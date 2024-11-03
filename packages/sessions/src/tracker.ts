@@ -19,6 +19,11 @@ export type ConfigDataDump = {
   presignedTransactions: PresignedConfigLink[]
 }
 
+export type SignerSignature = {
+  address: string
+  signature: string
+}
+
 export interface ConfigTracker {
   loadPresignedConfiguration: (args: {
     wallet: string
@@ -28,7 +33,7 @@ export interface ConfigTracker {
 
   savePresignedConfiguration: (args: PresignedConfig) => Promise<void>
 
-  saveWitnesses: (args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }) => Promise<void>
+  saveWitnesses: (args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] | SignerSignature[] }) => Promise<void>
 
   configOfImageHash: (args: { imageHash: string; noCache?: boolean }) => Promise<commons.config.Config | undefined>
 

@@ -125,7 +125,7 @@ export function encodeSignature(signature: Signature | UnrecoveredSignature | et
 export async function recoverSignature(
   data: UnrecoveredSignature,
   payload: base.SignedPayload,
-  provider: ethers.Provider
+  provider?: ethers.Provider
 ): Promise<Signature> {
   const subdigest = base.subdigestOf(payload)
   const signers = await Promise.all(

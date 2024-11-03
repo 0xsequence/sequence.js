@@ -1,7 +1,7 @@
 import { commons, universal, v1, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
-import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../../tracker'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../../tracker'
 import { Sessions, SignatureType, Transaction } from './sessions.gen'
 
 export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
@@ -56,21 +56,36 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     wallet: string
     digest: string
     chainId: ethers.BigNumberish
-    signatures: string[]
+    signatures: string[] | SignerSignature[]
   }): Promise<void> {
     let filteredSignatures = args.signatures
     if (this.onlyRecoverable) {
       filteredSignatures = filteredSignatures.filter(signature => {
-        return commons.signer.canRecover(signature)
-      })
+        if (typeof signature === 'string') {
+          return commons.signer.canRecover(signature)
+        } else {
+          // We "recover" using the included address
+          return !!signature.address
+        }
+      }) as string[] | SignerSignature[]
     }
 
-    await this.sessions.saveSignerSignatures({
-      wallet: args.wallet,
-      digest: args.digest,
-      chainID: numberString(args.chainId),
-      signatures: filteredSignatures
-    })
+    if (filteredSignatures.length === 0 || typeof args.signatures[0] === 'string') {
+      await this.sessions.saveSignerSignatures({
+        wallet: args.wallet,
+        digest: args.digest,
+        chainID: numberString(args.chainId),
+        signatures: filteredSignatures as string[]
+      })
+    } else {
+      await this.sessions.saveSignerSignatures2({
+        wallet: args.wallet,
+        digest: args.digest,
+        chainID: numberString(args.chainId),
+        // Rename "address" to "signer"
+        signatures: (filteredSignatures as SignerSignature[]).map(({ address, signature }) => ({ signer: address, signature }))
+      })
+    }
   }
 
   async configOfImageHash(args: { imageHash: string }): Promise<commons.config.Config | undefined> {

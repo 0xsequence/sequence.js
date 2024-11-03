@@ -43,7 +43,7 @@ export function isValidSignature(
   address: string,
   digest: ethers.BytesLike,
   signature: ethers.BytesLike,
-  provider: ethers.Provider
+  provider?: ethers.Provider
 ) {
   const bytes = ethers.getBytes(signature)
 
@@ -55,6 +55,9 @@ export function isValidSignature(
   }
 
   if (type === SigType.WALLET_BYTES32) {
+    if (!provider) {
+      throw new Error('Provider is required to validate EIP1271 signatures')
+    }
     return isValidEIP1271Signature(address, ethers.hexlify(digest), bytes.slice(0, -1), provider)
   }
 

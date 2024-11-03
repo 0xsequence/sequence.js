@@ -223,10 +223,11 @@ export class InvalidSignatureLeafError extends Error {
   }
 }
 
+// Signature validity is only checked if provider is provided
 export async function recoverTopology(
   unrecovered: UnrecoveredTopology,
   subdigest: string,
-  provider: ethers.Provider
+  provider?: ethers.Provider
 ): Promise<Topology> {
   if (isUnrecoveredNode(unrecovered)) {
     const [left, right] = await Promise.all([
@@ -251,9 +252,11 @@ export async function recoverTopology(
         throw new Error('Dynamic signature leaf without address')
       }
 
-      const isValid = await isValidSignature(unrecovered.address, subdigest, unrecovered.signature, provider)
-      if (!isValid) {
-        throw new InvalidSignatureLeafError(unrecovered)
+      if (provider) {
+        const isValid = await isValidSignature(unrecovered.address, subdigest, unrecovered.signature, provider)
+        if (!isValid) {
+          throw new InvalidSignatureLeafError(unrecovered)
+        }
       }
 
       return {
@@ -598,7 +601,7 @@ export function setImageHashStruct(imageHash: string) {
 export async function recoverSignature(
   signature: UnrecoveredSignature | UnrecoveredChainedSignature,
   payload: base.SignedPayload | { subdigest: string },
-  provider: ethers.Provider
+  provider?: ethers.Provider
 ): Promise<Signature | ChainedSignature> {
   const signedPayload = (payload as { subdigest: string }).subdigest === undefined ? (payload as base.SignedPayload) : undefined
 
@@ -927,7 +930,7 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
   recover: (
     data: UnrecoveredSignature | UnrecoveredChainedSignature,
     payload: base.SignedPayload,
-    provider: ethers.Provider
+    provider?: ethers.Provider
   ): Promise<Signature> => {
     return recoverSignature(data, payload, provider)
   },
