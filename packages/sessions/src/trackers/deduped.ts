@@ -2,7 +2,7 @@ import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
 
 import { ethers } from 'ethers'
-import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../tracker'
 import { PromiseCache } from './promise-cache'
 import { LocalConfigTracker } from './local'
 
@@ -63,7 +63,7 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     return this.cache.do('savePresignedConfiguration', undefined, args => this.tracker.savePresignedConfiguration(args), args)
   }
 
-  saveWitnesses(args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }): Promise<void> {
+  saveWitnesses(args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] | SignerSignature[] }): Promise<void> {
     return this.cache.do('saveWitnesses', undefined, args => this.tracker.saveWitnesses(args), args)
   }
 

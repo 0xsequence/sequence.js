@@ -1,4 +1,4 @@
-import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../tracker'
 import { migrator } from '@0xsequence/migration'
 
 import { commons, universal } from '@0xsequence/core'
@@ -151,7 +151,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     wallet: string
     digest: string
     chainId: ethers.BigNumberish
-    signatures: string[]
+    signatures: string[] | SignerSignature[]
   }): Promise<void> {
     await Promise.all(this.trackers.map(t => t.saveWitnesses(args)))
   }

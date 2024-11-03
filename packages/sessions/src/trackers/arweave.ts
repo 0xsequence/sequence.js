@@ -2,7 +2,7 @@ import { commons, universal, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
 import { CachedEIP5719 } from '@0xsequence/replacer'
 import { ethers } from 'ethers'
-import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../tracker'
 
 // depending on @0xsequence/abi breaks 0xsequence's proxy-transport-channel integration test
 const MAIN_MODULE_ABI = [
@@ -231,7 +231,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
     throw new Error('arweave backend does not support saving config updates')
   }
 
-  saveWitnesses(_args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }): Promise<void> {
+  saveWitnesses(_args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] | SignerSignature[] }): Promise<void> {
     throw new Error('arweave backend does not support saving signatures')
   }
 

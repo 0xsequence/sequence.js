@@ -509,7 +509,7 @@ export class Account {
     const signature = await wallet.signDigest(digest)
 
     const decoded = this.coders.signature.decode(signature)
-    const signatures = this.coders.signature.signaturesOfDecoded(decoded)
+    const signatures = this.coders.signature.signaturesOf(decoded)
 
     if (signatures.length === 0) {
       throw new Error('No signatures found')
@@ -522,7 +522,8 @@ export class Account {
     const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
     const signature = await this.signDigest(digest, 0, false)
     const decoded = this.coders.signature.decode(signature)
-    const signatures = this.coders.signature.signaturesOfDecoded(decoded)
+    const recovered = await this.coders.signature.recover(decoded, { digest, chainId: 0, address: this.address })
+    const signatures = this.coders.signature.signaturesOf(recovered.config)
     return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId: 0, signatures })
   }
 

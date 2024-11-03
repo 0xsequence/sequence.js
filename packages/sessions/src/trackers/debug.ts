@@ -1,6 +1,6 @@
 import { commons } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
-import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../tracker'
 import { ethers } from 'ethers'
 import { bigintReplacer } from '@0xsequence/utils'
 
@@ -23,7 +23,7 @@ export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigr
     return this.tracker.savePresignedConfiguration(args)
   }
 
-  saveWitnesses(args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] }): Promise<void> {
+  saveWitnesses(args: { wallet: string; digest: string; chainId: ethers.BigNumberish; signatures: string[] | SignerSignature[] }): Promise<void> {
     console.debug('? saveWitnesses')
     debug(args, '? ')
     return this.tracker.saveWitnesses(args)
