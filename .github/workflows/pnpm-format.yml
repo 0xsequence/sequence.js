@@ -1,0 +1,36 @@
+name: pnpm format
+
+on:
+  workflow_call:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 20
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
+      - run: pnpm format
+
+      - name: Commit back
+        uses: 0xsequence/actions/git-commit@v0.0.4
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN_GIT_COMMIT }}
+        with:
+          files: "**/*.js **/*.ts"
+          branch: ${{ github.head_ref }}
+          commit_message: "[AUTOMATED] pnpm format"
