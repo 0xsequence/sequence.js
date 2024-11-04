@@ -13,16 +13,7 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 20
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-          run_install: false
+      - uses: ./.github/actions/install-dependencies
 
       - run: pnpm format
 
@@ -31,6 +22,6 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN_GIT_COMMIT }}
         with:
-          files: "**/*.js **/*.ts"
+          files: '**/*.js **/*.ts'
           branch: ${{ github.head_ref }}
-          commit_message: "[AUTOMATED] pnpm format"
+          commit_message: '[AUTOMATED] pnpm format'
