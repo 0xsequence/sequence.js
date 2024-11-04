@@ -507,7 +507,6 @@ export class Account {
 
     const wallet = this.walletFor(chainId, status.original.context, allOfAll, this.coders)
     const signature = await wallet.signDigest(digest)
-
     const decoded = this.coders.signature.decode(signature)
     const signatures = this.coders.signature.signaturesOf(decoded)
 
