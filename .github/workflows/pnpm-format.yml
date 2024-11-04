@@ -22,6 +22,6 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN_GIT_COMMIT }}
         with:
-          files: '**/*.js **/*.ts'
+          files: '**/*.ts'
           branch: ${{ github.head_ref }}
           commit_message: '[AUTOMATED] pnpm format'
