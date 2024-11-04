@@ -38,7 +38,7 @@ export type PasskeySignerContext = {
 }
 
 export type PasskeySignMetadata = {
-  cantValidateBehavior: 'ignore' | 'eip6492' | 'throw',
+  cantValidateBehavior: 'ignore' | 'eip6492' | 'throw'
 }
 
 function bytesToBase64URL(bytes: Uint8Array): string {
@@ -131,7 +131,9 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     return this.reader().isDeployed(await this.getAddress())
   }
 
-  async buildDeployTransaction(metadata?: commons.WalletDeployMetadata): Promise<commons.transaction.TransactionBundle | undefined> {
+  async buildDeployTransaction(
+    metadata?: commons.WalletDeployMetadata
+  ): Promise<commons.transaction.TransactionBundle | undefined> {
     if (metadata?.ignoreDeployed && (await this.isDeployed())) {
       return
     }
@@ -204,11 +206,11 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     }
 
     // Pack the flags as hex string for encoding
-    const flags = `0x${
+    const flags = `0x${(
       (this.requireUserValidation ? 0x40 : 0) |
       (BigInt(this.chainId) === 0n ? 0x20 : 0) |
       (this.requireBackupSanityCheck ? 0x10 : 0)
-    }`
+    ).toString(16)}`
 
     // Build signature
     const signatureBytes = ethers.solidityPacked(
@@ -228,16 +230,16 @@ export class SequencePasskeySigner implements signers.SapientSigner {
       ]
     )
 
-    if (!!metadata && metadata.cantValidateBehavior !== "ignore") {
+    if (!!metadata && metadata.cantValidateBehavior !== 'ignore') {
       let isDeployed = false
       try {
         isDeployed = await this.isDeployed()
       } catch (e) {
         // Ignore. Handled below
       }
-      if (!isDeployed && metadata.cantValidateBehavior === "eip6492") {
+      if (!isDeployed && metadata.cantValidateBehavior === 'eip6492') {
         return this.buildEIP6492Signature(signatureBytes)
-      } else if (!isDeployed && metadata.cantValidateBehavior === "throw") {
+      } else if (!isDeployed && metadata.cantValidateBehavior === 'throw') {
         throw new Error('Cannot sign with a non-deployed passkey signer')
       }
     }
