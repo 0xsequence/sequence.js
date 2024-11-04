@@ -500,7 +500,7 @@ export class Account {
       signers: signers.map(s => ({
         address: s,
         weight: 1
-      })),
+      }))
     })
 
     const wallet = this.walletFor(chainId, status.original.context, allOfAll, this.coders)
@@ -510,7 +510,7 @@ export class Account {
     const signatures = this.coders.signature.signaturesOfDecoded(decoded)
 
     if (signatures.length === 0) {
-      throw new Error("No signatures found")
+      throw new Error('No signatures found')
     }
 
     return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures })
