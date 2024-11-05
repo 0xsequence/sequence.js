@@ -5,6 +5,7 @@ export type PresignedConfig = {
   wallet: string
   nextConfig: commons.config.Config
   signature: string
+  referenceChainId?: string
 }
 
 export type PresignedConfigLink = Omit<PresignedConfig, 'nextConfig'> & { nextImageHash: string }
