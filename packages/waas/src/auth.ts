@@ -16,7 +16,9 @@ import {
   SendERC721Args,
   SendTransactionsArgs,
   SignedIntent,
-  SignMessageArgs
+  SignMessageArgs,
+  getTimeDrift,
+  updateTimeDrift
 } from './intents'
 import {
   FeeOptionsResponse,
@@ -334,7 +336,20 @@ export class SequenceWaaS {
     }
   }
 
+  private async updateTimeDrift() {
+    if (getTimeDrift() === undefined) {
+      const res = await fetch(`${this.config.rpcServer}/status`)
+      const date = res.headers.get('Date')
+      if (!date) {
+        throw new Error('missing Date header value')
+      }
+      updateTimeDrift(new Date(date))
+    }
+  }
+
   private async sendIntent(intent: SignedIntent<any>) {
+    this.updateTimeDrift()
+
     const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
       throw new Error('session not open')
@@ -533,6 +548,8 @@ export class SequenceWaaS {
   }
 
   private async registerSession(intent: SignedIntent<IntentDataOpenSession>, name: string) {
+    this.updateTimeDrift()
+
     try {
       const res = await this.client.registerSession({ intent, friendlyName: name }, this.headers())
       return res
