@@ -20,7 +20,7 @@ function isSessionStorageAvailable() {
 
 export function getTimeDrift() {
   if (isSessionStorageAvailable()) {
-    const drift = sessionStorage.getItem(timeDriftKey)
+    const drift = window.sessionStorage.getItem(timeDriftKey)
     if (drift) {
       return parseInt(drift, 10)
     }
@@ -31,7 +31,7 @@ export function getTimeDrift() {
 export function updateTimeDrift(serverTime: Date) {
   timeDrift = (Date.now() - serverTime.getTime()) / 1000
   if (isSessionStorageAvailable()) {
-    sessionStorage.setItem(timeDriftKey, timeDrift.toString(10))
+    window.sessionStorage.setItem(timeDriftKey, timeDrift.toString(10))
   }
 }
 
