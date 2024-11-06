@@ -38,6 +38,7 @@
     "@0xsequence/deployer": "workspace:*",
     "@0xsequence/guard": "workspace:*",
     "@0xsequence/indexer": "workspace:*",
+    "@0xsequence/marketplace": "workspace:*",
     "@0xsequence/metadata": "workspace:*",
     "@0xsequence/network": "workspace:*",
     "@0xsequence/provider": "workspace:*",
