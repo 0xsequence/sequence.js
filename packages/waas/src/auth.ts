@@ -348,7 +348,7 @@ export class SequenceWaaS {
   }
 
   private async sendIntent(intent: SignedIntent<any>) {
-    this.updateTimeDrift()
+    await this.updateTimeDrift()
 
     const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
@@ -548,7 +548,7 @@ export class SequenceWaaS {
   }
 
   private async registerSession(intent: SignedIntent<IntentDataOpenSession>, name: string) {
-    this.updateTimeDrift()
+    await this.updateTimeDrift()
 
     try {
       const res = await this.client.registerSession({ intent, friendlyName: name }, this.headers())
