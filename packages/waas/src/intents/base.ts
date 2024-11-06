@@ -11,16 +11,28 @@ export type SignedIntent<T> = Omit<RawIntent, 'data'> & { data: T }
 const INTENTS_VERSION = 1
 const VERSION = `${INTENTS_VERSION} (Web ${PACKAGE_VERSION})`
 
+let timeDrift: number | undefined
+const timeDriftKey = '@sequence.timeDrift'
+
+function isSessionStorageAvailable() {
+  return typeof window === 'object' && typeof window.sessionStorage === 'object'
+}
+
 export function getTimeDrift() {
-  const drift = sessionStorage.getItem('timeDrift')
-  if (drift) {
-    return parseInt(drift, 10)
+  if (isSessionStorageAvailable()) {
+    const drift = sessionStorage.getItem(timeDriftKey)
+    if (drift) {
+      return parseInt(drift, 10)
+    }
   }
-  return undefined
+  return timeDrift
 }
 
 export function updateTimeDrift(serverTime: Date) {
-  sessionStorage.setItem('timeDrift', ((Date.now() - serverTime.getTime()) / 1000).toString(10))
+  timeDrift = (Date.now() - serverTime.getTime()) / 1000
+  if (isSessionStorageAvailable()) {
+    sessionStorage.setItem(timeDriftKey, timeDrift.toString(10))
+  }
 }
 
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
