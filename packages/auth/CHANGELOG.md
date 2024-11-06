@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 2.0.23
+
+### Patch Changes
+
+- Add The Root Network support
+- Updated dependencies
+  - @0xsequence/abi@2.0.23
+  - @0xsequence/account@2.0.23
+  - @0xsequence/api@2.0.23
+  - @0xsequence/core@2.0.23
+  - @0xsequence/indexer@2.0.23
+  - @0xsequence/metadata@2.0.23
+  - @0xsequence/migration@2.0.23
+  - @0xsequence/network@2.0.23
+  - @0xsequence/sessions@2.0.23
+  - @0xsequence/signhub@2.0.23
+  - @0xsequence/utils@2.0.23
+  - @0xsequence/wallet@2.0.23
+
 ## 2.0.22
 
 ### Patch Changes

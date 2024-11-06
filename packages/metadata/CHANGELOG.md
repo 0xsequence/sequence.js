@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.0.23
+
+### Patch Changes
+
+- Add The Root Network support
+
 ## 2.0.22
 
 ### Patch Changes

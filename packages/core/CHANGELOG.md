@@ -1,5 +1,14 @@
 # @0xsequence/core
 
+## 2.0.23
+
+### Patch Changes
+
+- Add The Root Network support
+- Updated dependencies
+  - @0xsequence/abi@2.0.23
+  - @0xsequence/utils@2.0.23
+
 ## 2.0.22
 
 ### Patch Changes
