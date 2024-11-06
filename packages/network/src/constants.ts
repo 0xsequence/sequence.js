@@ -86,6 +86,10 @@ export enum ChainId {
   IMMUTABLE_ZKEVM = 13371,
   IMMUTABLE_ZKEVM_TESTNET = 13473,
 
+  // The Root Network
+  ROOT_NETWORK = 7668,
+  ROOT_NETWORK_PORCINI = 7672,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -882,6 +886,40 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'IMX',
       name: 'IMX',
+      decimals: 18
+    }
+  },
+  [ChainId.ROOT_NETWORK]: {
+    chainId: ChainId.ROOT_NETWORK,
+    type: NetworkType.MAINNET,
+    name: 'rootnet',
+    title: 'The Root Network',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'The Root Network Explorer',
+      rootUrl: 'https://rootscan.io/'
+    },
+    nativeToken: {
+      symbol: 'XRP',
+      name: 'XRP',
+      decimals: 18
+    }
+  },
+  [ChainId.ROOT_NETWORK_PORCINI]: {
+    chainId: ChainId.ROOT_NETWORK_PORCINI,
+    type: NetworkType.TESTNET,
+    name: 'rootnet-porcini',
+    title: 'The Root Network Porcini Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK_PORCINI}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'The Root Network Porcini Testnet Explorer',
+      rootUrl: 'https://porcini.rootscan.io/'
+    },
+    nativeToken: {
+      symbol: 'XRP',
+      name: 'XRP',
       decimals: 18
     }
   },
