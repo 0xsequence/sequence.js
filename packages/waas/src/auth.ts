@@ -341,7 +341,7 @@ export class SequenceWaaS {
       const res = await fetch(`${this.config.rpcServer}/status`)
       const date = res.headers.get('Date')
       if (!date) {
-        throw new Error('missing Date header value')
+        throw new Error('failed to get Date header value from /status')
       }
       updateTimeDrift(new Date(date))
     }
