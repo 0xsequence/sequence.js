@@ -33,6 +33,9 @@ importers:
       '@0xsequence/indexer':
         specifier: workspace:*
         version: link:packages/indexer
+      '@0xsequence/marketplace':
+        specifier: workspace:*
+        version: link:packages/marketplace
       '@0xsequence/metadata':
         specifier: workspace:*
         version: link:packages/metadata
@@ -408,6 +411,8 @@ importers:
         version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
 
   packages/indexer: {}
+
+  packages/marketplace: {}
 
   packages/metadata: {}
 

@@ -1,5 +1,4 @@
-0xsequence
-==========
+# 0xsequence
 
 [Sequence](https://sequence.xyz): a modular web3 stack and smart wallet for Ethereum chains
 
@@ -15,7 +14,6 @@ or
 
 `yarn add 0xsequence ethers`
 
-
 ## Packages
 
 - [0xsequence](./packages/0xsequence)
@@ -25,6 +23,7 @@ or
 - [@0xsequence/core](./packages/core)
 - [@0xsequence/deployer](./packages/deployer)
 - [@0xsequence/guard](./packages/guard)
+- [@0xsequence/marketplace](./packages/marketplace)
 - [@0xsequence/multicall](./packages/multicall)
 - [@0xsequence/network](./packages/network)
 - [@0xsequence/provider](./packages/provider)
@@ -34,7 +33,6 @@ or
 - [@0xsequence/signhub](./packages/signhub)
 - [@0xsequence/utils](./packages/utils)
 - [@0xsequence/wallet](./packages/wallet)
-
 
 ## Development Environment
 
@@ -67,7 +65,6 @@ and enjoyable.
 
 7. **Versioning** -- this repository uses the handy [changesets](https://github.com/atlassian/changesets)
    package for package versioning across the monorepo, as well as changelogs. See _Releasing_ section below.
-
 
 ## Releasing to NPM
 
@@ -116,12 +113,10 @@ Snapshot releases are versioned as 0.0.0-YYYYmmddHHMMSS and are intended for tes
 1. Browser tests can be run with `pnpm test` or, separately `pnpm test:server` and `pnpm test:run`
 2. To run a specific test, run `pnpm test:only <test-file-basename>`, ie. `pnpm test:only window-transport`
 
-
 ## TIPS
 
-* If you're using node v18+ and you hit the error `Error: error:0308010C:digital envelope routines::unsupported`,
+- If you're using node v18+ and you hit the error `Error: error:0308010C:digital envelope routines::unsupported`,
   make sure to first set, `export NODE_OPTIONS=--openssl-legacy-provider`
-
 
 ## LICENSE
 
