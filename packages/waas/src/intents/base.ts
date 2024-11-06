@@ -23,7 +23,7 @@ export function updateTimeDrift(serverTime: Date) {
 }
 
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
-  const drift = Math.floor(timeDrift || 0)
+  const drift = Math.abs(Math.floor(timeDrift || 0))
   const issuedAt = Math.floor(Date.now() / 1000 - drift)
   const expiresAt = issuedAt + lifespan + 2*drift
   return {
