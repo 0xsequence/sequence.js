@@ -11,19 +11,20 @@ export type SignedIntent<T> = Omit<RawIntent, 'data'> & { data: T }
 const INTENTS_VERSION = 1
 const VERSION = `${INTENTS_VERSION} (Web ${PACKAGE_VERSION})`
 
-// The result of localTime - serverTime, in seconds
-let timeDrift: number | undefined
-
 export function getTimeDrift() {
-  return timeDrift
+  const drift = sessionStorage.getItem('timeDrift')
+  if (drift) {
+    return parseInt(drift, 10)
+  }
+  return undefined
 }
 
 export function updateTimeDrift(serverTime: Date) {
-  timeDrift = (Date.now() - serverTime.getTime()) / 1000
+  sessionStorage.setItem('timeDrift', ((Date.now() - serverTime.getTime()) / 1000).toString(10))
 }
 
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
-  const drift = Math.abs(Math.floor(timeDrift || 0))
+  const drift = Math.abs(Math.floor(getTimeDrift() || 0))
   const issuedAt = Math.floor(Date.now() / 1000 - drift)
   const expiresAt = issuedAt + lifespan + 2*drift
   return {
