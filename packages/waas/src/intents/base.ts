@@ -38,7 +38,7 @@ export function updateTimeDrift(serverTime: Date) {
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
   const drift = Math.abs(Math.floor(getTimeDrift() || 0))
   const issuedAt = Math.floor(Date.now() / 1000 - drift)
-  const expiresAt = issuedAt + lifespan + 2*drift
+  const expiresAt = issuedAt + lifespan + 2 * drift
   return {
     version: VERSION,
     issuedAt,
