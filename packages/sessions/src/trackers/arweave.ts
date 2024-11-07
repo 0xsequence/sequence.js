@@ -12,6 +12,7 @@ const MAIN_MODULE_ABI = [
 export interface Options {
   readonly namespace?: string
   readonly owners?: string[]
+  readonly arweaveUrl?: string
   readonly graphqlUrl?: string
   readonly eip5719Provider?: ethers.Provider
   readonly rateLimitRetryDelayMs?: number
@@ -20,6 +21,7 @@ export interface Options {
 export const defaults = {
   namespace: 'Sequence-Sessions',
   owners: ['AZ6R2mG8zxW9q7--iZXGrBknjegHoPzmG5IG-nxvMaM'],
+  arweaveUrl: 'https://arweave.net',
   graphqlUrl: 'https://arweave.net/graphql',
   eip5719Provider: undefined,
   rateLimitRetryDelayMs: 5 * 60 * 1000
@@ -175,7 +177,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
               nextCandidateSigners.map(async signer => {
                 const { id, subdigest, signatureType } = nextCandidateItems.get(signer)!
                 try {
-                  let signature = await (await fetchItem(id, this.options.rateLimitRetryDelayMs)).text()
+                  let signature = await (await fetchItem(id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl)).text()
                   switch (signatureType) {
                     case 'eip-712':
                       signature += '01'
@@ -276,7 +278,10 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
 
       for (const { id, version } of items) {
         try {
-          const config = { ...(await (await fetchItem(id, this.options.rateLimitRetryDelayMs)).json()), version }
+          const config = {
+            ...(await (await fetchItem(id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl)).json()),
+            version
+          }
           if (config.tree) {
             config.tree = toTopology(config.tree)
           }
@@ -401,7 +406,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
           throw new Error('incorrect subdigest')
         }
 
-        const signature = fetchItem(id, this.options.rateLimitRetryDelayMs).then(async response => {
+        const signature = fetchItem(id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl).then(async response => {
           const signature = (await response.text()) + signatureType
           if (this.eip5719) {
             try {
@@ -488,7 +493,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
     const { id, toVersion, toImageHash, executor } = items[0]
 
     const [data, toConfig] = await Promise.all([
-      fetchItem(id, this.options.rateLimitRetryDelayMs).then(response => response.text()),
+      fetchItem(id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl).then(response => response.text()),
       this.configOfImageHash({ imageHash: toImageHash })
     ])
 
@@ -568,7 +573,7 @@ async function findItems(
         break
       }
       console.warn(
-        `rate limited by arweave.net, trying again in ${rateLimitRetryDelayMs / 1000} seconds at ${new Date(Date.now() + rateLimitRetryDelayMs).toLocaleTimeString()}`
+        `rate limited by ${graphqlUrl}, trying again in ${rateLimitRetryDelayMs / 1000} seconds at ${new Date(Date.now() + rateLimitRetryDelayMs).toLocaleTimeString()}`
       )
       await new Promise(resolve => setTimeout(resolve, rateLimitRetryDelayMs))
     }
@@ -595,14 +600,18 @@ async function findItems(
   )
 }
 
-async function fetchItem(id: string, rateLimitRetryDelayMs = defaults.rateLimitRetryDelayMs): Promise<Response> {
+async function fetchItem(
+  id: string,
+  rateLimitRetryDelayMs = defaults.rateLimitRetryDelayMs,
+  arweaveUrl = defaults.arweaveUrl
+): Promise<Response> {
   while (true) {
-    const response = await fetch(`https://arweave.net/${id}`, { redirect: 'follow' })
+    const response = await fetch(`${arweaveUrl}/${id}`, { redirect: 'follow' })
     if (response.status !== 429) {
       return response
     }
     console.warn(
-      `rate limited by arweave.net, trying again in ${rateLimitRetryDelayMs / 1000} seconds at ${new Date(Date.now() + rateLimitRetryDelayMs).toLocaleTimeString()}`
+      `rate limited by ${arweaveUrl}, trying again in ${rateLimitRetryDelayMs / 1000} seconds at ${new Date(Date.now() + rateLimitRetryDelayMs).toLocaleTimeString()}`
     )
     await new Promise(resolve => setTimeout(resolve, rateLimitRetryDelayMs))
   }
