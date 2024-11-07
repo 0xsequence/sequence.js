@@ -1,5 +1,17 @@
 # @0xsequence/relayer
 
+## 2.0.24
+
+### Patch Changes
+
+- sessions: arweave: configurable gateway url
+- waas: use /status to get time drift before sending any intents
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.0.24
+  - @0xsequence/core@2.0.24
+  - @0xsequence/utils@2.0.24
+
 ## 2.0.23
 
 ### Patch Changes
