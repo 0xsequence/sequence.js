@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import { commons, v1, v2 } from '@0xsequence/core'
+import { ChainId } from '@0xsequence/network'
 import { SignatureOrchestrator, SignerState, Status } from '@0xsequence/signhub'
 import { encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
 import { FeeQuote, Relayer } from '@0xsequence/relayer'
@@ -65,7 +66,7 @@ export class Wallet<
   public context: commons.context.WalletContext
   public config: Y
   public address: string
-  public chainId: ethers.BigNumberish
+  public chainId: bigint
 
   public relayer?: Relayer
 
@@ -78,7 +79,9 @@ export class Wallet<
   private _reader?: commons.reader.Reader
 
   constructor(options: WalletOptions<T, Y, Z>) {
-    if (BigInt(options.chainId) === 0n && !options.coders.signature.supportsNoChainId) {
+    const chainId = BigInt(options.chainId)
+
+    if (chainId === 0n && !options.coders.signature.supportsNoChainId) {
       throw new Error(`Sequence version ${options.config.version} doesn't support chainId 0`)
     }
 
@@ -89,7 +92,7 @@ export class Wallet<
     this.orchestrator = options.orchestrator
     this.coders = options.coders
     this.address = options.address
-    this.chainId = options.chainId
+    this.chainId = chainId
     this.relayer = options.relayer
 
     this._reader = options.reader
@@ -179,7 +182,14 @@ export class Wallet<
       throw new Error(`First address of config ${imageHash} doesn't match wallet address ${this.address}`)
     }
 
-    const bundle = Wallet.buildDeployTransaction(this.context, imageHash)
+    let gasLimit: bigint | undefined
+    switch (this.chainId) {
+      case BigInt(ChainId.SKALE_NEBULA):
+        gasLimit = 10000000n
+        break
+    }
+
+    const bundle = Wallet.buildDeployTransaction(this.context, imageHash, gasLimit)
     if (metadata?.includeChildren) {
       const childBundle = await this.orchestrator.buildDeployTransaction(metadata)
       if (childBundle) {
@@ -209,7 +219,8 @@ export class Wallet<
 
   static buildDeployTransaction(
     context: commons.context.WalletContext,
-    imageHash: string
+    imageHash: string,
+    gasLimit: ethers.BigNumberish = 100000n
   ): commons.transaction.TransactionBundle {
     const factoryInterface = new ethers.Interface(walletContracts.factory.abi)
 
@@ -219,7 +230,7 @@ export class Wallet<
         {
           to: context.factory,
           data: factoryInterface.encodeFunctionData(factoryInterface.getFunction('deploy')!, [context.mainModule, imageHash]),
-          gasLimit: 100000,
+          gasLimit,
           delegateCall: false,
           revertOnError: true,
           value: 0
