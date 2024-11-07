@@ -700,9 +700,16 @@ export class Account {
 
     // Add wallet deployment if needed
     if (!status.onChain.deployed) {
+      let gasLimit: bigint | undefined
+      switch (chainId) {
+        case BigInt(ChainId.SKALE_NEBULA):
+          gasLimit = 10000000n
+          break
+      }
+
       // Wallet deployment will vary depending on the version
       // so we need to use the context to get the correct deployment
-      const deployTransaction = Wallet.buildDeployTransaction(status.original.context, status.original.imageHash)
+      const deployTransaction = Wallet.buildDeployTransaction(status.original.context, status.original.imageHash, gasLimit)
 
       transactions.push(...deployTransaction.transactions)
     }
