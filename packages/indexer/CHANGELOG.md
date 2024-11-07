@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.0.25
+
+### Patch Changes
+
+- skale-nebula: deploy gas limit = 10m
+
 ## 2.0.24
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.0.25
+
+### Patch Changes
+
+- skale-nebula: deploy gas limit = 10m
+- Updated dependencies
+  - @0xsequence/abi@2.0.25
+  - @0xsequence/core@2.0.25
+  - @0xsequence/migration@2.0.25
+  - @0xsequence/network@2.0.25
+  - @0xsequence/relayer@2.0.25
+  - @0xsequence/sessions@2.0.25
+  - @0xsequence/utils@2.0.25
+  - @0xsequence/wallet@2.0.25
+
 ## 2.0.24
 
 ### Patch Changes

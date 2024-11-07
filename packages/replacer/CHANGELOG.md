@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 2.0.25
+
+### Patch Changes
+
+- skale-nebula: deploy gas limit = 10m
+- Updated dependencies
+  - @0xsequence/abi@2.0.25
+  - @0xsequence/core@2.0.25
+
 ## 2.0.24
 
 ### Patch Changes
