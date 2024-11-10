@@ -1,5 +1,5 @@
 import { Account } from '@0xsequence/account'
-import { SequenceAPIClient } from '@0xsequence/api'
+import { GetAuthToken2Return, GetAuthTokenReturn, SequenceAPIClient } from '@0xsequence/api'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
 import { Indexer, SequenceIndexer, SequenceIndexerGateway } from '@0xsequence/indexer'
 import { SequenceMetadata } from '@0xsequence/metadata'
@@ -101,7 +101,7 @@ export class Services {
     }
   }
 
-  auth(maxTries: number = 5): Promise<SequenceAPIClient> {
+  auth(maxTries: number = 5, referenceChainId?: ChainIdLike): Promise<SequenceAPIClient> {
     if (this._initialAuthRequest) return this._initialAuthRequest
 
     this._initialAuthRequest = (async () => {
@@ -111,7 +111,7 @@ export class Services {
       let jwtAuth: string | undefined
       for (let i = 1; ; i++) {
         try {
-          jwtAuth = (await this.getJWT(true)).token
+          jwtAuth = (await this.getJWT(true, referenceChainId)).token
           break
         } catch (error) {
           if (i === maxTries) {
@@ -127,7 +127,7 @@ export class Services {
     return this._initialAuthRequest
   }
 
-  private async getJWT(tryAuth: boolean): Promise<SessionJWT> {
+  private async getJWT(tryAuth: boolean, referenceChainId?: ChainIdLike): Promise<SessionJWT> {
     const url = this.settings.sequenceApiUrl
     if (!url) throw Error('No sequence api url')
 
@@ -156,7 +156,12 @@ export class Services {
         .then(async proofString => {
           const api = new SequenceAPIClient(url)
 
-          const authResp = await api.getAuthToken({ ewtString: proofString })
+          let authResp: GetAuthToken2Return | GetAuthTokenReturn
+          if (referenceChainId) {
+            authResp = await api.getAuthToken2({ ewtString: proofString, chainID: referenceChainId?.toString() })
+          } else {
+            authResp = await api.getAuthToken({ ewtString: proofString })
+          }
 
           if (authResp?.status === true && authResp.jwtToken.length !== 0) {
             return authResp.jwtToken

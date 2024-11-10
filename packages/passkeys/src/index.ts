@@ -38,7 +38,8 @@ export type PasskeySignerContext = {
 }
 
 export type PasskeySignMetadata = {
-  cantValidateBehavior: 'ignore' | 'eip6492' | 'throw'
+  referenceChainId?: ethers.BigNumberish
+  cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
 }
 
 function bytesToBase64URL(bytes: Uint8Array): string {
@@ -180,7 +181,8 @@ export class SequencePasskeySigner implements signers.SapientSigner {
   }
 
   async sign(digest: ethers.BytesLike, metadata: PasskeySignMetadata): Promise<ethers.BytesLike> {
-    const subdigest = subDigestOf(await this.getAddress(), this.chainId, digest)
+    const referenceChainId = metadata?.referenceChainId ?? this.chainId
+    const subdigest = subDigestOf(await this.getAddress(), referenceChainId, ethers.hexlify(digest))
 
     const signature = await this.doSign(digest, subdigest)
 
@@ -208,7 +210,7 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     // Pack the flags as hex string for encoding
     const flags = `0x${(
       (this.requireUserValidation ? 0x40 : 0) |
-      (BigInt(this.chainId) === 0n ? 0x20 : 0) |
+      (BigInt(referenceChainId) === 0n ? 0x20 : 0) |
       (this.requireBackupSanityCheck ? 0x10 : 0)
     ).toString(16)}`
 

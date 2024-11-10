@@ -22,6 +22,7 @@ export type ConfigDataDump = {
 export type SignerSignature = {
   address: string
   signature: string
+  referenceChainId?: ethers.BigNumberish
 }
 
 export interface ConfigTracker {

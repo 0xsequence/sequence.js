@@ -517,14 +517,15 @@ export class Account {
     return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures })
   }
 
-  async publishWitness(): Promise<void> {
+  async publishWitness(chainId: ethers.BigNumberish = 0, referenceChainId?: ethers.BigNumberish): Promise<void> {
     const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
     // Apply ERC-6492 to undeployed children
-    const signature = await this.signDigest(digest, 0, false, 'ignore', {cantValidateBehavior: "eip6492"})
+    const signature = await this.signDigest(digest, 0, false, 'ignore', {referenceChainId, cantValidateBehavior: "eip6492"})
     const decoded = this.coders.signature.decode(signature)
-    const recovered = await this.coders.signature.recover(decoded, { digest, chainId: 0, address: this.address })
+    const recovered = await this.coders.signature.recover(decoded, { digest, chainId, address: this.address })
     const signatures = this.coders.signature.signaturesOf(recovered.config)
-    return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId: 0, signatures })
+    const signaturesWithReferenceChainId = signatures.map(s => ({...s, referenceChainId}))
+    return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures: signaturesWithReferenceChainId })
   }
 
   async signDigest(
