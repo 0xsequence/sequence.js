@@ -83,7 +83,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
         digest: args.digest,
         chainID: numberString(args.chainId),
         // Rename "address" to "signer"
-        signatures: (filteredSignatures as SignerSignature[]).map(({ address, signature }) => ({ signer: address, signature }))
+        signatures: (filteredSignatures as SignerSignature[]).map(({ address, signature, referenceChainId }) => ({ signer: address, signature, referenceChainId: referenceChainId?.toString() }))
       })
     }
   }

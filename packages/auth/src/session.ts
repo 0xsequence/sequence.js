@@ -289,7 +289,7 @@ export class Session {
 
       // sign a digest and send it to the tracker
       // otherwise the tracker will not know about this account
-      await account.publishWitness()
+      await account.publishWitness(undefined, referenceChainId)
 
       // safety check, the remove tracker should be able to find
       // this account for the reference signer
@@ -303,7 +303,7 @@ export class Session {
 
     if (services) {
       servicesObj = new Services(account, services)
-      servicesObj.auth() // fire and forget
+      servicesObj.auth(1, referenceChainId) // fire and forget
 
       servicesObj.onAuth(result => {
         if (result.status === 'fulfilled') {

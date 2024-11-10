@@ -54,7 +54,7 @@ export interface SignatureCoder<
 
   hashSetImageHash: (imageHash: string) => string
 
-  signaturesOf: (config: Y) => { address: string; signature: string }[]
+  signaturesOf: (config: Y, referenceChainId?: ethers.BigNumberish) => { address: string; signature: string }[]
 
   signaturesOfDecoded: (decoded: Z) => string[]
 }

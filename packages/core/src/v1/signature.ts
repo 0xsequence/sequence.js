@@ -248,7 +248,7 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
     throw new Error('Image hash not supported on v1')
   },
 
-  signaturesOf(config: WalletConfig): { address: string; signature: string }[] {
+  signaturesOf(config: WalletConfig, referenceChainId?: ethers.BigNumberish): { address: string; signature: string }[] {
     return config.signers.filter(s => s.signature !== undefined).map(s => ({ address: s.address, signature: s.signature! }))
   },
 
