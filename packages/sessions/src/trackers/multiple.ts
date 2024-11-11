@@ -48,11 +48,11 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     let result1: { res: commons.config.Config | undefined; i: number } | undefined
 
     if (this.isSerial) {
-      for (const request of requests) {
-        const result = await request
-        if (result.res) {
-          if (universal.genericCoderFor(result.res.version).config.isComplete(result.res)) {
-            result1 = result
+      for (const [i, tracker] of this.trackers.entries()) {
+        const result = await tracker.configOfImageHash(args)
+        if (result) {
+          if (universal.genericCoderFor(result.version).config.isComplete(result)) {
+            result1 = { res: result, i }
             break
           }
         }
@@ -103,10 +103,10 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     const requests = this.trackers.map(t => t.imageHashOfCounterfactualWallet(args))
 
     if (this.isSerial) {
-      for (const request of requests) {
-        const result = await request
+      for (const tracker of this.trackers) {
+        const result = await tracker.imageHashOfCounterfactualWallet(args)
         if (result) {
-          imageHash = result
+          imageHash = { imageHash: result.imageHash, context: result.context }
           break
         }
       }
