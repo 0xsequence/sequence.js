@@ -32,15 +32,19 @@ export function raceUntil<T>(promises: Promise<T>[], fallback: T, evalRes: (val:
   })
 }
 
-export function serialResolve<T>(promises: Promise<T>[], fallback: T, evalRes: (val: T) => boolean): Promise<T | undefined> {
-  return new Promise(resolve => {
-    for (const p of promises) {
-      p.then(val => {
-        if (evalRes(val)) resolve(val)
-      })
+export async function serialResolve<T>(promises: Promise<T>[], fallback: T, evalRes: (val: T) => boolean): Promise<T> {
+  for (const p of promises) {
+    try {
+      const val = await p
+      if (evalRes(val)) {
+        return val
+      }
+    } catch {
+      // Continue to next promise if this one fails
+      continue
     }
-    resolve(fallback)
-  })
+  }
+  return fallback
 }
 
 export async function allSafe<T>(promises: Promise<T>[], fallback: T): Promise<T[]> {
