@@ -32,21 +32,6 @@ export function raceUntil<T>(promises: Promise<T>[], fallback: T, evalRes: (val:
   })
 }
 
-export async function serialResolve<T>(promises: Array<() => Promise<T>>, fallback: T, evalRes: (val: T) => boolean): Promise<T> {
-  for (const p of promises) {
-    try {
-      const val = await p()
-      if (evalRes(val)) {
-        return val
-      }
-    } catch {
-      // Continue to next promise if this one fails
-      continue
-    }
-  }
-  return fallback
-}
-
 export async function allSafe<T>(promises: Promise<T>[], fallback: T): Promise<T[]> {
   return Promise.all(promises.map(promise => promise.catch(() => fallback)))
 }
@@ -58,25 +43,26 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
   ) {}
 
   async configOfImageHash(args: { imageHash: string }): Promise<commons.config.Config | undefined> {
-    const requestFactory = this.trackers.map((t, i) => async () => ({ res: await t.configOfImageHash(args), i }))
+    const requests = this.trackers.map(async (t, i) => ({ res: await t.configOfImageHash(args), i }))
 
     let result1: { res: commons.config.Config | undefined; i: number } | undefined
 
     if (this.isSerial) {
-      result1 = await serialResolve(requestFactory, undefined, val => {
+      for (const request of requests) {
+        const result = await request
+        if (result.res) {
+          if (universal.genericCoderFor(result.res.version).config.isComplete(result.res)) {
+            result1 = result
+            break
+          }
+        }
+      }
+    } else {
+      // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
+      result1 = await raceUntil(requests, undefined, val => {
         if (val?.res === undefined) return false
         return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
       })
-    } else {
-      // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
-      result1 = await raceUntil(
-        requestFactory.map(p => p()),
-        undefined,
-        val => {
-          if (val?.res === undefined) return false
-          return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
-        }
-      )
     }
 
     if (result1?.res) {
@@ -90,10 +76,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     // but we try to combine all results anyway
     const tmptracker = new LocalConfigTracker(undefined as any) // TODO: Fix this, provider not needed anyway
 
-    const results = await allSafe(
-      requestFactory.map(p => p()),
-      undefined
-    )
+    const results = await allSafe(requests, undefined)
 
     for (const r of results) {
       if (r?.res) await tmptracker.saveWalletConfig({ config: r.res })
@@ -117,16 +100,18 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     wallet: string
   }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
     let imageHash: { imageHash: string; context: commons.context.WalletContext } | undefined
-    const requestFactory = this.trackers.map(t => () => t.imageHashOfCounterfactualWallet(args))
+    const requests = this.trackers.map(t => t.imageHashOfCounterfactualWallet(args))
 
     if (this.isSerial) {
-      imageHash = await serialResolve(requestFactory, undefined, result => Boolean(result))
+      for (const request of requests) {
+        const result = await request
+        if (result) {
+          imageHash = result
+          break
+        }
+      }
     } else {
-      imageHash = await raceUntil(
-        requestFactory.map(p => p()),
-        undefined,
-        result => Boolean(result)
-      )
+      imageHash = await raceUntil(requests, undefined, result => Boolean(result))
     }
 
     if (imageHash) {
