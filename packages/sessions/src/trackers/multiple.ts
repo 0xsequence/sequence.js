@@ -32,10 +32,10 @@ export function raceUntil<T>(promises: Promise<T>[], fallback: T, evalRes: (val:
   })
 }
 
-export async function serialResolve<T>(promises: Promise<T>[], fallback: T, evalRes: (val: T) => boolean): Promise<T> {
+export async function serialResolve<T>(promises: Array<() => Promise<T>>, fallback: T, evalRes: (val: T) => boolean): Promise<T> {
   for (const p of promises) {
     try {
-      const val = await p
+      const val = await p()
       if (evalRes(val)) {
         return val
       }
@@ -63,10 +63,14 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     let result1: { res: commons.config.Config | undefined; i: number } | undefined
 
     if (this.isSerial) {
-      result1 = await serialResolve(requests, undefined, val => {
-        if (val?.res === undefined) return false
-        return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
-      })
+      result1 = await serialResolve(
+        requests.map(p => () => p),
+        undefined,
+        val => {
+          if (val?.res === undefined) return false
+          return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
+        }
+      )
     } else {
       // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
       result1 = await raceUntil(requests, undefined, val => {
@@ -113,7 +117,11 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     const requests = this.trackers.map(t => t.imageHashOfCounterfactualWallet(args))
 
     if (this.isSerial) {
-      imageHash = await serialResolve(requests, undefined, result => Boolean(result))
+      imageHash = await serialResolve(
+        requests.map(p => () => p),
+        undefined,
+        result => Boolean(result)
+      )
     } else {
       imageHash = await raceUntil(requests, undefined, result => Boolean(result))
     }
