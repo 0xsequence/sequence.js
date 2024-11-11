@@ -100,7 +100,6 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     wallet: string
   }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
     let imageHash: { imageHash: string; context: commons.context.WalletContext } | undefined
-    const requests = this.trackers.map(t => t.imageHashOfCounterfactualWallet(args))
 
     if (this.isSerial) {
       for (const tracker of this.trackers) {
@@ -111,6 +110,7 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
         }
       }
     } else {
+      const requests = this.trackers.map(t => t.imageHashOfCounterfactualWallet(args))
       imageHash = await raceUntil(requests, undefined, result => Boolean(result))
     }
 
