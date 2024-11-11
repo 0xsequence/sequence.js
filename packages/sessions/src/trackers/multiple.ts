@@ -58,25 +58,25 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
   ) {}
 
   async configOfImageHash(args: { imageHash: string }): Promise<commons.config.Config | undefined> {
-    const requests = this.trackers.map(async (t, i) => ({ res: await t.configOfImageHash(args), i }))
+    const requestFactory = this.trackers.map((t, i) => async () => ({ res: await t.configOfImageHash(args), i }))
 
     let result1: { res: commons.config.Config | undefined; i: number } | undefined
 
     if (this.isSerial) {
-      result1 = await serialResolve(
-        requests.map(p => () => p),
+      result1 = await serialResolve(requestFactory, undefined, val => {
+        if (val?.res === undefined) return false
+        return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
+      })
+    } else {
+      // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
+      result1 = await raceUntil(
+        requestFactory.map(p => p()),
         undefined,
         val => {
           if (val?.res === undefined) return false
           return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
         }
       )
-    } else {
-      // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
-      result1 = await raceUntil(requests, undefined, val => {
-        if (val?.res === undefined) return false
-        return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
-      })
     }
 
     if (result1?.res) {
@@ -90,7 +90,10 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     // but we try to combine all results anyway
     const tmptracker = new LocalConfigTracker(undefined as any) // TODO: Fix this, provider not needed anyway
 
-    const results = await allSafe(requests, undefined)
+    const results = await allSafe(
+      requestFactory.map(p => p()),
+      undefined
+    )
 
     for (const r of results) {
       if (r?.res) await tmptracker.saveWalletConfig({ config: r.res })
@@ -114,16 +117,16 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     wallet: string
   }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
     let imageHash: { imageHash: string; context: commons.context.WalletContext } | undefined
-    const requests = this.trackers.map(t => t.imageHashOfCounterfactualWallet(args))
+    const requestFactory = this.trackers.map(t => () => t.imageHashOfCounterfactualWallet(args))
 
     if (this.isSerial) {
-      imageHash = await serialResolve(
-        requests.map(p => () => p),
+      imageHash = await serialResolve(requestFactory, undefined, result => Boolean(result))
+    } else {
+      imageHash = await raceUntil(
+        requestFactory.map(p => p()),
         undefined,
         result => Boolean(result)
       )
-    } else {
-      imageHash = await raceUntil(requests, undefined, result => Boolean(result))
     }
 
     if (imageHash) {
