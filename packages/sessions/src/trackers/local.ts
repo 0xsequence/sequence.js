@@ -235,7 +235,12 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const savePayload = this.savePayload({ payload })
     const saveNextConfig = this.saveWalletConfig({ config: args.nextConfig })
 
-    const recovered = await v2.signature.SignatureCoder.recover(decoded, payload, this.provider)
+    const validateBehavior = args.validateBehavior ?? 'throw'
+    const recovered = await v2.signature.SignatureCoder.recover(
+      decoded,
+      payload,
+      validateBehavior === 'ignore' ? undefined : this.provider // Only validate if we are not ignoring
+    )
 
     // Save the recovered configuration and all signature parts
     const signatures = v2.signature.signaturesOf(recovered.config.tree)

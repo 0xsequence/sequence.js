@@ -38,6 +38,7 @@ export type PasskeySignerContext = {
 }
 
 export type PasskeySignMetadata = {
+  chainId?: ethers.BigNumberish
   referenceChainId?: ethers.BigNumberish
   cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
 }
@@ -181,7 +182,7 @@ export class SequencePasskeySigner implements signers.SapientSigner {
   }
 
   async sign(digest: ethers.BytesLike, metadata: PasskeySignMetadata): Promise<ethers.BytesLike> {
-    const referenceChainId = metadata?.referenceChainId ?? this.chainId
+    const referenceChainId = metadata?.referenceChainId ?? metadata?.chainId ?? this.chainId
     const subdigest = subDigestOf(await this.getAddress(), referenceChainId, ethers.hexlify(digest))
 
     const signature = await this.doSign(digest, subdigest)
