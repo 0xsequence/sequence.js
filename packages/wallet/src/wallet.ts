@@ -433,10 +433,11 @@ export class Wallet<
   }
 
   async fillGasLimits(txs: commons.transaction.Transactionish): Promise<commons.transaction.SimulatedTransaction[]> {
-    const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
-    const transactions = commons.transaction.fromTransactionish(this.address, transaction)
     const relayer = this.relayer
     if (!relayer) throw new Error('Wallet fillGasLimits requires a relayer')
+
+    const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
+    const transactions = commons.transaction.fromTransactionish(this.address, transaction)
 
     const simulations = await relayer.simulate(this.address, ...transactions)
     return transactions.map((tx, i) => {

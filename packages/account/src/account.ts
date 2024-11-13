@@ -520,7 +520,7 @@ export class Account {
   async publishWitness(chainId: ethers.BigNumberish = 0, referenceChainId?: ethers.BigNumberish): Promise<void> {
     const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
     // Apply ERC-6492 to undeployed children
-    const signature = await this.signDigest(digest, 0, false, 'ignore', {referenceChainId, cantValidateBehavior: "eip6492"})
+    const signature = await this.signDigest(digest, 0, false, 'ignore', {chainId, referenceChainId, cantValidateBehavior: "eip6492"})
     const decoded = this.coders.signature.decode(signature)
     const recovered = await this.coders.signature.recover(decoded, { digest, chainId, address: this.address })
     const signatures = this.coders.signature.signaturesOf(recovered.config)
@@ -670,7 +670,8 @@ export class Account {
       wallet: this.address,
       nextConfig: config,
       signature,
-      referenceChainId: 1
+      referenceChainId: 1,
+      validateBehavior: 'ignore'
     })
 
     // safety check, tracker should have a reverse lookup for the imageHash
