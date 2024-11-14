@@ -9,7 +9,9 @@ import {
   IntentDataSessionAuthProof,
   IntentDataInitiateAuth,
   IntentDataGetIdToken,
-  IntentName
+  IntentName,
+  IntentDataAdoptChildWallet,
+  IntentDataGetAdopter
 } from '../clients/intent.gen'
 
 interface BaseArgs {
@@ -68,4 +70,16 @@ export type GetIdTokenArgs = BaseArgs & IntentDataGetIdToken
 
 export function getIdToken({ lifespan, ...data }: GetIdTokenArgs): Intent<IntentDataGetIdToken> {
   return makeIntent(IntentName.getIdToken, lifespan, data)
+}
+
+export type AdoptChildWalletArgs = BaseArgs & IntentDataAdoptChildWallet
+
+export function adoptChildWallet({ lifespan, ...data }: AdoptChildWalletArgs): Intent<IntentDataAdoptChildWallet> {
+  return makeIntent(IntentName.adoptChildWallet, lifespan, data)
+}
+
+export type GetAdopterArgs = BaseArgs & IntentDataGetAdopter
+
+export function getAdopter({ lifespan, ...data }: GetAdopterArgs): Intent<IntentDataGetAdopter> {
+  return makeIntent(IntentName.getAdopter, lifespan, data)
 }

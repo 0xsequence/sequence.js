@@ -3,7 +3,9 @@ import {
   IntentDataSendTransaction,
   IntentResponseAccountFederated,
   IntentResponseAccountList,
+  IntentResponseAdopter,
   IntentResponseAuthInitiated,
+  IntentResponseChildWalletAdopted,
   IntentResponseCode,
   IntentResponseGetSession,
   IntentResponseIdToken,
@@ -130,6 +132,8 @@ export type GetSessionResponse = Response<IntentResponseCode.getSessionResponse,
 export type LinkAccountResponse = Response<IntentResponseCode.accountFederated, IntentResponseAccountFederated>
 export type ListAccountsResponse = Response<IntentResponseCode.accountList, IntentResponseAccountList>
 export type IdTokenResponse = Response<IntentResponseCode.idToken, IntentResponseIdToken>
+export type AdopterResponse = Response<IntentResponseCode.adopter, IntentResponseAdopter>
+export type ChildWalletAdoptedResponse = Response<IntentResponseCode.childWalletAdopted, IntentResponseChildWalletAdopted>
 
 export function isInitiateAuthResponse(receipt: any): receipt is InitiateAuthResponse {
   return (
@@ -286,5 +290,23 @@ export function isGetIdTokenResponse(receipt: any): receipt is IdTokenResponse {
     receipt.code === IntentResponseCode.idToken &&
     typeof receipt.data === 'object' &&
     typeof receipt.data.idToken === 'string'
+  )
+}
+
+export function isGetAdopterResponse(receipt: any): receipt is AdopterResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.adopter &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.adopterAddress === 'string'
+  )
+}
+
+export function isChildWalletAdoptedResponse(receipt: any): receipt is ChildWalletAdoptedResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.childWalletAdopted &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.adopterAddress === 'string'
   )
 }

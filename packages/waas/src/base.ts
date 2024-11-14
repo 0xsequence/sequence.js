@@ -1,9 +1,12 @@
 import {
+  adoptChildWallet,
+  AdoptChildWalletArgs,
   changeIntentTime,
   closeSession,
   combineTransactionIntents,
   feeOptions,
   finishValidateSession,
+  getAdopter,
   getIdToken,
   getSession,
   getTransactionReceipt,
@@ -585,6 +588,23 @@ export class SequenceWaaSBase {
       lifespan: DEFAULT_LIFESPAN,
       sessionId,
       nonce
+    })
+    return this.signIntent(intent)
+  }
+
+  async adoptChildWallet(args: WithSimpleNetwork<AdoptChildWalletArgs>) {
+    const intent = adoptChildWallet({
+      wallet: await this.getWalletAddress(),
+      ...args,
+      lifespan: DEFAULT_LIFESPAN,
+    })
+    return this.signIntent(intent)
+  }
+
+  async getAdopter() {
+    const intent = getAdopter({
+      wallet: await this.getWalletAddress(),
+      lifespan: DEFAULT_LIFESPAN,
     })
     return this.signIntent(intent)
   }
