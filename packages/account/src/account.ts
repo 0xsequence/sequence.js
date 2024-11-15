@@ -701,7 +701,7 @@ export class Account {
     // Add wallet deployment if needed
     if (!status.onChain.deployed) {
       let gasLimit: bigint | undefined
-      switch (chainId) {
+      switch (BigInt(chainId)) {
         case BigInt(ChainId.SKALE_NEBULA):
           gasLimit = 10000000n
           break
