@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.0.26
+
+### Patch Changes
+
+- account: fix chain id comparison
+
 ## 2.0.25
 
 ### Patch Changes

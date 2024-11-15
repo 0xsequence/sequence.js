@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.0.26
+
+### Patch Changes
+
+- account: fix chain id comparison
+- Updated dependencies
+  - @0xsequence/abi@2.0.26
+  - @0xsequence/core@2.0.26
+  - @0xsequence/wallet@2.0.26
+
 ## 2.0.25
 
 ### Patch Changes

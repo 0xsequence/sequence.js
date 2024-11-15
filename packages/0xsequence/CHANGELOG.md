@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 2.0.26
+
+### Patch Changes
+
+- account: fix chain id comparison
+- Updated dependencies
+  - @0xsequence/abi@2.0.26
+  - @0xsequence/account@2.0.26
+  - @0xsequence/api@2.0.26
+  - @0xsequence/auth@2.0.26
+  - @0xsequence/core@2.0.26
+  - @0xsequence/guard@2.0.26
+  - @0xsequence/indexer@2.0.26
+  - @0xsequence/metadata@2.0.26
+  - @0xsequence/migration@2.0.26
+  - @0xsequence/network@2.0.26
+  - @0xsequence/provider@2.0.26
+  - @0xsequence/relayer@2.0.26
+  - @0xsequence/sessions@2.0.26
+  - @0xsequence/signhub@2.0.26
+  - @0xsequence/utils@2.0.26
+  - @0xsequence/wallet@2.0.26
+
 ## 2.0.25
 
 ### Patch Changes
