@@ -43,6 +43,10 @@ export type PasskeySignMetadata = {
   cantValidateBehavior?: 'ignore' | 'eip6492' | 'throw'
 }
 
+function isPasskeySignMetadata(obj: any): obj is PasskeySignMetadata {
+  return typeof obj === 'object' && obj !== null
+}
+
 function bytesToBase64URL(bytes: Uint8Array): string {
   const base64 = btoa(String.fromCharCode(...bytes))
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
@@ -181,7 +185,11 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     return Promise.resolve(bundle)
   }
 
-  async sign(digest: ethers.BytesLike, metadata: PasskeySignMetadata): Promise<ethers.BytesLike> {
+  async sign(digest: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike> {
+    if (!isPasskeySignMetadata(metadata)) {
+      throw new Error('expected sequence signature request metadata')
+    }
+
     const referenceChainId = metadata?.referenceChainId ?? metadata?.chainId ?? this.chainId
     const subdigest = subDigestOf(await this.getAddress(), referenceChainId, ethers.hexlify(digest))
 
@@ -233,21 +241,33 @@ export class SequencePasskeySigner implements signers.SapientSigner {
       ]
     )
 
-    if (!!metadata && metadata.cantValidateBehavior !== 'ignore') {
-      let isDeployed = false
-      try {
-        isDeployed = await this.isDeployed()
-      } catch (e) {
-        // Ignore. Handled below
-      }
-      if (!isDeployed && metadata.cantValidateBehavior === 'eip6492') {
-        return this.buildEIP6492Signature(signatureBytes)
-      } else if (!isDeployed && metadata.cantValidateBehavior === 'throw') {
-        throw new Error('Cannot sign with a non-deployed passkey signer')
-      }
+    const cantValidateBehavior = metadata?.cantValidateBehavior ?? 'ignore'
+    let isDeployed = false
+    try {
+      isDeployed = await this.isDeployed()
+    } catch (e) {
+      // Ignore. Handled below
+    }
+    if (!isDeployed && cantValidateBehavior === 'throw') {
+      throw new Error('Cannot sign with a non-deployed passkey signer')
+    }
+    if (!isDeployed && cantValidateBehavior === 'eip6492') {
+      return this.buildEIP6492Signature(signatureBytes)
     }
 
     return signatureBytes
+  }
+
+  async buildValidationSignature(signatureBytes: string): Promise<string | undefined> {
+    console.log('passkey buildValidationSignature', signatureBytes)
+    try {
+      if (await this.isDeployed()) {
+        return undefined
+      }
+    } catch (e) {
+      // Ignore. Assume not deployed
+    }
+    return this.buildEIP6492Signature(signatureBytes)
   }
 
   private async buildEIP6492Signature(signature: string): Promise<string> {

@@ -54,7 +54,7 @@ describe('Orchestrator', () => {
 
         expect(numErrors).to.be.equal(0, 'No errors should be present')
         expect(numSignatures).to.be.equal(Math.max(callbackCallsA, 3), 'Should have max 3 signatures')
-        expect(numPending).to.be.equal(Math.min(signers.length - callbackCallsA, 0), 'Should have 0 pending')
+        expect(numPending).to.be.equal(0, 'Should have 0 pending')
       })
 
       let callbackCallsB = 0
@@ -71,6 +71,61 @@ describe('Orchestrator', () => {
 
       // only the 3 updates
       expect(callbackCallsB).to.be.equal(3)
+    })
+
+    it('Should call callback with status and validation signature', async () => {
+      class SapientValidationSignerMock implements SapientSigner {
+        private readonly wallet: ethers.Signer
+        constructor() {
+          this.wallet = ethers.Wallet.createRandom()
+        }
+        async getAddress(): Promise<string> {
+          return this.wallet.getAddress()
+        }
+        buildDeployTransaction(metadata: object): Promise<commons.transaction.TransactionBundle | undefined> {
+          throw new Error('Method not implemented.')
+        }
+        predecorateSignedTransactions(metadata: object): Promise<commons.transaction.SignedTransactionBundle[]> {
+          throw new Error('Method not implemented.')
+        }
+        decorateTransactions(bundle: commons.transaction.IntendedTransactionBundle, metadata: object): Promise<commons.transaction.IntendedTransactionBundle> {
+          throw new Error('Method not implemented.')
+        }
+        sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike> {
+          return this.wallet.signMessage(message)
+        }
+        notifyStatusChange(id: string, status: Status, metadata: object): void {
+          throw new Error('Method not implemented.')
+        }
+        suffix(): ethers.BytesLike {
+          return new Uint8Array([2])
+        }
+        async buildValidationSignature(signature: string) {
+          return signature + 'validation'
+        }
+      }
+      const signers = [new SapientValidationSignerMock()]
+      const signerAddress = await signers[0].getAddress()
+
+      const orchestrator = new Orchestrator(signers)
+
+      let signingSuccess = false
+      orchestrator.subscribe((status, metadata) => {
+        expect(Object.keys(status.signers)).to.have.lengthOf(signers.length, 'Should have all signers')
+        expect(status.signers).to.have.property(signerAddress)
+        const signerStatus = status.signers[signerAddress]
+
+        if (signerStatus.state === SignerState.SIGNED) {
+          signingSuccess = true
+          expect(signerStatus.validationSignature).to.be.equal(signerStatus.signature + 'validation')
+        }
+      })
+
+      await orchestrator.signMessage({
+        message: '0x1234',
+      })
+
+      expect(signingSuccess).to.be.true
     })
 
     it('getSigners should return all signers', async () => {

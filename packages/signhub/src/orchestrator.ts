@@ -19,7 +19,7 @@ export enum SignerState {
 export type SignerStatus =
   | { state: SignerState.INITIAL }
   | { state: SignerState.SIGNING; request: Promise<ethers.BytesLike> }
-  | { state: SignerState.SIGNED; signature: ethers.BytesLike; suffix: ethers.BytesLike }
+  | { state: SignerState.SIGNED; signature: ethers.BytesLike; suffix: ethers.BytesLike; validationSignature?: ethers.BytesLike }
   | { state: SignerState.ERROR; error: any }
 
 export function isSignerStatusPending(
@@ -183,9 +183,23 @@ export class Orchestrator {
             state: SignerState.SIGNING,
             request: s
               .sign(message, metadata ?? {})
-              .then(signature => {
+              .then(async signature => {
                 const suffix = s.suffix()
-                status.signers[saddr] = { state: SignerState.SIGNED, signature, suffix }
+                let validationSignature
+                if (s.buildValidationSignature) {
+                  try {
+                    validationSignature = await s.buildValidationSignature(signature)
+                  } catch (e) {
+                    // Log and ignore
+                    console.warn(`signer ${saddr} failed to build validation signature: ${e}`)
+                  }
+                }
+                status.signers[saddr] = {
+                  state: SignerState.SIGNED,
+                  suffix,
+                  signature,
+                  ...(validationSignature && { validationSignature })
+                }
                 onStatusUpdate()
                 return signature
               })

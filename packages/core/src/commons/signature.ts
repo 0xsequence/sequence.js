@@ -4,6 +4,7 @@ import * as config from './config'
 export type SignaturePart = {
   signature: string
   isDynamic: boolean
+  validationSignature?: string
 }
 
 export type Signature<T extends config.Config> = {
