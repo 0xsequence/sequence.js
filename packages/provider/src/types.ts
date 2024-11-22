@@ -62,6 +62,7 @@ export interface ProviderMessage<T> {
   chainId?: number // chain id which the message is intended
   origin?: string // origin of the message
   clientVersion: string // client version of the message
+  projectAccessKey?: string // project access key
 }
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>

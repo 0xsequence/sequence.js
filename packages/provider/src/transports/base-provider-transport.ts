@@ -46,10 +46,14 @@ export abstract class BaseProviderTransport implements ProviderTransport {
   protected _init: InitState
   protected _registered: boolean
 
-  constructor() {
+  readonly projectAccessKey?: string
+
+  constructor(projectAccessKey?: string) {
     this.state = OpenState.CLOSED
     this._registered = false
     this._init = InitState.NIL
+
+    this.projectAccessKey = projectAccessKey
   }
 
   get registered(): boolean {
@@ -113,7 +117,8 @@ export abstract class BaseProviderTransport implements ProviderTransport {
       type: EventType.MESSAGE,
       data: request,
       chainId: request.chainId,
-      clientVersion: VERSION
+      clientVersion: VERSION,
+      projectAccessKey: this.projectAccessKey
     })
 
     return response.data

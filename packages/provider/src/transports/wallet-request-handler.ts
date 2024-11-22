@@ -228,7 +228,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
         params: message.data.params,
         chainId: message.chainId,
         origin: message.origin,
-        projectAccessKey: undefined // message.projectAccessKey
+        projectAccessKey: message.projectAccessKey
       })
 
       return {
