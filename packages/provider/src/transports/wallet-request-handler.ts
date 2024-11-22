@@ -226,7 +226,9 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
       const result = await this.request({
         method: message.data.method,
         params: message.data.params,
-        chainId: message.chainId
+        chainId: message.chainId,
+        origin: message.origin,
+        projectAccessKey: undefined // message.projectAccessKey
       })
 
       return {
@@ -241,7 +243,13 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
     }
   }
 
-  async request(request: { method: string; params?: any[]; chainId?: number }): Promise<any> {
+  async request(request: {
+    method: string
+    params?: any[]
+    chainId?: number
+    origin?: string
+    projectAccessKey?: string
+  }): Promise<any> {
     await this.getAccount()
 
     try {
@@ -344,7 +352,8 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
                 message: ethers.getBytes(prefixedMessage),
                 eip6492: sequenceVerified
               },
-              this.connectOptions
+              request.origin,
+              request.projectAccessKey
             )
           }
 
@@ -397,7 +406,8 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
                 typedData: typedData,
                 eip6492: sequenceVerified
               },
-              this.connectOptions
+              request.origin,
+              request.projectAccessKey
             )
           }
 
@@ -431,7 +441,12 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
             txnHash = txnResponse?.hash ?? ''
           } else {
             // prompt user to provide the response
-            txnHash = await this.prompter.promptSendTransaction(transactionParams, request.chainId, this.connectOptions)
+            txnHash = await this.prompter.promptSendTransaction(
+              transactionParams,
+              request.chainId,
+              request.origin,
+              request.projectAccessKey
+            )
           }
 
           if (txnHash) {
@@ -461,7 +476,12 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
             // we will want to resolveProperties the big number values to hex strings
             return await account.signTransactions(transaction, request.chainId ?? this.defaultChainId())
           } else {
-            return await this.prompter.promptSignTransaction(transaction, request.chainId, this.connectOptions)
+            return await this.prompter.promptSignTransaction(
+              transaction,
+              request.chainId,
+              request.origin,
+              request.projectAccessKey
+            )
           }
         }
 
@@ -800,7 +820,8 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
     prompter: WalletUserPrompter,
     account: Account,
     sequenceVerified: boolean,
-    chainId?: number
+    chainId?: number,
+    origin?: string
   ): Promise<boolean> {
     // check if wallet is deployed and up to date, if not, prompt user to deploy
     // if no chainId is provided, we'll assume the wallet is auth chain wallet and is up to date
@@ -817,7 +838,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
       return true
     }
 
-    const promptResult = await prompter.promptConfirmWalletDeploy(chainId, this.connectOptions)
+    const promptResult = await prompter.promptConfirmWalletDeploy(chainId, origin)
 
     // if client returned true, check again to make sure wallet is deployed and up to date
     if (promptResult) {
@@ -837,15 +858,22 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
 
 export interface WalletUserPrompter {
   getDefaultChainId(): number
-
-  promptConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
-  promptSignInConnect(options?: ConnectOptions): Promise<PromptConnectDetails>
-
-  promptSignMessage(message: MessageToSign, options?: ConnectOptions): Promise<string>
-  promptSignTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
-  promptSendTransaction(txn: commons.transaction.Transactionish, chainId?: number, options?: ConnectOptions): Promise<string>
-  promptConfirmWalletDeploy(chainId: number, options?: ConnectOptions): Promise<boolean>
-
+  promptConnect(connectOptions?: ConnectOptions): Promise<PromptConnectDetails>
+  promptSignInConnect(connectOptions?: ConnectOptions): Promise<PromptConnectDetails>
+  promptSignMessage(message: MessageToSign, origin?: string, projectAccessKey?: string): Promise<string>
+  promptSignTransaction(
+    txn: commons.transaction.Transactionish,
+    chainId?: number,
+    origin?: string,
+    projectAccessKey?: string
+  ): Promise<string>
+  promptSendTransaction(
+    txn: commons.transaction.Transactionish,
+    chainId?: number,
+    origin?: string,
+    projectAccessKey?: string
+  ): Promise<string>
+  promptConfirmWalletDeploy(chainId: number, origin?: string): Promise<boolean>
   promptChangeNetwork(chainId: number): Promise<boolean>
 }
 
