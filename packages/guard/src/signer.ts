@@ -61,7 +61,13 @@ export class GuardSigner implements signers.SapientSigner {
     // Building auxData, notice: this uses the old v1 format
     // TODO: We should update the guard API so we can pass the metadata directly
     const coder = universal.genericCoderFor(metadata.config.version)
-    const { encoded } = coder.signature.encodeSigners(metadata.config, metadata.parts ?? new Map(), [], metadata.chainId)
+    const validationsParts = new Map(
+      Array.from(metadata.parts || []).map(([signer, part]) => [
+        signer,
+        part.validationSignature ? { ...part, signature: part.validationSignature } : part
+      ])
+    )
+    const { encoded } = coder.signature.encodeSigners(metadata.config, validationsParts, [], metadata.chainId)
 
     return (
       await this.guard.signWith({

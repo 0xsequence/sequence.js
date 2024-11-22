@@ -40,8 +40,13 @@ const statusToSignatureParts = (status: Status) => {
     if (value.state === SignerState.SIGNED) {
       const suffix = ethers.getBytes(value.suffix)
       const suffixed = ethers.solidityPacked(['bytes', 'bytes'], [value.signature, suffix])
+      const validationSignature = value.validationSignature ? ethers.hexlify(value.validationSignature) : undefined
 
-      parts.set(signer, { signature: suffixed, isDynamic: suffix.length !== 1 || suffix[0] !== 2 })
+      parts.set(signer, {
+        signature: suffixed,
+        isDynamic: suffix.length !== 1 || suffix[0] !== 2,
+        validationSignature
+      })
     }
   }
 

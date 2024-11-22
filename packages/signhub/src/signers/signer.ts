@@ -26,6 +26,11 @@ export interface SapientSigner {
   sign(message: ethers.BytesLike, metadata: object): Promise<ethers.BytesLike>
 
   /**
+   * Build a validation signature for an undeployed contract signer.
+   */
+  buildValidationSignature?(signatureBytes: ethers.BytesLike): Promise<ethers.BytesLike | undefined>;
+
+  /**
    * Notify the signer of a status change.
    */
   notifyStatusChange(id: string, status: Status, metadata: object): void
