@@ -880,10 +880,11 @@ export class Account {
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
     pstatus?: AccountStatus,
-    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
+    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
+    projectAccessKey?: string
   ): Promise<ethers.TransactionResponse> {
     if (!Array.isArray(signedBundle)) {
-      return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback)
+      return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback, projectAccessKey)
     }
     const status = pstatus || (await this.status(chainId))
     this.mustBeFullyMigrated(status)
@@ -891,7 +892,7 @@ export class Account {
     const decoratedBundle = await this.decorateTransactions(signedBundle, status, chainId)
     callback?.(decoratedBundle)
 
-    return this.relayer(chainId).relay(decoratedBundle, quote)
+    return this.relayer(chainId).relay(decoratedBundle, quote, undefined, projectAccessKey)
   }
 
   async fillGasLimits(
@@ -910,6 +911,7 @@ export class Account {
     status?: AccountStatus,
     options?: {
       simulate?: boolean
+      projectAccessKey?: string
     }
   ): Promise<{
     options: FeeOption[]
@@ -952,12 +954,14 @@ export class Account {
     chainId: ethers.BigNumberish
     stubSignatureOverrides: Map<string, string>
     simulateForFeeOptions?: boolean
+    projectAccessKey?: string
   }): Promise<PreparedTransactions> {
     const status = await this.status(args.chainId)
 
     const transactions = await this.fillGasLimits(args.txs, args.chainId, status)
     const gasRefundQuote = await this.gasRefundQuotes(transactions, args.chainId, args.stubSignatureOverrides, status, {
-      simulate: args.simulateForFeeOptions
+      simulate: args.simulateForFeeOptions,
+      projectAccessKey: args.projectAccessKey
     })
     const flatDecorated = commons.transaction.unwind(this.address, gasRefundQuote.decorated.transactions)
 
@@ -978,6 +982,7 @@ export class Account {
     options?: {
       nonceSpace?: ethers.BigNumberish
       serial?: boolean
+      projectAccessKey?: string
     }
   ): Promise<ethers.TransactionResponse | undefined> {
     const status = await this.status(chainId)
@@ -994,7 +999,7 @@ export class Account {
     }
     bundles.push(...childBundles.filter(b => b.transactions.length > 0))
 
-    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback)
+    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback, options?.projectAccessKey)
   }
 
   async signTypedData(

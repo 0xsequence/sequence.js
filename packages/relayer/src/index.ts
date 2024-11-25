@@ -40,7 +40,8 @@ export interface Relayer {
   relay(
     signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
-    waitForReceipt?: boolean
+    waitForReceipt?: boolean,
+    projectAccessKey?: string
   ): Promise<commons.transaction.TransactionResponse>
 
   // wait for transaction confirmation

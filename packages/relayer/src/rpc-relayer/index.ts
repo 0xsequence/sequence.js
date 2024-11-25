@@ -61,7 +61,7 @@ export class RpcRelayer implements Relayer {
     }
 
     // before the request is made
-    init!.headers = { ...init!.headers, ...headers }
+    init!.headers = { ...headers, ...init!.headers }
 
     return fetch(input, init)
   }
@@ -160,14 +160,18 @@ export class RpcRelayer implements Relayer {
     data: ethers.BytesLike,
     options?: {
       simulate?: boolean
+      projectAccessKey?: string
     }
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
-    const { options: feeOptions, quote } = await this.service.feeOptions({
-      wallet: entrypoint,
-      to: entrypoint,
-      data: ethers.hexlify(data),
-      simulate: options?.simulate
-    })
+    const { options: feeOptions, quote } = await this.service.feeOptions(
+      {
+        wallet: entrypoint,
+        to: entrypoint,
+        data: ethers.hexlify(data),
+        simulate: options?.simulate
+      },
+      { ...(options?.projectAccessKey ? { 'X-Access-Key': options.projectAccessKey } : undefined) }
+    )
 
     return { options: feeOptions, quote: { _tag: 'FeeQuote', _quote: quote } }
   }
@@ -190,7 +194,8 @@ export class RpcRelayer implements Relayer {
   async relay(
     signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
-    waitForReceipt: boolean = true
+    waitForReceipt: boolean = true,
+    projectAccessKey?: string
   ): Promise<commons.transaction.TransactionResponse<RelayerTxReceipt>> {
     logger.info(
       `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs, bigintReplacer)} with quote ${JSON.stringify(quote, bigintReplacer)}`
@@ -211,14 +216,17 @@ export class RpcRelayer implements Relayer {
     }
 
     const data = commons.transaction.encodeBundleExecData(signedTxs)
-    const metaTxn = await this.service.sendMetaTxn({
-      call: {
-        walletAddress: signedTxs.intent.wallet,
-        contract: signedTxs.entrypoint,
-        input: data
+    const metaTxn = await this.service.sendMetaTxn(
+      {
+        call: {
+          walletAddress: signedTxs.intent.wallet,
+          contract: signedTxs.entrypoint,
+          input: data
+        },
+        quote: typecheckedQuote
       },
-      quote: typecheckedQuote
-    })
+      { ...(projectAccessKey ? { 'X-Access-Key': projectAccessKey } : undefined) }
+    )
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn, bigintReplacer)}`)
 
