@@ -1,5 +1,29 @@
 # @0xsequence/auth
 
+## 2.1.0
+
+### Minor Changes
+
+- account: forward project access key when estimating fees and sending transactions
+
+### Patch Changes
+
+- sessions: save signatures with reference chain id
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.1.0
+  - @0xsequence/account@2.1.0
+  - @0xsequence/api@2.1.0
+  - @0xsequence/core@2.1.0
+  - @0xsequence/indexer@2.1.0
+  - @0xsequence/metadata@2.1.0
+  - @0xsequence/migration@2.1.0
+  - @0xsequence/network@2.1.0
+  - @0xsequence/sessions@2.1.0
+  - @0xsequence/signhub@2.1.0
+  - @0xsequence/utils@2.1.0
+  - @0xsequence/wallet@2.1.0
+
 ## 2.0.26
 
 ### Patch Changes

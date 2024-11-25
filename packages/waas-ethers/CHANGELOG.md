@@ -1,5 +1,18 @@
 # @0xsequence/waas-ethers
 
+## 2.1.0
+
+### Minor Changes
+
+- account: forward project access key when estimating fees and sending transactions
+
+### Patch Changes
+
+- sessions: save signatures with reference chain id
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@2.1.0
+
 ## 2.0.26
 
 ### Patch Changes
