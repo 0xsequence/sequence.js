@@ -576,11 +576,11 @@ describe('Wallet integration', function () {
 
       server = mockServer.getLocal()
       server.start(8099)
-      server.forPost('/rpc/API/GetAuthToken').thenCallback(async request => {
+      const getAuthToken = async (request: mockServer.CompletedRequest, provider: ethers.Provider) => {
         if (delayMs !== 0) await delay(delayMs)
 
         const validator = ValidateSequenceWalletProof(
-          () => new commons.reader.OnChainReader(networks[0].provider!),
+          () => new commons.reader.OnChainReader(provider),
           tracker,
           contexts[2]
         )
@@ -621,7 +621,24 @@ describe('Wallet integration', function () {
           return {
             statusCode: 401
           }
+          }
+      }
+      server.forPost('/rpc/API/GetAuthToken').thenCallback(async request => {
+        return getAuthToken(request, networks[0].provider!)
+      })
+      server.forPost('/rpc/API/GetAuthToken2').thenCallback(async request => {
+        const requestBody = await request.body.getJson()
+        if (!requestBody) {
+          return { statusCode: 400 }
         }
+
+        const provider = networks.find(n => n.chainId === Number(requestBody['chainID']))
+        if (!provider || !provider.provider) {
+          console.log('No provider found for chainID', requestBody['chainID'])
+          return { statusCode: 400 }
+        }
+
+        return getAuthToken(request, provider.provider!)
       })
     })
 

@@ -303,7 +303,7 @@ export class Session {
 
     if (services) {
       servicesObj = new Services(account, services)
-      servicesObj.auth(1, referenceChainId) // fire and forget
+      servicesObj.auth(undefined, referenceChainId) // fire and forget
 
       servicesObj.onAuth(result => {
         if (result.status === 'fulfilled') {
