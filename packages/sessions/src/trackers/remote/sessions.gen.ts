@@ -6,18 +6,17 @@
 // webrpc-gen -schema=sessions.ridl -target=typescript -client -out=./clients/sessions.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.0.1"
+export const WebRPCSchemaVersion = 'v0.0.1'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "67f782e8acfe452f905078a7423ed5d27c6639a8"
+export const WebRPCSchemaHash = '67f782e8acfe452f905078a7423ed5d27c6639a8'
 
 //
 // Types
 //
-
 
 export enum SignatureType {
   EIP712 = 'EIP712',
@@ -51,10 +50,10 @@ export interface ArweaveStatus {
 }
 
 export interface Info {
-  wallets: {[key: string]: number}
-  configs: {[key: string]: number}
+  wallets: { [key: string]: number }
+  configs: { [key: string]: number }
   configTrees: number
-  migrations: {[key: string]: number}
+  migrations: { [key: string]: number }
   signatures: number
   digests: number
   recorder: RecorderInfo
@@ -66,7 +65,7 @@ export interface RecorderInfo {
   buffer: number
   lastFlush?: string
   lastFlushSeconds?: number
-  endpoints: {[key: string]: number}
+  endpoints: { [key: string]: number }
 }
 
 export interface ArweaveInfo {
@@ -164,23 +163,29 @@ export interface Sessions {
   saveConfig(args: SaveConfigArgs, headers?: object, signal?: AbortSignal): Promise<SaveConfigReturn>
   saveWallet(args: SaveWalletArgs, headers?: object, signal?: AbortSignal): Promise<SaveWalletReturn>
   saveSignature(args: SaveSignatureArgs, headers?: object, signal?: AbortSignal): Promise<SaveSignatureReturn>
-  saveSignerSignatures(args: SaveSignerSignaturesArgs, headers?: object, signal?: AbortSignal): Promise<SaveSignerSignaturesReturn>
-  saveSignerSignatures2(args: SaveSignerSignatures2Args, headers?: object, signal?: AbortSignal): Promise<SaveSignerSignatures2Return>
+  saveSignerSignatures(
+    args: SaveSignerSignaturesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SaveSignerSignaturesReturn>
+  saveSignerSignatures2(
+    args: SaveSignerSignatures2Args,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SaveSignerSignatures2Return>
   saveMigration(args: SaveMigrationArgs, headers?: object, signal?: AbortSignal): Promise<SaveMigrationReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
-export interface PingReturn {  
-}
+export interface PingReturn {}
 export interface ConfigArgs {
   imageHash: string
 }
 
 export interface ConfigReturn {
   version: number
-  config: any  
+  config: any
 }
 export interface WalletsArgs {
   signer: string
@@ -189,8 +194,8 @@ export interface WalletsArgs {
 }
 
 export interface WalletsReturn {
-  wallets: {[key: string]: Signature}
-  cursor: number  
+  wallets: { [key: string]: Signature }
+  cursor: number
 }
 export interface DeployHashArgs {
   wallet: string
@@ -198,7 +203,7 @@ export interface DeployHashArgs {
 
 export interface DeployHashReturn {
   deployHash: string
-  context: Context  
+  context: Context
 }
 export interface ConfigUpdatesArgs {
   wallet: string
@@ -207,7 +212,7 @@ export interface ConfigUpdatesArgs {
 }
 
 export interface ConfigUpdatesReturn {
-  updates: Array<ConfigUpdate>  
+  updates: Array<ConfigUpdate>
 }
 export interface MigrationsArgs {
   wallet: string
@@ -217,22 +222,20 @@ export interface MigrationsArgs {
 }
 
 export interface MigrationsReturn {
-  migrations: {[key: string]: {[key: number]: {[key: string]: TransactionBundle}}}  
+  migrations: { [key: string]: { [key: number]: { [key: string]: TransactionBundle } } }
 }
 export interface SaveConfigArgs {
   version: number
   config: any
 }
 
-export interface SaveConfigReturn {  
-}
+export interface SaveConfigReturn {}
 export interface SaveWalletArgs {
   version: number
   deployConfig: any
 }
 
-export interface SaveWalletReturn {  
-}
+export interface SaveWalletReturn {}
 export interface SaveSignatureArgs {
   wallet: string
   digest: string
@@ -242,8 +245,7 @@ export interface SaveSignatureArgs {
   referenceChainID?: string
 }
 
-export interface SaveSignatureReturn {  
-}
+export interface SaveSignatureReturn {}
 export interface SaveSignerSignaturesArgs {
   wallet: string
   digest: string
@@ -252,8 +254,7 @@ export interface SaveSignerSignaturesArgs {
   toConfig?: any
 }
 
-export interface SaveSignerSignaturesReturn {  
-}
+export interface SaveSignerSignaturesReturn {}
 export interface SaveSignerSignatures2Args {
   wallet: string
   digest: string
@@ -262,8 +263,7 @@ export interface SaveSignerSignatures2Args {
   toConfig?: any
 }
 
-export interface SaveSignerSignatures2Return {  
-}
+export interface SaveSignerSignatures2Return {}
 export interface SaveMigrationArgs {
   wallet: string
   fromVersion: number
@@ -276,11 +276,8 @@ export interface SaveMigrationArgs {
   chainID?: string
 }
 
-export interface SaveMigrationReturn {  
-}
+export interface SaveMigrationReturn {}
 
-
-  
 //
 // Client
 //
@@ -297,168 +294,186 @@ export class Sessions implements Sessions {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   config = (args: ConfigArgs, headers?: object, signal?: AbortSignal): Promise<ConfigReturn> => {
-    return this.fetch(
-      this.url('Config'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          version: <number>(_data.version),
-          config: <any>(_data.config),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Config'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            version: <number>_data.version,
+            config: <any>_data.config
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   wallets = (args: WalletsArgs, headers?: object, signal?: AbortSignal): Promise<WalletsReturn> => {
-    return this.fetch(
-      this.url('Wallets'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          wallets: <{[key: string]: Signature}>(_data.wallets),
-          cursor: <number>(_data.cursor),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Wallets'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            wallets: <{ [key: string]: Signature }>_data.wallets,
+            cursor: <number>_data.cursor
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   deployHash = (args: DeployHashArgs, headers?: object, signal?: AbortSignal): Promise<DeployHashReturn> => {
-    return this.fetch(
-      this.url('DeployHash'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          deployHash: <string>(_data.deployHash),
-          context: <Context>(_data.context),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('DeployHash'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            deployHash: <string>_data.deployHash,
+            context: <Context>_data.context
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   configUpdates = (args: ConfigUpdatesArgs, headers?: object, signal?: AbortSignal): Promise<ConfigUpdatesReturn> => {
-    return this.fetch(
-      this.url('ConfigUpdates'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          updates: <Array<ConfigUpdate>>(_data.updates),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ConfigUpdates'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            updates: <Array<ConfigUpdate>>_data.updates
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   migrations = (args: MigrationsArgs, headers?: object, signal?: AbortSignal): Promise<MigrationsReturn> => {
-    return this.fetch(
-      this.url('Migrations'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          migrations: <{[key: string]: {[key: number]: {[key: string]: TransactionBundle}}}>(_data.migrations),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Migrations'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            migrations: <{ [key: string]: { [key: number]: { [key: string]: TransactionBundle } } }>_data.migrations
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   saveConfig = (args: SaveConfigArgs, headers?: object, signal?: AbortSignal): Promise<SaveConfigReturn> => {
-    return this.fetch(
-      this.url('SaveConfig'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SaveConfig'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   saveWallet = (args: SaveWalletArgs, headers?: object, signal?: AbortSignal): Promise<SaveWalletReturn> => {
-    return this.fetch(
-      this.url('SaveWallet'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SaveWallet'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   saveSignature = (args: SaveSignatureArgs, headers?: object, signal?: AbortSignal): Promise<SaveSignatureReturn> => {
-    return this.fetch(
-      this.url('SaveSignature'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SaveSignature'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  saveSignerSignatures = (args: SaveSignerSignaturesArgs, headers?: object, signal?: AbortSignal): Promise<SaveSignerSignaturesReturn> => {
-    return this.fetch(
-      this.url('SaveSignerSignatures'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  saveSignerSignatures = (
+    args: SaveSignerSignaturesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SaveSignerSignaturesReturn> => {
+    return this.fetch(this.url('SaveSignerSignatures'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  saveSignerSignatures2 = (args: SaveSignerSignatures2Args, headers?: object, signal?: AbortSignal): Promise<SaveSignerSignatures2Return> => {
-    return this.fetch(
-      this.url('SaveSignerSignatures2'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  saveSignerSignatures2 = (
+    args: SaveSignerSignatures2Args,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SaveSignerSignatures2Return> => {
+    return this.fetch(this.url('SaveSignerSignatures2'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   saveMigration = (args: SaveMigrationArgs, headers?: object, signal?: AbortSignal): Promise<SaveMigrationReturn> => {
-    return this.fetch(
-      this.url('SaveMigration'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SaveMigration'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
@@ -472,18 +487,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -665,7 +680,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
   }
 }
 
-
 // Schema errors
 
 export class InvalidArgumentError extends WebrpcError {
@@ -682,18 +696,11 @@ export class InvalidArgumentError extends WebrpcError {
 }
 
 export class NotFoundError extends WebrpcError {
-  constructor(
-    name: string = 'NotFound',
-    code: number = 2,
-    message: string = 'not found',
-    status: number = 0,
-    cause?: string
-  ) {
+  constructor(name: string = 'NotFound', code: number = 2, message: string = 'not found', status: number = 0, cause?: string) {
     super(name, code, message, status, cause)
     Object.setPrototypeOf(this, NotFoundError.prototype)
   }
 }
-
 
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
@@ -708,7 +715,7 @@ export enum errors {
   WebrpcStreamLost = 'WebrpcStreamLost',
   WebrpcStreamFinished = 'WebrpcStreamFinished',
   InvalidArgument = 'InvalidArgument',
-  NotFound = 'NotFound',
+  NotFound = 'NotFound'
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -724,8 +731,7 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [-9]: WebrpcStreamLostError,
   [-10]: WebrpcStreamFinishedError,
   [1]: InvalidArgumentError,
-  [2]: NotFoundError,
+  [2]: NotFoundError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-
