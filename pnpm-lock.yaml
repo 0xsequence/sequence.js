@@ -42,6 +42,9 @@ importers:
       '@0xsequence/network':
         specifier: workspace:*
         version: link:packages/network
+      '@0xsequence/passkeys':
+        specifier: workspace:*
+        version: link:packages/passkeys
       '@0xsequence/provider':
         specifier: workspace:*
         version: link:packages/provider

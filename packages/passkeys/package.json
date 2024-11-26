@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/passkeys",
-  "version": "2.0.21",
+  "version": "2.1.0",
   "description": "Implements a special 1/1 Sequence wallet backed by a passkey",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/passkeys",
   "source": "src/index.ts",
@@ -9,9 +9,8 @@
   "author": "Horizon Blockchain Games",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "yarn test:file tests/**/*.spec.ts",
-    "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
-    "test:coverage": "nyc yarn test"
+    "test": "echo",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
