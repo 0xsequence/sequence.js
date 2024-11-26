@@ -129,6 +129,15 @@ jobs:
       - uses: ./.github/actions/install-dependencies
       - run: pnpm --filter network test
 
+  tests-passkeys:
+    name: Run passkeys tests
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-dependencies
+      - run: pnpm --filter passkeys test
+
   tests-provider:
     name: Run provider tests
     runs-on: ubuntu-latest
