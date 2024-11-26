@@ -90,6 +90,10 @@ export enum ChainId {
   ROOT_NETWORK = 7668,
   ROOT_NETWORK_PORCINI = 7672,
 
+  // LAOS
+  LAOS = 6283,
+  LAOS_SIGMA_TESTNET = 62850,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -920,6 +924,40 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'XRP',
       name: 'XRP',
+      decimals: 18
+    }
+  },
+  [ChainId.LAOS]: {
+    chainId: ChainId.LAOS,
+    type: NetworkType.MAINNET,
+    name: 'laos',
+    title: 'LAOS',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'LAOS Explorer',
+      rootUrl: 'https://blockscout.laos.laosfoundation.io/'
+    },
+    nativeToken: {
+      symbol: 'LAOS',
+      name: 'LAOS',
+      decimals: 18
+    }
+  },
+  [ChainId.LAOS_SIGMA_TESTNET]: {
+    chainId: ChainId.LAOS_SIGMA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'laos-sigma-testnet',
+    title: 'LAOS Sigma Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS_SIGMA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'LAOS Sigma Testnet Explorer',
+      rootUrl: 'https://sigma.explorer.laosnetwork.io/'
+    },
+    nativeToken: {
+      symbol: 'SIGMA',
+      name: 'SIGMA',
       decimals: 18
     }
   },
