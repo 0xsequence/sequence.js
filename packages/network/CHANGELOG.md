@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.1.2
+
+### Patch Changes
+
+- provider: export analytics correctly
+- Updated dependencies
+  - @0xsequence/core@2.1.2
+  - @0xsequence/indexer@2.1.2
+  - @0xsequence/relayer@2.1.2
+  - @0xsequence/utils@2.1.2
+
 ## 2.1.1
 
 ### Patch Changes

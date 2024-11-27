@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.1.2
+
+### Patch Changes
+
+- provider: export analytics correctly
+
 ## 2.1.1
 
 ### Patch Changes

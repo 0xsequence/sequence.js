@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.1.2
+
+### Patch Changes
+
+- provider: export analytics correctly
+- Updated dependencies
+  - @0xsequence/core@2.1.2
+  - @0xsequence/migration@2.1.2
+  - @0xsequence/replacer@2.1.2
+  - @0xsequence/utils@2.1.2
+
 ## 2.1.1
 
 ### Patch Changes

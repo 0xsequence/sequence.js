@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.1.2
+
+### Patch Changes
+
+- provider: export analytics correctly
+- Updated dependencies
+  - @0xsequence/waas@2.1.2
+
 ## 2.1.1
 
 ### Patch Changes
