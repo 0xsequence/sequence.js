@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.1.1
+
+### Patch Changes
+
+- Add LAOS chain support
+- Updated dependencies
+  - @0xsequence/waas@2.1.1
+
 ## 2.1.0
 
 ### Minor Changes

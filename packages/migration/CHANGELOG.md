@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.1.1
+
+### Patch Changes
+
+- Add LAOS chain support
+- Updated dependencies
+  - @0xsequence/abi@2.1.1
+  - @0xsequence/core@2.1.1
+  - @0xsequence/wallet@2.1.1
+
 ## 2.1.0
 
 ### Minor Changes
