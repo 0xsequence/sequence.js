@@ -1,6 +1,6 @@
 import { Databeat, Event as DatabeatEvent, Auth, isBrowser } from '@databeat/tracker'
 
-export enum EventType {
+export enum AnalyticsEventType {
   // Core types part of Databeat
   INIT,
   VIEW,
@@ -11,11 +11,11 @@ export enum EventType {
   SEND_TRANSACTION_REQUEST
 }
 
-export type EventTypes = keyof typeof EventType
-export type Event = DatabeatEvent<EventTypes>
+export type AnalyticsEventTypes = keyof typeof AnalyticsEventType
+export type AnalyticsEvent = DatabeatEvent<AnalyticsEventTypes>
 
 // Analytics sub-class to add some custom helper methods
-export class Analytics extends Databeat<EventTypes> {}
+export class Analytics extends Databeat<AnalyticsEventTypes> {}
 
 // Setup analytics tracker
 export const setupAnalytics = (projectAccessKey: string, server?: string) => {
