@@ -26,7 +26,13 @@ export const SignerJsonRpcMethods = [
   'wallet_switchEthereumChain',
   'wallet_registerOnboarding',
   'wallet_watchAsset',
-  'wallet_scanQRCode'
+  'wallet_scanQRCode',
+
+  // EIP-5792
+  'wallet_sendCalls',
+  'wallet_getCallsStatus',
+  'wallet_showCallsStatus',
+  'wallet_getCapabilities'
 ]
 
 export class SigningProvider implements JsonRpcMiddlewareHandler {

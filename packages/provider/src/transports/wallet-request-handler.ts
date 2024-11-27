@@ -36,6 +36,10 @@ import { prefixEIP191Message } from '../utils'
 
 const SIGNER_READY_TIMEOUT = 10000
 
+const mainModule = new ethers.Interface([
+  'function selfExecute((bool delegateCall, bool revertOnError, uint256 gasLimit, address target, uint256 value, bytes data)[] calldata transactions)'
+])
+
 export interface WalletSignInOptions {
   connect?: boolean
   defaultNetworkId?: number
@@ -421,7 +425,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
 
         case 'eth_sendTransaction': {
           // https://eth.wiki/json-rpc/API#eth_sendtransaction
-          const transactionParams = fromExtended(request.params![0]).map(tx => {
+          const transaction = fromExtended(request.params![0]).map(tx => {
             // eth_sendTransaction uses 'gas'
             // ethers and sequence use 'gasLimit'
             if ('gas' in tx && tx.gasLimit === undefined) {
@@ -432,21 +436,18 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
             return tx
           })
 
-          validateTransactionRequest(account.address, transactionParams)
+          validateTransactionRequest(account.address, transaction)
 
           let txnHash = ''
           if (this.prompter === null) {
             // prompter is null, so we'll send from here
-            const txnResponse = await account.sendTransaction(transactionParams, request.chainId ?? this.defaultChainId())
+            const txnResponse = await account.sendTransaction(transaction, request.chainId ?? this.defaultChainId())
             txnHash = txnResponse?.hash ?? ''
           } else {
             // prompt user to provide the response
-            txnHash = await this.prompter.promptSendTransaction(
-              transactionParams,
-              request.chainId,
-              request.origin,
-              request.projectAccessKey
-            )
+            txnHash = (
+              await this.prompter.promptSendTransaction([{ chainId: request.chainId, transactions: transaction }], request)
+            )[0]
           }
 
           if (txnHash) {
@@ -476,12 +477,9 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
             // we will want to resolveProperties the big number values to hex strings
             return await account.signTransactions(transaction, request.chainId ?? this.defaultChainId())
           } else {
-            return await this.prompter.promptSignTransaction(
-              transaction,
-              request.chainId,
-              request.origin,
-              request.projectAccessKey
-            )
+            return (
+              await this.prompter.promptSignTransaction([{ chainId: request.chainId, transactions: transaction }], request)
+            )[0]
           }
         }
 
@@ -558,6 +556,149 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
           this.setDefaultChainId(Number(chainId))
 
           return null // success
+        }
+
+        case 'wallet_sendCalls': {
+          const { params } = request
+
+          if (!params) {
+            throw new Error('no parameters for wallet_sendCalls request')
+          }
+          if (params.length !== 1) {
+            throw new Error(`${params.length} parameters for wallet_sendCalls request`)
+          }
+
+          const { version, from, calls } = params[0]
+
+          switch (version) {
+            case '1.0':
+              break
+            default:
+              throw new Error(`wallet_sendCalls version '${version}' not supported`)
+          }
+
+          if (!ethers.isAddress(from)) {
+            throw new Error(`wallet_sendCalls from address '${from}' is not an address`)
+          }
+
+          const invalidCall = calls.find((call: any) => {
+            if (
+              (call.to !== undefined && !ethers.isAddress(call.to)) ||
+              (call.value !== undefined && !ethers.isHexString(call.value)) ||
+              (call.data !== undefined && !ethers.isHexString(call.data, true)) ||
+              (call.chainId !== undefined && !ethers.isHexString(call.chainId))
+            ) {
+              return true
+            }
+
+            try {
+              validateTransactionRequest(account.address, call)
+              return false
+            } catch {
+              return true
+            }
+          })
+          if (invalidCall) {
+            throw new Error(`wallet_sendCalls call '${JSON.stringify(invalidCall)}' is invalid`)
+          }
+
+          if (this.prompter) {
+            return JSON.stringify(
+              await this.prompter.promptSendTransaction(
+                calls.map((call: any) => ({ ...call, chainId: call.chainId !== undefined ? Number(call.chainId) : undefined })),
+                request
+              )
+            )
+          }
+
+          const chainIds = []
+          const chainCalls = new Map<bigint, Array<{ to?: `0x${string}`; value?: `0x${string}`; data?: `0x${string}` }>>()
+
+          for (const call of calls) {
+            const chainId = BigInt(call.chainId ?? request.chainId ?? this.defaultChainId())
+
+            let calls = chainCalls.get(chainId)
+            if (!calls) {
+              calls = []
+              chainCalls.set(chainId, calls)
+              chainIds.push(chainId)
+            }
+
+            calls.push(call)
+          }
+
+          const metaTxns = new Map(
+            await Promise.all(
+              chainIds.map(async chainId => {
+                const calls = chainCalls.get(chainId)!
+
+                const transaction =
+                  calls.length <= 1
+                    ? calls
+                    : {
+                        to: account.address,
+                        data: mainModule.encodeFunctionData('selfExecute', [
+                          commons.transaction.sequenceTxAbiEncode(
+                            calls.map(({ to, value, data }) => ({
+                              to: to ?? ethers.ZeroAddress,
+                              value,
+                              data,
+                              revertOnError: true
+                            }))
+                          )
+                        ])
+                      }
+
+                const response = await account.sendTransaction(transaction, chainId)
+                const metaTxn = response?.hash
+
+                if (metaTxn) {
+                  return [chainId, metaTxn] as const
+                }
+
+                throw new Error('transaction rejected by user')
+              })
+            )
+          )
+
+          return JSON.stringify(
+            calls.map((call: any) => metaTxns.get(BigInt(call.chainId ?? request.chainId ?? this.defaultChainId())))
+          )
+        }
+
+        case 'wallet_getCallsStatus': {
+          throw new Error('not implemented')
+        }
+
+        case 'wallet_showCallsStatus': {
+          throw new Error('not implemented')
+        }
+
+        case 'wallet_getCapabilities': {
+          const { params } = request
+
+          if (!params) {
+            throw new Error('no parameters for wallet_getCapabilities request')
+          }
+          if (params.length !== 1) {
+            throw new Error(`${params.length} parameters for wallet_getCapabilities request`)
+          }
+
+          const [address] = params
+
+          if (!ethers.isAddress(address)) {
+            throw new Error(`wallet_getCapabilities '${address}' is not an address`)
+          }
+
+          switch (address) {
+            case account.address:
+              return Object.fromEntries(
+                account.networks.map(({ chainId }) => [ethers.toQuantity(chainId), { atomicBatch: { supported: true } }])
+              )
+
+            default:
+              return {}
+          }
         }
 
         // smart wallet method
@@ -862,17 +1003,13 @@ export interface WalletUserPrompter {
   promptSignInConnect(connectOptions?: ConnectOptions): Promise<PromptConnectDetails>
   promptSignMessage(message: MessageToSign, origin?: string, projectAccessKey?: string): Promise<string>
   promptSignTransaction(
-    txn: commons.transaction.Transactionish,
-    chainId?: number,
-    origin?: string,
-    projectAccessKey?: string
-  ): Promise<string>
+    transactions: Array<{ chainId?: number; transactions: commons.transaction.Transactionish }>,
+    options?: { origin?: string; projectAccessKey?: string }
+  ): Promise<string[]>
   promptSendTransaction(
-    txn: commons.transaction.Transactionish,
-    chainId?: number,
-    origin?: string,
-    projectAccessKey?: string
-  ): Promise<string>
+    transactions: Array<{ chainId?: number; transactions: commons.transaction.Transactionish }>,
+    options?: { origin?: string; projectAccessKey?: string }
+  ): Promise<string[]>
   promptConfirmWalletDeploy(chainId: number, origin?: string): Promise<boolean>
   promptChangeNetwork(chainId: number): Promise<boolean>
 }

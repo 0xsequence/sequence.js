@@ -319,6 +319,11 @@ export class SequenceProvider extends ethers.AbstractProvider implements ISequen
       method === 'eth_signTypedData' ||
       method === 'eth_signTypedData_v4' ||
       method === 'personal_sign' ||
+      // EIP-5792
+      method === 'wallet_sendCalls' ||
+      method === 'wallet_getCallsStatus' ||
+      method === 'wallet_showCallsStatus' ||
+      method === 'wallet_getCapabilities' ||
       // These methods will use EIP-6492
       // but this is handled directly by the wallet
       method === 'sequence_sign' ||
