@@ -491,12 +491,29 @@ export class SequenceClient {
   }
 
   async sendTransaction(tx: ethers.TransactionRequest[] | ethers.TransactionRequest, options?: OptionalChainId): Promise<string> {
-    const sequenceTxs = Array.isArray(tx) ? tx : [tx]
-    const extendedTxs = toExtended(sequenceTxs)
+    const transactions = Array.isArray(tx) ? tx : [tx]
+    const chainId = options?.chainId ?? this.getChainId()
 
-    this.analytics?.track({ event: 'SEND_TRANSACTION_REQUEST', props: { chainId: `${options?.chainId || this.getChainId()}` } })
+    this.analytics?.track({ event: 'SEND_TRANSACTION_REQUEST', props: { chainId: chainId.toString() } })
 
-    return this.request({ method: 'eth_sendTransaction', params: [extendedTxs], chainId: options?.chainId })
+    return JSON.parse(
+      await this.request({
+        method: 'wallet_sendCalls',
+        params: [
+          {
+            version: '1.0',
+            from: this.getAddress(),
+            calls: transactions.map(({ to, value, data }) => ({
+              to: to ? ethers.resolveAddress(to) : undefined,
+              value: value !== undefined && value !== null ? ethers.toQuantity(value) : undefined,
+              data: data || undefined,
+              chainId: ethers.toQuantity(chainId)
+            }))
+          }
+        ],
+        chainId
+      })
+    )[ethers.toQuantity(chainId)]
   }
 
   async getWalletContext(): Promise<commons.context.VersionedContext> {
