@@ -18,13 +18,16 @@ import {
   SignedIntent,
   SignMessageArgs,
   getTimeDrift,
-  updateTimeDrift
+  updateTimeDrift,
+  AdoptChildWalletArgs
 } from './intents'
 import {
   FeeOptionsResponse,
+  isChildWalletAdoptedResponse,
   isCloseSessionResponse,
   isFeeOptionsResponse,
   isFinishValidateSessionResponse,
+  isGetAdopterResponse,
   isGetIdTokenResponse,
   isGetSessionResponse,
   isInitiateAuthResponse,
@@ -738,6 +741,19 @@ export class SequenceWaaS {
     return res.data
   }
 
+  async getAdopter(): Promise<string> {
+    await this.updateTimeDrift()
+
+    const intent = await this.waas.getAdopter()
+    const res = await this.sendIntent(intent)
+
+    if (!isGetAdopterResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+
+    return res.data.adopterAddress
+  }
+
   async useIdentifier<T extends CommonAuthArgs>(args: T): Promise<T & { identifier: string }> {
     if (args.identifier) {
       return args as T & { identifier: string }
@@ -842,6 +858,13 @@ export class SequenceWaaS {
 
     const intent = await this.waas.feeOptions(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isFeeOptionsResponse)
+  }
+
+  async adoptChildWallet(args: WithSimpleNetwork<AdoptChildWalletArgs> & CommonAuthArgs) {
+    await this.updateTimeDrift()
+
+    const intent = await this.waas.adoptChildWallet(args)
+    return this.trySendIntent(args, intent, isChildWalletAdoptedResponse)
   }
 
   async networkList(): Promise<NetworkList> {
