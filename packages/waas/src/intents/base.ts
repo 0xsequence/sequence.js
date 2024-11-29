@@ -32,7 +32,15 @@ export function getTimeDrift() {
   return timeDrift
 }
 
-export function updateTimeDrift(serverTime: Date) {
+export function updateTimeDrift(serverTime?: Date) {
+  if (!serverTime) {
+    timeDrift = undefined
+    if (isSessionStorageAvailable()) {
+      window.sessionStorage.removeItem(timeDriftKey)
+    }
+    return
+  }
+
   timeDrift = (getLocalTime() - serverTime.getTime()) / 1000
   if (isSessionStorageAvailable()) {
     window.sessionStorage.setItem(timeDriftKey, timeDrift.toString(10))

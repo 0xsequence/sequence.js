@@ -610,6 +610,7 @@ export class SequenceWaaS {
       session.clear()
       await this.waas.completeSignOut()
       await this.deviceName.set(undefined)
+      updateTimeDrift(undefined)
     }
   }
 
