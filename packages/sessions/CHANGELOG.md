@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.1.3
+
+### Patch Changes
+
+- waas: time drift date fix due to strange browser quirk
+- Updated dependencies
+  - @0xsequence/core@2.1.3
+  - @0xsequence/migration@2.1.3
+  - @0xsequence/replacer@2.1.3
+  - @0xsequence/utils@2.1.3
+
 ## 2.1.2
 
 ### Patch Changes
