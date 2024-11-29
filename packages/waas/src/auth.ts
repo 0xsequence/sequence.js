@@ -18,7 +18,8 @@ import {
   SignedIntent,
   SignMessageArgs,
   getTimeDrift,
-  updateTimeDrift
+  updateTimeDrift,
+  getLocalTime
 } from './intents'
 import {
   FeeOptionsResponse,
@@ -609,6 +610,7 @@ export class SequenceWaaS {
       session.clear()
       await this.waas.completeSignOut()
       await this.deviceName.set(undefined)
+      updateTimeDrift(undefined)
     }
   }
 
@@ -672,9 +674,9 @@ export class SequenceWaaS {
   }
 
   async waitForSessionValid(timeout: number = 600000, pollRate: number = 2000) {
-    const start = Date.now()
+    const start = getLocalTime()
 
-    while (Date.now() - start < timeout) {
+    while (getLocalTime() - start < timeout) {
       if (await this.isSessionValid()) {
         return true
       }
