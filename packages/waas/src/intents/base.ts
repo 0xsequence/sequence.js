@@ -18,6 +18,10 @@ function isSessionStorageAvailable() {
   return typeof window === 'object' && typeof window.sessionStorage === 'object'
 }
 
+export function getLocalTime() {
+  return new Date().getTime()
+}
+
 export function getTimeDrift() {
   if (isSessionStorageAvailable()) {
     const drift = window.sessionStorage.getItem(timeDriftKey)
@@ -29,7 +33,7 @@ export function getTimeDrift() {
 }
 
 export function updateTimeDrift(serverTime: Date) {
-  timeDrift = (Date.now() - serverTime.getTime()) / 1000
+  timeDrift = (getLocalTime() - serverTime.getTime()) / 1000
   if (isSessionStorageAvailable()) {
     window.sessionStorage.setItem(timeDriftKey, timeDrift.toString(10))
   }
@@ -37,7 +41,7 @@ export function updateTimeDrift(serverTime: Date) {
 
 export function makeIntent<T>(name: IntentName, lifespan: number, data: T): Intent<T> {
   const drift = Math.abs(Math.floor(getTimeDrift() || 0))
-  const issuedAt = Math.floor(Date.now() / 1000 - drift)
+  const issuedAt = Math.floor(getLocalTime() / 1000 - drift)
   const expiresAt = issuedAt + lifespan + 2 * drift
   return {
     version: VERSION,
