@@ -64,7 +64,6 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
         if (typeof signature === 'string') {
           return commons.signer.canRecover(signature)
         } else {
-          // We "recover" using the included address
           return !!signature.address
         }
       }) as string[] | SignerSignature[]
