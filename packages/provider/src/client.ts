@@ -142,7 +142,7 @@ export class SequenceClient {
 
   constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, options?: SequenceClientOptions) {
     if (isMuxTransportTemplate(transport)) {
-      this.transport = MuxMessageProvider.new(transport)
+      this.transport = MuxMessageProvider.new(transport, options?.projectAccessKey)
     } else if (isProviderTransport(transport)) {
       this.transport = transport
     } else {
