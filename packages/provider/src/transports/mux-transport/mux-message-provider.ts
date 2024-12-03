@@ -62,7 +62,7 @@ export class MuxMessageProvider implements ProviderTransport {
   private messageProviders: ProviderTransport[]
   private provider: ProviderTransport | undefined
 
-  constructor(messageProviders: ProviderTransport[] = [], projectAccessKey?: string) {
+  constructor(messageProviders: ProviderTransport[] = []) {
     this.messageProviders = messageProviders
     this.provider = undefined
   }
