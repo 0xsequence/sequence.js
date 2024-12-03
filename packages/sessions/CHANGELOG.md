@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.1.4
+
+### Patch Changes
+
+- provider: pass projectAccessKey into MuxMessageProvider
+- Updated dependencies
+  - @0xsequence/core@2.1.4
+  - @0xsequence/migration@2.1.4
+  - @0xsequence/replacer@2.1.4
+  - @0xsequence/utils@2.1.4
+
 ## 2.1.3
 
 ### Patch Changes

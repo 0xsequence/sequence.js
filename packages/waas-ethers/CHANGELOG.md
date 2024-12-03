@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.1.4
+
+### Patch Changes
+
+- provider: pass projectAccessKey into MuxMessageProvider
+- Updated dependencies
+  - @0xsequence/waas@2.1.4
+
 ## 2.1.3
 
 ### Patch Changes

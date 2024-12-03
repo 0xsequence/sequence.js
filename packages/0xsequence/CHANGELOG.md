@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 2.1.4
+
+### Patch Changes
+
+- provider: pass projectAccessKey into MuxMessageProvider
+- Updated dependencies
+  - @0xsequence/abi@2.1.4
+  - @0xsequence/account@2.1.4
+  - @0xsequence/api@2.1.4
+  - @0xsequence/auth@2.1.4
+  - @0xsequence/core@2.1.4
+  - @0xsequence/guard@2.1.4
+  - @0xsequence/indexer@2.1.4
+  - @0xsequence/metadata@2.1.4
+  - @0xsequence/migration@2.1.4
+  - @0xsequence/network@2.1.4
+  - @0xsequence/provider@2.1.4
+  - @0xsequence/relayer@2.1.4
+  - @0xsequence/sessions@2.1.4
+  - @0xsequence/signhub@2.1.4
+  - @0xsequence/utils@2.1.4
+  - @0xsequence/wallet@2.1.4
+
 ## 2.1.3
 
 ### Patch Changes

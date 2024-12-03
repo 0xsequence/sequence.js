@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.1.4
+
+### Patch Changes
+
+- provider: pass projectAccessKey into MuxMessageProvider
+
 ## 2.1.3
 
 ### Patch Changes
