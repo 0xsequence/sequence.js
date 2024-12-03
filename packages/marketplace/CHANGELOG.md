@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.1.5
+
+### Patch Changes
+
+- account: save presigned configuration with reference chain id 1
+
 ## 2.1.4
 
 ### Patch Changes

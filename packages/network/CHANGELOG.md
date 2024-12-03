@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.1.5
+
+### Patch Changes
+
+- account: save presigned configuration with reference chain id 1
+- Updated dependencies
+  - @0xsequence/core@2.1.5
+  - @0xsequence/indexer@2.1.5
+  - @0xsequence/relayer@2.1.5
+  - @0xsequence/utils@2.1.5
+
 ## 2.1.4
 
 ### Patch Changes

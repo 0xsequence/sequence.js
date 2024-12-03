@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.1.5
+
+### Patch Changes
+
+- account: save presigned configuration with reference chain id 1
+- Updated dependencies
+  - @0xsequence/waas@2.1.5
+
 ## 2.1.4
 
 ### Patch Changes
