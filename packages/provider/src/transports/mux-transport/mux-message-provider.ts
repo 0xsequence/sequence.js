@@ -61,12 +61,10 @@ export function isMuxTransportTemplate(obj: any): obj is MuxTransportTemplate {
 export class MuxMessageProvider implements ProviderTransport {
   private messageProviders: ProviderTransport[]
   private provider: ProviderTransport | undefined
-  private projectAccessKey?: string
 
   constructor(messageProviders: ProviderTransport[] = [], projectAccessKey?: string) {
     this.messageProviders = messageProviders
     this.provider = undefined
-    this.projectAccessKey = projectAccessKey
   }
 
   static new(template: MuxTransportTemplate, projectAccessKey?: string): MuxMessageProvider {
