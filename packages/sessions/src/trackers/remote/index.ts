@@ -48,7 +48,7 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
       chainID: '0',
       signature: args.signature,
       toConfig: encodeConfig(config),
-      referenceChainID: args.referenceChainId
+      referenceChainID: args.referenceChainId !== undefined ? BigInt(args.referenceChainId).toString() : undefined
     })
   }
 

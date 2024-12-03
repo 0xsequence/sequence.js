@@ -666,7 +666,7 @@ export class Account {
       wallet: this.address,
       nextConfig: config,
       signature,
-      referenceChainId: '1'
+      referenceChainId: 1
     })
 
     // safety check, tracker should have a reverse lookup for the imageHash
