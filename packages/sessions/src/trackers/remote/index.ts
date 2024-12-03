@@ -69,6 +69,9 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
       }) as string[] | SignerSignature[]
     }
 
+    if (filteredSignatures.some(sig => typeof sig === 'string') && filteredSignatures.some(sig => typeof sig === 'object')) {
+      throw new Error('Signatures must be string[] | SignerSignature[]')
+    }
     if (filteredSignatures.length === 0 || typeof args.signatures[0] === 'string') {
       await this.sessions.saveSignerSignatures({
         wallet: args.wallet,
