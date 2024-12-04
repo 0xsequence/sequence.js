@@ -56,6 +56,7 @@ export enum ChainId {
 
   // TELOS
   TELOS = 40,
+  TELOS_TESTNET = 41,
 
   // B3 Sepolia
   B3 = 8333,
@@ -766,7 +767,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS}.webp`,
     blockExplorer: {
       name: 'Telos Explorer',
-      rootUrl: 'https://explorer.telos.net/network/'
+      rootUrl: 'https://www.teloscan.io/'
+    },
+    nativeToken: {
+      symbol: 'TLOS',
+      name: 'TLOS',
+      decimals: 18
+    }
+  },
+  [ChainId.TELOS_TESTNET]: {
+    chainId: ChainId.TELOS_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'telos-testnet',
+    title: 'Telos Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS_TESTNET}.webp`,
+    blockExplorer: {
+      name: 'Telos Testnet Explorer',
+      rootUrl: 'https://testnet.teloscan.io/'
     },
     nativeToken: {
       symbol: 'TLOS',
