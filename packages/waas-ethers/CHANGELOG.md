@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.1.6
+
+### Patch Changes
+
+- Add LAOS and Telos Testnet chains
+- Updated dependencies
+  - @0xsequence/waas@2.1.6
+
 ## 2.1.5
 
 ### Patch Changes

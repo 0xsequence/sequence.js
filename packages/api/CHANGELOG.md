@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.1.6
+
+### Patch Changes
+
+- Add LAOS and Telos Testnet chains
+
 ## 2.1.5
 
 ### Patch Changes

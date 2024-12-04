@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.1.6
+
+### Patch Changes
+
+- Add LAOS and Telos Testnet chains
+- Updated dependencies
+  - @0xsequence/core@2.1.6
+  - @0xsequence/indexer@2.1.6
+  - @0xsequence/relayer@2.1.6
+  - @0xsequence/utils@2.1.6
+
 ## 2.1.5
 
 ### Patch Changes
