@@ -123,6 +123,7 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.BLAST),
   createNetworkConfig(ChainId.BLAST_SEPOLIA),
   createNetworkConfig(ChainId.TELOS),
+  createNetworkConfig(ChainId.TELOS_TESTNET),
   createNetworkConfig(ChainId.BORNE_TESTNET),
   createNetworkConfig(ChainId.SKALE_NEBULA),
   createNetworkConfig(ChainId.SKALE_NEBULA_TESTNET),
@@ -132,5 +133,7 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.IMMUTABLE_ZKEVM_TESTNET),
   createNetworkConfig(ChainId.ROOT_NETWORK),
   createNetworkConfig(ChainId.ROOT_NETWORK_PORCINI),
+  createNetworkConfig(ChainId.LAOS),
+  createNetworkConfig(ChainId.LAOS_SIGMA_TESTNET),
   ...hardhatNetworks
 ])
