@@ -100,7 +100,7 @@ describe('Orchestrator', () => {
         suffix(): ethers.BytesLike {
           return new Uint8Array([2])
         }
-        async buildValidationSignature(signature: string) {
+        async buildEIP6492Signature(signature: string) {
           return signature + 'validation'
         }
       }

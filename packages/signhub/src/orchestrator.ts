@@ -186,9 +186,9 @@ export class Orchestrator {
               .then(async signature => {
                 const suffix = s.suffix()
                 let validationSignature
-                if (s.buildValidationSignature) {
+                if (s.buildEIP6492Signature) {
                   try {
-                    validationSignature = await s.buildValidationSignature(signature)
+                    validationSignature = await s.buildEIP6492Signature(signature)
                   } catch (e) {
                     // Log and ignore
                     console.warn(`signer ${saddr} failed to build validation signature: ${e}`)
