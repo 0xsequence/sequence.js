@@ -2,8 +2,6 @@ export * from './indexer.gen'
 
 import { Indexer as IndexerRpc } from './indexer.gen'
 
-const fetch = globalThis.fetch
-
 export class SequenceIndexer extends IndexerRpc {
   constructor(
     hostname: string,

@@ -2,8 +2,6 @@ export * from './api.gen'
 
 import { API as ApiRpc } from './api.gen'
 
-const fetch = globalThis.fetch
-
 export class SequenceAPIClient extends ApiRpc {
   constructor(
     hostname: string,

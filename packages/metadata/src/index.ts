@@ -2,8 +2,6 @@ export * from './metadata.gen'
 
 import { Metadata as MetadataRpc, Collections as CollectionsRpc } from './metadata.gen'
 
-const fetch = globalThis.fetch
-
 export class SequenceMetadata extends MetadataRpc {
   constructor(
     hostname: string = 'https://metadata.sequence.app',
