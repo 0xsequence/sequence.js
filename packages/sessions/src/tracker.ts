@@ -6,7 +6,6 @@ export type PresignedConfig = {
   nextConfig: commons.config.Config
   signature: string
   referenceChainId?: ethers.BigNumberish
-  validateBehavior?: 'ignore' | 'throw'
 }
 
 export type PresignedConfigLink = Omit<PresignedConfig, 'nextConfig'> & { nextImageHash: string }

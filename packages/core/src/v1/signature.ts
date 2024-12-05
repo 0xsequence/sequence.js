@@ -125,7 +125,8 @@ export function encodeSignature(signature: Signature | UnrecoveredSignature | et
 export async function recoverSignature(
   data: UnrecoveredSignature,
   payload: base.SignedPayload,
-  provider?: ethers.Provider
+  provider?: ethers.Provider,
+  validateBehavior: 'ignore' | 'throw' = 'throw'
 ): Promise<Signature> {
   const subdigest = base.subdigestOf(payload)
   const signers = await Promise.all(
@@ -136,8 +137,15 @@ export async function recoverSignature(
 
       if (s.isDynamic) {
         if (!s.address) throw new Error('Dynamic signature part must have address')
-        if (!isValidSignature(s.address, subdigest, s.signature, provider)) {
-          throw new Error(`Invalid dynamic signature part ${s.address}`)
+
+        if (validateBehavior !== 'ignore') {
+          if (!provider) {
+            throw new Error('Provider is required to validate EIP1271 signatures')
+          }
+
+          if (!isValidSignature(s.address, subdigest, s.signature, provider)) {
+            throw new Error(`Invalid dynamic signature part ${s.address}`)
+          }
         }
 
         return { address: s.address, weight: s.weight, signature: s.signature }
@@ -216,8 +224,13 @@ export const SignatureCoder: base.SignatureCoder<WalletConfig, Signature, Unreco
 
   supportsNoChainId: true,
 
-  recover: (data: UnrecoveredSignature, payload: base.SignedPayload, provider: ethers.Provider): Promise<Signature> => {
-    return recoverSignature(data, payload, provider)
+  recover: (
+    data: UnrecoveredSignature,
+    payload: base.SignedPayload,
+    provider?: ethers.Provider,
+    validateBehavior: 'ignore' | 'throw' = 'throw'
+  ): Promise<Signature> => {
+    return recoverSignature(data, payload, provider, validateBehavior)
   },
 
   encodeSigners: (

@@ -522,7 +522,7 @@ export class Account {
     // Apply ERC-6492 to undeployed children
     const signature = await this.signDigest(digest, 0, false, 'ignore', {chainId, referenceChainId, cantValidateBehavior: "eip6492"})
     const decoded = this.coders.signature.decode(signature)
-    const recovered = await this.coders.signature.recover(decoded, { digest, chainId, address: this.address })
+    const recovered = await this.coders.signature.recover(decoded, { digest, chainId, address: this.address }, undefined, 'ignore')
     const signatures = this.coders.signature.signaturesOf(recovered.config)
     const signaturesWithReferenceChainId = signatures.map(s => ({...s, referenceChainId}))
     return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures: signaturesWithReferenceChainId })
@@ -669,9 +669,7 @@ export class Account {
     await this.tracker.savePresignedConfiguration({
       wallet: this.address,
       nextConfig: config,
-      signature,
-      referenceChainId: 1,
-      validateBehavior: 'ignore'
+      signature
     })
 
     // safety check, tracker should have a reverse lookup for the imageHash
