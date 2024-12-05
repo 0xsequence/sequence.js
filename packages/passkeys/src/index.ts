@@ -258,19 +258,7 @@ export class SequencePasskeySigner implements signers.SapientSigner {
     return signatureBytes
   }
 
-  async buildValidationSignature(signatureBytes: string): Promise<string | undefined> {
-    console.log('passkey buildValidationSignature', signatureBytes)
-    try {
-      if (await this.isDeployed()) {
-        return undefined
-      }
-    } catch (e) {
-      // Ignore. Assume not deployed
-    }
-    return this.buildEIP6492Signature(signatureBytes)
-  }
-
-  private async buildEIP6492Signature(signature: string): Promise<string> {
+  async buildEIP6492Signature(signature: string): Promise<string> {
     const deployTransactions = await this.buildDeployTransaction()
     if (!deployTransactions || deployTransactions?.transactions.length === 0) {
       throw new Error('Cannot build EIP-6492 signature without deploy transaction')
