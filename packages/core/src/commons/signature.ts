@@ -35,7 +35,7 @@ export interface SignatureCoder<
 
   trim: (data: string) => Promise<string>
 
-  recover: (data: Z, payload: SignedPayload, provider?: ethers.Provider) => Promise<T>
+  recover: (data: Z, payload: SignedPayload, provider?: ethers.Provider, validateBehavior?: 'ignore' | 'throw') => Promise<T>
 
   supportsNoChainId: boolean
 

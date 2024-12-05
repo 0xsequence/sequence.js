@@ -6,7 +6,6 @@ export type PresignedConfig = {
   nextConfig: commons.config.Config
   signature: string
   referenceChainId?: string
-  validateBehavior?: 'ignore' | 'throw'
 }
 
 export type PresignedConfigLink = Omit<PresignedConfig, 'nextConfig'> & { nextImageHash: string }
