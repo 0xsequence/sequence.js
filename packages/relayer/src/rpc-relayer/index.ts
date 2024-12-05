@@ -26,8 +26,6 @@ export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
   return obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && isAbstractProvider(obj.provider)
 }
 
-const fetch = globalThis.fetch
-
 // TODO: rename to SequenceRelayer
 export class RpcRelayer implements Relayer {
   private readonly service: proto.Relayer

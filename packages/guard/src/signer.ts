@@ -5,8 +5,6 @@ import { encodeTypedDataDigest, TypedData } from '@0xsequence/utils'
 import { ethers } from 'ethers'
 import { AuthMethodsReturn, Guard, RecoveryCode as GuardRecoveryCode } from './guard.gen'
 
-const fetch = globalThis.fetch
-
 export class GuardSigner implements signers.SapientSigner {
   private guard: Guard
 

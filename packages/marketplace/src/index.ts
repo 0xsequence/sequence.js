@@ -2,8 +2,6 @@ export * from './marketplace.gen'
 
 import { Marketplace as MarketplaceRpc } from './marketplace.gen'
 
-const fetch = globalThis.fetch
-
 export class MarketplaceIndexer extends MarketplaceRpc {
   constructor(
     hostname: string,
