@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.1.7
+
+### Patch Changes
+
+- guard: pass project access key to guard requests
+- Updated dependencies
+  - @0xsequence/waas@2.1.7
+
 ## 2.1.6
 
 ### Patch Changes

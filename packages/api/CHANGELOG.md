@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.1.7
+
+### Patch Changes
+
+- guard: pass project access key to guard requests
+
 ## 2.1.6
 
 ### Patch Changes

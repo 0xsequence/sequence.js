@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.1.7
+
+### Patch Changes
+
+- guard: pass project access key to guard requests
+- Updated dependencies
+  - @0xsequence/account@2.1.7
+  - @0xsequence/core@2.1.7
+  - @0xsequence/signhub@2.1.7
+  - @0xsequence/utils@2.1.7
+
 ## 2.1.6
 
 ### Patch Changes
