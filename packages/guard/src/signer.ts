@@ -11,9 +11,25 @@ export class GuardSigner implements signers.SapientSigner {
   constructor(
     public readonly address: string,
     public readonly url: string,
-    public readonly appendSuffix: boolean = false
+    public readonly appendSuffix: boolean = false,
+    public readonly projectAccessKey?: string
   ) {
-    this.guard = new Guard(url, fetch)
+    this.guard = new Guard(url, this._fetch)
+  }
+
+  _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
+    const headers: { [key: string]: any } = {}
+
+    const projectAccessKey = this.projectAccessKey
+
+    if (projectAccessKey && projectAccessKey.length > 0) {
+      headers['X-Access-Key'] = projectAccessKey
+    }
+
+    // before the request is made
+    init!.headers = { ...init!.headers, ...headers }
+
+    return fetch(input, init)
   }
 
   async getAddress(): Promise<string> {
