@@ -79,6 +79,7 @@ export enum ChainId {
 
   // Soneium Minato
   SONEIUM_MINATO = 1946,
+  SONEIUM = 1868,
 
   // TOY Testnet
   TOY_TESTNET = 21000000,
@@ -839,6 +840,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'sFUEL',
       name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
+  [ChainId.SONEIUM]: {
+    chainId: ChainId.SONEIUM,
+    type: NetworkType.MAINNET,
+    name: 'soneium',
+    title: 'Soneium',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Soneium Explorer',
+      rootUrl: 'https://vk9a3tgpne6qmub8.blockscout.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
       decimals: 18
     }
   },
