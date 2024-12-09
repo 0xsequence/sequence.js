@@ -2,7 +2,7 @@ import { commons, universal, v1, v2 } from '@0xsequence/core'
 import { migration, migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
 import { CachedEIP5719 } from '@0xsequence/replacer'
-import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../tracker'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../tracker'
 import { isPlainNested, isPlainNode, isPlainV2Config, MemoryTrackerStore, PlainNested, PlainNode, TrackerStore } from './stores'
 
 export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
@@ -235,7 +235,12 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     const savePayload = this.savePayload({ payload })
     const saveNextConfig = this.saveWalletConfig({ config: args.nextConfig })
 
-    const recovered = await v2.signature.SignatureCoder.recover(decoded, payload, this.provider)
+    const recovered = await v2.signature.SignatureCoder.recover(
+      decoded,
+      payload,
+      this.provider,
+      'ignore'
+    )
 
     // Save the recovered configuration and all signature parts
     const signatures = v2.signature.signaturesOf(recovered.config.tree)
@@ -388,7 +393,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     wallet: string
     digest: string
     chainId: ethers.BigNumberish
-    signatures: string[]
+    signatures: string[] | SignerSignature[]
   }): Promise<void> => {
     const payload = {
       digest: args.digest,
@@ -401,6 +406,7 @@ export class LocalConfigTracker implements ConfigTracker, migrator.PresignedMigr
     await Promise.all([
       this.savePayload({ payload }),
       ...args.signatures
+        .map(s => (typeof s === 'string' ? s : s.signature))
         .filter(signature => {
           // We don't support saving witnesses for non-recoverable signatures
           // we could change this eventually, but the issue is that the witness may become invalid
