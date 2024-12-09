@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 2.1.8
+
+### Patch Changes
+
+- Add Soneium Mainnet
+- Updated dependencies
+  - @0xsequence/abi@2.1.8
+  - @0xsequence/account@2.1.8
+  - @0xsequence/api@2.1.8
+  - @0xsequence/core@2.1.8
+  - @0xsequence/indexer@2.1.8
+  - @0xsequence/metadata@2.1.8
+  - @0xsequence/migration@2.1.8
+  - @0xsequence/network@2.1.8
+  - @0xsequence/sessions@2.1.8
+  - @0xsequence/signhub@2.1.8
+  - @0xsequence/utils@2.1.8
+  - @0xsequence/wallet@2.1.8
+
 ## 2.1.7
 
 ### Patch Changes

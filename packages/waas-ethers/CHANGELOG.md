@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.1.8
+
+### Patch Changes
+
+- Add Soneium Mainnet
+- Updated dependencies
+  - @0xsequence/waas@2.1.8
+
 ## 2.1.7
 
 ### Patch Changes

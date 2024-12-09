@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.1.8
+
+### Patch Changes
+
+- Add Soneium Mainnet
+- Updated dependencies
+  - @0xsequence/abi@2.1.8
+  - @0xsequence/core@2.1.8
+  - @0xsequence/wallet@2.1.8
+
 ## 2.1.7
 
 ### Patch Changes

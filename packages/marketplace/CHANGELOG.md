@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.1.8
+
+### Patch Changes
+
+- Add Soneium Mainnet
+
 ## 2.1.7
 
 ### Patch Changes
