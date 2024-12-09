@@ -10,7 +10,8 @@ import {
   IntentResponseGetSession,
   IntentResponseIdToken,
   IntentResponseValidationFinished,
-  IntentResponseValidationStarted
+  IntentResponseValidationStarted,
+  IntentResponseConfirmationRequired,
 } from '../clients/intent.gen'
 import { WebrpcEndpointError, WebrpcError } from '../clients/authenticator.gen'
 
@@ -127,6 +128,7 @@ export interface Response<Code, Data> {
 
 export type InitiateAuthResponse = Response<IntentResponseCode.authInitiated, IntentResponseAuthInitiated>
 export type ValidateSessionResponse = Response<IntentResponseCode.validationStarted, IntentResponseValidationStarted>
+export type ConfirmationRequiredResponse = Response<IntentResponseCode.confirmationRequired, IntentResponseConfirmationRequired>
 export type FinishValidateSessionResponse = Response<IntentResponseCode.validationFinished, IntentResponseValidationFinished>
 export type GetSessionResponse = Response<IntentResponseCode.getSessionResponse, IntentResponseGetSession>
 export type LinkAccountResponse = Response<IntentResponseCode.accountFederated, IntentResponseAccountFederated>
@@ -247,6 +249,15 @@ export function isValidateSessionResponse(receipt: any): receipt is ValidateSess
 
 export function isFinishValidateSessionResponse(receipt: any): receipt is FinishValidateSessionResponse {
   return typeof receipt === 'object' && receipt.code === IntentResponseCode.validationFinished && typeof receipt.data === 'object'
+}
+
+export function isConfirmationRequiredResponse(receipt: any): receipt is ConfirmationRequiredResponse {
+  return (
+    typeof receipt === 'object' &&
+    receipt.code === IntentResponseCode.confirmationRequired &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.salt === 'string'
+  )
 }
 
 export function isCloseSessionResponse(receipt: any): receipt is CloseSessionResponse {

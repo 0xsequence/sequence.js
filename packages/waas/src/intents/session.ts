@@ -11,7 +11,8 @@ import {
   IntentDataGetIdToken,
   IntentName,
   IntentDataAdoptChildWallet,
-  IntentDataGetAdopter
+  IntentDataGetAdopter,
+  IntentDataConfirmIntent,
 } from '../clients/intent.gen'
 
 interface BaseArgs {
@@ -82,4 +83,10 @@ export type GetAdopterArgs = BaseArgs & IntentDataGetAdopter
 
 export function getAdopter({ lifespan, ...data }: GetAdopterArgs): Intent<IntentDataGetAdopter> {
   return makeIntent(IntentName.getAdopter, lifespan, data)
+}
+
+export type ConfirmIntentArgs = BaseArgs & IntentDataConfirmIntent
+
+export function confirmIntent({ lifespan, ...data }: ConfirmIntentArgs): Intent<IntentDataConfirmIntent> {
+  return makeIntent(IntentName.confirmIntent, lifespan, data)
 }

@@ -4,6 +4,7 @@ import {
   changeIntentTime,
   closeSession,
   combineTransactionIntents,
+  confirmIntent,
   feeOptions,
   finishValidateSession,
   getAdopter,
@@ -50,7 +51,8 @@ import {
   IntentDataOpenSession,
   IntentDataSendTransaction,
   IntentDataSignMessage,
-  IntentDataValidateSession
+  IntentDataValidateSession,
+  IntentDataConfirmIntent,
 } from './clients/intent.gen'
 import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
@@ -508,6 +510,17 @@ export class SequenceWaaSBase {
       sessionId: sessionId,
       deviceMetadata,
       wallet: await this.getWalletAddress()
+    })
+
+    return this.signIntent(intent)
+  }
+
+  async confirmIntent(salt: string, secretCode: string): Promise<SignedIntent<IntentDataConfirmIntent>> {
+    const intent = confirmIntent({
+      lifespan: DEFAULT_LIFESPAN,
+      wallet: await this.getWalletAddress(),
+      confirmationID: salt,
+      challengeAnswer: ethers.id(salt + secretCode),
     })
 
     return this.signIntent(intent)

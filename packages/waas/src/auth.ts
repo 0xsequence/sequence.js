@@ -22,9 +22,11 @@ import {
   AdoptChildWalletArgs
 } from './intents'
 import {
+  ConfirmationRequiredResponse,
   FeeOptionsResponse,
   isChildWalletAdoptedResponse,
   isCloseSessionResponse,
+  isConfirmationRequiredResponse,
   isFeeOptionsResponse,
   isFinishValidateSessionResponse,
   isGetAdopterResponse,
@@ -331,6 +333,11 @@ export class SequenceWaaS {
     }
 
     return this.waitForSessionValid()
+  }
+
+  private async handleConfirmationRequired(response: ConfirmationRequiredResponse) {
+    const intent2 = await this.waas.confirmIntent(response.data.salt, "111111")
+    return intent2
   }
 
   private headers() {
@@ -773,6 +780,16 @@ export class SequenceWaaS {
 
     if (isExpectedResponse(response)) {
       return response
+    }
+
+    if (isConfirmationRequiredResponse(response)) {
+      const intent2 = await this.handleConfirmationRequired(response)
+      if (intent2) {
+        const response2 = await this.sendIntent(intent2)
+        if (isExpectedResponse(response2)) {
+          return response2
+        }
+      }
     }
 
     if (isValidationRequiredResponse(response)) {
