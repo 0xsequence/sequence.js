@@ -356,6 +356,8 @@ importers:
         specifier: ^3.6.0
         version: 3.15.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
 
+  packages/builder: {}
+
   packages/core:
     dependencies:
       '@0xsequence/abi':
