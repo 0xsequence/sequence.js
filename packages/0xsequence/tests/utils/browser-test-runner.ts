@@ -56,7 +56,10 @@ export const runBrowserTests = async (title: string, path: string) => {
 }
 
 export const browserContext = async (t, run) => {
-  const browser = await puppeteer.launch({})
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  })
   const page = await browser.newPage()
   try {
     await run(t, page)
