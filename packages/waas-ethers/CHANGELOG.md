@@ -1,5 +1,20 @@
 # @0xsequence/waas-ethers
 
+## 2.2.0
+
+### Minor Changes
+
+- indexer: gateway client
+- @0xsequence/builder
+- upgrade puppeteer to v23.10.3
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@2.2.0
+
 ## 2.1.8
 
 ### Patch Changes
