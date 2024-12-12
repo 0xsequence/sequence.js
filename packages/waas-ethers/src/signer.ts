@@ -58,7 +58,7 @@ export class SequenceSigner extends ethers.AbstractSigner {
     await this._ensureNetworkValid(false)
 
     const typedDataDigest = ethers.TypedDataEncoder.encode(domain, types, value)
-    
+
     const args = {
       message: typedDataDigest,
       network: await this.getSimpleNetwork(),

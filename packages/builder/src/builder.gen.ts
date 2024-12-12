@@ -3,65 +3,65 @@
 // surface area of the client.
 //
 // In the future we can include additional interfaces as needed.
-export const WebrpcHeader = "Webrpc"
+export const WebrpcHeader = 'Webrpc'
 
-export const WebrpcHeaderValue = "webrpc@v0.22.0;gen-typescript@v0.16.1;sequence-builder@v0.1.0"
+export const WebrpcHeaderValue = 'webrpc@v0.22.0;gen-typescript@v0.16.1;sequence-builder@v0.1.0'
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.1.0"
+export const WebRPCSchemaVersion = 'v0.1.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "5b580e1afeb26e0b4a8ee026271e2466760da0aa"
+export const WebRPCSchemaHash = '5b580e1afeb26e0b4a8ee026271e2466760da0aa'
 
 type WebrpcGenVersions = {
-  webrpcGenVersion: string;
-  codeGenName: string;
-  codeGenVersion: string;
-  schemaName: string;
-  schemaVersion: string;
-};
+  webrpcGenVersion: string
+  codeGenName: string
+  codeGenVersion: string
+  schemaName: string
+  schemaVersion: string
+}
 
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
+  const headerValue = headers.get(WebrpcHeader)
   if (!headerValue) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  return parseWebrpcGenVersions(headerValue);
+  return parseWebrpcGenVersions(headerValue)
 }
 
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
+  const versions = header.split(';')
   if (versions.length < 3) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  const [_, webrpcGenVersion] = versions[0].split("@");
-  const [codeGenName, codeGenVersion] = versions[1].split("@");
-  const [schemaName, schemaVersion] = versions[2].split("@");
+  const [_, webrpcGenVersion] = versions[0].split('@')
+  const [codeGenName, codeGenVersion] = versions[1].split('@')
+  const [schemaName, schemaVersion] = versions[2].split('@')
 
   return {
     webrpcGenVersion,
     codeGenName,
     codeGenVersion,
     schemaName,
-    schemaVersion,
-  };
+    schemaVersion
+  }
 }
 
 //
@@ -93,17 +93,32 @@ export interface WalletProof {
 
 export interface Builder {
   ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
-  registerAudienceContact(args: RegisterAudienceContactArgs, headers?: object, signal?: AbortSignal): Promise<RegisterAudienceContactReturn>
-  getRegisteredAudienceContact(args: GetRegisteredAudienceContactArgs, headers?: object, signal?: AbortSignal): Promise<GetRegisteredAudienceContactReturn>
-  getAudienceRegistrationPublicStatus(args: GetAudienceRegistrationPublicStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetAudienceRegistrationPublicStatusReturn>
-  isAudienceContactRegistered(args: IsAudienceContactRegisteredArgs, headers?: object, signal?: AbortSignal): Promise<IsAudienceContactRegisteredReturn>
+  registerAudienceContact(
+    args: RegisterAudienceContactArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RegisterAudienceContactReturn>
+  getRegisteredAudienceContact(
+    args: GetRegisteredAudienceContactArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetRegisteredAudienceContactReturn>
+  getAudienceRegistrationPublicStatus(
+    args: GetAudienceRegistrationPublicStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetAudienceRegistrationPublicStatusReturn>
+  isAudienceContactRegistered(
+    args: IsAudienceContactRegisteredArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsAudienceContactRegisteredReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
 
 export interface RegisterAudienceContactArgs {
@@ -114,7 +129,7 @@ export interface RegisterAudienceContactArgs {
 }
 
 export interface RegisterAudienceContactReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface GetRegisteredAudienceContactArgs {
   projectId: number
@@ -123,7 +138,7 @@ export interface GetRegisteredAudienceContactArgs {
 }
 
 export interface GetRegisteredAudienceContactReturn {
-  contact: AudienceContact  
+  contact: AudienceContact
 }
 export interface GetAudienceRegistrationPublicStatusArgs {
   projectId: number
@@ -131,7 +146,7 @@ export interface GetAudienceRegistrationPublicStatusArgs {
 }
 
 export interface GetAudienceRegistrationPublicStatusReturn {
-  status: AudienceRegistrationStatus  
+  status: AudienceRegistrationStatus
 }
 export interface IsAudienceContactRegisteredArgs {
   projectId: number
@@ -140,10 +155,9 @@ export interface IsAudienceContactRegisteredArgs {
 }
 
 export interface IsAudienceContactRegisteredReturn {
-  registered: boolean  
+  registered: boolean
 }
 
-  
 //
 // Client
 //
@@ -160,82 +174,101 @@ export class Builder implements Builder {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  registerAudienceContact = (args: RegisterAudienceContactArgs, headers?: object, signal?: AbortSignal): Promise<RegisterAudienceContactReturn> => {
-    return this.fetch(
-      this.url('RegisterAudienceContact'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  registerAudienceContact = (
+    args: RegisterAudienceContactArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RegisterAudienceContactReturn> => {
+    return this.fetch(this.url('RegisterAudienceContact'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getRegisteredAudienceContact = (args: GetRegisteredAudienceContactArgs, headers?: object, signal?: AbortSignal): Promise<GetRegisteredAudienceContactReturn> => {
-    return this.fetch(
-      this.url('GetRegisteredAudienceContact'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contact: <AudienceContact>(_data.contact),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getRegisteredAudienceContact = (
+    args: GetRegisteredAudienceContactArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetRegisteredAudienceContactReturn> => {
+    return this.fetch(this.url('GetRegisteredAudienceContact'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contact: <AudienceContact>_data.contact
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getAudienceRegistrationPublicStatus = (args: GetAudienceRegistrationPublicStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetAudienceRegistrationPublicStatusReturn> => {
-    return this.fetch(
-      this.url('GetAudienceRegistrationPublicStatus'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <AudienceRegistrationStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getAudienceRegistrationPublicStatus = (
+    args: GetAudienceRegistrationPublicStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetAudienceRegistrationPublicStatusReturn> => {
+    return this.fetch(this.url('GetAudienceRegistrationPublicStatus'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <AudienceRegistrationStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  isAudienceContactRegistered = (args: IsAudienceContactRegisteredArgs, headers?: object, signal?: AbortSignal): Promise<IsAudienceContactRegisteredReturn> => {
-    return this.fetch(
-      this.url('IsAudienceContactRegistered'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          registered: <boolean>(_data.registered),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  isAudienceContactRegistered = (
+    args: IsAudienceContactRegisteredArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsAudienceContactRegisteredReturn> => {
+    return this.fetch(this.url('IsAudienceContactRegistered'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            registered: <boolean>_data.registered
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
-  const reqHeaders: {[key: string]: string} = { ...headers, 'Content-Type': 'application/json' }
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+  const reqHeaders: { [key: string]: string } = { ...headers, 'Content-Type': 'application/json' }
   reqHeaders[WebrpcHeader] = WebrpcHeaderValue
 
   return {
@@ -251,18 +284,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -444,7 +477,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
   }
 }
 
-
 // Schema errors
 
 export class UnauthorizedError extends WebrpcError {
@@ -603,7 +635,6 @@ export class AlreadyCollaboratorError extends WebrpcError {
   }
 }
 
-
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -626,7 +657,7 @@ export enum errors {
   InvalidArgument = 'InvalidArgument',
   NotFound = 'NotFound',
   UserNotFound = 'UserNotFound',
-  ProjectNotFound = 'ProjectNotFound',
+  ProjectNotFound = 'ProjectNotFound'
 }
 
 export enum WebrpcErrorCodes {
@@ -651,7 +682,7 @@ export enum WebrpcErrorCodes {
   InvalidArgument = 2001,
   NotFound = 3000,
   UserNotFound = 3001,
-  ProjectNotFound = 3002,
+  ProjectNotFound = 3002
 }
 
 export const webrpcErrorByCode: { [code: number]: any } = {
@@ -676,8 +707,7 @@ export const webrpcErrorByCode: { [code: number]: any } = {
   [2001]: InvalidArgumentError,
   [3000]: NotFoundError,
   [3001]: UserNotFoundError,
-  [3002]: ProjectNotFoundError,
+  [3002]: ProjectNotFoundError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-

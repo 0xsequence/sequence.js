@@ -5,71 +5,70 @@
 //
 // webrpc-gen -schema=indexer.ridl -service=IndexerGateway -target=typescript -client -out=./clients/indexergw/indexer.gen.ts
 
-export const WebrpcHeader = "Webrpc"
+export const WebrpcHeader = 'Webrpc'
 
-export const WebrpcHeaderValue = "webrpc@v0.21.1;gen-typescript@v0.15.1;sequence-indexer@v0.4.0"
+export const WebrpcHeaderValue = 'webrpc@v0.21.1;gen-typescript@v0.15.1;sequence-indexer@v0.4.0'
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "71cd081c5ca2372bf92a897ae1aa4ebf93ffd0fc"
+export const WebRPCSchemaHash = '71cd081c5ca2372bf92a897ae1aa4ebf93ffd0fc'
 
 type WebrpcGenVersions = {
-  webrpcGenVersion: string;
-  codeGenName: string;
-  codeGenVersion: string;
-  schemaName: string;
-  schemaVersion: string;
-};
+  webrpcGenVersion: string
+  codeGenName: string
+  codeGenVersion: string
+  schemaName: string
+  schemaVersion: string
+}
 
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
+  const headerValue = headers.get(WebrpcHeader)
   if (!headerValue) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  return parseWebrpcGenVersions(headerValue);
+  return parseWebrpcGenVersions(headerValue)
 }
 
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
+  const versions = header.split(';')
   if (versions.length < 3) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  const [_, webrpcGenVersion] = versions[0].split("@");
-  const [codeGenName, codeGenVersion] = versions[1].split("@");
-  const [schemaName, schemaVersion] = versions[2].split("@");
+  const [_, webrpcGenVersion] = versions[0].split('@')
+  const [codeGenName, codeGenVersion] = versions[1].split('@')
+  const [schemaName, schemaVersion] = versions[2].split('@')
 
   return {
     webrpcGenVersion,
     codeGenName,
     codeGenVersion,
     schemaName,
-    schemaVersion,
-  };
+    schemaVersion
+  }
 }
 
 //
 // Types
 //
-
 
 export interface ContractInfo {
   chainId: number
@@ -104,8 +103,8 @@ export interface TokenMetadata {
   image?: string
   video?: string
   audio?: string
-  properties?: {[key: string]: any}
-  attributes: Array<{[key: string]: any}>
+  properties?: { [key: string]: any }
+  attributes: Array<{ [key: string]: any }>
   image_data?: string
   external_url?: string
   background_color?: string
@@ -238,7 +237,7 @@ export interface DiskUsage {
   used: number
   size: number
   percent: number
-  dirs: {[key: string]: string}
+  dirs: { [key: string]: string }
 }
 
 export interface Bond {
@@ -303,7 +302,7 @@ export interface EventLog {
   logDataType: EventLogDataType
   ts: string
   txnInfo?: TxnInfo
-  rawLog?: {[key: string]: any}
+  rawLog?: { [key: string]: any }
   event?: EventDecoded
 }
 
@@ -404,7 +403,7 @@ export interface TxnTransfer {
   amounts: Array<string>
   logIndex: number
   contractInfo?: ContractInfo
-  tokenMetadata?: {[key: string]: TokenMetadata}
+  tokenMetadata?: { [key: string]: TokenMetadata }
 }
 
 export interface TransactionHistoryFilter {
@@ -530,11 +529,27 @@ export interface GatewayTokenBalance {
 }
 
 export interface IndexerGateway {
-  getNativeTokenBalance(args: GetNativeTokenBalanceArgs, headers?: object, signal?: AbortSignal): Promise<GetNativeTokenBalanceReturn>
+  getNativeTokenBalance(
+    args: GetNativeTokenBalanceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNativeTokenBalanceReturn>
   getTokenBalances(args: GetTokenBalancesArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesReturn>
-  getTokenBalancesSummary(args: GetTokenBalancesSummaryArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesSummaryReturn>
-  getTokenBalancesDetails(args: GetTokenBalancesDetailsArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesDetailsReturn>
-  getTokenBalancesByContract(args: GetTokenBalancesByContractArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesByContractReturn>
+  getTokenBalancesSummary(
+    args: GetTokenBalancesSummaryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenBalancesSummaryReturn>
+  getTokenBalancesDetails(
+    args: GetTokenBalancesDetailsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenBalancesDetailsReturn>
+  getTokenBalancesByContract(
+    args: GetTokenBalancesByContractArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenBalancesByContractReturn>
   getBalanceUpdates(args: GetBalanceUpdatesArgs, headers?: object, signal?: AbortSignal): Promise<GetBalanceUpdatesReturn>
   ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
   version(headers?: object, signal?: AbortSignal): Promise<VersionReturn>
@@ -547,7 +562,7 @@ export interface GetNativeTokenBalanceArgs {
 }
 
 export interface GetNativeTokenBalanceReturn {
-  balances: Array<GatewayNativeTokenBalance>  
+  balances: Array<GatewayNativeTokenBalance>
 }
 export interface GetTokenBalancesArgs {
   chainIds?: Array<number>
@@ -562,7 +577,7 @@ export interface GetTokenBalancesArgs {
 
 export interface GetTokenBalancesReturn {
   page: Page
-  balances: Array<GatewayTokenBalance>  
+  balances: Array<GatewayTokenBalance>
 }
 export interface GetTokenBalancesSummaryArgs {
   chainIds?: Array<number>
@@ -573,7 +588,7 @@ export interface GetTokenBalancesSummaryArgs {
 
 export interface GetTokenBalancesSummaryReturn {
   page: Page
-  balances: Array<GatewayTokenBalance>  
+  balances: Array<GatewayTokenBalance>
 }
 export interface GetTokenBalancesDetailsArgs {
   chainIds?: Array<number>
@@ -584,7 +599,7 @@ export interface GetTokenBalancesDetailsArgs {
 
 export interface GetTokenBalancesDetailsReturn {
   page: Page
-  balances: Array<GatewayTokenBalance>  
+  balances: Array<GatewayTokenBalance>
 }
 export interface GetTokenBalancesByContractArgs {
   chainIds?: Array<number>
@@ -595,7 +610,7 @@ export interface GetTokenBalancesByContractArgs {
 
 export interface GetTokenBalancesByContractReturn {
   page: Page
-  balances: Array<GatewayTokenBalance>  
+  balances: Array<GatewayTokenBalance>
 }
 export interface GetBalanceUpdatesArgs {
   chainIds?: Array<number>
@@ -607,29 +622,24 @@ export interface GetBalanceUpdatesArgs {
 
 export interface GetBalanceUpdatesReturn {
   page: Page
-  balances: Array<GatewayTokenBalance>  
+  balances: Array<GatewayTokenBalance>
 }
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
 
-
-  
 //
 // Client
 //
@@ -646,145 +656,166 @@ export class IndexerGateway implements IndexerGateway {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
-  getNativeTokenBalance = (args: GetNativeTokenBalanceArgs, headers?: object, signal?: AbortSignal): Promise<GetNativeTokenBalanceReturn> => {
-    return this.fetch(
-      this.url('GetNativeTokenBalance'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          balances: <Array<GatewayNativeTokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getNativeTokenBalance = (
+    args: GetNativeTokenBalanceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNativeTokenBalanceReturn> => {
+    return this.fetch(this.url('GetNativeTokenBalance'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            balances: <Array<GatewayNativeTokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTokenBalances = (args: GetTokenBalancesArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesReturn> => {
-    return this.fetch(
-      this.url('GetTokenBalances'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          balances: <Array<GatewayTokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTokenBalances'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            balances: <Array<GatewayTokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTokenBalancesSummary = (args: GetTokenBalancesSummaryArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesSummaryReturn> => {
-    return this.fetch(
-      this.url('GetTokenBalancesSummary'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          balances: <Array<GatewayTokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTokenBalancesSummary = (
+    args: GetTokenBalancesSummaryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenBalancesSummaryReturn> => {
+    return this.fetch(this.url('GetTokenBalancesSummary'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            balances: <Array<GatewayTokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTokenBalancesDetails = (args: GetTokenBalancesDetailsArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesDetailsReturn> => {
-    return this.fetch(
-      this.url('GetTokenBalancesDetails'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          balances: <Array<GatewayTokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTokenBalancesDetails = (
+    args: GetTokenBalancesDetailsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenBalancesDetailsReturn> => {
+    return this.fetch(this.url('GetTokenBalancesDetails'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            balances: <Array<GatewayTokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTokenBalancesByContract = (args: GetTokenBalancesByContractArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenBalancesByContractReturn> => {
-    return this.fetch(
-      this.url('GetTokenBalancesByContract'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          balances: <Array<GatewayTokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTokenBalancesByContract = (
+    args: GetTokenBalancesByContractArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenBalancesByContractReturn> => {
+    return this.fetch(this.url('GetTokenBalancesByContract'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            balances: <Array<GatewayTokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getBalanceUpdates = (args: GetBalanceUpdatesArgs, headers?: object, signal?: AbortSignal): Promise<GetBalanceUpdatesReturn> => {
-    return this.fetch(
-      this.url('GetBalanceUpdates'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          balances: <Array<GatewayTokenBalance>>(_data.balances),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetBalanceUpdates'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            balances: <Array<GatewayTokenBalance>>_data.balances
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   version = (headers?: object, signal?: AbortSignal): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          version: <Version>(_data.version),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            version: <Version>_data.version
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   runtimeStatus = (headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <RuntimeStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <RuntimeStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
-  const reqHeaders: {[key: string]: string} = { ...headers, 'Content-Type': 'application/json' }
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+  const reqHeaders: { [key: string]: string } = { ...headers, 'Content-Type': 'application/json' }
   reqHeaders[WebrpcHeader] = WebrpcHeaderValue
 
   return {
@@ -800,18 +831,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -992,7 +1023,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
     Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
   }
 }
-
 
 // Schema errors
 
@@ -1334,7 +1364,6 @@ export class MetadataCallFailedError extends WebrpcError {
   }
 }
 
-
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -1372,7 +1401,7 @@ export enum errors {
   QueryFailed = 'QueryFailed',
   ResourceExhausted = 'ResourceExhausted',
   NotFound = 'NotFound',
-  MetadataCallFailed = 'MetadataCallFailed',
+  MetadataCallFailed = 'MetadataCallFailed'
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -1412,8 +1441,7 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [2003]: QueryFailedError,
   [2004]: ResourceExhaustedError,
   [3000]: NotFoundError,
-  [3003]: MetadataCallFailedError,
+  [3003]: MetadataCallFailedError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-
