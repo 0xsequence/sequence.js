@@ -49,12 +49,22 @@ export class SequenceSigner extends ethers.AbstractSigner {
     return this.sequence.signMessage(args).then(response => response.data.signature)
   }
 
-  signTypedData(
+  async signTypedData(
     domain: ethers.TypedDataDomain,
     types: Record<string, ethers.TypedDataField[]>,
-    value: Record<string, any>
+    value: Record<string, any>,
+    authArgs?: CommonAuthArgs
   ): Promise<string> {
-    throw new Error('SequenceSigner does not support signTypedData')
+    await this._ensureNetworkValid(false)
+
+    const typedDataDigest = ethers.TypedDataEncoder.encode(domain, types, value)
+    
+    const args = {
+      message: typedDataDigest,
+      network: await this.getSimpleNetwork(),
+      ...authArgs
+    }
+    return this.sequence.signMessage(args).then(response => response.data.signature)
   }
 
   async signTransaction(_transaction: ethers.TransactionRequest): Promise<string> {
