@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.2.1
+
+### Patch Changes
+
+- waas-ethers: sign typed data
+- Updated dependencies
+  - @0xsequence/abi@2.2.1
+  - @0xsequence/core@2.2.1
+  - @0xsequence/migration@2.2.1
+  - @0xsequence/network@2.2.1
+  - @0xsequence/relayer@2.2.1
+  - @0xsequence/sessions@2.2.1
+  - @0xsequence/utils@2.2.1
+  - @0xsequence/wallet@2.2.1
+
 ## 2.2.0
 
 ### Minor Changes

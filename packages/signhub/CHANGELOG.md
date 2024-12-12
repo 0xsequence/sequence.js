@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.2.1
+
+### Patch Changes
+
+- waas-ethers: sign typed data
+- Updated dependencies
+  - @0xsequence/core@2.2.1
+
 ## 2.2.0
 
 ### Minor Changes
