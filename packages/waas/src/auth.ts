@@ -22,9 +22,11 @@ import {
   AdoptChildWalletArgs
 } from './intents'
 import {
+  ConfirmationRequiredResponse,
   FeeOptionsResponse,
   isChildWalletAdoptedResponse,
   isCloseSessionResponse,
+  isConfirmationRequiredResponse,
   isFeeOptionsResponse,
   isFinishValidateSessionResponse,
   isGetAdopterResponse,
@@ -168,7 +170,9 @@ export class SequenceWaaS {
   private validationRequiredCallback: (() => void)[] = []
   private emailConflictCallback: ((info: EmailConflictInfo, forceCreate: () => Promise<void>) => Promise<void>)[] = []
   private emailAuthCodeRequiredCallback: ((respondWithCode: (code: string) => Promise<void>) => Promise<void>)[] = []
+  private confirmationRequiredCallback: ((respondWithCode: (code: string) => Promise<void>) => Promise<void>)[] = []
   private validationRequiredSalt: string
+  private lastConfirmationAttemptAt: Date | undefined
 
   public readonly config: Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 
@@ -313,6 +317,13 @@ export class SequenceWaaS {
     }
   }
 
+  onConfirmationRequired(callback: (respondWithCode: (code: string) => Promise<void>) => Promise<void>) {
+    this.confirmationRequiredCallback.push(callback)
+    return () => {
+      this.confirmationRequiredCallback = this.confirmationRequiredCallback.filter(c => c !== callback)
+    }
+  }
+
   private async handleValidationRequired({ onValidationRequired }: ValidationArgs = {}): Promise<boolean> {
     const proceed = onValidationRequired ? onValidationRequired() : true
     if (!proceed) {
@@ -331,6 +342,45 @@ export class SequenceWaaS {
     }
 
     return this.waitForSessionValid()
+  }
+
+  private async handleConfirmationRequired(response: ConfirmationRequiredResponse) {
+    if (this.confirmationRequiredCallback.length === 0) {
+      throw new Error('Missing confirmationRequired callback')
+    }
+
+    return new Promise((resolve, reject) => {
+      const respondToChallenge = async (answer: string) => {
+        if (this.lastConfirmationAttemptAt) {
+          const timeSinceLastAttempt = new Date().getTime() - this.lastConfirmationAttemptAt.getTime()
+          if (timeSinceLastAttempt < 32000) {
+            console.info(`Waiting ${Math.ceil((32000 - timeSinceLastAttempt) / 1000)}s before retrying confirmation attempt`)
+            await new Promise(resolve => setTimeout(resolve, 32000 - timeSinceLastAttempt))
+          }
+        }
+
+        this.lastConfirmationAttemptAt = new Date()
+
+        const intent = await this.waas.confirmIntent(response.data.salt, answer)
+
+        try { 
+          const response2 = await this.sendIntent(intent)
+          resolve(response2)
+        } catch (e) {
+          if (e instanceof AnswerIncorrectError) {
+            // This will NOT resolve NOR reject the top-level promise returned from signIn, it'll keep being pending
+            // It allows the caller to retry calling the respondToChallenge callback
+            throw e
+          } else {
+            reject(e)
+          }
+        }
+      }
+
+      for (const callback of this.confirmationRequiredCallback) {
+        callback(respondToChallenge)
+      }
+    })
   }
 
   private headers() {
@@ -773,6 +823,15 @@ export class SequenceWaaS {
 
     if (isExpectedResponse(response)) {
       return response
+    }
+
+    if (isConfirmationRequiredResponse(response)) {
+      const response2 = await this.handleConfirmationRequired(response)
+      if (isExpectedResponse(response2)) {
+        return response2
+      } else {
+        throw new Error(JSON.stringify(response2))
+      }
     }
 
     if (isValidationRequiredResponse(response)) {
