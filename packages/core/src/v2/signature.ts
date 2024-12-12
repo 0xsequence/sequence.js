@@ -231,8 +231,8 @@ export async function recoverTopology(
 ): Promise<Topology> {
   if (isUnrecoveredNode(unrecovered)) {
     const [left, right] = await Promise.all([
-      recoverTopology(unrecovered.left, subdigest, provider),
-      recoverTopology(unrecovered.right, subdigest, provider)
+      recoverTopology(unrecovered.left, subdigest, provider, validateBehavior),
+      recoverTopology(unrecovered.right, subdigest, provider, validateBehavior)
     ])
 
     return { left, right }
@@ -242,7 +242,7 @@ export async function recoverTopology(
     return {
       weight: unrecovered.weight,
       threshold: unrecovered.threshold,
-      tree: await recoverTopology(unrecovered.tree, subdigest, provider)
+      tree: await recoverTopology(unrecovered.tree, subdigest, provider, validateBehavior)
     }
   }
 
