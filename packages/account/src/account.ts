@@ -669,7 +669,8 @@ export class Account {
     await this.tracker.savePresignedConfiguration({
       wallet: this.address,
       nextConfig: config,
-      signature
+      signature,
+      referenceChainId: 1
     })
 
     // safety check, tracker should have a reverse lookup for the imageHash
