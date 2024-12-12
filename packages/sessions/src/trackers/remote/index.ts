@@ -2,7 +2,7 @@ import { commons, universal, v1, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../../tracker'
-import { Sessions, SignatureType, Transaction } from './sessions.gen'
+import { Sessions, SignatureType, Transaction, SignerSignature as SessionsSignerSignature } from './sessions.gen'
 
 export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly sessions: Sessions
@@ -58,36 +58,27 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     chainId: ethers.BigNumberish
     signatures: string[] | SignerSignature[]
   }): Promise<void> {
-    let filteredSignatures = args.signatures
-    if (this.onlyRecoverable) {
-      filteredSignatures = filteredSignatures.filter(signature => {
-        if (typeof signature === 'string') {
-          return commons.signer.canRecover(signature)
-        } else {
-          return !!signature.address
+    const signerSignatures: SessionsSignerSignature[] = []
+    for (const signature of args.signatures) {
+      if (typeof signature === 'string') {
+        if (!this.onlyRecoverable || commons.signer.canRecover(signature)) {
+          signerSignatures.push({ signature })
         }
-      }) as string[] | SignerSignature[]
+      } else {
+        signerSignatures.push({
+          signer: signature.address,
+          signature: signature.signature,
+          referenceChainID: signature.referenceChainId?.toString()
+        })
+      }
     }
 
-    if (filteredSignatures.some(sig => typeof sig === 'string') && filteredSignatures.some(sig => typeof sig === 'object')) {
-      throw new Error('Signatures must be string[] | SignerSignature[]')
-    }
-    if (filteredSignatures.length === 0 || typeof args.signatures[0] === 'string') {
-      await this.sessions.saveSignerSignatures({
-        wallet: args.wallet,
-        digest: args.digest,
-        chainID: numberString(args.chainId),
-        signatures: filteredSignatures as string[]
-      })
-    } else {
-      await this.sessions.saveSignerSignatures2({
-        wallet: args.wallet,
-        digest: args.digest,
-        chainID: numberString(args.chainId),
-        // Rename "address" to "signer"
-        signatures: (filteredSignatures as SignerSignature[]).map(({ address, signature, referenceChainId }) => ({ signer: address, signature, referenceChainId: referenceChainId?.toString() }))
-      })
-    }
+    await this.sessions.saveSignerSignatures2({
+      wallet: args.wallet,
+      digest: args.digest,
+      chainID: numberString(args.chainId),
+      signatures: signerSignatures
+    })
   }
 
   async configOfImageHash(args: { imageHash: string }): Promise<commons.config.Config | undefined> {
