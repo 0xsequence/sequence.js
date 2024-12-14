@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.2.2
+
+### Patch Changes
+
+- pass projectAccessKey to relayer at all times
+- Updated dependencies
+  - @0xsequence/utils@2.2.2
+
 ## 2.2.1
 
 ### Patch Changes

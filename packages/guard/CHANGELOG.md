@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.2.2
+
+### Patch Changes
+
+- pass projectAccessKey to relayer at all times
+- Updated dependencies
+  - @0xsequence/account@2.2.2
+  - @0xsequence/core@2.2.2
+  - @0xsequence/signhub@2.2.2
+  - @0xsequence/utils@2.2.2
+
 ## 2.2.1
 
 ### Patch Changes

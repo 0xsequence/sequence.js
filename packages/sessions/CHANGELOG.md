@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.2.2
+
+### Patch Changes
+
+- pass projectAccessKey to relayer at all times
+- Updated dependencies
+  - @0xsequence/core@2.2.2
+  - @0xsequence/migration@2.2.2
+  - @0xsequence/replacer@2.2.2
+  - @0xsequence/utils@2.2.2
+
 ## 2.2.1
 
 ### Patch Changes

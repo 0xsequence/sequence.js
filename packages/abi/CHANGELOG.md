@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.2.2
+
+### Patch Changes
+
+- pass projectAccessKey to relayer at all times
+
 ## 2.2.1
 
 ### Patch Changes

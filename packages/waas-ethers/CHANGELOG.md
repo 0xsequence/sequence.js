@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.2.2
+
+### Patch Changes
+
+- pass projectAccessKey to relayer at all times
+- Updated dependencies
+  - @0xsequence/waas@2.2.2
+
 ## 2.2.1
 
 ### Patch Changes
