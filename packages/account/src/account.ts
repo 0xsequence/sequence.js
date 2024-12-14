@@ -215,9 +215,9 @@ export class Account {
     if (isRelayer(found.relayer)) return found.relayer
     return new RpcRelayer({
       ...found.relayer,
-      // If there's an access key, we don't pass the JWT, because browser-side usage of this code mandates an access key
-      // and passing a JWT causes a CORS error.
-      ...(this.projectAccessKey ? { projectAccessKey: this.projectAccessKey } : { jwtAuth: this.jwt })
+      // we pass both projectAccessKey and jwtAuth because the projectAccessKey is
+      // used either for unauthenticated access, or gas sponsorship even if the jwtAuth is provided,
+      ...({ projectAccessKey: this.projectAccessKey, jwtAuth: this.jwt })
     })
   }
 
