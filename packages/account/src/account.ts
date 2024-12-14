@@ -217,7 +217,7 @@ export class Account {
       ...found.relayer,
       // we pass both projectAccessKey and jwtAuth because the projectAccessKey is
       // used either for unauthenticated access, or gas sponsorship even if the jwtAuth is provided,
-      ...({ projectAccessKey: this.projectAccessKey, jwtAuth: this.jwt })
+      ...{ projectAccessKey: this.projectAccessKey, jwtAuth: this.jwt }
     })
   }
 
