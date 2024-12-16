@@ -57,14 +57,16 @@ export class SequenceSigner extends ethers.AbstractSigner {
   ): Promise<string> {
     await this._ensureNetworkValid(false)
 
-    const typedDataDigest = ethers.TypedDataEncoder.encode(domain, types, value)
-
     const args = {
-      message: typedDataDigest,
+      typedData: {
+        domain,
+        types,
+        message: value,
+      },
       network: await this.getSimpleNetwork(),
       ...authArgs
     }
-    return this.sequence.signMessage(args).then(response => response.data.signature)
+    return this.sequence.signTypedData(args).then(response => response.data.signature)
   }
 
   async signTransaction(_transaction: ethers.TransactionRequest): Promise<string> {
