@@ -84,58 +84,31 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
     }
   }
 
-  const rpcProviders: Record<number, ethers.JsonRpcProvider> = {}
+  let networks: NetworkConfig[] = []
 
-  // Find any new networks that aren't already defined in sequence.js
-  // and add them to the list of networks, (they must have a rpcUrl and chainId)
-  const newNetworks = (config.networks?.filter(n => {
-    // eslint-disable-next-line
-    n.rpcUrl !== undefined && n.chainId !== undefined && !allNetworks.find(an => an.chainId === n.chainId)
-  }) ?? []) as NetworkConfig[]
+  const updateNetworks = (connectedNetworks: NetworkConfig[] = []) => {
+    networks = mergeNetworks(allNetworks, connectedNetworks, config.networks ?? [])
 
-  // Override any information about the networks using the config
-  const combinedNetworks = allNetworks
-    .map(n => {
-      const network = config.networks?.find(cn => cn.chainId === n.chainId)
-      return network ? { ...n, ...network } : n
-    })
-    .concat(newNetworks)
-    .map(network => {
-      // don't double-append in the case the user has already included their access key in the rpc URL
+    // Append projectAccessKey to network rpcUrls
+    networks = networks.map(network => {
+      // Don't double-append in the case the user has already included their access key in the rpc URL
       if (network.rpcUrl.includes(projectAccessKey)) {
         return network
       }
 
-      // this will probably break non-sequence RPC provider URLs.
+      // XXX: This will probably break non-sequence RPC provider URLs.
       network.rpcUrl = network.rpcUrl + `/${projectAccessKey}`
+
       return network
     })
-
-  // This builds a "public rpc" on demand, we build them on demand because we don't want to
-  // generate a bunch of providers for networks that aren't used.
-  const providerForChainId = (chainId: number) => {
-    if (!rpcProviders[chainId]) {
-      const rpcUrl = combinedNetworks.find(n => n.chainId === chainId)?.rpcUrl
-      if (!rpcUrl) {
-        throw new Error(`no rpcUrl found for chainId: ${chainId}`)
-      }
-
-      rpcProviders[chainId] = new JsonRpcProvider(
-        rpcUrl,
-        {
-          middlewares: [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()]
-        },
-        { cacheTimeout: -1 }
-      )
-    }
-
-    return rpcProviders[chainId]
   }
+
+  updateNetworks()
 
   // This is the starting default network (as defined by the config)
   // it can be later be changed using `wallet_switchEthereumChain` or some
   // of the other methods on the provider.
-  const defaultNetwork = config.defaultNetwork ? findNetworkConfig(combinedNetworks, config.defaultNetwork)?.chainId : undefined
+  const defaultNetwork = config.defaultNetwork ? findNetworkConfig(networks, config.defaultNetwork)?.chainId : undefined
   if (!defaultNetwork && config.defaultNetwork) {
     throw new Error(`defaultNetwork not found for chainId: ${config.defaultNetwork}`)
   }
@@ -150,6 +123,39 @@ export const initWallet = (projectAccessKey: string, partialConfig?: Partial<Pro
     projectAccessKey: projectAccessKey,
     analytics: config.analytics
   })
+
+  updateNetworks(client.getSession()?.networks)
+
+  client.onConnect(ev => {
+    updateNetworks(ev.session?.networks)
+  })
+
+  const rpcProviders: Record<string, ethers.JsonRpcProvider> = {}
+
+  // This builds a "public rpc" on demand, we build them on demand because we don't want to
+  // generate a bunch of providers for networks that aren't used.
+  const providerForChainId = (chainId: number) => {
+    const network = findNetworkConfig(networks, chainId)
+
+    if (!network) {
+      throw new Error(`no network config found for chainId: ${chainId}`)
+    }
+
+    const { rpcUrl } = network
+
+    // Cache providers by rpc url
+    if (!rpcProviders[rpcUrl]) {
+      rpcProviders[rpcUrl] = new JsonRpcProvider(
+        rpcUrl,
+        {
+          middlewares: [loggingProviderMiddleware, exceptionProviderMiddleware, new CachedProvider()]
+        },
+        { cacheTimeout: -1 }
+      )
+    }
+
+    return rpcProviders[rpcUrl]
+  }
 
   sequenceWalletProvider = new SequenceProvider(client, providerForChainId)
   return sequenceWalletProvider
@@ -167,4 +173,19 @@ export const getWallet = () => {
     throw new Error('Wallet has not been initialized, call sequence.initWallet(config) first.')
   }
   return sequenceWalletProvider
+}
+
+// allNetworks <- connectedNetworks <- config.networks
+const mergeNetworks = (...networks: Partial<NetworkConfig>[][]) => {
+  const networkMap = new Map<number, NetworkConfig>()
+
+  for (const network of networks.flat()) {
+    if (network.chainId && network.rpcUrl) {
+      const existingNetwork = networkMap.get(network.chainId)
+
+      networkMap.set(network.chainId, { ...existingNetwork, ...network } as NetworkConfig)
+    }
+  }
+
+  return Array.from(networkMap.values())
 }
