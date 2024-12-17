@@ -4,6 +4,7 @@ import * as config from './config'
 export type SignaturePart = {
   signature: string
   isDynamic: boolean
+  validationSignature?: string
 }
 
 export type Signature<T extends config.Config> = {
@@ -34,7 +35,7 @@ export interface SignatureCoder<
 
   trim: (data: string) => Promise<string>
 
-  recover: (data: Z, payload: SignedPayload, provider: ethers.Provider) => Promise<T>
+  recover: (data: Z, payload: SignedPayload, provider?: ethers.Provider, validateBehavior?: 'ignore' | 'throw') => Promise<T>
 
   supportsNoChainId: boolean
 
@@ -54,7 +55,7 @@ export interface SignatureCoder<
 
   hashSetImageHash: (imageHash: string) => string
 
-  signaturesOf: (config: Y) => { address: string; signature: string }[]
+  signaturesOf: (config: Y, referenceChainId?: ethers.BigNumberish) => { address: string; signature: string }[]
 
   signaturesOfDecoded: (decoded: Z) => string[]
 }

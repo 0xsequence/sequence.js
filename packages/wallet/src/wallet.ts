@@ -40,8 +40,13 @@ const statusToSignatureParts = (status: Status) => {
     if (value.state === SignerState.SIGNED) {
       const suffix = ethers.getBytes(value.suffix)
       const suffixed = ethers.solidityPacked(['bytes', 'bytes'], [value.signature, suffix])
+      const validationSignature = value.validationSignature ? ethers.hexlify(value.validationSignature) : undefined
 
-      parts.set(signer, { signature: suffixed, isDynamic: suffix.length !== 1 || suffix[0] !== 2 })
+      parts.set(signer, {
+        signature: suffixed,
+        isDynamic: suffix.length !== 1 || suffix[0] !== 2,
+        validationSignature
+      })
     }
   }
 
@@ -433,10 +438,11 @@ export class Wallet<
   }
 
   async fillGasLimits(txs: commons.transaction.Transactionish): Promise<commons.transaction.SimulatedTransaction[]> {
-    const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
-    const transactions = commons.transaction.fromTransactionish(this.address, transaction)
     const relayer = this.relayer
     if (!relayer) throw new Error('Wallet fillGasLimits requires a relayer')
+
+    const transaction = await resolveArrayProperties<commons.transaction.Transactionish>(txs)
+    const transactions = commons.transaction.fromTransactionish(this.address, transaction)
 
     const simulations = await relayer.simulate(this.address, ...transactions)
     return transactions.map((tx, i) => {

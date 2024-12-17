@@ -61,6 +61,11 @@ export type AccountOptions = {
   projectAccessKey?: string
 }
 
+export type AccountCoders = {
+  signature: commons.signature.SignatureCoder
+  config: commons.config.ConfigCoder
+}
+
 export interface PreparedTransactions {
   transactions: commons.transaction.SimulatedTransaction[]
   flatDecorated: commons.transaction.Transaction[]
@@ -164,10 +169,7 @@ export class Account {
     return this.migrator.lastMigration().version
   }
 
-  get coders(): {
-    signature: commons.signature.SignatureCoder
-    config: commons.config.ConfigCoder
-  } {
+  get coders(): AccountCoders {
     const lastMigration = this.migrator.lastMigration()
 
     return {
@@ -244,7 +246,7 @@ export class Account {
     chainId: ethers.BigNumberish,
     context: commons.context.WalletContext,
     config: commons.config.Config,
-    coders: typeof this.coders
+    coders: AccountCoders,
   ): Wallet {
     const isNetworkZero = BigInt(chainId) === 0n
     return new Wallet({
@@ -505,9 +507,8 @@ export class Account {
 
     const wallet = this.walletFor(chainId, status.original.context, allOfAll, this.coders)
     const signature = await wallet.signDigest(digest)
-
     const decoded = this.coders.signature.decode(signature)
-    const signatures = this.coders.signature.signaturesOfDecoded(decoded)
+    const signatures = this.coders.signature.signaturesOf(decoded)
 
     if (signatures.length === 0) {
       throw new Error('No signatures found')
@@ -516,12 +517,15 @@ export class Account {
     return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures })
   }
 
-  async publishWitness(): Promise<void> {
+  async publishWitness(chainId: ethers.BigNumberish = 0, referenceChainId?: ethers.BigNumberish): Promise<void> {
     const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
-    const signature = await this.signDigest(digest, 0, false)
+    // Apply ERC-6492 to undeployed children
+    const signature = await this.signDigest(digest, 0, false, 'ignore', {chainId, referenceChainId, cantValidateBehavior: "eip6492"})
     const decoded = this.coders.signature.decode(signature)
-    const signatures = this.coders.signature.signaturesOfDecoded(decoded)
-    return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId: 0, signatures })
+    const recovered = await this.coders.signature.recover(decoded, { digest, chainId, address: this.address }, undefined, 'ignore')
+    const signatures = this.coders.signature.signaturesOf(recovered.config)
+    const signaturesWithReferenceChainId = signatures.map(s => ({...s, referenceChainId}))
+    return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures: signaturesWithReferenceChainId })
   }
 
   async signDigest(

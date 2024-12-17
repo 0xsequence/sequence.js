@@ -1,8 +1,8 @@
 import { commons, universal, v1, v2 } from '@0xsequence/core'
 import { migrator } from '@0xsequence/migration'
 import { ethers } from 'ethers'
-import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../../tracker'
-import { Sessions, SignatureType, Transaction } from './sessions.gen'
+import { ConfigTracker, PresignedConfig, PresignedConfigLink, SignerSignature } from '../../tracker'
+import { Sessions, SignatureType, Transaction, SignerSignature as SessionsSignerSignature } from './sessions.gen'
 
 export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly sessions: Sessions
@@ -56,20 +56,28 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     wallet: string
     digest: string
     chainId: ethers.BigNumberish
-    signatures: string[]
+    signatures: string[] | SignerSignature[]
   }): Promise<void> {
-    let filteredSignatures = args.signatures
-    if (this.onlyRecoverable) {
-      filteredSignatures = filteredSignatures.filter(signature => {
-        return commons.signer.canRecover(signature)
-      })
+    const signerSignatures: SessionsSignerSignature[] = []
+    for (const signature of args.signatures) {
+      if (typeof signature === 'string') {
+        if (!this.onlyRecoverable || commons.signer.canRecover(signature)) {
+          signerSignatures.push({ signature })
+        }
+      } else {
+        signerSignatures.push({
+          signer: signature.address,
+          signature: signature.signature,
+          referenceChainID: signature.referenceChainId?.toString()
+        })
+      }
     }
 
-    await this.sessions.saveSignerSignatures({
+    await this.sessions.saveSignerSignatures2({
       wallet: args.wallet,
       digest: args.digest,
       chainID: numberString(args.chainId),
-      signatures: filteredSignatures
+      signatures: signerSignatures
     })
   }
 
