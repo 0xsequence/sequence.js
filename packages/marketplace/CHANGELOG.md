@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.2.3
+
+### Patch Changes
+
+- provider: updating initWallet to use connected network configs if they exist
+
 ## 2.2.2
 
 ### Patch Changes

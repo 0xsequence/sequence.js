@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 2.2.3
+
+### Patch Changes
+
+- provider: updating initWallet to use connected network configs if they exist
+- Updated dependencies
+  - @0xsequence/abi@2.2.3
+  - @0xsequence/account@2.2.3
+  - @0xsequence/api@2.2.3
+  - @0xsequence/auth@2.2.3
+  - @0xsequence/core@2.2.3
+  - @0xsequence/guard@2.2.3
+  - @0xsequence/indexer@2.2.3
+  - @0xsequence/metadata@2.2.3
+  - @0xsequence/migration@2.2.3
+  - @0xsequence/network@2.2.3
+  - @0xsequence/provider@2.2.3
+  - @0xsequence/relayer@2.2.3
+  - @0xsequence/sessions@2.2.3
+  - @0xsequence/signhub@2.2.3
+  - @0xsequence/utils@2.2.3
+  - @0xsequence/wallet@2.2.3
+
 ## 2.2.2
 
 ### Patch Changes

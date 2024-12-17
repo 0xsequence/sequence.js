@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.2.3
+
+### Patch Changes
+
+- provider: updating initWallet to use connected network configs if they exist
+- Updated dependencies
+  - @0xsequence/account@2.2.3
+  - @0xsequence/core@2.2.3
+  - @0xsequence/signhub@2.2.3
+  - @0xsequence/utils@2.2.3
+
 ## 2.2.2
 
 ### Patch Changes

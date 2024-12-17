@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.2.3
+
+### Patch Changes
+
+- provider: updating initWallet to use connected network configs if they exist
+- Updated dependencies
+  - @0xsequence/waas@2.2.3
+
 ## 2.2.2
 
 ### Patch Changes
