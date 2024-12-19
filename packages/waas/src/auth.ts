@@ -19,7 +19,8 @@ import {
   SignMessageArgs,
   getTimeDrift,
   updateTimeDrift,
-  getLocalTime
+  getLocalTime,
+  SignTypedDataArgs
 } from './intents'
 import {
   FeeOptionsResponse,
@@ -35,10 +36,12 @@ import {
   isMaySentTransactionResponse,
   isSessionAuthProofResponse,
   isSignedMessageResponse,
+  isSignedTypedDataResponse,
   isTimedOutTransactionResponse,
   isValidationRequiredResponse,
   MaySentTransactionResponse,
-  SignedMessageResponse
+  SignedMessageResponse,
+  SignedTypedDataResponse
 } from './intents/responses'
 import { WaasAuthenticator, AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
@@ -778,6 +781,13 @@ export class SequenceWaaS {
 
     const intent = await this.waas.signMessage(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSignedMessageResponse)
+  }
+
+  async signTypedData(args: WithSimpleNetwork<SignTypedDataArgs> & CommonAuthArgs): Promise<SignedTypedDataResponse> {
+    await this.updateTimeDrift()
+
+    const intent = await this.waas.signTypedData(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSignedTypedDataResponse)
   }
 
   private async trySendTransactionIntent(
