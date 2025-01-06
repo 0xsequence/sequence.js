@@ -852,7 +852,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: false,
     blockExplorer: {
       name: 'Soneium Explorer',
-      rootUrl: 'https://vk9a3tgpne6qmub8.blockscout.com/'
+      rootUrl: 'https://xckc3jvrzboyo8w4.blockscout.com/'
     },
     nativeToken: {
       symbol: 'ETH',
