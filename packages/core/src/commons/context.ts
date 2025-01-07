@@ -12,6 +12,8 @@ export type WalletContext = {
   guestModule: string
 
   walletCreationCode: string
+
+  proxyImplementationHook?: string;
 }
 
 export function addressOf(context: WalletContext, imageHash: ethers.BytesLike) {
