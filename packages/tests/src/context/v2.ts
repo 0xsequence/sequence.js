@@ -43,6 +43,7 @@ export async function deployV2Context(signer: ethers.Signer): Promise<coreV2.con
     guestModule: await guestModule.getAddress(),
     universalSigValidator: await universalSigValidator.getAddress(),
 
-    walletCreationCode: '0x603a600e3d39601a805130553df3363d3d373d3d3d363d30545af43d82803e903d91601857fd5bf3'
+    walletCreationCode: '0x603a600e3d39601a805130553df3363d3d373d3d3d363d30545af43d82803e903d91601857fd5bf3',
+    proxyImplementationHook: '0x1f56dbAD5e8319F0DE9a323E24A31b5077dEB1a4'
   }
 }

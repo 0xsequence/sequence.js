@@ -413,7 +413,8 @@ export class Account {
     }
 
     // On immutable chains, we add the WalletProxyHook
-    if (chainId === ChainId.IMMUTABLE_ZKEVM || chainId === ChainId.IMMUTABLE_ZKEVM_TESTNET) {
+    const { proxyImplementationHook } = this.contexts[status.config.version]
+    if (proxyImplementationHook && (chainId === ChainId.IMMUTABLE_ZKEVM || chainId === ChainId.IMMUTABLE_ZKEVM_TESTNET)) {
       const provider = this.providerFor(chainId)
       if (provider) {
         const hook = new ethers.Contract(this.address, walletContracts.walletProxyHook.abi, provider)
@@ -431,7 +432,7 @@ export class Account {
             to: this.address,
             data: hooksInterface.encodeFunctionData(hooksInterface.getFunction('addHook')!, [
               '0x90611127',
-              '0x1f56dbAD5e8319F0DE9a323E24A31b5077dEB1a4'
+              proxyImplementationHook,
             ]),
             gasLimit: 50000, // Expected ~28k gas. Buffer added
             delegateCall: false,
