@@ -1,5 +1,12 @@
 # @0xsequence/indexer
 
+## 2.2.4
+
+### Patch Changes
+
+- network: update soneium mainnet block explorer url
+- waas: signTypedData intent support
+
 ## 2.2.3
 
 ### Patch Changes

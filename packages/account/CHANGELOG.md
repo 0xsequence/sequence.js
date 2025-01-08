@@ -1,5 +1,22 @@
 # @0xsequence/account
 
+## 2.2.4
+
+### Patch Changes
+
+- network: update soneium mainnet block explorer url
+- waas: signTypedData intent support
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.2.4
+  - @0xsequence/core@2.2.4
+  - @0xsequence/migration@2.2.4
+  - @0xsequence/network@2.2.4
+  - @0xsequence/relayer@2.2.4
+  - @0xsequence/sessions@2.2.4
+  - @0xsequence/utils@2.2.4
+  - @0xsequence/wallet@2.2.4
+
 ## 2.2.3
 
 ### Patch Changes
