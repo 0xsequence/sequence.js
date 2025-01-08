@@ -271,7 +271,7 @@ export class Services {
   async getIndexerGateway(tryAuth: boolean = true): Promise<SequenceIndexerGateway> {
     if (!this.indexerGateway) {
       const jwtAuth = (await this.getJWT(tryAuth)).token
-      this.indexerGateway = new SequenceIndexerGateway(this.settings.sequenceMetadataUrl, undefined, jwtAuth)
+      this.indexerGateway = new SequenceIndexerGateway(this.settings.sequenceIndexerGatewayUrl, undefined, jwtAuth)
     }
 
     return this.indexerGateway
