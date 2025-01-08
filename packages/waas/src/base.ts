@@ -28,6 +28,8 @@ import {
   signIntent,
   signMessage,
   SignMessageArgs,
+  signTypedData,
+  SignTypedDataArgs,
   validateSession
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
@@ -47,6 +49,7 @@ import {
   IntentDataOpenSession,
   IntentDataSendTransaction,
   IntentDataSignMessage,
+  IntentDataSignTypedData,
   IntentDataValidateSession
 } from './clients/intent.gen'
 import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
@@ -413,6 +416,28 @@ export class SequenceWaaSBase {
    */
   async signMessage(args: WithSimpleNetwork<SignMessageArgs> & ExtraArgs): Promise<SignedIntent<IntentDataSignMessage>> {
     const packet = signMessage({
+      chainId: toNetworkID(args.network || this.config.network),
+      ...args,
+      lifespan: args.lifespan ?? DEFAULT_LIFESPAN,
+      wallet: await this.getWalletAddress()
+    })
+
+    return this.signIntent(packet)
+  }
+
+  /**
+   * This method can be used to sign typed data using waas API. It can only be used
+   * after successfully signing in with the `signIn` and `completeSignIn` methods.
+   *
+   * The method does not sign the typed data. It only returns a payload
+   * that must be sent to the waas API to complete the sign process.
+   *
+   * @param chainId The network on which the typed data will be signed
+   * @param typedData  The typed data that will be signed
+   * @return a payload that must be sent to the waas API to complete sign process
+   */
+  async signTypedData(args: WithSimpleNetwork<SignTypedDataArgs> & ExtraArgs): Promise<SignedIntent<IntentDataSignTypedData>> {
+    const packet = signTypedData({
       chainId: toNetworkID(args.network || this.config.network),
       ...args,
       lifespan: args.lifespan ?? DEFAULT_LIFESPAN,

@@ -107,6 +107,14 @@ export type SignedMessageResponse = {
   }
 }
 
+export type SignedTypedDataResponse = {
+  code: 'signedTypedData'
+  data: {
+    typedData: any
+    signature: string
+  }
+}
+
 export type SessionAuthProofResponse = {
   code: 'sessionAuthProof'
   data: {
@@ -200,6 +208,17 @@ export function isSignedMessageResponse(receipt: any): receipt is SignedMessageR
     receipt.code === 'signedMessage' &&
     typeof receipt.data === 'object' &&
     typeof receipt.data.message === 'string' &&
+    typeof receipt.data.signature === 'string'
+  )
+}
+
+export function isSignedTypedDataResponse(receipt: any): receipt is SignedTypedDataResponse {
+  return (
+    typeof receipt === 'object' &&
+    typeof receipt.code === 'string' &&
+    receipt.code === 'signedTypedData' &&
+    typeof receipt.data === 'object' &&
+    typeof receipt.data.encodedTypedData === 'string' &&
     typeof receipt.data.signature === 'string'
   )
 }
