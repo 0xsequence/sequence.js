@@ -44,6 +44,7 @@ import {
   SignedTypedDataResponse
 } from './intents/responses'
 import { WaasAuthenticator, AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
+import { NoPrivateKeyError } from './errors'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
@@ -607,8 +608,18 @@ export class SequenceWaaS {
         throw new Error('No secure store available')
       }
 
-      const session = await newSessionFromSessionId(thisSessionId, this.cryptoBackend, this.secureStoreBackend)
-      session.clear()
+      try {
+        const session = await newSessionFromSessionId(thisSessionId, this.cryptoBackend, this.secureStoreBackend)
+        session.clear()
+      } catch (error) {
+        if (error instanceof NoPrivateKeyError) {
+          // If no private key is found, we can't clear the session properly
+          // but we can still clean up other session data which will log us out
+        } else {
+          throw error
+        }
+      }
+
       await this.waas.completeSignOut()
       await this.deviceName.set(undefined)
       updateTimeDrift(undefined)
