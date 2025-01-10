@@ -1,5 +1,15 @@
 # @0xsequence/react-native
 
+## 2.2.5
+
+### Patch Changes
+
+- auth: fix sequence indexer gateway url
+- account: immutable wallet proxy hook
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/waas@2.2.5
+
 ## 2.2.4
 
 ### Patch Changes

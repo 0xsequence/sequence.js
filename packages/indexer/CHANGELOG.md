@@ -1,5 +1,12 @@
 # @0xsequence/indexer
 
+## 2.2.5
+
+### Patch Changes
+
+- auth: fix sequence indexer gateway url
+- account: immutable wallet proxy hook
+
 ## 2.2.4
 
 ### Patch Changes
