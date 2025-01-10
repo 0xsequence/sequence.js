@@ -61,7 +61,7 @@ export class SequenceSigner extends ethers.AbstractSigner {
       typedData: {
         domain,
         types,
-        message: value,
+        message: value
       },
       network: await this.getSimpleNetwork(),
       ...authArgs
