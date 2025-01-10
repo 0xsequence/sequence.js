@@ -24,7 +24,12 @@ export type SignTypedDataArgs = {
   typedData: any
 }
 
-export function signTypedData({ wallet, chainId, typedData, lifespan }: SignTypedDataArgs & BaseArgs): Intent<IntentDataSignTypedData> {
+export function signTypedData({
+  wallet,
+  chainId,
+  typedData,
+  lifespan
+}: SignTypedDataArgs & BaseArgs): Intent<IntentDataSignTypedData> {
   return makeIntent(IntentName.signTypedData, lifespan, {
     wallet,
     network: chainId.toString(),
