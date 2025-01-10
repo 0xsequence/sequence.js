@@ -6,18 +6,17 @@
 // webrpc-gen -schema=intent.ridl -target=typescript -out=./intent.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.1.0"
+export const WebRPCSchemaVersion = 'v0.1.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "2ceeffac8ca0cebead69d58a1aa7a27d30ecb864"
+export const WebRPCSchemaHash = '2ceeffac8ca0cebead69d58a1aa7a27d30ecb864'
 
 //
 // Types
 //
-
 
 export enum IntentName {
   initiateAuth = 'initiateAuth',
@@ -314,11 +313,9 @@ export interface IntentResponseSessionOpened {
   wallet: string
 }
 
-export interface IntentResponseSessionClosed {
-}
+export interface IntentResponseSessionClosed {}
 
-export interface IntentResponseValidateSession {
-}
+export interface IntentResponseValidateSession {}
 
 export interface IntentResponseValidationRequired {
   sessionId: string
@@ -407,8 +404,7 @@ export interface IntentResponseAccountFederated {
   account: Account
 }
 
-export interface IntentResponseAccountRemoved {
-}
+export interface IntentResponseAccountRemoved {}
 
 export interface IntentResponseIdToken {
   idToken: string
