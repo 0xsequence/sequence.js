@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import { SecureStoreBackend } from '../secure-store'
 import { Session } from './index'
+import { NoPrivateKeyError } from '../errors'
 
 const idbName = 'seq-waas-session-p256k1'
 const idbStoreName = 'seq-waas-session'
@@ -12,7 +13,7 @@ export async function newSECP256K1SessionFromSessionId(
   const privateKey = await secureStoreBackend.get(idbName, idbStoreName, sessionId)
 
   if (!privateKey) {
-    throw new Error('No private key found')
+    throw new NoPrivateKeyError()
   }
 
   const wallet = new ethers.Wallet(privateKey)
