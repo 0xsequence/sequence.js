@@ -432,7 +432,7 @@ export class Account {
             to: this.address,
             data: hooksInterface.encodeFunctionData(hooksInterface.getFunction('addHook')!, [
               '0x90611127',
-              proxyImplementationHook,
+              proxyImplementationHook
             ]),
             gasLimit: 50000, // Expected ~28k gas. Buffer added
             delegateCall: false,
