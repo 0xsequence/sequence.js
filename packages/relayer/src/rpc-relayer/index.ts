@@ -220,7 +220,7 @@ export class RpcRelayer implements Relayer {
           walletAddress: signedTxs.intent.wallet,
           contract: signedTxs.entrypoint,
           input: data,
-          chainId: 0, // TODO: how to you set it here?
+          chainId: 0 // TODO: how to you set it here?
         },
         quote: typecheckedQuote
       },

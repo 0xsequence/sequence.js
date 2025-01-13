@@ -6,18 +6,17 @@
 // webrpc-gen -schema=relayer.ridl -target=typescript -client -out=./clients/relayer.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.1"
+export const WebRPCSchemaVersion = 'v0.4.1'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "904b2d766c6deda7180931a1bb558929502143fc"
+export const WebRPCSchemaHash = '904b2d766c6deda7180931a1bb558929502143fc'
 
 //
 // Types
 //
-
 
 export enum ETHTxnStatus {
   UNKNOWN = 'UNKNOWN',
@@ -76,8 +75,7 @@ export interface SenderStatus {
   active: boolean
 }
 
-export interface RuntimeChecks {
-}
+export interface RuntimeChecks {}
 
 export interface SequenceContext {
   factory: string
@@ -153,8 +151,8 @@ export interface MetaTxnLog {
   minedAt: string
   target: string
   input: string
-  txnArgs: {[key: string]: any}
-  txnReceipt?: {[key: string]: any}
+  txnArgs: { [key: string]: any }
+  txnReceipt?: { [key: string]: any }
   walletAddress: string
   metaTxnNonce: string
   gasLimit: number
@@ -193,7 +191,7 @@ export interface Transaction {
   chainId: number
   metaTxnID?: string
   transfers?: Array<TxnLogTransfer>
-  users?: {[key: string]: TxnLogUser}
+  users?: { [key: string]: TxnLogUser }
   timestamp: string
 }
 
@@ -268,10 +266,18 @@ export interface Relayer {
   getMetaTxnNonce(args: GetMetaTxnNonceArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTxnNonceReturn>
   getMetaTxnReceipt(args: GetMetaTxnReceiptArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTxnReceiptReturn>
   simulate(args: SimulateArgs, headers?: object, signal?: AbortSignal): Promise<SimulateReturn>
-  updateMetaTxnGasLimits(args: UpdateMetaTxnGasLimitsArgs, headers?: object, signal?: AbortSignal): Promise<UpdateMetaTxnGasLimitsReturn>
+  updateMetaTxnGasLimits(
+    args: UpdateMetaTxnGasLimitsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateMetaTxnGasLimitsReturn>
   feeTokens(headers?: object, signal?: AbortSignal): Promise<FeeTokensReturn>
   feeOptions(args: FeeOptionsArgs, headers?: object, signal?: AbortSignal): Promise<FeeOptionsReturn>
-  getMetaTxnNetworkFeeOptions(args: GetMetaTxnNetworkFeeOptionsArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTxnNetworkFeeOptionsReturn>
+  getMetaTxnNetworkFeeOptions(
+    args: GetMetaTxnNetworkFeeOptionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetMetaTxnNetworkFeeOptionsReturn>
   getMetaTransactions(args: GetMetaTransactionsArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTransactionsReturn>
   getTransactionCost(args: GetTransactionCostArgs, headers?: object, signal?: AbortSignal): Promise<GetTransactionCostReturn>
   sentTransactions(args: SentTransactionsArgs, headers?: object, signal?: AbortSignal): Promise<SentTransactionsReturn>
@@ -285,44 +291,63 @@ export interface Relayer {
   addGasSponsor(args: AddGasSponsorArgs, headers?: object, signal?: AbortSignal): Promise<AddGasSponsorReturn>
   updateGasSponsor(args: UpdateGasSponsorArgs, headers?: object, signal?: AbortSignal): Promise<UpdateGasSponsorReturn>
   removeGasSponsor(args: RemoveGasSponsorArgs, headers?: object, signal?: AbortSignal): Promise<RemoveGasSponsorReturn>
-  reportGasSponsorUsage(args: ReportGasSponsorUsageArgs, headers?: object, signal?: AbortSignal): Promise<ReportGasSponsorUsageReturn>
-  nextGasTankBalanceAdjustmentNonce(args: NextGasTankBalanceAdjustmentNonceArgs, headers?: object, signal?: AbortSignal): Promise<NextGasTankBalanceAdjustmentNonceReturn>
-  adjustGasTankBalance(args: AdjustGasTankBalanceArgs, headers?: object, signal?: AbortSignal): Promise<AdjustGasTankBalanceReturn>
-  getGasTankBalanceAdjustment(args: GetGasTankBalanceAdjustmentArgs, headers?: object, signal?: AbortSignal): Promise<GetGasTankBalanceAdjustmentReturn>
-  listGasTankBalanceAdjustments(args: ListGasTankBalanceAdjustmentsArgs, headers?: object, signal?: AbortSignal): Promise<ListGasTankBalanceAdjustmentsReturn>
+  reportGasSponsorUsage(
+    args: ReportGasSponsorUsageArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ReportGasSponsorUsageReturn>
+  nextGasTankBalanceAdjustmentNonce(
+    args: NextGasTankBalanceAdjustmentNonceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<NextGasTankBalanceAdjustmentNonceReturn>
+  adjustGasTankBalance(
+    args: AdjustGasTankBalanceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AdjustGasTankBalanceReturn>
+  getGasTankBalanceAdjustment(
+    args: GetGasTankBalanceAdjustmentArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetGasTankBalanceAdjustmentReturn>
+  listGasTankBalanceAdjustments(
+    args: ListGasTankBalanceAdjustmentsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListGasTankBalanceAdjustmentsReturn>
   getProjectBalance(args: GetProjectBalanceArgs, headers?: object, signal?: AbortSignal): Promise<GetProjectBalanceReturn>
-  adjustProjectBalance(args: AdjustProjectBalanceArgs, headers?: object, signal?: AbortSignal): Promise<AdjustProjectBalanceReturn>
+  adjustProjectBalance(
+    args: AdjustProjectBalanceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AdjustProjectBalanceReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
-export interface GetSequenceContextArgs {
-}
+export interface GetSequenceContextArgs {}
 
 export interface GetSequenceContextReturn {
-  data: SequenceContext  
+  data: SequenceContext
 }
-export interface GetChainIDArgs {
-}
+export interface GetChainIDArgs {}
 
 export interface GetChainIDReturn {
-  chainID: number  
+  chainID: number
 }
 export interface SendMetaTxnArgs {
   call: MetaTxn
@@ -332,7 +357,7 @@ export interface SendMetaTxnArgs {
 
 export interface SendMetaTxnReturn {
   status: boolean
-  txnHash: string  
+  txnHash: string
 }
 export interface GetMetaTxnNonceArgs {
   walletContractAddress: string
@@ -340,14 +365,14 @@ export interface GetMetaTxnNonceArgs {
 }
 
 export interface GetMetaTxnNonceReturn {
-  nonce: string  
+  nonce: string
 }
 export interface GetMetaTxnReceiptArgs {
   metaTxID: string
 }
 
 export interface GetMetaTxnReceiptReturn {
-  receipt: MetaTxnReceipt  
+  receipt: MetaTxnReceipt
 }
 export interface SimulateArgs {
   wallet: string
@@ -355,7 +380,7 @@ export interface SimulateArgs {
 }
 
 export interface SimulateReturn {
-  results: Array<SimulateResult>  
+  results: Array<SimulateResult>
 }
 export interface UpdateMetaTxnGasLimitsArgs {
   walletAddress: string
@@ -364,14 +389,13 @@ export interface UpdateMetaTxnGasLimitsArgs {
 }
 
 export interface UpdateMetaTxnGasLimitsReturn {
-  payload: string  
+  payload: string
 }
-export interface FeeTokensArgs {
-}
+export interface FeeTokensArgs {}
 
 export interface FeeTokensReturn {
   isFeeRequired: boolean
-  tokens: Array<FeeToken>  
+  tokens: Array<FeeToken>
 }
 export interface FeeOptionsArgs {
   wallet: string
@@ -383,7 +407,7 @@ export interface FeeOptionsArgs {
 export interface FeeOptionsReturn {
   options: Array<FeeOption>
   sponsored: boolean
-  quote?: string  
+  quote?: string
 }
 export interface GetMetaTxnNetworkFeeOptionsArgs {
   walletConfig: any
@@ -391,7 +415,7 @@ export interface GetMetaTxnNetworkFeeOptionsArgs {
 }
 
 export interface GetMetaTxnNetworkFeeOptionsReturn {
-  options: Array<FeeOption>  
+  options: Array<FeeOption>
 }
 export interface GetMetaTransactionsArgs {
   projectId: number
@@ -401,7 +425,7 @@ export interface GetMetaTransactionsArgs {
 
 export interface GetMetaTransactionsReturn {
   page: Page
-  transactions: Array<MetaTxnLog>  
+  transactions: Array<MetaTxnLog>
 }
 export interface GetTransactionCostArgs {
   projectId: number
@@ -410,7 +434,7 @@ export interface GetTransactionCostArgs {
 }
 
 export interface GetTransactionCostReturn {
-  cost: number  
+  cost: number
 }
 export interface SentTransactionsArgs {
   filter?: SentTransactionsFilter
@@ -419,7 +443,7 @@ export interface SentTransactionsArgs {
 
 export interface SentTransactionsReturn {
   page: Page
-  transactions: Array<Transaction>  
+  transactions: Array<Transaction>
 }
 export interface PendingTransactionsArgs {
   page?: Page
@@ -427,14 +451,14 @@ export interface PendingTransactionsArgs {
 
 export interface PendingTransactionsReturn {
   page: Page
-  transactions: Array<Transaction>  
+  transactions: Array<Transaction>
 }
 export interface GetGasTankArgs {
   id: number
 }
 
 export interface GetGasTankReturn {
-  gasTank: GasTank  
+  gasTank: GasTank
 }
 export interface AddGasTankArgs {
   name: string
@@ -444,7 +468,7 @@ export interface AddGasTankArgs {
 
 export interface AddGasTankReturn {
   status: boolean
-  gasTank: GasTank  
+  gasTank: GasTank
 }
 export interface UpdateGasTankArgs {
   id: number
@@ -455,14 +479,14 @@ export interface UpdateGasTankArgs {
 
 export interface UpdateGasTankReturn {
   status: boolean
-  gasTank: GasTank  
+  gasTank: GasTank
 }
 export interface GetGasSponsorArgs {
   id: number
 }
 
 export interface GetGasSponsorReturn {
-  gasSponsor: GasSponsor  
+  gasSponsor: GasSponsor
 }
 export interface AddressGasSponsorsArgs {
   address: string
@@ -471,7 +495,7 @@ export interface AddressGasSponsorsArgs {
 
 export interface AddressGasSponsorsReturn {
   page: Page
-  gasSponsors: Array<GasSponsor>  
+  gasSponsors: Array<GasSponsor>
 }
 export interface ListGasSponsorsArgs {
   projectId: number
@@ -481,7 +505,7 @@ export interface ListGasSponsorsArgs {
 
 export interface ListGasSponsorsReturn {
   page: Page
-  gasSponsors: Array<GasSponsor>  
+  gasSponsors: Array<GasSponsor>
 }
 export interface AddGasSponsorArgs {
   projectId: number
@@ -493,7 +517,7 @@ export interface AddGasSponsorArgs {
 
 export interface AddGasSponsorReturn {
   status: boolean
-  gasSponsor: GasSponsor  
+  gasSponsor: GasSponsor
 }
 export interface UpdateGasSponsorArgs {
   id: number
@@ -503,14 +527,14 @@ export interface UpdateGasSponsorArgs {
 
 export interface UpdateGasSponsorReturn {
   status: boolean
-  gasSponsor: GasSponsor  
+  gasSponsor: GasSponsor
 }
 export interface RemoveGasSponsorArgs {
   id: number
 }
 
 export interface RemoveGasSponsorReturn {
-  status: boolean  
+  status: boolean
 }
 export interface ReportGasSponsorUsageArgs {
   projectId: number
@@ -520,14 +544,14 @@ export interface ReportGasSponsorUsageArgs {
 }
 
 export interface ReportGasSponsorUsageReturn {
-  gasSponsorUsage: Array<GasSponsorUsage>  
+  gasSponsorUsage: Array<GasSponsorUsage>
 }
 export interface NextGasTankBalanceAdjustmentNonceArgs {
   id: number
 }
 
 export interface NextGasTankBalanceAdjustmentNonceReturn {
-  nonce: number  
+  nonce: number
 }
 export interface AdjustGasTankBalanceArgs {
   id: number
@@ -537,7 +561,7 @@ export interface AdjustGasTankBalanceArgs {
 
 export interface AdjustGasTankBalanceReturn {
   status: boolean
-  adjustment: GasTankBalanceAdjustment  
+  adjustment: GasTankBalanceAdjustment
 }
 export interface GetGasTankBalanceAdjustmentArgs {
   id: number
@@ -545,7 +569,7 @@ export interface GetGasTankBalanceAdjustmentArgs {
 }
 
 export interface GetGasTankBalanceAdjustmentReturn {
-  adjustment: GasTankBalanceAdjustment  
+  adjustment: GasTankBalanceAdjustment
 }
 export interface ListGasTankBalanceAdjustmentsArgs {
   id: number
@@ -554,14 +578,14 @@ export interface ListGasTankBalanceAdjustmentsArgs {
 
 export interface ListGasTankBalanceAdjustmentsReturn {
   page: Page
-  adjustments: Array<GasTankBalanceAdjustment>  
+  adjustments: Array<GasTankBalanceAdjustment>
 }
 export interface GetProjectBalanceArgs {
   projectId: number
 }
 
 export interface GetProjectBalanceReturn {
-  balance: number  
+  balance: number
 }
 export interface AdjustProjectBalanceArgs {
   projectId: number
@@ -570,11 +594,9 @@ export interface AdjustProjectBalanceArgs {
 }
 
 export interface AdjustProjectBalanceReturn {
-  balance: number  
+  balance: number
 }
 
-
-  
 //
 // Client
 //
@@ -591,493 +613,567 @@ export class Relayer implements Relayer {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   version = (headers?: object, signal?: AbortSignal): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          version: <Version>(_data.version),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            version: <Version>_data.version
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   runtimeStatus = (headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <RuntimeStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <RuntimeStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getSequenceContext = (headers?: object, signal?: AbortSignal): Promise<GetSequenceContextReturn> => {
-    return this.fetch(
-      this.url('GetSequenceContext'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          data: <SequenceContext>(_data.data),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetSequenceContext'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            data: <SequenceContext>_data.data
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getChainID = (headers?: object, signal?: AbortSignal): Promise<GetChainIDReturn> => {
-    return this.fetch(
-      this.url('GetChainID'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          chainID: <number>(_data.chainID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetChainID'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            chainID: <number>_data.chainID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   sendMetaTxn = (args: SendMetaTxnArgs, headers?: object, signal?: AbortSignal): Promise<SendMetaTxnReturn> => {
-    return this.fetch(
-      this.url('SendMetaTxn'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          txnHash: <string>(_data.txnHash),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SendMetaTxn'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            txnHash: <string>_data.txnHash
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getMetaTxnNonce = (args: GetMetaTxnNonceArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTxnNonceReturn> => {
-    return this.fetch(
-      this.url('GetMetaTxnNonce'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          nonce: <string>(_data.nonce),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetMetaTxnNonce'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            nonce: <string>_data.nonce
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getMetaTxnReceipt = (args: GetMetaTxnReceiptArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTxnReceiptReturn> => {
-    return this.fetch(
-      this.url('GetMetaTxnReceipt'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          receipt: <MetaTxnReceipt>(_data.receipt),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetMetaTxnReceipt'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            receipt: <MetaTxnReceipt>_data.receipt
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   simulate = (args: SimulateArgs, headers?: object, signal?: AbortSignal): Promise<SimulateReturn> => {
-    return this.fetch(
-      this.url('Simulate'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          results: <Array<SimulateResult>>(_data.results),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Simulate'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            results: <Array<SimulateResult>>_data.results
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  updateMetaTxnGasLimits = (args: UpdateMetaTxnGasLimitsArgs, headers?: object, signal?: AbortSignal): Promise<UpdateMetaTxnGasLimitsReturn> => {
-    return this.fetch(
-      this.url('UpdateMetaTxnGasLimits'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          payload: <string>(_data.payload),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  updateMetaTxnGasLimits = (
+    args: UpdateMetaTxnGasLimitsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateMetaTxnGasLimitsReturn> => {
+    return this.fetch(this.url('UpdateMetaTxnGasLimits'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            payload: <string>_data.payload
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   feeTokens = (headers?: object, signal?: AbortSignal): Promise<FeeTokensReturn> => {
-    return this.fetch(
-      this.url('FeeTokens'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          isFeeRequired: <boolean>(_data.isFeeRequired),
-          tokens: <Array<FeeToken>>(_data.tokens),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('FeeTokens'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            isFeeRequired: <boolean>_data.isFeeRequired,
+            tokens: <Array<FeeToken>>_data.tokens
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   feeOptions = (args: FeeOptionsArgs, headers?: object, signal?: AbortSignal): Promise<FeeOptionsReturn> => {
-    return this.fetch(
-      this.url('FeeOptions'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          options: <Array<FeeOption>>(_data.options),
-          sponsored: <boolean>(_data.sponsored),
-          quote: <string>(_data.quote),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('FeeOptions'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            options: <Array<FeeOption>>_data.options,
+            sponsored: <boolean>_data.sponsored,
+            quote: <string>_data.quote
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getMetaTxnNetworkFeeOptions = (args: GetMetaTxnNetworkFeeOptionsArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTxnNetworkFeeOptionsReturn> => {
-    return this.fetch(
-      this.url('GetMetaTxnNetworkFeeOptions'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          options: <Array<FeeOption>>(_data.options),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getMetaTxnNetworkFeeOptions = (
+    args: GetMetaTxnNetworkFeeOptionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetMetaTxnNetworkFeeOptionsReturn> => {
+    return this.fetch(this.url('GetMetaTxnNetworkFeeOptions'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            options: <Array<FeeOption>>_data.options
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getMetaTransactions = (args: GetMetaTransactionsArgs, headers?: object, signal?: AbortSignal): Promise<GetMetaTransactionsReturn> => {
-    return this.fetch(
-      this.url('GetMetaTransactions'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          transactions: <Array<MetaTxnLog>>(_data.transactions),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getMetaTransactions = (
+    args: GetMetaTransactionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetMetaTransactionsReturn> => {
+    return this.fetch(this.url('GetMetaTransactions'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            transactions: <Array<MetaTxnLog>>_data.transactions
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTransactionCost = (args: GetTransactionCostArgs, headers?: object, signal?: AbortSignal): Promise<GetTransactionCostReturn> => {
-    return this.fetch(
-      this.url('GetTransactionCost'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          cost: <number>(_data.cost),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTransactionCost = (
+    args: GetTransactionCostArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTransactionCostReturn> => {
+    return this.fetch(this.url('GetTransactionCost'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            cost: <number>_data.cost
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   sentTransactions = (args: SentTransactionsArgs, headers?: object, signal?: AbortSignal): Promise<SentTransactionsReturn> => {
-    return this.fetch(
-      this.url('SentTransactions'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          transactions: <Array<Transaction>>(_data.transactions),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SentTransactions'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            transactions: <Array<Transaction>>_data.transactions
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  pendingTransactions = (args: PendingTransactionsArgs, headers?: object, signal?: AbortSignal): Promise<PendingTransactionsReturn> => {
-    return this.fetch(
-      this.url('PendingTransactions'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          transactions: <Array<Transaction>>(_data.transactions),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  pendingTransactions = (
+    args: PendingTransactionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<PendingTransactionsReturn> => {
+    return this.fetch(this.url('PendingTransactions'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            transactions: <Array<Transaction>>_data.transactions
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getGasTank = (args: GetGasTankArgs, headers?: object, signal?: AbortSignal): Promise<GetGasTankReturn> => {
-    return this.fetch(
-      this.url('GetGasTank'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          gasTank: <GasTank>(_data.gasTank),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetGasTank'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            gasTank: <GasTank>_data.gasTank
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   addGasTank = (args: AddGasTankArgs, headers?: object, signal?: AbortSignal): Promise<AddGasTankReturn> => {
-    return this.fetch(
-      this.url('AddGasTank'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          gasTank: <GasTank>(_data.gasTank),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('AddGasTank'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            gasTank: <GasTank>_data.gasTank
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   updateGasTank = (args: UpdateGasTankArgs, headers?: object, signal?: AbortSignal): Promise<UpdateGasTankReturn> => {
-    return this.fetch(
-      this.url('UpdateGasTank'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          gasTank: <GasTank>(_data.gasTank),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UpdateGasTank'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            gasTank: <GasTank>_data.gasTank
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getGasSponsor = (args: GetGasSponsorArgs, headers?: object, signal?: AbortSignal): Promise<GetGasSponsorReturn> => {
-    return this.fetch(
-      this.url('GetGasSponsor'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          gasSponsor: <GasSponsor>(_data.gasSponsor),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetGasSponsor'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            gasSponsor: <GasSponsor>_data.gasSponsor
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  addressGasSponsors = (args: AddressGasSponsorsArgs, headers?: object, signal?: AbortSignal): Promise<AddressGasSponsorsReturn> => {
-    return this.fetch(
-      this.url('AddressGasSponsors'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          gasSponsors: <Array<GasSponsor>>(_data.gasSponsors),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  addressGasSponsors = (
+    args: AddressGasSponsorsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddressGasSponsorsReturn> => {
+    return this.fetch(this.url('AddressGasSponsors'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            gasSponsors: <Array<GasSponsor>>_data.gasSponsors
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   listGasSponsors = (args: ListGasSponsorsArgs, headers?: object, signal?: AbortSignal): Promise<ListGasSponsorsReturn> => {
-    return this.fetch(
-      this.url('ListGasSponsors'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          gasSponsors: <Array<GasSponsor>>(_data.gasSponsors),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ListGasSponsors'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            gasSponsors: <Array<GasSponsor>>_data.gasSponsors
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   addGasSponsor = (args: AddGasSponsorArgs, headers?: object, signal?: AbortSignal): Promise<AddGasSponsorReturn> => {
-    return this.fetch(
-      this.url('AddGasSponsor'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          gasSponsor: <GasSponsor>(_data.gasSponsor),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('AddGasSponsor'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            gasSponsor: <GasSponsor>_data.gasSponsor
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   updateGasSponsor = (args: UpdateGasSponsorArgs, headers?: object, signal?: AbortSignal): Promise<UpdateGasSponsorReturn> => {
-    return this.fetch(
-      this.url('UpdateGasSponsor'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          gasSponsor: <GasSponsor>(_data.gasSponsor),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UpdateGasSponsor'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            gasSponsor: <GasSponsor>_data.gasSponsor
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   removeGasSponsor = (args: RemoveGasSponsorArgs, headers?: object, signal?: AbortSignal): Promise<RemoveGasSponsorReturn> => {
-    return this.fetch(
-      this.url('RemoveGasSponsor'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RemoveGasSponsor'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  reportGasSponsorUsage = (args: ReportGasSponsorUsageArgs, headers?: object, signal?: AbortSignal): Promise<ReportGasSponsorUsageReturn> => {
-    return this.fetch(
-      this.url('ReportGasSponsorUsage'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          gasSponsorUsage: <Array<GasSponsorUsage>>(_data.gasSponsorUsage),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  reportGasSponsorUsage = (
+    args: ReportGasSponsorUsageArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ReportGasSponsorUsageReturn> => {
+    return this.fetch(this.url('ReportGasSponsorUsage'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            gasSponsorUsage: <Array<GasSponsorUsage>>_data.gasSponsorUsage
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  nextGasTankBalanceAdjustmentNonce = (args: NextGasTankBalanceAdjustmentNonceArgs, headers?: object, signal?: AbortSignal): Promise<NextGasTankBalanceAdjustmentNonceReturn> => {
-    return this.fetch(
-      this.url('NextGasTankBalanceAdjustmentNonce'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          nonce: <number>(_data.nonce),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  nextGasTankBalanceAdjustmentNonce = (
+    args: NextGasTankBalanceAdjustmentNonceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<NextGasTankBalanceAdjustmentNonceReturn> => {
+    return this.fetch(this.url('NextGasTankBalanceAdjustmentNonce'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            nonce: <number>_data.nonce
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  adjustGasTankBalance = (args: AdjustGasTankBalanceArgs, headers?: object, signal?: AbortSignal): Promise<AdjustGasTankBalanceReturn> => {
-    return this.fetch(
-      this.url('AdjustGasTankBalance'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          adjustment: <GasTankBalanceAdjustment>(_data.adjustment),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  adjustGasTankBalance = (
+    args: AdjustGasTankBalanceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AdjustGasTankBalanceReturn> => {
+    return this.fetch(this.url('AdjustGasTankBalance'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            adjustment: <GasTankBalanceAdjustment>_data.adjustment
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getGasTankBalanceAdjustment = (args: GetGasTankBalanceAdjustmentArgs, headers?: object, signal?: AbortSignal): Promise<GetGasTankBalanceAdjustmentReturn> => {
-    return this.fetch(
-      this.url('GetGasTankBalanceAdjustment'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          adjustment: <GasTankBalanceAdjustment>(_data.adjustment),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getGasTankBalanceAdjustment = (
+    args: GetGasTankBalanceAdjustmentArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetGasTankBalanceAdjustmentReturn> => {
+    return this.fetch(this.url('GetGasTankBalanceAdjustment'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            adjustment: <GasTankBalanceAdjustment>_data.adjustment
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  listGasTankBalanceAdjustments = (args: ListGasTankBalanceAdjustmentsArgs, headers?: object, signal?: AbortSignal): Promise<ListGasTankBalanceAdjustmentsReturn> => {
-    return this.fetch(
-      this.url('ListGasTankBalanceAdjustments'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          adjustments: <Array<GasTankBalanceAdjustment>>(_data.adjustments),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  listGasTankBalanceAdjustments = (
+    args: ListGasTankBalanceAdjustmentsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListGasTankBalanceAdjustmentsReturn> => {
+    return this.fetch(this.url('ListGasTankBalanceAdjustments'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            adjustments: <Array<GasTankBalanceAdjustment>>_data.adjustments
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getProjectBalance = (args: GetProjectBalanceArgs, headers?: object, signal?: AbortSignal): Promise<GetProjectBalanceReturn> => {
-    return this.fetch(
-      this.url('GetProjectBalance'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          balance: <number>(_data.balance),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetProjectBalance'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            balance: <number>_data.balance
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  adjustProjectBalance = (args: AdjustProjectBalanceArgs, headers?: object, signal?: AbortSignal): Promise<AdjustProjectBalanceReturn> => {
-    return this.fetch(
-      this.url('AdjustProjectBalance'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          balance: <number>(_data.balance),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  adjustProjectBalance = (
+    args: AdjustProjectBalanceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AdjustProjectBalanceReturn> => {
+    return this.fetch(this.url('AdjustProjectBalance'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            balance: <number>_data.balance
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
@@ -1091,18 +1187,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -1284,7 +1380,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
   }
 }
 
-
 // Schema errors
 
 export class UnauthorizedError extends WebrpcError {
@@ -1430,7 +1525,6 @@ export class InsufficientFeeError extends WebrpcError {
   }
 }
 
-
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -1453,7 +1547,7 @@ export enum errors {
   Unavailable = 'Unavailable',
   QueryFailed = 'QueryFailed',
   NotFound = 'NotFound',
-  InsufficientFee = 'InsufficientFee',
+  InsufficientFee = 'InsufficientFee'
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -1478,8 +1572,7 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [2002]: UnavailableError,
   [2003]: QueryFailedError,
   [3000]: NotFoundError,
-  [3004]: InsufficientFeeError,
+  [3004]: InsufficientFeeError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-
