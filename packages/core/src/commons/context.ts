@@ -13,7 +13,7 @@ export type WalletContext = {
 
   walletCreationCode: string
 
-  proxyImplementationHook?: string;
+  proxyImplementationHook?: string
 }
 
 export function addressOf(context: WalletContext, imageHash: ethers.BytesLike) {
