@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
+import { FeeOption, FeeQuote, proto, Relayer, SimulateResult } from '.'
 import { logger, Optionals } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
 
@@ -63,9 +63,9 @@ export abstract class ProviderRelayer implements Relayer {
     cost: number
   }>
 
-  abstract getMetaTransactions(projectId: number, gasTankId: number, page?: proto.Page): Promise<{
+  abstract getMetaTransactions(projectId: number, gasTankId: number, page?: commons.Page): Promise<{
     page: commons.Page,
-    transactions: commons.MetaTxnLog[]
+    transactions: proto.MetaTxnLog[]
   }>
 
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
