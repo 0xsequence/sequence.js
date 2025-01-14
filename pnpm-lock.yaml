@@ -293,7 +293,15 @@ importers:
         specifier: ^15.1.0
         version: 15.1.0
 
-  packages/api: {}
+  packages/api:
+    dependencies:
+      '@0xsequence/relayer':
+        specifier: workspace:*
+        version: link:../relayer
+    devDependencies:
+      ethers:
+        specifier: 6.13.4
+        version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@6.0.3)
 
   packages/auth:
     dependencies:
@@ -467,6 +475,9 @@ importers:
       '@0xsequence/account':
         specifier: workspace:*
         version: link:../account
+      '@0xsequence/api':
+        specifier: workspace:*
+        version: link:../api
       '@0xsequence/auth':
         specifier: workspace:*
         version: link:../auth
@@ -1933,7 +1944,7 @@ packages:
   '@nomicfoundation/hardhat-ethers@3.0.8':
     resolution: {integrity: sha512-zhOZ4hdRORls31DTOqg+GmEZM0ujly8GGIuRY7t7szEk2zW/arY1qDug/py8AEktT00v5K+b6RvbVog+va51IA==}
     peerDependencies:
-      ethers: 6.13.4
+      ethers: ^6.1.0
       hardhat: ^2.0.0
 
   '@nomicfoundation/hardhat-ignition-ethers@0.15.6':
@@ -9835,7 +9846,7 @@ snapshots:
 
   '@nomicfoundation/hardhat-ethers@3.0.8(ethers@6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10))(hardhat@2.22.14(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.9)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10))':
     dependencies:
-      debug: 4.3.7(supports-color@6.1.0)
+      debug: 4.4.0
       ethers: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       hardhat: 2.22.14(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.9)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10)
       lodash.isequal: 4.5.0
@@ -9856,7 +9867,7 @@ snapshots:
       '@nomicfoundation/ignition-core': 0.15.6(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@nomicfoundation/ignition-ui': 0.15.6
       chalk: 4.1.2
-      debug: 4.3.7(supports-color@6.1.0)
+      debug: 4.4.0
       fs-extra: 10.1.0
       hardhat: 2.22.14(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.9)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10)
       json5: 2.2.3
@@ -9898,7 +9909,7 @@ snapshots:
       '@ethersproject/address': 5.7.0
       cbor: 8.1.0
       chalk: 2.4.2
-      debug: 4.3.7(supports-color@6.1.0)
+      debug: 4.4.0
       hardhat: 2.22.14(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.9)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10)
       lodash.clonedeep: 4.5.0
       semver: 6.3.1
@@ -9912,7 +9923,7 @@ snapshots:
       '@ethersproject/address': 5.6.1
       '@nomicfoundation/solidity-analyzer': 0.1.2
       cbor: 9.0.2
-      debug: 4.3.7(supports-color@6.1.0)
+      debug: 4.4.0
       ethers: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       fs-extra: 10.1.0
       immer: 10.0.2

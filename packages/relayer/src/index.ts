@@ -75,6 +75,7 @@ export interface Relayer {
 }
 
 export * from './local-relayer'
+export * from './precondition'
 export * from './provider-relayer'
 export * from './rpc-relayer'
 export { proto as RpcRelayerProto } from './rpc-relayer'

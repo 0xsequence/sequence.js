@@ -12,9 +12,15 @@
     "test": "echo",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
-  "peerDependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "@0xsequence/relayer": "workspace:*"
+  },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
+  "devDependencies": {
+    "ethers": "6.13.4"
+  },
   "files": [
     "src",
     "dist"

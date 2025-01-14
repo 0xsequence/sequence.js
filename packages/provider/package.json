@@ -25,6 +25,7 @@
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/account": "workspace:*",
+    "@0xsequence/api": "workspace:*",
     "@0xsequence/auth": "workspace:*",
     "@0xsequence/core": "workspace:*",
     "@0xsequence/migration": "workspace:*",

@@ -1,4 +1,5 @@
 import { Account, AccountStatus } from '@0xsequence/account'
+import { Precondition, isPrecondition } from '@0xsequence/api'
 import { signAuthorization, AuthorizationOptions } from '@0xsequence/auth'
 import { commons } from '@0xsequence/core'
 import {
@@ -568,7 +569,7 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
             throw new Error(`${params.length} parameters for wallet_sendCalls request`)
           }
 
-          const { version, from, calls } = params[0]
+          const { version, from, calls, capabilities } = params[0]
 
           switch (version) {
             case '1.0':
@@ -602,13 +603,29 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
             throw new Error(`wallet_sendCalls call '${JSON.stringify(invalidCall)}' is invalid`)
           }
 
+          if (capabilities !== undefined && typeof capabilities !== 'object') {
+            throw new Error(`wallet_sendCalls capabilities '${JSON.stringify(capabilities)}' is invalid`)
+          }
+
+          let preconditions: Precondition[] | undefined
+          if (capabilities.preconditions !== undefined) {
+            if (!(capabilities.preconditions instanceof Array) || !capabilities.preconditions.every(isPrecondition)) {
+              throw new Error(`wallet_sendCalls preconditions '${JSON.stringify(capabilities.preconditions)}' is invalid`)
+            }
+            preconditions = capabilities.preconditions
+          }
+
           if (this.prompter) {
             return JSON.stringify(
               await this.prompter.promptSendTransaction(
                 calls.map((call: any) => ({ ...call, chainId: call.chainId !== undefined ? Number(call.chainId) : undefined })),
-                request
+                { ...request, preconditions }
               )
             )
+          }
+
+          if (preconditions) {
+            throw new Error(`wallet_sendCalls preconditions not supported`)
           }
 
           const chainIds = []
@@ -693,7 +710,13 @@ export class WalletRequestHandler implements EIP1193Provider, ProviderMessageReq
           switch (address) {
             case account.address:
               return Object.fromEntries(
-                account.networks.map(({ chainId }) => [ethers.toQuantity(chainId), { atomicBatch: { supported: true } }])
+                account.networks.map(({ chainId }) => [
+                  ethers.toQuantity(chainId),
+                  {
+                    atomicBatch: { supported: true },
+                    ...(this.prompter && { preconditions: { supported: true, versions: ['1.0'] } })
+                  }
+                ])
               )
 
             default:
@@ -1004,11 +1027,11 @@ export interface WalletUserPrompter {
   promptSignMessage(message: MessageToSign, origin?: string, projectAccessKey?: string): Promise<string>
   promptSignTransaction(
     transactions: Array<{ chainId?: number; transactions: commons.transaction.Transactionish }>,
-    options?: { origin?: string; projectAccessKey?: string }
+    options?: { origin?: string; projectAccessKey?: string; preconditions?: Precondition[] }
   ): Promise<string[]>
   promptSendTransaction(
     transactions: Array<{ chainId?: number; transactions: commons.transaction.Transactionish }>,
-    options?: { origin?: string; projectAccessKey?: string }
+    options?: { origin?: string; projectAccessKey?: string; preconditions?: Precondition[] }
   ): Promise<string[]>
   promptConfirmWalletDeploy(chainId: number, origin?: string): Promise<boolean>
   promptChangeNetwork(chainId: number): Promise<boolean>
