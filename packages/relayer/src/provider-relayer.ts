@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { FeeOption, FeeQuote, Relayer, SimulateResult } from '.'
+import { FeeOption, FeeQuote, proto, Relayer, SimulateResult } from '.'
 import { logger, Optionals } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
 
@@ -58,6 +58,15 @@ export abstract class ProviderRelayer implements Relayer {
     quote?: FeeQuote,
     waitForReceipt?: boolean
   ): Promise<commons.transaction.TransactionResponse>
+
+  abstract getTransactionCost(projectId: number, from: string, to: string): Promise<{
+    cost: number
+  }>
+
+  abstract getMetaTransactions(projectId: number, page?: proto.Page): Promise<{
+    page: proto.Page,
+    transactions: proto.MetaTxnLog[]
+  }>
 
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
     return (
@@ -248,6 +257,8 @@ export abstract class ProviderRelayer implements Relayer {
       return waitReceipt()
     }
   }
+
+ 
 }
 
 function isAbstractProvider(provider: any): provider is ethers.AbstractProvider {
