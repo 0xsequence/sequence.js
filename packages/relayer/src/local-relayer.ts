@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { logger } from '@0xsequence/utils'
-import { FeeOption, FeeQuote, Relayer } from '.'
+import { FeeOption, FeeQuote, proto, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 import { commons } from '@0xsequence/core'
 
@@ -75,6 +75,19 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     } else {
       return responsePromise
     }
+  }
+
+  async getMetaTransactions(projectId: number, page?: proto.Page): Promise<{
+    page: proto.Page,
+    transactions: proto.MetaTxnLog[]
+  }> {
+    return { page: { page: 0, pageSize: 100 }, transactions: [] }
+  }
+
+  async getTransactionCost(projectId: number, from: string, to: string): Promise<{
+    cost: number
+  }> {
+    return { cost: 0 }
   }
 }
 

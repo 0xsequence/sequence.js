@@ -1,5 +1,53 @@
 # 0xsequence
 
+## 2.2.6
+
+### Patch Changes
+
+- Update relayer package
+- Updated dependencies
+  - @0xsequence/abi@2.2.6
+  - @0xsequence/account@2.2.6
+  - @0xsequence/api@2.2.6
+  - @0xsequence/auth@2.2.6
+  - @0xsequence/core@2.2.6
+  - @0xsequence/guard@2.2.6
+  - @0xsequence/indexer@2.2.6
+  - @0xsequence/metadata@2.2.6
+  - @0xsequence/migration@2.2.6
+  - @0xsequence/network@2.2.6
+  - @0xsequence/provider@2.2.6
+  - @0xsequence/relayer@2.2.6
+  - @0xsequence/sessions@2.2.6
+  - @0xsequence/signhub@2.2.6
+  - @0xsequence/utils@2.2.6
+  - @0xsequence/wallet@2.2.6
+
+## 2.2.5
+
+### Patch Changes
+
+- auth: fix sequence indexer gateway url
+- account: immutable wallet proxy hook
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.2.5
+  - @0xsequence/account@2.2.5
+  - @0xsequence/api@2.2.5
+  - @0xsequence/auth@2.2.5
+  - @0xsequence/core@2.2.5
+  - @0xsequence/guard@2.2.5
+  - @0xsequence/indexer@2.2.5
+  - @0xsequence/metadata@2.2.5
+  - @0xsequence/migration@2.2.5
+  - @0xsequence/network@2.2.5
+  - @0xsequence/provider@2.2.5
+  - @0xsequence/relayer@2.2.5
+  - @0xsequence/sessions@2.2.5
+  - @0xsequence/signhub@2.2.5
+  - @0xsequence/utils@2.2.5
+  - @0xsequence/wallet@2.2.5
+
 ## 2.2.4
 
 ### Patch Changes

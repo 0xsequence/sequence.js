@@ -402,13 +402,46 @@ export class Account {
     status: AccountStatus,
     chainId: ethers.BigNumberish
   ): Promise<commons.transaction.Transactionish> {
+    txs = Array.isArray(txs) ? txs : [txs]
     // if onchain wallet config is not up to date
     // then we should append an extra transaction that updates it
     // to the latest "lazy" state
     if (status.onChain.imageHash !== status.imageHash) {
       const wallet = this.walletForStatus(chainId, status)
       const updateConfig = await wallet.buildUpdateConfigurationTransaction(status.config)
-      return [Array.isArray(txs) ? txs : [txs], updateConfig.transactions].flat()
+      txs = [...txs, ...updateConfig.transactions]
+    }
+
+    // On immutable chains, we add the WalletProxyHook
+    const { proxyImplementationHook } = this.contexts[status.config.version]
+    if (proxyImplementationHook && (chainId === ChainId.IMMUTABLE_ZKEVM || chainId === ChainId.IMMUTABLE_ZKEVM_TESTNET)) {
+      const provider = this.providerFor(chainId)
+      if (provider) {
+        const hook = new ethers.Contract(this.address, walletContracts.walletProxyHook.abi, provider)
+        let implementation
+        try {
+          implementation = await hook.PROXY_getImplementation()
+        } catch (e) {
+          // Handle below
+          console.log('Error getting implementation address', e)
+        }
+        if (!implementation || implementation === ethers.ZeroAddress) {
+          console.log('Adding wallet proxy hook')
+          const hooksInterface = new ethers.Interface(walletContracts.moduleHooks.abi)
+          const tx: commons.transaction.Transaction = {
+            to: this.address,
+            data: hooksInterface.encodeFunctionData(hooksInterface.getFunction('addHook')!, [
+              '0x90611127',
+              proxyImplementationHook
+            ]),
+            gasLimit: 50000, // Expected ~28k gas. Buffer added
+            delegateCall: false,
+            revertOnError: false,
+            value: 0
+          }
+          txs = [tx, ...txs]
+        }
+      }
     }
 
     return txs
