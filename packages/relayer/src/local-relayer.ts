@@ -77,7 +77,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     }
   }
 
-  async getMetaTransactions(projectId: number, gasTankId: number, page?: proto.Page): Promise<{
+  async getMetaTransactions(projectId: number, page?: proto.Page): Promise<{
     page: proto.Page,
     transactions: proto.MetaTxnLog[]
   }> {

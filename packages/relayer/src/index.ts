@@ -56,7 +56,7 @@ export interface Relayer {
   ): Promise<commons.transaction.TransactionResponse>
 
   // getMetaTransactions returns a list of meta transactions for a given project and gas tank
-  getMetaTransactions(projectId: number, gasTankId: number, page?: proto.Page): Promise<{
+  getMetaTransactions(projectId: number, page?: proto.Page): Promise<{
     page: proto.Page,
     transactions: proto.MetaTxnLog[]
   }>

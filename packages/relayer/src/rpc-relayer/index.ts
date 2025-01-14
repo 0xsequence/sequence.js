@@ -305,11 +305,11 @@ export class RpcRelayer implements Relayer {
     } as commons.transaction.TransactionResponse
   }
 
-  async getMetaTransactions(projectId: number, gasTankId: number, page?: proto.Page): Promise<{
+  async getMetaTransactions(projectId: number,  page?: proto.Page): Promise<{
     page: proto.Page,
     transactions: proto.MetaTxnLog[]
   }> {
-    return this.service.getMetaTransactions({ projectId, gasTankId, page })
+    return this.service.getMetaTransactions({ projectId, page })
   }
 
   async getTransactionCost(projectId: number, from: string, to: string): Promise<{
