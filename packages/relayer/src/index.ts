@@ -61,7 +61,7 @@ export interface Relayer {
     transactions: proto.MetaTxnLog[]
   }>
 
-  // getTransactionCost returns the estimated cost of a transaction between addresses
+  // getTransactionCost returns the used fee cost for gas tank during a given period
   getTransactionCost(projectId: number, from: string, to: string): Promise<{
     cost: number
   }>
