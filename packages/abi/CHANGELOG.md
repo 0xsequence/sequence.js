@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.2.6
+
+### Patch Changes
+
+- Update relayer package
+
 ## 2.2.5
 
 ### Patch Changes

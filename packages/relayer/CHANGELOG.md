@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 2.2.6
+
+### Patch Changes
+
+- Update relayer package
+- Updated dependencies
+  - @0xsequence/abi@2.2.6
+  - @0xsequence/core@2.2.6
+  - @0xsequence/utils@2.2.6
+
 ## 2.2.5
 
 ### Patch Changes
