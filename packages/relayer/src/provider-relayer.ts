@@ -59,6 +59,15 @@ export abstract class ProviderRelayer implements Relayer {
     waitForReceipt?: boolean
   ): Promise<commons.transaction.TransactionResponse>
 
+  abstract getTransactionCost(projectId: number, from: string, to: string): Promise<{
+    cost: number
+  }>
+
+  abstract getMetaTransactions(projectId: number, gasTankId: number, page?: proto.Page): Promise<{
+    page: commons.Page,
+    transactions: commons.MetaTxnLog[]
+  }>
+
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
     return (
       await Promise.all(
@@ -248,6 +257,8 @@ export abstract class ProviderRelayer implements Relayer {
       return waitReceipt()
     }
   }
+
+ 
 }
 
 function isAbstractProvider(provider: any): provider is ethers.AbstractProvider {
