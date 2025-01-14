@@ -63,8 +63,8 @@ export abstract class ProviderRelayer implements Relayer {
     cost: number
   }>
 
-  abstract getMetaTransactions(projectId: number, gasTankId: number, page?: commons.Page): Promise<{
-    page: commons.Page,
+  abstract getMetaTransactions(projectId: number, gasTankId: number, page?: proto.Page): Promise<{
+    page: proto.Page,
     transactions: proto.MetaTxnLog[]
   }>
 
