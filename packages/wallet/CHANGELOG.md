@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 2.2.7
+
+### Patch Changes
+
+- Update Builder package
+- Updated dependencies
+  - @0xsequence/abi@2.2.7
+  - @0xsequence/core@2.2.7
+  - @0xsequence/network@2.2.7
+  - @0xsequence/relayer@2.2.7
+  - @0xsequence/signhub@2.2.7
+  - @0xsequence/utils@2.2.7
+
 ## 2.2.6
 
 ### Patch Changes

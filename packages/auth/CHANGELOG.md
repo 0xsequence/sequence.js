@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 2.2.7
+
+### Patch Changes
+
+- Update Builder package
+- Updated dependencies
+  - @0xsequence/abi@2.2.7
+  - @0xsequence/account@2.2.7
+  - @0xsequence/api@2.2.7
+  - @0xsequence/core@2.2.7
+  - @0xsequence/indexer@2.2.7
+  - @0xsequence/metadata@2.2.7
+  - @0xsequence/migration@2.2.7
+  - @0xsequence/network@2.2.7
+  - @0xsequence/sessions@2.2.7
+  - @0xsequence/signhub@2.2.7
+  - @0xsequence/utils@2.2.7
+  - @0xsequence/wallet@2.2.7
+
 ## 2.2.6
 
 ### Patch Changes

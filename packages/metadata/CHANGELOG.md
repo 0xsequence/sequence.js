@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.2.7
+
+### Patch Changes
+
+- Update Builder package
+
 ## 2.2.6
 
 ### Patch Changes

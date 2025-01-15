@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.2.7
+
+### Patch Changes
+
+- Update Builder package
+- Updated dependencies
+  - @0xsequence/account@2.2.7
+  - @0xsequence/core@2.2.7
+  - @0xsequence/signhub@2.2.7
+  - @0xsequence/utils@2.2.7
+
 ## 2.2.6
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.2.7
+
+### Patch Changes
+
+- Update Builder package
+- Updated dependencies
+  - @0xsequence/utils@2.2.7
+
 ## 2.2.6
 
 ### Patch Changes

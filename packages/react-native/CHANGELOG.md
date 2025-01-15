@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.2.7
+
+### Patch Changes
+
+- Update Builder package
+- Updated dependencies
+  - @0xsequence/waas@2.2.7
+
 ## 2.2.6
 
 ### Patch Changes
