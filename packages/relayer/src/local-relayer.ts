@@ -77,14 +77,21 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     }
   }
 
-  async getMetaTransactions(projectId: number, page?: proto.Page): Promise<{
-    page: proto.Page,
+  async getMetaTransactions(
+    projectId: number,
+    page?: proto.Page
+  ): Promise<{
+    page: proto.Page
     transactions: proto.MetaTxnLog[]
   }> {
     return { page: { page: 0, pageSize: 100 }, transactions: [] }
   }
 
-  async getTransactionCost(projectId: number, from: string, to: string): Promise<{
+  async getTransactionCost(
+    projectId: number,
+    from: string,
+    to: string
+  ): Promise<{
     cost: number
   }> {
     return { cost: 0 }

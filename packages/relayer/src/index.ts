@@ -56,13 +56,20 @@ export interface Relayer {
   ): Promise<commons.transaction.TransactionResponse>
 
   // getMetaTransactions returns a list of meta transactions for a given project and gas tank
-  getMetaTransactions(projectId: number, page?: proto.Page): Promise<{
-    page: proto.Page,
+  getMetaTransactions(
+    projectId: number,
+    page?: proto.Page
+  ): Promise<{
+    page: proto.Page
     transactions: proto.MetaTxnLog[]
   }>
 
   // getTransactionCost returns the used fee cost for gas tank during a given period
-  getTransactionCost(projectId: number, from: string, to: string): Promise<{
+  getTransactionCost(
+    projectId: number,
+    from: string,
+    to: string
+  ): Promise<{
     cost: number
   }>
 }
