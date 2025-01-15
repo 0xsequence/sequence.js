@@ -5,7 +5,7 @@
 // In the future we can include additional interfaces as needed.
 export const WebrpcHeader = 'Webrpc'
 
-export const WebrpcHeaderValue = 'webrpc@v0.22.0;gen-typescript@v0.16.1;sequence-builder@v0.1.0'
+export const WebrpcHeaderValue = 'webrpc@v0.22.1;gen-typescript@v0.16.2;sequence-builder@v0.1.0'
 
 // WebRPC description and code-gen version
 export const WebRPCVersion = 'v1'
@@ -14,7 +14,7 @@ export const WebRPCVersion = 'v1'
 export const WebRPCSchemaVersion = 'v0.1.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = '5b580e1afeb26e0b4a8ee026271e2466760da0aa'
+export const WebRPCSchemaHash = '461bc324d241f4df14fbf63268fde2cfe4873e3e'
 
 type WebrpcGenVersions = {
   webrpcGenVersion: string
@@ -76,6 +76,7 @@ export interface AudienceContact {
   email?: string
   userIp?: string
   stage?: number
+  provider?: string
   createdAt?: string
   updatedAt?: string
 }
