@@ -1,8 +1,9 @@
-import { ethers } from 'ethers'
 import { walletContracts } from '@0xsequence/abi'
-import { FeeOption, FeeQuote, proto, Relayer, SimulateResult } from '.'
-import { logger, Optionals } from '@0xsequence/utils'
 import { commons } from '@0xsequence/core'
+import { logger, Optionals } from '@0xsequence/utils'
+import { ethers } from 'ethers'
+
+import { FeeOption, FeeQuote, Precondition, proto, Relayer, SimulateResult } from '.'
 
 const DEFAULT_GAS_LIMIT = 800000n
 
@@ -54,9 +55,8 @@ export abstract class ProviderRelayer implements Relayer {
   abstract gasRefundOptions(address: string, ...transactions: commons.transaction.Transaction[]): Promise<FeeOption[]>
 
   abstract relay(
-    signedTxs: commons.transaction.IntendedTransactionBundle,
-    quote?: FeeQuote,
-    waitForReceipt?: boolean
+    transactions: commons.transaction.IntendedTransactionBundle,
+    options?: { projectAccessKey?: string; quote?: FeeQuote; preconditions?: Precondition[]; waitForReceipt?: boolean }
   ): Promise<commons.transaction.TransactionResponse>
 
   abstract getTransactionCost(

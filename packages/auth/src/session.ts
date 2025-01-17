@@ -248,7 +248,7 @@ export class Session {
         // we could speed this up by sending the migration alongside the jwt request
         // and letting the API validate it offchain.
         if (status.onChain.version !== status.version) {
-          await account.doBootstrap(referenceChainId, undefined, status)
+          await account.doBootstrap(referenceChainId, status)
         }
 
         const prevConfig = status.config

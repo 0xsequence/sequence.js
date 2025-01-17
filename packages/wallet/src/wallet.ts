@@ -1,10 +1,10 @@
-import { ethers } from 'ethers'
+import { walletContracts } from '@0xsequence/abi'
 import { commons, v1, v2 } from '@0xsequence/core'
 import { ChainId } from '@0xsequence/network'
+import { FeeQuote, Precondition, Relayer } from '@0xsequence/relayer'
 import { SignatureOrchestrator, SignerState, Status } from '@0xsequence/signhub'
 import { encodeTypedDataDigest, subDigestOf } from '@0xsequence/utils'
-import { FeeQuote, Relayer } from '@0xsequence/relayer'
-import { walletContracts } from '@0xsequence/abi'
+import { ethers } from 'ethers'
 
 import { resolveArrayProperties } from './utils'
 
@@ -202,18 +202,18 @@ export class Wallet<
 
   async deploy(metadata?: commons.WalletDeployMetadata): Promise<ethers.TransactionResponse | undefined> {
     const deployTx = await this.buildDeployTransaction(metadata)
-    if (deployTx === undefined) {
-      // Already deployed
-      return
+    if (!deployTx) {
+      return // already deployed
     }
-    if (!this.relayer) throw new Error('Wallet deploy requires a relayer')
+
+    if (!this.relayer) {
+      throw new Error('no relayer')
+    }
+
     return this.relayer.relay({
       ...deployTx,
       chainId: this.chainId,
-      intent: {
-        id: ethers.hexlify(ethers.randomBytes(32)),
-        wallet: this.address
-      }
+      intent: { id: ethers.hexlify(ethers.randomBytes(32)), wallet: this.address }
     })
   }
 
@@ -394,11 +394,14 @@ export class Wallet<
   }
 
   async sendSignedTransaction(
-    signedBundle: commons.transaction.IntendedTransactionBundle,
-    quote?: FeeQuote
+    transactions: commons.transaction.IntendedTransactionBundle,
+    options?: { projectAccessKey?: string; quote?: FeeQuote; preconditions?: Precondition[]; waitForReceipt?: boolean }
   ): Promise<ethers.TransactionResponse> {
-    if (!this.relayer) throw new Error('Wallet sendTransaction requires a relayer')
-    return this.relayer.relay(signedBundle, quote)
+    if (!this.relayer) {
+      throw new Error('no relayer')
+    }
+
+    return this.relayer.relay(transactions, options)
   }
 
   // sendTransaction will dispatch the transaction to the relayer for submission to the network.
@@ -408,9 +411,12 @@ export class Wallet<
   // By default, nonces are generated randomly and assigned so transactioned can be executed
   // in parallel. However, if you'd like to execute serially, pass { serial: true } as an option.
   async sendTransaction(
-    txs: commons.transaction.Transactionish,
+    transactions: commons.transaction.Transactionish,
     options?: {
+      projectAccessKey?: string
       quote?: FeeQuote
+      preconditions?: Precondition[]
+      waitForReceipt?: boolean
       nonce?: ethers.BigNumberish
       serial?: boolean
     }
@@ -427,9 +433,9 @@ export class Wallet<
       nonce = this.randomNonce()
     }
 
-    const signed = await this.signTransactions(txs, nonce)
+    const signed = await this.signTransactions(transactions, nonce)
     const decorated = await this.decorateTransactions(signed)
-    return this.sendSignedTransaction(decorated, options?.quote)
+    return this.sendSignedTransaction(decorated, options)
   }
 
   async fillGasLimits(txs: commons.transaction.Transactionish): Promise<commons.transaction.SimulatedTransaction[]> {

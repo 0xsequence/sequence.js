@@ -1,4 +1,5 @@
 import { walletContracts } from '@0xsequence/abi'
+import { Precondition } from '@0xsequence/api'
 import { commons, universal } from '@0xsequence/core'
 import { migrator, defaults, version } from '@0xsequence/migration'
 import { ChainId, NetworkConfig } from '@0xsequence/network'
@@ -783,9 +784,9 @@ export class Account {
     return this.buildBootstrapTransactions(status, chainId)
   }
 
-  async doBootstrap(chainId: ethers.BigNumberish, feeQuote?: FeeQuote, prestatus?: AccountStatus) {
+  async doBootstrap(chainId: ethers.BigNumberish, prestatus?: AccountStatus) {
     const bootstrapTxs = await this.bootstrapTransactions(chainId, prestatus)
-    return this.relayer(chainId).relay({ ...bootstrapTxs, chainId }, feeQuote)
+    return this.relayer(chainId).relay({ ...bootstrapTxs, chainId })
   }
 
   signMessage(
@@ -910,23 +911,28 @@ export class Account {
   }
 
   async sendSignedTransactions(
-    signedBundle: commons.transaction.IntendedTransactionBundle | commons.transaction.IntendedTransactionBundle[],
+    transactions: commons.transaction.IntendedTransactionBundle | commons.transaction.IntendedTransactionBundle[],
     chainId: ethers.BigNumberish,
-    quote?: FeeQuote,
-    pstatus?: AccountStatus,
-    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
-    projectAccessKey?: string
-  ): Promise<ethers.TransactionResponse> {
-    if (!Array.isArray(signedBundle)) {
-      return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback, projectAccessKey)
+    options?: {
+      projectAccessKey?: string
+      quote?: FeeQuote
+      preconditions?: Precondition[]
+      waitForReceipt?: boolean
+      status?: AccountStatus
+      callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
     }
-    const status = pstatus || (await this.status(chainId))
+  ): Promise<ethers.TransactionResponse> {
+    if (!Array.isArray(transactions)) {
+      return this.sendSignedTransactions([transactions], chainId, options)
+    }
+
+    const status = options?.status ?? (await this.status(chainId))
     this.mustBeFullyMigrated(status)
 
-    const decoratedBundle = await this.decorateTransactions(signedBundle, status, chainId)
-    callback?.(decoratedBundle)
+    const decorated = await this.decorateTransactions(transactions, status, chainId)
+    options?.callback?.(decorated)
 
-    return this.relayer(chainId).relay(decoratedBundle, quote, undefined, projectAccessKey)
+    return this.relayer(chainId).relay(decorated, options)
   }
 
   async fillGasLimits(
@@ -1008,32 +1014,36 @@ export class Account {
   }
 
   async sendTransaction(
-    txs: commons.transaction.Transactionish,
+    transactions: commons.transaction.Transactionish,
     chainId: ethers.BigNumberish,
-    quote?: FeeQuote,
-    skipPreDecorate: boolean = false,
-    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
     options?: {
+      projectAccessKey?: string
+      quote?: FeeQuote
+      preconditions?: Precondition[]
+      waitForReceipt?: boolean
+      status?: AccountStatus
+      callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
       nonceSpace?: ethers.BigNumberish
       serial?: boolean
-      projectAccessKey?: string
+      skipPredecorate?: boolean
     }
   ): Promise<ethers.TransactionResponse | undefined> {
-    const status = await this.status(chainId)
-
-    const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
-    const hasTxs = commons.transaction.fromTransactionish(this.address, predecorated).length > 0
-    const signed = hasTxs ? await this.signTransactions(predecorated, chainId, undefined, options) : undefined
+    const status = options?.status ?? (await this.status(chainId))
+    const predecorated = options?.skipPredecorate
+      ? transactions
+      : await this.predecorateTransactions(transactions, status, chainId)
+    const hasTransactions = commons.transaction.fromTransactionish(this.address, predecorated).length > 0
+    const signed = hasTransactions ? await this.signTransactions(predecorated, chainId, undefined, options) : undefined
 
     const childBundles = await this.orchestrator.predecorateSignedTransactions({ chainId })
 
     const bundles: commons.transaction.SignedTransactionBundle[] = []
-    if (signed !== undefined && signed.transactions.length > 0) {
+    if (signed && signed.transactions.length > 0) {
       bundles.push(signed)
     }
-    bundles.push(...childBundles.filter(b => b.transactions.length > 0))
+    bundles.push(...childBundles.filter(b => b.transactions.length))
 
-    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback, options?.projectAccessKey)
+    return this.sendSignedTransactions(bundles, chainId, options)
   }
 
   async signTypedData(

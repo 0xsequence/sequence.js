@@ -1,12 +1,13 @@
-import { ethers } from 'ethers'
-
-import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
-import { SequenceClient } from './client'
+import { Precondition } from '@0xsequence/api'
 import { commons } from '@0xsequence/core'
 import { ChainIdLike, NetworkConfig } from '@0xsequence/network'
+import { ethers } from 'ethers'
+
+import { SequenceClient } from './client'
+import { SequenceProvider, SingleNetworkSequenceProvider } from './provider'
+import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 import { resolveArrayProperties } from './utils'
 import { WalletUtils } from './utils/index'
-import { OptionalChainIdLike, OptionalEIP6492 } from './types'
 
 export interface ISequenceSigner extends Omit<ethers.Signer, 'connect'> {
   getProvider(): SequenceProvider
@@ -36,7 +37,7 @@ export interface ISequenceSigner extends Omit<ethers.Signer, 'connect'> {
   // It supports any kind of transaction, including regular ethers transactions, and Sequence transactions.
   sendTransaction(
     transaction: ethers.TransactionRequest[] | ethers.TransactionRequest,
-    options?: OptionalChainIdLike
+    options?: OptionalChainIdLike & { preconditions?: Precondition[] }
   ): Promise<commons.transaction.TransactionResponse>
 
   utils: WalletUtils
@@ -123,10 +124,13 @@ export class SequenceSigner implements ISequenceSigner {
     return this.provider.getProvider(chainId)
   }
 
-  async sendTransaction(transaction: ethers.TransactionRequest[] | ethers.TransactionRequest, options?: OptionalChainIdLike) {
+  async sendTransaction(
+    transaction: ethers.TransactionRequest[] | ethers.TransactionRequest,
+    options?: OptionalChainIdLike & { preconditions?: Precondition[] }
+  ) {
     const chainId = this.useChainId(options?.chainId)
     const resolved = await resolveArrayProperties(transaction)
-    const txHash = await this.client.sendTransaction(resolved, { chainId })
+    const txHash = await this.client.sendTransaction(resolved, { chainId, preconditions: options?.preconditions })
     const provider = this.getProvider(chainId)
 
     try {

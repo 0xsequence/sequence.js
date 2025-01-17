@@ -1,8 +1,8 @@
-import { ethers } from 'ethers'
-import { logger } from '@0xsequence/utils'
-import { FeeOption, FeeQuote, proto, Relayer } from '.'
-import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 import { commons } from '@0xsequence/core'
+import { logger } from '@0xsequence/utils'
+import { ethers } from 'ethers'
+
+import { FeeOption, FeeQuote, Precondition, ProviderRelayer, ProviderRelayerOptions, Relayer, proto } from '.'
 
 export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
   signer: ethers.Signer
@@ -46,15 +46,14 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   }
 
   async relay(
-    signedTxs: commons.transaction.IntendedTransactionBundle,
-    quote?: FeeQuote,
-    waitForReceipt: boolean = true
+    transactions: commons.transaction.IntendedTransactionBundle,
+    options?: { projectAccessKey?: string; quote?: FeeQuote; preconditions?: Precondition[]; waitForReceipt?: boolean }
   ): Promise<commons.transaction.TransactionResponse<ethers.TransactionReceipt>> {
-    if (quote !== undefined) {
+    if (options?.quote) {
       logger.warn(`LocalRelayer doesn't accept fee quotes`)
     }
 
-    const data = commons.transaction.encodeBundleExecData(signedTxs)
+    const data = commons.transaction.encodeBundleExecData(transactions)
 
     // TODO: think about computing gas limit individually, summing together and passing across
     // NOTE: we expect that all txns have set their gasLimit ahead of time through proper estimation
@@ -62,13 +61,13 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     // txRequest.gasLimit = gasLimit
 
     const responsePromise = this.signer.sendTransaction({
-      to: signedTxs.entrypoint,
+      to: transactions.entrypoint,
       data,
       ...this.txnOptions,
       gasLimit: 9000000
     })
 
-    if (waitForReceipt) {
+    if (options?.waitForReceipt !== false) {
       const response: commons.transaction.TransactionResponse = await responsePromise
       response.receipt = await response.wait()
       return response

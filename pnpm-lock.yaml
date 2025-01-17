@@ -255,6 +255,9 @@ importers:
       '@0xsequence/abi':
         specifier: workspace:*
         version: link:../abi
+      '@0xsequence/api':
+        specifier: workspace:*
+        version: link:../api
       '@0xsequence/core':
         specifier: workspace:*
         version: link:../core

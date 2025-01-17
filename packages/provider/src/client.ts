@@ -1,4 +1,8 @@
+import { Precondition, encodePrecondition } from '@0xsequence/api'
+import { commons, VERSION } from '@0xsequence/core'
 import { NetworkConfig } from '@0xsequence/network'
+import { TypedData } from '@0xsequence/utils'
+import { ethers } from 'ethers'
 import {
   ConnectDetails,
   ConnectOptions,
@@ -15,11 +19,7 @@ import {
   isProviderTransport,
   messageToBytes
 } from '.'
-import { commons, VERSION } from '@0xsequence/core'
-import { TypedData } from '@0xsequence/utils'
-import { toExtended } from './extended'
 import { Analytics, setupAnalytics } from './analytics'
-import { ethers } from 'ethers'
 
 /**
  *  This session class is meant to persist the state of the wallet connection
@@ -490,7 +490,10 @@ export class SequenceClient {
     })
   }
 
-  async sendTransaction(tx: ethers.TransactionRequest[] | ethers.TransactionRequest, options?: OptionalChainId): Promise<string> {
+  async sendTransaction(
+    tx: ethers.TransactionRequest[] | ethers.TransactionRequest,
+    options?: OptionalChainId & { preconditions?: Precondition[] }
+  ): Promise<string> {
     const transactions = Array.isArray(tx) ? tx : [tx]
     const chainId = options?.chainId ?? this.getChainId()
 
@@ -508,7 +511,10 @@ export class SequenceClient {
               value: value !== undefined && value !== null ? ethers.toQuantity(value) : undefined,
               data: data || undefined,
               chainId: ethers.toQuantity(chainId)
-            }))
+            })),
+            capabilities: {
+              ...(options?.preconditions ? { preconditions: options.preconditions.map(encodePrecondition) } : undefined)
+            }
           }
         ],
         chainId

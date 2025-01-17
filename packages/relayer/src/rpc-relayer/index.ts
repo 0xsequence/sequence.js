@@ -1,8 +1,9 @@
-import { ethers } from 'ethers'
-import { FeeOption, FeeQuote, Relayer, SimulateResult } from '..'
-import * as proto from './relayer.gen'
 import { commons } from '@0xsequence/core'
 import { bigintReplacer, getFetchRequest, logger, toHexString } from '@0xsequence/utils'
+import { ethers } from 'ethers'
+
+import { FeeOption, FeeQuote, Precondition, Relayer, SimulateResult } from '..'
+import * as proto from './relayer.gen'
 
 export { proto }
 
@@ -190,19 +191,17 @@ export class RpcRelayer implements Relayer {
   }
 
   async relay(
-    signedTxs: commons.transaction.IntendedTransactionBundle,
-    quote?: FeeQuote,
-    waitForReceipt: boolean = true,
-    projectAccessKey?: string
+    transactions: commons.transaction.IntendedTransactionBundle,
+    options?: { projectAccessKey?: string; quote?: FeeQuote; preconditions?: Precondition[]; waitForReceipt?: boolean }
   ): Promise<commons.transaction.TransactionResponse<RelayerTxReceipt>> {
     logger.info(
-      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs, bigintReplacer)} with quote ${JSON.stringify(quote, bigintReplacer)}`
+      `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(transactions, bigintReplacer)} with quote ${JSON.stringify(options?.quote, bigintReplacer)}`
     )
 
     let typecheckedQuote: string | undefined
-    if (quote !== undefined) {
-      if (typeof quote._quote === 'string') {
-        typecheckedQuote = quote._quote
+    if (options?.quote) {
+      if (typeof options.quote._quote === 'string') {
+        typecheckedQuote = options.quote._quote
       } else {
         logger.warn('[rpc-relayer/relay] ignoring invalid fee quote')
       }
@@ -213,28 +212,24 @@ export class RpcRelayer implements Relayer {
       throw new Error('provider is not set')
     }
 
-    const data = commons.transaction.encodeBundleExecData(signedTxs)
+    const data = commons.transaction.encodeBundleExecData(transactions)
     const metaTxn = await this.service.sendMetaTxn(
       {
-        call: {
-          walletAddress: signedTxs.intent.wallet,
-          contract: signedTxs.entrypoint,
-          input: data
-        },
+        call: { walletAddress: transactions.intent.wallet, contract: transactions.entrypoint, input: data },
         quote: typecheckedQuote
       },
-      { ...(projectAccessKey ? { 'X-Access-Key': projectAccessKey } : undefined) }
+      { ...(options?.projectAccessKey ? { 'X-Access-Key': options.projectAccessKey } : undefined) }
     )
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn, bigintReplacer)}`)
 
-    if (waitForReceipt) {
-      return this.wait(signedTxs.intent.id)
+    if (options?.waitForReceipt !== false) {
+      return this.wait(transactions.intent.id)
     } else {
       const response = {
-        hash: signedTxs.intent.id,
+        hash: transactions.intent.id,
         confirmations: 0,
-        from: signedTxs.intent.wallet,
+        from: transactions.intent.wallet,
         wait: (_confirmations?: number): Promise<ethers.TransactionReceipt | null> => Promise.reject(new Error('impossible'))
       }
 
@@ -243,7 +238,7 @@ export class RpcRelayer implements Relayer {
           throw new Error('cannot wait for receipt, relayer has no provider set')
         }
 
-        const waitResponse = await this.wait(signedTxs.intent.id)
+        const waitResponse = await this.wait(transactions.intent.id)
         const transactionHash = waitResponse.receipt?.transactionHash
 
         if (!transactionHash) {

@@ -1,7 +1,8 @@
-import { ethers } from 'ethers'
-import { proto } from './rpc-relayer'
-
 import { commons } from '@0xsequence/core'
+import { ethers } from 'ethers'
+
+import { Precondition } from './precondition'
+import { proto } from './rpc-relayer'
 
 export interface Relayer {
   // simulate returns the execution results for a list of transactions.
@@ -38,10 +39,8 @@ export interface Relayer {
   // The quote should be the one returned from getFeeOptions, if any.
   // waitForReceipt must default to true.
   relay(
-    signedTxs: commons.transaction.IntendedTransactionBundle,
-    quote?: FeeQuote,
-    waitForReceipt?: boolean,
-    projectAccessKey?: string
+    transactions: commons.transaction.IntendedTransactionBundle,
+    options?: { projectAccessKey?: string; quote?: FeeQuote; preconditions?: Precondition[]; waitForReceipt?: boolean }
   ): Promise<commons.transaction.TransactionResponse>
 
   // wait for transaction confirmation

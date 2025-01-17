@@ -145,18 +145,10 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
 
     const finalTransactions = [...prepare.transactions, ...encodeGasRefundTransaction(feeOption)]
 
-    return this.account.sendTransaction(
-      finalTransactions,
-      this.chainId,
-      prepare.feeQuote,
-      undefined,
-      undefined,
-      this.options?.nonceSpace !== undefined
-        ? {
-            nonceSpace: this.options.nonceSpace
-          }
-        : undefined
-    ) as Promise<ethers.TransactionResponse> // Will always have a transaction response
+    return this.account.sendTransaction(finalTransactions, this.chainId, {
+      quote: prepare.feeQuote,
+      nonceSpace: this.options?.nonceSpace
+    }) as Promise<ethers.TransactionResponse> // Will always have a transaction response
   }
 
   getBalance(blockTag?: ethers.BlockTag | undefined): Promise<bigint> {
