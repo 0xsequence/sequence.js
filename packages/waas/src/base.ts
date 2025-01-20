@@ -56,6 +56,7 @@ import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-cry
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
 import { ethers } from 'ethers'
 import { ChallengeIntentParams } from './challenge'
+import { NoPrivateKeyError } from './errors'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -155,8 +156,16 @@ export class SequenceWaaSBase {
       throw new Error('session not open')
     }
 
-    const session = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
-    return signIntent(session, intent)
+    try {
+      const session = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
+      return signIntent(session, intent)
+    } catch (error) {
+      if (error instanceof NoPrivateKeyError) {
+        await this.completeSignOut()
+        throw new Error('No private key found, logging out')
+      }
+      throw error
+    }
   }
 
   public async signUsingSessionKey(message: string | Uint8Array) {
@@ -165,8 +174,16 @@ export class SequenceWaaSBase {
       throw new Error('session not open')
     }
 
-    const signer = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
-    return signer.sign(message)
+    try {
+      const signer = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
+      return signer.sign(message)
+    } catch (error) {
+      if (error instanceof NoPrivateKeyError) {
+        await this.completeSignOut()
+        throw new Error('No private key found, logging out')
+      }
+      throw error
+    }
   }
 
   private gettingSessionIdPromise: Promise<string> | undefined
