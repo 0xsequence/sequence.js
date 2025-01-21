@@ -60,10 +60,7 @@ export type RawNestedLeaf = {
 
 export type RawLeaf = Leaf | RawSignerLeaf | RawNestedLeaf
 
-export type RawNode = {
-  left: RawTopology
-  right: RawTopology
-}
+export type RawNode = [RawTopology, RawTopology]
 
 export type RawTopology = RawNode | RawLeaf
 
@@ -101,18 +98,17 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
     throw new Error('Signature is empty')
   }
 
-  // First byte is the "flag"
   const flag = signature[0]!
   let index = 1
 
-  // Chained signature
+  // If bit 0 is set => chained signature (not implemented here)
   if ((flag & 0x01) === 0x01) {
     throw new Error('TODO')
   }
 
   const noChainId = (flag & 0x02) === 0x02
 
-  // Checkpoint size is bits [2..4] of flag -> (flag & 0x1c) >> 2
+  // bits [2..4] => checkpoint size
   const checkpointSize = (flag & 0x1c) >> 2
   if (index + checkpointSize > signature.length) {
     throw new Error('Not enough bytes for checkpoint')
@@ -120,7 +116,7 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   const checkpoint = Bytes.toBigInt(signature.slice(index, index + checkpointSize))
   index += checkpointSize
 
-  // Threshold size is bits [5..5] of flag -> ((flag & 0x20) >> 5) + 1
+  // bit [5] => threshold size offset
   const thresholdSize = ((flag & 0x20) >> 5) + 1
   if (index + thresholdSize > signature.length) {
     throw new Error('Not enough bytes for threshold')
@@ -131,7 +127,7 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   let checkpointerAddress: `0x${string}` | undefined
   let checkpointerData: Uint8Array | undefined
 
-  // Checkpointer is bit [6] of flag -> if set, read address + data
+  // bit [6] => checkpointer address + data
   if ((flag & 0x40) === 0x40) {
     if (index + 20 > signature.length) {
       throw new Error('Not enough bytes for checkpointer address')
@@ -139,7 +135,6 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
     checkpointerAddress = Bytes.toHex(signature.slice(index, index + 20)) as `0x${string}`
     index += 20
 
-    // We reuse the bits [2..4] again for data size, or any scheme you use
     const checkpointerDataSize = (flag & 0x1c) >> 2
     if (index + checkpointerDataSize > signature.length) {
       throw new Error('Not enough bytes for checkpointer data')
@@ -180,11 +175,9 @@ export function parseBranch(signature: Uint8Array): { nodes: RawTopology[]; left
 
     const flag = (firstByte & 0xf0) >> 4
 
-    // Signature hash or eth_sign (0x00 or 0x07)
+    // 'hash' or 'eth_sign' (0x00 or 0x07)
     if (flag === 0x00 || flag === 0x07) {
-      // v is typically 27 or 28, but in your code you do shifts. Adjust accordingly
       const v = ((firstByte & 0x10) >> 4) + 27
-
       let weight = BigInt(firstByte & 0x07)
       if (weight === 0n) {
         if (index >= signature.length) {
@@ -237,7 +230,7 @@ export function parseBranch(signature: Uint8Array): { nodes: RawTopology[]; left
       continue
     }
 
-    // Signature ERC1271 (0x02)
+    // ERC1271 (0x02)
     if (flag === 0x02) {
       let weight = BigInt(firstByte & 0x03)
       if (weight === 0n) {
@@ -256,7 +249,7 @@ export function parseBranch(signature: Uint8Array): { nodes: RawTopology[]; left
 
       const sizeSize = (firstByte & 0x0c) >> 2
       if (index + sizeSize > signature.length) {
-        throw new Error('Not enough bytes for ERC1271 signature size')
+        throw new Error('Not enough bytes for ERC1271 size')
       }
       const size = Bytes.toNumber(signature.slice(index, index + sizeSize))
       index += sizeSize
@@ -278,7 +271,7 @@ export function parseBranch(signature: Uint8Array): { nodes: RawTopology[]; left
       continue
     }
 
-    // Node (0x03)
+    // Node leaf (0x03) => nodeHash
     if (flag === 0x03) {
       if (index + 32 > signature.length) {
         throw new Error('Not enough bytes for node hash')
@@ -286,9 +279,7 @@ export function parseBranch(signature: Uint8Array): { nodes: RawTopology[]; left
       const node = signature.slice(index, index + 32)
       index += 32
 
-      nodes.push({
-        nodeHash: node,
-      } as NodeLeaf)
+      nodes.push(node)
       continue
     }
 
@@ -435,7 +426,7 @@ function foldNodes(nodes: RawTopology[]): RawTopology {
 
   let tree: RawTopology = nodes[0]!
   for (let i = 1; i < nodes.length; i++) {
-    tree = { left: tree, right: nodes[i]! }
+    tree = [tree, nodes[i]!] as RawNode
   }
   return tree
 }

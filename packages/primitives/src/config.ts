@@ -1,8 +1,5 @@
 import { Bytes, Hash, Hex } from 'ox'
 
-/**
- *  Types for the topology of the tree
- */
 export type SignerLeaf = {
   address: `0x${string}`
   weight: bigint
@@ -24,16 +21,11 @@ export type NestedLeaf = {
   threshold: bigint
 }
 
-export type NodeLeaf = {
-  nodeHash: Uint8Array
-}
+export type NodeLeaf = Uint8Array
+
+export type Node = [Topology, Topology]
 
 export type Leaf = SignerLeaf | SubdigestLeaf | NodeLeaf | NestedLeaf | SapientSigner
-
-export type Node = {
-  left: Topology
-  right: Topology
-}
 
 export type Topology = Node | Leaf
 
@@ -45,7 +37,7 @@ export type Configuration = {
 }
 
 export function isSignerLeaf(cand: Topology): cand is SignerLeaf {
-  return typeof cand === 'object' && 'address' in cand && 'weight' in cand
+  return typeof cand === 'object' && 'address' in cand && 'weight' in cand && !('imageHash' in cand)
 }
 
 export function isSapientSigner(cand: Topology): cand is SapientSigner {
@@ -57,15 +49,26 @@ export function isSubdigestLeaf(cand: Topology): cand is SubdigestLeaf {
 }
 
 export function isNodeLeaf(cand: Topology): cand is NodeLeaf {
-  return typeof cand === 'object' && 'nodeHash' in cand
+  return cand instanceof Uint8Array && cand.length === 32
 }
 
 export function isNestedLeaf(cand: Topology): cand is NestedLeaf {
-  return typeof cand === 'object' && 'tree' in cand && 'weight' in cand && 'threshold' in cand
+  return (
+    typeof cand === 'object' &&
+    !Array.isArray(cand) &&
+    'tree' in cand &&
+    'weight' in cand &&
+    'threshold' in cand
+  )
 }
 
 export function isNode(cand: Topology): cand is Node {
-  return typeof cand === 'object' && 'left' in cand && 'right' in cand
+  return (
+    Array.isArray(cand) &&
+    cand.length === 2 &&
+    isLeaf(cand[0]) &&
+    isLeaf(cand[1])
+  )
 }
 
 export function isConfiguration(cand: any): cand is Configuration {
@@ -84,7 +87,7 @@ export function isLeaf(cand: Topology): cand is Leaf {
   )
 }
 
-function hashConfiguration(topology: Topology | Configuration): Uint8Array {
+export function hashConfiguration(topology: Topology | Configuration): Uint8Array {
   if (isConfiguration(topology)) {
     let root = hashConfiguration(topology.topology)
     root = Hash.keccak256(Bytes.concat(root, Bytes.fromNumber(topology.threshold)))
@@ -122,7 +125,7 @@ function hashConfiguration(topology: Topology | Configuration): Uint8Array {
   }
 
   if (isNodeLeaf(topology)) {
-    return topology.nodeHash
+    return topology
   }
 
   if (isNestedLeaf(topology)) {
@@ -138,7 +141,7 @@ function hashConfiguration(topology: Topology | Configuration): Uint8Array {
 
   if (isNode(topology)) {
     return Hash.keccak256(
-      Bytes.concat(hashConfiguration(topology.left), hashConfiguration(topology.right))
+      Bytes.concat(hashConfiguration(topology[0]), hashConfiguration(topology[1]))
     )
   }
 
