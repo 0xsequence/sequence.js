@@ -1,5 +1,6 @@
 {
   "name": "@0xsequence/sequence-core",
+  "version": "0.0.0",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"
