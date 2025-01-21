@@ -87,6 +87,10 @@ importers:
         version: 5.5.4
 
   packages/core:
+    dependencies:
+      '@0xsequence/sequence-primitives':
+        specifier: workspace:^
+        version: link:../primitives
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
