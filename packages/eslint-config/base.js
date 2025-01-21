@@ -27,6 +27,26 @@ export const config = [
     },
   },
   {
+    rules: {
+      // Disallow semicolons
+      "semi": ["error", "never"],
+
+      // Turn off the base ESLint version of no-unused-vars
+      "no-unused-vars": "off",
+
+      // Use @typescript-eslint/no-unused-vars
+      // Allow unused vars prefixed with _
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "destructuredArrayIgnorePattern": "^_"
+        }
+      ]
+    }
+  },
+  {
     ignores: ["dist/**"],
   },
 ];
