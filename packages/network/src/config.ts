@@ -136,5 +136,7 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.ROOT_NETWORK_PORCINI),
   createNetworkConfig(ChainId.LAOS),
   createNetworkConfig(ChainId.LAOS_SIGMA_TESTNET),
+  createNetworkConfig(ChainId.MOONBEAM),
+  createNetworkConfig(ChainId.MOONBASE_ALPHA),
   ...hardhatNetworks
 ])

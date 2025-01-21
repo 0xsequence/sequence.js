@@ -96,6 +96,10 @@ export enum ChainId {
   LAOS = 6283,
   LAOS_SIGMA_TESTNET = 62850,
 
+  // MOONBEAM
+  MOONBEAM = 1284,
+  MOONBASE_ALPHA = 1287,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -993,6 +997,40 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'SIGMA',
       name: 'SIGMA',
+      decimals: 18
+    }
+  },
+  [ChainId.MOONBEAM]: {
+    chainId: ChainId.MOONBEAM,
+    type: NetworkType.MAINNET,
+    name: 'moonbeam',
+    title: 'Moonbeam',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBEAM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Moonscan',
+      rootUrl: 'https://moonscan.io/'
+    },
+    nativeToken: {
+      symbol: 'GLMR',
+      name: 'GLMR',
+      decimals: 18
+    }
+  },
+  [ChainId.MOONBASE_ALPHA]: {
+    chainId: ChainId.MOONBASE_ALPHA,
+    type: NetworkType.TESTNET,
+    name: 'moonbase-alpha',
+    title: 'Moonbase Alpha',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBASE_ALPHA}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Moonscan (Moonbase Alpha)',
+      rootUrl: 'https://moonbase.moonscan.io/'
+    },
+    nativeToken: {
+      symbol: 'GLMR',
+      name: 'GLMR',
       decimals: 18
     }
   },
