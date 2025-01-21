@@ -1,12 +1,12 @@
-import { Bytes, Hash, Hex } from 'ox'
+import { Address, Bytes, Hash, Hex } from 'ox'
 
 export type SignerLeaf = {
-  address: `0x${string}`
+  address: Address.Address
   weight: bigint
 }
 
 export type SapientSigner = {
-  address: `0x${string}`
+  address: Address.Address
   weight: bigint
   imageHash: Uint8Array
 }
@@ -25,7 +25,12 @@ export type NodeLeaf = Uint8Array
 
 export type Node = [Topology, Topology]
 
-export type Leaf = SignerLeaf | SubdigestLeaf | NodeLeaf | NestedLeaf | SapientSigner
+export type Leaf =
+  | SignerLeaf
+  | SubdigestLeaf
+  | NodeLeaf
+  | NestedLeaf
+  | SapientSigner
 
 export type Topology = Node | Leaf
 
@@ -33,15 +38,25 @@ export type Configuration = {
   threshold: bigint
   checkpoint: bigint
   topology: Topology
-  checkpointer?: `0x${string}`
+  checkpointer?: Address.Address
 }
 
 export function isSignerLeaf(cand: Topology): cand is SignerLeaf {
-  return typeof cand === 'object' && 'address' in cand && 'weight' in cand && !('imageHash' in cand)
+  return (
+    typeof cand === 'object' &&
+    'address' in cand &&
+    'weight' in cand &&
+    !('imageHash' in cand)
+  )
 }
 
 export function isSapientSigner(cand: Topology): cand is SapientSigner {
-  return typeof cand === 'object' && 'address' in cand && 'weight' in cand && 'imageHash' in cand
+  return (
+    typeof cand === 'object' &&
+    'address' in cand &&
+    'weight' in cand &&
+    'imageHash' in cand
+  )
 }
 
 export function isSubdigestLeaf(cand: Topology): cand is SubdigestLeaf {
@@ -73,7 +88,10 @@ export function isNode(cand: Topology): cand is Node {
 
 export function isConfiguration(cand: any): cand is Configuration {
   return (
-    typeof cand === 'object' && 'threshold' in cand && 'checkpoint' in cand && 'topology' in cand
+    typeof cand === 'object' &&
+    'threshold' in cand &&
+    'checkpoint' in cand &&
+    'topology' in cand
   )
 }
 
@@ -87,16 +105,24 @@ export function isLeaf(cand: Topology): cand is Leaf {
   )
 }
 
-export function hashConfiguration(topology: Topology | Configuration): Uint8Array {
+export function hashConfiguration(
+  topology: Topology | Configuration,
+): Uint8Array {
   if (isConfiguration(topology)) {
     let root = hashConfiguration(topology.topology)
-    root = Hash.keccak256(Bytes.concat(root, Bytes.fromNumber(topology.threshold)))
-    root = Hash.keccak256(Bytes.concat(root, Bytes.fromNumber(topology.checkpoint)))
+    root = Hash.keccak256(
+      Bytes.concat(root, Bytes.fromNumber(topology.threshold)),
+    )
+    root = Hash.keccak256(
+      Bytes.concat(root, Bytes.fromNumber(topology.checkpoint)),
+    )
     root = Hash.keccak256(
       Bytes.concat(
         root,
-        Bytes.fromHex(topology.checkpointer ?? '0x0000000000000000000000000000000000000000')
-      )
+        Bytes.fromHex(
+          topology.checkpointer ?? '0x0000000000000000000000000000000000000000',
+        ),
+      ),
     )
     return root
   }
@@ -113,14 +139,17 @@ export function hashConfiguration(topology: Topology | Configuration): Uint8Arra
         Bytes.fromString('Sequence sapient config:\n'),
         Bytes.fromHex(topology.address),
         Bytes.padLeft(Bytes.fromNumber(topology.weight), 32),
-        topology.imageHash
-      )
+        topology.imageHash,
+      ),
     )
   }
 
   if (isSubdigestLeaf(topology)) {
     return Hash.keccak256(
-      Bytes.concat(Bytes.fromString('Sequence static digest:\n'), topology.digest)
+      Bytes.concat(
+        Bytes.fromString('Sequence static digest:\n'),
+        topology.digest,
+      ),
     )
   }
 
@@ -134,14 +163,17 @@ export function hashConfiguration(topology: Topology | Configuration): Uint8Arra
         Bytes.fromString('Sequence nested config:\n'),
         hashConfiguration(topology.tree),
         Bytes.padLeft(Bytes.fromNumber(topology.threshold), 32),
-        Bytes.padLeft(Bytes.fromNumber(topology.weight), 32)
-      )
+        Bytes.padLeft(Bytes.fromNumber(topology.weight), 32),
+      ),
     )
   }
 
   if (isNode(topology)) {
     return Hash.keccak256(
-      Bytes.concat(hashConfiguration(topology[0]), hashConfiguration(topology[1]))
+      Bytes.concat(
+        hashConfiguration(topology[0]),
+        hashConfiguration(topology[1]),
+      ),
     )
   }
 

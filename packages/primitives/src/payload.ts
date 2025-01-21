@@ -1,7 +1,8 @@
+import { Address, Hex } from 'ox'
 import { minBytesFor } from './utils'
 
 export type Call = {
-  to: `0x${string}`
+  to: Address.Address
   value: bigint
   data: Uint8Array
   gasLimit: bigint
@@ -24,19 +25,23 @@ export type MessagePayload = {
 
 export type ConfigUpdatePayload = {
   type: 'config-update'
-  imageHash: `0x${string}`
+  imageHash: Hex.Hex
 }
 
 export type DigestPayload = {
   type: 'digest'
-  digest: `0x${string}`
+  digest: Hex.Hex
 }
 
 export type ParentPayload = {
-  parentWallets?: `0x${string}`[]
+  parentWallets?: Address.Address[]
 }
 
-export type Payload = CallPayload | MessagePayload | ConfigUpdatePayload | DigestPayload
+export type Payload =
+  | CallPayload
+  | MessagePayload
+  | ConfigUpdatePayload
+  | DigestPayload
 
 export type ParentedPayload = Payload & ParentPayload
 
@@ -47,14 +52,14 @@ export function fromMessage(message: Uint8Array): Payload {
   }
 }
 
-export function fromConfigUpdate(imageHash: `0x${string}`): Payload {
+export function fromConfigUpdate(imageHash: Hex.Hex): Payload {
   return {
     type: 'config-update',
     imageHash,
   }
 }
 
-export function fromDigest(digest: `0x${string}`): Payload {
+export function fromDigest(digest: Hex.Hex): Payload {
   return {
     type: 'digest',
     digest,
@@ -70,7 +75,10 @@ export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Payload {
   }
 }
 
-export function encode(payload: CallPayload, self?: `0x${string}`): Uint8Array {
+export function encode(
+  payload: CallPayload,
+  self?: Address.Address,
+): Uint8Array {
   const callsLen = payload.calls.length
   const minBytes = minBytesFor(payload.nonce)
   if (minBytes > 15) {

@@ -1,14 +1,13 @@
+import { Address, Bytes } from 'ox'
 import {
-  SignerLeaf,
-  SapientSigner,
-  isSignerLeaf,
-  isSapientSigner,
-  Topology,
   Leaf,
-  NodeLeaf,
+  SapientSigner,
+  SignerLeaf,
   SubdigestLeaf,
+  Topology,
+  isSapientSigner,
+  isSignerLeaf,
 } from './config'
-import { Bytes } from 'ox'
 
 export type SignedSignerLeaf = SignerLeaf & {
   signature:
@@ -68,7 +67,7 @@ export type RawConfiguration = {
   threshold: bigint
   checkpoint: bigint
   topology: RawTopology
-  checkpointer?: `0x${string}`
+  checkpointer?: Address.Address
 }
 
 export type RawSignature = {
@@ -113,7 +112,9 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   if (index + checkpointSize > signature.length) {
     throw new Error('Not enough bytes for checkpoint')
   }
-  const checkpoint = Bytes.toBigInt(signature.slice(index, index + checkpointSize))
+  const checkpoint = Bytes.toBigInt(
+    signature.slice(index, index + checkpointSize),
+  )
   index += checkpointSize
 
   // bit [5] => threshold size offset
@@ -121,10 +122,12 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   if (index + thresholdSize > signature.length) {
     throw new Error('Not enough bytes for threshold')
   }
-  const threshold = Bytes.toBigInt(signature.slice(index, index + thresholdSize))
+  const threshold = Bytes.toBigInt(
+    signature.slice(index, index + thresholdSize),
+  )
   index += thresholdSize
 
-  let checkpointerAddress: `0x${string}` | undefined
+  let checkpointerAddress: Address.Address | undefined
   let checkpointerData: Uint8Array | undefined
 
   // bit [6] => checkpointer address + data
@@ -132,7 +135,7 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
     if (index + 20 > signature.length) {
       throw new Error('Not enough bytes for checkpointer address')
     }
-    checkpointerAddress = Bytes.toHex(signature.slice(index, index + 20)) as `0x${string}`
+    checkpointerAddress = Bytes.toHex(signature.slice(index, index + 20))
     index += 20
 
     const checkpointerDataSize = (flag & 0x1c) >> 2
@@ -162,7 +165,10 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   }
 }
 
-export function parseBranch(signature: Uint8Array): { nodes: RawTopology[]; leftover: Uint8Array } {
+export function parseBranch(signature: Uint8Array): {
+  nodes: RawTopology[]
+  leftover: Uint8Array
+} {
   const nodes: RawTopology[] = []
   let index = 0
 
