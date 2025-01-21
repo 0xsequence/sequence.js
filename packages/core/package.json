@@ -1,0 +1,6 @@
+{
+  "name": "@0xsequence/sequence-core",
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
