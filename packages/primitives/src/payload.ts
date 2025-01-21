@@ -220,9 +220,7 @@ export function encode(payload: CallPayload, self?: `0x${string}`): Uint8Array {
         throw new Error('Data too large')
       }
       out.push((dataLen >> 16) & 0xff, (dataLen >> 8) & 0xff, dataLen & 0xff)
-      for (let i = 0; i < dataLen; i++) {
-        out.push(call.data[i])
-      }
+      out.push(...call.data)
     }
 
     // If bit3 is set, store 32 bytes of gasLimit
