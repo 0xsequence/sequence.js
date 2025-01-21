@@ -9,5 +9,8 @@
       "types": "./src/index.ts",
       "default": "./dist/index.js"
     }
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
   }
 }
