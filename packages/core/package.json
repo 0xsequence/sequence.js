@@ -17,6 +17,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@0xsequence/sequence-primitives": "workspace:^"
+    "@0xsequence/sequence-primitives": "workspace:^",
+    "ox": "^0.6.7"
   }
 }
