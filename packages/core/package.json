@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/sequence-core",
   "devDependencies": {
+    "@repo/typescript-config": "workspace:^",
     "typescript": "^5.7.3"
   }
 }

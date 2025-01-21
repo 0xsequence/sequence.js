@@ -88,6 +88,9 @@ importers:
 
   packages/core:
     devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
