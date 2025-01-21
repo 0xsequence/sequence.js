@@ -1,6 +1,7 @@
 {
   "name": "@0xsequence/sequence-wdk",
   "version": "0.0.0",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"

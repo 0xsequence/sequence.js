@@ -1,5 +1,6 @@
 {
   "name": "sequence-core",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "build": "turbo build",
