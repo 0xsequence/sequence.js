@@ -3,6 +3,7 @@ import { Address, Bytes, Hash, Hex } from 'ox'
 export type SignerLeaf = {
   address: Address.Address
   weight: bigint
+  imageHash: undefined
 }
 
 export type SapientSigner = {
