@@ -13,27 +13,37 @@ const payloadCommand: CommandModule = {
   describe: 'Payload conversion utilities',
   builder: (yargs) => {
     return yargs
-      .command('to-abi <payload>', 'Convert payload to ABI format', (yargs) => {
-        return yargs.positional('payload', {
-          type: 'string',
-          description: 'Input payload to convert',
-          demandOption: true,
-        })
-      }, async (argv) => {
-        await convertToAbi(argv.payload)
-      })
-      .command('to-packed <payload>', 'Convert payload to packed format', (yargs) => {
-        return yargs.positional('payload', {
-          type: 'string',
-          description: 'Input payload to convert',
-          demandOption: true,
-        })
-      }, async (argv) => {
-        await convertToPacked(argv.payload)
-      })
+      .command(
+        'to-abi <payload>',
+        'Convert payload to ABI format',
+        (yargs) => {
+          return yargs.positional('payload', {
+            type: 'string',
+            description: 'Input payload to convert',
+            demandOption: true,
+          })
+        },
+        async (argv) => {
+          await convertToAbi(argv.payload)
+        },
+      )
+      .command(
+        'to-packed <payload>',
+        'Convert payload to packed format',
+        (yargs) => {
+          return yargs.positional('payload', {
+            type: 'string',
+            description: 'Input payload to convert',
+            demandOption: true,
+          })
+        },
+        async (argv) => {
+          await convertToPacked(argv.payload)
+        },
+      )
       .demandCommand(1, 'You must specify a subcommand for payload')
   },
-  handler: () => { }
+  handler: () => {},
 }
 
 export default payloadCommand
