@@ -106,6 +106,35 @@ export function isLeaf(cand: Topology): cand is Leaf {
   )
 }
 
+export function getSigners(configuration: Configuration | Topology): {
+  signers: Address.Address[]
+  isComplete: boolean
+} {
+  const signers = new Set<Address.Address>()
+  let isComplete = true
+
+  const scan = (topology: Topology) => {
+    if (isNode(topology)) {
+      scan(topology[0])
+      scan(topology[1])
+    } else if (isSignerLeaf(topology)) {
+      if (topology.weight) {
+        signers.add(topology.address)
+      }
+    } else if (isNodeLeaf(topology)) {
+      isComplete = false
+    } else if (isNestedLeaf(topology)) {
+      if (topology.weight) {
+        scan(topology.tree)
+      }
+    }
+  }
+
+  scan(isConfiguration(configuration) ? configuration.topology : configuration)
+
+  return { signers: Array.from(signers), isComplete }
+}
+
 export function hashConfiguration(
   topology: Topology | Configuration,
 ): Uint8Array {
