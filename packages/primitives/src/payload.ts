@@ -88,8 +88,8 @@ export function encode(
   /*
     globalFlag layout:
 
-      bit 0: spaceZeroFlag => 1 if space == 0, else 0
-      bits [1..4]: nonceBytes => how many bytes we use to encode nonce
+      bit 1: spaceZeroFlag => 1 if space == 0, else 0
+      bits [2..4]: nonceBytes => how many bytes we use to encode nonce
       bit 5: singleCallFlag => 1 if there's exactly one call, else 0
       bit 6: callsCountSizeFlag => 1 if #calls stored in 1 byte, else 0 if stored in 2 bytes
 

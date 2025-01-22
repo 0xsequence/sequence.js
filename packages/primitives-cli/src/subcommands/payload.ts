@@ -1,4 +1,4 @@
-import { AbiParameters, Address, Hex } from 'ox'
+import { AbiParameters, Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { encode } from '@0xsequence/sequence-primitives'
 
@@ -43,7 +43,7 @@ interface SolidityDecoded {
   calls: SolidityCall[];
   space: bigint;
   nonce: bigint;
-  message: Uint8Array;
+  message: string;
   imageHash: string;
   digest: string;
   parentWallets: string[];
@@ -52,7 +52,7 @@ interface SolidityDecoded {
 interface SolidityCall {
   to: string;
   value: bigint;
-  data: Uint8Array;
+  data: string;
   gasLimit: bigint;
   delegateCall: boolean;
   onlyFallback: boolean;
@@ -90,7 +90,7 @@ async function convertToPacked(payload: string): Promise<void> {
       calls: decoded.calls.map((call) => ({
         to: Address.from(call.to),
         value: call.value,
-        data: call.data,
+        data: Bytes.from(call.data as Hex.Hex),
         gasLimit: call.gasLimit,
         delegateCall: call.delegateCall,
         onlyFallback: call.onlyFallback,
@@ -102,6 +102,15 @@ async function convertToPacked(payload: string): Promise<void> {
   }
 
   throw new Error('Not implemented')
+}
+
+async function convertToHuman(payload: string): Promise<void> {
+  const decoded = AbiParameters.decode(
+    [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
+    payload as Hex.Hex
+  )[0] as unknown as SolidityDecoded
+
+  console.log(decoded)
 }
 
 const payloadCommand: CommandModule = {
@@ -135,6 +144,20 @@ const payloadCommand: CommandModule = {
         },
         async (argv) => {
           await convertToPacked(argv.payload)
+        },
+      )
+      .command(
+        'to-human <payload>',
+        'Convert payload to human readable format',
+        (yargs) => {
+          return yargs.positional('payload', {
+            type: 'string',
+            description: 'Input payload to convert',
+            demandOption: true,
+          })
+        },
+        async (argv) => {
+          await convertToHuman(argv.payload)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for payload')
