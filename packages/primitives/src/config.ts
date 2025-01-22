@@ -135,6 +135,29 @@ export function getSigners(configuration: Configuration | Topology): {
   return { signers: Array.from(signers), isComplete }
 }
 
+export function getPotentialWeight(
+  configuration: Configuration,
+  signers: Address.Address[],
+): bigint {
+  const set = new Set(signers)
+
+  const scan = (topology: Topology): bigint => {
+    if (isNode(topology)) {
+      return scan(topology[0]) + scan(topology[1])
+    } else if (isSignerLeaf(topology)) {
+      return set.has(topology.address) ? topology.weight : 0n
+    } else if (isNestedLeaf(topology)) {
+      return scan(topology.tree) >= topology.threshold ? topology.weight : 0n
+    } else {
+      return 0n
+    }
+  }
+
+  return scan(
+    isConfiguration(configuration) ? configuration.topology : configuration,
+  )
+}
+
 export function hashConfiguration(
   topology: Topology | Configuration,
 ): Uint8Array {
