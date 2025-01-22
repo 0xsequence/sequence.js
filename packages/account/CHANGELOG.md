@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.2.8
+
+### Patch Changes
+
+- Add Moonbeam and Moonbase Alpha
+- Updated dependencies
+  - @0xsequence/abi@2.2.8
+  - @0xsequence/core@2.2.8
+  - @0xsequence/migration@2.2.8
+  - @0xsequence/network@2.2.8
+  - @0xsequence/relayer@2.2.8
+  - @0xsequence/sessions@2.2.8
+  - @0xsequence/utils@2.2.8
+  - @0xsequence/wallet@2.2.8
+
 ## 2.2.7
 
 ### Patch Changes

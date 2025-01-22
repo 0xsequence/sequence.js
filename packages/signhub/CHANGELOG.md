@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.2.8
+
+### Patch Changes
+
+- Add Moonbeam and Moonbase Alpha
+- Updated dependencies
+  - @0xsequence/core@2.2.8
+
 ## 2.2.7
 
 ### Patch Changes

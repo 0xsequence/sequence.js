@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.2.8
+
+### Patch Changes
+
+- Add Moonbeam and Moonbase Alpha
+
 ## 2.2.7
 
 ### Patch Changes
