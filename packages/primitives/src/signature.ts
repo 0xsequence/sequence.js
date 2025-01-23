@@ -4,20 +4,20 @@ import { Leaf, SapientSigner, SignerLeaf, SubdigestLeaf, Topology, isSapientSign
 export type SignedSignerLeaf = SignerLeaf & {
   signature:
     | {
-        r: Uint8Array
-        s: Uint8Array
+        r: Bytes.Bytes
+        s: Bytes.Bytes
         v: number
         type: 'eth_sign' | 'hash'
       }
     | {
-        data: Uint8Array
+        data: Bytes.Bytes
         type: 'erc1271'
       }
 }
 
 export type SignedSapientLeaf = SapientSigner & {
   signature: {
-    data: Uint8Array
+    data: Bytes.Bytes
     type: 'sapient' | 'sapient_compact'
   }
 }
@@ -26,19 +26,19 @@ export type RawSignerLeaf = {
   weight: bigint
   signature:
     | {
-        r: Uint8Array
-        s: Uint8Array
+        r: Bytes.Bytes
+        s: Bytes.Bytes
         v: number
         type: 'eth_sign' | 'hash'
       }
     | {
         address: string
-        data: Uint8Array
+        data: Bytes.Bytes
         type: 'erc1271'
       }
     | {
         address: string
-        data: Uint8Array
+        data: Bytes.Bytes
         type: 'sapient' | 'sapient_compact'
       }
 }
@@ -64,14 +64,14 @@ export type RawConfiguration = {
 
 export type RawSignature = {
   noChainId: boolean
-  checkpointerData?: Uint8Array
+  checkpointerData?: Bytes.Bytes
   configuration: RawConfiguration
   suffix?: Omit<RawSignature, 'checkpointerData'>[]
 }
 
 export type Signature = {
   noChainId: boolean
-  checkpointerData?: Uint8Array
+  checkpointerData?: Bytes.Bytes
   topology: Topology
   suffix?: Omit<Signature, 'checkpointerData'>[]
 }
@@ -84,7 +84,7 @@ export function isSignedSapientLeaf(cand: any): cand is SignedSapientLeaf {
   return isSapientSigner(cand) && 'signature' in cand
 }
 
-export function decodeSignature(signature: Uint8Array): RawSignature {
+export function decodeSignature(signature: Bytes.Bytes): RawSignature {
   if (signature.length < 1) {
     throw new Error('Signature is empty')
   }
@@ -116,7 +116,7 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   index += thresholdSize
 
   let checkpointerAddress: Address.Address | undefined
-  let checkpointerData: Uint8Array | undefined
+  let checkpointerData: Bytes.Bytes | undefined
 
   // bit [6] => checkpointer address + data
   if ((flag & 0x40) === 0x40) {
@@ -153,9 +153,9 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   }
 }
 
-export function parseBranch(signature: Uint8Array): {
+export function parseBranch(signature: Bytes.Bytes): {
   nodes: RawTopology[]
-  leftover: Uint8Array
+  leftover: Bytes.Bytes
 } {
   const nodes: RawTopology[] = []
   let index = 0

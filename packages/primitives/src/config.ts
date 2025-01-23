@@ -9,11 +9,11 @@ export type SignerLeaf = {
 export type SapientSigner = {
   address: Address.Address
   weight: bigint
-  imageHash: Uint8Array
+  imageHash: Bytes.Bytes
 }
 
 export type SubdigestLeaf = {
-  digest: Uint8Array
+  digest: Bytes.Bytes
 }
 
 export type NestedLeaf = {
@@ -22,7 +22,7 @@ export type NestedLeaf = {
   threshold: bigint
 }
 
-export type NodeLeaf = Uint8Array
+export type NodeLeaf = Bytes.Bytes
 
 export type Node = [Topology, Topology]
 
@@ -116,7 +116,7 @@ export function getWeight(configuration: Configuration, signers: Address.Address
   return scan(isConfiguration(configuration) ? configuration.topology : configuration)
 }
 
-export function hashConfiguration(topology: Topology | Configuration): Uint8Array {
+export function hashConfiguration(topology: Topology | Configuration): Bytes.Bytes {
   if (isConfiguration(topology)) {
     let root = hashConfiguration(topology.topology)
     root = Hash.keccak256(Bytes.concat(root, Bytes.fromNumber(topology.threshold)))
