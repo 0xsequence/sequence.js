@@ -37,11 +37,7 @@ export type ParentPayload = {
   parentWallets?: Address.Address[]
 }
 
-export type Payload =
-  | CallPayload
-  | MessagePayload
-  | ConfigUpdatePayload
-  | DigestPayload
+export type Payload = CallPayload | MessagePayload | ConfigUpdatePayload | DigestPayload
 
 export type ParentedPayload = Payload & ParentPayload
 
@@ -75,10 +71,7 @@ export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Payload {
   }
 }
 
-export function encode(
-  payload: CallPayload,
-  self?: Address.Address,
-): Uint8Array {
+export function encode(payload: CallPayload, self?: Address.Address): Uint8Array {
   const callsLen = payload.calls.length
   const minBytes = minBytesFor(payload.nonce)
   if (minBytes > 15) {

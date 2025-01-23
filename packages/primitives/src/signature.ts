@@ -1,13 +1,5 @@
 import { Address, Bytes } from 'ox'
-import {
-  Leaf,
-  SapientSigner,
-  SignerLeaf,
-  SubdigestLeaf,
-  Topology,
-  isSapientSigner,
-  isSignerLeaf,
-} from './config'
+import { Leaf, SapientSigner, SignerLeaf, SubdigestLeaf, Topology, isSapientSigner, isSignerLeaf } from './config'
 
 export type SignedSignerLeaf = SignerLeaf & {
   signature:
@@ -112,9 +104,7 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   if (index + checkpointSize > signature.length) {
     throw new Error('Not enough bytes for checkpoint')
   }
-  const checkpoint = Bytes.toBigInt(
-    signature.slice(index, index + checkpointSize),
-  )
+  const checkpoint = Bytes.toBigInt(signature.slice(index, index + checkpointSize))
   index += checkpointSize
 
   // bit [5] => threshold size offset
@@ -122,9 +112,7 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   if (index + thresholdSize > signature.length) {
     throw new Error('Not enough bytes for threshold')
   }
-  const threshold = Bytes.toBigInt(
-    signature.slice(index, index + thresholdSize),
-  )
+  const threshold = Bytes.toBigInt(signature.slice(index, index + thresholdSize))
   index += thresholdSize
 
   let checkpointerAddress: Address.Address | undefined

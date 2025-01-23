@@ -27,7 +27,7 @@ const DecodedAbi = [
   {
     type: 'tuple[]',
     name: 'calls',
-    components: CallAbi
+    components: CallAbi,
   },
   { type: 'uint256', name: 'space' },
   { type: 'uint256', name: 'nonce' },
@@ -38,25 +38,25 @@ const DecodedAbi = [
 ]
 
 interface SolidityDecoded {
-  kind: number;
-  noChainId: boolean;
-  calls: SolidityCall[];
-  space: bigint;
-  nonce: bigint;
-  message: string;
-  imageHash: string;
-  digest: string;
-  parentWallets: string[];
+  kind: number
+  noChainId: boolean
+  calls: SolidityCall[]
+  space: bigint
+  nonce: bigint
+  message: string
+  imageHash: string
+  digest: string
+  parentWallets: string[]
 }
 
 interface SolidityCall {
-  to: string;
-  value: bigint;
-  data: string;
-  gasLimit: bigint;
-  delegateCall: boolean;
-  onlyFallback: boolean;
-  behaviorOnError: bigint;
+  to: string
+  value: bigint
+  data: string
+  gasLimit: bigint
+  delegateCall: boolean
+  onlyFallback: boolean
+  behaviorOnError: bigint
 }
 
 function behaviorOnError(behavior: number): 'ignore' | 'revert' | 'abort' {
@@ -79,7 +79,7 @@ async function convertToAbi(_payload: string): Promise<void> {
 async function convertToPacked(payload: string): Promise<void> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
-    payload as Hex.Hex
+    payload as Hex.Hex,
   )[0] as unknown as SolidityDecoded
 
   if (decoded.kind === KIND_TRANSACTIONS) {
@@ -107,7 +107,7 @@ async function convertToPacked(payload: string): Promise<void> {
 async function convertToHuman(payload: string): Promise<void> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
-    payload as Hex.Hex
+    payload as Hex.Hex,
   )[0] as unknown as SolidityDecoded
 
   console.log(decoded)
