@@ -1,10 +1,10 @@
-import { Address, Hex } from 'ox'
+import { Address, Bytes, Hex } from 'ox'
 import { minBytesFor } from './utils'
 
 export type Call = {
   to: Address.Address
   value: bigint
-  data: Uint8Array
+  data: Bytes.Bytes
   gasLimit: bigint
   delegateCall: boolean
   onlyFallback: boolean
@@ -20,7 +20,7 @@ export type CallPayload = {
 
 export type MessagePayload = {
   type: 'message'
-  message: Uint8Array
+  message: Bytes.Bytes
 }
 
 export type ConfigUpdatePayload = {
@@ -37,15 +37,11 @@ export type ParentPayload = {
   parentWallets?: Address.Address[]
 }
 
-export type Payload =
-  | CallPayload
-  | MessagePayload
-  | ConfigUpdatePayload
-  | DigestPayload
+export type Payload = CallPayload | MessagePayload | ConfigUpdatePayload | DigestPayload
 
 export type ParentedPayload = Payload & ParentPayload
 
-export function fromMessage(message: Uint8Array): Payload {
+export function fromMessage(message: Bytes.Bytes): Payload {
   return {
     type: 'message',
     message,
@@ -75,10 +71,7 @@ export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Payload {
   }
 }
 
-export function encode(
-  payload: CallPayload,
-  self?: Address.Address,
-): Uint8Array {
+export function encode(payload: CallPayload, self?: Address.Address): Bytes.Bytes {
   const callsLen = payload.calls.length
   const minBytes = minBytesFor(payload.nonce)
   if (minBytes > 15) {
@@ -242,5 +235,5 @@ export function encode(
     }
   }
 
-  return new Uint8Array(out)
+  return Bytes.from(out)
 }
