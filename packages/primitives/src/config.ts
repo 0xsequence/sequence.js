@@ -38,21 +38,11 @@ export type Configuration = {
 }
 
 export function isSignerLeaf(cand: any): cand is SignerLeaf {
-  return (
-    typeof cand === 'object' &&
-    'address' in cand &&
-    'weight' in cand &&
-    !('imageHash' in cand)
-  )
+  return typeof cand === 'object' && 'address' in cand && 'weight' in cand && !('imageHash' in cand)
 }
 
 export function isSapientSignerLeaf(cand: any): cand is SapientSigner {
-  return (
-    typeof cand === 'object' &&
-    'address' in cand &&
-    'weight' in cand &&
-    'imageHash' in cand
-  )
+  return typeof cand === 'object' && 'address' in cand && 'weight' in cand && 'imageHash' in cand
 }
 
 export function isSubdigestLeaf(cand: any): cand is SubdigestLeaf {
@@ -64,22 +54,11 @@ export function isNodeLeaf(cand: any): cand is NodeLeaf {
 }
 
 export function isNestedLeaf(cand: any): cand is NestedLeaf {
-  return (
-    typeof cand === 'object' &&
-    !Array.isArray(cand) &&
-    'tree' in cand &&
-    'weight' in cand &&
-    'threshold' in cand
-  )
+  return typeof cand === 'object' && !Array.isArray(cand) && 'tree' in cand && 'weight' in cand && 'threshold' in cand
 }
 
 export function isNode(cand: any): cand is Node {
-  return (
-    Array.isArray(cand) &&
-    cand.length === 2 &&
-    isTopology(cand[0]) &&
-    isTopology(cand[1])
-  )
+  return Array.isArray(cand) && cand.length === 2 && isTopology(cand[0]) && isTopology(cand[1])
 }
 
 export function isConfiguration(cand: any): cand is Configuration {
@@ -88,11 +67,7 @@ export function isConfiguration(cand: any): cand is Configuration {
 
 export function isLeaf(cand: Topology): cand is Leaf {
   return (
-    isSignerLeaf(cand) ||
-    isSapientSignerLeaf(cand) ||
-    isSubdigestLeaf(cand) ||
-    isNodeLeaf(cand) ||
-    isNestedLeaf(cand)
+    isSignerLeaf(cand) || isSapientSignerLeaf(cand) || isSubdigestLeaf(cand) || isNodeLeaf(cand) || isNestedLeaf(cand)
   )
 }
 

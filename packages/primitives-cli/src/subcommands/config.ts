@@ -19,43 +19,41 @@ function generateRandomTopology(depth: number): Topology {
   if (depth <= 0) {
     // Generate a random leaf
     const leafType = Math.floor(Math.random() * 5)
-    
+
     switch (leafType) {
       case 0: // SignerLeaf
         return {
           address: randomAddress(),
-          weight: randomBigInt(100n)
+          weight: randomBigInt(100n),
+          imageHash: undefined,
         }
-      
+
       case 1: // SapientSigner
         return {
           address: randomAddress(),
           weight: randomBigInt(100n),
-          imageHash: randomBytes(32)
+          imageHash: randomBytes(32),
         }
-      
+
       case 2: // SubdigestLeaf
         return {
-          digest: randomBytes(32)
+          digest: randomBytes(32),
         }
-      
+
       case 3: // NodeLeaf
         return randomBytes(32)
-      
+
       case 4: // NestedLeaf
         return {
           tree: generateRandomTopology(0),
           weight: randomBigInt(100n),
-          threshold: randomBigInt(50n)
+          threshold: randomBigInt(50n),
         }
     }
   }
 
   // Generate a node with two random subtrees
-  return [
-    generateRandomTopology(depth - 1),
-    generateRandomTopology(depth - 1)
-  ]
+  return [generateRandomTopology(depth - 1), generateRandomTopology(depth - 1)]
 }
 
 async function generateRandom(maxDepth: number): Promise<void> {
@@ -63,20 +61,20 @@ async function generateRandom(maxDepth: number): Promise<void> {
     threshold: randomBigInt(100n),
     checkpoint: randomBigInt(1000n),
     topology: generateRandomTopology(maxDepth),
-    checkpointer: Math.random() > 0.5 ? randomAddress() : undefined
+    checkpointer: Math.random() > 0.5 ? randomAddress() : undefined,
   }
 
   const encoded = encodeSignature(config)
   console.log(Hex.fromBytes(encoded))
 }
 
-async function createConfig(options: { threshold: number, checkpoint: number }): Promise<void> {
+async function createConfig(options: { threshold: number; checkpoint: number }): Promise<void> {
   const config: Configuration = {
     threshold: BigInt(options.threshold),
     checkpoint: BigInt(options.checkpoint),
     // Starts with empty topology
     topology: Bytes.padLeft(Bytes.fromNumber(1), 32),
-    checkpointer: undefined
+    checkpointer: undefined,
   }
 
   console.log(configToJson(config))
@@ -94,12 +92,12 @@ const configCommand: CommandModule = {
           return yargs.option('max-depth', {
             type: 'number',
             description: 'Maximum depth of the configuration tree',
-            default: 3
+            default: 3,
           })
         },
         async (argv) => {
           await generateRandom(argv.maxDepth as number)
-        }
+        },
       )
       .command(
         'new',
@@ -109,17 +107,17 @@ const configCommand: CommandModule = {
             .option('threshold', {
               type: 'number',
               description: 'Threshold value for the configuration',
-              demandOption: true
+              demandOption: true,
             })
             .option('checkpoint', {
-              type: 'number', 
+              type: 'number',
               description: 'Checkpoint value for the configuration',
-              demandOption: true
+              demandOption: true,
             })
         },
         async (argv) => {
           await createConfig(argv)
-        }
+        },
       )
       .demandCommand(1, 'You must specify a subcommand for config')
   },

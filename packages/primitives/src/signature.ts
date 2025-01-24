@@ -30,17 +30,17 @@ export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
 export type SignedSignerLeaf = SignerLeaf & {
   signature:
-  | {
-    r: Bytes.Bytes
-    s: Bytes.Bytes
-    v: number
-    type: 'eth_sign' | 'hash'
-  }
-  | {
-    address: `0x${string}`
-    data: Bytes.Bytes
-    type: 'erc1271'
-  }
+    | {
+        r: Bytes.Bytes
+        s: Bytes.Bytes
+        v: number
+        type: 'eth_sign' | 'hash'
+      }
+    | {
+        address: `0x${string}`
+        data: Bytes.Bytes
+        type: 'erc1271'
+      }
 }
 
 export type SignedSapientSignerLeaf = SapientSigner & {
@@ -53,22 +53,22 @@ export type SignedSapientSignerLeaf = SapientSigner & {
 export type RawSignerLeaf = {
   weight: bigint
   signature:
-  | {
-    r: Bytes.Bytes
-    s: Bytes.Bytes
-    v: number
-    type: 'eth_sign' | 'hash'
-  }
-  | {
-    address: `0x${string}`
-    data: Bytes.Bytes
-    type: 'erc1271'
-  }
-  | {
-    address: `0x${string}`
-    data: Bytes.Bytes
-    type: 'sapient' | 'sapient_compact'
-  }
+    | {
+        r: Bytes.Bytes
+        s: Bytes.Bytes
+        v: number
+        type: 'eth_sign' | 'hash'
+      }
+    | {
+        address: `0x${string}`
+        data: Bytes.Bytes
+        type: 'erc1271'
+      }
+    | {
+        address: `0x${string}`
+        data: Bytes.Bytes
+        type: 'sapient' | 'sapient_compact'
+      }
 }
 
 export type RawNestedLeaf = {
@@ -125,12 +125,7 @@ export function isRawTopology(cand: any): cand is RawTopology {
 }
 
 export function isRawLeaf(cand: any): cand is RawLeaf {
-  return (
-    typeof cand === 'object' &&
-    'weight' in cand &&
-    'signature' in cand &&
-    !('tree' in cand)
-  )
+  return typeof cand === 'object' && 'weight' in cand && 'signature' in cand && !('tree' in cand)
 }
 
 export function isRawNestedLeaf(cand: any): cand is RawNestedLeaf {
@@ -489,10 +484,7 @@ export function encodeSignature(
   let output = Bytes.fromNumber(flag)
 
   if (config.checkpointer) {
-    output = Bytes.concat(
-      output,
-      Bytes.padLeft(Bytes.fromHex(config.checkpointer), 20)
-    )
+    output = Bytes.concat(output, Bytes.padLeft(Bytes.fromHex(config.checkpointer), 20))
   }
 
   if (checkpointerData) {
@@ -501,24 +493,15 @@ export function encodeSignature(
       throw new Error('Checkpointer data too large')
     }
 
-    const checkpointerDataSizeBytes = Bytes.padLeft(
-      Bytes.fromNumber(checkpointerDataSize),
-      3,
-    )
+    const checkpointerDataSizeBytes = Bytes.padLeft(Bytes.fromNumber(checkpointerDataSize), 3)
 
     output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData)
   }
 
-  const checkpointBytes = Bytes.padLeft(
-    Bytes.fromNumber(config.checkpoint),
-    bytesForCheckpoint,
-  )
+  const checkpointBytes = Bytes.padLeft(Bytes.fromNumber(config.checkpoint), bytesForCheckpoint)
   output = Bytes.concat(output, checkpointBytes)
 
-  const thresholdBytes = Bytes.padLeft(
-    Bytes.fromNumber(config.threshold),
-    bytesForThreshold,
-  )
+  const thresholdBytes = Bytes.padLeft(Bytes.fromNumber(config.threshold), bytesForThreshold)
   output = Bytes.concat(output, thresholdBytes)
 
   const topologyBytes = encodeTopology(config.topology, options)
@@ -550,7 +533,7 @@ export function encodeTopology(
         encoded0,
         Bytes.fromNumber(flag),
         Bytes.padLeft(Bytes.fromNumber(encoded1.length), encoded1Size),
-        encoded1
+        encoded1,
       )
     } else {
       return Bytes.concat(encoded0, encoded1)
@@ -592,15 +575,12 @@ export function encodeTopology(
       weightBytes,
       thresholdBytes,
       Bytes.padLeft(Bytes.fromNumber(nestedSize), 3),
-      nested
+      nested,
     )
   }
 
   if (isNodeLeaf(topology)) {
-    return Bytes.concat(
-      Bytes.fromNumber(FLAG_NODE),
-      topology,
-    )
+    return Bytes.concat(Bytes.fromNumber(FLAG_NODE), topology)
   }
 
   if (isSignedSignerLeaf(topology) || isRawSignerLeaf(topology)) {
@@ -621,12 +601,7 @@ export function encodeTopology(
         s[0]! |= 0x80
       }
 
-      return Bytes.concat(
-        Bytes.fromNumber(flag),
-        weightBytes,
-        r,
-        s,
-      )
+      return Bytes.concat(Bytes.fromNumber(flag), weightBytes, r, s)
     } else if (topology.signature.type === 'erc1271') {
       let flag = FLAG_SIGNATURE_ERC1271 << 4
 
@@ -685,10 +660,7 @@ export function encodeTopology(
   }
 
   if (isSubdigestLeaf(topology)) {
-    return Bytes.concat(
-      Bytes.fromNumber(FLAG_SUBDIGEST),
-      topology.digest,
-    )
+    return Bytes.concat(Bytes.fromNumber(FLAG_SUBDIGEST), topology.digest)
   }
 
   if (isSignerLeaf(topology)) {
@@ -702,20 +674,13 @@ export function encodeTopology(
       throw new Error('Weight too large')
     }
 
-    return Bytes.concat(
-      Bytes.fromNumber(flag),
-      weightBytes,
-      Bytes.padLeft(Bytes.fromHex(topology.address), 20),
-    )
+    return Bytes.concat(Bytes.fromNumber(flag), weightBytes, Bytes.padLeft(Bytes.fromHex(topology.address), 20))
   }
 
   if (isSapientSignerLeaf(topology)) {
     // Encode as node directly
     const hash = hashConfiguration(topology)
-    return Bytes.concat(
-      Bytes.fromNumber(FLAG_NODE),
-      hash,
-    )
+    return Bytes.concat(Bytes.fromNumber(FLAG_NODE), hash)
   }
 
   console.log(topology)
