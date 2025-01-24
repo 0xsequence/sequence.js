@@ -72,6 +72,21 @@ function behaviorOnError(behavior: number): 'ignore' | 'revert' | 'abort' {
   }
 }
 
+async function readStdin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = ''
+    process.stdin.on('data', (chunk) => {
+      data += chunk
+    })
+    process.stdin.on('end', () => {
+      resolve(data.trim())
+    })
+    process.stdin.on('error', (err) => {
+      reject(err)
+    })
+  })
+}
+
 async function convertToAbi(_payload: string): Promise<void> {
   throw new Error('Not implemented')
 }
@@ -119,45 +134,66 @@ const payloadCommand: CommandModule = {
   builder: (yargs) => {
     return yargs
       .command(
-        'to-abi <payload>',
+        'to-abi [payload]',
         'Convert payload to ABI format',
         (yargs) => {
           return yargs.positional('payload', {
             type: 'string',
             description: 'Input payload to convert',
-            demandOption: true,
           })
         },
         async (argv) => {
-          await convertToAbi(argv.payload)
+          const hasArg = typeof argv.payload === 'string' && argv.payload.length > 0
+          const hasStdin = !process.stdin.isTTY
+          if (hasArg && hasStdin) {
+            throw new Error('Payload can only come from arg or stdin, not both')
+          } else if (!hasArg && !hasStdin) {
+            throw new Error('No payload provided and no stdin data')
+          }
+          const finalPayload = hasArg ? argv.payload! : await readStdin()
+          await convertToAbi(finalPayload)
         },
       )
       .command(
-        'to-packed <payload>',
+        'to-packed [payload]',
         'Convert payload to packed format',
         (yargs) => {
           return yargs.positional('payload', {
             type: 'string',
             description: 'Input payload to convert',
-            demandOption: true,
           })
         },
         async (argv) => {
-          await convertToPacked(argv.payload)
+          const hasArg = typeof argv.payload === 'string' && argv.payload.length > 0
+          const hasStdin = !process.stdin.isTTY
+          if (hasArg && hasStdin) {
+            throw new Error('Payload can only come from arg or stdin, not both')
+          } else if (!hasArg && !hasStdin) {
+            throw new Error('No payload provided and no stdin data')
+          }
+          const finalPayload = hasArg ? argv.payload! : await readStdin()
+          await convertToPacked(finalPayload)
         },
       )
       .command(
-        'to-human <payload>',
+        'to-human [payload]',
         'Convert payload to human readable format',
         (yargs) => {
           return yargs.positional('payload', {
             type: 'string',
             description: 'Input payload to convert',
-            demandOption: true,
           })
         },
         async (argv) => {
-          await convertToHuman(argv.payload)
+          const hasArg = typeof argv.payload === 'string' && argv.payload.length > 0
+          const hasStdin = !process.stdin.isTTY
+          if (hasArg && hasStdin) {
+            throw new Error('Payload can only come from arg or stdin, not both')
+          } else if (!hasArg && !hasStdin) {
+            throw new Error('No payload provided and no stdin data')
+          }
+          const finalPayload = hasArg ? argv.payload! : await readStdin()
+          await convertToHuman(finalPayload)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for payload')

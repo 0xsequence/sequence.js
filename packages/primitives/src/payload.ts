@@ -109,9 +109,11 @@ export function encode(
   if (callsLen !== 1) {
     if (callsLen < 256) {
       callsCountSize = 1
-    } else {
+    } else if (callsLen < 65536) {
       globalFlag |= 0x20
       callsCountSize = 2
+    } else {
+      throw new Error('Too many calls')
     }
   }
 

@@ -41,7 +41,7 @@ export type Configuration = {
   checkpointer?: Address.Address
 }
 
-export function isSignerLeaf(cand: Topology): cand is SignerLeaf {
+export function isSignerLeaf(cand: any): cand is SignerLeaf {
   return (
     typeof cand === 'object' &&
     'address' in cand &&
@@ -50,7 +50,7 @@ export function isSignerLeaf(cand: Topology): cand is SignerLeaf {
   )
 }
 
-export function isSapientSigner(cand: Topology): cand is SapientSigner {
+export function isSapientSignerLeaf(cand: any): cand is SapientSigner {
   return (
     typeof cand === 'object' &&
     'address' in cand &&
@@ -59,15 +59,15 @@ export function isSapientSigner(cand: Topology): cand is SapientSigner {
   )
 }
 
-export function isSubdigestLeaf(cand: Topology): cand is SubdigestLeaf {
+export function isSubdigestLeaf(cand: any): cand is SubdigestLeaf {
   return typeof cand === 'object' && 'digest' in cand
 }
 
-export function isNodeLeaf(cand: Topology): cand is NodeLeaf {
+export function isNodeLeaf(cand: any): cand is NodeLeaf {
   return cand instanceof Uint8Array && cand.length === 32
 }
 
-export function isNestedLeaf(cand: Topology): cand is NestedLeaf {
+export function isNestedLeaf(cand: any): cand is NestedLeaf {
   return (
     typeof cand === 'object' &&
     !Array.isArray(cand) &&
@@ -77,12 +77,12 @@ export function isNestedLeaf(cand: Topology): cand is NestedLeaf {
   )
 }
 
-export function isNode(cand: Topology): cand is Node {
+export function isNode(cand: any): cand is Node {
   return (
     Array.isArray(cand) &&
     cand.length === 2 &&
-    isLeaf(cand[0]) &&
-    isLeaf(cand[1])
+    isTopology(cand[0]) &&
+    isTopology(cand[1])
   )
 }
 
@@ -98,11 +98,15 @@ export function isConfiguration(cand: any): cand is Configuration {
 export function isLeaf(cand: Topology): cand is Leaf {
   return (
     isSignerLeaf(cand) ||
-    isSapientSigner(cand) ||
+    isSapientSignerLeaf(cand) ||
     isSubdigestLeaf(cand) ||
     isNodeLeaf(cand) ||
     isNestedLeaf(cand)
   )
+}
+
+export function isTopology(cand: any): cand is Topology {
+  return isNode(cand) || isLeaf(cand)
 }
 
 export function hashConfiguration(
@@ -133,7 +137,7 @@ export function hashConfiguration(
     return Bytes.padLeft(Bytes.fromNumber(combined), 32)
   }
 
-  if (isSapientSigner(topology)) {
+  if (isSapientSignerLeaf(topology)) {
     return Hash.keccak256(
       Bytes.concat(
         Bytes.fromString('Sequence sapient config:\n'),
@@ -178,4 +182,197 @@ export function hashConfiguration(
   }
 
   throw new Error('Invalid topology')
+}
+
+export function configToJson(item: Topology | Configuration): string {
+  function encodeTopology(topology: Topology): any {
+    if (isNode(topology)) {
+      return {
+        type: 'Node',
+        left: encodeTopology(topology[0]),
+        right: encodeTopology(topology[1]),
+      }
+    } else if (isSignerLeaf(topology)) {
+      return {
+        type: 'SignerLeaf',
+        address: topology.address,
+        weight: topology.weight.toString(),
+      }
+    } else if (isSapientSignerLeaf(topology)) {
+      return {
+        type: 'SapientSignerLeaf',
+        address: topology.address,
+        weight: topology.weight.toString(),
+        imageHash: Bytes.toHex(topology.imageHash),
+      }
+    } else if (isSubdigestLeaf(topology)) {
+      return {
+        type: 'SubdigestLeaf',
+        digest: Bytes.toHex(topology.digest),
+      }
+    } else if (isNodeLeaf(topology)) {
+      return {
+        type: 'NodeLeaf',
+        data: Bytes.toHex(topology),
+      }
+    } else if (isNestedLeaf(topology)) {
+      return {
+        type: 'NestedLeaf',
+        tree: encodeTopology(topology.tree),
+        weight: topology.weight.toString(),
+        threshold: topology.threshold.toString(),
+      }
+    }
+    throw new Error('encodeTopology: Unrecognized Topology')
+  }
+
+  if (isConfiguration(item)) {
+    return JSON.stringify({
+      type: 'Configuration',
+      threshold: item.threshold.toString(),
+      checkpoint: item.checkpoint.toString(),
+      checkpointer: item.checkpointer ?? '0x0000000000000000000000000000000000000000',
+      topology: encodeTopology(item.topology),
+    })
+  } else {
+    // It's just a Topology
+    return JSON.stringify(encodeTopology(item))
+  }
+}
+
+export function configFromJson(json: string): Topology | Configuration {
+  const parsed = JSON.parse(json)
+
+  function decodeTopology(obj: any): Topology {
+    if (!obj || typeof obj !== 'object') {
+      throw new Error('decodeTopology: Invalid object')
+    }
+    switch (obj.type) {
+      case 'Node':
+        return [decodeTopology(obj.left), decodeTopology(obj.right)]
+      case 'SignerLeaf':
+        return {
+          address: obj.address,
+          weight: BigInt(obj.weight),
+        }
+      case 'SapientSignerLeaf':
+        return {
+          address: obj.address,
+          weight: BigInt(obj.weight),
+          imageHash: Bytes.fromHex(obj.imageHash),
+        }
+      case 'SubdigestLeaf':
+        return {
+          digest: Bytes.fromHex(obj.digest),
+        }
+      case 'NodeLeaf':
+        return Bytes.fromHex(obj.data)
+      case 'NestedLeaf':
+        return {
+          tree: decodeTopology(obj.tree),
+          weight: BigInt(obj.weight),
+          threshold: BigInt(obj.threshold),
+        }
+      default:
+        throw new Error('decodeTopology: Unrecognized type ' + obj.type)
+    }
+  }
+
+  if (parsed.type === 'Configuration') {
+    return {
+      threshold: BigInt(parsed.threshold),
+      checkpoint: BigInt(parsed.checkpoint),
+      checkpointer: parsed.checkpointer ?? '0x0000000000000000000000000000000000000000',
+      topology: decodeTopology(parsed.topology),
+    }
+  } else {
+    return decodeTopology(parsed)
+  }
+}
+
+export function topologyToJson(topology: Topology): string {
+  function encodeTopology(top: Topology): any {
+    if (isNode(top)) {
+      return {
+        type: 'Node',
+        left: encodeTopology(top[0]),
+        right: encodeTopology(top[1]),
+      }
+    } else if (isSignerLeaf(top)) {
+      return {
+        type: 'SignerLeaf',
+        address: top.address,
+        weight: top.weight.toString(),
+      }
+    } else if (isSapientSignerLeaf(top)) {
+      return {
+        type: 'SapientSignerLeaf',
+        address: top.address,
+        weight: top.weight.toString(),
+        imageHash: Bytes.toHex(top.imageHash),
+      }
+    } else if (isSubdigestLeaf(top)) {
+      return {
+        type: 'SubdigestLeaf',
+        digest: Bytes.toHex(top.digest),
+      }
+    } else if (isNodeLeaf(top)) {
+      return {
+        type: 'NodeLeaf',
+        data: Bytes.toHex(top),
+      }
+    } else if (isNestedLeaf(top)) {
+      return {
+        type: 'NestedLeaf',
+        tree: encodeTopology(top.tree),
+        weight: top.weight.toString(),
+        threshold: top.threshold.toString(),
+      }
+    }
+    throw new Error('topologyToJson: Unrecognized Topology')
+  }
+
+  return JSON.stringify(encodeTopology(topology))
+}
+
+export function topologyFromJson(json: string): Topology {
+  // We'll parse just a Topology here
+  const parsed = JSON.parse(json)
+
+  function decodeTopology(obj: any): Topology {
+    if (!obj || typeof obj !== 'object') {
+      throw new Error('topologyFromJson: Invalid object')
+    }
+    switch (obj.type) {
+      case 'Node':
+        return [decodeTopology(obj.left), decodeTopology(obj.right)]
+      case 'SignerLeaf':
+        return {
+          address: obj.address,
+          weight: BigInt(obj.weight),
+        }
+      case 'SapientSignerLeaf':
+        return {
+          address: obj.address,
+          weight: BigInt(obj.weight),
+          imageHash: Bytes.padLeft(Bytes.fromHex(obj.imageHash), 32),
+        }
+      case 'SubdigestLeaf':
+        return {
+          digest: Bytes.padLeft(Bytes.fromHex(obj.digest), 32),
+        }
+      case 'NodeLeaf':
+        return Bytes.padLeft(Bytes.fromHex(obj.data), 32)
+      case 'NestedLeaf':
+        return {
+          tree: decodeTopology(obj.tree),
+          weight: BigInt(obj.weight),
+          threshold: BigInt(obj.threshold),
+        }
+      default:
+        throw new Error('topologyFromJson: Unrecognized type ' + obj.type)
+    }
+  }
+
+  return decodeTopology(parsed)
 }

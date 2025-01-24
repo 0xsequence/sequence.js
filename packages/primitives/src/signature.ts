@@ -1,13 +1,32 @@
 import { Address, Bytes } from 'ox'
 import {
+  Configuration,
   Leaf,
   SapientSigner,
   SignerLeaf,
   SubdigestLeaf,
   Topology,
-  isSapientSigner,
+  hashConfiguration,
+  isNestedLeaf,
+  isNode,
+  isNodeLeaf,
+  isSapientSignerLeaf,
   isSignerLeaf,
+  isSubdigestLeaf,
 } from './config'
+import { minBytesFor } from './utils'
+
+export const FLAG_SIGNATURE_HASH = 0
+export const FLAG_ADDRESS = 1
+export const FLAG_SIGNATURE_ERC1271 = 2
+export const FLAG_NODE = 3
+export const FLAG_BRANCH = 4
+export const FLAG_SUBDIGEST = 5
+export const FLAG_NESTED = 6
+export const FLAG_SIGNATURE_ETH_SIGN = 7
+export const FLAG_SIGNATURE_EIP712 = 8
+export const FLAG_SIGNATURE_SAPIENT = 9
+export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
 export type SignedSignerLeaf = SignerLeaf & {
   signature:
@@ -18,12 +37,13 @@ export type SignedSignerLeaf = SignerLeaf & {
         type: 'eth_sign' | 'hash'
       }
     | {
+        address: `0x${string}`
         data: Uint8Array
         type: 'erc1271'
       }
 }
 
-export type SignedSapientLeaf = SapientSigner & {
+export type SignedSapientSignerLeaf = SapientSigner & {
   signature: {
     data: Uint8Array
     type: 'sapient' | 'sapient_compact'
@@ -40,12 +60,12 @@ export type RawSignerLeaf = {
         type: 'eth_sign' | 'hash'
       }
     | {
-        address: string
+        address: `0x${string}`
         data: Uint8Array
         type: 'erc1271'
       }
     | {
-        address: string
+        address: `0x${string}`
         data: Uint8Array
         type: 'sapient' | 'sapient_compact'
       }
@@ -84,12 +104,37 @@ export type Signature = {
   suffix?: Omit<Signature, 'checkpointerData'>[]
 }
 
+export function isRawSignerLeaf(cand: any): cand is RawSignerLeaf {
+  return typeof cand === 'object' && 'weight' in cand && 'signature' in cand
+}
+
 export function isSignedSignerLeaf(cand: any): cand is SignedSignerLeaf {
   return isSignerLeaf(cand) && 'signature' in cand
 }
 
-export function isSignedSapientLeaf(cand: any): cand is SignedSapientLeaf {
-  return isSapientSigner(cand) && 'signature' in cand
+export function isSignedSapientSignerLeaf(cand: any): cand is SignedSapientSignerLeaf {
+  return isSapientSignerLeaf(cand) && 'signature' in cand
+}
+
+export function isRawNode(cand: any): cand is RawNode {
+  return Array.isArray(cand) && cand.length === 2 && isRawTopology(cand[0]) && isRawTopology(cand[1])
+}
+
+export function isRawTopology(cand: any): cand is RawTopology {
+  return isRawNode(cand) || isRawLeaf(cand)
+}
+
+export function isRawLeaf(cand: any): cand is RawLeaf {
+  return (
+    typeof cand === 'object' &&
+    'weight' in cand &&
+    'signature' in cand &&
+    !('tree' in cand)
+  )
+}
+
+export function isRawNestedLeaf(cand: any): cand is RawNestedLeaf {
+  return typeof cand === 'object' && 'tree' in cand && 'weight' in cand && 'threshold' in cand
 }
 
 export function decodeSignature(signature: Uint8Array): RawSignature {
@@ -100,7 +145,7 @@ export function decodeSignature(signature: Uint8Array): RawSignature {
   const flag = signature[0]!
   let index = 1
 
-  // If bit 0 is set => chained signature (not implemented here)
+  // If bit 1 is set => chained signature (not implemented here)
   if ((flag & 0x01) === 0x01) {
     throw new Error('TODO')
   }
@@ -181,8 +226,7 @@ export function parseBranch(signature: Uint8Array): {
 
     const flag = (firstByte & 0xf0) >> 4
 
-    // 'hash' or 'eth_sign' (0x00 or 0x07)
-    if (flag === 0x00 || flag === 0x07) {
+    if (flag === FLAG_SIGNATURE_HASH || flag === FLAG_SIGNATURE_ETH_SIGN) {
       const v = ((firstByte & 0x10) >> 4) + 27
       let weight = BigInt(firstByte & 0x07)
       if (weight === 0n) {
@@ -212,8 +256,7 @@ export function parseBranch(signature: Uint8Array): {
       continue
     }
 
-    // Address (0x01)
-    if (flag === 0x01) {
+    if (flag === FLAG_ADDRESS) {
       let weight = BigInt(firstByte & 0x0f)
       if (weight === 0n) {
         if (index >= signature.length) {
@@ -236,8 +279,7 @@ export function parseBranch(signature: Uint8Array): {
       continue
     }
 
-    // ERC1271 (0x02)
-    if (flag === 0x02) {
+    if (flag === FLAG_SIGNATURE_ERC1271) {
       let weight = BigInt(firstByte & 0x03)
       if (weight === 0n) {
         if (index >= signature.length) {
@@ -277,8 +319,7 @@ export function parseBranch(signature: Uint8Array): {
       continue
     }
 
-    // Node leaf (0x03) => nodeHash
-    if (flag === 0x03) {
+    if (flag === FLAG_NODE) {
       if (index + 32 > signature.length) {
         throw new Error('Not enough bytes for node hash')
       }
@@ -289,8 +330,7 @@ export function parseBranch(signature: Uint8Array): {
       continue
     }
 
-    // Branch (0x04)
-    if (flag === 0x04) {
+    if (flag === FLAG_BRANCH) {
       const sizeSize = firstByte & 0x0f
       if (index + sizeSize > signature.length) {
         throw new Error('Not enough bytes for branch size')
@@ -314,8 +354,7 @@ export function parseBranch(signature: Uint8Array): {
       continue
     }
 
-    // Nested (0x05)
-    if (flag === 0x05) {
+    if (flag === FLAG_NESTED) {
       let weight = BigInt(firstByte & 0x03)
       if (weight === 0n) {
         if (index >= signature.length) {
@@ -360,8 +399,7 @@ export function parseBranch(signature: Uint8Array): {
       continue
     }
 
-    // Subdigest (0x06)
-    if (flag === 0x06) {
+    if (flag === FLAG_SUBDIGEST) {
       if (index + 32 > signature.length) {
         throw new Error('Not enough bytes for subdigest')
       }
@@ -374,8 +412,7 @@ export function parseBranch(signature: Uint8Array): {
       continue
     }
 
-    // Sapient or Sapient compact (0x09 or 0x0a)
-    if (flag === 0x09 || flag === 0x0a) {
+    if (flag === FLAG_SIGNATURE_SAPIENT || flag === FLAG_SIGNATURE_SAPIENT_COMPACT) {
       let addrWeight = BigInt(firstByte & 0x03)
       if (addrWeight === 0n) {
         if (index >= signature.length) {
@@ -419,6 +456,275 @@ export function parseBranch(signature: Uint8Array): {
   }
 
   return { nodes, leftover: signature.slice(index) }
+}
+
+export function encodeSignature(
+  config: Configuration | RawConfiguration,
+  options: {
+    noChainId?: boolean
+    checkpointerData?: Uint8Array
+  } = {},
+): Uint8Array {
+  const { noChainId, checkpointerData } = options
+
+  let flag = 0
+
+  if (noChainId) {
+    flag |= 0x02
+  }
+
+  const bytesForCheckpoint = minBytesFor(config.checkpoint)
+  if (bytesForCheckpoint > 7) {
+    throw new Error('Checkpoint too large')
+  }
+  flag |= bytesForCheckpoint << 2
+
+  let bytesForThreshold = minBytesFor(config.threshold)
+  bytesForThreshold = bytesForThreshold === 0 ? 1 : bytesForThreshold
+  if (bytesForThreshold > 2) {
+    throw new Error('Threshold too large')
+  }
+  flag |= bytesForThreshold == 2 ? 0x20 : 0x00
+
+  if (config.checkpointer) {
+    flag |= 0x40
+  }
+
+  let output = Bytes.fromNumber(flag)
+
+  if (config.checkpointer) {
+    output = Bytes.concat(
+      output,
+      Bytes.padLeft(Bytes.fromHex(config.checkpointer), 20)
+    )
+  }
+
+  if (checkpointerData) {
+    const checkpointerDataSize = checkpointerData.length
+    if (checkpointerDataSize > 16777215) {
+      throw new Error('Checkpointer data too large')
+    }
+
+    const checkpointerDataSizeBytes = Bytes.padLeft(
+      Bytes.fromNumber(checkpointerDataSize),
+      3,
+    )
+
+    output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData)
+  }
+
+  const checkpointBytes = Bytes.padLeft(
+    Bytes.fromNumber(config.checkpoint),
+    bytesForCheckpoint,
+  )
+  output = Bytes.concat(output, checkpointBytes)
+
+  const thresholdBytes = Bytes.padLeft(
+    Bytes.fromNumber(config.threshold),
+    bytesForThreshold,
+  )
+  output = Bytes.concat(output, thresholdBytes)
+
+  const topologyBytes = encodeTopology(config.topology, options)
+  output = Bytes.concat(output, topologyBytes)
+
+  return output
+}
+
+export function encodeTopology(
+  topology: Topology | RawTopology,
+  options: {
+    noChainId?: boolean
+    checkpointerData?: Uint8Array
+  } = {},
+): Uint8Array {
+  if (isNode(topology) || isRawNode(topology)) {
+    const encoded0 = encodeTopology(topology[0]!, options)
+    const encoded1 = encodeTopology(topology[1]!, options)
+    const isBranching = isNode(topology[1]!) || isRawNode(topology[1]!)
+
+    if (isBranching) {
+      let encoded1Size = minBytesFor(BigInt(encoded1.length))
+      if (encoded1Size > 15) {
+        throw new Error('Branch too large')
+      }
+
+      const flag = (FLAG_BRANCH << 4) | encoded1Size
+      return Bytes.concat(
+        encoded0,
+        Bytes.fromNumber(flag),
+        Bytes.padLeft(Bytes.fromNumber(encoded1.length), encoded1Size),
+        encoded1
+      )
+    } else {
+      return Bytes.concat(encoded0, encoded1)
+    }
+  }
+
+  if (isNestedLeaf(topology) || isRawNestedLeaf(topology)) {
+    const nested = encodeTopology(topology.tree, options)
+    
+    // - XX00 : Weight (00 = dynamic, 01 = 1, 10 = 2, 11 = 3)
+    // - 00XX : Threshold (00 = dynamic, 01 = 1, 10 = 2, 11 = 3)
+    let flag = FLAG_NESTED << 4
+    
+    let weightBytes = Bytes.fromArray([])
+    if (topology.weight <= 3n) {
+      flag |= Number(topology.weight) << 2
+    } else if (topology.weight <= 255n) {
+      weightBytes = Bytes.fromNumber(Number(topology.weight))
+    } else {
+      throw new Error('Weight too large')
+    }
+
+    let thresholdBytes = Bytes.fromArray([])
+    if (topology.threshold <= 3n) {
+      flag |= Number(topology.threshold)
+    } else if (topology.threshold <= 65535n) {
+      thresholdBytes = Bytes.padLeft(Bytes.fromNumber(Number(topology.threshold)), 2)
+    } else {
+      throw new Error('Threshold too large')
+    }
+
+    const nestedSize = minBytesFor(BigInt(nested.length))
+    if (nestedSize > 3) {
+      throw new Error('Nested tree too large')
+    }
+
+    return Bytes.concat(
+      Bytes.fromNumber(flag),
+      weightBytes,
+      thresholdBytes,
+      Bytes.padLeft(Bytes.fromNumber(nestedSize), 3),
+      nested
+    )
+  }
+
+  if (isNodeLeaf(topology)) {
+    return Bytes.concat(
+      Bytes.fromNumber(FLAG_NODE),
+      topology,
+    )
+  }
+
+  if (isSignedSignerLeaf(topology) || isRawSignerLeaf(topology)) {
+    if (topology.signature.type === 'hash' || topology.signature.type === 'eth_sign') {
+      let flag = (topology.signature.type === 'hash' ? FLAG_SIGNATURE_HASH : FLAG_SIGNATURE_ETH_SIGN) << 4
+      let weightBytes = Bytes.fromArray([])
+      if (topology.weight <= 15n) {
+        flag |= Number(topology.weight)
+      } else if (topology.weight <= 255n) {
+        weightBytes = Bytes.fromNumber(Number(topology.weight))
+      } else {
+        throw new Error('Weight too large')
+      }
+      
+      const r = Bytes.padLeft(topology.signature.r, 32)
+      const s = Bytes.padLeft(topology.signature.s, 32)
+      if (topology.signature.v % 2 !== 0) {
+        s[0]! |= 0x80
+      }
+
+      return Bytes.concat(
+        Bytes.fromNumber(flag),
+        weightBytes,
+        r,
+        s,
+      )
+    } else if (topology.signature.type === 'erc1271') {
+      let flag = FLAG_SIGNATURE_ERC1271 << 4
+
+      let signatureSize = minBytesFor(BigInt(topology.signature.data.length))
+      if (signatureSize > 3) {
+        throw new Error('Signature too large')
+      }
+      
+      flag |= signatureSize << 2
+
+      let weightBytes = Bytes.fromArray([])
+      if (topology.weight <= 3n) {
+        flag |= Number(topology.weight)
+      } else if (topology.weight <= 255n) {
+        weightBytes = Bytes.fromNumber(Number(topology.weight))
+      } else {
+        throw new Error('Weight too large')
+      }
+
+      return Bytes.concat(
+        Bytes.fromNumber(flag),
+        weightBytes,
+        Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
+        Bytes.padLeft(Bytes.fromNumber(signatureSize), 3),
+        topology.signature.data,
+      )
+    } else if (topology.signature.type === 'sapient' || topology.signature.type === 'sapient_compact') {
+      let flag = (topology.signature.type === 'sapient' ? FLAG_SIGNATURE_SAPIENT : FLAG_SIGNATURE_SAPIENT_COMPACT) << 4
+
+      let signatureSize = minBytesFor(BigInt(topology.signature.data.length))
+      if (signatureSize > 3) {
+        throw new Error('Signature too large')
+      }
+
+      flag |= signatureSize << 2
+
+      let weightBytes = Bytes.fromArray([])
+      if (topology.weight <= 3n) {
+        flag |= Number(topology.weight)
+      } else if (topology.weight <= 255n) {
+        weightBytes = Bytes.fromNumber(Number(topology.weight))
+      } else {
+        throw new Error('Weight too large')
+      }
+
+      return Bytes.concat(
+        Bytes.fromNumber(flag),
+        weightBytes,
+        Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
+        Bytes.padLeft(Bytes.fromNumber(signatureSize), 3),
+        topology.signature.data,
+      )
+    } else {
+      throw new Error(`Invalid signature type: ${topology.signature.type}`)
+    }
+  }
+
+  if (isSubdigestLeaf(topology)) {
+    return Bytes.concat(
+      Bytes.fromNumber(FLAG_SUBDIGEST),
+      topology.digest,
+    )
+  }
+
+  if (isSignerLeaf(topology)) {
+    let flag = FLAG_ADDRESS << 4
+    let weightBytes = Bytes.fromArray([])
+    if (topology.weight <= 15n) {
+      flag |= Number(topology.weight)
+    } else if (topology.weight <= 255n) {
+      weightBytes = Bytes.fromNumber(Number(topology.weight))
+    } else {
+      throw new Error('Weight too large')
+    }
+
+    return Bytes.concat(
+      Bytes.fromNumber(flag),
+      weightBytes,
+      Bytes.padLeft(Bytes.fromHex(topology.address), 20),
+    )
+  }
+
+  if (isSapientSignerLeaf(topology)) {
+    // Encode as node directly
+    const hash = hashConfiguration(topology)
+    return Bytes.concat(
+      Bytes.fromNumber(FLAG_NODE),
+      hash,
+    )
+  }
+
+  console.log(topology)
+
+  throw new Error('Invalid topology')
 }
 
 function foldNodes(nodes: RawTopology[]): RawTopology {
