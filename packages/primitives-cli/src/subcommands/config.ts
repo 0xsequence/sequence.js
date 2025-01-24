@@ -1,6 +1,13 @@
 import crypto from 'crypto'
 import type { CommandModule } from 'yargs'
-import { Configuration, Topology, configToJson, encodeSignature } from '@0xsequence/sequence-primitives'
+import {
+  Configuration,
+  Topology,
+  configToJson,
+  configFromJson,
+  encodeSignature,
+  hashConfiguration,
+} from '@0xsequence/sequence-primitives'
 import { Bytes, Hex } from 'ox'
 
 function randomBytes(length: number): Uint8Array {
@@ -23,13 +30,14 @@ function generateRandomTopology(depth: number): Topology {
     switch (leafType) {
       case 0: // SignerLeaf
         return {
+          type: 'signer',
           address: randomAddress(),
           weight: randomBigInt(100n),
-          imageHash: undefined,
         }
 
       case 1: // SapientSigner
         return {
+          type: 'sapient-signer',
           address: randomAddress(),
           weight: randomBigInt(100n),
           imageHash: randomBytes(32),
@@ -37,6 +45,7 @@ function generateRandomTopology(depth: number): Topology {
 
       case 2: // SubdigestLeaf
         return {
+          type: 'subdigest',
           digest: randomBytes(32),
         }
 
@@ -45,6 +54,7 @@ function generateRandomTopology(depth: number): Topology {
 
       case 4: // NestedLeaf
         return {
+          type: 'nested',
           tree: generateRandomTopology(0),
           weight: randomBigInt(100n),
           threshold: randomBigInt(50n),
@@ -78,6 +88,28 @@ async function createConfig(options: { threshold: number; checkpoint: number }):
   }
 
   console.log(configToJson(config))
+}
+
+async function getInput(input?: string): Promise<string> {
+  if (input) {
+    return input
+  }
+  let stdin = ''
+  process.stdin.setEncoding('utf8')
+  for await (const chunk of process.stdin) {
+    stdin += chunk
+  }
+  return stdin
+}
+
+async function calculateImageHash(input: string): Promise<void> {
+  const config = configFromJson(input)
+  console.log(Hex.fromBytes(hashConfiguration(config)))
+}
+
+async function doEncode(input: string): Promise<void> {
+  const config = configFromJson(input)
+  console.log(Hex.fromBytes(encodeSignature(config as Configuration)))
 }
 
 const configCommand: CommandModule = {
@@ -117,6 +149,34 @@ const configCommand: CommandModule = {
         },
         async (argv) => {
           await createConfig(argv)
+        },
+      )
+      .command(
+        'image-hash',
+        'Calculate image hash from hex input',
+        (yargs) => {
+          return yargs.option('input', {
+            type: 'string',
+            description: 'Hex input to hash (if not using pipe)',
+          })
+        },
+        async (argv) => {
+          const input = await getInput(argv.input as string)
+          await calculateImageHash(input)
+        },
+      )
+      .command(
+        'encode',
+        'Encode configuration from hex input',
+        (yargs) => {
+          return yargs.option('input', {
+            type: 'string',
+            description: 'Hex input to encode (if not using pipe)',
+          })
+        },
+        async (argv) => {
+          const input = await getInput(argv.input as string)
+          await doEncode(input)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for config')

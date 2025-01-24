@@ -29,6 +29,7 @@ export const FLAG_SIGNATURE_SAPIENT = 9
 export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
 export type SignedSignerLeaf = SignerLeaf & {
+  signed: true
   signature:
     | {
         r: Bytes.Bytes
@@ -44,6 +45,7 @@ export type SignedSignerLeaf = SignerLeaf & {
 }
 
 export type SignedSapientSignerLeaf = SapientSigner & {
+  signed: true
   signature: {
     data: Bytes.Bytes
     type: 'sapient' | 'sapient_compact'
@@ -51,6 +53,7 @@ export type SignedSapientSignerLeaf = SapientSigner & {
 }
 
 export type RawSignerLeaf = {
+  type: 'unrecovered-signer'
   weight: bigint
   signature:
     | {
@@ -72,6 +75,7 @@ export type RawSignerLeaf = {
 }
 
 export type RawNestedLeaf = {
+  type: 'nested'
   tree: RawTopology
   weight: bigint
   threshold: bigint
@@ -264,8 +268,9 @@ export function parseBranch(signature: Bytes.Bytes): {
       index += 20
 
       nodes.push({
-        weight,
+        type: 'signer',
         address: Bytes.toHex(address),
+        weight,
       } as SignerLeaf)
       continue
     }
@@ -383,6 +388,7 @@ export function parseBranch(signature: Bytes.Bytes): {
 
       const subTree = foldNodes(subNodes)
       nodes.push({
+        type: 'nested',
         tree: subTree,
         weight,
         threshold,
@@ -398,6 +404,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       index += 32
 
       nodes.push({
+        type: 'subdigest',
         digest: hardcoded,
       } as SubdigestLeaf)
       continue
