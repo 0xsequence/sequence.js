@@ -23,15 +23,8 @@ export interface RpcRelayerOptions {
 }
 
 export function isRpcRelayerOptions(obj: any): obj is RpcRelayerOptions {
-  return (
-    obj.url !== undefined &&
-    typeof obj.url === 'string' &&
-    obj.provider !== undefined &&
-    obj.provider instanceof ethers.AbstractProvider
-  )
+  return obj.url !== undefined && typeof obj.url === 'string' && obj.provider !== undefined && isAbstractProvider(obj.provider)
 }
-
-const fetch = globalThis.fetch
 
 // TODO: rename to SequenceRelayer
 export class RpcRelayer implements Relayer {
@@ -41,7 +34,7 @@ export class RpcRelayer implements Relayer {
   constructor(public options: RpcRelayerOptions) {
     this.service = new proto.Relayer(options.url, this._fetch)
 
-    if (options.provider instanceof ethers.AbstractProvider) {
+    if (isAbstractProvider(options.provider)) {
       this.provider = options.provider
     } else {
       const { jwtAuth, projectAccessKey } = this.options
@@ -66,7 +59,7 @@ export class RpcRelayer implements Relayer {
     }
 
     // before the request is made
-    init!.headers = { ...init!.headers, ...headers }
+    init!.headers = { ...headers, ...init!.headers }
 
     return fetch(input, init)
   }
@@ -165,14 +158,18 @@ export class RpcRelayer implements Relayer {
     data: ethers.BytesLike,
     options?: {
       simulate?: boolean
+      projectAccessKey?: string
     }
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
-    const { options: feeOptions, quote } = await this.service.feeOptions({
-      wallet: entrypoint,
-      to: entrypoint,
-      data: ethers.hexlify(data),
-      simulate: options?.simulate
-    })
+    const { options: feeOptions, quote } = await this.service.feeOptions(
+      {
+        wallet: entrypoint,
+        to: entrypoint,
+        data: ethers.hexlify(data),
+        simulate: options?.simulate
+      },
+      { ...(options?.projectAccessKey ? { 'X-Access-Key': options.projectAccessKey } : undefined) }
+    )
 
     return { options: feeOptions, quote: { _tag: 'FeeQuote', _quote: quote } }
   }
@@ -195,7 +192,8 @@ export class RpcRelayer implements Relayer {
   async relay(
     signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
-    waitForReceipt: boolean = true
+    waitForReceipt: boolean = true,
+    projectAccessKey?: string
   ): Promise<commons.transaction.TransactionResponse<RelayerTxReceipt>> {
     logger.info(
       `[rpc-relayer/relay] relaying signed meta-transactions ${JSON.stringify(signedTxs, bigintReplacer)} with quote ${JSON.stringify(quote, bigintReplacer)}`
@@ -216,14 +214,17 @@ export class RpcRelayer implements Relayer {
     }
 
     const data = commons.transaction.encodeBundleExecData(signedTxs)
-    const metaTxn = await this.service.sendMetaTxn({
-      call: {
-        walletAddress: signedTxs.intent.wallet,
-        contract: signedTxs.entrypoint,
-        input: data
+    const metaTxn = await this.service.sendMetaTxn(
+      {
+        call: {
+          walletAddress: signedTxs.intent.wallet,
+          contract: signedTxs.entrypoint,
+          input: data
+        },
+        quote: typecheckedQuote
       },
-      quote: typecheckedQuote
-    })
+      { ...(projectAccessKey ? { 'X-Access-Key': projectAccessKey } : undefined) }
+    )
 
     logger.info(`[rpc-relayer/relay] got relay result ${JSON.stringify(metaTxn, bigintReplacer)}`)
 
@@ -303,6 +304,26 @@ export class RpcRelayer implements Relayer {
       wait: async (confirmations?: number) => this.provider!.waitForTransaction(txReceipt.transactionHash, confirmations)
     } as commons.transaction.TransactionResponse
   }
+
+  async getMetaTransactions(
+    projectId: number,
+    page?: proto.Page
+  ): Promise<{
+    page: proto.Page
+    transactions: proto.MetaTxnLog[]
+  }> {
+    return this.service.getMetaTransactions({ projectId, page })
+  }
+
+  async getTransactionCost(
+    projectId: number,
+    from: string,
+    to: string
+  ): Promise<{
+    cost: number
+  }> {
+    return this.service.getTransactionCost({ projectId, from, to })
+  }
 }
 
 class MetaTransactionResponseException {
@@ -331,4 +352,13 @@ export type RelayerTxReceipt = {
   status: string
   transactionHash: string
   transactionIndex: string
+}
+
+function isAbstractProvider(provider: any): provider is ethers.AbstractProvider {
+  return (
+    provider &&
+    typeof provider === 'object' &&
+    typeof provider.getNetwork === 'function' &&
+    typeof provider.getBlockNumber === 'function'
+  )
 }

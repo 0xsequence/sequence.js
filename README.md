@@ -1,5 +1,4 @@
-0xsequence
-==========
+# 0xsequence
 
 [Sequence](https://sequence.xyz): a modular web3 stack and smart wallet for Ethereum chains
 
@@ -15,7 +14,6 @@ or
 
 `yarn add 0xsequence ethers`
 
-
 ## Packages
 
 - [0xsequence](./packages/0xsequence)
@@ -25,6 +23,7 @@ or
 - [@0xsequence/core](./packages/core)
 - [@0xsequence/deployer](./packages/deployer)
 - [@0xsequence/guard](./packages/guard)
+- [@0xsequence/marketplace](./packages/marketplace)
 - [@0xsequence/multicall](./packages/multicall)
 - [@0xsequence/network](./packages/network)
 - [@0xsequence/provider](./packages/provider)
@@ -34,7 +33,6 @@ or
 - [@0xsequence/signhub](./packages/signhub)
 - [@0xsequence/utils](./packages/utils)
 - [@0xsequence/wallet](./packages/wallet)
-
 
 ## Development Environment
 
@@ -68,48 +66,57 @@ and enjoyable.
 7. **Versioning** -- this repository uses the handy [changesets](https://github.com/atlassian/changesets)
    package for package versioning across the monorepo, as well as changelogs. See _Releasing_ section below.
 
-
 ## Releasing to NPM
 
 0xsequence uses changesets to do versioning. This makes releasing really easy and changelogs are automatically generated.
 
 ### How to do a release
 
-1. Run `pnpm` to make sure everything is up to date
-2. Code.. do your magic
-3. Run `pnpm changeset` to generate a new .changeset/ entry explaining the code changes
-4. Version bump all packages regardless of them having changes or not
-5. Run `pnpm i` to update the pnpm-lock.yaml.
-6. Commit and submit your changes as a PR for review
-7. Once merged and you're ready to make a release, continue to the next step. If you're not
-   ready to make a release, then go back to step 2.
-8. Run `pnpm build && pnpm test` to double check all tests pass
-9. Run `pnpm changeset:version` to bump versions of the packages
-10. Run `pnpm install` so we update our pnpm-lock.yaml file with our newly created version
-11. Commit files after versioning. This is the commit that will be published and tagged: `git push --no-verify`
-12. Run `pnpm changeset:publish`. If the 2FA code timesout while publishing, run the command again
-    with a new code, only the packages that were not published will be published.
-13. Finally, push your git tags, via: `git push --tags --no-verify`
+Authorization on https://www.npmjs.com/ to push to the 0xsequence organization's packages is required.
 
+0. (first time) `pnpm login`
+1. check that master is passing tests on github
+2. (warning: destructive) start from a clean repo:
+   `git checkout master && git reset --hard && git clean -dfx && pnpm i`
+3. for each new change:
+   a. `pnpm changeset`
+   b. select all packages
+   c. update all packages with either a minor or patch bump according to semver
+   d. add a summary of the form: `package: description of a single change`
+   e. repeat a-d until all changes are accounted for
+4. `pnpm changeset:version && pnpm i && pnpm build && pnpm i`
+5. `git diff` and copy the newest version according to the changelogs
+6. `git commit -a -m <new version here>`
+7. `git push`
+8. `pnpm changeset:publish` and enter your 2fa totp token when prompted
+9. `git push --tags`
 
 ## How to do a snapshot release
 
+Authorization on https://www.npmjs.com/ to push to the 0xsequence organization's packages is required.
+
 Snapshot releases are versioned as 0.0.0-YYYYmmddHHMMSS and are intended for testing builds only.
 
-1. `pnpm snapshot` (select all packages even if unchanged, the message is not important)
-2. Do not commit any changes to package.json's or CHANGELOG.md's that happened during 1.
+0. (first time) `pnpm login`
+1. (warning: destructive) start from a clean repo:
+   `git checkout <branch or commit to snapshot> && git reset --hard && git clean -dfx && pnpm i`
+2. `pnpm changeset:snapshot`
+   a. select all packages
+   b. update all packages with a patch bump
+   c. any summary is ok
+   d. enter your 2fa totp token when prompted
+   e. note the snapshot version 0.0.0-YYYYmmddHHMMSS
+3. `git reset --hard`
 
 ## NOTES
 
 1. Browser tests can be run with `pnpm test` or, separately `pnpm test:server` and `pnpm test:run`
 2. To run a specific test, run `pnpm test:only <test-file-basename>`, ie. `pnpm test:only window-transport`
 
-
 ## TIPS
 
-* If you're using node v18+ and you hit the error `Error: error:0308010C:digital envelope routines::unsupported`,
+- If you're using node v18+ and you hit the error `Error: error:0308010C:digital envelope routines::unsupported`,
   make sure to first set, `export NODE_OPTIONS=--openssl-legacy-provider`
-
 
 ## LICENSE
 

@@ -62,6 +62,7 @@ export interface ProviderMessage<T> {
   chainId?: number // chain id which the message is intended
   origin?: string // origin of the message
   clientVersion: string // client version of the message
+  projectAccessKey?: string // project access key
 }
 
 export type ProviderMessageRequest = ProviderMessage<JsonRpcRequest>
@@ -352,6 +353,8 @@ export interface TypedEventEmitter<Events> {
 
   emit<E extends keyof Events>(event: E, ...args: Arguments<Events[E]>): boolean
   eventNames(): (keyof Events | string | symbol)[]
+
+  // eslint-disable-next-line
   listeners<E extends keyof Events>(event: E): Function[]
   listenerCount<E extends keyof Events>(event: E): number
 }

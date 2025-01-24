@@ -10,13 +10,17 @@ import { newSessionFromSessionId } from './session'
 import { LocalStore, Store, StoreObj } from './store'
 import {
   GetTransactionReceiptArgs,
-  SendDelayedEncodeArgs,
+  SendContractCallArgs,
   SendERC1155Args,
   SendERC20Args,
   SendERC721Args,
   SendTransactionsArgs,
   SignedIntent,
-  SignMessageArgs
+  SignMessageArgs,
+  getTimeDrift,
+  updateTimeDrift,
+  getLocalTime,
+  SignTypedDataArgs
 } from './intents'
 import {
   FeeOptionsResponse,
@@ -32,19 +36,15 @@ import {
   isMaySentTransactionResponse,
   isSessionAuthProofResponse,
   isSignedMessageResponse,
+  isSignedTypedDataResponse,
   isTimedOutTransactionResponse,
   isValidationRequiredResponse,
   MaySentTransactionResponse,
-  SignedMessageResponse
+  SignedMessageResponse,
+  SignedTypedDataResponse
 } from './intents/responses'
-import {
-  WaasAuthenticator,
-  AnswerIncorrectError,
-  Chain,
-  EmailAlreadyInUseError,
-  Session,
-  WebrpcEndpointError
-} from './clients/authenticator.gen'
+import { WaasAuthenticator, AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
+import { NoPrivateKeyError } from './errors'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
 import { EmailAuth } from './email'
 import { ethers } from 'ethers'
@@ -134,8 +134,6 @@ export function defaultArgsOrFail(
 
   return preconfig as Required<SequenceConfig> & Required<WaaSConfigKey> & ExtendedSequenceConfig
 }
-
-const fetch = globalThis.fetch
 
 const jwksDev = {
   keys: [
@@ -341,6 +339,17 @@ export class SequenceWaaS {
     }
   }
 
+  private async updateTimeDrift() {
+    if (getTimeDrift() === undefined) {
+      const res = await fetch(`${this.config.rpcServer}/status`)
+      const date = res.headers.get('Date')
+      if (!date) {
+        throw new Error('failed to get Date header value from /status')
+      }
+      updateTimeDrift(new Date(date))
+    }
+  }
+
   private async sendIntent(intent: SignedIntent<any>) {
     const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
@@ -360,30 +369,17 @@ export class SequenceWaaS {
     }
   }
 
-  private async updateSessionStatus() {
-    // if we are not signed in, then we don't need to check and update session status
-    if ((await this.waas.isSignedIn()) === false) {
-      return
-    }
-    // if we can fetch sessions from API, then we are signed in
-    // if not and error is the related session error, then we drop the session
-    try {
-      await this.listSessions()
-    } catch (error) {
-      if (error instanceof WebrpcEndpointError && error.cause === 'session invalid or not found') {
-        await this.dropSession({ sessionId: await this.waas.getSessionId(), strict: false })
-      } else {
-        throw error
-      }
-    }
-  }
-
   async isSignedIn() {
-    await this.updateSessionStatus()
     return this.waas.isSignedIn()
   }
 
-  signIn(creds: Identity, sessionName: string): Promise<SignInResponse> {
+  async signIn(creds: Identity, sessionName: string): Promise<SignInResponse> {
+    // We clear and drop session regardless of whether it's signed in or not
+    const currentSessionId = await this.waas.getSessionId()
+    if (currentSessionId) {
+      await this.dropSession({ sessionId: currentSessionId, strict: false })
+    }
+
     const isEmailAuth = 'email' in creds
     if (isEmailAuth && this.emailAuthCodeRequiredCallback.length == 0) {
       return Promise.reject('Missing emailAuthCodeRequired callback')
@@ -450,6 +446,8 @@ export class SequenceWaaS {
   }
 
   async initAuth(identity: Identity): Promise<Challenge> {
+    await this.updateTimeDrift()
+
     if ('guest' in identity && identity.guest) {
       return this.initGuestAuth()
     } else if ('idToken' in identity) {
@@ -513,6 +511,15 @@ export class SequenceWaaS {
     challenge: Challenge,
     opts?: { sessionName?: string; forceCreateAccount?: boolean }
   ): Promise<SignInResponse> {
+    await this.updateTimeDrift()
+
+    // initAuth can start while user is already signed in and continue with linkAccount method,
+    // but it can't be used to completeAuth while user is already signed in. In this
+    // case we should throw an error.
+    const isSignedIn = await this.isSignedIn()
+    if (isSignedIn) {
+      throw new Error('You are already signed in. Use dropSession to sign out from current session first.')
+    }
     if (!opts) {
       opts = {}
     }
@@ -545,7 +552,7 @@ export class SequenceWaaS {
     }
   }
 
-  async registerSession(intent: SignedIntent<IntentDataOpenSession>, name: string) {
+  private async registerSession(intent: SignedIntent<IntentDataOpenSession>, name: string) {
     try {
       const res = await this.client.registerSession({ intent, friendlyName: name }, this.headers())
       return res
@@ -572,6 +579,8 @@ export class SequenceWaaS {
   }
 
   async dropSession({ sessionId, strict }: { sessionId?: string; strict?: boolean } = {}) {
+    await this.updateTimeDrift()
+
     const thisSessionId = await this.waas.getSessionId()
     if (!thisSessionId) {
       throw new Error('session not open')
@@ -599,14 +608,27 @@ export class SequenceWaaS {
         throw new Error('No secure store available')
       }
 
-      const session = await newSessionFromSessionId(thisSessionId, this.cryptoBackend, this.secureStoreBackend)
-      session.clear()
+      try {
+        const session = await newSessionFromSessionId(thisSessionId, this.cryptoBackend, this.secureStoreBackend)
+        session.clear()
+      } catch (error) {
+        if (error instanceof NoPrivateKeyError) {
+          // If no private key is found, we can't clear the session properly
+          // but we can still clean up other session data which will log us out
+        } else {
+          throw error
+        }
+      }
+
       await this.waas.completeSignOut()
       await this.deviceName.set(undefined)
+      updateTimeDrift(undefined)
     }
   }
 
   async listSessions(): Promise<Sessions> {
+    await this.updateTimeDrift()
+
     const sessionId = await this.waas.getSessionId()
     if (!sessionId) {
       throw new Error('session not open')
@@ -627,6 +649,8 @@ export class SequenceWaaS {
   }
 
   async validateSession(args?: ValidationArgs) {
+    await this.updateTimeDrift()
+
     if (await this.isSessionValid()) {
       return true
     }
@@ -635,6 +659,8 @@ export class SequenceWaaS {
   }
 
   async finishValidateSession(challenge: string): Promise<boolean> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.finishValidateSession(this.validationRequiredSalt, challenge)
     const result = await this.sendIntent(intent)
 
@@ -647,6 +673,8 @@ export class SequenceWaaS {
   }
 
   async isSessionValid(): Promise<boolean> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.getSession()
     const result = await this.sendIntent(intent)
 
@@ -658,9 +686,9 @@ export class SequenceWaaS {
   }
 
   async waitForSessionValid(timeout: number = 600000, pollRate: number = 2000) {
-    const start = Date.now()
+    const start = getLocalTime()
 
-    while (Date.now() - start < timeout) {
+    while (getLocalTime() - start < timeout) {
       if (await this.isSessionValid()) {
         return true
       }
@@ -672,11 +700,15 @@ export class SequenceWaaS {
   }
 
   async sessionAuthProof({ nonce, network, validation }: { nonce?: string; network?: string; validation?: ValidationArgs }) {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.sessionAuthProof({ nonce, network })
     return await this.trySendIntent({ validation }, intent, isSessionAuthProofResponse)
   }
 
   async listAccounts() {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.listAccounts()
     const res = await this.sendIntent(intent)
 
@@ -688,6 +720,8 @@ export class SequenceWaaS {
   }
 
   async linkAccount(challenge: Challenge) {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.linkAccount(challenge.getIntentParams())
     const res = await this.sendIntent(intent)
 
@@ -699,11 +733,15 @@ export class SequenceWaaS {
   }
 
   async removeAccount(accountId: string) {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.removeAccount({ accountId })
     await this.sendIntent(intent)
   }
 
   async getIdToken(args?: { nonce?: string }): Promise<IntentResponseIdToken> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.getIdToken({ nonce: args?.nonce })
     const res = await this.sendIntent(intent)
 
@@ -750,8 +788,17 @@ export class SequenceWaaS {
   }
 
   async signMessage(args: WithSimpleNetwork<SignMessageArgs> & CommonAuthArgs): Promise<SignedMessageResponse> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.signMessage(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isSignedMessageResponse)
+  }
+
+  async signTypedData(args: WithSimpleNetwork<SignTypedDataArgs> & CommonAuthArgs): Promise<SignedTypedDataResponse> {
+    await this.updateTimeDrift()
+
+    const intent = await this.waas.signTypedData(await this.useIdentifier(args))
+    return this.trySendIntent(args, intent, isSignedTypedDataResponse)
   }
 
   private async trySendTransactionIntent(
@@ -777,31 +824,43 @@ export class SequenceWaaS {
   }
 
   async sendTransaction(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.sendTransaction(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
   }
 
   async sendERC20(args: WithSimpleNetwork<SendERC20Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.sendERC20(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
   }
 
   async sendERC721(args: WithSimpleNetwork<SendERC721Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.sendERC721(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
   }
 
   async sendERC1155(args: WithSimpleNetwork<SendERC1155Args> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.sendERC1155(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
   }
 
-  async callContract(args: WithSimpleNetwork<SendDelayedEncodeArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+  async callContract(args: WithSimpleNetwork<SendContractCallArgs> & CommonAuthArgs): Promise<MaySentTransactionResponse> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.callContract(await this.useIdentifier(args))
     return this.trySendTransactionIntent(intent, args)
   }
 
   async feeOptions(args: WithSimpleNetwork<SendTransactionsArgs> & CommonAuthArgs): Promise<FeeOptionsResponse> {
+    await this.updateTimeDrift()
+
     const intent = await this.waas.feeOptions(await this.useIdentifier(args))
     return this.trySendIntent(args, intent, isFeeOptionsResponse)
   }
@@ -828,7 +887,7 @@ export class SequenceWaaS {
 
   // Special version of fetch that keeps track of the last seen Date header
   async fetch(input: RequestInfo, init?: RequestInit) {
-    const res = await globalThis.fetch(input, init)
+    const res = await fetch(input, init)
     const headerValue = res.headers.get('date')
     if (headerValue) {
       this.lastDate = new Date(headerValue)

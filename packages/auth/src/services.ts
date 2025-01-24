@@ -1,7 +1,7 @@
 import { Account } from '@0xsequence/account'
 import { SequenceAPIClient } from '@0xsequence/api'
 import { ETHAuth, Proof } from '@0xsequence/ethauth'
-import { Indexer, SequenceIndexer } from '@0xsequence/indexer'
+import { Indexer, SequenceIndexer, SequenceIndexerGateway } from '@0xsequence/indexer'
 import { SequenceMetadata } from '@0xsequence/metadata'
 import { ChainIdLike, findNetworkConfig } from '@0xsequence/network'
 import { getFetchRequest } from '@0xsequence/utils'
@@ -20,6 +20,7 @@ export type ServicesSettings = {
   sequenceApiUrl: string
   sequenceApiChainId: ethers.BigNumberish
   sequenceMetadataUrl: string
+  sequenceIndexerGatewayUrl: string
 }
 
 export type SessionJWT = {
@@ -56,6 +57,7 @@ export class Services {
   private apiClient: SequenceAPIClient | undefined
   private metadataClient: SequenceMetadata | undefined
   private indexerClients: Map<number, Indexer> = new Map()
+  private indexerGateway: SequenceIndexerGateway | undefined
 
   private projectAccessKey?: string
 
@@ -264,6 +266,15 @@ export class Services {
     }
 
     return this.indexerClients.get(network.chainId)!
+  }
+
+  async getIndexerGateway(tryAuth: boolean = true): Promise<SequenceIndexerGateway> {
+    if (!this.indexerGateway) {
+      const jwtAuth = (await this.getJWT(tryAuth)).token
+      this.indexerGateway = new SequenceIndexerGateway(this.settings.sequenceIndexerGatewayUrl, undefined, jwtAuth)
+    }
+
+    return this.indexerGateway
   }
 
   private getProofString(key: string): ProofStringPromise {

@@ -99,6 +99,9 @@ export class WindowMessageHandler extends BaseWalletTransport {
       return
     }
 
+    // Set the origin on the request
+    request.origin ??= event.origin
+
     logger.debug('RECEIVED MESSAGE', request)
 
     // Record event origin for valid init ack

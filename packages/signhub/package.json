@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/signhub",
-  "version": "2.0.15",
+  "version": "2.2.8",
   "description": "orchestrates a series of signers, provides visibility into the signing process, and to the signers themselves",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/signhub",
   "source": "src/index.ts",
@@ -13,13 +13,15 @@
     "test:file": "TS_NODE_PROJECT=../../tsconfig.test.json mocha -r ts-node/register --timeout 30000",
     "test:coverage": "nyc pnpm test"
   },
-  "dependencies": {
-    "@0xsequence/core": "workspace:*",
-    "ethers": "^6.13.0"
+  "peerDependencies": {
+    "ethers": ">=6"
   },
-  "peerDependencies": {},
+  "dependencies": {
+    "@0xsequence/core": "workspace:*"
+  },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "ethers": "6.13.4",
     "nyc": "^15.1.0"
   },
   "files": [

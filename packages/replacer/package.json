@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/replacer",
-  "version": "2.0.15",
+  "version": "2.2.8",
   "description": "EIP-5719 client implementation",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/replacer",
   "source": "src/index.ts",
@@ -11,12 +11,12 @@
   "scripts": {
     "test": "echo 'TODO: replacer tests'"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/abi": "workspace:*",
     "@0xsequence/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "ethers": ">=6"
   },
   "devDependencies": {},
   "files": [

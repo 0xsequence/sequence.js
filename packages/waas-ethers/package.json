@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/waas-ethers",
-  "version": "2.0.15",
+  "version": "2.2.8",
   "description": "waas ethers wrapper",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/waas",
   "source": "src/index.ts",
@@ -13,11 +13,14 @@
     "test:file": "NODE_OPTIONS='--import tsx' mocha -timeout 300000",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
   "dependencies": {
     "@0xsequence/waas": "workspace:*"
   },
-  "peerDependencies": {
-    "ethers": ">=6"
+  "devDependencies": {
+    "ethers": "6.13.4"
   },
   "files": [
     "src",

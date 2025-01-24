@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { logger } from '@0xsequence/utils'
-import { FeeOption, FeeQuote, Relayer } from '.'
+import { FeeOption, FeeQuote, proto, Relayer } from '.'
 import { ProviderRelayer, ProviderRelayerOptions } from './provider-relayer'
 import { commons } from '@0xsequence/core'
 
@@ -9,7 +9,7 @@ export type LocalRelayerOptions = Omit<ProviderRelayerOptions, 'provider'> & {
 }
 
 export function isLocalRelayerOptions(obj: any): obj is LocalRelayerOptions {
-  return typeof obj === 'object' && obj.signer instanceof ethers.AbstractSigner
+  return typeof obj === 'object' && isAbstractSigner(obj.signer)
 }
 
 export class LocalRelayer extends ProviderRelayer implements Relayer {
@@ -17,12 +17,8 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   private txnOptions: ethers.TransactionRequest
 
   constructor(options: LocalRelayerOptions | ethers.AbstractSigner) {
-    super(
-      options instanceof ethers.AbstractSigner
-        ? { provider: options.provider! }
-        : { ...options, provider: options.signer.provider! }
-    )
-    this.signer = options instanceof ethers.AbstractSigner ? options : options.signer
+    super(isAbstractSigner(options) ? { provider: options.provider! } : { ...options, provider: options.signer.provider! })
+    this.signer = isAbstractSigner(options) ? options : options.signer
     if (!this.signer.provider) throw new Error('Signer must have a provider')
   }
 
@@ -80,4 +76,34 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
       return responsePromise
     }
   }
+
+  async getMetaTransactions(
+    projectId: number,
+    page?: proto.Page
+  ): Promise<{
+    page: proto.Page
+    transactions: proto.MetaTxnLog[]
+  }> {
+    return { page: { page: 0, pageSize: 100 }, transactions: [] }
+  }
+
+  async getTransactionCost(
+    projectId: number,
+    from: string,
+    to: string
+  ): Promise<{
+    cost: number
+  }> {
+    return { cost: 0 }
+  }
+}
+
+function isAbstractSigner(signer: any): signer is ethers.AbstractSigner {
+  return (
+    signer &&
+    typeof signer === 'object' &&
+    typeof signer.provider === 'object' &&
+    typeof signer.getAddress === 'function' &&
+    typeof signer.connect === 'function'
+  )
 }

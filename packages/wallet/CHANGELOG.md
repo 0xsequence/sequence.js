@@ -1,5 +1,402 @@
 # @0xsequence/wallet
 
+## 2.2.8
+
+### Patch Changes
+
+- Add Moonbeam and Moonbase Alpha
+- Updated dependencies
+  - @0xsequence/abi@2.2.8
+  - @0xsequence/core@2.2.8
+  - @0xsequence/network@2.2.8
+  - @0xsequence/relayer@2.2.8
+  - @0xsequence/signhub@2.2.8
+  - @0xsequence/utils@2.2.8
+
+## 2.2.7
+
+### Patch Changes
+
+- Update Builder package
+- Updated dependencies
+  - @0xsequence/abi@2.2.7
+  - @0xsequence/core@2.2.7
+  - @0xsequence/network@2.2.7
+  - @0xsequence/relayer@2.2.7
+  - @0xsequence/signhub@2.2.7
+  - @0xsequence/utils@2.2.7
+
+## 2.2.6
+
+### Patch Changes
+
+- Update relayer package
+- Updated dependencies
+  - @0xsequence/abi@2.2.6
+  - @0xsequence/core@2.2.6
+  - @0xsequence/network@2.2.6
+  - @0xsequence/relayer@2.2.6
+  - @0xsequence/signhub@2.2.6
+  - @0xsequence/utils@2.2.6
+
+## 2.2.5
+
+### Patch Changes
+
+- auth: fix sequence indexer gateway url
+- account: immutable wallet proxy hook
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.2.5
+  - @0xsequence/core@2.2.5
+  - @0xsequence/network@2.2.5
+  - @0xsequence/relayer@2.2.5
+  - @0xsequence/signhub@2.2.5
+  - @0xsequence/utils@2.2.5
+
+## 2.2.4
+
+### Patch Changes
+
+- network: update soneium mainnet block explorer url
+- waas: signTypedData intent support
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.2.4
+  - @0xsequence/core@2.2.4
+  - @0xsequence/network@2.2.4
+  - @0xsequence/relayer@2.2.4
+  - @0xsequence/signhub@2.2.4
+  - @0xsequence/utils@2.2.4
+
+## 2.2.3
+
+### Patch Changes
+
+- provider: updating initWallet to use connected network configs if they exist
+- Updated dependencies
+  - @0xsequence/abi@2.2.3
+  - @0xsequence/core@2.2.3
+  - @0xsequence/network@2.2.3
+  - @0xsequence/relayer@2.2.3
+  - @0xsequence/signhub@2.2.3
+  - @0xsequence/utils@2.2.3
+
+## 2.2.2
+
+### Patch Changes
+
+- pass projectAccessKey to relayer at all times
+- Updated dependencies
+  - @0xsequence/abi@2.2.2
+  - @0xsequence/core@2.2.2
+  - @0xsequence/network@2.2.2
+  - @0xsequence/relayer@2.2.2
+  - @0xsequence/signhub@2.2.2
+  - @0xsequence/utils@2.2.2
+
+## 2.2.1
+
+### Patch Changes
+
+- waas-ethers: sign typed data
+- Updated dependencies
+  - @0xsequence/abi@2.2.1
+  - @0xsequence/core@2.2.1
+  - @0xsequence/network@2.2.1
+  - @0xsequence/relayer@2.2.1
+  - @0xsequence/signhub@2.2.1
+  - @0xsequence/utils@2.2.1
+
+## 2.2.0
+
+### Minor Changes
+
+- indexer: gateway client
+- @0xsequence/builder
+- upgrade puppeteer to v23.10.3
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.2.0
+  - @0xsequence/core@2.2.0
+  - @0xsequence/network@2.2.0
+  - @0xsequence/relayer@2.2.0
+  - @0xsequence/signhub@2.2.0
+  - @0xsequence/utils@2.2.0
+
+## 2.1.8
+
+### Patch Changes
+
+- Add Soneium Mainnet
+- Updated dependencies
+  - @0xsequence/abi@2.1.8
+  - @0xsequence/core@2.1.8
+  - @0xsequence/network@2.1.8
+  - @0xsequence/relayer@2.1.8
+  - @0xsequence/signhub@2.1.8
+  - @0xsequence/utils@2.1.8
+
+## 2.1.7
+
+### Patch Changes
+
+- guard: pass project access key to guard requests
+- Updated dependencies
+  - @0xsequence/abi@2.1.7
+  - @0xsequence/core@2.1.7
+  - @0xsequence/network@2.1.7
+  - @0xsequence/relayer@2.1.7
+  - @0xsequence/signhub@2.1.7
+  - @0xsequence/utils@2.1.7
+
+## 2.1.6
+
+### Patch Changes
+
+- Add LAOS and Telos Testnet chains
+- Updated dependencies
+  - @0xsequence/abi@2.1.6
+  - @0xsequence/core@2.1.6
+  - @0xsequence/network@2.1.6
+  - @0xsequence/relayer@2.1.6
+  - @0xsequence/signhub@2.1.6
+  - @0xsequence/utils@2.1.6
+
+## 2.1.5
+
+### Patch Changes
+
+- account: save presigned configuration with reference chain id 1
+- Updated dependencies
+  - @0xsequence/abi@2.1.5
+  - @0xsequence/core@2.1.5
+  - @0xsequence/network@2.1.5
+  - @0xsequence/relayer@2.1.5
+  - @0xsequence/signhub@2.1.5
+  - @0xsequence/utils@2.1.5
+
+## 2.1.4
+
+### Patch Changes
+
+- provider: pass projectAccessKey into MuxMessageProvider
+- Updated dependencies
+  - @0xsequence/abi@2.1.4
+  - @0xsequence/core@2.1.4
+  - @0xsequence/network@2.1.4
+  - @0xsequence/relayer@2.1.4
+  - @0xsequence/signhub@2.1.4
+  - @0xsequence/utils@2.1.4
+
+## 2.1.3
+
+### Patch Changes
+
+- waas: time drift date fix due to strange browser quirk
+- Updated dependencies
+  - @0xsequence/abi@2.1.3
+  - @0xsequence/core@2.1.3
+  - @0xsequence/network@2.1.3
+  - @0xsequence/relayer@2.1.3
+  - @0xsequence/signhub@2.1.3
+  - @0xsequence/utils@2.1.3
+
+## 2.1.2
+
+### Patch Changes
+
+- provider: export analytics correctly
+- Updated dependencies
+  - @0xsequence/abi@2.1.2
+  - @0xsequence/core@2.1.2
+  - @0xsequence/network@2.1.2
+  - @0xsequence/relayer@2.1.2
+  - @0xsequence/signhub@2.1.2
+  - @0xsequence/utils@2.1.2
+
+## 2.1.1
+
+### Patch Changes
+
+- Add LAOS chain support
+- Updated dependencies
+  - @0xsequence/abi@2.1.1
+  - @0xsequence/core@2.1.1
+  - @0xsequence/network@2.1.1
+  - @0xsequence/relayer@2.1.1
+  - @0xsequence/signhub@2.1.1
+  - @0xsequence/utils@2.1.1
+
+## 2.1.0
+
+### Minor Changes
+
+- account: forward project access key when estimating fees and sending transactions
+
+### Patch Changes
+
+- sessions: save signatures with reference chain id
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.1.0
+  - @0xsequence/core@2.1.0
+  - @0xsequence/network@2.1.0
+  - @0xsequence/relayer@2.1.0
+  - @0xsequence/signhub@2.1.0
+  - @0xsequence/utils@2.1.0
+
+## 2.0.26
+
+### Patch Changes
+
+- account: fix chain id comparison
+- Updated dependencies
+  - @0xsequence/abi@2.0.26
+  - @0xsequence/core@2.0.26
+  - @0xsequence/network@2.0.26
+  - @0xsequence/relayer@2.0.26
+  - @0xsequence/signhub@2.0.26
+  - @0xsequence/utils@2.0.26
+
+## 2.0.25
+
+### Patch Changes
+
+- skale-nebula: deploy gas limit = 10m
+- Updated dependencies
+  - @0xsequence/abi@2.0.25
+  - @0xsequence/core@2.0.25
+  - @0xsequence/network@2.0.25
+  - @0xsequence/relayer@2.0.25
+  - @0xsequence/signhub@2.0.25
+  - @0xsequence/utils@2.0.25
+
+## 2.0.24
+
+### Patch Changes
+
+- sessions: arweave: configurable gateway url
+- waas: use /status to get time drift before sending any intents
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.0.24
+  - @0xsequence/core@2.0.24
+  - @0xsequence/network@2.0.24
+  - @0xsequence/relayer@2.0.24
+  - @0xsequence/signhub@2.0.24
+  - @0xsequence/utils@2.0.24
+
+## 2.0.23
+
+### Patch Changes
+
+- Add The Root Network support
+- Updated dependencies
+  - @0xsequence/abi@2.0.23
+  - @0xsequence/core@2.0.23
+  - @0xsequence/network@2.0.23
+  - @0xsequence/relayer@2.0.23
+  - @0xsequence/signhub@2.0.23
+  - @0xsequence/utils@2.0.23
+
+## 2.0.22
+
+### Patch Changes
+
+- Add SKALE Nebula Mainnet support
+- Updated dependencies
+  - @0xsequence/abi@2.0.22
+  - @0xsequence/core@2.0.22
+  - @0xsequence/network@2.0.22
+  - @0xsequence/relayer@2.0.22
+  - @0xsequence/signhub@2.0.22
+  - @0xsequence/utils@2.0.22
+
+## 2.0.21
+
+### Patch Changes
+
+- account: add publishWitnessFor
+- Updated dependencies
+  - @0xsequence/abi@2.0.21
+  - @0xsequence/core@2.0.21
+  - @0xsequence/network@2.0.21
+  - @0xsequence/relayer@2.0.21
+  - @0xsequence/signhub@2.0.21
+  - @0xsequence/utils@2.0.21
+
+## 2.0.20
+
+### Patch Changes
+
+- upgrade deps, and improve waas session status handling
+- Updated dependencies
+  - @0xsequence/abi@2.0.20
+  - @0xsequence/core@2.0.20
+  - @0xsequence/network@2.0.20
+  - @0xsequence/relayer@2.0.20
+  - @0xsequence/signhub@2.0.20
+  - @0xsequence/utils@2.0.20
+
+## 2.0.19
+
+### Patch Changes
+
+- Add Immutable zkEVM support
+- Updated dependencies
+  - @0xsequence/abi@2.0.19
+  - @0xsequence/core@2.0.19
+  - @0xsequence/network@2.0.19
+  - @0xsequence/relayer@2.0.19
+  - @0xsequence/signhub@2.0.19
+  - @0xsequence/utils@2.0.19
+
+## 2.0.18
+
+### Patch Changes
+
+- waas: new contractCall transaction type
+- sessions: add arweave owner
+- Updated dependencies
+- Updated dependencies
+  - @0xsequence/abi@2.0.18
+  - @0xsequence/core@2.0.18
+  - @0xsequence/network@2.0.18
+  - @0xsequence/relayer@2.0.18
+  - @0xsequence/signhub@2.0.18
+  - @0xsequence/utils@2.0.18
+
+## 2.0.17
+
+### Patch Changes
+
+- update waas auth to clear session before signIn
+- Updated dependencies
+  - @0xsequence/abi@2.0.17
+  - @0xsequence/core@2.0.17
+  - @0xsequence/network@2.0.17
+  - @0xsequence/relayer@2.0.17
+  - @0xsequence/signhub@2.0.17
+  - @0xsequence/utils@2.0.17
+
+## 2.0.16
+
+### Patch Changes
+
+- Removed Astar chains
+- Updated dependencies
+  - @0xsequence/abi@2.0.16
+  - @0xsequence/core@2.0.16
+  - @0xsequence/network@2.0.16
+  - @0xsequence/relayer@2.0.16
+  - @0xsequence/signhub@2.0.16
+  - @0xsequence/utils@2.0.16
+
 ## 2.0.15
 
 ### Patch Changes

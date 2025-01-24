@@ -13,8 +13,8 @@ import {
   listSessions,
   openSession,
   OpenSessionArgs,
-  sendDelayedEncode,
-  SendDelayedEncodeArgs,
+  sendContractCall,
+  SendContractCallArgs,
   sendERC1155,
   SendERC1155Args,
   sendERC20,
@@ -28,6 +28,8 @@ import {
   signIntent,
   signMessage,
   SignMessageArgs,
+  signTypedData,
+  SignTypedDataArgs,
   validateSession
 } from './intents'
 import { LocalStore, Store, StoreObj } from './store'
@@ -47,12 +49,14 @@ import {
   IntentDataOpenSession,
   IntentDataSendTransaction,
   IntentDataSignMessage,
+  IntentDataSignTypedData,
   IntentDataValidateSession
 } from './clients/intent.gen'
 import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
 import { ethers } from 'ethers'
 import { ChallengeIntentParams } from './challenge'
+import { NoPrivateKeyError } from './errors'
 
 type Status = 'pending' | 'signed-in' | 'signed-out'
 
@@ -152,8 +156,16 @@ export class SequenceWaaSBase {
       throw new Error('session not open')
     }
 
-    const session = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
-    return signIntent(session, intent)
+    try {
+      const session = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
+      return signIntent(session, intent)
+    } catch (error) {
+      if (error instanceof NoPrivateKeyError) {
+        await this.completeSignOut()
+        throw new Error('No private key found, logging out')
+      }
+      throw error
+    }
   }
 
   public async signUsingSessionKey(message: string | Uint8Array) {
@@ -162,8 +174,16 @@ export class SequenceWaaSBase {
       throw new Error('session not open')
     }
 
-    const signer = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
-    return signer.sign(message)
+    try {
+      const signer = await newSessionFromSessionId(sessionId, this.cryptoBackend, this.secureStoreBackend)
+      return signer.sign(message)
+    } catch (error) {
+      if (error instanceof NoPrivateKeyError) {
+        await this.completeSignOut()
+        throw new Error('No private key found, logging out')
+      }
+      throw error
+    }
   }
 
   private gettingSessionIdPromise: Promise<string> | undefined
@@ -423,6 +443,28 @@ export class SequenceWaaSBase {
   }
 
   /**
+   * This method can be used to sign typed data using waas API. It can only be used
+   * after successfully signing in with the `signIn` and `completeSignIn` methods.
+   *
+   * The method does not sign the typed data. It only returns a payload
+   * that must be sent to the waas API to complete the sign process.
+   *
+   * @param chainId The network on which the typed data will be signed
+   * @param typedData  The typed data that will be signed
+   * @return a payload that must be sent to the waas API to complete sign process
+   */
+  async signTypedData(args: WithSimpleNetwork<SignTypedDataArgs> & ExtraArgs): Promise<SignedIntent<IntentDataSignTypedData>> {
+    const packet = signTypedData({
+      chainId: toNetworkID(args.network || this.config.network),
+      ...args,
+      lifespan: args.lifespan ?? DEFAULT_LIFESPAN,
+      wallet: await this.getWalletAddress()
+    })
+
+    return this.signIntent(packet)
+  }
+
+  /**
    * This method can be used to send transactions to the waas API. It can only be used
    * after successfully signing in with the `signIn` and `completeSignIn` methods.
    *
@@ -481,9 +523,9 @@ export class SequenceWaaSBase {
   }
 
   async callContract(
-    args: WithSimpleNetwork<SendDelayedEncodeArgs> & ExtraTransactionArgs
+    args: WithSimpleNetwork<SendContractCallArgs> & ExtraTransactionArgs
   ): Promise<SignedIntent<IntentDataSendTransaction>> {
-    const intent = sendDelayedEncode(await this.commonArgs(args))
+    const intent = sendContractCall(await this.commonArgs(args))
     return this.signIntent(intent)
   }
 

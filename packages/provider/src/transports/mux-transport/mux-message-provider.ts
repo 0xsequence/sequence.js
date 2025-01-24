@@ -62,16 +62,16 @@ export class MuxMessageProvider implements ProviderTransport {
   private messageProviders: ProviderTransport[]
   private provider: ProviderTransport | undefined
 
-  constructor(...messageProviders: ProviderTransport[]) {
+  constructor(messageProviders: ProviderTransport[] = []) {
     this.messageProviders = messageProviders
     this.provider = undefined
   }
 
-  static new(template: MuxTransportTemplate): MuxMessageProvider {
+  static new(template: MuxTransportTemplate, projectAccessKey?: string): MuxMessageProvider {
     const muxMessageProvider = new MuxMessageProvider()
 
     if (template.windowTransport?.enabled && typeof window === 'object' && template.walletAppURL) {
-      const windowMessageProvider = new WindowMessageProvider(template.walletAppURL)
+      const windowMessageProvider = new WindowMessageProvider(template.walletAppURL, projectAccessKey)
       muxMessageProvider.add(windowMessageProvider)
     }
 

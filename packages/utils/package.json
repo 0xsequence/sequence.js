@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/utils",
-  "version": "2.0.15",
+  "version": "2.2.8",
   "description": "utils sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/utils",
   "source": "src/index.ts",
@@ -13,14 +13,14 @@
     "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 30000",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "js-base64": "^3.7.2"
-  },
   "peerDependencies": {
     "ethers": ">=6"
   },
+  "dependencies": {
+    "js-base64": "^3.7.2"
+  },
   "devDependencies": {
-    "ethers": "^6.13.0"
+    "ethers": "6.13.4"
   },
   "files": [
     "src",

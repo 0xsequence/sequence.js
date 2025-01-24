@@ -51,15 +51,12 @@ export enum ChainId {
   XAI = 660279,
   XAI_SEPOLIA = 37714555429,
 
-  // Astar
-  ASTAR_ZKEVM = 3776,
-  ASTAR_ZKYOTO = 6038361,
-
   // XR
   XR_SEPOLIA = 2730,
 
   // TELOS
   TELOS = 40,
+  TELOS_TESTNET = 41,
 
   // B3 Sepolia
   B3 = 8333,
@@ -76,14 +73,32 @@ export enum ChainId {
   // Borne
   BORNE_TESTNET = 94984,
 
-  // Skale Testnet
+  // SKALE Nebula
+  SKALE_NEBULA = 1482601649,
   SKALE_NEBULA_TESTNET = 37084624,
 
   // Soneium Minato
   SONEIUM_MINATO = 1946,
+  SONEIUM = 1868,
 
   // TOY Testnet
   TOY_TESTNET = 21000000,
+
+  // Immutable zkEVM
+  IMMUTABLE_ZKEVM = 13371,
+  IMMUTABLE_ZKEVM_TESTNET = 13473,
+
+  // The Root Network
+  ROOT_NETWORK = 7668,
+  ROOT_NETWORK_PORCINI = 7672,
+
+  // LAOS
+  LAOS = 6283,
+  LAOS_SIGMA_TESTNET = 62850,
+
+  // MOONBEAM
+  MOONBEAM = 1284,
+  MOONBASE_ALPHA = 1287,
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
@@ -631,39 +646,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.ASTAR_ZKEVM]: {
-    chainId: ChainId.ASTAR_ZKEVM,
-    type: NetworkType.MAINNET,
-    name: 'astar-zkevm',
-    title: 'Astar zkEVM',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKEVM}.webp`,
-    blockExplorer: {
-      name: 'Astar zkEVM Explorer',
-      rootUrl: 'https://astar-zkevm.explorer.startale.com/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.ASTAR_ZKYOTO]: {
-    chainId: ChainId.ASTAR_ZKYOTO,
-    type: NetworkType.TESTNET,
-    name: 'astar-zkyoto',
-    title: 'Astar zKyoto Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ASTAR_ZKYOTO}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Astar zKyoto Explorer',
-      rootUrl: 'https://astar-zkyoto.blockscout.com/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    }
-  },
   [ChainId.XR_SEPOLIA]: {
     chainId: ChainId.XR_SEPOLIA,
     type: NetworkType.TESTNET,
@@ -790,7 +772,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS}.webp`,
     blockExplorer: {
       name: 'Telos Explorer',
-      rootUrl: 'https://explorer.telos.net/network/'
+      rootUrl: 'https://www.teloscan.io/'
+    },
+    nativeToken: {
+      symbol: 'TLOS',
+      name: 'TLOS',
+      decimals: 18
+    }
+  },
+  [ChainId.TELOS_TESTNET]: {
+    chainId: ChainId.TELOS_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'telos-testnet',
+    title: 'Telos Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS_TESTNET}.webp`,
+    blockExplorer: {
+      name: 'Telos Testnet Explorer',
+      rootUrl: 'https://testnet.teloscan.io/'
     },
     nativeToken: {
       symbol: 'TLOS',
@@ -815,6 +813,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
+  [ChainId.SKALE_NEBULA]: {
+    chainId: ChainId.SKALE_NEBULA,
+    type: NetworkType.MAINNET,
+    name: 'skale-nebula',
+    title: 'SKALE Nebula Gaming Hub',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'SKALE Nebula Gaming Hub Explorer',
+      rootUrl: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
   [ChainId.SKALE_NEBULA_TESTNET]: {
     chainId: ChainId.SKALE_NEBULA_TESTNET,
     type: NetworkType.TESTNET,
@@ -829,6 +844,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'sFUEL',
       name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
+  [ChainId.SONEIUM]: {
+    chainId: ChainId.SONEIUM,
+    type: NetworkType.MAINNET,
+    name: 'soneium',
+    title: 'Soneium',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Soneium Explorer',
+      rootUrl: 'https://soneium.blockscout.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
       decimals: 18
     }
   },
@@ -863,6 +895,142 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'TOY',
       name: 'TOY',
+      decimals: 18
+    }
+  },
+  [ChainId.IMMUTABLE_ZKEVM]: {
+    chainId: ChainId.IMMUTABLE_ZKEVM,
+    type: NetworkType.MAINNET,
+    name: 'immutable-zkevm',
+    title: 'Immutable zkEVM',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Immutable zkEVM Explorer',
+      rootUrl: 'https://explorer.immutable.com/'
+    },
+    nativeToken: {
+      symbol: 'IMX',
+      name: 'IMX',
+      decimals: 18
+    }
+  },
+  [ChainId.IMMUTABLE_ZKEVM_TESTNET]: {
+    chainId: ChainId.IMMUTABLE_ZKEVM_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'immutable-zkevm-testnet',
+    title: 'Immutable zkEVM Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Immutable zkEVM Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.immutable.com/'
+    },
+    nativeToken: {
+      symbol: 'IMX',
+      name: 'IMX',
+      decimals: 18
+    }
+  },
+  [ChainId.ROOT_NETWORK]: {
+    chainId: ChainId.ROOT_NETWORK,
+    type: NetworkType.MAINNET,
+    name: 'rootnet',
+    title: 'The Root Network',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'The Root Network Explorer',
+      rootUrl: 'https://rootscan.io/'
+    },
+    nativeToken: {
+      symbol: 'XRP',
+      name: 'XRP',
+      decimals: 18
+    }
+  },
+  [ChainId.ROOT_NETWORK_PORCINI]: {
+    chainId: ChainId.ROOT_NETWORK_PORCINI,
+    type: NetworkType.TESTNET,
+    name: 'rootnet-porcini',
+    title: 'The Root Network Porcini Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK_PORCINI}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'The Root Network Porcini Testnet Explorer',
+      rootUrl: 'https://porcini.rootscan.io/'
+    },
+    nativeToken: {
+      symbol: 'XRP',
+      name: 'XRP',
+      decimals: 18
+    }
+  },
+  [ChainId.LAOS]: {
+    chainId: ChainId.LAOS,
+    type: NetworkType.MAINNET,
+    name: 'laos',
+    title: 'LAOS',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'LAOS Explorer',
+      rootUrl: 'https://blockscout.laos.laosfoundation.io/'
+    },
+    nativeToken: {
+      symbol: 'LAOS',
+      name: 'LAOS',
+      decimals: 18
+    }
+  },
+  [ChainId.LAOS_SIGMA_TESTNET]: {
+    chainId: ChainId.LAOS_SIGMA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'laos-sigma-testnet',
+    title: 'LAOS Sigma Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS_SIGMA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'LAOS Sigma Testnet Explorer',
+      rootUrl: 'https://sigma.explorer.laosnetwork.io/'
+    },
+    nativeToken: {
+      symbol: 'SIGMA',
+      name: 'SIGMA',
+      decimals: 18
+    }
+  },
+  [ChainId.MOONBEAM]: {
+    chainId: ChainId.MOONBEAM,
+    type: NetworkType.MAINNET,
+    name: 'moonbeam',
+    title: 'Moonbeam',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBEAM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Moonscan',
+      rootUrl: 'https://moonscan.io/'
+    },
+    nativeToken: {
+      symbol: 'GLMR',
+      name: 'GLMR',
+      decimals: 18
+    }
+  },
+  [ChainId.MOONBASE_ALPHA]: {
+    chainId: ChainId.MOONBASE_ALPHA,
+    type: NetworkType.TESTNET,
+    name: 'moonbase-alpha',
+    title: 'Moonbase Alpha',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBASE_ALPHA}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Moonscan (Moonbase Alpha)',
+      rootUrl: 'https://moonbase.moonscan.io/'
+    },
+    nativeToken: {
+      symbol: 'GLMR',
+      name: 'GLMR',
       decimals: 18
     }
   },

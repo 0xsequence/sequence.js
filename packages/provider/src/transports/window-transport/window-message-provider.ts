@@ -10,8 +10,8 @@ export class WindowMessageProvider extends BaseProviderTransport {
   private walletURL: URL
   private walletWindow: Window | null
 
-  constructor(walletAppURL: string) {
-    super()
+  constructor(walletAppURL: string, projectAccessKey?: string) {
+    super(projectAccessKey)
     this.walletURL = new URL(walletAppURL)
   }
 

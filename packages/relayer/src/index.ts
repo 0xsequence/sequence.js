@@ -40,7 +40,8 @@ export interface Relayer {
   relay(
     signedTxs: commons.transaction.IntendedTransactionBundle,
     quote?: FeeQuote,
-    waitForReceipt?: boolean
+    waitForReceipt?: boolean,
+    projectAccessKey?: string
   ): Promise<commons.transaction.TransactionResponse>
 
   // wait for transaction confirmation
@@ -53,6 +54,24 @@ export interface Relayer {
     delay?: number,
     maxFails?: number
   ): Promise<commons.transaction.TransactionResponse>
+
+  // getMetaTransactions returns a list of meta transactions for a given project and gas tank
+  getMetaTransactions(
+    projectId: number,
+    page?: proto.Page
+  ): Promise<{
+    page: proto.Page
+    transactions: proto.MetaTxnLog[]
+  }>
+
+  // getTransactionCost returns the used fee cost for gas tank during a given period
+  getTransactionCost(
+    projectId: number,
+    from: string,
+    to: string
+  ): Promise<{
+    cost: number
+  }>
 }
 
 export * from './local-relayer'

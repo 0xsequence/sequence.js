@@ -1,0 +1,27 @@
+name: pnpm format
+
+on:
+  workflow_call:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 20
+
+      - uses: ./.github/actions/install-dependencies
+
+      - run: pnpm format
+
+      - name: Commit back
+        uses: 0xsequence/actions/git-commit@v0.0.4
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN_GIT_COMMIT }}
+        with:
+          files: './'
+          branch: ${{ github.head_ref }}
+          commit_message: '[AUTOMATED] pnpm format'

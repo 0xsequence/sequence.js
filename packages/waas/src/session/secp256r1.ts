@@ -3,6 +3,7 @@ import { Session } from './index'
 import { KeyTypes } from './keyTypes'
 import { SubtleCryptoBackend } from '../subtle-crypto'
 import { SecureStoreBackend } from '../secure-store'
+import { NoPrivateKeyError } from '../errors'
 
 const idbName = 'seq-waas-session-p256r1'
 const idbStoreName = 'seq-waas-session'
@@ -20,7 +21,7 @@ export async function newSECP256R1SessionFromSessionId(
   const keys = await secureStoreBackend.get(idbName, idbStoreName, sessionId)
 
   if (!keys || !keys.privateKey) {
-    throw new Error('No private key found')
+    throw new NoPrivateKeyError()
   }
 
   const encoder = new TextEncoder()

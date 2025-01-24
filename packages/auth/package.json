@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/auth",
-  "version": "2.0.15",
+  "version": "2.2.8",
   "description": "auth sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/auth",
   "source": "src/index.ts",
@@ -37,9 +37,9 @@
   "devDependencies": {
     "@0xsequence/tests": "workspace:*",
     "@0xsequence/wallet-contracts": "^3.0.1",
-    "concurrently": "^7.5.0",
-    "ethers": "^6.13.0",
-    "hardhat": "^2.20.1",
+    "concurrently": "^9.0.1",
+    "ethers": "6.13.4",
+    "hardhat": "^2.22.14",
     "mockttp": "^3.6.0"
   },
   "files": [

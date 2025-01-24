@@ -215,9 +215,9 @@ export class Account {
     if (isRelayer(found.relayer)) return found.relayer
     return new RpcRelayer({
       ...found.relayer,
-      // If there's an access key, we don't pass the JWT, because browser-side usage of this code mandates an access key
-      // and passing a JWT causes a CORS error.
-      ...(this.projectAccessKey ? { projectAccessKey: this.projectAccessKey } : { jwtAuth: this.jwt })
+      // we pass both projectAccessKey and jwtAuth because the projectAccessKey is
+      // used either for unauthenticated access, or gas sponsorship even if the jwtAuth is provided,
+      ...{ projectAccessKey: this.projectAccessKey, jwtAuth: this.jwt }
     })
   }
 
@@ -402,13 +402,46 @@ export class Account {
     status: AccountStatus,
     chainId: ethers.BigNumberish
   ): Promise<commons.transaction.Transactionish> {
+    txs = Array.isArray(txs) ? txs : [txs]
     // if onchain wallet config is not up to date
     // then we should append an extra transaction that updates it
     // to the latest "lazy" state
     if (status.onChain.imageHash !== status.imageHash) {
       const wallet = this.walletForStatus(chainId, status)
       const updateConfig = await wallet.buildUpdateConfigurationTransaction(status.config)
-      return [Array.isArray(txs) ? txs : [txs], updateConfig.transactions].flat()
+      txs = [...txs, ...updateConfig.transactions]
+    }
+
+    // On immutable chains, we add the WalletProxyHook
+    const { proxyImplementationHook } = this.contexts[status.config.version]
+    if (proxyImplementationHook && (chainId === ChainId.IMMUTABLE_ZKEVM || chainId === ChainId.IMMUTABLE_ZKEVM_TESTNET)) {
+      const provider = this.providerFor(chainId)
+      if (provider) {
+        const hook = new ethers.Contract(this.address, walletContracts.walletProxyHook.abi, provider)
+        let implementation
+        try {
+          implementation = await hook.PROXY_getImplementation()
+        } catch (e) {
+          // Handle below
+          console.log('Error getting implementation address', e)
+        }
+        if (!implementation || implementation === ethers.ZeroAddress) {
+          console.log('Adding wallet proxy hook')
+          const hooksInterface = new ethers.Interface(walletContracts.moduleHooks.abi)
+          const tx: commons.transaction.Transaction = {
+            to: this.address,
+            data: hooksInterface.encodeFunctionData(hooksInterface.getFunction('addHook')!, [
+              '0x90611127',
+              proxyImplementationHook
+            ]),
+            gasLimit: 50000, // Expected ~28k gas. Buffer added
+            delegateCall: false,
+            revertOnError: false,
+            value: 0
+          }
+          txs = [tx, ...txs]
+        }
+      }
     }
 
     return txs
@@ -488,6 +521,32 @@ export class Account {
     const chain = status.presignedConfigurations.map(c => c.signature)
     const chainedSignature = coder.chainSignatures(signature, chain)
     return coder.trim(chainedSignature)
+  }
+
+  async publishWitnessFor(signers: string[], chainId: ethers.BigNumberish = 0): Promise<void> {
+    const digest = ethers.id(`This is a Sequence account woo! ${Date.now()}`)
+
+    const status = await this.status(chainId)
+    const allOfAll = this.coders.config.fromSimple({
+      threshold: signers.length,
+      checkpoint: 0,
+      signers: signers.map(s => ({
+        address: s,
+        weight: 1
+      }))
+    })
+
+    const wallet = this.walletFor(chainId, status.original.context, allOfAll, this.coders)
+    const signature = await wallet.signDigest(digest)
+
+    const decoded = this.coders.signature.decode(signature)
+    const signatures = this.coders.signature.signaturesOfDecoded(decoded)
+
+    if (signatures.length === 0) {
+      throw new Error('No signatures found')
+    }
+
+    return this.tracker.saveWitnesses({ wallet: this.address, digest, chainId, signatures })
   }
 
   async publishWitness(): Promise<void> {
@@ -639,7 +698,8 @@ export class Account {
     await this.tracker.savePresignedConfiguration({
       wallet: this.address,
       nextConfig: config,
-      signature
+      signature,
+      referenceChainId: 1
     })
 
     // safety check, tracker should have a reverse lookup for the imageHash
@@ -674,9 +734,16 @@ export class Account {
 
     // Add wallet deployment if needed
     if (!status.onChain.deployed) {
+      let gasLimit: bigint | undefined
+      switch (BigInt(chainId)) {
+        case BigInt(ChainId.SKALE_NEBULA):
+          gasLimit = 10000000n
+          break
+      }
+
       // Wallet deployment will vary depending on the version
       // so we need to use the context to get the correct deployment
-      const deployTransaction = Wallet.buildDeployTransaction(status.original.context, status.original.imageHash)
+      const deployTransaction = Wallet.buildDeployTransaction(status.original.context, status.original.imageHash, gasLimit)
 
       transactions.push(...deployTransaction.transactions)
     }
@@ -847,10 +914,11 @@ export class Account {
     chainId: ethers.BigNumberish,
     quote?: FeeQuote,
     pstatus?: AccountStatus,
-    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void
+    callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
+    projectAccessKey?: string
   ): Promise<ethers.TransactionResponse> {
     if (!Array.isArray(signedBundle)) {
-      return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback)
+      return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback, projectAccessKey)
     }
     const status = pstatus || (await this.status(chainId))
     this.mustBeFullyMigrated(status)
@@ -858,7 +926,7 @@ export class Account {
     const decoratedBundle = await this.decorateTransactions(signedBundle, status, chainId)
     callback?.(decoratedBundle)
 
-    return this.relayer(chainId).relay(decoratedBundle, quote)
+    return this.relayer(chainId).relay(decoratedBundle, quote, undefined, projectAccessKey)
   }
 
   async fillGasLimits(
@@ -877,6 +945,7 @@ export class Account {
     status?: AccountStatus,
     options?: {
       simulate?: boolean
+      projectAccessKey?: string
     }
   ): Promise<{
     options: FeeOption[]
@@ -919,12 +988,14 @@ export class Account {
     chainId: ethers.BigNumberish
     stubSignatureOverrides: Map<string, string>
     simulateForFeeOptions?: boolean
+    projectAccessKey?: string
   }): Promise<PreparedTransactions> {
     const status = await this.status(args.chainId)
 
     const transactions = await this.fillGasLimits(args.txs, args.chainId, status)
     const gasRefundQuote = await this.gasRefundQuotes(transactions, args.chainId, args.stubSignatureOverrides, status, {
-      simulate: args.simulateForFeeOptions
+      simulate: args.simulateForFeeOptions,
+      projectAccessKey: args.projectAccessKey
     })
     const flatDecorated = commons.transaction.unwind(this.address, gasRefundQuote.decorated.transactions)
 
@@ -945,6 +1016,7 @@ export class Account {
     options?: {
       nonceSpace?: ethers.BigNumberish
       serial?: boolean
+      projectAccessKey?: string
     }
   ): Promise<ethers.TransactionResponse | undefined> {
     const status = await this.status(chainId)
@@ -961,7 +1033,7 @@ export class Account {
     }
     bundles.push(...childBundles.filter(b => b.transactions.length > 0))
 
-    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback)
+    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback, options?.projectAccessKey)
   }
 
   async signTypedData(

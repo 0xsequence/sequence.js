@@ -54,10 +54,14 @@ export class SequenceClientSession {
   }
 
   getSession(): WalletSession | undefined {
-    const session = this.store.getItem(SequenceClientSession.SESSION_LOCALSTORE_KEY)
+    try {
+      const session = this.store.getItem(SequenceClientSession.SESSION_LOCALSTORE_KEY)
 
-    if (session) {
-      return JSON.parse(session)
+      if (session) {
+        return JSON.parse(session)
+      }
+    } catch (err) {
+      console.error('Error parsing session', err)
     }
 
     return undefined
@@ -142,7 +146,7 @@ export class SequenceClient {
 
   constructor(transport: ProviderTransport | MuxTransportTemplate, store: ItemStore, options?: SequenceClientOptions) {
     if (isMuxTransportTemplate(transport)) {
-      this.transport = MuxMessageProvider.new(transport)
+      this.transport = MuxMessageProvider.new(transport, options?.projectAccessKey)
     } else if (isProviderTransport(transport)) {
       this.transport = transport
     } else {

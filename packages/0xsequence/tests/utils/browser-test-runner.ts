@@ -1,6 +1,5 @@
 import test from 'ava'
-import puppeteer from 'puppeteer'
-import { spawnSync } from 'child_process'
+import * as puppeteer from 'puppeteer'
 
 export const runBrowserTests = async (title: string, path: string) => {
   test.serial(title, browserContext, async (t, page: puppeteer.Page) => {
@@ -58,8 +57,8 @@ export const runBrowserTests = async (title: string, path: string) => {
 
 export const browserContext = async (t, run) => {
   const browser = await puppeteer.launch({
-    executablePath: getChromePath(),
-    args: ['--headless', '--no-sandbox', '--disable-setuid-sandbox']
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
   })
   const page = await browser.newPage()
   try {
@@ -70,21 +69,21 @@ export const browserContext = async (t, run) => {
   }
 }
 
-const getChromePath = (): string | undefined => {
-  if (process.env['NIX_PATH']) {
-    // nixos users are unable to use the chrome bin packaged with puppeteer,
-    // so instead we use the locally installed chrome or chromium binary.
-    for (const bin of ['google-chrome-stable', 'chromium']) {
-      const out = spawnSync('which', [bin])
-      if (out.status === 0) {
-        const executablePath = out.stdout.toString().trim()
-        return executablePath
-      }
-    }
-    console.error('Unable to find `google-chrome-stable` or `chromium` binary on your NixOS system.')
-    process.exit(1)
-  } else {
-    // undefined will use the chrome version packaged with puppeteer npm package
-    return undefined
-  }
-}
+// const getChromePath = (): string | undefined => {
+//   if (process.env['NIX_PATH']) {
+//     // nixos users are unable to use the chrome bin packaged with puppeteer,
+//     // so instead we use the locally installed chrome or chromium binary.
+//     for (const bin of ['google-chrome-stable', 'chromium']) {
+//       const out = spawnSync('which', [bin])
+//       if (out.status === 0) {
+//         const executablePath = out.stdout.toString().trim()
+//         return executablePath
+//       }
+//     }
+//     console.error('Unable to find `google-chrome-stable` or `chromium` binary on your NixOS system.')
+//     process.exit(1)
+//   } else {
+//     // undefined will use the chrome version packaged with puppeteer npm package
+//     return undefined
+//   }
+// }
