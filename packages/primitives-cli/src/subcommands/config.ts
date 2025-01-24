@@ -9,6 +9,7 @@ import {
   hashConfiguration,
 } from '@0xsequence/sequence-primitives'
 import { Bytes, Hex } from 'ox'
+import { fromPosOrStdin } from '../utils'
 
 function randomBytes(length: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(length))
@@ -78,7 +79,7 @@ async function generateRandom(maxDepth: number): Promise<void> {
   console.log(Hex.fromBytes(encoded))
 }
 
-async function createConfig(options: { threshold: number; checkpoint: number }): Promise<void> {
+async function createConfig(options: { threshold: string; checkpoint: string }): Promise<void> {
   const config: Configuration = {
     threshold: BigInt(options.threshold),
     checkpoint: BigInt(options.checkpoint),
@@ -88,18 +89,6 @@ async function createConfig(options: { threshold: number; checkpoint: number }):
   }
 
   console.log(configToJson(config))
-}
-
-async function getInput(input?: string): Promise<string> {
-  if (input) {
-    return input
-  }
-  let stdin = ''
-  process.stdin.setEncoding('utf8')
-  for await (const chunk of process.stdin) {
-    stdin += chunk
-  }
-  return stdin
 }
 
 async function calculateImageHash(input: string): Promise<void> {
@@ -137,12 +126,12 @@ const configCommand: CommandModule = {
         (yargs) => {
           return yargs
             .option('threshold', {
-              type: 'number',
+              type: 'string',
               description: 'Threshold value for the configuration',
               demandOption: true,
             })
             .option('checkpoint', {
-              type: 'number',
+              type: 'string',
               description: 'Checkpoint value for the configuration',
               demandOption: true,
             })
@@ -152,30 +141,30 @@ const configCommand: CommandModule = {
         },
       )
       .command(
-        'image-hash',
+        'image-hash [input]',
         'Calculate image hash from hex input',
         (yargs) => {
-          return yargs.option('input', {
+          return yargs.positional('input', {
             type: 'string',
             description: 'Hex input to hash (if not using pipe)',
           })
         },
         async (argv) => {
-          const input = await getInput(argv.input as string)
+          const input = await fromPosOrStdin(argv, 'input')
           await calculateImageHash(input)
         },
       )
       .command(
-        'encode',
+        'encode [input]',
         'Encode configuration from hex input',
         (yargs) => {
-          return yargs.option('input', {
+          return yargs.positional('input', {
             type: 'string',
             description: 'Hex input to encode (if not using pipe)',
           })
         },
         async (argv) => {
-          const input = await getInput(argv.input as string)
+          const input = await fromPosOrStdin(argv, 'input')
           await doEncode(input)
         },
       )

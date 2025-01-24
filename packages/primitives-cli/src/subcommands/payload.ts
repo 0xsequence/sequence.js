@@ -1,8 +1,9 @@
 import { AbiParameters, Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { encode } from '@0xsequence/sequence-primitives'
+import { fromPosOrStdin, readStdin } from '../utils'
 
-const KIND_TRANSACTIONS = 0x00
+export const KIND_TRANSACTIONS = 0x00
 const KIND_MESSAGE = 0x01
 const KIND_CONFIG_UPDATE = 0x02
 const KIND_DIGEST = 0x03
@@ -21,7 +22,7 @@ const CallAbi = [
   { type: 'uint256', name: 'behaviorOnError' },
 ]
 
-const DecodedAbi = [
+export const DecodedAbi = [
   { type: 'uint8', name: 'kind' },
   { type: 'bool', name: 'noChainId' },
   {
@@ -37,7 +38,7 @@ const DecodedAbi = [
   { type: 'address[]', name: 'parentWallets' },
 ]
 
-interface SolidityDecoded {
+export interface SolidityDecoded {
   kind: number
   noChainId: boolean
   calls: SolidityCall[]
@@ -72,21 +73,6 @@ function behaviorOnError(behavior: number): 'ignore' | 'revert' | 'abort' {
   }
 }
 
-async function readStdin(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = ''
-    process.stdin.on('data', (chunk) => {
-      data += chunk
-    })
-    process.stdin.on('end', () => {
-      resolve(data.trim())
-    })
-    process.stdin.on('error', (err) => {
-      reject(err)
-    })
-  })
-}
-
 async function convertToAbi(_payload: string): Promise<void> {
   throw new Error('Not implemented')
 }
@@ -119,13 +105,14 @@ async function convertToPacked(payload: string): Promise<void> {
   throw new Error('Not implemented')
 }
 
-async function convertToHuman(payload: string): Promise<void> {
+async function convertToJson(payload: string): Promise<void> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload as Hex.Hex,
   )[0] as unknown as SolidityDecoded
 
-  console.log(decoded)
+  const json = JSON.stringify(decoded)
+  console.log(json)
 }
 
 const payloadCommand: CommandModule = {
@@ -143,15 +130,8 @@ const payloadCommand: CommandModule = {
           })
         },
         async (argv) => {
-          const hasArg = typeof argv.payload === 'string' && argv.payload.length > 0
-          const hasStdin = !process.stdin.isTTY
-          if (hasArg && hasStdin) {
-            throw new Error('Payload can only come from arg or stdin, not both')
-          } else if (!hasArg && !hasStdin) {
-            throw new Error('No payload provided and no stdin data')
-          }
-          const finalPayload = hasArg ? argv.payload! : await readStdin()
-          await convertToAbi(finalPayload)
+          const payload = await fromPosOrStdin(argv, 'payload')
+          await convertToAbi(payload)
         },
       )
       .command(
@@ -164,20 +144,13 @@ const payloadCommand: CommandModule = {
           })
         },
         async (argv) => {
-          const hasArg = typeof argv.payload === 'string' && argv.payload.length > 0
-          const hasStdin = !process.stdin.isTTY
-          if (hasArg && hasStdin) {
-            throw new Error('Payload can only come from arg or stdin, not both')
-          } else if (!hasArg && !hasStdin) {
-            throw new Error('No payload provided and no stdin data')
-          }
-          const finalPayload = hasArg ? argv.payload! : await readStdin()
-          await convertToPacked(finalPayload)
+          const payload = await fromPosOrStdin(argv, 'payload')
+          await convertToPacked(payload)
         },
       )
       .command(
-        'to-human [payload]',
-        'Convert payload to human readable format',
+        'to-json [payload]',
+        'Convert payload to JSON format',
         (yargs) => {
           return yargs.positional('payload', {
             type: 'string',
@@ -185,15 +158,8 @@ const payloadCommand: CommandModule = {
           })
         },
         async (argv) => {
-          const hasArg = typeof argv.payload === 'string' && argv.payload.length > 0
-          const hasStdin = !process.stdin.isTTY
-          if (hasArg && hasStdin) {
-            throw new Error('Payload can only come from arg or stdin, not both')
-          } else if (!hasArg && !hasStdin) {
-            throw new Error('No payload provided and no stdin data')
-          }
-          const finalPayload = hasArg ? argv.payload! : await readStdin()
-          await convertToHuman(finalPayload)
+          const payload = await fromPosOrStdin(argv, 'payload')
+          await convertToJson(payload)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for payload')

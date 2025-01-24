@@ -130,10 +130,13 @@ export function getWeight(configuration: Configuration, signers: Address.Address
 export function hashConfiguration(topology: Topology | Configuration): Bytes.Bytes {
   if (isConfiguration(topology)) {
     let root = hashConfiguration(topology.topology)
-    root = Hash.keccak256(Bytes.concat(root, Bytes.fromNumber(topology.threshold)))
-    root = Hash.keccak256(Bytes.concat(root, Bytes.fromNumber(topology.checkpoint)))
+    root = Hash.keccak256(Bytes.concat(root, Bytes.padLeft(Bytes.fromNumber(topology.threshold), 32)))
+    root = Hash.keccak256(Bytes.concat(root, Bytes.padLeft(Bytes.fromNumber(topology.checkpoint), 32)))
     root = Hash.keccak256(
-      Bytes.concat(root, Bytes.fromHex(topology.checkpointer ?? '0x0000000000000000000000000000000000000000')),
+      Bytes.concat(
+        root,
+        Bytes.padLeft(Bytes.fromHex(topology.checkpointer ?? '0x0000000000000000000000000000000000000000'), 32),
+      ),
     )
     return root
   }

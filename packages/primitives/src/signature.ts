@@ -587,7 +587,7 @@ export function encodeTopology(
   }
 
   if (isNodeLeaf(topology)) {
-    return Bytes.concat(Bytes.fromNumber(FLAG_NODE), topology)
+    return Bytes.concat(Bytes.fromNumber(FLAG_NODE << 4), topology)
   }
 
   if (isSignedSignerLeaf(topology) || isRawSignerLeaf(topology)) {
