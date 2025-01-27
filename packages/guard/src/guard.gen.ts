@@ -6,17 +6,18 @@
 // webrpc-gen -schema=guard.ridl -target=typescript -client -out=./clients/guard.gen.ts
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = 'v1'
+export const WebRPCVersion = "v1"
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = 'v0.4.0'
+export const WebRPCSchemaVersion = "v0.4.0"
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = 'd6b4a3c89539b494875af543fff459df65bb7b9e'
+export const WebRPCSchemaHash = "d6b4a3c89539b494875af543fff459df65bb7b9e"
 
 //
 // Types
 //
+
 
 export interface Version {
   webrpcVersion: string
@@ -86,27 +87,30 @@ export interface Guard {
   resetRecoveryCodes(args: ResetRecoveryCodesArgs, headers?: object, signal?: AbortSignal): Promise<ResetRecoveryCodesReturn>
 }
 
-export interface PingArgs {}
+export interface PingArgs {
+}
 
 export interface PingReturn {
-  status: boolean
+  status: boolean  
 }
-export interface VersionArgs {}
+export interface VersionArgs {
+}
 
 export interface VersionReturn {
-  version: Version
+  version: Version  
 }
-export interface RuntimeStatusArgs {}
+export interface RuntimeStatusArgs {
+}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus
+  status: RuntimeStatus  
 }
 export interface GetSignerConfigArgs {
   signer: string
 }
 
 export interface GetSignerConfigReturn {
-  signerConfig: WalletConfig
+  signerConfig: WalletConfig  
 }
 export interface SignArgs {
   request: SignRequest
@@ -114,7 +118,7 @@ export interface SignArgs {
 }
 
 export interface SignReturn {
-  sig: string
+  sig: string  
 }
 export interface SignWithArgs {
   signer: string
@@ -123,7 +127,7 @@ export interface SignWithArgs {
 }
 
 export interface SignWithReturn {
-  sig: string
+  sig: string  
 }
 export interface PatchArgs {
   signer: string
@@ -132,7 +136,7 @@ export interface PatchArgs {
 }
 
 export interface PatchReturn {
-  txs: any
+  txs: any  
 }
 export interface AuthMethodsArgs {
   proof?: OwnershipProof
@@ -140,7 +144,7 @@ export interface AuthMethodsArgs {
 
 export interface AuthMethodsReturn {
   methods: Array<string>
-  active: boolean
+  active: boolean  
 }
 export interface SetPINArgs {
   pin: string
@@ -148,47 +152,51 @@ export interface SetPINArgs {
   signature: string
 }
 
-export interface SetPINReturn {}
+export interface SetPINReturn {  
+}
 export interface ResetPINArgs {
   timestamp: number
   signature: string
 }
 
-export interface ResetPINReturn {}
+export interface ResetPINReturn {  
+}
 export interface CreateTOTPArgs {
   timestamp: number
   signature: string
 }
 
 export interface CreateTOTPReturn {
-  uri: string
+  uri: string  
 }
 export interface CommitTOTPArgs {
   token: string
 }
 
 export interface CommitTOTPReturn {
-  codes: Array<RecoveryCode>
+  codes: Array<RecoveryCode>  
 }
 export interface ResetTOTPArgs {
   timestamp: number
   signature: string
 }
 
-export interface ResetTOTPReturn {}
+export interface ResetTOTPReturn {  
+}
 export interface Reset2FAArgs {
   code: string
   proof?: OwnershipProof
 }
 
-export interface Reset2FAReturn {}
+export interface Reset2FAReturn {  
+}
 export interface RecoveryCodesArgs {
   timestamp: number
   signature: string
 }
 
 export interface RecoveryCodesReturn {
-  codes: Array<RecoveryCode>
+  codes: Array<RecoveryCode>  
 }
 export interface ResetRecoveryCodesArgs {
   timestamp: number
@@ -196,9 +204,11 @@ export interface ResetRecoveryCodesArgs {
 }
 
 export interface ResetRecoveryCodesReturn {
-  codes: Array<RecoveryCode>
+  codes: Array<RecoveryCode>  
 }
 
+
+  
 //
 // Client
 //
@@ -215,246 +225,230 @@ export class Guard implements Guard {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-
+  
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            status: <boolean>_data.status
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('Ping'),
+      createHTTPRequest({}, headers, signal)
+      ).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          status: <boolean>(_data.status),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   version = (headers?: object, signal?: AbortSignal): Promise<VersionReturn> => {
-    return this.fetch(this.url('Version'), createHTTPRequest({}, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            version: <Version>_data.version
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('Version'),
+      createHTTPRequest({}, headers, signal)
+      ).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          version: <Version>(_data.version),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   runtimeStatus = (headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn> => {
-    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            status: <RuntimeStatus>_data.status
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('RuntimeStatus'),
+      createHTTPRequest({}, headers, signal)
+      ).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          status: <RuntimeStatus>(_data.status),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   getSignerConfig = (args: GetSignerConfigArgs, headers?: object, signal?: AbortSignal): Promise<GetSignerConfigReturn> => {
-    return this.fetch(this.url('GetSignerConfig'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            signerConfig: <WalletConfig>_data.signerConfig
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('GetSignerConfig'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          signerConfig: <WalletConfig>(_data.signerConfig),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   sign = (args: SignArgs, headers?: object, signal?: AbortSignal): Promise<SignReturn> => {
-    return this.fetch(this.url('Sign'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            sig: <string>_data.sig
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('Sign'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          sig: <string>(_data.sig),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   signWith = (args: SignWithArgs, headers?: object, signal?: AbortSignal): Promise<SignWithReturn> => {
-    return this.fetch(this.url('SignWith'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            sig: <string>_data.sig
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('SignWith'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          sig: <string>(_data.sig),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   patch = (args: PatchArgs, headers?: object, signal?: AbortSignal): Promise<PatchReturn> => {
-    return this.fetch(this.url('Patch'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            txs: <any>_data.txs
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('Patch'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          txs: <any>(_data.txs),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   authMethods = (args: AuthMethodsArgs, headers?: object, signal?: AbortSignal): Promise<AuthMethodsReturn> => {
-    return this.fetch(this.url('AuthMethods'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            methods: <Array<string>>_data.methods,
-            active: <boolean>_data.active
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('AuthMethods'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          methods: <Array<string>>(_data.methods),
+          active: <boolean>(_data.active),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   setPIN = (args: SetPINArgs, headers?: object, signal?: AbortSignal): Promise<SetPINReturn> => {
-    return this.fetch(this.url('SetPIN'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {}
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('SetPIN'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {}
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   resetPIN = (args: ResetPINArgs, headers?: object, signal?: AbortSignal): Promise<ResetPINReturn> => {
-    return this.fetch(this.url('ResetPIN'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {}
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('ResetPIN'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {}
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   createTOTP = (args: CreateTOTPArgs, headers?: object, signal?: AbortSignal): Promise<CreateTOTPReturn> => {
-    return this.fetch(this.url('CreateTOTP'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            uri: <string>_data.uri
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('CreateTOTP'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          uri: <string>(_data.uri),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   commitTOTP = (args: CommitTOTPArgs, headers?: object, signal?: AbortSignal): Promise<CommitTOTPReturn> => {
-    return this.fetch(this.url('CommitTOTP'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            codes: <Array<RecoveryCode>>_data.codes
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('CommitTOTP'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          codes: <Array<RecoveryCode>>(_data.codes),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   resetTOTP = (args: ResetTOTPArgs, headers?: object, signal?: AbortSignal): Promise<ResetTOTPReturn> => {
-    return this.fetch(this.url('ResetTOTP'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {}
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('ResetTOTP'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {}
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   reset2FA = (args: Reset2FAArgs, headers?: object, signal?: AbortSignal): Promise<Reset2FAReturn> => {
-    return this.fetch(this.url('Reset2FA'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {}
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('Reset2FA'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {}
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
+  
   recoveryCodes = (args: RecoveryCodesArgs, headers?: object, signal?: AbortSignal): Promise<RecoveryCodesReturn> => {
-    return this.fetch(this.url('RecoveryCodes'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            codes: <Array<RecoveryCode>>_data.codes
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+    return this.fetch(
+      this.url('RecoveryCodes'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          codes: <Array<RecoveryCode>>(_data.codes),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-
-  resetRecoveryCodes = (
-    args: ResetRecoveryCodesArgs,
-    headers?: object,
-    signal?: AbortSignal
-  ): Promise<ResetRecoveryCodesReturn> => {
-    return this.fetch(this.url('ResetRecoveryCodes'), createHTTPRequest(args, headers, signal)).then(
-      res => {
-        return buildResponse(res).then(_data => {
-          return {
-            codes: <Array<RecoveryCode>>_data.codes
-          }
-        })
-      },
-      error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-      }
-    )
+  
+  resetRecoveryCodes = (args: ResetRecoveryCodesArgs, headers?: object, signal?: AbortSignal): Promise<ResetRecoveryCodesReturn> => {
+    return this.fetch(
+      this.url('ResetRecoveryCodes'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          codes: <Array<RecoveryCode>>(_data.codes),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
+  
 }
 
-const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
@@ -468,18 +462,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch (error) {
+    } catch(error) {
       let message = ''
-      if (error instanceof Error) {
+      if (error instanceof Error)  {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`
-      })
+        cause: `JSON.parse(): ${message}: response text: ${text}`},
+      )
     }
     if (!res.ok) {
-      const code: number = typeof data.code === 'number' ? data.code : 0
+      const code: number = (typeof data.code === 'number') ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -661,6 +655,7 @@ export class WebrpcStreamFinishedError extends WebrpcError {
   }
 }
 
+
 // Schema errors
 
 export class UnauthorizedError extends WebrpcError {
@@ -832,6 +827,7 @@ export class NotFoundError extends WebrpcError {
   }
 }
 
+
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -856,7 +852,7 @@ export enum errors {
   Unavailable = 'Unavailable',
   QueryFailed = 'QueryFailed',
   ValidationFailed = 'ValidationFailed',
-  NotFound = 'NotFound'
+  NotFound = 'NotFound',
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -883,7 +879,8 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [2002]: UnavailableError,
   [2003]: QueryFailedError,
   [2004]: ValidationFailedError,
-  [3000]: NotFoundError
+  [3000]: NotFoundError,
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
+
