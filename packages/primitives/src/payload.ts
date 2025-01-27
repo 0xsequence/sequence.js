@@ -73,85 +73,88 @@ export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Payload {
 
 export function encode(payload: CallPayload, self?: Address.Address): Bytes.Bytes {
   const callsLen = payload.calls.length
-  const minBytes = minBytesFor(payload.nonce)
-  if (minBytes > 15) {
+  const nonceBytesNeeded = minBytesFor(payload.nonce)
+  if (nonceBytesNeeded > 15) {
     throw new Error('Nonce is too large')
   }
 
   /*
     globalFlag layout:
-
-      bit 1: spaceZeroFlag => 1 if space == 0, else 0
-      bits [2..4]: nonceBytes => how many bytes we use to encode nonce
-      bit 5: singleCallFlag => 1 if there's exactly one call, else 0
-      bit 6: callsCountSizeFlag => 1 if #calls stored in 1 byte, else 0 if stored in 2 bytes
-
-      (bits 7..7 are unused, or free)
+      bit 0: spaceZeroFlag => 1 if space == 0, else 0
+      bits [1..3]: how many bytes we use to encode nonce
+      bit 4: singleCallFlag => 1 if there's exactly one call
+      bit 5: callsCountSizeFlag => 1 if #calls stored in 2 bytes, 0 if in 1 byte
+      (bits [6..7] are unused/free)
   */
   let globalFlag = 0
+
   if (payload.space === 0n) {
     globalFlag |= 0x01
   }
-  globalFlag |= minBytes << 1
+
+  // bits [1..3] => how many bytes for the nonce
+  globalFlag |= nonceBytesNeeded << 1
+
+  // bit [4] => singleCallFlag
   if (callsLen === 1) {
     globalFlag |= 0x10
   }
 
-  // If more than one call, figure out if we store the calls count in 1 or 2 bytes
+  /*
+    If there's more than one call, we decide if we store the #calls in 1 or 2 bytes.
+    bit [5] => callsCountSizeFlag: 1 => 2 bytes, 0 => 1 byte
+  */
   let callsCountSize = 0
   if (callsLen !== 1) {
     if (callsLen < 256) {
       callsCountSize = 1
     } else if (callsLen < 65536) {
-      globalFlag |= 0x20
       callsCountSize = 2
+      globalFlag |= 0x20
     } else {
       throw new Error('Too many calls')
     }
   }
 
-  const out: number[] = []
-  out.push(globalFlag)
+  // Start building the output
+  // We'll accumulate in a Bytes object as we go
+  let out = Bytes.fromNumber(globalFlag, { size: 1 })
 
-  // If space isn't zero, we store it in 20 bytes (uint160)
+  // If space isn't 0, store it as exactly 20 bytes (like uint160)
   if (payload.space !== 0n) {
-    const spaceHex = payload.space.toString(16).padStart(40, '0')
-    for (let i = 0; i < 20; i++) {
-      out.push(parseInt(spaceHex.substring(i * 2, i * 2 + 2), 16))
-    }
+    const spaceBytes = Bytes.padLeft(Bytes.fromNumber(payload.space), 20)
+    out = Bytes.concat(out, spaceBytes)
   }
 
-  // Encode nonce in minBytes
-  if (minBytes > 0) {
-    let nonceHex = payload.nonce.toString(16)
-    nonceHex = nonceHex.padStart(minBytes * 2, '0')
-    for (let i = 0; i < minBytes; i++) {
-      out.push(parseInt(nonceHex.substring(i * 2, i * 2 + 2), 16))
-    }
+  // Encode nonce in nonceBytesNeeded
+  if (nonceBytesNeeded > 0) {
+    // We'll store nonce in exactly nonceBytesNeeded bytes
+    const nonceBytes = Bytes.padLeft(Bytes.fromNumber(payload.nonce), nonceBytesNeeded)
+    out = Bytes.concat(out, nonceBytes)
   }
 
-  // Store the calls length if not single-call
+  // Store callsLen if not single-call
   if (callsLen !== 1) {
     if (callsCountSize === 1) {
-      out.push(callsLen & 0xff)
+      out = Bytes.concat(out, Bytes.fromNumber(callsLen, { size: 1 }))
     } else {
-      out.push((callsLen >> 8) & 0xff, callsLen & 0xff)
+      // callsCountSize === 2
+      out = Bytes.concat(out, Bytes.fromNumber(callsLen, { size: 2 }))
     }
   }
 
-  /*
-    Each call has a flags byte:
-
-      bit 0: toSelf => 1 if call.to == address(this) in solidity, else 0
-      bit 1: hasValue => 1 if call.value != 0
-      bit 2: hasData => 1 if call.data.length > 0
-      bit 3: hasGasLimit => 1 if call.gasLimit != 0
-      bit 4: delegateCall
-      bit 5: onlyFallback
-      bits [6..7]: behaviorOnError => 0=ignore, 1=revert, 2=abort
-  */
-
+  // Now encode each call
   for (const call of payload.calls) {
+    /*
+      call flags layout (1 byte):
+        bit 0 => toSelf (call.to == this)
+        bit 1 => hasValue (call.value != 0)
+        bit 2 => hasData (call.data.length > 0)
+        bit 3 => hasGasLimit (call.gasLimit != 0)
+        bit 4 => delegateCall
+        bit 5 => onlyFallback
+        bits [6..7] => behaviorOnError => 0=ignore, 1=revert, 2=abort
+    */
     let flags = 0
 
     if (self && call.to === self) {
@@ -178,7 +181,6 @@ export function encode(payload: CallPayload, self?: Address.Address): Bytes.Byte
       flags |= 0x20
     }
 
-    // bits [6..7] => behaviorOnError
     let behaviorBits = 0
     switch (call.behaviorOnError) {
       case 'ignore':
@@ -191,49 +193,44 @@ export function encode(payload: CallPayload, self?: Address.Address): Bytes.Byte
         behaviorBits = 2
         break
       default:
-        throw new Error(`Unknown behavior: ${call.behaviorOnError}`)
+        throw new Error(`Unknown behaviorOnError: ${call.behaviorOnError}`)
     }
     flags |= behaviorBits << 6
 
-    out.push(flags)
+    out = Bytes.concat(out, Bytes.fromNumber(flags, { size: 1 }))
 
-    // If bit0 is 0, we store the address in 20 bytes
+    // If toSelf bit not set, store 20-byte address
     if ((flags & 0x01) === 0) {
-      const addr = call.to.startsWith('0x') ? call.to.substring(2) : call.to
-      if (addr.length !== 40) {
+      const addrBytes = Bytes.fromHex(call.to)
+      if (addrBytes.length !== 20) {
         throw new Error(`Invalid 'to' address: ${call.to}`)
       }
-      for (let i = 0; i < 20; i++) {
-        out.push(parseInt(addr.substring(i * 2, i * 2 + 2), 16))
-      }
+      out = Bytes.concat(out, addrBytes)
     }
 
-    // If bit1 is set, store 32 bytes of value
+    // If hasValue, store 32 bytes of value
     if ((flags & 0x02) !== 0) {
-      const valHex = call.value.toString(16).padStart(64, '0')
-      for (let i = 0; i < 32; i++) {
-        out.push(parseInt(valHex.substring(i * 2, i * 2 + 2), 16))
-      }
+      const valueBytes = Bytes.padLeft(Bytes.fromNumber(call.value), 32)
+      out = Bytes.concat(out, valueBytes)
     }
 
-    // If bit2 is set, store 3 bytes of data length + data
+    // If hasData, store 3 bytes of data length + data
     if ((flags & 0x04) !== 0) {
       const dataLen = call.data.length
       if (dataLen > 0xffffff) {
         throw new Error('Data too large')
       }
-      out.push((dataLen >> 16) & 0xff, (dataLen >> 8) & 0xff, dataLen & 0xff)
-      out.push(...call.data)
+      // 3 bytes => up to 16,777,215
+      const dataLenBytes = Bytes.fromNumber(dataLen, { size: 3 })
+      out = Bytes.concat(out, dataLenBytes, call.data)
     }
 
-    // If bit3 is set, store 32 bytes of gasLimit
+    // If hasGasLimit, store 32 bytes of gasLimit
     if ((flags & 0x08) !== 0) {
-      const gasHex = call.gasLimit.toString(16).padStart(64, '0')
-      for (let i = 0; i < 32; i++) {
-        out.push(parseInt(gasHex.substring(i * 2, i * 2 + 2), 16))
-      }
+      const gasBytes = Bytes.padLeft(Bytes.fromNumber(call.gasLimit), 32)
+      out = Bytes.concat(out, gasBytes)
     }
   }
 
-  return Bytes.from(out)
+  return out
 }
