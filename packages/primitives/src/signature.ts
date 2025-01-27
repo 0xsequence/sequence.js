@@ -2,7 +2,8 @@ import { Address, Bytes } from 'ox'
 import {
   Configuration,
   Leaf,
-  SapientSigner,
+  NestedLeaf,
+  SapientSignerLeaf,
   SignerLeaf,
   SubdigestLeaf,
   Topology,
@@ -28,50 +29,37 @@ export const FLAG_SIGNATURE_EIP712 = 8
 export const FLAG_SIGNATURE_SAPIENT = 9
 export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
-export type SignedSignerLeaf = SignerLeaf & {
-  signed: true
-  signature:
-    | {
-        r: Bytes.Bytes
-        s: Bytes.Bytes
-        v: number
-        type: 'eth_sign' | 'hash'
-      }
-    | {
-        address: `0x${string}`
-        data: Bytes.Bytes
-        type: 'erc1271'
-      }
+export type SignatureOfSignerLeaf = {
+  r: Bytes.Bytes
+  s: Bytes.Bytes
+  v: number
+  type: 'eth_sign' | 'hash'
+} | {
+  address: `0x${string}`
+  data: Bytes.Bytes
+  type: 'erc1271'
 }
 
-export type SignedSapientSignerLeaf = SapientSigner & {
+export type SignatureOfSapientSignerLeaf = {
+  address: `0x${string}`
+  data: Bytes.Bytes
+  type: 'sapient' | 'sapient_compact'
+}
+
+export type SignedSignerLeaf = SignerLeaf & {
   signed: true
-  signature: {
-    data: Bytes.Bytes
-    type: 'sapient' | 'sapient_compact'
-  }
+  signature: SignatureOfSignerLeaf
+}
+
+export type SignedSapientSignerLeaf = SapientSignerLeaf & {
+  signed: true
+  signature: SignatureOfSapientSignerLeaf
 }
 
 export type RawSignerLeaf = {
   type: 'unrecovered-signer'
   weight: bigint
-  signature:
-    | {
-        r: Bytes.Bytes
-        s: Bytes.Bytes
-        v: number
-        type: 'eth_sign' | 'hash'
-      }
-    | {
-        address: `0x${string}`
-        data: Bytes.Bytes
-        type: 'erc1271'
-      }
-    | {
-        address: `0x${string}`
-        data: Bytes.Bytes
-        type: 'sapient' | 'sapient_compact'
-      }
+  signature: SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf
 }
 
 export type RawNestedLeaf = {
@@ -454,6 +442,50 @@ export function parseBranch(signature: Bytes.Bytes): {
   }
 
   return { nodes, leftover: signature.slice(index) }
+}
+
+export function fillLeaves(
+  topology: Topology,
+  signatureFor: (
+    leaf: SignerLeaf | SapientSignerLeaf
+  ) => SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf | undefined,
+): Topology {
+  if (isNode(topology)) {
+    return [
+      fillLeaves(topology[0]!, signatureFor),
+      fillLeaves(topology[1]!, signatureFor),
+    ] as Topology
+  }
+
+  if (isSignerLeaf(topology)) {
+    const signature = signatureFor(topology)
+    if (!signature) {
+      return topology
+    }
+    return { ...topology, signature } as SignedSignerLeaf
+  }
+
+  if (isSapientSignerLeaf(topology)) {
+    const signature = signatureFor(topology)
+    if (!signature) {
+      return topology
+    }
+    return { ...topology, signature } as SignedSapientSignerLeaf
+  }
+
+  if (isSubdigestLeaf(topology)) {
+    return topology
+  }
+
+  if (isNestedLeaf(topology)) {
+    return { ...topology, tree: fillLeaves(topology.tree, signatureFor) } as NestedLeaf
+  }
+
+  if (isNodeLeaf(topology)) {
+    return topology
+  }
+
+  throw new Error('Invalid topology')
 }
 
 export function encodeSignature(
