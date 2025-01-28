@@ -183,6 +183,25 @@ export function hashConfiguration(topology: Topology | Configuration): Bytes.Byt
   throw new Error('Invalid topology')
 }
 
+export function flatLeavesToTopology(leaves: Leaf[]): Topology {
+  if (leaves.length === 0) {
+    throw new Error('Cannot create topology from empty leaves')
+  }
+
+  if (leaves.length === 1) {
+    return leaves[0]!
+  }
+
+  if (leaves.length === 2) {
+    return [leaves[0]!, leaves[1]!]
+  }
+
+  return [
+    flatLeavesToTopology(leaves.slice(0, leaves.length / 2)),
+    flatLeavesToTopology(leaves.slice(leaves.length / 2)),
+  ]
+}
+
 export function configToJson(config: Configuration): string {
   return JSON.stringify({
     threshold: config.threshold.toString(),
