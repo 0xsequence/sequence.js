@@ -1,5 +1,5 @@
-import { Configuration, Payload } from '@0xsequence/sequence-primitives'
-import { Address, Hex } from 'ox'
+import { Configuration, hash, hashConfiguration, Payload } from '@0xsequence/sequence-primitives'
+import { Address, Bytes, Hex } from 'ox'
 import { Signature, StateReader, StateWriter } from '.'
 import * as service from './sessions.gen'
 
@@ -94,7 +94,7 @@ export class Sessions implements StateReader, StateWriter {
     await this.sessions.saveSignerSignatures2({
       wallet,
       chainID: `${chainId}`,
-      digest,
+      digest: Bytes.toHex(hash(wallet, chainId, payload)),
       signatures: [
         {
           signer,
@@ -106,6 +106,14 @@ export class Sessions implements StateReader, StateWriter {
   }
 
   async setConfiguration(wallet: Address.Address, configuration: Configuration, signature: Hex.Hex): Promise<void> {
-    await this.sessions.saveSignature({ wallet, chainID: '0', digest, signature, toConfig: configuration })
+    await this.sessions.saveSignature({
+      wallet,
+      chainID: '0',
+      digest: Bytes.toHex(
+        hash(wallet, 0n, { type: 'config-update', imageHash: Bytes.toHex(hashConfiguration(configuration)) }),
+      ),
+      signature,
+      toConfig: configuration,
+    })
   }
 }

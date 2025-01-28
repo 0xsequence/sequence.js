@@ -1,4 +1,4 @@
-import { Address, Bytes, Hex } from 'ox'
+import { Address, Bytes, Hash, Hex, TypedData } from 'ox'
 import { minBytesFor } from './utils'
 
 export type Call = {
@@ -181,21 +181,7 @@ export function encode(payload: CallPayload, self?: Address.Address): Bytes.Byte
       flags |= 0x20
     }
 
-    let behaviorBits = 0
-    switch (call.behaviorOnError) {
-      case 'ignore':
-        behaviorBits = 0
-        break
-      case 'revert':
-        behaviorBits = 1
-        break
-      case 'abort':
-        behaviorBits = 2
-        break
-      default:
-        throw new Error(`Unknown behaviorOnError: ${call.behaviorOnError}`)
-    }
-    flags |= behaviorBits << 6
+    flags |= encodeBehaviorOnError(call.behaviorOnError) << 6
 
     out = Bytes.concat(out, Bytes.fromNumber(flags, { size: 1 }))
 
@@ -233,4 +219,100 @@ export function encode(payload: CallPayload, self?: Address.Address): Bytes.Byte
   }
 
   return out
+}
+
+export function hash(wallet: Address.Address, chainId: bigint, payload: ParentedPayload): Bytes.Bytes {
+  const domain = { name: 'Sequence Wallet', version: '3', chainId, verifyingContract: wallet }
+
+  let data: Hex.Hex
+  switch (payload.type) {
+    case 'call':
+      data = TypedData.encode({
+        domain,
+        types: {
+          Calls: [
+            { name: 'calls', type: 'Call[]' },
+            { name: 'space', type: 'uint256' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'wallets', type: 'address[]' },
+          ],
+          Call: [
+            { name: 'to', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'data', type: 'bytes' },
+            { name: 'gasLimit', type: 'uint256' },
+            { name: 'delegateCall', type: 'bool' },
+            { name: 'onlyFallback', type: 'bool' },
+            { name: 'behaviorOnError', type: 'uint256' },
+          ],
+        },
+        primaryType: 'Calls',
+        message: {
+          calls: payload.calls.map((call) => ({
+            ...call,
+            data: Bytes.toHex(call.data),
+            behaviorOnError: BigInt(encodeBehaviorOnError(call.behaviorOnError)),
+          })),
+          space: payload.space,
+          nonce: payload.nonce,
+          wallets: payload.parentWallets ?? [],
+        },
+      })
+      break
+
+    case 'message':
+      data = TypedData.encode({
+        domain,
+        types: {
+          Message: [
+            { name: 'message', type: 'bytes' },
+            { name: 'wallets', type: 'address[]' },
+          ],
+        },
+        primaryType: 'Message',
+        message: { message: Bytes.toHex(payload.message), wallets: payload.parentWallets ?? [] },
+      })
+      break
+
+    case 'config-update':
+      data = TypedData.encode({
+        domain,
+        types: {
+          ConfigUpdate: [
+            { name: 'imageHash', type: 'bytes32' },
+            { name: 'wallets', type: 'address[]' },
+          ],
+        },
+        primaryType: 'ConfigUpdate',
+        message: { imageHash: payload.imageHash, wallets: payload.parentWallets ?? [] },
+      })
+      break
+
+    case 'digest':
+      data = TypedData.encode({
+        domain,
+        types: {
+          Digest: [
+            { name: 'digest', type: 'bytes32' },
+            { name: 'wallets', type: 'address[]' },
+          ],
+        },
+        primaryType: 'Digest',
+        message: { digest: payload.digest, wallets: payload.parentWallets ?? [] },
+      })
+      break
+  }
+
+  return Hash.keccak256(data, { as: 'Bytes' })
+}
+
+function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']): number {
+  switch (behaviorOnError) {
+    case 'ignore':
+      return 0
+    case 'revert':
+      return 1
+    case 'abort':
+      return 2
+  }
 }
