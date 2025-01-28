@@ -1,10 +1,6 @@
 import crypto from 'crypto'
 import type { CommandModule } from 'yargs'
-import {
-  Configuration,
-  Topology,
-  configToJson,
-} from '@0xsequence/sequence-primitives'
+import { Configuration, Topology, configToJson } from '@0xsequence/sequence-primitives'
 import { Hex } from 'ox'
 
 function createSeededRandom(seed: string) {
@@ -49,9 +45,7 @@ function randomAddress(seededRandom?: () => number): `0x${string}` {
 
 function generateRandomTopology(depth: number, seededRandom?: () => number): Topology {
   if (depth <= 0) {
-    const leafType = seededRandom 
-      ? Math.floor(seededRandom() * 5)
-      : Math.floor(Math.random() * 5)
+    const leafType = seededRandom ? Math.floor(seededRandom() * 5) : Math.floor(Math.random() * 5)
 
     switch (leafType) {
       case 0: // SignerLeaf
@@ -89,22 +83,17 @@ function generateRandomTopology(depth: number, seededRandom?: () => number): Top
   }
 
   // Generate a node with two random subtrees
-  return [
-    generateRandomTopology(depth - 1, seededRandom),
-    generateRandomTopology(depth - 1, seededRandom)
-  ]
+  return [generateRandomTopology(depth - 1, seededRandom), generateRandomTopology(depth - 1, seededRandom)]
 }
 
 async function generateRandomConfig(maxDepth: number, seed?: string): Promise<void> {
   const seededRandom = seed ? createSeededRandom(seed) : undefined
-  
+
   const config: Configuration = {
     threshold: randomBigInt(100n, seededRandom),
     checkpoint: randomBigInt(1000n, seededRandom),
     topology: generateRandomTopology(maxDepth, seededRandom),
-    checkpointer: (seededRandom ? seededRandom() : Math.random()) > 0.5 
-      ? randomAddress(seededRandom) 
-      : undefined,
+    checkpointer: (seededRandom ? seededRandom() : Math.random()) > 0.5 ? randomAddress(seededRandom) : undefined,
   }
 
   console.log(configToJson(config))
@@ -140,4 +129,4 @@ const command: CommandModule = {
   handler: () => {},
 }
 
-export default command 
+export default command

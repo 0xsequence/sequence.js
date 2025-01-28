@@ -14,5 +14,4 @@ void yargs(hideBin(process.argv))
   .command(signatureCommand)
   .demandCommand(1)
   .strict()
-  .help()
-  .argv
+  .help().argv

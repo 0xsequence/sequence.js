@@ -1,4 +1,3 @@
-
 import type { CommandModule } from 'yargs'
 import {
   Configuration,

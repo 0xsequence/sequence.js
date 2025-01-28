@@ -30,4 +30,4 @@ const signatureCommand: CommandModule = {
   handler: () => {},
 }
 
-export default signatureCommand 
+export default signatureCommand

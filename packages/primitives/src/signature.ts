@@ -29,16 +29,18 @@ export const FLAG_SIGNATURE_EIP712 = 8
 export const FLAG_SIGNATURE_SAPIENT = 9
 export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
-export type SignatureOfSignerLeaf = {
-  r: Bytes.Bytes
-  s: Bytes.Bytes
-  v: number
-  type: 'eth_sign' | 'hash'
-} | {
-  address: `0x${string}`
-  data: Bytes.Bytes
-  type: 'erc1271'
-}
+export type SignatureOfSignerLeaf =
+  | {
+      r: Bytes.Bytes
+      s: Bytes.Bytes
+      v: number
+      type: 'eth_sign' | 'hash'
+    }
+  | {
+      address: `0x${string}`
+      data: Bytes.Bytes
+      type: 'erc1271'
+    }
 
 export type SignatureOfSapientSignerLeaf = {
   address: `0x${string}`
@@ -447,14 +449,11 @@ export function parseBranch(signature: Bytes.Bytes): {
 export function fillLeaves(
   topology: Topology,
   signatureFor: (
-    leaf: SignerLeaf | SapientSignerLeaf
+    leaf: SignerLeaf | SapientSignerLeaf,
   ) => SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf | undefined,
 ): Topology {
   if (isNode(topology)) {
-    return [
-      fillLeaves(topology[0]!, signatureFor),
-      fillLeaves(topology[1]!, signatureFor),
-    ] as Topology
+    return [fillLeaves(topology[0]!, signatureFor), fillLeaves(topology[1]!, signatureFor)] as Topology
   }
 
   if (isSignerLeaf(topology)) {

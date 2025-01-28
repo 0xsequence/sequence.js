@@ -70,11 +70,7 @@ export function isConfiguration(cand: any): cand is Configuration {
 
 export function isLeaf(cand: Topology): cand is Leaf {
   return (
-    isSignerLeaf(cand) ||
-    isSapientSignerLeaf(cand) ||
-    isSubdigestLeaf(cand) ||
-    isNodeLeaf(cand) ||
-    isNestedLeaf(cand)
+    isSignerLeaf(cand) || isSapientSignerLeaf(cand) || isSubdigestLeaf(cand) || isNodeLeaf(cand) || isNestedLeaf(cand)
   )
 }
 
@@ -240,7 +236,6 @@ function encodeTopology(top: Topology): any {
 
   throw new Error('Invalid topology')
 }
-
 
 function decodeTopology(obj: any): Topology {
   if (Array.isArray(obj)) {
