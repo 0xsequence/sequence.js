@@ -12,7 +12,7 @@ export interface Signer {
 }
 
 export type Signature =
-  | { type: 'digest'; signature: Hex.Hex }
+  | { type: 'hash'; signature: Hex.Hex }
   | { type: 'eth_sign'; signature: Hex.Hex }
   | { type: 'erc-1271'; address: Address.Address; signature: Hex.Hex }
   | { type: 'sapient'; address: Address.Address; signature: Hex.Hex }
