@@ -7,13 +7,20 @@ export interface Signer {
   sign(
     payload: Payload,
   ):
-    | Promise<Hex.Hex>
-    | { signature: Promise<Hex.Hex>; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
+    | Promise<Signature>
+    | { signature: Promise<Signature>; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
 }
+
+export type Signature =
+  | { type: 'digest'; signature: Hex.Hex }
+  | { type: 'eth_sign'; signature: Hex.Hex }
+  | { type: 'erc-1271'; address: Address.Address; signature: Hex.Hex }
+  | { type: 'sapient'; address: Address.Address; signature: Hex.Hex }
+  | { type: 'sapient-compact'; address: Address.Address; signature: Hex.Hex }
 
 export type SignerSignatureCallback = (
   configuration: Configuration,
-  signatures: Map<Address.Address, Hex.Hex>,
+  signatures: Map<Address.Address, Signature>,
   validated: boolean,
 ) => void
 

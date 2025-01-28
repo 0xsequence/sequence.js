@@ -8,7 +8,7 @@ import {
   Payload,
 } from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex, Provider } from 'ox'
-import { CancelCallback, Signer, SignerSignatureCallback } from './signer'
+import { CancelCallback, Signature, Signer, SignerSignatureCallback } from './signer'
 import { Sessions, StateReader, StateWriter } from './state'
 
 export class Wallet {
@@ -80,7 +80,7 @@ export class Wallet {
 
     const signers = new Map<
       Address.Address,
-      { signer: Signer; signature?: Hex.Hex; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
+      { signer: Signer; signature?: Signature; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
     >(
       getSigners(configuration).signers.flatMap((address) => {
         const signer = this.signers.get(address)
@@ -92,7 +92,7 @@ export class Wallet {
       throw new Error('insufficient potential weight')
     }
 
-    const signerSignatures = await new Promise<Map<Address.Address, Hex.Hex>>((resolve, reject) => {
+    const signerSignatures = await new Promise<Map<Address.Address, Signature>>((resolve, reject) => {
       const onError = (address: Hex.Hex) => (error: any) => {
         signers.delete(address)
 
@@ -106,7 +106,7 @@ export class Wallet {
         }
       }
 
-      const onSignerSignature = (address: Hex.Hex) => (signature: Hex.Hex) => {
+      const onSignerSignature = (address: Hex.Hex) => (signature: Signature) => {
         if (!options?.trustSigners) {
         }
 
