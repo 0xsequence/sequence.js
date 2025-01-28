@@ -129,11 +129,13 @@ const configCommand: CommandModule = {
               type: 'string',
               description: 'Threshold value for the configuration',
               demandOption: true,
+              alias: 't',
             })
             .option('checkpoint', {
               type: 'string',
               description: 'Checkpoint value for the configuration',
               demandOption: true,
+              alias: 'c',
             })
             .option('from', {
               type: 'string',
@@ -141,6 +143,7 @@ const configCommand: CommandModule = {
               demandOption: false,
               default: 'flat',
               choices: ['flat'],
+              alias: 'f',
             })
             .positional('content', {
               type: 'string',
