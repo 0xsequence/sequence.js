@@ -625,7 +625,7 @@ export function encodeTopology(
     if (topology.signature.type === 'hash' || topology.signature.type === 'eth_sign') {
       let flag = (topology.signature.type === 'hash' ? FLAG_SIGNATURE_HASH : FLAG_SIGNATURE_ETH_SIGN) << 4
       let weightBytes = Bytes.fromArray([])
-      if (topology.weight <= 15n) {
+      if (topology.weight <= 15n && topology.weight > 0n) {
         flag |= Number(topology.weight)
       } else if (topology.weight <= 255n) {
         weightBytes = Bytes.fromNumber(Number(topology.weight))
@@ -635,7 +635,7 @@ export function encodeTopology(
 
       const r = Bytes.padLeft(topology.signature.r, 32)
       const s = Bytes.padLeft(topology.signature.s, 32)
-      if (topology.signature.v % 2 !== 0) {
+      if (topology.signature.v % 2 === 0) {
         s[0]! |= 0x80
       }
 
