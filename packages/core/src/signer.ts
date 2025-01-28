@@ -11,6 +11,10 @@ export interface Signer {
     | { signature: Promise<Hex.Hex>; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
 }
 
-export type SignerSignatureCallback = (configuration: Configuration, signatures: Map<Address.Address, Hex.Hex>) => void
+export type SignerSignatureCallback = (
+  configuration: Configuration,
+  signatures: Map<Address.Address, Hex.Hex>,
+  validated: boolean,
+) => void
 
 export type CancelCallback = (success: boolean) => void

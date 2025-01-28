@@ -128,7 +128,7 @@ export class Wallet {
 
         if (weight < configuration.threshold) {
           Array.from(signers.values()).forEach(({ onSignerSignature }) =>
-            onSignerSignature?.(configuration, signerSignatures),
+            onSignerSignature?.(configuration, signerSignatures, !options?.trustSigners),
           )
         } else {
           const onCancels = Array.from(signers.values()).flatMap(({ onCancel }) => (onCancel ? [onCancel] : []))
