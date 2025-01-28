@@ -704,7 +704,7 @@ export function encodeTopology(
   if (isSignerLeaf(topology)) {
     let flag = FLAG_ADDRESS << 4
     let weightBytes = Bytes.fromArray([])
-    if (topology.weight <= 15n) {
+    if (topology.weight <= 15n && topology.weight > 0n) {
       flag |= Number(topology.weight)
     } else if (topology.weight <= 255n) {
       weightBytes = Bytes.fromNumber(Number(topology.weight))
