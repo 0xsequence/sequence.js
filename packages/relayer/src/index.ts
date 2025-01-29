@@ -29,6 +29,12 @@ export interface Relayer {
   // relayer for submitting your transaction to a network.
   gasRefundOptions(address: string, ...transactions: commons.transaction.Transaction[]): Promise<FeeOption[]>
 
+  // Gas tank sponsorship management
+  listGasSponsors(args: proto.ListGasSponsorsArgs): Promise<proto.ListGasSponsorsReturn>
+  addGasSponsor(args: proto.AddGasSponsorArgs): Promise<proto.AddGasSponsorReturn>
+  updateGasSponsor(args: proto.UpdateGasSponsorArgs): Promise<proto.UpdateGasSponsorReturn>
+  removeGasSponsor(args: proto.RemoveGasSponsorArgs): Promise<proto.RemoveGasSponsorReturn>
+
   // getNonce returns the transaction count/nonce for a wallet, encoded with nonce space.
   // If space is undefined, the relayer can choose a nonce space to encode the result with.
   // Otherwise, the relayer must return a nonce encoded for the given nonce space.
