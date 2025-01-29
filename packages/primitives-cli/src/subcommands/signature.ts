@@ -1,30 +1,42 @@
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
-import { configFromJson, encodeSignature, fillLeaves, isSapientSignerLeaf, isSignerLeaf } from '@0xsequence/sequence-primitives'
+import {
+  configFromJson,
+  encodeSignature,
+  fillLeaves,
+  isSapientSignerLeaf,
+  isSignerLeaf,
+} from '@0xsequence/sequence-primitives'
 import { PossibleElements } from './config'
 import { Bytes, Hex } from 'ox'
 
-const SignatureElements = [{
-  type: 'eth_sign',
-  format: '<address>:eth_sign:<r>:<s>:<v>',
-  description: 'An eth_sign signature',
-}, {
-  type: 'hash',
-  format: '<address>:hash:<r>:<s>:<v>',
-  description: 'A hash signature',
-}, {
-  type: 'erc1271',
-  format: '<address>:erc1271:<data>',
-  description: 'An erc1271 signature',
-}, {
-  type: 'sapient',
-  format: '<address>:sapient:<data>',
-  description: 'A sapient signature',
-}, {
-  type: 'sapient_compact',
-  format: '<address>:sapient_compact:<data>',
-  description: 'A sapient compact signature',
-}]
+const SignatureElements = [
+  {
+    type: 'eth_sign',
+    format: '<address>:eth_sign:<r>:<s>:<v>',
+    description: 'An eth_sign signature',
+  },
+  {
+    type: 'hash',
+    format: '<address>:hash:<r>:<s>:<v>',
+    description: 'A hash signature',
+  },
+  {
+    type: 'erc1271',
+    format: '<address>:erc1271:<data>',
+    description: 'An erc1271 signature',
+  },
+  {
+    type: 'sapient',
+    format: '<address>:sapient:<data>',
+    description: 'A sapient signature',
+  },
+  {
+    type: 'sapient_compact',
+    format: '<address>:sapient_compact:<data>',
+    description: 'A sapient compact signature',
+  },
+]
 
 async function doEncode(input: string, signatures: string[] = []): Promise<void> {
   const config = configFromJson(input)
@@ -125,7 +137,9 @@ const signatureCommand: CommandModule = {
             .option('signature', {
               type: 'string',
               array: true,
-              description: 'A signature to include in the encoded signature, one of:\n' + PossibleElements.map(e => `- ${e.format}`).join('\n'),
+              description:
+                'A signature to include in the encoded signature, one of:\n' +
+                PossibleElements.map((e) => `- ${e.format}`).join('\n'),
               demandOption: false,
               alias: 's',
             })
@@ -141,7 +155,7 @@ const signatureCommand: CommandModule = {
       )
       .demandCommand(1, 'You must specify a subcommand for signature')
   },
-  handler: () => { },
+  handler: () => {},
 }
 
 export default signatureCommand

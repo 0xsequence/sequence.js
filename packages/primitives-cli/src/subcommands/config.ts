@@ -11,27 +11,33 @@ import {
 import { Address, Bytes, Hex } from 'ox'
 import { fromPosOrStdin } from '../utils'
 
-export const PossibleElements = [{
-  type: 'signer',
-  format: 'signer:<address>:<weight>',
-  description: 'A signer leaf',
-}, {
-  type: 'subdigest',
-  format: 'subdigest:<subdigest>',
-  description: 'A subdigest leaf',
-}, {
-  type: 'sapient',
-  format: 'sapient:<image_hash>:<address>:<weight>',
-  description: 'A sapient leaf',
-}, {
-  type: 'nested',
-  format: 'nested:<threshold>:<weight>:[<elements>]',
-  description: 'A nested leaf',
-}, {
-  type: 'node',
-  format: 'node:<hash>',
-  description: 'A node leaf',
-}]
+export const PossibleElements = [
+  {
+    type: 'signer',
+    format: 'signer:<address>:<weight>',
+    description: 'A signer leaf',
+  },
+  {
+    type: 'subdigest',
+    format: 'subdigest:<subdigest>',
+    description: 'A subdigest leaf',
+  },
+  {
+    type: 'sapient',
+    format: 'sapient:<image_hash>:<address>:<weight>',
+    description: 'A sapient leaf',
+  },
+  {
+    type: 'nested',
+    format: 'nested:<threshold>:<weight>:[<elements>]',
+    description: 'A nested leaf',
+  },
+  {
+    type: 'node',
+    format: 'node:<hash>',
+    description: 'A node leaf',
+  },
+]
 
 function parseElements(elements: string): Leaf[] {
   const leaves: Leaf[] = []
@@ -92,7 +98,12 @@ function parseElements(elements: string): Leaf[] {
   return leaves
 }
 
-async function createConfig(options: { threshold: string; checkpoint: string, from: string, content: string[] }): Promise<void> {
+async function createConfig(options: {
+  threshold: string
+  checkpoint: string
+  from: string
+  content: string[]
+}): Promise<void> {
   const leaves = parseElements(options.content.join(' '))
   const config: Configuration = {
     threshold: BigInt(options.threshold),
@@ -148,7 +159,9 @@ const configCommand: CommandModule = {
             .positional('content', {
               type: 'string',
               array: true,
-              description: 'The elements to use to create the configuration:\n' + PossibleElements.map(e => `- ${e.format}`).join('\n'),
+              description:
+                'The elements to use to create the configuration:\n' +
+                PossibleElements.map((e) => `- ${e.format}`).join('\n'),
               demandOption: true,
             })
         },
@@ -186,7 +199,7 @@ const configCommand: CommandModule = {
       )
       .demandCommand(1, 'You must specify a subcommand for config')
   },
-  handler: () => { },
+  handler: () => {},
 }
 
 export default configCommand
