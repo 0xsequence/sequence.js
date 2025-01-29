@@ -643,15 +643,15 @@ export function encodeTopology(
     } else if (topology.signature.type === 'erc1271') {
       let flag = FLAG_SIGNATURE_ERC1271 << 4
 
-      let signatureSize = minBytesFor(BigInt(topology.signature.data.length))
-      if (signatureSize > 3) {
+      let bytesForSignatureSize = minBytesFor(BigInt(topology.signature.data.length))
+      if (bytesForSignatureSize > 3) {
         throw new Error('Signature too large')
       }
 
-      flag |= signatureSize << 2
+      flag |= bytesForSignatureSize << 2
 
       let weightBytes = Bytes.fromArray([])
-      if (topology.weight <= 3n) {
+      if (topology.weight <= 3n && topology.weight > 0n) {
         flag |= Number(topology.weight)
       } else if (topology.weight <= 255n) {
         weightBytes = Bytes.fromNumber(Number(topology.weight))
@@ -663,21 +663,21 @@ export function encodeTopology(
         Bytes.fromNumber(flag),
         weightBytes,
         Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
-        Bytes.padLeft(Bytes.fromNumber(signatureSize), 3),
+        Bytes.padLeft(Bytes.fromNumber(topology.signature.data.length), bytesForSignatureSize),
         topology.signature.data,
       )
     } else if (topology.signature.type === 'sapient' || topology.signature.type === 'sapient_compact') {
       let flag = (topology.signature.type === 'sapient' ? FLAG_SIGNATURE_SAPIENT : FLAG_SIGNATURE_SAPIENT_COMPACT) << 4
 
-      let signatureSize = minBytesFor(BigInt(topology.signature.data.length))
-      if (signatureSize > 3) {
+      let bytesForSignatureSize = minBytesFor(BigInt(topology.signature.data.length))
+      if (bytesForSignatureSize > 3) {
         throw new Error('Signature too large')
       }
 
-      flag |= signatureSize << 2
+      flag |= bytesForSignatureSize << 2
 
       let weightBytes = Bytes.fromArray([])
-      if (topology.weight <= 3n) {
+      if (topology.weight <= 3n && topology.weight > 0n) {
         flag |= Number(topology.weight)
       } else if (topology.weight <= 255n) {
         weightBytes = Bytes.fromNumber(Number(topology.weight))
@@ -689,7 +689,7 @@ export function encodeTopology(
         Bytes.fromNumber(flag),
         weightBytes,
         Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
-        Bytes.padLeft(Bytes.fromNumber(signatureSize), 3),
+        Bytes.padLeft(Bytes.fromNumber(topology.signature.data.length), bytesForSignatureSize),
         topology.signature.data,
       )
     } else {

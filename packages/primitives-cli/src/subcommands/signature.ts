@@ -116,12 +116,15 @@ async function doEncode(input: string, signatures: string[] = [], noChainId: boo
     return undefined
   })
 
-  const encoded = encodeSignature({
-    ...config,
-    topology: fullTopology,
-  }, {
-    noChainId
-  })
+  const encoded = encodeSignature(
+    {
+      ...config,
+      topology: fullTopology,
+    },
+    {
+      noChainId,
+    },
+  )
 
   console.log(Hex.fromBytes(encoded))
 }
@@ -149,7 +152,7 @@ const signatureCommand: CommandModule = {
               type: 'boolean',
               description: 'Use chainId of recovered chain on signature',
               demandOption: false,
-              default: true
+              default: true,
             })
             .positional('input', {
               type: 'string',
@@ -163,7 +166,7 @@ const signatureCommand: CommandModule = {
       )
       .demandCommand(1, 'You must specify a subcommand for signature')
   },
-  handler: () => { },
+  handler: () => {},
 }
 
 export default signatureCommand
