@@ -29,7 +29,7 @@ export const PossibleElements = [
   },
   {
     type: 'nested',
-    format: 'nested:<threshold>:<weight>:[<elements>]',
+    format: 'nested:<threshold>:<weight>:(<elements>)',
     description: 'A nested leaf',
   },
   {
@@ -73,19 +73,21 @@ function parseElements(elements: string): Leaf[] {
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'nested') {
       // This is a bit spacial
-      // as we need to grab all nested elements within [ ]
+      // as we need to grab all nested elements within ( )
       const [_, threshold, weight] = firstElement!.split(':')
-      const startSubElements = remainingElements.indexOf('[')
-      const endSubElements = remainingElements.indexOf(']')
-      const subElements = remainingElements.slice(startSubElements, endSubElements)
+      const startSubElements = remainingElements.indexOf('(')
+      const endSubElements = remainingElements.indexOf(')')
+      if (startSubElements === -1 || endSubElements === -1) {
+        throw new Error(`Missing ( ) for nested element: ${remainingElements}`)
+      }
+      const innerSubElements = remainingElements.slice(startSubElements + 1, endSubElements)
       leaves.push({
         type: 'nested',
         threshold: BigInt(threshold!),
         weight: BigInt(weight!),
-        // TODO: Maybe not always from flatten?
-        tree: flatLeavesToTopology(parseElements(subElements)),
+        tree: flatLeavesToTopology(parseElements(innerSubElements))
       })
-      remainingElements = remainingElements.slice(endSubElements + 1)
+      remainingElements = remainingElements.slice(endSubElements + 1).trim()
     } else if (firstElementType === 'node') {
       const [_, hash] = firstElement!.split(':')
       leaves.push(Bytes.fromHex(hash as `0x${string}`))
