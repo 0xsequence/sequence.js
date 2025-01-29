@@ -134,11 +134,6 @@ export function decodeSignature(signature: Bytes.Bytes): RawSignature {
   const flag = signature[0]!
   let index = 1
 
-  // If bit 1 is set => chained signature (not implemented here)
-  if ((flag & 0x01) === 0x01) {
-    throw new Error('TODO')
-  }
-
   const noChainId = (flag & 0x02) === 0x02
 
   // bits [2..4] => checkpoint size
@@ -174,6 +169,33 @@ export function decodeSignature(signature: Bytes.Bytes): RawSignature {
     }
     checkpointerData = signature.slice(index, index + checkpointerDataSize)
     index += checkpointerDataSize
+  }
+
+  // If bit 1 is set => chained signature
+  if ((flag & 0x01) === 0x01) {
+    const subsignatures: RawSignature[] = []
+
+    while (index < signature.length) {
+      if (index + 3 > signature.length) {
+        throw new Error('Not enough bytes for chained signature subsignature size')
+      }
+      const subsignatureSize = Bytes.toNumber(signature.subarray(index, index + 3))
+      index += 3
+
+      if (index + subsignatureSize > signature.length) {
+        throw new Error('Not enough bytes for chained signature subsignature')
+      }
+      const subsignature = decodeSignature(signature.subarray(index, index + subsignatureSize))
+      index += subsignatureSize
+
+      subsignatures.push(subsignature)
+    }
+
+    if (subsignatures.length === 0) {
+      throw new Error('Chained signature has no subsignatures')
+    }
+
+    return { ...subsignatures[0]!, suffix: subsignatures.slice(1) }
   }
 
   const { nodes, leftover } = parseBranch(signature.slice(index))
