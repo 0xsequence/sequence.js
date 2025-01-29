@@ -324,6 +324,22 @@ export class RpcRelayer implements Relayer {
   }> {
     return this.service.getTransactionCost({ projectId, from, to })
   }
+
+  async listGasSponsors(args: proto.ListGasSponsorsArgs): Promise<proto.ListGasSponsorsReturn> {
+    return this.service.listGasSponsors(args)
+  }
+
+  async addGasSponsor(args: proto.AddGasSponsorArgs): Promise<proto.AddGasSponsorReturn> {
+    return this.service.addGasSponsor(args)
+  }
+
+  async updateGasSponsor(args: proto.UpdateGasSponsorArgs): Promise<proto.UpdateGasSponsorReturn> {
+    return this.service.updateGasSponsor(args)
+  }
+
+  async removeGasSponsor(args: proto.RemoveGasSponsorArgs): Promise<proto.RemoveGasSponsorReturn> {
+    return this.service.removeGasSponsor(args)
+  }
 }
 
 class MetaTransactionResponseException {
