@@ -1,4 +1,4 @@
-import type { CommandModule } from 'yargs'
+import { boolean, type CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
 import {
   configFromJson,
@@ -38,7 +38,7 @@ const SignatureElements = [
   },
 ]
 
-async function doEncode(input: string, signatures: string[] = []): Promise<void> {
+async function doEncode(input: string, signatures: string[] = [], noChainId: boolean): Promise<void> {
   const config = configFromJson(input)
 
   const allSignatures = signatures.map((s) => {
@@ -119,6 +119,8 @@ async function doEncode(input: string, signatures: string[] = []): Promise<void>
   const encoded = encodeSignature({
     ...config,
     topology: fullTopology,
+  }, {
+    noChainId
   })
 
   console.log(Hex.fromBytes(encoded))
@@ -143,6 +145,12 @@ const signatureCommand: CommandModule = {
               demandOption: false,
               alias: 's',
             })
+            .option('chain-id', {
+              type: 'boolean',
+              description: 'Use chainId of recovered chain on signature',
+              demandOption: false,
+              default: true
+            })
             .positional('input', {
               type: 'string',
               description: 'Hex input to encode (if not using pipe)',
@@ -150,12 +158,12 @@ const signatureCommand: CommandModule = {
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'input')
-          await doEncode(input, argv.signature)
+          await doEncode(input, argv.signature, !argv.chainId)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for signature')
   },
-  handler: () => {},
+  handler: () => { },
 }
 
 export default signatureCommand
