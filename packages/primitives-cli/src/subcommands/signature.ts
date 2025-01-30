@@ -116,15 +116,7 @@ async function doEncode(input: string, signatures: string[] = [], noChainId: boo
     return undefined
   })
 
-  const encoded = encodeSignature(
-    {
-      ...config,
-      topology: fullTopology,
-    },
-    {
-      noChainId,
-    },
-  )
+  const encoded = encodeSignature({ noChainId, configuration: { ...config, topology: fullTopology } })
 
   console.log(Hex.fromBytes(encoded))
 }

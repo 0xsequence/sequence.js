@@ -124,8 +124,8 @@ async function calculateImageHash(input: string): Promise<void> {
 }
 
 async function doEncode(input: string): Promise<void> {
-  const config = configFromJson(input)
-  console.log(Hex.fromBytes(encodeSignature(config as Configuration)))
+  const configuration = configFromJson(input)
+  console.log(Hex.fromBytes(encodeSignature({ noChainId: true, configuration })))
 }
 
 const configCommand: CommandModule = {
