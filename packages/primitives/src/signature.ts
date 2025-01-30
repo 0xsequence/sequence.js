@@ -545,17 +545,15 @@ export function encodeSignature(
 
   if (config.checkpointer) {
     output = Bytes.concat(output, Bytes.padLeft(Bytes.fromHex(config.checkpointer), 20))
-  }
 
-  if (checkpointerData) {
-    const checkpointerDataSize = checkpointerData.length
+    const checkpointerDataSize = checkpointerData?.length ?? 0
     if (checkpointerDataSize > 16777215) {
       throw new Error('Checkpointer data too large')
     }
 
     const checkpointerDataSizeBytes = Bytes.padLeft(Bytes.fromNumber(checkpointerDataSize), 3)
 
-    output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData)
+    output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData ?? Bytes.fromArray([]))
   }
 
   const checkpointBytes = Bytes.padLeft(Bytes.fromNumber(config.checkpoint), bytesForCheckpoint)
@@ -608,7 +606,7 @@ export function encodeTopology(
     let flag = FLAG_NESTED << 4
 
     let weightBytes = Bytes.fromArray([])
-    if (topology.weight <= 3n) {
+    if (topology.weight <= 3n && topology.weight > 0n) {
       flag |= Number(topology.weight) << 2
     } else if (topology.weight <= 255n) {
       weightBytes = Bytes.fromNumber(Number(topology.weight))
@@ -617,7 +615,7 @@ export function encodeTopology(
     }
 
     let thresholdBytes = Bytes.fromArray([])
-    if (topology.threshold <= 3n) {
+    if (topology.threshold <= 3n && topology.threshold > 0n) {
       flag |= Number(topology.threshold)
     } else if (topology.threshold <= 65535n) {
       thresholdBytes = Bytes.padLeft(Bytes.fromNumber(Number(topology.threshold)), 2)
@@ -625,8 +623,7 @@ export function encodeTopology(
       throw new Error('Threshold too large')
     }
 
-    const nestedSize = minBytesFor(BigInt(nested.length))
-    if (nestedSize > 3) {
+    if (nested.length > 16777215) {
       throw new Error('Nested tree too large')
     }
 
@@ -634,7 +631,7 @@ export function encodeTopology(
       Bytes.fromNumber(flag),
       weightBytes,
       thresholdBytes,
-      Bytes.padLeft(Bytes.fromNumber(nestedSize), 3),
+      Bytes.padLeft(Bytes.fromNumber(nested.length), 3),
       nested,
     )
   }
@@ -720,7 +717,7 @@ export function encodeTopology(
   }
 
   if (isSubdigestLeaf(topology)) {
-    return Bytes.concat(Bytes.fromNumber(FLAG_SUBDIGEST), topology.digest)
+    return Bytes.concat(Bytes.fromNumber(FLAG_SUBDIGEST << 4), topology.digest)
   }
 
   if (isSignerLeaf(topology)) {
@@ -740,7 +737,7 @@ export function encodeTopology(
   if (isSapientSignerLeaf(topology)) {
     // Encode as node directly
     const hash = hashConfiguration(topology)
-    return Bytes.concat(Bytes.fromNumber(FLAG_NODE), hash)
+    return Bytes.concat(Bytes.fromNumber(FLAG_NODE << 4), hash)
   }
 
   console.log(topology)

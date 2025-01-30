@@ -19,7 +19,7 @@
 ### Development Workflow
 
 - Run development mode across all packages:
-   `pnpm dev`
+  `pnpm dev`
 
 - Linting and formatting is enforced via git hooks
 

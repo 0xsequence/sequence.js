@@ -85,7 +85,7 @@ function parseElements(elements: string): Leaf[] {
         type: 'nested',
         threshold: BigInt(threshold!),
         weight: BigInt(weight!),
-        tree: flatLeavesToTopology(parseElements(innerSubElements))
+        tree: flatLeavesToTopology(parseElements(innerSubElements)),
       })
       remainingElements = remainingElements.slice(endSubElements + 1).trim()
     } else if (firstElementType === 'node') {
