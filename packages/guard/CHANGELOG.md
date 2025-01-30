@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.2.9
+
+### Patch Changes
+
+- Indexer gateway native token balances
+- Updated dependencies
+  - @0xsequence/account@2.2.9
+  - @0xsequence/core@2.2.9
+  - @0xsequence/signhub@2.2.9
+  - @0xsequence/utils@2.2.9
+
 ## 2.2.8
 
 ### Patch Changes

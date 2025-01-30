@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.2.9
+
+### Patch Changes
+
+- Indexer gateway native token balances
+- Updated dependencies
+  - @0xsequence/abi@2.2.9
+  - @0xsequence/core@2.2.9
+  - @0xsequence/wallet@2.2.9
+
 ## 2.2.8
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.2.9
+
+### Patch Changes
+
+- Indexer gateway native token balances
+- Updated dependencies
+  - @0xsequence/waas@2.2.9
+
 ## 2.2.8
 
 ### Patch Changes
