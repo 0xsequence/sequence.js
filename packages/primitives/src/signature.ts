@@ -88,14 +88,7 @@ export type RawSignature = {
   noChainId: boolean
   checkpointerData?: Bytes.Bytes
   configuration: RawConfiguration
-  suffix?: Omit<RawSignature, 'checkpointerData'>[]
-}
-
-export type Signature = {
-  noChainId: boolean
-  checkpointerData?: Bytes.Bytes
-  topology: Topology
-  suffix?: Omit<Signature, 'checkpointerData'>[]
+  suffix?: Array<RawSignature & { checkpointerData: undefined }>
 }
 
 export function isRawSignerLeaf(cand: any): cand is RawSignerLeaf {
@@ -173,7 +166,7 @@ export function decodeSignature(signature: Bytes.Bytes): RawSignature {
 
   // If bit 1 is set => chained signature
   if ((flag & 0x01) === 0x01) {
-    const subsignatures: RawSignature[] = []
+    const subsignatures: Array<RawSignature & { checkpointerData: undefined }> = []
 
     while (index < signature.length) {
       if (index + 3 > signature.length) {
@@ -188,7 +181,11 @@ export function decodeSignature(signature: Bytes.Bytes): RawSignature {
       const subsignature = decodeSignature(signature.subarray(index, index + subsignatureSize))
       index += subsignatureSize
 
-      subsignatures.push(subsignature)
+      if (subsignature.checkpointerData) {
+        throw new Error('Chained signature subsignature has checkpointer data')
+      }
+
+      subsignatures.push({ ...subsignature, checkpointerData: undefined })
     }
 
     if (subsignatures.length === 0) {
@@ -509,16 +506,14 @@ export function fillLeaves(
   throw new Error('Invalid topology')
 }
 
-export function encodeSignature(
-  config: Configuration | RawConfiguration,
-  options: {
-    noChainId?: boolean
-    checkpointerData?: Uint8Array
-  } = {},
-): Uint8Array {
-  const { noChainId, checkpointerData } = options
+export function encodeSignature(signature: RawSignature): Uint8Array {
+  const { noChainId, checkpointerData, configuration: config, suffix } = signature
 
   let flag = 0
+
+  if (suffix?.length) {
+    flag |= 0x01
+  }
 
   if (noChainId) {
     flag |= 0x02
@@ -556,13 +551,27 @@ export function encodeSignature(
     output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData ?? Bytes.fromArray([]))
   }
 
+  if (suffix?.length) {
+    const encoded = encodeSignature({ ...signature, checkpointerData: undefined, suffix: undefined })
+    const encodedSize = Bytes.padLeft(Bytes.fromNumber(encoded.length), 3)
+    output = Bytes.concat(output, encodedSize)
+
+    for (const subsignature of suffix) {
+      const encoded = encodeSignature(subsignature)
+      const encodedSize = Bytes.padLeft(Bytes.fromNumber(encoded.length), 3)
+      output = Bytes.concat(output, encodedSize)
+    }
+
+    return output
+  }
+
   const checkpointBytes = Bytes.padLeft(Bytes.fromNumber(config.checkpoint), bytesForCheckpoint)
   output = Bytes.concat(output, checkpointBytes)
 
   const thresholdBytes = Bytes.padLeft(Bytes.fromNumber(config.threshold), bytesForThreshold)
   output = Bytes.concat(output, thresholdBytes)
 
-  const topologyBytes = encodeTopology(config.topology, options)
+  const topologyBytes = encodeTopology(config.topology, signature)
   output = Bytes.concat(output, topologyBytes)
 
   return output
