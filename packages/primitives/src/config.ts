@@ -141,9 +141,13 @@ export function hashConfiguration(topology: Topology | Configuration): Bytes.Byt
   }
 
   if (isSignerLeaf(topology)) {
-    const addrBigInt = Hex.toBigInt(topology.address)
-    const combined = (topology.weight << 160n) | addrBigInt
-    return Bytes.padLeft(Bytes.fromNumber(combined), 32)
+    return Hash.keccak256(
+      Bytes.concat(
+        Bytes.fromString('Sequence signer:\n'),
+        Bytes.fromHex(topology.address),
+        Bytes.padLeft(Bytes.fromNumber(topology.weight), 32),
+      ),
+    )
   }
 
   if (isSapientSignerLeaf(topology)) {
