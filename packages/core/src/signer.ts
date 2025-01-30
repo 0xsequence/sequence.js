@@ -11,12 +11,7 @@ export interface Signer {
     | { signature: Promise<Signature>; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
 }
 
-export type Signature =
-  | { type: 'hash'; signature: Hex.Hex }
-  | { type: 'eth_sign'; signature: Hex.Hex }
-  | { type: 'erc-1271'; address: Address.Address; signature: Hex.Hex }
-  | { type: 'sapient'; address: Address.Address; signature: Hex.Hex }
-  | { type: 'sapient-compact'; address: Address.Address; signature: Hex.Hex }
+export type Signature = { type: 'hash' | 'eth_sign' | 'erc-1271' | 'sapient' | 'sapient-compact'; signature: Hex.Hex }
 
 export type SignerSignatureCallback = (
   configuration: Configuration,
