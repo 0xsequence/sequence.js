@@ -10,7 +10,7 @@ export enum ParameterOperation {
 export type ParameterRule = {
   cumulative: boolean
   operation: ParameterOperation
-  value: bigint
+  value: Bytes.Bytes
   offset: bigint
   mask: Bytes.Bytes
 }
@@ -26,6 +26,8 @@ export type SessionPermissions = {
   deadline: bigint
   permissions: Permission[]
 }
+
+// Encoding
 
 export function encodeSessionPermissions(sessionPermissions: SessionPermissions): Bytes.Bytes {
   const encodedPermissions = sessionPermissions.permissions.map(encodePermission)
@@ -55,8 +57,42 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 
   return Bytes.concat(
     Bytes.fromNumber(operationCumulative),
-    Bytes.padLeft(Bytes.fromNumber(rule.value), 32),
+    Bytes.padLeft(rule.value, 32),
     Bytes.padLeft(Bytes.fromNumber(rule.offset), 32),
     Bytes.padLeft(rule.mask, 32),
   )
+}
+
+// JSON
+
+export function permissionToJson(permission: Permission): string {
+  return JSON.stringify({
+    target: permission.target.toString(),
+    rules: permission.rules.map(permissionRuleToJson),
+  })
+}
+
+export function permissionRuleToJson(rule: ParameterRule): string {
+  return JSON.stringify({
+    cumulative: rule.cumulative,
+    operation: rule.operation,
+    value: rule.value.toString(),
+    offset: rule.offset.toString(),
+    mask: rule.mask.toString(),
+  })
+}
+
+export function permissionFromJson(json: string): Permission {
+  const parsed = JSON.parse(json)
+  const res = {
+    target: Address.from(parsed.target),
+    rules: parsed.rules.map((decoded: any) => ({
+      cumulative: decoded.cumulative,
+      operation: decoded.operation,
+      value: Bytes.fromHex(decoded.value),
+      offset: BigInt(decoded.offset),
+      mask: Bytes.fromHex(decoded.mask),
+    })),
+  }
+  return res
 }

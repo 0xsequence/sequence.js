@@ -1,6 +1,6 @@
 export * from './address'
 export * from './config'
 export * from './payload'
+export * from './permission'
 export * from './signature'
 export * from './utils'
-export * from './signature'
