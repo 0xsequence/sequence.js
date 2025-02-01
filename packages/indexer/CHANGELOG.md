@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.2.9
+
+### Patch Changes
+
+- Indexer gateway native token balances
+
 ## 2.2.8
 
 ### Patch Changes
