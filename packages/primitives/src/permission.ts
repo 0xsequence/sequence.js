@@ -20,7 +20,7 @@ export type Permission = {
   rules: ParameterRule[]
 }
 
-export type SessionPermission = {
+export type SessionPermissions = {
   signer: Address.Address
   valueLimit: bigint
   deadline: bigint
@@ -29,14 +29,14 @@ export type SessionPermission = {
 
 // Encoding
 
-export function encodeSessionPermission(sessionPermission: SessionPermission): Bytes.Bytes {
-  const encodedPermissions = sessionPermission.permissions.map(encodePermission)
+export function encodeSessionPermissions(sessionPermissions: SessionPermissions): Bytes.Bytes {
+  const encodedPermissions = sessionPermissions.permissions.map(encodePermission)
 
   return Bytes.concat(
-    Bytes.padLeft(Bytes.fromHex(sessionPermission.signer), 20),
-    Bytes.padLeft(Bytes.fromNumber(sessionPermission.valueLimit), 32),
-    Bytes.padLeft(Bytes.fromNumber(sessionPermission.deadline), 32),
-    Bytes.padLeft(Bytes.fromNumber(sessionPermission.permissions.length), 3),
+    Bytes.padLeft(Bytes.fromHex(sessionPermissions.signer), 20),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.valueLimit), 32),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.deadline), 32),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.permissions.length), 3),
     Bytes.concat(...encodedPermissions),
   )
 }
@@ -65,12 +65,12 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 
 // JSON
 
-export function sessionPermissionToJson(sessionPermission: SessionPermission): string {
+export function sessionPermissionsToJson(sessionPermissions: SessionPermissions): string {
   return JSON.stringify({
-    signer: sessionPermission.signer.toString(),
-    valueLimit: sessionPermission.valueLimit.toString(),
-    deadline: sessionPermission.deadline.toString(),
-    permissions: sessionPermission.permissions.map(permissionToJson),
+    signer: sessionPermissions.signer.toString(),
+    valueLimit: sessionPermissions.valueLimit.toString(),
+    deadline: sessionPermissions.deadline.toString(),
+    permissions: sessionPermissions.permissions.map(permissionToJson),
   })
 }
 
@@ -91,11 +91,11 @@ export function permissionRuleToJson(rule: ParameterRule): string {
   })
 }
 
-export function sessionPermissionFromJson(json: string): SessionPermission {
-  return sessionPermissionFromParsed(JSON.parse(json))
+export function sessionPermissionsFromJson(json: string): SessionPermissions {
+  return sessionPermissionsFromParsed(JSON.parse(json))
 }
 
-function sessionPermissionFromParsed(parsed: any): SessionPermission {
+function sessionPermissionsFromParsed(parsed: any): SessionPermissions {
   return {
     signer: Address.from(parsed.signer),
     valueLimit: BigInt(parsed.valueLimit),

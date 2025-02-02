@@ -1,16 +1,16 @@
 import {
   encodePermission,
-  encodeSessionPermission,
+  encodeSessionPermissions,
   permissionFromJson,
-  sessionPermissionFromJson,
+  sessionPermissionsFromJson,
 } from '@0xsequence/sequence-primitives'
 import { Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
 
-async function doEncodeSessionPermission(input: string): Promise<void> {
-  const permission = sessionPermissionFromJson(input)
-  const packed = encodeSessionPermission(permission)
+async function doEncodeSessionPermissions(input: string): Promise<void> {
+  const permission = sessionPermissionsFromJson(input)
+  const packed = encodeSessionPermissions(permission)
   console.log(Hex.from(packed))
 }
 
@@ -36,7 +36,7 @@ const permissionCommand: CommandModule = {
         },
         async (argv) => {
           const permission = await fromPosOrStdin(argv, 'session-permission')
-          await doEncodeSessionPermission(permission)
+          await doEncodeSessionPermissions(permission)
         },
       )
       .command(
