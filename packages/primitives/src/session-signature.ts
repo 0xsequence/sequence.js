@@ -1,9 +1,8 @@
 import { Address, Bytes } from 'ox'
 import { Attestation, encodeAttestation } from './attestation'
-import { Permission, SessionPermissions } from './permission'
+import { SessionPermission } from './permission'
 import { minBytesFor, packRSV } from './utils'
 
-import { encodePermission } from './permission'
 import { encodeSessionConfig } from './session-config'
 export const FLAG_PERMISSIONS = 0
 export const FLAG_NODE = 1
@@ -19,7 +18,7 @@ export type SessionManagerSignature = {
   permissionIdxPerCall: number[]
 }
 
-export type SessionLeaf = SessionPermissions
+export type SessionLeaf = SessionPermission
 export type SessionNode = [SessionsTopology, SessionsTopology]
 export type SessionsTopology = SessionNode | SessionLeaf
 

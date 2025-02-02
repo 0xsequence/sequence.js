@@ -20,7 +20,7 @@ export type Permission = {
   rules: ParameterRule[]
 }
 
-export type SessionPermissions = {
+export type SessionPermission = {
   signer: Address.Address
   valueLimit: bigint
   deadline: bigint
@@ -29,14 +29,14 @@ export type SessionPermissions = {
 
 // Encoding
 
-export function encodeSessionPermissions(sessionPermissions: SessionPermissions): Bytes.Bytes {
-  const encodedPermissions = sessionPermissions.permissions.map(encodePermission)
+export function encodeSessionPermission(sessionPermission: SessionPermission): Bytes.Bytes {
+  const encodedPermissions = sessionPermission.permissions.map(encodePermission)
 
   return Bytes.concat(
-    Bytes.padLeft(Bytes.fromHex(sessionPermissions.signer), 20),
-    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.valueLimit), 32),
-    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.deadline), 32),
-    Bytes.padLeft(Bytes.fromNumber(encodedPermissions.length), 3),
+    Bytes.padLeft(Bytes.fromHex(sessionPermission.signer), 20),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermission.valueLimit), 32),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermission.deadline), 32),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermission.permissions.length), 3),
     Bytes.concat(...encodedPermissions),
   )
 }
@@ -65,6 +65,15 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 
 // JSON
 
+export function sessionPermissionToJson(sessionPermission: SessionPermission): string {
+  return JSON.stringify({
+    signer: sessionPermission.signer.toString(),
+    valueLimit: sessionPermission.valueLimit.toString(),
+    deadline: sessionPermission.deadline.toString(),
+    permissions: sessionPermission.permissions.map(permissionToJson),
+  })
+}
+
 export function permissionToJson(permission: Permission): string {
   return JSON.stringify({
     target: permission.target.toString(),
@@ -82,9 +91,25 @@ export function permissionRuleToJson(rule: ParameterRule): string {
   })
 }
 
+export function sessionPermissionFromJson(json: string): SessionPermission {
+  return sessionPermissionFromParsed(JSON.parse(json))
+}
+
+function sessionPermissionFromParsed(parsed: any): SessionPermission {
+  return {
+    signer: Address.from(parsed.signer),
+    valueLimit: BigInt(parsed.valueLimit),
+    deadline: BigInt(parsed.deadline),
+    permissions: parsed.permissions.map(permissionFromParsed),
+  }
+}
+
 export function permissionFromJson(json: string): Permission {
-  const parsed = JSON.parse(json)
-  const res = {
+  return permissionFromParsed(JSON.parse(json))
+}
+
+function permissionFromParsed(parsed: any): Permission {
+  return {
     target: Address.from(parsed.target),
     rules: parsed.rules.map((decoded: any) => ({
       cumulative: decoded.cumulative,
@@ -94,5 +119,4 @@ export function permissionFromJson(json: string): Permission {
       mask: Bytes.fromHex(decoded.mask),
     })),
   }
-  return res
 }
