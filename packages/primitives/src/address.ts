@@ -1,9 +1,6 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Address, Bytes, Hash } from 'ox'
 import { Configuration, hashConfiguration } from './config'
-
-const FACTORY: Address.Address = '0x'
-const MAIN_MODULE: Address.Address = '0x'
-const CREATION_CODE: Hex.Hex = '0x'
+import { CREATION_CODE, FACTORY, MAIN_MODULE } from './constants'
 
 export function getCounterfactualAddress(configuration: Bytes.Bytes | Configuration): Address.Address {
   const imageHash = configuration instanceof Uint8Array ? configuration : hashConfiguration(configuration)

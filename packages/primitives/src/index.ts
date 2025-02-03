@@ -1,5 +1,6 @@
 export * from './address'
 export * from './config'
+export * from './constants'
 export * from './erc-6492'
 export * from './payload'
 export * from './permission'
