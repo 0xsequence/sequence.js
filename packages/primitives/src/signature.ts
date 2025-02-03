@@ -1,6 +1,5 @@
 import { Address, Bytes } from 'ox'
 import {
-  Configuration,
   Leaf,
   NestedLeaf,
   SapientSignerLeaf,
