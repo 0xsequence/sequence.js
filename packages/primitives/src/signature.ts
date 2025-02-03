@@ -169,19 +169,19 @@ export function decodeSignature(signature: Bytes.Bytes): RawSignature {
 
     while (index < signature.length) {
       if (index + 3 > signature.length) {
-        throw new Error('Not enough bytes for chained signature subsignature size')
+        throw new Error('Not enough bytes for chained subsignature size')
       }
       const subsignatureSize = Bytes.toNumber(signature.subarray(index, index + 3))
       index += 3
 
       if (index + subsignatureSize > signature.length) {
-        throw new Error('Not enough bytes for chained signature subsignature')
+        throw new Error('Not enough bytes for chained subsignature')
       }
       const subsignature = decodeSignature(signature.subarray(index, index + subsignatureSize))
       index += subsignatureSize
 
       if (subsignature.checkpointerData) {
-        throw new Error('Chained signature subsignature has checkpointer data')
+        throw new Error('Chained subsignature has checkpointer data')
       }
 
       subsignatures.push({ ...subsignature, checkpointerData: undefined })
