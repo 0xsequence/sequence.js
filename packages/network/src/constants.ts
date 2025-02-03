@@ -100,6 +100,10 @@ export enum ChainId {
   MOONBEAM = 1284,
   MOONBASE_ALPHA = 1287,
 
+  // ETHERLINK
+  ETHERLINK = 42793,
+  ETHERLINK_TESTNET = 128123,
+
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338
@@ -1031,6 +1035,40 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'GLMR',
       name: 'GLMR',
+      decimals: 18
+    }
+  },
+  [ChainId.ETHERLINK]: {
+    chainId: ChainId.ETHERLINK,
+    type: NetworkType.MAINNET,
+    name: 'etherlink',
+    title: 'Etherlink',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Etherlink Explorer',
+      rootUrl: 'https://explorer.etherlink.com/'
+    },
+    nativeToken: {
+      symbol: 'XTZ',
+      name: 'Tez',
+      decimals: 18
+    }
+  },
+  [ChainId.ETHERLINK_TESTNET]: {
+    chainId: ChainId.ETHERLINK_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'etherlink-testnet',
+    title: 'Etherlink Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Etherlink Testnet Explorer',
+      rootUrl: 'https://testnet.explorer.etherlink.com/'
+    },
+    nativeToken: {
+      symbol: 'XTZ',
+      name: 'Tez',
       decimals: 18
     }
   },
