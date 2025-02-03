@@ -1,13 +1,20 @@
 import {
   Configuration,
+  decodeSignature,
+  encodeSignature,
+  erc6492,
+  erc6492Deploy,
+  fillLeaves,
   fromConfigUpdate,
   getCounterfactualAddress,
   getSigners,
   getWeight,
   hashConfiguration,
+  isSignerLeaf,
   Payload,
+  RawSignature,
 } from '@0xsequence/sequence-primitives'
-import { Address, Bytes, Hex, Provider } from 'ox'
+import { Address, Bytes, Hex, Provider, Signature as oxSignature } from 'ox'
 import { CancelCallback, Signature, Signer, SignerSignatureCallback } from './signer'
 import { Sessions, StateReader, StateWriter } from './state'
 
@@ -41,7 +48,7 @@ export class Wallet {
     provider?: Provider.Provider,
     options?: { trustSigners?: boolean; onSignerError?: (signer: Address.Address, error: any) => void },
   ): Promise<Bytes.Bytes> {
-    const signatures: Hex.Hex[] = []
+    const signatures: Array<RawSignature & { checkpointerData: undefined }> = []
 
     let chainId: bigint
     let isDeployed: boolean
@@ -64,7 +71,16 @@ export class Wallet {
       }
 
       const path = await this.stateProvider.getConfigurationPath(this.address, imageHash)
-      signatures.push(...path.map(({ signature }) => signature))
+
+      signatures.push(
+        ...path.map(({ signature }) => {
+          const decoded = decodeSignature(Hex.toBytes(signature))
+          if (decoded.checkpointerData) {
+            throw new Error('chained subsignature has checkpointer data')
+          }
+          return { ...decoded, checkpointerData: undefined }
+        }),
+      )
     } else {
       chainId = 0n
       isDeployed = true
@@ -154,5 +170,72 @@ export class Wallet {
         }
       }
     })
+
+    const signature = encodeSignature({
+      noChainId: !chainId,
+      configuration: {
+        ...configuration,
+        topology: fillLeaves(configuration.topology, (leaf) => {
+          const signerSignature = signerSignatures.get(leaf.address)
+          if (!signerSignature) {
+            return
+          }
+
+          if (isSignerLeaf(leaf)) {
+            switch (signerSignature.type) {
+              case 'hash': {
+                const { r, s, yParity } = oxSignature.fromHex(signerSignature.signature)
+                return {
+                  type: 'hash',
+                  r: Bytes.fromNumber(r),
+                  s: Bytes.fromNumber(s),
+                  v: oxSignature.yParityToV(yParity),
+                }
+              }
+
+              case 'eth_sign': {
+                const { r, s, yParity } = oxSignature.fromHex(signerSignature.signature)
+                return {
+                  type: 'eth_sign',
+                  r: Bytes.fromNumber(r),
+                  s: Bytes.fromNumber(s),
+                  v: oxSignature.yParityToV(yParity),
+                }
+              }
+
+              case 'erc-1271': {
+                return { type: 'erc1271', address: leaf.address, data: Hex.toBytes(signerSignature.signature) }
+              }
+
+              case 'sapient':
+              case 'sapient-compact': {
+                throw new Error(`signature is ${signerSignature.type}, but ${leaf.address} is not a sapient signer`)
+              }
+            }
+          } else {
+            switch (signerSignature.type) {
+              case 'hash':
+              case 'eth_sign':
+              case 'erc-1271': {
+                throw new Error(
+                  `expected ${leaf.address} to be a sapient signer, but signature is ${signerSignature.type}`,
+                )
+              }
+
+              case 'sapient': {
+                return { type: 'sapient', address: leaf.address, data: Hex.toBytes(signerSignature.signature) }
+              }
+
+              case 'sapient-compact': {
+                return { type: 'sapient_compact', address: leaf.address, data: Hex.toBytes(signerSignature.signature) }
+              }
+            }
+          }
+        }),
+      },
+      suffix: signatures.reverse(),
+    })
+
+    return isDeployed ? signature : erc6492(signature, erc6492Deploy(imageHash))
   }
 }
