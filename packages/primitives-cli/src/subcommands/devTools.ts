@@ -1,11 +1,20 @@
+import {
+  Configuration,
+  ParameterRule,
+  Permission,
+  SessionsTopology,
+  Topology,
+  configToJson,
+  sessionsTopologyToJson,
+} from '@0xsequence/sequence-primitives'
 import crypto from 'crypto'
 import type { CommandModule } from 'yargs'
-import { Configuration, Topology, configToJson } from '@0xsequence/sequence-primitives'
-import { Hex } from 'ox'
 
 interface RandomOptions {
   seededRandom?: () => number
   minThresholdOnNested?: number
+  maxPermissions?: number
+  maxRules?: number
 }
 
 function createSeededRandom(seed: string) {
@@ -50,7 +59,7 @@ function randomAddress(options?: RandomOptions): `0x${string}` {
 
 function generateRandomTopology(depth: number, options?: RandomOptions): Topology {
   if (depth <= 0) {
-    const leafType = options?.seededRandom ? Math.floor(options.seededRandom() * 5) : Math.floor(Math.random() * 5)
+    const leafType = Math.floor((options?.seededRandom ?? Math.random)() * 5)
 
     switch (leafType) {
       case 0: // SignerLeaf
@@ -104,6 +113,40 @@ async function generateRandomConfig(maxDepth: number, options?: RandomOptions): 
   console.log(configToJson(config))
 }
 
+async function generateSessionsTopology(depth: number, options?: RandomOptions): Promise<SessionsTopology> {
+  const isLeaf = (options?.seededRandom ?? Math.random)() * 2 > 1
+
+  if (isLeaf || depth <= 1) {
+    const permissionsCount = Math.floor((options?.seededRandom ?? Math.random)() * (options?.maxPermissions ?? 5)) + 1
+    return {
+      signer: randomAddress(options),
+      valueLimit: randomBigInt(100n, options),
+      deadline: randomBigInt(1000n, options),
+      permissions: await Promise.all(Array.from({ length: permissionsCount }, () => generateRandomPermission(options))),
+    }
+  }
+
+  return [await generateSessionsTopology(depth - 1, options), await generateSessionsTopology(depth - 1, options)]
+}
+
+async function generateRandomPermission(options?: RandomOptions): Promise<Permission> {
+  const rulesCount = Math.floor((options?.seededRandom ?? Math.random)() * (options?.maxRules ?? 5)) + 1
+  return {
+    target: randomAddress(options),
+    rules: await Promise.all(Array.from({ length: rulesCount }, () => generateRandomRule(options))),
+  }
+}
+
+async function generateRandomRule(options?: RandomOptions): Promise<ParameterRule> {
+  return {
+    cumulative: (options?.seededRandom ?? Math.random)() * 2 > 1,
+    operation: Math.floor((options?.seededRandom ?? Math.random)() * 4),
+    value: randomBytes(32, options),
+    offset: randomBigInt(100n, options),
+    mask: randomBytes(32, options),
+  }
+}
+
 const command: CommandModule = {
   command: 'dev-tools',
   describe: 'Development tools and utilities',
@@ -136,6 +179,42 @@ const command: CommandModule = {
             minThresholdOnNested: argv.minThresholdOnNested as number,
           }
           await generateRandomConfig(argv.maxDepth as number, options)
+        },
+      )
+      .command(
+        'random-session-topology',
+        'Generate a random session topology',
+        (yargs) => {
+          return yargs
+            .option('max-depth', {
+              type: 'number',
+              description: 'Maximum depth of the session topology',
+              default: 1,
+            })
+            .option('max-permissions', {
+              type: 'number',
+              description: 'Maximum number of permissions in each session',
+              default: 1,
+            })
+            .option('max-rules', {
+              type: 'number',
+              description: 'Maximum number of rules in each permission',
+              default: 1,
+            })
+            .option('seed', {
+              type: 'string',
+              description: 'Seed for deterministic generation',
+              required: false,
+            })
+        },
+        async (argv) => {
+          const options: RandomOptions = {
+            seededRandom: argv.seed ? createSeededRandom(argv.seed) : undefined,
+            maxPermissions: argv.maxPermissions as number,
+            maxRules: argv.maxRules as number,
+          }
+          const topology = await generateSessionsTopology(argv.maxDepth as number, options)
+          console.log(sessionsTopologyToJson(topology))
         },
       )
       .demandCommand(1, 'You must specify a subcommand for dev-tools')

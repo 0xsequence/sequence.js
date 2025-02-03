@@ -3,10 +3,6 @@ import { Attestation, encodeAttestation } from './attestation'
 import { encodeSessionsTopology, SessionsTopology } from './session-config'
 import { packRSV } from './utils'
 
-export const FLAG_PERMISSIONS = 0
-export const FLAG_NODE = 1
-export const FLAG_BRANCH = 2
-
 export type SessionManagerSignature = {
   attestation: Attestation
   sessionsTopology: SessionsTopology

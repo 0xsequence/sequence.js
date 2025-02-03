@@ -66,36 +66,48 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 // JSON
 
 export function sessionPermissionsToJson(sessionPermissions: SessionPermissions): string {
-  return JSON.stringify({
+  return JSON.stringify(encodeSessionPermissionsForJson(sessionPermissions))
+}
+
+function encodeSessionPermissionsForJson(sessionPermissions: SessionPermissions): any {
+  return {
     signer: sessionPermissions.signer.toString(),
     valueLimit: sessionPermissions.valueLimit.toString(),
     deadline: sessionPermissions.deadline.toString(),
-    permissions: sessionPermissions.permissions.map(permissionToJson),
-  })
+    permissions: sessionPermissions.permissions.map(encodePermissionForJson),
+  }
 }
 
 export function permissionToJson(permission: Permission): string {
-  return JSON.stringify({
-    target: permission.target.toString(),
-    rules: permission.rules.map(permissionRuleToJson),
-  })
+  return JSON.stringify(encodePermissionForJson(permission))
 }
 
-export function permissionRuleToJson(rule: ParameterRule): string {
-  return JSON.stringify({
+function encodePermissionForJson(permission: Permission): any {
+  return {
+    target: permission.target.toString(),
+    rules: permission.rules.map(encodeParameterRuleForJson),
+  }
+}
+
+export function parameterRuleToJson(rule: ParameterRule): string {
+  return JSON.stringify(encodeParameterRuleForJson(rule))
+}
+
+function encodeParameterRuleForJson(rule: ParameterRule): any {
+  return {
     cumulative: rule.cumulative,
     operation: rule.operation,
-    value: rule.value.toString(),
+    value: Bytes.toHex(rule.value),
     offset: rule.offset.toString(),
-    mask: rule.mask.toString(),
-  })
+    mask: Bytes.toHex(rule.mask),
+  }
 }
 
 export function sessionPermissionsFromJson(json: string): SessionPermissions {
   return sessionPermissionsFromParsed(JSON.parse(json))
 }
 
-function sessionPermissionsFromParsed(parsed: any): SessionPermissions {
+export function sessionPermissionsFromParsed(parsed: any): SessionPermissions {
   return {
     signer: Address.from(parsed.signer),
     valueLimit: BigInt(parsed.valueLimit),
