@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.2.10
+
+### Patch Changes
+
+- Etherlink support
+- Updated dependencies
+  - @0xsequence/account@2.2.10
+  - @0xsequence/core@2.2.10
+  - @0xsequence/signhub@2.2.10
+  - @0xsequence/utils@2.2.10
+
 ## 2.2.9
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.2.10
+
+### Patch Changes
+
+- Etherlink support
+- Updated dependencies
+  - @0xsequence/core@2.2.10
+  - @0xsequence/migration@2.2.10
+  - @0xsequence/replacer@2.2.10
+  - @0xsequence/utils@2.2.10
+
 ## 2.2.9
 
 ### Patch Changes

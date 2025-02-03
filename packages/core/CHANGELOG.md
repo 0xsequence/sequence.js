@@ -1,5 +1,14 @@
 # @0xsequence/core
 
+## 2.2.10
+
+### Patch Changes
+
+- Etherlink support
+- Updated dependencies
+  - @0xsequence/abi@2.2.10
+  - @0xsequence/utils@2.2.10
+
 ## 2.2.9
 
 ### Patch Changes

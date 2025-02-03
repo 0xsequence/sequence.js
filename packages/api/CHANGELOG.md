@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.2.10
+
+### Patch Changes
+
+- Etherlink support
+
 ## 2.2.9
 
 ### Patch Changes

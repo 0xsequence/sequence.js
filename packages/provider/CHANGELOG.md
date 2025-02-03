@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 2.2.10
+
+### Patch Changes
+
+- Etherlink support
+- Updated dependencies
+  - @0xsequence/abi@2.2.10
+  - @0xsequence/account@2.2.10
+  - @0xsequence/auth@2.2.10
+  - @0xsequence/core@2.2.10
+  - @0xsequence/migration@2.2.10
+  - @0xsequence/network@2.2.10
+  - @0xsequence/relayer@2.2.10
+  - @0xsequence/utils@2.2.10
+  - @0xsequence/wallet@2.2.10
+
 ## 2.2.9
 
 ### Patch Changes
