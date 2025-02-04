@@ -1,3 +1,32 @@
+export enum NetworkType {
+  MAINNET = 'mainnet',
+  TESTNET = 'testnet'
+}
+
+export type BlockExplorerConfig = {
+  name?: string
+  rootUrl: string
+  addressUrl?: string
+  txnHashUrl?: string
+}
+
+export interface NetworkMetadata {
+  chainId: ChainId
+  type?: NetworkType
+  name: string
+  title?: string
+  logoURI?: string
+  blockExplorer?: BlockExplorerConfig
+  ensAddress?: string
+  testnet?: boolean // Deprecated field, use type instead
+  deprecated?: boolean // The actual network is deprecated
+  nativeToken: {
+    symbol: string
+    name: string
+    decimals: number
+  }
+}
+
 export enum ChainId {
   // Ethereum
   MAINNET = 1,
@@ -92,50 +121,21 @@ export enum ChainId {
   ROOT_NETWORK = 7668,
   ROOT_NETWORK_PORCINI = 7672,
 
+  // HARDHAT TESTNETS
+  HARDHAT = 31337,
+  HARDHAT_2 = 31338,
+
   // LAOS
   LAOS = 6283,
   LAOS_SIGMA_TESTNET = 62850,
 
-  // MOONBEAM
-  MOONBEAM = 1284,
-  MOONBASE_ALPHA = 1287,
-
-  // ETHERLINK
+  //ETHERLINK
   ETHERLINK = 42793,
   ETHERLINK_TESTNET = 128123,
 
-  // HARDHAT TESTNETS
-  HARDHAT = 31337,
-  HARDHAT_2 = 31338
-}
-
-export enum NetworkType {
-  MAINNET = 'mainnet',
-  TESTNET = 'testnet'
-}
-
-export type BlockExplorerConfig = {
-  name?: string
-  rootUrl: string
-  addressUrl?: string
-  txnHashUrl?: string
-}
-
-export interface NetworkMetadata {
-  chainId: ChainId
-  type?: NetworkType
-  name: string
-  title?: string
-  logoURI?: string
-  blockExplorer?: BlockExplorerConfig
-  ensAddress?: string
-  testnet?: boolean // Deprecated field, use type instead
-  deprecated?: boolean // The actual network is deprecated
-  nativeToken: {
-    symbol: string
-    name: string
-    decimals: number
-  }
+  // MOONBEAM
+  MOONBEAM = 1284,
+  MOONBASE_ALPHA = 1287
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -776,7 +776,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS}.webp`,
     blockExplorer: {
       name: 'Telos Explorer',
-      rootUrl: 'https://www.teloscan.io/'
+      rootUrl: 'https://explorer.telos.net/network/'
     },
     nativeToken: {
       symbol: 'TLOS',
@@ -792,7 +792,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS_TESTNET}.webp`,
     blockExplorer: {
       name: 'Telos Testnet Explorer',
-      rootUrl: 'https://testnet.teloscan.io/'
+      rootUrl: 'https://explorer-test.telos.net/network'
     },
     nativeToken: {
       symbol: 'TLOS',
@@ -970,6 +970,26 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
+  [ChainId.HARDHAT]: {
+    chainId: ChainId.HARDHAT,
+    name: 'hardhat',
+    title: 'Hardhat (local testnet)',
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
+  [ChainId.HARDHAT_2]: {
+    chainId: ChainId.HARDHAT_2,
+    name: 'hardhat2',
+    title: 'Hardhat (local testnet)',
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18
+    }
+  },
   [ChainId.LAOS]: {
     chainId: ChainId.LAOS,
     type: NetworkType.MAINNET,
@@ -1042,11 +1062,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.ETHERLINK,
     type: NetworkType.MAINNET,
     name: 'etherlink',
-    title: 'Etherlink',
+    title: 'ETHERLINK',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK}.webp`,
     testnet: false,
     blockExplorer: {
-      name: 'Etherlink Explorer',
+      name: 'ETHERLINK Explorer',
       rootUrl: 'https://explorer.etherlink.com/'
     },
     nativeToken: {
@@ -1059,11 +1079,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.ETHERLINK_TESTNET,
     type: NetworkType.TESTNET,
     name: 'etherlink-testnet',
-    title: 'Etherlink Testnet',
+    title: 'ETHERLINK Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'Etherlink Testnet Explorer',
+      name: 'ETHERLINK Testnet Explorer',
       rootUrl: 'https://testnet.explorer.etherlink.com/'
     },
     nativeToken: {
@@ -1071,25 +1091,14 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Tez',
       decimals: 18
     }
-  },
-  [ChainId.HARDHAT]: {
-    chainId: ChainId.HARDHAT,
-    name: 'hardhat',
-    title: 'Hardhat (local testnet)',
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.HARDHAT_2]: {
-    chainId: ChainId.HARDHAT_2,
-    name: 'hardhat2',
-    title: 'Hardhat (local testnet)',
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
+  }
+}
+
+export function getChainIdFromNetwork(networkName: string): ChainId {
+  for (const [chainId, network] of Object.entries(networks)) {
+    if (network.name === networkName) {
+      return Number(chainId) as ChainId
     }
   }
+  throw new Error(`Unknown network name: ${networkName}`)
 }
