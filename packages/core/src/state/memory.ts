@@ -17,7 +17,13 @@ export class MemoryStore implements StateReader, StateWriter {
         [wallet: Address.Address]: { chainId: bigint; digest: Hex.Hex; signature: Signature }
       }
     }
-  } = { configurations: {}, deployHashes: {}, wallets: {} }
+    configurationPaths: {
+      [wallet: Address.Address]: {
+        updates: Array<{ imageHash: Hex.Hex; signature: Hex.Hex }>
+        index: { [imageHash: Hex.Hex]: number }
+      }
+    }
+  } = { configurations: {}, deployHashes: {}, wallets: {}, configurationPaths: {} }
 
   getConfiguration(imageHash: Hex.Hex): Configuration {
     const configuration = this.objects.configurations[imageHash]
@@ -52,13 +58,46 @@ export class MemoryStore implements StateReader, StateWriter {
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
-  ): Array<{ imageHash: Hex.Hex; signature: Hex.Hex }> {}
+  ): Array<{ imageHash: Hex.Hex; signature: Hex.Hex }> {
+    const configurationPath = this.objects.configurationPaths[wallet]
+    if (!configurationPath) {
+      throw new Error(`no configuration path for wallet ${wallet}`)
+    }
+
+    let index = configurationPath.index[fromImageHash]
+    if (index === undefined) {
+      throw new Error(`no configuration path for wallet ${wallet} from ${fromImageHash}`)
+    }
+
+    if (options?.allUpdates) {
+      return configurationPath.updates.slice(index + 1)
+    }
+
+    const updates: Array<{ imageHash: Hex.Hex; signature: Hex.Hex }> = []
+    while (index + 1 < configurationPath.updates.length) {
+      for (let next = configurationPath.updates.length - 1; next > index; next--) {
+        if (true) {
+          updates.push(configurationPath.updates[next]!)
+          index = next
+          break
+        }
+      }
+    }
+    return updates
+  }
 
   saveWallet(deployConfiguration: Configuration): void {
     const deployHash = hashConfiguration(deployConfiguration)
     const wallet = getCounterfactualAddress(deployHash)
     this.objects.configurations[Bytes.toHex(deployHash)] = deployConfiguration
     this.objects.deployHashes[wallet] = Bytes.toHex(deployHash)
+
+    let configurationPath = this.objects.configurationPaths[wallet]
+    if (!configurationPath) {
+      configurationPath = { updates: [], index: {} }
+      this.objects.configurationPaths[wallet] = configurationPath
+    }
+    configurationPath.index[Bytes.toHex(deployHash)] = -1
   }
 
   saveWitness(
@@ -86,5 +125,34 @@ export class MemoryStore implements StateReader, StateWriter {
     }
   }
 
-  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: Hex.Hex): void {}
+  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: Hex.Hex): void {
+    const configurationPath = this.objects.configurationPaths[wallet]
+    if (!configurationPath) {
+      throw new Error(`no configuration path for wallet ${wallet}`)
+    }
+
+    let latestImageHash: Hex.Hex
+    if (configurationPath.updates.length) {
+      latestImageHash = configurationPath.updates[configurationPath.updates.length - 1]!.imageHash
+    } else {
+      const deployHash = this.objects.deployHashes[wallet]
+      if (!deployHash) {
+        throw new Error(`no deploy hash for wallet ${wallet}`)
+      }
+      latestImageHash = deployHash
+    }
+
+    const latestConfiguration = this.objects.configurations[latestImageHash]
+    if (!latestConfiguration) {
+      throw new Error(`no configuration ${latestImageHash}`)
+    }
+
+    if (configuration.checkpoint <= latestConfiguration.checkpoint) {
+      throw new Error(
+        `configuration checkpoint ${configuration.checkpoint} <= latest checkpoint ${latestConfiguration.checkpoint}`,
+      )
+    }
+
+    configurationPath.updates.push({ imageHash: Bytes.toHex(hashConfiguration(configuration)), signature })
+  }
 }
