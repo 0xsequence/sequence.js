@@ -90,6 +90,32 @@ export type RawSignature = {
   suffix?: Array<RawSignature & { checkpointerData: undefined }>
 }
 
+export function isRawSignature(signature: any): signature is RawSignature {
+  return (
+    typeof signature === 'object' &&
+    signature &&
+    typeof signature.noChainId === 'boolean' &&
+    (signature.checkpointerData === undefined || Bytes.validate(signature.checkpointerData)) &&
+    isRawConfiguration(signature.configuration) &&
+    (signature.suffix === undefined ||
+      (Array.isArray(signature.suffix) &&
+        signature.suffix.every(
+          (signature: any) => isRawSignature(signature) && signature.checkpointerData === undefined,
+        )))
+  )
+}
+
+export function isRawConfiguration(configuration: any): configuration is RawConfiguration {
+  return (
+    typeof configuration === 'object' &&
+    configuration &&
+    typeof configuration.threshold === 'bigint' &&
+    typeof configuration.checkpoint === 'bigint' &&
+    isRawTopology(configuration.topology) &&
+    (configuration.checkpointer === undefined || Address.validate(configuration.checkpointer))
+  )
+}
+
 export function isRawSignerLeaf(cand: any): cand is RawSignerLeaf {
   return typeof cand === 'object' && 'weight' in cand && 'signature' in cand
 }
