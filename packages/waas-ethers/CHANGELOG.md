@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+- Updated dependencies
+  - @0xsequence/waas@2.2.11
+
 ## 2.2.10
 
 ### Patch Changes

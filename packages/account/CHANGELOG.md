@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+- Updated dependencies
+  - @0xsequence/abi@2.2.11
+  - @0xsequence/core@2.2.11
+  - @0xsequence/migration@2.2.11
+  - @0xsequence/network@2.2.11
+  - @0xsequence/relayer@2.2.11
+  - @0xsequence/sessions@2.2.11
+  - @0xsequence/utils@2.2.11
+  - @0xsequence/wallet@2.2.11
+
 ## 2.2.10
 
 ### Patch Changes

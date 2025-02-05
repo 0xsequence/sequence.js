@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+- Updated dependencies
+  - @0xsequence/core@2.2.11
+
 ## 2.2.10
 
 ### Patch Changes

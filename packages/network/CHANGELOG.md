@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+- Updated dependencies
+  - @0xsequence/core@2.2.11
+  - @0xsequence/indexer@2.2.11
+  - @0xsequence/relayer@2.2.11
+  - @0xsequence/utils@2.2.11
+
 ## 2.2.10
 
 ### Patch Changes

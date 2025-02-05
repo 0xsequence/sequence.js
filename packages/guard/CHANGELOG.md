@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+- Updated dependencies
+  - @0xsequence/account@2.2.11
+  - @0xsequence/core@2.2.11
+  - @0xsequence/signhub@2.2.11
+  - @0xsequence/utils@2.2.11
+
 ## 2.2.10
 
 ### Patch Changes

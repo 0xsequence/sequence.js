@@ -1,5 +1,14 @@
 # @0xsequence/core
 
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+- Updated dependencies
+  - @0xsequence/abi@2.2.11
+  - @0xsequence/utils@2.2.11
+
 ## 2.2.10
 
 ### Patch Changes
