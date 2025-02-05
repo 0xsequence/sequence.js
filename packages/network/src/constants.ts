@@ -135,7 +135,10 @@ export enum ChainId {
 
   // MOONBEAM
   MOONBEAM = 1284,
-  MOONBASE_ALPHA = 1287
+  MOONBASE_ALPHA = 1287,
+
+  // XR1
+  XR1 = 273
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1089,6 +1092,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'XTZ',
       name: 'Tez',
+      decimals: 18
+    }
+  },
+  [ChainId.XR1]: {
+    chainId: ChainId.XR1,
+    type: NetworkType.MAINNET,
+    name: 'rx1',
+    title: 'RX1',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR1}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'XR1 Explorer',
+      rootUrl: 'https://xr1.calderachain.xyz/http'
+    },
+    nativeToken: {
+      symbol: 'XR1',
+      name: 'XR1',
       decimals: 18
     }
   }
