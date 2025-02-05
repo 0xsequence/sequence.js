@@ -125,10 +125,18 @@ async function doEncode(input: string, signatures: string[] = [], noChainId: boo
 }
 
 async function doConcat(signatures: string[]): Promise<void> {
-  throw new Error('Not implemented')
-  // const encoded = signatures.map((s) => Hex.fromHex(s)).map((s) => s.toBytes())
-  // const concatenated = Bytes.concat(...encoded)
-  // console.log(Hex.fromBytes(concatenated))
+  if (signatures.length === 0) {
+    throw new Error('No signatures provided')
+  }
+
+  const decoded = signatures.map((s) => decodeSignature(Bytes.fromHex(s as `0x${string}`)))
+  
+  const reEncoded = encodeSignature({
+    ...decoded[0]!,
+    suffix: decoded.slice(1),
+  })
+
+  console.log(Hex.fromBytes(reEncoded))
 }
 
 async function doDecode(signature: string): Promise<void> {

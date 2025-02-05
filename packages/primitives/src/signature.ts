@@ -13,6 +13,7 @@ import {
   isSapientSignerLeaf,
   isSignerLeaf,
   isSubdigestLeaf,
+  isTopology,
 } from './config'
 import { minBytesFor } from './utils'
 
@@ -87,7 +88,7 @@ export type RawSignature = {
   noChainId: boolean
   checkpointerData?: Bytes.Bytes
   configuration: RawConfiguration
-  suffix?: Array<RawSignature & { checkpointerData: undefined }>
+  suffix?: Array<RawSignature>
 }
 
 export function isRawSignature(signature: any): signature is RawSignature {
@@ -129,7 +130,7 @@ export function isSignedSapientSignerLeaf(cand: any): cand is SignedSapientSigne
 }
 
 export function isRawNode(cand: any): cand is RawNode {
-  return Array.isArray(cand) && cand.length === 2 && isRawTopology(cand[0]) && isRawTopology(cand[1])
+  return Array.isArray(cand) && cand.length === 2 && (isRawTopology(cand[0]) || isTopology(cand[0])) && (isRawTopology(cand[1]) || isTopology(cand[1]))
 }
 
 export function isRawTopology(cand: any): cand is RawTopology {
@@ -531,14 +532,47 @@ export function fillLeaves(
   throw new Error('Invalid topology')
 }
 
-export function encodeSignature(signature: RawSignature): Uint8Array {
+export function encodeChainedSignature(signatures: RawSignature[]): Uint8Array {
+  let flag = 0x01
+
+  let sigForCheckpointer = signatures[signatures.length - 1]
+
+  if (sigForCheckpointer?.configuration.checkpointer) {
+    flag |= 0x40
+  }
+
+  let output = Bytes.fromNumber(flag)
+  if (sigForCheckpointer?.configuration.checkpointer) {
+    output = Bytes.concat(output, Bytes.padLeft(Bytes.fromHex(sigForCheckpointer.configuration.checkpointer), 20))
+    const checkpointerDataSize = sigForCheckpointer.checkpointerData?.length ?? 0
+    if (checkpointerDataSize > 16777215) {
+      throw new Error('Checkpointer data too large')
+    }
+    const checkpointerDataSizeBytes = Bytes.padLeft(Bytes.fromNumber(checkpointerDataSize), 3)
+    output = Bytes.concat(output, checkpointerDataSizeBytes, sigForCheckpointer.checkpointerData ?? Bytes.fromArray([]))
+  }
+
+  for (let i = 0; i < signatures.length; i++) {
+    const signature = signatures[i]!
+    const encoded = encodeSignature(signature, true)
+    if (encoded.length > 16777215) {
+      throw new Error('Chained signature too large')
+    }
+    const encodedSize = Bytes.padLeft(Bytes.fromNumber(encoded.length), 3)
+    output = Bytes.concat(output, encodedSize, encoded)
+  }
+
+  return output
+}
+
+export function encodeSignature(signature: RawSignature, skipCheckpointerData?: boolean): Uint8Array {
   const { noChainId, checkpointerData, configuration: config, suffix } = signature
 
-  let flag = 0
-
   if (suffix?.length) {
-    flag |= 0x01
+    return encodeChainedSignature([{ ...signature, suffix: undefined }, ...suffix])
   }
+
+  let flag = 0
 
   if (noChainId) {
     flag |= 0x02
@@ -563,7 +597,7 @@ export function encodeSignature(signature: RawSignature): Uint8Array {
 
   let output = Bytes.fromNumber(flag)
 
-  if (config.checkpointer) {
+  if (config.checkpointer && !skipCheckpointerData) {
     output = Bytes.concat(output, Bytes.padLeft(Bytes.fromHex(config.checkpointer), 20))
 
     const checkpointerDataSize = checkpointerData?.length ?? 0
@@ -573,20 +607,6 @@ export function encodeSignature(signature: RawSignature): Uint8Array {
 
     const checkpointerDataSizeBytes = Bytes.padLeft(Bytes.fromNumber(checkpointerDataSize), 3)
     output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData ?? Bytes.fromArray([]))
-  }
-
-  if (suffix?.length) {
-    const encoded = encodeSignature({ ...signature, checkpointerData: undefined, suffix: undefined })
-    const encodedSize = Bytes.padLeft(Bytes.fromNumber(encoded.length), 3)
-    output = Bytes.concat(output, encodedSize)
-
-    for (const subsignature of suffix) {
-      const encoded = encodeSignature(subsignature)
-      const encodedSize = Bytes.padLeft(Bytes.fromNumber(encoded.length), 3)
-      output = Bytes.concat(output, encodedSize)
-    }
-
-    return output
   }
 
   const checkpointBytes = Bytes.padLeft(Bytes.fromNumber(config.checkpoint), bytesForCheckpoint)
@@ -772,8 +792,6 @@ export function encodeTopology(
     const hash = hashConfiguration(topology)
     return Bytes.concat(Bytes.fromNumber(FLAG_NODE << 4), hash)
   }
-
-  console.log(topology)
 
   throw new Error('Invalid topology')
 }
