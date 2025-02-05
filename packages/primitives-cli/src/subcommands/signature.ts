@@ -130,7 +130,7 @@ async function doConcat(signatures: string[]): Promise<void> {
   }
 
   const decoded = signatures.map((s) => decodeSignature(Bytes.fromHex(s as `0x${string}`)))
-  
+
   const reEncoded = encodeSignature({
     ...decoded[0]!,
     suffix: decoded.slice(1),
@@ -184,33 +184,31 @@ const signatureCommand: CommandModule = {
         'concat [signatures...]',
         'Concatenate multiple signatures',
         (yargs) => {
-          return yargs
-            .positional('signatures', {
-              type: 'string',
-              array: true,
-              description: 'Hex signatures to concatenate',
-              demandOption: true
-            })
+          return yargs.positional('signatures', {
+            type: 'string',
+            array: true,
+            description: 'Hex signatures to concatenate',
+            demandOption: true,
+          })
         },
         async (argv) => {
           await doConcat(argv.signatures)
-        }
+        },
       )
       .command(
         'decode [signature]',
         'Decode a signature from bytes',
         (yargs) => {
-          return yargs
-            .positional('signature', {
-              type: 'string',
-              description: 'Hex signature to decode',
-              demandOption: true
-            })
+          return yargs.positional('signature', {
+            type: 'string',
+            description: 'Hex signature to decode',
+            demandOption: true,
+          })
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'signature')
           await doDecode(input)
-        }
+        },
       )
       .demandCommand(1, 'You must specify a subcommand for signature')
   },

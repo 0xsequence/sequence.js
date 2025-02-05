@@ -130,7 +130,12 @@ export function isSignedSapientSignerLeaf(cand: any): cand is SignedSapientSigne
 }
 
 export function isRawNode(cand: any): cand is RawNode {
-  return Array.isArray(cand) && cand.length === 2 && (isRawTopology(cand[0]) || isTopology(cand[0])) && (isRawTopology(cand[1]) || isTopology(cand[1]))
+  return (
+    Array.isArray(cand) &&
+    cand.length === 2 &&
+    (isRawTopology(cand[0]) || isTopology(cand[0])) &&
+    (isRawTopology(cand[1]) || isTopology(cand[1]))
+  )
 }
 
 export function isRawTopology(cand: any): cand is RawTopology {
@@ -819,18 +824,14 @@ export function rawSignatureToJson(signature: RawSignature): string {
 function rawSignatureToJsonParsed(signature: RawSignature): any {
   return {
     noChainId: signature.noChainId,
-    checkpointerData: signature.checkpointerData
-      ? Bytes.toHex(signature.checkpointerData)
-      : undefined,
+    checkpointerData: signature.checkpointerData ? Bytes.toHex(signature.checkpointerData) : undefined,
     configuration: {
       threshold: signature.configuration.threshold.toString(),
       checkpoint: signature.configuration.checkpoint.toString(),
       topology: rawTopologyToJson(signature.configuration.topology),
       checkpointer: signature.configuration.checkpointer,
     },
-    suffix: signature.suffix
-      ? signature.suffix.map((sig) => rawSignatureToJsonParsed(sig))
-      : undefined,
+    suffix: signature.suffix ? signature.suffix.map((sig) => rawSignatureToJsonParsed(sig)) : undefined,
   }
 }
 
@@ -886,9 +887,7 @@ function rawTopologyToJson(top: RawTopology): any {
   throw new Error('Invalid raw topology format')
 }
 
-function rawSignatureOfLeafToJson(
-  sig: SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf
-): any {
+function rawSignatureOfLeafToJson(sig: SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf): any {
   if (sig.type === 'eth_sign' || sig.type === 'hash') {
     return {
       type: sig.type,
@@ -923,18 +922,14 @@ export function rawSignatureFromJson(json: string): RawSignature {
 function rawSignatureFromParsed(parsed: any): RawSignature {
   return {
     noChainId: parsed.noChainId,
-    checkpointerData: parsed.checkpointerData
-      ? Bytes.fromHex(parsed.checkpointerData)
-      : undefined,
+    checkpointerData: parsed.checkpointerData ? Bytes.fromHex(parsed.checkpointerData) : undefined,
     configuration: {
       threshold: BigInt(parsed.configuration.threshold),
       checkpoint: BigInt(parsed.configuration.checkpoint),
       topology: rawTopologyFromJson(parsed.configuration.topology),
       checkpointer: parsed.configuration.checkpointer,
     },
-    suffix: parsed.suffix
-      ? parsed.suffix.map((sig: any) => rawSignatureFromParsed(sig))
-      : undefined,
+    suffix: parsed.suffix ? parsed.suffix.map((sig: any) => rawSignatureFromParsed(sig)) : undefined,
   }
 }
 
@@ -990,9 +985,7 @@ function rawTopologyFromJson(obj: any): RawTopology {
   throw new Error('Invalid raw topology format')
 }
 
-function rawSignatureOfLeafFromJson(
-  obj: any
-): SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf {
+function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf {
   switch (obj.type) {
     case 'eth_sign':
     case 'hash':
