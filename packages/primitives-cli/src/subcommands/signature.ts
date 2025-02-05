@@ -2,10 +2,13 @@ import { boolean, type CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
 import {
   configFromJson,
+  configToJson,
+  decodeSignature,
   encodeSignature,
   fillLeaves,
   isSapientSignerLeaf,
   isSignerLeaf,
+  rawSignatureToJson,
 } from '@0xsequence/sequence-primitives'
 import { PossibleElements } from './config'
 import { Bytes, Hex } from 'ox'
@@ -121,6 +124,19 @@ async function doEncode(input: string, signatures: string[] = [], noChainId: boo
   console.log(Hex.fromBytes(encoded))
 }
 
+async function doConcat(signatures: string[]): Promise<void> {
+  throw new Error('Not implemented')
+  // const encoded = signatures.map((s) => Hex.fromHex(s)).map((s) => s.toBytes())
+  // const concatenated = Bytes.concat(...encoded)
+  // console.log(Hex.fromBytes(concatenated))
+}
+
+async function doDecode(signature: string): Promise<void> {
+  const bytes = Bytes.fromHex(signature as `0x${string}`)
+  const decoded = decodeSignature(bytes)
+  console.log(rawSignatureToJson(decoded))
+}
+
 const signatureCommand: CommandModule = {
   command: 'signature',
   describe: 'Signature utilities',
@@ -155,6 +171,38 @@ const signatureCommand: CommandModule = {
           const input = await fromPosOrStdin(argv, 'input')
           await doEncode(input, argv.signature, !argv.chainId)
         },
+      )
+      .command(
+        'concat [signatures...]',
+        'Concatenate multiple signatures',
+        (yargs) => {
+          return yargs
+            .positional('signatures', {
+              type: 'string',
+              array: true,
+              description: 'Hex signatures to concatenate',
+              demandOption: true
+            })
+        },
+        async (argv) => {
+          await doConcat(argv.signatures)
+        }
+      )
+      .command(
+        'decode [signature]',
+        'Decode a signature from bytes',
+        (yargs) => {
+          return yargs
+            .positional('signature', {
+              type: 'string',
+              description: 'Hex signature to decode',
+              demandOption: true
+            })
+        },
+        async (argv) => {
+          const input = await fromPosOrStdin(argv, 'signature')
+          await doDecode(input)
+        }
       )
       .demandCommand(1, 'You must specify a subcommand for signature')
   },

@@ -572,7 +572,6 @@ export function encodeSignature(signature: RawSignature): Uint8Array {
     }
 
     const checkpointerDataSizeBytes = Bytes.padLeft(Bytes.fromNumber(checkpointerDataSize), 3)
-
     output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData ?? Bytes.fromArray([]))
   }
 
@@ -793,4 +792,212 @@ function foldNodes(nodes: RawTopology[]): RawTopology {
     tree = [tree, nodes[i]!] as RawNode
   }
   return tree
+}
+
+export function rawSignatureToJson(signature: RawSignature): string {
+  return JSON.stringify(rawSignatureToJsonParsed(signature))
+}
+
+function rawSignatureToJsonParsed(signature: RawSignature): any {
+  return {
+    noChainId: signature.noChainId,
+    checkpointerData: signature.checkpointerData
+      ? Bytes.toHex(signature.checkpointerData)
+      : undefined,
+    configuration: {
+      threshold: signature.configuration.threshold.toString(),
+      checkpoint: signature.configuration.checkpoint.toString(),
+      topology: rawTopologyToJson(signature.configuration.topology),
+      checkpointer: signature.configuration.checkpointer,
+    },
+    suffix: signature.suffix
+      ? signature.suffix.map((sig) => rawSignatureToJsonParsed(sig))
+      : undefined,
+  }
+}
+
+function rawTopologyToJson(top: RawTopology): any {
+  if (Array.isArray(top)) {
+    return [rawTopologyToJson(top[0]), rawTopologyToJson(top[1])]
+  }
+  if (typeof top === 'object' && top !== null) {
+    if ('type' in top) {
+      switch (top.type) {
+        case 'signer':
+          return {
+            type: 'signer',
+            address: top.address,
+            weight: top.weight.toString(),
+          }
+        case 'sapient-signer':
+          return {
+            type: 'sapient-signer',
+            address: top.address,
+            weight: top.weight.toString(),
+            imageHash: Bytes.toHex(Bytes.padLeft(top.imageHash, 32)),
+          }
+        case 'subdigest':
+          return {
+            type: 'subdigest',
+            digest: Bytes.toHex(top.digest),
+          }
+        case 'nested':
+          return {
+            type: 'nested',
+            tree: rawTopologyToJson(top.tree),
+            weight: top.weight.toString(),
+            threshold: top.threshold.toString(),
+          }
+        case 'unrecovered-signer':
+          return {
+            type: 'unrecovered-signer',
+            weight: top.weight.toString(),
+            signature: rawSignatureOfLeafToJson(top.signature),
+          }
+        default:
+          throw new Error('Invalid raw topology type')
+      }
+    }
+  }
+  if (top instanceof Uint8Array) {
+    return Bytes.toHex(top)
+  }
+  if (typeof top === 'string') {
+    return top
+  }
+  throw new Error('Invalid raw topology format')
+}
+
+function rawSignatureOfLeafToJson(
+  sig: SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf
+): any {
+  if (sig.type === 'eth_sign' || sig.type === 'hash') {
+    return {
+      type: sig.type,
+      r: Bytes.toHex(sig.r),
+      s: Bytes.toHex(sig.s),
+      v: sig.v,
+    }
+  }
+  if (sig.type === 'erc1271') {
+    return {
+      type: sig.type,
+      address: sig.address,
+      data: Bytes.toHex(sig.data),
+    }
+  }
+  if (sig.type === 'sapient' || sig.type === 'sapient_compact') {
+    return {
+      type: sig.type,
+      address: sig.address,
+      data: Bytes.toHex(sig.data),
+    }
+  }
+  throw new Error('Unknown signature type in raw signature')
+}
+
+// Re-create a RawSignature from its JSON string representation.
+export function rawSignatureFromJson(json: string): RawSignature {
+  const parsed = JSON.parse(json)
+  return rawSignatureFromParsed(parsed)
+}
+
+function rawSignatureFromParsed(parsed: any): RawSignature {
+  return {
+    noChainId: parsed.noChainId,
+    checkpointerData: parsed.checkpointerData
+      ? Bytes.fromHex(parsed.checkpointerData)
+      : undefined,
+    configuration: {
+      threshold: BigInt(parsed.configuration.threshold),
+      checkpoint: BigInt(parsed.configuration.checkpoint),
+      topology: rawTopologyFromJson(parsed.configuration.topology),
+      checkpointer: parsed.configuration.checkpointer,
+    },
+    suffix: parsed.suffix
+      ? parsed.suffix.map((sig: any) => rawSignatureFromParsed(sig))
+      : undefined,
+  }
+}
+
+function rawTopologyFromJson(obj: any): RawTopology {
+  if (Array.isArray(obj)) {
+    if (obj.length !== 2) {
+      throw new Error('Invalid raw topology node')
+    }
+    return [rawTopologyFromJson(obj[0]), rawTopologyFromJson(obj[1])]
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    if ('type' in obj) {
+      switch (obj.type) {
+        case 'signer':
+          return {
+            type: 'signer',
+            address: obj.address,
+            weight: BigInt(obj.weight),
+          }
+        case 'sapient-signer':
+          return {
+            type: 'sapient-signer',
+            address: obj.address,
+            weight: BigInt(obj.weight),
+            imageHash: Bytes.fromHex(obj.imageHash),
+          }
+        case 'subdigest':
+          return {
+            type: 'subdigest',
+            digest: Bytes.fromHex(obj.digest),
+          }
+        case 'nested':
+          return {
+            type: 'nested',
+            tree: rawTopologyFromJson(obj.tree),
+            weight: BigInt(obj.weight),
+            threshold: BigInt(obj.threshold),
+          }
+        case 'unrecovered-signer':
+          return {
+            type: 'unrecovered-signer',
+            weight: BigInt(obj.weight),
+            signature: rawSignatureOfLeafFromJson(obj.signature),
+          }
+        default:
+          throw new Error('Invalid raw topology type')
+      }
+    }
+  }
+  if (typeof obj === 'string') {
+    return Bytes.fromHex(obj as `0x${string}`)
+  }
+  throw new Error('Invalid raw topology format')
+}
+
+function rawSignatureOfLeafFromJson(
+  obj: any
+): SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf {
+  switch (obj.type) {
+    case 'eth_sign':
+    case 'hash':
+      return {
+        type: obj.type,
+        r: Bytes.fromHex(obj.r),
+        s: Bytes.fromHex(obj.s),
+        v: obj.v,
+      }
+    case 'erc1271':
+      return {
+        type: 'erc1271',
+        address: obj.address,
+        data: Bytes.fromHex(obj.data),
+      }
+    case 'sapient':
+    case 'sapient_compact':
+      return {
+        type: obj.type,
+        address: obj.address,
+        data: Bytes.fromHex(obj.data),
+      }
+    default:
+      throw new Error('Invalid signature type in raw signature')
+  }
 }
