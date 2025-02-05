@@ -15,7 +15,7 @@ const sessionCommand: CommandModule = {
   builder: (yargs) => {
     return yargs
       .command(
-        'to-packed [session-topology]',
+        'to-packed-topology [session-topology]',
         'Convert session topology to packed format',
         (yargs) => {
           return yargs.positional('session-topology', {
