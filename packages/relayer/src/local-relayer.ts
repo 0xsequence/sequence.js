@@ -96,6 +96,22 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   }> {
     return { cost: 0 }
   }
+
+  async listGasSponsors(args: proto.ListGasSponsorsArgs): Promise<proto.ListGasSponsorsReturn> {
+    return { page: { page: 0, pageSize: 100 }, gasSponsors: [] }
+  }
+
+  async addGasSponsor(args: proto.AddGasSponsorArgs): Promise<proto.AddGasSponsorReturn> {
+    return { status: true, gasSponsor: {} as proto.GasSponsor }
+  }
+
+  async updateGasSponsor(args: proto.UpdateGasSponsorArgs): Promise<proto.UpdateGasSponsorReturn> {
+    return { status: true, gasSponsor: {} as proto.GasSponsor }
+  }
+
+  async removeGasSponsor(args: proto.RemoveGasSponsorArgs): Promise<proto.RemoveGasSponsorReturn> {
+    return { status: true }
+  }
 }
 
 function isAbstractSigner(signer: any): signer is ethers.AbstractSigner {
