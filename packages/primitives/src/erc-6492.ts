@@ -3,7 +3,7 @@ import { WrappedSignature } from 'ox/erc6492'
 import { DEPLOY, MAIN_MODULE } from './constants'
 
 export function erc6492Deploy<T extends Bytes.Bytes | Hex.Hex>(deployHash: T): { to: Address.Address; data: T } {
-  const encoded = AbiFunction.encodeData(AbiFunction.from(DEPLOY), [MAIN_MODULE, Hex.from(deployHash)])
+  const encoded = AbiFunction.encodeData(DEPLOY, [MAIN_MODULE, Hex.from(deployHash)])
 
   switch (typeof deployHash) {
     case 'object':

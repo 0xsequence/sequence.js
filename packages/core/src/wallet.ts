@@ -10,11 +10,12 @@ import {
   getSigners,
   getWeight,
   hashConfiguration,
+  IMAGE_HASH,
   isSignerLeaf,
   Payload,
   RawSignature,
 } from '@0xsequence/sequence-primitives'
-import { Address, Bytes, Hex, Provider, Signature as oxSignature } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, Provider, Signature as oxSignature } from 'ox'
 import { CancelCallback, Signature, Signer, SignerSignatureCallback } from './signer'
 import { Sessions, StateReader, StateWriter } from './state'
 
@@ -67,7 +68,10 @@ export class Wallet {
         imageHash = await this.stateProvider.getDeployHash(this.address)
       } else {
         isDeployed = true
-        imageHash = await provider.request({ method: 'eth_call', params: [{ data: '0x51605d80' /* imageHash() */ }] })
+        imageHash = await provider.request({
+          method: 'eth_call',
+          params: [{ data: AbiFunction.encodeData(IMAGE_HASH) }],
+        })
       }
 
       const path = await this.stateProvider.getConfigurationPath(this.address, imageHash)

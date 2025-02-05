@@ -1,5 +1,6 @@
-import { Address, Bytes } from 'ox'
+import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
 import {
+  Configuration,
   Leaf,
   NestedLeaf,
   SapientSignerLeaf,
@@ -15,6 +16,8 @@ import {
   isSubdigestLeaf,
   isTopology,
 } from './config'
+import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
+import { fromConfigUpdate, hash, ParentedPayload } from './payload'
 import { minBytesFor } from './utils'
 
 export const FLAG_SIGNATURE_HASH = 0
@@ -88,7 +91,7 @@ export type RawSignature = {
   noChainId: boolean
   checkpointerData?: Bytes.Bytes
   configuration: RawConfiguration
-  suffix?: Array<RawSignature>
+  suffix?: RawSignature[]
 }
 
 export function isRawSignature(signature: any): signature is RawSignature {
@@ -1010,5 +1013,295 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
       }
     default:
       throw new Error('Invalid signature type in raw signature')
+  }
+}
+
+export async function recover(
+  signature: RawSignature,
+  wallet: Address.Address,
+  chainId: bigint,
+  payload: ParentedPayload,
+  options?: {
+    provider?: Provider.Provider | { provider: Provider.Provider; block: number } | 'assume-valid' | 'assume-invalid'
+  },
+): Promise<{ configuration: Configuration; weight: bigint }> {
+  if (signature.suffix?.length) {
+    let invalid = false
+
+    let { configuration, weight } = await recover(
+      { ...signature, suffix: undefined },
+      wallet,
+      chainId,
+      payload,
+      options,
+    )
+
+    invalid ||= weight < configuration.threshold
+
+    for (const subsignature of signature.suffix) {
+      const recovered = await recover(
+        subsignature,
+        wallet,
+        subsignature.noChainId ? 0n : chainId,
+        fromConfigUpdate(Bytes.toHex(hashConfiguration(configuration))),
+        options,
+      )
+
+      invalid ||= recovered.weight < recovered.configuration.threshold
+      invalid ||= recovered.configuration.checkpoint >= configuration.checkpoint
+
+      configuration = recovered.configuration
+      weight = recovered.weight
+    }
+
+    return { configuration, weight: invalid ? 0n : weight }
+  }
+
+  const { topology, weight } = await recoverTopology(
+    signature.configuration.topology,
+    wallet,
+    chainId,
+    payload,
+    options,
+  )
+
+  return { configuration: { ...signature.configuration, topology }, weight }
+}
+
+async function recoverTopology(
+  topology: RawTopology,
+  wallet: Address.Address,
+  chainId: bigint,
+  payload: ParentedPayload,
+  options?: {
+    provider?: Provider.Provider | { provider: Provider.Provider; block: number } | 'assume-valid' | 'assume-invalid'
+    throw?: boolean
+  },
+): Promise<{ topology: Topology; weight: bigint }> {
+  const digest = hash(wallet, chainId, payload)
+
+  if (isRawSignerLeaf(topology)) {
+    switch (topology.signature.type) {
+      case 'eth_sign':
+      case 'hash':
+        return {
+          topology: {
+            type: 'signer',
+            address: Secp256k1.recoverAddress({
+              payload:
+                topology.signature.type === 'eth_sign'
+                  ? Hash.keccak256(
+                      AbiParameters.encodePacked(
+                        ['string', 'bytes32'],
+                        ['\x19Ethereum Signed Message:\n32', Bytes.toHex(digest)],
+                      ),
+                    )
+                  : digest,
+              signature: {
+                r: Bytes.toBigInt(topology.signature.r),
+                s: Bytes.toBigInt(topology.signature.s),
+                yParity: Signature.vToYParity(topology.signature.v),
+              },
+            }),
+            weight: topology.weight,
+            signed: true,
+            signature: topology.signature,
+          },
+          weight: topology.weight,
+        }
+
+      case 'erc1271':
+        switch (options?.provider) {
+          case undefined:
+          case 'assume-invalid':
+            if (options?.throw !== false) {
+              throw new Error(`unable to validate signer ${topology.signature.address} erc-1271 signature`)
+            } else {
+              return {
+                topology: { type: 'signer', address: topology.signature.address, weight: topology.weight },
+                weight: 0n,
+              }
+            }
+
+          case 'assume-valid':
+            return {
+              topology: {
+                type: 'signer',
+                address: topology.signature.address,
+                weight: topology.weight,
+                signed: true,
+                signature: topology.signature,
+              },
+              weight: topology.weight,
+            }
+
+          default:
+            const { provider, block } =
+              'block' in options!.provider ? options!.provider : { provider: options!.provider }
+
+            const call = {
+              to: topology.signature.address,
+              data: AbiFunction.encodeData(IS_VALID_SIGNATURE, [
+                Bytes.toHex(digest),
+                Bytes.toHex(topology.signature.data),
+              ]),
+            }
+
+            const response = await provider.request({
+              method: 'eth_call',
+              params: block === undefined ? [call] : [call, Hex.fromNumber(block)],
+            })
+
+            if (response === AbiFunction.getSelector(IS_VALID_SIGNATURE)) {
+              return {
+                topology: {
+                  type: 'signer',
+                  address: topology.signature.address,
+                  weight: topology.weight,
+                  signed: true,
+                  signature: topology.signature,
+                },
+                weight: topology.weight,
+              }
+            } else {
+              if (options?.throw !== false) {
+                throw new Error(`invalid signer ${topology.signature.address} erc-1271 signature`)
+              } else {
+                return {
+                  topology: { type: 'signer', address: topology.signature.address, weight: topology.weight },
+                  weight: 0n,
+                }
+              }
+            }
+        }
+
+      case 'sapient':
+      case 'sapient_compact':
+        switch (options?.provider) {
+          case undefined:
+          case 'assume-invalid':
+          case 'assume-valid':
+            throw new Error(`unable to validate sapient signer ${topology.signature.address} signature`)
+
+          default:
+            const { provider, block } =
+              'block' in options!.provider ? options!.provider : { provider: options!.provider }
+
+            const call = {
+              to: topology.signature.address,
+              data:
+                topology.signature.type === 'sapient'
+                  ? AbiFunction.encodeData(IS_VALID_SAPIENT_SIGNATURE, [
+                      encode(chainId, payload),
+                      Bytes.toHex(topology.signature.data),
+                    ])
+                  : AbiFunction.encodeData(IS_VALID_SAPIENT_SIGNATURE_COMPACT, [
+                      Bytes.toHex(digest),
+                      Bytes.toHex(topology.signature.data),
+                    ]),
+            }
+
+            const response = await provider.request({
+              method: 'eth_call',
+              params: block === undefined ? [call] : [call, Hex.fromNumber(block)],
+            })
+
+            return {
+              topology: {
+                type: 'sapient-signer',
+                address: topology.signature.address,
+                weight: topology.weight,
+                imageHash: Hex.toBytes(response),
+                signed: true,
+                signature: topology.signature,
+              },
+              weight: topology.weight,
+            }
+        }
+    }
+  } else if (isRawNestedLeaf(topology)) {
+    const { topology: tree, weight } = await recoverTopology(topology.tree, wallet, chainId, payload, options)
+    return { topology: { ...topology, tree }, weight: weight >= topology.threshold ? topology.weight : 0n }
+  } else if (isSignerLeaf(topology)) {
+    return { topology, weight: 0n }
+  } else if (isSapientSignerLeaf(topology)) {
+    return { topology, weight: 0n }
+  } else if (isSubdigestLeaf(topology)) {
+    return {
+      topology,
+      weight: Bytes.isEqual(topology.digest, digest)
+        ? 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+        : 0n,
+    }
+  } else if (isNodeLeaf(topology)) {
+    return { topology, weight: 0n }
+  } else {
+    const [left, right] = await Promise.all(
+      topology.map((topology) => recoverTopology(topology, wallet, chainId, payload, options)),
+    )
+    return { topology: [left!.topology, right!.topology], weight: left!.weight + right!.weight }
+  }
+}
+
+function encode(
+  chainId: bigint,
+  payload: ParentedPayload,
+): Exclude<AbiFunction.encodeData.Args<typeof IS_VALID_SAPIENT_SIGNATURE>, []>[0][0] {
+  switch (payload.type) {
+    case 'call':
+      return {
+        kind: 0,
+        noChainId: !chainId,
+        calls: payload.calls.map((call) => ({
+          ...call,
+          data: Bytes.toHex(call.data),
+          behaviorOnError: call.behaviorOnError === 'ignore' ? 0n : call.behaviorOnError === 'revert' ? 1n : 2n,
+        })),
+        space: payload.space,
+        nonce: payload.nonce,
+        message: '0x',
+        imageHash: '0x',
+        digest: '0x',
+        parentWallets: payload.parentWallets ?? [],
+      }
+
+    case 'message':
+      return {
+        kind: 1,
+        noChainId: !chainId,
+        calls: [],
+        space: 0n,
+        nonce: 0n,
+        message: Bytes.toHex(payload.message),
+        imageHash: '0x',
+        digest: '0x',
+        parentWallets: payload.parentWallets ?? [],
+      }
+
+    case 'config-update':
+      return {
+        kind: 2,
+        noChainId: !chainId,
+        calls: [],
+        space: 0n,
+        nonce: 0n,
+        message: '0x',
+        imageHash: payload.imageHash,
+        digest: '0x',
+        parentWallets: payload.parentWallets ?? [],
+      }
+
+    case 'digest':
+      return {
+        kind: 3,
+        noChainId: !chainId,
+        calls: [],
+        space: 0n,
+        nonce: 0n,
+        message: '0x',
+        imageHash: '0x',
+        digest: payload.digest,
+        parentWallets: payload.parentWallets ?? [],
+      }
   }
 }

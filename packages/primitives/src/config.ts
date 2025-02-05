@@ -1,9 +1,12 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
+import { SignatureOfSapientSignerLeaf, SignatureOfSignerLeaf } from './signature'
 
 export type SignerLeaf = {
   type: 'signer'
   address: Address.Address
   weight: bigint
+  signed?: boolean
+  signature?: SignatureOfSignerLeaf
 }
 
 export type SapientSignerLeaf = {
@@ -11,6 +14,8 @@ export type SapientSignerLeaf = {
   address: Address.Address
   weight: bigint
   imageHash: Bytes.Bytes
+  signed?: boolean
+  signature?: SignatureOfSapientSignerLeaf
 }
 
 export type SubdigestLeaf = {
