@@ -15,6 +15,7 @@ interface RandomOptions {
   minThresholdOnNested?: number
   maxPermissions?: number
   maxRules?: number
+  checkpointerMode?: 'no' | 'random' | 'yes'
 }
 
 function createSeededRandom(seed: string) {
@@ -106,8 +107,17 @@ async function generateRandomConfig(maxDepth: number, options?: RandomOptions): 
     threshold: randomBigInt(100n, options),
     checkpoint: randomBigInt(1000n, options),
     topology: generateRandomTopology(maxDepth, options),
-    checkpointer:
-      (options?.seededRandom ? options.seededRandom() : Math.random()) > 0.5 ? randomAddress(options) : undefined,
+    checkpointer: (() => {
+      switch (options?.checkpointerMode) {
+        case 'yes':
+          return randomAddress(options)
+        case 'random':
+          return (options?.seededRandom?.() ?? Math.random()) > 0.5 ? randomAddress(options) : undefined
+        case 'no':
+        default:
+          return undefined
+      }
+    })(),
   }
 
   console.log(configToJson(config))
@@ -172,11 +182,18 @@ const command: CommandModule = {
               description: 'Minimum threshold value for nested leaves',
               default: 0,
             })
+            .option('checkpointer', {
+              type: 'string',
+              choices: ['no', 'random', 'yes'],
+              description: 'Checkpointer mode: no (never add), random (50% chance), yes (always add)',
+              default: 'no',
+            })
         },
         async (argv) => {
           const options: RandomOptions = {
             seededRandom: argv.seed ? createSeededRandom(argv.seed) : undefined,
             minThresholdOnNested: argv.minThresholdOnNested as number,
+            checkpointerMode: argv.checkpointer as 'no' | 'random' | 'yes',
           }
           await generateRandomConfig(argv.maxDepth as number, options)
         },
