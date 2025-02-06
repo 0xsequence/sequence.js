@@ -79,7 +79,7 @@ export class MemoryStore implements StateReader, StateWriter {
     const updates: Array<{ imageHash: Hex.Hex; signature: Hex.Hex }> = []
     while (index + 1 < configurationPath.updates.length) {
       for (let next = configurationPath.updates.length - 1; next > index; next--) {
-        if (true) {
+        if (next === index + 1) {
           updates.push(configurationPath.updates[next]!)
           index = next
           break
