@@ -1,9 +1,12 @@
 import {
   Configuration,
+  decodeSignature,
+  fromConfigUpdate,
   getCounterfactualAddress,
   hash,
   hashConfiguration,
   Payload,
+  recover,
 } from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex } from 'ox'
 import { Signature, StateReader, StateWriter } from '.'
@@ -125,7 +128,7 @@ export class MemoryStore implements StateReader, StateWriter {
     }
   }
 
-  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: Hex.Hex): void {
+  async setConfiguration(wallet: Address.Address, configuration: Configuration, signature: Hex.Hex): Promise<void> {
     const configurationPath = this.objects.configurationPaths[wallet]
     if (!configurationPath) {
       throw new Error(`no configuration path for wallet ${wallet}`)
@@ -151,6 +154,20 @@ export class MemoryStore implements StateReader, StateWriter {
       throw new Error(
         `configuration checkpoint ${configuration.checkpoint} <= latest checkpoint ${latestConfiguration.checkpoint}`,
       )
+    }
+
+    const { configuration: recovered, weight } = await recover(
+      decodeSignature(Hex.toBytes(signature)),
+      wallet,
+      0n,
+      fromConfigUpdate(Bytes.toHex(hashConfiguration(configuration))),
+    )
+    if (weight < recovered.threshold) {
+      throw new Error(`invalid signature: weight ${weight} < threshold ${recovered.threshold}`)
+    }
+    const recoveredImageHash = Bytes.toHex(hashConfiguration(recovered))
+    if (recoveredImageHash !== latestImageHash) {
+      throw new Error(`invalid signature: recovered ${recoveredImageHash} != latest ${latestImageHash}`)
     }
 
     configurationPath.updates.push({ imageHash: Bytes.toHex(hashConfiguration(configuration)), signature })
