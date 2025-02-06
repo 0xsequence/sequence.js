@@ -111,7 +111,7 @@ export function getSigners(configuration: Configuration | Topology): {
   return { signers: Array.from(signers), isComplete }
 }
 
-export function getWeight(configuration: Configuration, signers: Address.Address[]): bigint {
+export function getWeight(configuration: Configuration | Topology, signers: Address.Address[]): bigint {
   const set = new Set(signers)
 
   const scan = (topology: Topology): bigint => {
