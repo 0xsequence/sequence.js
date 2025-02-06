@@ -69,7 +69,7 @@ export function sessionPermissionsToJson(sessionPermissions: SessionPermissions)
   return JSON.stringify(encodeSessionPermissionsForJson(sessionPermissions))
 }
 
-function encodeSessionPermissionsForJson(sessionPermissions: SessionPermissions): any {
+export function encodeSessionPermissionsForJson(sessionPermissions: SessionPermissions): any {
   return {
     signer: sessionPermissions.signer.toString(),
     valueLimit: sessionPermissions.valueLimit.toString(),
