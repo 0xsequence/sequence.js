@@ -5,71 +5,70 @@
 //
 // webrpc-gen -schema=metadata.ridl -target=typescript -client -out=./clients/metadata.gen.ts
 
-export const WebrpcHeader = "Webrpc"
+export const WebrpcHeader = 'Webrpc'
 
-export const WebrpcHeaderValue = "webrpc@v0.21.1;gen-typescript@v0.15.1;sequence-metadata@v0.4.0"
+export const WebrpcHeaderValue = 'webrpc@v0.21.1;gen-typescript@v0.15.1;sequence-metadata@v0.4.0'
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "674b211879a80aaf72087afbe63c0fca78a1897b"
+export const WebRPCSchemaHash = '674b211879a80aaf72087afbe63c0fca78a1897b'
 
 type WebrpcGenVersions = {
-  webrpcGenVersion: string;
-  codeGenName: string;
-  codeGenVersion: string;
-  schemaName: string;
-  schemaVersion: string;
-};
+  webrpcGenVersion: string
+  codeGenName: string
+  codeGenVersion: string
+  schemaName: string
+  schemaVersion: string
+}
 
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
+  const headerValue = headers.get(WebrpcHeader)
   if (!headerValue) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  return parseWebrpcGenVersions(headerValue);
+  return parseWebrpcGenVersions(headerValue)
 }
 
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
+  const versions = header.split(';')
   if (versions.length < 3) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  const [_, webrpcGenVersion] = versions[0].split("@");
-  const [codeGenName, codeGenVersion] = versions[1].split("@");
-  const [schemaName, schemaVersion] = versions[2].split("@");
+  const [_, webrpcGenVersion] = versions[0].split('@')
+  const [codeGenName, codeGenVersion] = versions[1].split('@')
+  const [schemaName, schemaVersion] = versions[2].split('@')
 
   return {
     webrpcGenVersion,
     codeGenName,
     codeGenVersion,
     schemaName,
-    schemaVersion,
-  };
+    schemaVersion
+  }
 }
 
 //
 // Types
 //
-
 
 export enum ContractType {
   UNKNOWN = 'UNKNOWN',
@@ -135,7 +134,7 @@ export interface RuntimeStatus {
   branch: string
   commitHash: string
   checks: RuntimeChecks
-  runnable: {[key: string]: RunnableStatus}
+  runnable: { [key: string]: RunnableStatus }
 }
 
 export interface RunnableStatus {
@@ -146,15 +145,14 @@ export interface RunnableStatus {
   lastError: any
 }
 
-export interface RuntimeChecks {
-}
+export interface RuntimeChecks {}
 
 export interface ContractIndex {
   chainId: number
   address: string
   type: ContractType
   source: Source
-  metadata: {[key: string]: any}
+  metadata: { [key: string]: any }
   contentHash: number
   deployed: boolean
   bytecodeHash: string
@@ -170,7 +168,7 @@ export interface TokenIndex {
   chainId: number
   contractAddress: string
   tokenId: string
-  metadata: {[key: string]: any}
+  metadata: { [key: string]: any }
   notFound?: boolean
   lastFetched?: string
   fetchCount?: number
@@ -218,8 +216,8 @@ export interface TokenMetadata {
   image?: string
   video?: string
   audio?: string
-  properties?: {[key: string]: any}
-  attributes: Array<{[key: string]: any}>
+  properties?: { [key: string]: any }
+  attributes: Array<{ [key: string]: any }>
   image_data?: string
   external_url?: string
   background_color?: string
@@ -264,8 +262,8 @@ export interface CollectionMetadata {
   description?: string
   image?: string
   external_link?: string
-  properties?: {[key: string]: any}
-  attributes?: Array<{[key: string]: any}>
+  properties?: { [key: string]: any }
+  attributes?: Array<{ [key: string]: any }>
 }
 
 export interface CollectionBaseURIs {
@@ -347,72 +345,153 @@ export interface Metadata {
   runtimeStatus(headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn>
   getTask(args: GetTaskArgs, headers?: object, signal?: AbortSignal): Promise<GetTaskReturn>
   getTaskStatus(args: GetTaskStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetTaskStatusReturn>
-  refreshTokenMetadata(args: RefreshTokenMetadataArgs, headers?: object, signal?: AbortSignal): Promise<RefreshTokenMetadataReturn>
-  enqueueTokensForRefresh(args: EnqueueTokensForRefreshArgs, headers?: object, signal?: AbortSignal): Promise<EnqueueTokensForRefreshReturn>
-  getTokenRefreshStatus(args: GetTokenRefreshStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenRefreshStatusReturn>
-  getTokenRefreshResult(args: GetTokenRefreshResultArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenRefreshResultReturn>
+  refreshTokenMetadata(
+    args: RefreshTokenMetadataArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RefreshTokenMetadataReturn>
+  enqueueTokensForRefresh(
+    args: EnqueueTokensForRefreshArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<EnqueueTokensForRefreshReturn>
+  getTokenRefreshStatus(
+    args: GetTokenRefreshStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenRefreshStatusReturn>
+  getTokenRefreshResult(
+    args: GetTokenRefreshResultArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenRefreshResultReturn>
   cancelRefreshJob(args: CancelRefreshJobArgs, headers?: object, signal?: AbortSignal): Promise<CancelRefreshJobReturn>
   refreshContractInfo(args: RefreshContractInfoArgs, headers?: object, signal?: AbortSignal): Promise<RefreshContractInfoReturn>
-  refreshContractTokens(args: RefreshContractTokensArgs, headers?: object, signal?: AbortSignal): Promise<RefreshContractTokensReturn>
-  refreshAllContractTokens(args: RefreshAllContractTokensArgs, headers?: object, signal?: AbortSignal): Promise<RefreshAllContractTokensReturn>
+  refreshContractTokens(
+    args: RefreshContractTokensArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RefreshContractTokensReturn>
+  refreshAllContractTokens(
+    args: RefreshAllContractTokensArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RefreshAllContractTokensReturn>
   getTokenMetadata(args: GetTokenMetadataArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenMetadataReturn>
-  getTokenMetadataBatch(args: GetTokenMetadataBatchArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenMetadataBatchReturn>
+  getTokenMetadataBatch(
+    args: GetTokenMetadataBatchArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenMetadataBatchReturn>
   searchTokenMetadata(args: SearchTokenMetadataArgs, headers?: object, signal?: AbortSignal): Promise<SearchTokenMetadataReturn>
   searchTokenIDs(args: SearchTokenIDsArgs, headers?: object, signal?: AbortSignal): Promise<SearchTokenIDsReturn>
-  tokenCollectionFilters(args: TokenCollectionFiltersArgs, headers?: object, signal?: AbortSignal): Promise<TokenCollectionFiltersReturn>
+  tokenCollectionFilters(
+    args: TokenCollectionFiltersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<TokenCollectionFiltersReturn>
   getContractInfo(args: GetContractInfoArgs, headers?: object, signal?: AbortSignal): Promise<GetContractInfoReturn>
-  getContractInfoBatch(args: GetContractInfoBatchArgs, headers?: object, signal?: AbortSignal): Promise<GetContractInfoBatchReturn>
+  getContractInfoBatch(
+    args: GetContractInfoBatchArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetContractInfoBatchReturn>
   searchContractInfo(args: SearchContractInfoArgs, headers?: object, signal?: AbortSignal): Promise<SearchContractInfoReturn>
-  searchContractInfoBatch(args: SearchContractInfoBatchArgs, headers?: object, signal?: AbortSignal): Promise<SearchContractInfoBatchReturn>
+  searchContractInfoBatch(
+    args: SearchContractInfoBatchArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SearchContractInfoBatchReturn>
   searchMetadata(args: SearchMetadataArgs, headers?: object, signal?: AbortSignal): Promise<SearchMetadataReturn>
   searchTokens(args: SearchTokensArgs, headers?: object, signal?: AbortSignal): Promise<SearchTokensReturn>
   searchContracts(args: SearchContractsArgs, headers?: object, signal?: AbortSignal): Promise<SearchContractsReturn>
-  getNiftyswapTokenQuantity(args: GetNiftyswapTokenQuantityArgs, headers?: object, signal?: AbortSignal): Promise<GetNiftyswapTokenQuantityReturn>
-  getNiftyswapUnitPrices(args: GetNiftyswapUnitPricesArgs, headers?: object, signal?: AbortSignal): Promise<GetNiftyswapUnitPricesReturn>
-  getNiftyswapUnitPricesWithQuantities(args: GetNiftyswapUnitPricesWithQuantitiesArgs, headers?: object, signal?: AbortSignal): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn>
-  addContractToMintMonitor(args: AddContractToMintMonitorArgs, headers?: object, signal?: AbortSignal): Promise<AddContractToMintMonitorReturn>
-  removeContractFromMintMonitor(args: RemoveContractFromMintMonitorArgs, headers?: object, signal?: AbortSignal): Promise<RemoveContractFromMintMonitorReturn>
-  mintMonitorJobStatus(args: MintMonitorJobStatusArgs, headers?: object, signal?: AbortSignal): Promise<MintMonitorJobStatusReturn>
-  mintMonitorTriggerJob(args: MintMonitorTriggerJobArgs, headers?: object, signal?: AbortSignal): Promise<MintMonitorTriggerJobReturn>
+  getNiftyswapTokenQuantity(
+    args: GetNiftyswapTokenQuantityArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNiftyswapTokenQuantityReturn>
+  getNiftyswapUnitPrices(
+    args: GetNiftyswapUnitPricesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNiftyswapUnitPricesReturn>
+  getNiftyswapUnitPricesWithQuantities(
+    args: GetNiftyswapUnitPricesWithQuantitiesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn>
+  addContractToMintMonitor(
+    args: AddContractToMintMonitorArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddContractToMintMonitorReturn>
+  removeContractFromMintMonitor(
+    args: RemoveContractFromMintMonitorArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveContractFromMintMonitorReturn>
+  mintMonitorJobStatus(
+    args: MintMonitorJobStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<MintMonitorJobStatusReturn>
+  mintMonitorTriggerJob(
+    args: MintMonitorTriggerJobArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<MintMonitorTriggerJobReturn>
   syncContractTokens(args: SyncContractTokensArgs, headers?: object, signal?: AbortSignal): Promise<SyncContractTokensReturn>
   abortContractSync(args: AbortContractSyncArgs, headers?: object, signal?: AbortSignal): Promise<AbortContractSyncReturn>
-  contractSyncJobStatus(args: ContractSyncJobStatusArgs, headers?: object, signal?: AbortSignal): Promise<ContractSyncJobStatusReturn>
-  directoryGetNetworks(args: DirectoryGetNetworksArgs, headers?: object, signal?: AbortSignal): Promise<DirectoryGetNetworksReturn>
-  directoryGetCollections(args: DirectoryGetCollectionsArgs, headers?: object, signal?: AbortSignal): Promise<DirectoryGetCollectionsReturn>
-  directorySearchCollections(args: DirectorySearchCollectionsArgs, headers?: object, signal?: AbortSignal): Promise<DirectorySearchCollectionsReturn>
+  contractSyncJobStatus(
+    args: ContractSyncJobStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ContractSyncJobStatusReturn>
+  directoryGetNetworks(
+    args: DirectoryGetNetworksArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DirectoryGetNetworksReturn>
+  directoryGetCollections(
+    args: DirectoryGetCollectionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DirectoryGetCollectionsReturn>
+  directorySearchCollections(
+    args: DirectorySearchCollectionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DirectorySearchCollectionsReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
 export interface GetTaskArgs {
   taskId: number
 }
 
 export interface GetTaskReturn {
-  task: Task  
+  task: Task
 }
 export interface GetTaskStatusArgs {
   taskId: number
 }
 
 export interface GetTaskStatusReturn {
-  status?: TaskStatus  
+  status?: TaskStatus
 }
 export interface RefreshTokenMetadataArgs {
   chainID: string
@@ -422,7 +501,7 @@ export interface RefreshTokenMetadataArgs {
 }
 
 export interface RefreshTokenMetadataReturn {
-  taskId: number  
+  taskId: number
 }
 export interface EnqueueTokensForRefreshArgs {
   chainID: string
@@ -432,14 +511,14 @@ export interface EnqueueTokensForRefreshArgs {
 }
 
 export interface EnqueueTokensForRefreshReturn {
-  taskId: number  
+  taskId: number
 }
 export interface GetTokenRefreshStatusArgs {
   taskId: number
 }
 
 export interface GetTokenRefreshStatusReturn {
-  status?: TaskStatus  
+  status?: TaskStatus
 }
 export interface GetTokenRefreshResultArgs {
   taskId: number
@@ -447,23 +526,22 @@ export interface GetTokenRefreshResultArgs {
 
 export interface GetTokenRefreshResultReturn {
   status?: TaskStatus
-  tokens: {[key: string]: boolean}
-  failureReasons: {[key: string]: string}  
+  tokens: { [key: string]: boolean }
+  failureReasons: { [key: string]: string }
 }
 export interface CancelRefreshJobArgs {
   taskId: number
 }
 
 export interface CancelRefreshJobReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface RefreshContractInfoArgs {
   chainHandle: string
   contractAddress: string
 }
 
-export interface RefreshContractInfoReturn {  
-}
+export interface RefreshContractInfoReturn {}
 export interface RefreshContractTokensArgs {
   chainHandle: string
   contractAddress: string
@@ -471,7 +549,7 @@ export interface RefreshContractTokensArgs {
 }
 
 export interface RefreshContractTokensReturn {
-  taskID?: number  
+  taskID?: number
 }
 export interface RefreshAllContractTokensArgs {
   chainHandle: string
@@ -480,7 +558,7 @@ export interface RefreshAllContractTokensArgs {
 
 export interface RefreshAllContractTokensReturn {
   taskID?: number
-  retryAfter: number  
+  retryAfter: number
 }
 export interface GetTokenMetadataArgs {
   chainID: string
@@ -490,16 +568,16 @@ export interface GetTokenMetadataArgs {
 
 export interface GetTokenMetadataReturn {
   tokenMetadata: Array<TokenMetadata>
-  taskID?: number  
+  taskID?: number
 }
 export interface GetTokenMetadataBatchArgs {
   chainID: string
-  contractTokenMap: {[key: string]: Array<string>}
+  contractTokenMap: { [key: string]: Array<string> }
 }
 
 export interface GetTokenMetadataBatchReturn {
-  contractTokenMetadata: {[key: string]: Array<TokenMetadata>}
-  taskID?: number  
+  contractTokenMetadata: { [key: string]: Array<TokenMetadata> }
+  taskID?: number
 }
 export interface SearchTokenMetadataArgs {
   chainID: string
@@ -510,7 +588,7 @@ export interface SearchTokenMetadataArgs {
 
 export interface SearchTokenMetadataReturn {
   page: Page
-  tokenMetadata: Array<TokenMetadata>  
+  tokenMetadata: Array<TokenMetadata>
 }
 export interface SearchTokenIDsArgs {
   chainID: string
@@ -521,7 +599,7 @@ export interface SearchTokenIDsArgs {
 
 export interface SearchTokenIDsReturn {
   page: Page
-  tokenIds: Array<string>  
+  tokenIds: Array<string>
 }
 export interface TokenCollectionFiltersArgs {
   chainID: string
@@ -529,7 +607,7 @@ export interface TokenCollectionFiltersArgs {
 }
 
 export interface TokenCollectionFiltersReturn {
-  filters: Array<PropertyFilter>  
+  filters: Array<PropertyFilter>
 }
 export interface GetContractInfoArgs {
   chainID: string
@@ -538,7 +616,7 @@ export interface GetContractInfoArgs {
 
 export interface GetContractInfoReturn {
   contractInfo: ContractInfo
-  taskID?: number  
+  taskID?: number
 }
 export interface GetContractInfoBatchArgs {
   chainID: string
@@ -546,22 +624,22 @@ export interface GetContractInfoBatchArgs {
 }
 
 export interface GetContractInfoBatchReturn {
-  contractInfoMap: {[key: string]: ContractInfo}
-  taskID?: number  
+  contractInfoMap: { [key: string]: ContractInfo }
+  taskID?: number
 }
 export interface SearchContractInfoArgs {
   contractAddress: string
 }
 
 export interface SearchContractInfoReturn {
-  contractInfoList: Array<ContractInfo>  
+  contractInfoList: Array<ContractInfo>
 }
 export interface SearchContractInfoBatchArgs {
   contractAddresses: Array<string>
 }
 
 export interface SearchContractInfoBatchReturn {
-  contractInfoByChain: {[key: string]: Array<ContractInfo>}  
+  contractInfoByChain: { [key: string]: Array<ContractInfo> }
 }
 export interface SearchMetadataArgs {
   filter: string
@@ -572,7 +650,7 @@ export interface SearchMetadataArgs {
 
 export interface SearchMetadataReturn {
   tokenMetadata: Array<TokenMetadata>
-  contractInfo: Array<ContractInfo>  
+  contractInfo: Array<ContractInfo>
 }
 export interface SearchTokensArgs {
   q: string
@@ -582,7 +660,7 @@ export interface SearchTokensArgs {
 
 export interface SearchTokensReturn {
   tokenMetadata: Array<TokenMetadata>
-  nextPage: Page  
+  nextPage: Page
 }
 export interface SearchContractsArgs {
   q: string
@@ -594,7 +672,7 @@ export interface SearchContractsArgs {
 
 export interface SearchContractsReturn {
   contractInfo: Array<ContractInfo>
-  nextPage: Page  
+  nextPage: Page
 }
 export interface GetNiftyswapTokenQuantityArgs {
   chainID: string
@@ -603,7 +681,7 @@ export interface GetNiftyswapTokenQuantityArgs {
 }
 
 export interface GetNiftyswapTokenQuantityReturn {
-  quantity: {[key: string]: string}  
+  quantity: { [key: string]: string }
 }
 export interface GetNiftyswapUnitPricesArgs {
   chainID: string
@@ -613,7 +691,7 @@ export interface GetNiftyswapUnitPricesArgs {
 }
 
 export interface GetNiftyswapUnitPricesReturn {
-  prices: {[key: string]: string}  
+  prices: { [key: string]: string }
 }
 export interface GetNiftyswapUnitPricesWithQuantitiesArgs {
   chainID: string
@@ -623,7 +701,7 @@ export interface GetNiftyswapUnitPricesWithQuantitiesArgs {
 }
 
 export interface GetNiftyswapUnitPricesWithQuantitiesReturn {
-  prices: {[key: string]: GetNiftyswapUnitPricesResponse}  
+  prices: { [key: string]: GetNiftyswapUnitPricesResponse }
 }
 export interface AddContractToMintMonitorArgs {
   chainID: string
@@ -631,7 +709,7 @@ export interface AddContractToMintMonitorArgs {
 }
 
 export interface AddContractToMintMonitorReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface RemoveContractFromMintMonitorArgs {
   chainID: string
@@ -639,7 +717,7 @@ export interface RemoveContractFromMintMonitorArgs {
 }
 
 export interface RemoveContractFromMintMonitorReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface MintMonitorJobStatusArgs {
   chainID: string
@@ -647,7 +725,7 @@ export interface MintMonitorJobStatusArgs {
 }
 
 export interface MintMonitorJobStatusReturn {
-  task: Task  
+  task: Task
 }
 export interface MintMonitorTriggerJobArgs {
   chainID: string
@@ -655,7 +733,7 @@ export interface MintMonitorTriggerJobArgs {
 }
 
 export interface MintMonitorTriggerJobReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface SyncContractTokensArgs {
   chainID: string
@@ -663,14 +741,14 @@ export interface SyncContractTokensArgs {
 }
 
 export interface SyncContractTokensReturn {
-  taskID: number  
+  taskID: number
 }
 export interface AbortContractSyncArgs {
   taskID: number
 }
 
 export interface AbortContractSyncReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface ContractSyncJobStatusArgs {
   taskID: number
@@ -678,7 +756,7 @@ export interface ContractSyncJobStatusArgs {
 
 export interface ContractSyncJobStatusReturn {
   refreshTask: Task
-  syncTask: Task  
+  syncTask: Task
 }
 export interface DirectoryGetNetworksArgs {
   includeTestnets?: boolean
@@ -686,7 +764,7 @@ export interface DirectoryGetNetworksArgs {
 }
 
 export interface DirectoryGetNetworksReturn {
-  networks: Array<number>  
+  networks: Array<number>
 }
 export interface DirectoryGetCollectionsArgs {
   chainId?: number
@@ -697,7 +775,7 @@ export interface DirectoryGetCollectionsArgs {
 
 export interface DirectoryGetCollectionsReturn {
   collections: Array<ContractInfo>
-  page: Page  
+  page: Page
 }
 export interface DirectorySearchCollectionsArgs {
   query: string
@@ -709,7 +787,7 @@ export interface DirectorySearchCollectionsArgs {
 
 export interface DirectorySearchCollectionsReturn {
   collections: Array<ContractInfo>
-  page: Page  
+  page: Page
 }
 
 export interface Collections {
@@ -720,11 +798,31 @@ export interface Collections {
   deleteCollection(args: DeleteCollectionArgs, headers?: object, signal?: AbortSignal): Promise<DeleteCollectionReturn>
   publishCollection(args: PublishCollectionArgs, headers?: object, signal?: AbortSignal): Promise<PublishCollectionReturn>
   unpublishCollection(args: UnpublishCollectionArgs, headers?: object, signal?: AbortSignal): Promise<UnpublishCollectionReturn>
-  createContractCollection(args: CreateContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<CreateContractCollectionReturn>
-  getContractCollection(args: GetContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<GetContractCollectionReturn>
-  listContractCollections(args: ListContractCollectionsArgs, headers?: object, signal?: AbortSignal): Promise<ListContractCollectionsReturn>
-  updateContractCollection(args: UpdateContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<UpdateContractCollectionReturn>
-  deleteContractCollection(args: DeleteContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<DeleteContractCollectionReturn>
+  createContractCollection(
+    args: CreateContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<CreateContractCollectionReturn>
+  getContractCollection(
+    args: GetContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetContractCollectionReturn>
+  listContractCollections(
+    args: ListContractCollectionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListContractCollectionsReturn>
+  updateContractCollection(
+    args: UpdateContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateContractCollectionReturn>
+  deleteContractCollection(
+    args: DeleteContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DeleteContractCollectionReturn>
   createToken(args: CreateTokenArgs, headers?: object, signal?: AbortSignal): Promise<CreateTokenReturn>
   getToken(args: GetTokenArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenReturn>
   listTokens(args: ListTokensArgs, headers?: object, signal?: AbortSignal): Promise<ListTokensReturn>
@@ -742,7 +840,7 @@ export interface CreateCollectionArgs {
 }
 
 export interface CreateCollectionReturn {
-  collection: Collection  
+  collection: Collection
 }
 export interface GetCollectionArgs {
   projectId?: number
@@ -750,7 +848,7 @@ export interface GetCollectionArgs {
 }
 
 export interface GetCollectionReturn {
-  collection: Collection  
+  collection: Collection
 }
 export interface ListCollectionsArgs {
   projectId?: number
@@ -759,7 +857,7 @@ export interface ListCollectionsArgs {
 
 export interface ListCollectionsReturn {
   page: Page
-  collections: Array<Collection>  
+  collections: Array<Collection>
 }
 export interface UpdateCollectionArgs {
   projectId?: number
@@ -767,7 +865,7 @@ export interface UpdateCollectionArgs {
 }
 
 export interface UpdateCollectionReturn {
-  collection: Collection  
+  collection: Collection
 }
 export interface DeleteCollectionArgs {
   projectId?: number
@@ -775,7 +873,7 @@ export interface DeleteCollectionArgs {
 }
 
 export interface DeleteCollectionReturn {
-  status: boolean  
+  status: boolean
 }
 export interface PublishCollectionArgs {
   projectId?: number
@@ -784,7 +882,7 @@ export interface PublishCollectionArgs {
 }
 
 export interface PublishCollectionReturn {
-  collection: Collection  
+  collection: Collection
 }
 export interface UnpublishCollectionArgs {
   projectId?: number
@@ -792,7 +890,7 @@ export interface UnpublishCollectionArgs {
 }
 
 export interface UnpublishCollectionReturn {
-  collection: Collection  
+  collection: Collection
 }
 export interface CreateContractCollectionArgs {
   projectId: number
@@ -800,7 +898,7 @@ export interface CreateContractCollectionArgs {
 }
 
 export interface CreateContractCollectionReturn {
-  contractCollection: ContractCollection  
+  contractCollection: ContractCollection
 }
 export interface GetContractCollectionArgs {
   projectId: number
@@ -809,7 +907,7 @@ export interface GetContractCollectionArgs {
 }
 
 export interface GetContractCollectionReturn {
-  contractCollection: ContractCollection  
+  contractCollection: ContractCollection
 }
 export interface ListContractCollectionsArgs {
   projectId: number
@@ -820,7 +918,7 @@ export interface ListContractCollectionsArgs {
 export interface ListContractCollectionsReturn {
   contractCollections: Array<ContractCollection>
   collections: Array<Collection>
-  page: Page  
+  page: Page
 }
 export interface UpdateContractCollectionArgs {
   projectId: number
@@ -828,7 +926,7 @@ export interface UpdateContractCollectionArgs {
 }
 
 export interface UpdateContractCollectionReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface DeleteContractCollectionArgs {
   projectId: number
@@ -837,7 +935,7 @@ export interface DeleteContractCollectionArgs {
 }
 
 export interface DeleteContractCollectionReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface CreateTokenArgs {
   projectId?: number
@@ -848,7 +946,7 @@ export interface CreateTokenArgs {
 
 export interface CreateTokenReturn {
   token: TokenMetadata
-  assets: Array<Asset>  
+  assets: Array<Asset>
 }
 export interface GetTokenArgs {
   projectId?: number
@@ -858,7 +956,7 @@ export interface GetTokenArgs {
 
 export interface GetTokenReturn {
   token: TokenMetadata
-  assets: Array<Asset>  
+  assets: Array<Asset>
 }
 export interface ListTokensArgs {
   projectId?: number
@@ -868,7 +966,7 @@ export interface ListTokensArgs {
 
 export interface ListTokensReturn {
   page: Page
-  tokens: Array<TokenMetadata>  
+  tokens: Array<TokenMetadata>
 }
 export interface UpdateTokenArgs {
   projectId?: number
@@ -879,7 +977,7 @@ export interface UpdateTokenArgs {
 }
 
 export interface UpdateTokenReturn {
-  token: TokenMetadata  
+  token: TokenMetadata
 }
 export interface DeleteTokenArgs {
   projectId?: number
@@ -888,7 +986,7 @@ export interface DeleteTokenArgs {
 }
 
 export interface DeleteTokenReturn {
-  status: boolean  
+  status: boolean
 }
 export interface CreateAssetArgs {
   projectId?: number
@@ -896,7 +994,7 @@ export interface CreateAssetArgs {
 }
 
 export interface CreateAssetReturn {
-  asset: Asset  
+  asset: Asset
 }
 export interface GetAssetArgs {
   projectId?: number
@@ -904,7 +1002,7 @@ export interface GetAssetArgs {
 }
 
 export interface GetAssetReturn {
-  asset: Asset  
+  asset: Asset
 }
 export interface UpdateAssetArgs {
   projectId?: number
@@ -912,7 +1010,7 @@ export interface UpdateAssetArgs {
 }
 
 export interface UpdateAssetReturn {
-  asset: Asset  
+  asset: Asset
 }
 export interface DeleteAssetArgs {
   projectId?: number
@@ -920,12 +1018,20 @@ export interface DeleteAssetArgs {
 }
 
 export interface DeleteAssetReturn {
-  status: boolean  
+  status: boolean
 }
 
 export interface Admin {
-  addContractsToTokenDirectory(args: AddContractsToTokenDirectoryArgs, headers?: object, signal?: AbortSignal): Promise<AddContractsToTokenDirectoryReturn>
-  removeContractsFromTokenDirectory(args: RemoveContractsFromTokenDirectoryArgs, headers?: object, signal?: AbortSignal): Promise<RemoveContractsFromTokenDirectoryReturn>
+  addContractsToTokenDirectory(
+    args: AddContractsToTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddContractsToTokenDirectoryReturn>
+  removeContractsFromTokenDirectory(
+    args: RemoveContractsFromTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveContractsFromTokenDirectoryReturn>
   modifyFeatureIndex(args: ModifyFeatureIndexArgs, headers?: object, signal?: AbortSignal): Promise<ModifyFeatureIndexReturn>
   getFeatureIndex(args: GetFeatureIndexArgs, headers?: object, signal?: AbortSignal): Promise<GetFeatureIndexReturn>
   listTokenDirectory(args: ListTokenDirectoryArgs, headers?: object, signal?: AbortSignal): Promise<ListTokenDirectoryReturn>
@@ -937,7 +1043,7 @@ export interface AddContractsToTokenDirectoryArgs {
 }
 
 export interface AddContractsToTokenDirectoryReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface RemoveContractsFromTokenDirectoryArgs {
   chainHandle: string
@@ -945,7 +1051,7 @@ export interface RemoveContractsFromTokenDirectoryArgs {
 }
 
 export interface RemoveContractsFromTokenDirectoryReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface ModifyFeatureIndexArgs {
   chainHandle: string
@@ -954,7 +1060,7 @@ export interface ModifyFeatureIndexArgs {
 }
 
 export interface ModifyFeatureIndexReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface GetFeatureIndexArgs {
   chainHandle: string
@@ -962,7 +1068,7 @@ export interface GetFeatureIndexArgs {
 }
 
 export interface GetFeatureIndexReturn {
-  featured: number  
+  featured: number
 }
 export interface ListTokenDirectoryArgs {
   chainID?: number
@@ -973,11 +1079,9 @@ export interface ListTokenDirectoryArgs {
 
 export interface ListTokenDirectoryReturn {
   page: Page
-  collections: Array<ContractInfo>  
+  collections: Array<ContractInfo>
 }
 
-
-  
 //
 // Client
 //
@@ -994,555 +1098,689 @@ export class Metadata implements Metadata {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   version = (headers?: object, signal?: AbortSignal): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          version: <Version>(_data.version),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            version: <Version>_data.version
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   runtimeStatus = (headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <RuntimeStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <RuntimeStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTask = (args: GetTaskArgs, headers?: object, signal?: AbortSignal): Promise<GetTaskReturn> => {
-    return this.fetch(
-      this.url('GetTask'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          task: <Task>(_data.task),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTask'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            task: <Task>_data.task
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTaskStatus = (args: GetTaskStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetTaskStatusReturn> => {
-    return this.fetch(
-      this.url('GetTaskStatus'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <TaskStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTaskStatus'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <TaskStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  refreshTokenMetadata = (args: RefreshTokenMetadataArgs, headers?: object, signal?: AbortSignal): Promise<RefreshTokenMetadataReturn> => {
-    return this.fetch(
-      this.url('RefreshTokenMetadata'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          taskId: <number>(_data.taskId),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  refreshTokenMetadata = (
+    args: RefreshTokenMetadataArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RefreshTokenMetadataReturn> => {
+    return this.fetch(this.url('RefreshTokenMetadata'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            taskId: <number>_data.taskId
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  enqueueTokensForRefresh = (args: EnqueueTokensForRefreshArgs, headers?: object, signal?: AbortSignal): Promise<EnqueueTokensForRefreshReturn> => {
-    return this.fetch(
-      this.url('EnqueueTokensForRefresh'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          taskId: <number>(_data.taskId),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  enqueueTokensForRefresh = (
+    args: EnqueueTokensForRefreshArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<EnqueueTokensForRefreshReturn> => {
+    return this.fetch(this.url('EnqueueTokensForRefresh'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            taskId: <number>_data.taskId
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTokenRefreshStatus = (args: GetTokenRefreshStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenRefreshStatusReturn> => {
-    return this.fetch(
-      this.url('GetTokenRefreshStatus'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <TaskStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTokenRefreshStatus = (
+    args: GetTokenRefreshStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenRefreshStatusReturn> => {
+    return this.fetch(this.url('GetTokenRefreshStatus'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <TaskStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTokenRefreshResult = (args: GetTokenRefreshResultArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenRefreshResultReturn> => {
-    return this.fetch(
-      this.url('GetTokenRefreshResult'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <TaskStatus>(_data.status),
-          tokens: <{[key: string]: boolean}>(_data.tokens),
-          failureReasons: <{[key: string]: string}>(_data.failureReasons),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTokenRefreshResult = (
+    args: GetTokenRefreshResultArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenRefreshResultReturn> => {
+    return this.fetch(this.url('GetTokenRefreshResult'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <TaskStatus>_data.status,
+            tokens: <{ [key: string]: boolean }>_data.tokens,
+            failureReasons: <{ [key: string]: string }>_data.failureReasons
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   cancelRefreshJob = (args: CancelRefreshJobArgs, headers?: object, signal?: AbortSignal): Promise<CancelRefreshJobReturn> => {
-    return this.fetch(
-      this.url('CancelRefreshJob'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('CancelRefreshJob'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  refreshContractInfo = (args: RefreshContractInfoArgs, headers?: object, signal?: AbortSignal): Promise<RefreshContractInfoReturn> => {
-    return this.fetch(
-      this.url('RefreshContractInfo'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  refreshContractInfo = (
+    args: RefreshContractInfoArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RefreshContractInfoReturn> => {
+    return this.fetch(this.url('RefreshContractInfo'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  refreshContractTokens = (args: RefreshContractTokensArgs, headers?: object, signal?: AbortSignal): Promise<RefreshContractTokensReturn> => {
-    return this.fetch(
-      this.url('RefreshContractTokens'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          taskID: <number>(_data.taskID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  refreshContractTokens = (
+    args: RefreshContractTokensArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RefreshContractTokensReturn> => {
+    return this.fetch(this.url('RefreshContractTokens'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            taskID: <number>_data.taskID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  refreshAllContractTokens = (args: RefreshAllContractTokensArgs, headers?: object, signal?: AbortSignal): Promise<RefreshAllContractTokensReturn> => {
-    return this.fetch(
-      this.url('RefreshAllContractTokens'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          taskID: <number>(_data.taskID),
-          retryAfter: <number>(_data.retryAfter),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  refreshAllContractTokens = (
+    args: RefreshAllContractTokensArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RefreshAllContractTokensReturn> => {
+    return this.fetch(this.url('RefreshAllContractTokens'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            taskID: <number>_data.taskID,
+            retryAfter: <number>_data.retryAfter
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getTokenMetadata = (args: GetTokenMetadataArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenMetadataReturn> => {
-    return this.fetch(
-      this.url('GetTokenMetadata'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokenMetadata: <Array<TokenMetadata>>(_data.tokenMetadata),
-          taskID: <number>(_data.taskID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetTokenMetadata'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokenMetadata: <Array<TokenMetadata>>_data.tokenMetadata,
+            taskID: <number>_data.taskID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getTokenMetadataBatch = (args: GetTokenMetadataBatchArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenMetadataBatchReturn> => {
-    return this.fetch(
-      this.url('GetTokenMetadataBatch'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractTokenMetadata: <{[key: string]: Array<TokenMetadata>}>(_data.contractTokenMetadata),
-          taskID: <number>(_data.taskID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getTokenMetadataBatch = (
+    args: GetTokenMetadataBatchArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetTokenMetadataBatchReturn> => {
+    return this.fetch(this.url('GetTokenMetadataBatch'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractTokenMetadata: <{ [key: string]: Array<TokenMetadata> }>_data.contractTokenMetadata,
+            taskID: <number>_data.taskID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  searchTokenMetadata = (args: SearchTokenMetadataArgs, headers?: object, signal?: AbortSignal): Promise<SearchTokenMetadataReturn> => {
-    return this.fetch(
-      this.url('SearchTokenMetadata'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          tokenMetadata: <Array<TokenMetadata>>(_data.tokenMetadata),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  searchTokenMetadata = (
+    args: SearchTokenMetadataArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SearchTokenMetadataReturn> => {
+    return this.fetch(this.url('SearchTokenMetadata'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            tokenMetadata: <Array<TokenMetadata>>_data.tokenMetadata
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   searchTokenIDs = (args: SearchTokenIDsArgs, headers?: object, signal?: AbortSignal): Promise<SearchTokenIDsReturn> => {
-    return this.fetch(
-      this.url('SearchTokenIDs'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          tokenIds: <Array<string>>(_data.tokenIds),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SearchTokenIDs'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            tokenIds: <Array<string>>_data.tokenIds
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  tokenCollectionFilters = (args: TokenCollectionFiltersArgs, headers?: object, signal?: AbortSignal): Promise<TokenCollectionFiltersReturn> => {
-    return this.fetch(
-      this.url('TokenCollectionFilters'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          filters: <Array<PropertyFilter>>(_data.filters),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  tokenCollectionFilters = (
+    args: TokenCollectionFiltersArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<TokenCollectionFiltersReturn> => {
+    return this.fetch(this.url('TokenCollectionFilters'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            filters: <Array<PropertyFilter>>_data.filters
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getContractInfo = (args: GetContractInfoArgs, headers?: object, signal?: AbortSignal): Promise<GetContractInfoReturn> => {
-    return this.fetch(
-      this.url('GetContractInfo'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractInfo: <ContractInfo>(_data.contractInfo),
-          taskID: <number>(_data.taskID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetContractInfo'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractInfo: <ContractInfo>_data.contractInfo,
+            taskID: <number>_data.taskID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getContractInfoBatch = (args: GetContractInfoBatchArgs, headers?: object, signal?: AbortSignal): Promise<GetContractInfoBatchReturn> => {
-    return this.fetch(
-      this.url('GetContractInfoBatch'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractInfoMap: <{[key: string]: ContractInfo}>(_data.contractInfoMap),
-          taskID: <number>(_data.taskID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getContractInfoBatch = (
+    args: GetContractInfoBatchArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetContractInfoBatchReturn> => {
+    return this.fetch(this.url('GetContractInfoBatch'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractInfoMap: <{ [key: string]: ContractInfo }>_data.contractInfoMap,
+            taskID: <number>_data.taskID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  searchContractInfo = (args: SearchContractInfoArgs, headers?: object, signal?: AbortSignal): Promise<SearchContractInfoReturn> => {
-    return this.fetch(
-      this.url('SearchContractInfo'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractInfoList: <Array<ContractInfo>>(_data.contractInfoList),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  searchContractInfo = (
+    args: SearchContractInfoArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SearchContractInfoReturn> => {
+    return this.fetch(this.url('SearchContractInfo'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractInfoList: <Array<ContractInfo>>_data.contractInfoList
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  searchContractInfoBatch = (args: SearchContractInfoBatchArgs, headers?: object, signal?: AbortSignal): Promise<SearchContractInfoBatchReturn> => {
-    return this.fetch(
-      this.url('SearchContractInfoBatch'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractInfoByChain: <{[key: string]: Array<ContractInfo>}>(_data.contractInfoByChain),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  searchContractInfoBatch = (
+    args: SearchContractInfoBatchArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SearchContractInfoBatchReturn> => {
+    return this.fetch(this.url('SearchContractInfoBatch'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractInfoByChain: <{ [key: string]: Array<ContractInfo> }>_data.contractInfoByChain
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   searchMetadata = (args: SearchMetadataArgs, headers?: object, signal?: AbortSignal): Promise<SearchMetadataReturn> => {
-    return this.fetch(
-      this.url('SearchMetadata'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokenMetadata: <Array<TokenMetadata>>(_data.tokenMetadata),
-          contractInfo: <Array<ContractInfo>>(_data.contractInfo),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SearchMetadata'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokenMetadata: <Array<TokenMetadata>>_data.tokenMetadata,
+            contractInfo: <Array<ContractInfo>>_data.contractInfo
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   searchTokens = (args: SearchTokensArgs, headers?: object, signal?: AbortSignal): Promise<SearchTokensReturn> => {
-    return this.fetch(
-      this.url('SearchTokens'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokenMetadata: <Array<TokenMetadata>>(_data.tokenMetadata),
-          nextPage: <Page>(_data.nextPage),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SearchTokens'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokenMetadata: <Array<TokenMetadata>>_data.tokenMetadata,
+            nextPage: <Page>_data.nextPage
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   searchContracts = (args: SearchContractsArgs, headers?: object, signal?: AbortSignal): Promise<SearchContractsReturn> => {
-    return this.fetch(
-      this.url('SearchContracts'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractInfo: <Array<ContractInfo>>(_data.contractInfo),
-          nextPage: <Page>(_data.nextPage),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SearchContracts'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractInfo: <Array<ContractInfo>>_data.contractInfo,
+            nextPage: <Page>_data.nextPage
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getNiftyswapTokenQuantity = (args: GetNiftyswapTokenQuantityArgs, headers?: object, signal?: AbortSignal): Promise<GetNiftyswapTokenQuantityReturn> => {
-    return this.fetch(
-      this.url('GetNiftyswapTokenQuantity'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          quantity: <{[key: string]: string}>(_data.quantity),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getNiftyswapTokenQuantity = (
+    args: GetNiftyswapTokenQuantityArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNiftyswapTokenQuantityReturn> => {
+    return this.fetch(this.url('GetNiftyswapTokenQuantity'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            quantity: <{ [key: string]: string }>_data.quantity
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getNiftyswapUnitPrices = (args: GetNiftyswapUnitPricesArgs, headers?: object, signal?: AbortSignal): Promise<GetNiftyswapUnitPricesReturn> => {
-    return this.fetch(
-      this.url('GetNiftyswapUnitPrices'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          prices: <{[key: string]: string}>(_data.prices),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getNiftyswapUnitPrices = (
+    args: GetNiftyswapUnitPricesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNiftyswapUnitPricesReturn> => {
+    return this.fetch(this.url('GetNiftyswapUnitPrices'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            prices: <{ [key: string]: string }>_data.prices
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getNiftyswapUnitPricesWithQuantities = (args: GetNiftyswapUnitPricesWithQuantitiesArgs, headers?: object, signal?: AbortSignal): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn> => {
-    return this.fetch(
-      this.url('GetNiftyswapUnitPricesWithQuantities'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          prices: <{[key: string]: GetNiftyswapUnitPricesResponse}>(_data.prices),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getNiftyswapUnitPricesWithQuantities = (
+    args: GetNiftyswapUnitPricesWithQuantitiesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetNiftyswapUnitPricesWithQuantitiesReturn> => {
+    return this.fetch(this.url('GetNiftyswapUnitPricesWithQuantities'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            prices: <{ [key: string]: GetNiftyswapUnitPricesResponse }>_data.prices
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  addContractToMintMonitor = (args: AddContractToMintMonitorArgs, headers?: object, signal?: AbortSignal): Promise<AddContractToMintMonitorReturn> => {
-    return this.fetch(
-      this.url('AddContractToMintMonitor'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  addContractToMintMonitor = (
+    args: AddContractToMintMonitorArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddContractToMintMonitorReturn> => {
+    return this.fetch(this.url('AddContractToMintMonitor'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  removeContractFromMintMonitor = (args: RemoveContractFromMintMonitorArgs, headers?: object, signal?: AbortSignal): Promise<RemoveContractFromMintMonitorReturn> => {
-    return this.fetch(
-      this.url('RemoveContractFromMintMonitor'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  removeContractFromMintMonitor = (
+    args: RemoveContractFromMintMonitorArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveContractFromMintMonitorReturn> => {
+    return this.fetch(this.url('RemoveContractFromMintMonitor'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  mintMonitorJobStatus = (args: MintMonitorJobStatusArgs, headers?: object, signal?: AbortSignal): Promise<MintMonitorJobStatusReturn> => {
-    return this.fetch(
-      this.url('MintMonitorJobStatus'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          task: <Task>(_data.task),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  mintMonitorJobStatus = (
+    args: MintMonitorJobStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<MintMonitorJobStatusReturn> => {
+    return this.fetch(this.url('MintMonitorJobStatus'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            task: <Task>_data.task
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  mintMonitorTriggerJob = (args: MintMonitorTriggerJobArgs, headers?: object, signal?: AbortSignal): Promise<MintMonitorTriggerJobReturn> => {
-    return this.fetch(
-      this.url('MintMonitorTriggerJob'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  mintMonitorTriggerJob = (
+    args: MintMonitorTriggerJobArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<MintMonitorTriggerJobReturn> => {
+    return this.fetch(this.url('MintMonitorTriggerJob'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  syncContractTokens = (args: SyncContractTokensArgs, headers?: object, signal?: AbortSignal): Promise<SyncContractTokensReturn> => {
-    return this.fetch(
-      this.url('SyncContractTokens'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          taskID: <number>(_data.taskID),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  syncContractTokens = (
+    args: SyncContractTokensArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SyncContractTokensReturn> => {
+    return this.fetch(this.url('SyncContractTokens'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            taskID: <number>_data.taskID
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   abortContractSync = (args: AbortContractSyncArgs, headers?: object, signal?: AbortSignal): Promise<AbortContractSyncReturn> => {
-    return this.fetch(
-      this.url('AbortContractSync'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('AbortContractSync'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  contractSyncJobStatus = (args: ContractSyncJobStatusArgs, headers?: object, signal?: AbortSignal): Promise<ContractSyncJobStatusReturn> => {
-    return this.fetch(
-      this.url('ContractSyncJobStatus'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          refreshTask: <Task>(_data.refreshTask),
-          syncTask: <Task>(_data.syncTask),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  contractSyncJobStatus = (
+    args: ContractSyncJobStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ContractSyncJobStatusReturn> => {
+    return this.fetch(this.url('ContractSyncJobStatus'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            refreshTask: <Task>_data.refreshTask,
+            syncTask: <Task>_data.syncTask
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  directoryGetNetworks = (args: DirectoryGetNetworksArgs, headers?: object, signal?: AbortSignal): Promise<DirectoryGetNetworksReturn> => {
-    return this.fetch(
-      this.url('DirectoryGetNetworks'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          networks: <Array<number>>(_data.networks),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  directoryGetNetworks = (
+    args: DirectoryGetNetworksArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DirectoryGetNetworksReturn> => {
+    return this.fetch(this.url('DirectoryGetNetworks'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            networks: <Array<number>>_data.networks
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  directoryGetCollections = (args: DirectoryGetCollectionsArgs, headers?: object, signal?: AbortSignal): Promise<DirectoryGetCollectionsReturn> => {
-    return this.fetch(
-      this.url('DirectoryGetCollections'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          collections: <Array<ContractInfo>>(_data.collections),
-          page: <Page>(_data.page),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  directoryGetCollections = (
+    args: DirectoryGetCollectionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DirectoryGetCollectionsReturn> => {
+    return this.fetch(this.url('DirectoryGetCollections'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            collections: <Array<ContractInfo>>_data.collections,
+            page: <Page>_data.page
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  directorySearchCollections = (args: DirectorySearchCollectionsArgs, headers?: object, signal?: AbortSignal): Promise<DirectorySearchCollectionsReturn> => {
-    return this.fetch(
-      this.url('DirectorySearchCollections'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          collections: <Array<ContractInfo>>(_data.collections),
-          page: <Page>(_data.page),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  directorySearchCollections = (
+    args: DirectorySearchCollectionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DirectorySearchCollectionsReturn> => {
+    return this.fetch(this.url('DirectorySearchCollections'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            collections: <Array<ContractInfo>>_data.collections,
+            page: <Page>_data.page
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 export class Collections implements Collections {
   protected hostname: string
@@ -1557,307 +1795,351 @@ export class Collections implements Collections {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   createCollection = (args: CreateCollectionArgs, headers?: object, signal?: AbortSignal): Promise<CreateCollectionReturn> => {
-    return this.fetch(
-      this.url('CreateCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          collection: <Collection>(_data.collection),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('CreateCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            collection: <Collection>_data.collection
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getCollection = (args: GetCollectionArgs, headers?: object, signal?: AbortSignal): Promise<GetCollectionReturn> => {
-    return this.fetch(
-      this.url('GetCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          collection: <Collection>(_data.collection),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            collection: <Collection>_data.collection
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   listCollections = (args: ListCollectionsArgs, headers?: object, signal?: AbortSignal): Promise<ListCollectionsReturn> => {
-    return this.fetch(
-      this.url('ListCollections'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          collections: <Array<Collection>>(_data.collections),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ListCollections'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            collections: <Array<Collection>>_data.collections
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   updateCollection = (args: UpdateCollectionArgs, headers?: object, signal?: AbortSignal): Promise<UpdateCollectionReturn> => {
-    return this.fetch(
-      this.url('UpdateCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          collection: <Collection>(_data.collection),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UpdateCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            collection: <Collection>_data.collection
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   deleteCollection = (args: DeleteCollectionArgs, headers?: object, signal?: AbortSignal): Promise<DeleteCollectionReturn> => {
-    return this.fetch(
-      this.url('DeleteCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('DeleteCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   publishCollection = (args: PublishCollectionArgs, headers?: object, signal?: AbortSignal): Promise<PublishCollectionReturn> => {
-    return this.fetch(
-      this.url('PublishCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          collection: <Collection>(_data.collection),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('PublishCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            collection: <Collection>_data.collection
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  unpublishCollection = (args: UnpublishCollectionArgs, headers?: object, signal?: AbortSignal): Promise<UnpublishCollectionReturn> => {
-    return this.fetch(
-      this.url('UnpublishCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          collection: <Collection>(_data.collection),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  unpublishCollection = (
+    args: UnpublishCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UnpublishCollectionReturn> => {
+    return this.fetch(this.url('UnpublishCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            collection: <Collection>_data.collection
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  createContractCollection = (args: CreateContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<CreateContractCollectionReturn> => {
-    return this.fetch(
-      this.url('CreateContractCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractCollection: <ContractCollection>(_data.contractCollection),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  createContractCollection = (
+    args: CreateContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<CreateContractCollectionReturn> => {
+    return this.fetch(this.url('CreateContractCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractCollection: <ContractCollection>_data.contractCollection
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getContractCollection = (args: GetContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<GetContractCollectionReturn> => {
-    return this.fetch(
-      this.url('GetContractCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractCollection: <ContractCollection>(_data.contractCollection),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getContractCollection = (
+    args: GetContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetContractCollectionReturn> => {
+    return this.fetch(this.url('GetContractCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractCollection: <ContractCollection>_data.contractCollection
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  listContractCollections = (args: ListContractCollectionsArgs, headers?: object, signal?: AbortSignal): Promise<ListContractCollectionsReturn> => {
-    return this.fetch(
-      this.url('ListContractCollections'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractCollections: <Array<ContractCollection>>(_data.contractCollections),
-          collections: <Array<Collection>>(_data.collections),
-          page: <Page>(_data.page),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  listContractCollections = (
+    args: ListContractCollectionsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListContractCollectionsReturn> => {
+    return this.fetch(this.url('ListContractCollections'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractCollections: <Array<ContractCollection>>_data.contractCollections,
+            collections: <Array<Collection>>_data.collections,
+            page: <Page>_data.page
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  updateContractCollection = (args: UpdateContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<UpdateContractCollectionReturn> => {
-    return this.fetch(
-      this.url('UpdateContractCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  updateContractCollection = (
+    args: UpdateContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateContractCollectionReturn> => {
+    return this.fetch(this.url('UpdateContractCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  deleteContractCollection = (args: DeleteContractCollectionArgs, headers?: object, signal?: AbortSignal): Promise<DeleteContractCollectionReturn> => {
-    return this.fetch(
-      this.url('DeleteContractCollection'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  deleteContractCollection = (
+    args: DeleteContractCollectionArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DeleteContractCollectionReturn> => {
+    return this.fetch(this.url('DeleteContractCollection'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   createToken = (args: CreateTokenArgs, headers?: object, signal?: AbortSignal): Promise<CreateTokenReturn> => {
-    return this.fetch(
-      this.url('CreateToken'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          token: <TokenMetadata>(_data.token),
-          assets: <Array<Asset>>(_data.assets),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('CreateToken'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            token: <TokenMetadata>_data.token,
+            assets: <Array<Asset>>_data.assets
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getToken = (args: GetTokenArgs, headers?: object, signal?: AbortSignal): Promise<GetTokenReturn> => {
-    return this.fetch(
-      this.url('GetToken'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          token: <TokenMetadata>(_data.token),
-          assets: <Array<Asset>>(_data.assets),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetToken'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            token: <TokenMetadata>_data.token,
+            assets: <Array<Asset>>_data.assets
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   listTokens = (args: ListTokensArgs, headers?: object, signal?: AbortSignal): Promise<ListTokensReturn> => {
-    return this.fetch(
-      this.url('ListTokens'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          tokens: <Array<TokenMetadata>>(_data.tokens),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ListTokens'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            tokens: <Array<TokenMetadata>>_data.tokens
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   updateToken = (args: UpdateTokenArgs, headers?: object, signal?: AbortSignal): Promise<UpdateTokenReturn> => {
-    return this.fetch(
-      this.url('UpdateToken'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          token: <TokenMetadata>(_data.token),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UpdateToken'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            token: <TokenMetadata>_data.token
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   deleteToken = (args: DeleteTokenArgs, headers?: object, signal?: AbortSignal): Promise<DeleteTokenReturn> => {
-    return this.fetch(
-      this.url('DeleteToken'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('DeleteToken'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   createAsset = (args: CreateAssetArgs, headers?: object, signal?: AbortSignal): Promise<CreateAssetReturn> => {
-    return this.fetch(
-      this.url('CreateAsset'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          asset: <Asset>(_data.asset),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('CreateAsset'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            asset: <Asset>_data.asset
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getAsset = (args: GetAssetArgs, headers?: object, signal?: AbortSignal): Promise<GetAssetReturn> => {
-    return this.fetch(
-      this.url('GetAsset'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          asset: <Asset>(_data.asset),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetAsset'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            asset: <Asset>_data.asset
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   updateAsset = (args: UpdateAssetArgs, headers?: object, signal?: AbortSignal): Promise<UpdateAssetReturn> => {
-    return this.fetch(
-      this.url('UpdateAsset'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          asset: <Asset>(_data.asset),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UpdateAsset'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            asset: <Asset>_data.asset
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   deleteAsset = (args: DeleteAssetArgs, headers?: object, signal?: AbortSignal): Promise<DeleteAssetReturn> => {
-    return this.fetch(
-      this.url('DeleteAsset'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('DeleteAsset'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 export class Admin implements Admin {
   protected hostname: string
@@ -1872,82 +2154,102 @@ export class Admin implements Admin {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
-  addContractsToTokenDirectory = (args: AddContractsToTokenDirectoryArgs, headers?: object, signal?: AbortSignal): Promise<AddContractsToTokenDirectoryReturn> => {
-    return this.fetch(
-      this.url('AddContractsToTokenDirectory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  addContractsToTokenDirectory = (
+    args: AddContractsToTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddContractsToTokenDirectoryReturn> => {
+    return this.fetch(this.url('AddContractsToTokenDirectory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  removeContractsFromTokenDirectory = (args: RemoveContractsFromTokenDirectoryArgs, headers?: object, signal?: AbortSignal): Promise<RemoveContractsFromTokenDirectoryReturn> => {
-    return this.fetch(
-      this.url('RemoveContractsFromTokenDirectory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  removeContractsFromTokenDirectory = (
+    args: RemoveContractsFromTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveContractsFromTokenDirectoryReturn> => {
+    return this.fetch(this.url('RemoveContractsFromTokenDirectory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  modifyFeatureIndex = (args: ModifyFeatureIndexArgs, headers?: object, signal?: AbortSignal): Promise<ModifyFeatureIndexReturn> => {
-    return this.fetch(
-      this.url('ModifyFeatureIndex'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  modifyFeatureIndex = (
+    args: ModifyFeatureIndexArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ModifyFeatureIndexReturn> => {
+    return this.fetch(this.url('ModifyFeatureIndex'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getFeatureIndex = (args: GetFeatureIndexArgs, headers?: object, signal?: AbortSignal): Promise<GetFeatureIndexReturn> => {
-    return this.fetch(
-      this.url('GetFeatureIndex'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          featured: <number>(_data.featured),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetFeatureIndex'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            featured: <number>_data.featured
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  listTokenDirectory = (args: ListTokenDirectoryArgs, headers?: object, signal?: AbortSignal): Promise<ListTokenDirectoryReturn> => {
-    return this.fetch(
-      this.url('ListTokenDirectory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          collections: <Array<ContractInfo>>(_data.collections),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  listTokenDirectory = (
+    args: ListTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListTokenDirectoryReturn> => {
+    return this.fetch(this.url('ListTokenDirectory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            collections: <Array<ContractInfo>>_data.collections
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
 }
 
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
-  const reqHeaders: {[key: string]: string} = { ...headers, 'Content-Type': 'application/json' }
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+  const reqHeaders: { [key: string]: string } = { ...headers, 'Content-Type': 'application/json' }
   reqHeaders[WebrpcHeader] = WebrpcHeaderValue
 
   return {
@@ -1963,18 +2265,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -2155,7 +2457,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
     Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
   }
 }
-
 
 // Schema errors
 
@@ -2380,7 +2681,6 @@ export class TokenDirectoryDisabledError extends WebrpcError {
   }
 }
 
-
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -2409,7 +2709,7 @@ export enum errors {
   NotFound = 'NotFound',
   ProjectNotFound = 'ProjectNotFound',
   ChainNotFound = 'ChainNotFound',
-  TokenDirectoryDisabled = 'TokenDirectoryDisabled',
+  TokenDirectoryDisabled = 'TokenDirectoryDisabled'
 }
 
 const webrpcErrorByCode: { [code: number]: any } = {
@@ -2440,8 +2740,7 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [3000]: NotFoundError,
   [3002]: ProjectNotFoundError,
   [3003]: ChainNotFoundError,
-  [4001]: TokenDirectoryDisabledError,
+  [4001]: TokenDirectoryDisabledError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-
