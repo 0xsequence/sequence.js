@@ -2,7 +2,6 @@ import { Abi, Address, Hex } from 'ox'
 
 export const FACTORY: Address.Address = '0xTODO'
 export const MAIN_MODULE: Address.Address = '0xTODO'
-
 export const CREATION_CODE: Hex.Hex = '0xTODO'
 
 // ERC1271
@@ -20,9 +19,7 @@ export const IMAGE_HASH = Abi.from(['function imageHash() external view returns 
 
 // Sapient
 export const IS_VALID_SAPIENT_SIGNATURE = Abi.from([
-  'function isValidSapientSignature(Payload.Decoded calldata _payload, bytes calldata _signature) external view returns (bytes32)',
-  'struct Payload.Decoded { uint8 kind; bool noChainId; Call[] calls; uint256 space; uint256 nonce; bytes message; bytes32 imageHash; bytes32 digest; address[] parentWallets; }',
-  'struct Call { address to; uint256 value; bytes data; uint256 gasLimit; bool delegateCall; bool onlyFallback; uint256 behaviorOnError; }',
+  'function isValidSapientSignature((uint8 kind,bool noChainId,(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)[] calls,uint256 space,uint256 nonce,bytes message,bytes32 imageHash,bytes32 digest,address[] parentWallets) calldata _payload, bytes calldata _signature) external view returns (bytes32)',
 ])[0]
 
 // SapientCompact
