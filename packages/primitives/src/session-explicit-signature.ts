@@ -1,17 +1,16 @@
-import { Address, Bytes } from 'ox'
+import { Bytes } from 'ox'
 import { Attestation, encodeAttestation } from './attestation'
-import { encodeSessionsTopology, SessionsTopology } from './session-config'
+import { encodeSessionsTopology, SessionsTopology } from './session-explicit-config'
 import { packRSV } from './utils'
 
-export type SessionManagerSignature = {
+export type ExplicitSessionSignature = {
   attestation: Attestation
   sessionsTopology: SessionsTopology
-  implicitBlacklist: Address.Address[]
   permissionIdxPerCall: number[]
 }
 
-export function encodeSessionSignature(
-  signature: SessionManagerSignature,
+export function encodeExplicitSessionSignature(
+  signature: ExplicitSessionSignature,
   sessionSignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes },
   globalSignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes },
 ): Bytes.Bytes {
@@ -33,14 +32,7 @@ export function encodeSessionSignature(
   parts.push(Bytes.padLeft(Bytes.fromNumber(encodedSessionsTopology.length), 3))
   parts.push(encodedSessionsTopology)
 
-  // Add blacklist with size prefix
-  parts.push(Bytes.padLeft(Bytes.fromNumber(signature.implicitBlacklist.length), 3))
-  for (const addr of signature.implicitBlacklist) {
-    parts.push(Bytes.fromHex(addr))
-  }
-
-  // Add permission indices with size prefix
-  parts.push(Bytes.padLeft(Bytes.fromNumber(signature.permissionIdxPerCall.length), 3))
+  // Add permission indices. No size prefix. All remaining bytes are assumed to be included.
   parts.push(new Uint8Array(signature.permissionIdxPerCall))
 
   return Bytes.concat(...parts)

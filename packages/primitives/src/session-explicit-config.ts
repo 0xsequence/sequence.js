@@ -1,4 +1,4 @@
-import { Address, Bytes } from 'ox'
+import { Bytes } from 'ox'
 import {
   encodeSessionPermissions,
   SessionPermissions,
