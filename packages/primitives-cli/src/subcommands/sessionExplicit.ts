@@ -1,5 +1,6 @@
 import {
   encodeSessionsTopology,
+  encodeExplicitSessionSignature,
   isEmptySessionsTopology,
   isSessionsTopology,
   mergeSessionsTopologies,
@@ -96,6 +97,52 @@ const sessionExplicitCommand: CommandModule = {
             removeSessionPermission(topology, explicitSessionAddress as `0x${string}`),
           )
           console.log(json)
+        },
+      )
+      .command(
+        'use [signature] [permission-indexes] [session-topology]',
+        'Encode a signature with the given session topology',
+        (yargs) => {
+          return yargs
+            .positional('signature', {
+              type: 'string',
+              description: 'Signature to encode (r:s:v)',
+            })
+            .positional('permission-indexes', {
+              type: 'string',
+              description: 'Indexes of the permissions to use (comma separated)',
+            })
+            .positional('session-topology', {
+              type: 'string',
+              description: 'Session topology to use',
+            })
+        },
+        async (argv) => {
+          const signatureInput = argv.signature
+          if (!signatureInput) {
+            throw new Error('Signature is required')
+          }
+          // Decode signature from "r:s:v"
+          const signatureParts = signatureInput.split(':')
+          if (signatureParts.length !== 3) {
+            throw new Error('Signature must be in r:s:v format')
+          }
+          const signature = {
+            r: Bytes.fromHex(signatureParts[0] as `0x${string}`),
+            s: Bytes.fromHex(signatureParts[1] as `0x${string}`),
+            v: parseInt(signatureParts[2] ?? ''),
+          }
+
+          const permissionIndexesInput = argv.permissionIndexes
+          if (!permissionIndexesInput) {
+            throw new Error('Permission indexes are required')
+          }
+          const permissionIndexes = permissionIndexesInput.split(',').map((index) => parseInt(index))
+          //TODO Validate that the permission index is valid
+          const topologyInput = await fromPosOrStdin(argv, 'session-topology')
+          const topology = sessionsTopologyFromJson(topologyInput)
+          const encoded = encodeExplicitSessionSignature(topology, permissionIndexes, signature)
+          console.log(Hex.from(encoded))
         },
       )
       .command(
