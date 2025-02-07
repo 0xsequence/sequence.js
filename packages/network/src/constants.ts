@@ -81,6 +81,7 @@ export enum ChainId {
   XAI_SEPOLIA = 37714555429,
 
   // XR
+  XR1 = 273,
   XR_SEPOLIA = 2730,
 
   // TELOS
@@ -135,10 +136,7 @@ export enum ChainId {
 
   // MOONBEAM
   MOONBEAM = 1284,
-  MOONBASE_ALPHA = 1287,
-
-  // XR1
-  XR1 = 273
+  MOONBASE_ALPHA = 1287
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1098,8 +1096,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
   [ChainId.XR1]: {
     chainId: ChainId.XR1,
     type: NetworkType.MAINNET,
-    name: 'rx1',
-    title: 'RX1',
+    name: 'xr1',
+    title: 'XR1',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR1}.webp`,
     testnet: true,
     blockExplorer: {
