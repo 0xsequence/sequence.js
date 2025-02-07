@@ -256,111 +256,117 @@ export function parseBranch(signature: Bytes.Bytes): {
   let index = 0
 
   while (index < signature.length) {
-    if (index >= signature.length) {
-      throw new Error('Unexpected end of signature while parsing branch')
-    }
     const firstByte = signature[index]!
     index++
 
     const flag = (firstByte & 0xf0) >> 4
 
-    if (flag === FLAG_SIGNATURE_HASH || flag === FLAG_SIGNATURE_ETH_SIGN) {
-      const v = ((firstByte & 0x10) >> 4) + 27
-      let weight = BigInt(firstByte & 0x07)
-      if (weight === 0n) {
+    // FLAG_SIGNATURE_HASH = 0 => bottom nibble is weight
+    // Then read 64 bytes => r, yParityAndS => top bit => yParity => s is the rest => v=27+yParity
+    if (flag === FLAG_SIGNATURE_HASH) {
+      let weight = firstByte & 0x0f
+      if (weight === 0) {
         if (index >= signature.length) {
-          throw new Error('Not enough bytes for weight')
+          throw new Error('Not enough bytes for dynamic weight')
         }
-        weight = BigInt(signature[index]!)
+        weight = signature[index]!
         index++
       }
-
       if (index + 64 > signature.length) {
-        throw new Error('Not enough bytes for r,s')
+        throw new Error('Not enough bytes for hash signature (r + yParityAndS)')
       }
       const r = signature.slice(index, index + 32)
-      const s = signature.slice(index + 32, index + 64)
+      const yParityAndS = signature.slice(index + 32, index + 64)
       index += 64
 
+      const yParity = (yParityAndS[0]! & 0x80) !== 0 ? 1 : 0
+      const s = new Uint8Array(32)
+      s.set(yParityAndS)
+      s[0] = s[0]! & 0x7f // clear the top bit
+
+      const v = 27 + yParity
       nodes.push({
-        weight,
+        type: 'unrecovered-signer',
+        weight: BigInt(weight),
         signature: {
+          type: 'hash',
           r,
           s,
           v,
-          type: flag === 0x00 ? 'hash' : 'eth_sign',
         },
       } as RawSignerLeaf)
       continue
     }
 
+    // FLAG_ADDRESS = 1 => bottom nibble is weight => read 20 bytes => no signature
     if (flag === FLAG_ADDRESS) {
-      let weight = BigInt(firstByte & 0x0f)
-      if (weight === 0n) {
+      let weight = firstByte & 0x0f
+      if (weight === 0) {
         if (index >= signature.length) {
           throw new Error('Not enough bytes for address weight')
         }
-        weight = BigInt(signature[index]!)
+        weight = signature[index]!
         index++
       }
-
       if (index + 20 > signature.length) {
-        throw new Error('Not enough bytes for address')
+        throw new Error('Not enough bytes for address leaf')
       }
-      const address = signature.slice(index, index + 20)
+      const addr = Bytes.toHex(signature.slice(index, index + 20))
       index += 20
 
       nodes.push({
         type: 'signer',
-        address: Bytes.toHex(address),
-        weight,
+        address: addr,
+        weight: BigInt(weight),
       } as SignerLeaf)
       continue
     }
 
+    // FLAG_SIGNATURE_ERC1271 = 2 => bottom 2 bits => weight, next 2 bits => sizeSize
     if (flag === FLAG_SIGNATURE_ERC1271) {
-      let weight = BigInt(firstByte & 0x03)
-      if (weight === 0n) {
+      let weight = firstByte & 0x03
+      if (weight === 0) {
         if (index >= signature.length) {
           throw new Error('Not enough bytes for ERC1271 weight')
         }
-        weight = BigInt(signature[index]!)
+        weight = signature[index]!
         index++
       }
-
       if (index + 20 > signature.length) {
-        throw new Error('Not enough bytes for ERC1271 signer')
+        throw new Error('Not enough bytes for ERC1271 signer address')
       }
-      const signer = signature.slice(index, index + 20)
+      const signer = Bytes.toHex(signature.slice(index, index + 20))
       index += 20
 
       const sizeSize = (firstByte & 0x0c) >> 2
       if (index + sizeSize > signature.length) {
-        throw new Error('Not enough bytes for ERC1271 size')
+        throw new Error('Not enough bytes for ERC1271 sizeSize')
       }
-      const size = Bytes.toNumber(signature.slice(index, index + sizeSize))
+      const dataSize = Bytes.toNumber(signature.slice(index, index + sizeSize))
       index += sizeSize
 
-      if (index + size > signature.length) {
-        throw new Error('Not enough bytes for ERC1271 sub-signature')
+      if (index + dataSize > signature.length) {
+        throw new Error('Not enough bytes for ERC1271 data')
       }
-      const subSignature = signature.slice(index, index + size)
-      index += size
+      const subSignature = signature.slice(index, index + dataSize)
+      index += dataSize
 
       nodes.push({
-        weight,
+        type: 'unrecovered-signer',
+        weight: BigInt(weight),
         signature: {
-          address: Bytes.toHex(signer),
-          data: subSignature,
           type: 'erc1271',
+          address: signer,
+          data: subSignature,
         },
       } as RawSignerLeaf)
       continue
     }
 
+    // FLAG_NODE = 3 => read 32 bytes as a node hash
     if (flag === FLAG_NODE) {
       if (index + 32 > signature.length) {
-        throw new Error('Not enough bytes for node hash')
+        throw new Error('Not enough bytes for node leaf')
       }
       const node = signature.slice(index, index + 32)
       index += 32
@@ -369,16 +375,17 @@ export function parseBranch(signature: Bytes.Bytes): {
       continue
     }
 
+    // FLAG_BRANCH = 4 => next nibble => sizeSize => read size => parse sub-branch
     if (flag === FLAG_BRANCH) {
       const sizeSize = firstByte & 0x0f
       if (index + sizeSize > signature.length) {
-        throw new Error('Not enough bytes for branch size')
+        throw new Error('Not enough bytes for branch sizeSize')
       }
       const size = Bytes.toNumber(signature.slice(index, index + sizeSize))
       index += sizeSize
 
       if (index + size > signature.length) {
-        throw new Error('Not enough bytes for branch data')
+        throw new Error('Not enough bytes in sub-branch')
       }
       const branchBytes = signature.slice(index, index + size)
       index += size
@@ -387,65 +394,18 @@ export function parseBranch(signature: Bytes.Bytes): {
       if (leftover.length > 0) {
         throw new Error('Leftover bytes in sub-branch')
       }
-
       const subTree = foldNodes(subNodes)
       nodes.push(subTree)
       continue
     }
 
-    if (flag === FLAG_NESTED) {
-      let weight = BigInt(firstByte & 0x03)
-      if (weight === 0n) {
-        if (index >= signature.length) {
-          throw new Error('Not enough bytes for nested weight')
-        }
-        weight = BigInt(signature[index]!)
-        index++
-      }
-
-      let threshold = BigInt((firstByte & 0x0c) >> 2)
-      if (threshold === 0n) {
-        if (index + 2 > signature.length) {
-          throw new Error('Not enough bytes for nested threshold')
-        }
-        threshold = BigInt(Bytes.toNumber(signature.slice(index, index + 2)))
-        index += 2
-      }
-
-      if (index + 3 > signature.length) {
-        throw new Error('Not enough bytes for nested size')
-      }
-      const size = Bytes.toNumber(signature.slice(index, index + 3))
-      index += 3
-
-      if (index + size > signature.length) {
-        throw new Error('Not enough bytes for nested sub-tree')
-      }
-      const nestedTree = signature.slice(index, index + size)
-      index += size
-
-      const { nodes: subNodes, leftover } = parseBranch(nestedTree)
-      if (leftover.length > 0) {
-        throw new Error('Leftover bytes in nested sub-tree')
-      }
-
-      const subTree = foldNodes(subNodes)
-      nodes.push({
-        type: 'nested',
-        tree: subTree,
-        weight,
-        threshold,
-      } as RawNestedLeaf)
-      continue
-    }
-
+    // FLAG_SUBDIGEST = 5 => read 32 bytes => push subdigest leaf
     if (flag === FLAG_SUBDIGEST) {
       if (index + 32 > signature.length) {
         throw new Error('Not enough bytes for subdigest')
       }
       const hardcoded = signature.slice(index, index + 32)
       index += 32
-
       nodes.push({
         type: 'subdigest',
         digest: hardcoded,
@@ -453,41 +413,127 @@ export function parseBranch(signature: Bytes.Bytes): {
       continue
     }
 
-    if (flag === FLAG_SIGNATURE_SAPIENT || flag === FLAG_SIGNATURE_SAPIENT_COMPACT) {
-      let addrWeight = BigInt(firstByte & 0x03)
-      if (addrWeight === 0n) {
+    // FLAG_NESTED = 6 => read externalWeight + internalThreshold, then read 3 bytes => parse subtree
+    if (flag === FLAG_NESTED) {
+      // bits [3..2] => external weight
+      let externalWeight = (firstByte & 0x0c) >> 2
+      if (externalWeight === 0) {
         if (index >= signature.length) {
-          throw new Error('Not enough bytes for sapient weight')
+          throw new Error('Not enough bytes for nested weight')
         }
-        addrWeight = BigInt(signature[index]!)
+        externalWeight = signature[index]!
         index++
       }
 
-      if (index + 20 > signature.length) {
-        throw new Error('Not enough bytes for sapient address')
+      // bits [1..0] => internal threshold
+      let internalThreshold = firstByte & 0x03
+      if (internalThreshold === 0) {
+        if (index + 2 > signature.length) {
+          throw new Error('Not enough bytes for nested threshold')
+        }
+        internalThreshold = Bytes.toNumber(signature.slice(index, index + 2))
+        index += 2
       }
-      const address = signature.slice(index, index + 20)
+
+      if (index + 3 > signature.length) {
+        throw new Error('Not enough bytes for nested sub-tree size')
+      }
+      const size = Bytes.toNumber(signature.slice(index, index + 3))
+      index += 3
+
+      if (index + size > signature.length) {
+        throw new Error('Not enough bytes for nested sub-tree')
+      }
+      const nestedTreeBytes = signature.slice(index, index + size)
+      index += size
+
+      const { nodes: subNodes, leftover } = parseBranch(nestedTreeBytes)
+      if (leftover.length > 0) {
+        throw new Error('Leftover bytes in nested sub-tree')
+      }
+      const subTree = foldNodes(subNodes)
+
+      nodes.push({
+        type: 'nested',
+        tree: subTree,
+        weight: BigInt(externalWeight),
+        threshold: BigInt(internalThreshold),
+      } as RawNestedLeaf)
+      continue
+    }
+
+    // FLAG_SIGNATURE_ETH_SIGN = 7 => parse it same as hash, but interpret the subdigest as an Ethereum Signed Message
+    if (flag === FLAG_SIGNATURE_ETH_SIGN) {
+      let weight = firstByte & 0x0f
+      if (weight === 0) {
+        if (index >= signature.length) {
+          throw new Error('Not enough bytes for dynamic weight in eth_sign')
+        }
+        weight = signature[index]!
+        index++
+      }
+      if (index + 64 > signature.length) {
+        throw new Error('Not enough bytes for eth_sign signature')
+      }
+      const r = signature.slice(index, index + 32)
+      const yParityAndS = signature.slice(index + 32, index + 64)
+      index += 64
+
+      const yParity = (yParityAndS[0]! & 0x80) !== 0 ? 1 : 0
+      const s = new Uint8Array(32)
+      s.set(yParityAndS)
+      s[0] = s[0]! & 0x7f
+
+      const v = 27 + yParity
+      nodes.push({
+        type: 'unrecovered-signer',
+        weight: BigInt(weight),
+        signature: {
+          type: 'eth_sign',
+          r,
+          s,
+          v,
+        },
+      } as RawSignerLeaf)
+      continue
+    }
+
+    // FLAG_SIGNATURE_SAPIENT = 9 or FLAG_SIGNATURE_SAPIENT_COMPACT = 10 => bottom 2 bits => weight, next 2 bits => sizeSize
+    if (flag === FLAG_SIGNATURE_SAPIENT || flag === FLAG_SIGNATURE_SAPIENT_COMPACT) {
+      let addrWeight = firstByte & 0x03
+      if (addrWeight === 0) {
+        if (index >= signature.length) {
+          throw new Error('Not enough bytes for sapient weight')
+        }
+        addrWeight = signature[index]!
+        index++
+      }
+      if (index + 20 > signature.length) {
+        throw new Error('Not enough bytes for sapient signer address')
+      }
+      const address = Bytes.toHex(signature.slice(index, index + 20))
       index += 20
 
       const sizeSize = (firstByte & 0x0c) >> 2
       if (index + sizeSize > signature.length) {
         throw new Error('Not enough bytes for sapient signature size')
       }
-      const size = Bytes.toNumber(signature.slice(index, index + sizeSize))
+      const dataSize = Bytes.toNumber(signature.slice(index, index + sizeSize))
       index += sizeSize
 
-      if (index + size > signature.length) {
-        throw new Error('Not enough bytes for sapient sub-signature')
+      if (index + dataSize > signature.length) {
+        throw new Error('Not enough bytes for sapient signature data')
       }
-      const subSignature = signature.slice(index, index + size)
-      index += size
+      const subSignature = signature.slice(index, index + dataSize)
+      index += dataSize
 
       nodes.push({
-        weight: addrWeight,
+        type: 'unrecovered-signer',
+        weight: BigInt(addrWeight),
         signature: {
-          address: Bytes.toHex(address),
+          address,
           data: subSignature,
-          type: flag === 0x09 ? 'sapient' : 'sapient_compact',
+          type: flag === FLAG_SIGNATURE_SAPIENT ? 'sapient' : 'sapient_compact',
         },
       } as RawSignerLeaf)
       continue
