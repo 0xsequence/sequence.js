@@ -163,7 +163,7 @@ export class Wallet {
           const result = signer.signer.sign(payload)
 
           if ('type' in result) {
-            onSignerSignature(address)(result)
+            Promise.resolve(result).then(onSignerSignature(address)).catch(onError(address))
           } else if (result instanceof Promise) {
             result.then(onSignerSignature(address)).catch(onError(address))
           } else {
