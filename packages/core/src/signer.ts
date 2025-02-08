@@ -7,6 +7,7 @@ export interface Signer {
   sign(
     payload: Payload,
   ):
+    | Signature
     | Promise<Signature>
     | { signature: Promise<Signature>; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
 }
