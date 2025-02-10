@@ -651,6 +651,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
+  [ChainId.XR1]: {
+    chainId: ChainId.XR1,
+    type: NetworkType.MAINNET,
+    name: 'xr1',
+    title: 'XR1',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR1}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'XR1 Explorer',
+      rootUrl: 'https://xr1.calderaexplorer.xyz/'
+    },
+    nativeToken: {
+      symbol: 'XR1',
+      name: 'XR1',
+      decimals: 18
+    }
+  },
   [ChainId.XR_SEPOLIA]: {
     chainId: ChainId.XR_SEPOLIA,
     type: NetworkType.TESTNET,
@@ -1090,23 +1107,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'XTZ',
       name: 'Tez',
-      decimals: 18
-    }
-  },
-  [ChainId.XR1]: {
-    chainId: ChainId.XR1,
-    type: NetworkType.MAINNET,
-    name: 'xr1',
-    title: 'XR1',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR1}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'XR1 Explorer',
-      rootUrl: 'https://xr1.calderachain.xyz/http'
-    },
-    nativeToken: {
-      symbol: 'XR1',
-      name: 'XR1',
       decimals: 18
     }
   }
