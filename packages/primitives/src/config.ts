@@ -1,5 +1,15 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
-import { SignatureOfSapientSignerLeaf, SignatureOfSignerLeaf } from './signature'
+import { Address, Bytes, Hash } from 'ox'
+import {
+  isRawConfiguration,
+  isRawNestedLeaf,
+  isRawSignerLeaf,
+  isSignedSapientSignerLeaf,
+  isSignedSignerLeaf,
+  RawConfiguration,
+  RawTopology,
+  SignatureOfSapientSignerLeaf,
+  SignatureOfSignerLeaf,
+} from './signature'
 
 export type SignerLeaf = {
   type: 'signer'
@@ -111,24 +121,37 @@ export function getSigners(configuration: Configuration | Topology): {
   return { signers: Array.from(signers), isComplete }
 }
 
-export function getWeight(configuration: Configuration | Topology, signers: Address.Address[]): bigint {
-  const set = new Set(signers)
+export function getWeight(
+  topology: RawTopology | RawConfiguration,
+  canSign?: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
+): { weight: bigint; potential: bigint } {
+  topology = isRawConfiguration(topology) ? topology.topology : topology
+  canSign = canSign || ((_signer: SignerLeaf | SapientSignerLeaf) => true)
 
-  const scan = (topology: Topology): bigint => {
-    if (isNode(topology)) {
-      return scan(topology[0]) + scan(topology[1])
-    } else if (isSignerLeaf(topology)) {
-      return set.has(topology.address) ? topology.weight : 0n
-    } else if (isSapientSignerLeaf(topology)) {
-      return set.has(topology.address) ? topology.weight : 0n
-    } else if (isNestedLeaf(topology)) {
-      return scan(topology.tree) >= topology.threshold ? topology.weight : 0n
-    } else {
-      return 0n
+  if (isSignedSignerLeaf(topology)) {
+    return { weight: topology.weight, potential: topology.weight }
+  } else if (isSignerLeaf(topology)) {
+    return { weight: 0n, potential: canSign(topology) ? topology.weight : 0n }
+  } else if (isRawSignerLeaf(topology)) {
+    return { weight: topology.weight, potential: topology.weight }
+  } else if (isSignedSapientSignerLeaf(topology)) {
+    return { weight: topology.weight, potential: topology.weight }
+  } else if (isSapientSignerLeaf(topology)) {
+    return { weight: topology.weight, potential: canSign(topology) ? topology.weight : 0n }
+  } else if (isSubdigestLeaf(topology)) {
+    return { weight: 0n, potential: 0n }
+  } else if (isRawNestedLeaf(topology)) {
+    const { weight, potential } = getWeight(topology.tree)
+    return {
+      weight: weight >= topology.threshold ? topology.weight : 0n,
+      potential: potential >= topology.threshold ? topology.weight : 0n,
     }
+  } else if (isNodeLeaf(topology)) {
+    return { weight: 0n, potential: 0n }
+  } else {
+    const [left, right] = [getWeight(topology[0], canSign), getWeight(topology[1], canSign)]
+    return { weight: left.weight + right.weight, potential: left.potential + right.potential }
   }
-
-  return scan(isConfiguration(configuration) ? configuration.topology : configuration)
 }
 
 export function hashConfiguration(topology: Topology | Configuration): Bytes.Bytes {
