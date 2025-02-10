@@ -8,6 +8,7 @@ import devToolsCommand from './subcommands/devTools'
 import signatureCommand from './subcommands/signature'
 import permissionCommand from './subcommands/permission'
 import sessionCommand from './subcommands/session'
+import serverCommand from './subcommands/server'
 
 void yargs(hideBin(process.argv))
   .command(payloadCommand)
@@ -16,6 +17,7 @@ void yargs(hideBin(process.argv))
   .command(signatureCommand)
   .command(permissionCommand) //FIXME Not sure we need to expose this
   .command(sessionCommand)
+  .command(serverCommand)
   .demandCommand(1)
   .strict()
   .help().argv

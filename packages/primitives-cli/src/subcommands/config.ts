@@ -100,12 +100,12 @@ function parseElements(elements: string): Leaf[] {
   return leaves
 }
 
-async function createConfig(options: {
+export async function createConfig(options: {
   threshold: string
   checkpoint: string
   from: string
   content: string[]
-}): Promise<void> {
+}): Promise<string> {
   const leaves = parseElements(options.content.join(' '))
   const config: Configuration = {
     threshold: BigInt(options.threshold),
@@ -115,17 +115,17 @@ async function createConfig(options: {
     checkpointer: undefined,
   }
 
-  console.log(configToJson(config))
+  return configToJson(config)
 }
 
-async function calculateImageHash(input: string): Promise<void> {
+export async function calculateImageHash(input: string): Promise<string> {
   const config = configFromJson(input)
-  console.log(Hex.fromBytes(hashConfiguration(config)))
+  return Hex.fromBytes(hashConfiguration(config))
 }
 
-async function doEncode(input: string): Promise<void> {
+export async function doEncode(input: string): Promise<string> {
   const configuration = configFromJson(input)
-  console.log(Hex.fromBytes(encodeSignature({ noChainId: true, configuration })))
+  return Hex.fromBytes(encodeSignature({ noChainId: true, configuration }))
 }
 
 const configCommand: CommandModule = {
@@ -168,7 +168,7 @@ const configCommand: CommandModule = {
             })
         },
         async (argv) => {
-          await createConfig(argv)
+          console.log(await createConfig(argv))
         },
       )
       .command(
@@ -182,7 +182,7 @@ const configCommand: CommandModule = {
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'input')
-          await calculateImageHash(input)
+          console.log(await calculateImageHash(input))
         },
       )
       .command(
@@ -196,7 +196,7 @@ const configCommand: CommandModule = {
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'input')
-          await doEncode(input)
+          console.log(await doEncode(input))
         },
       )
       .demandCommand(1, 'You must specify a subcommand for config')

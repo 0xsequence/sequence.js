@@ -8,16 +8,16 @@ import { Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
 
-async function doEncodeSessionPermissions(input: string): Promise<void> {
+export async function doEncodeSessionPermissions(input: string): Promise<string> {
   const permission = sessionPermissionsFromJson(input)
   const packed = encodeSessionPermissions(permission)
-  console.log(Hex.from(packed))
+  return Hex.from(packed)
 }
 
-async function doEncodePermission(input: string): Promise<void> {
+export async function doEncodePermission(input: string): Promise<string> {
   const permission = permissionFromJson(input)
   const packed = encodePermission(permission)
-  console.log(Hex.from(packed))
+  return Hex.from(packed)
 }
 
 const permissionCommand: CommandModule = {
@@ -36,7 +36,8 @@ const permissionCommand: CommandModule = {
         },
         async (argv) => {
           const permission = await fromPosOrStdin(argv, 'session-permission')
-          await doEncodeSessionPermissions(permission)
+          const result = await doEncodeSessionPermissions(permission)
+          console.log(result)
         },
       )
       .command(
@@ -50,7 +51,8 @@ const permissionCommand: CommandModule = {
         },
         async (argv) => {
           const permission = await fromPosOrStdin(argv, 'permission')
-          await doEncodePermission(permission)
+          const result = await doEncodePermission(permission)
+          console.log(result)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for permission')

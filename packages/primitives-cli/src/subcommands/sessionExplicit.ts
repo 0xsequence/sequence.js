@@ -12,14 +12,70 @@ import { Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
 
-async function doEncodeSessionsTopology(input: string): Promise<void> {
+export async function doEncodeSessionsTopology(input: string): Promise<string> {
   let topology = sessionsTopologyFromJson(input)
   if (isEmptySessionsTopology(topology)) {
     // Encode a node of bytes32(0)
     topology = Bytes.fromHex('0x0000000000000000000000000000000000000000000000000000000000000000')
   }
   const packed = encodeSessionsTopology(topology)
-  console.log(Hex.from(packed))
+  return Hex.from(packed)
+}
+
+export async function doEmptySession(): Promise<string> {
+  return JSON.stringify([])
+}
+
+export async function doAddSession(sessionInput: string, topologyInput: string): Promise<string> {
+  const session = sessionsTopologyFromJson(sessionInput)
+  const topology = sessionsTopologyFromJson(topologyInput)
+  if (!isSessionsTopology(session)) {
+    throw new Error('Explicit session must be a valid session topology')
+  }
+  if (!isSessionsTopology(topology) && !isEmptySessionsTopology(topology)) {
+    throw new Error('Session topology must be a valid session topology')
+  }
+  return sessionsTopologyToJson(mergeSessionsTopologies(topology, session))
+}
+
+export async function doRemoveSession(explicitSessionAddress: string, topologyInput: string): Promise<string> {
+  const topology = sessionsTopologyFromJson(topologyInput)
+  if (!isSessionsTopology(topology) && !isEmptySessionsTopology(topology)) {
+    throw new Error('Session topology must be a valid session topology')
+  }
+  if (!explicitSessionAddress || !explicitSessionAddress.startsWith('0x')) {
+    throw new Error('Explicit session address must be a valid address')
+  }
+  return sessionsTopologyToJson(removeSessionPermission(topology, explicitSessionAddress as `0x${string}`))
+}
+
+export async function doUseSession(
+  signatureInput: string,
+  permissionIndexesInput: string,
+  topologyInput: string,
+): Promise<string> {
+  if (!signatureInput) {
+    throw new Error('Signature is required')
+  }
+  // Decode signature from "r:s:v"
+  const signatureParts = signatureInput.split(':')
+  if (signatureParts.length !== 3) {
+    throw new Error('Signature must be in r:s:v format')
+  }
+  const signature = {
+    r: Bytes.fromHex(signatureParts[0] as `0x${string}`),
+    s: Bytes.fromHex(signatureParts[1] as `0x${string}`),
+    v: parseInt(signatureParts[2] ?? ''),
+  }
+
+  if (!permissionIndexesInput) {
+    throw new Error('Permission indexes are required')
+  }
+  const permissionIndexes = permissionIndexesInput.split(',').map((index) => parseInt(index))
+  //TODO Validate that the permission index is valid
+  const topology = sessionsTopologyFromJson(topologyInput)
+  const encoded = encodeExplicitSessionSignature(topology, permissionIndexes, signature)
+  return Hex.from(encoded)
 }
 
 const sessionExplicitCommand: CommandModule = {
@@ -32,7 +88,7 @@ const sessionExplicitCommand: CommandModule = {
         'Create an empty session topology',
         () => {},
         async () => {
-          console.log([])
+          console.log(await doEmptySession())
         },
       )
       .command(
@@ -51,22 +107,12 @@ const sessionExplicitCommand: CommandModule = {
             })
         },
         async (argv) => {
-          // This function can also merge two topologies
           const sessionInput = argv.explicitSession
           if (!sessionInput) {
             throw new Error('Explicit session is required')
           }
-          const session = sessionsTopologyFromJson(sessionInput)
           const topologyInput = await fromPosOrStdin(argv, 'session-topology')
-          const topology = sessionsTopologyFromJson(topologyInput)
-          if (!isSessionsTopology(session)) {
-            throw new Error('Explicit session must be a valid session topology')
-          }
-          if (!isSessionsTopology(topology) && !isEmptySessionsTopology(topology)) {
-            throw new Error('Session topology must be a valid session topology')
-          }
-          const json = sessionsTopologyToJson(mergeSessionsTopologies(topology, session))
-          console.log(json)
+          console.log(await doAddSession(sessionInput, topologyInput))
         },
       )
       .command(
@@ -86,17 +132,7 @@ const sessionExplicitCommand: CommandModule = {
         async (argv) => {
           const explicitSessionAddress = argv.explicitSessionAddress
           const topologyInput = await fromPosOrStdin(argv, 'session-topology')
-          const topology = sessionsTopologyFromJson(topologyInput)
-          if (!isSessionsTopology(topology) && !isEmptySessionsTopology(topology)) {
-            throw new Error('Session topology must be a valid session topology')
-          }
-          if (!explicitSessionAddress || !explicitSessionAddress.startsWith('0x')) {
-            throw new Error('Explicit session address must be a valid address')
-          }
-          const json = sessionsTopologyToJson(
-            removeSessionPermission(topology, explicitSessionAddress as `0x${string}`),
-          )
-          console.log(json)
+          console.log(await doRemoveSession(explicitSessionAddress!, topologyInput))
         },
       )
       .command(
@@ -122,27 +158,12 @@ const sessionExplicitCommand: CommandModule = {
           if (!signatureInput) {
             throw new Error('Signature is required')
           }
-          // Decode signature from "r:s:v"
-          const signatureParts = signatureInput.split(':')
-          if (signatureParts.length !== 3) {
-            throw new Error('Signature must be in r:s:v format')
-          }
-          const signature = {
-            r: Bytes.fromHex(signatureParts[0] as `0x${string}`),
-            s: Bytes.fromHex(signatureParts[1] as `0x${string}`),
-            v: parseInt(signatureParts[2] ?? ''),
-          }
-
           const permissionIndexesInput = argv.permissionIndexes
           if (!permissionIndexesInput) {
             throw new Error('Permission indexes are required')
           }
-          const permissionIndexes = permissionIndexesInput.split(',').map((index) => parseInt(index))
-          //TODO Validate that the permission index is valid
           const topologyInput = await fromPosOrStdin(argv, 'session-topology')
-          const topology = sessionsTopologyFromJson(topologyInput)
-          const encoded = encodeExplicitSessionSignature(topology, permissionIndexes, signature)
-          console.log(Hex.from(encoded))
+          console.log(await doUseSession(signatureInput, permissionIndexesInput, topologyInput))
         },
       )
       .command(
@@ -156,7 +177,7 @@ const sessionExplicitCommand: CommandModule = {
         },
         async (argv) => {
           const permission = await fromPosOrStdin(argv, 'session-topology')
-          await doEncodeSessionsTopology(permission)
+          console.log(await doEncodeSessionsTopology(permission))
         },
       )
       .demandCommand(1, 'You must specify a subcommand for session')

@@ -73,11 +73,12 @@ function behaviorOnError(behavior: number): 'ignore' | 'revert' | 'abort' {
   }
 }
 
-async function convertToAbi(_payload: string): Promise<void> {
+export async function doConvertToAbi(payload: string): Promise<string> {
+  // Not implemented yet, but following the pattern
   throw new Error('Not implemented')
 }
 
-async function convertToPacked(payload: string): Promise<void> {
+export async function doConvertToPacked(payload: string): Promise<string> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload as Hex.Hex,
@@ -98,21 +99,20 @@ async function convertToPacked(payload: string): Promise<void> {
         behaviorOnError: behaviorOnError(Number(call.behaviorOnError)),
       })),
     })
-    console.log(Hex.from(packed))
-    return
+    return Hex.from(packed)
   }
 
   throw new Error('Not implemented')
 }
 
-async function convertToJson(payload: string): Promise<void> {
+export async function doConvertToJson(payload: string): Promise<string> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload as Hex.Hex,
   )[0] as unknown as SolidityDecoded
 
   const json = JSON.stringify(decoded)
-  console.log(json)
+  return json
 }
 
 const payloadCommand: CommandModule = {
@@ -131,7 +131,8 @@ const payloadCommand: CommandModule = {
         },
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
-          await convertToAbi(payload)
+          const result = await doConvertToAbi(payload)
+          console.log(result)
         },
       )
       .command(
@@ -145,7 +146,8 @@ const payloadCommand: CommandModule = {
         },
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
-          await convertToPacked(payload)
+          const result = await doConvertToPacked(payload)
+          console.log(result)
         },
       )
       .command(
@@ -159,7 +161,8 @@ const payloadCommand: CommandModule = {
         },
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
-          await convertToJson(payload)
+          const result = await doConvertToJson(payload)
+          console.log(result)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for payload')

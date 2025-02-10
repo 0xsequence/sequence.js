@@ -10,7 +10,7 @@ import {
 import crypto from 'crypto'
 import type { CommandModule } from 'yargs'
 
-interface RandomOptions {
+export interface RandomOptions {
   seededRandom?: () => number
   minThresholdOnNested?: number
   maxPermissions?: number
@@ -18,7 +18,7 @@ interface RandomOptions {
   checkpointerMode?: 'no' | 'random' | 'yes'
 }
 
-function createSeededRandom(seed: string) {
+export function createSeededRandom(seed: string) {
   let currentSeed = seed
   let hash = crypto.createHash('sha256').update(currentSeed).digest()
   let index = 0
@@ -102,27 +102,6 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Topolog
   return [generateRandomTopology(depth - 1, options), generateRandomTopology(depth - 1, options)]
 }
 
-async function generateRandomConfig(maxDepth: number, options?: RandomOptions): Promise<void> {
-  const config: Configuration = {
-    threshold: randomBigInt(100n, options),
-    checkpoint: randomBigInt(1000n, options),
-    topology: generateRandomTopology(maxDepth, options),
-    checkpointer: (() => {
-      switch (options?.checkpointerMode) {
-        case 'yes':
-          return randomAddress(options)
-        case 'random':
-          return (options?.seededRandom?.() ?? Math.random()) > 0.5 ? randomAddress(options) : undefined
-        case 'no':
-        default:
-          return undefined
-      }
-    })(),
-  }
-
-  console.log(configToJson(config))
-}
-
 async function generateSessionsTopology(depth: number, options?: RandomOptions): Promise<SessionsTopology> {
   const isLeaf = (options?.seededRandom ?? Math.random)() * 2 > 1
 
@@ -155,6 +134,31 @@ async function generateRandomRule(options?: RandomOptions): Promise<ParameterRul
     offset: randomBigInt(100n, options),
     mask: randomBytes(32, options),
   }
+}
+
+export async function doRandomConfig(maxDepth: number, options?: RandomOptions): Promise<string> {
+  const config: Configuration = {
+    threshold: randomBigInt(100n, options),
+    checkpoint: randomBigInt(1000n, options),
+    topology: generateRandomTopology(maxDepth, options),
+    checkpointer: (() => {
+      switch (options?.checkpointerMode) {
+        case 'yes':
+          return randomAddress(options)
+        case 'random':
+          return (options?.seededRandom?.() ?? Math.random()) > 0.5 ? randomAddress(options) : undefined
+        case 'no':
+        default:
+          return undefined
+      }
+    })(),
+  }
+  return configToJson(config)
+}
+
+export async function doRandomSessionTopology(maxDepth: number, options?: RandomOptions): Promise<string> {
+  const topology = await generateSessionsTopology(maxDepth, options)
+  return sessionsTopologyToJson(topology)
 }
 
 const command: CommandModule = {
@@ -192,10 +196,11 @@ const command: CommandModule = {
         async (argv) => {
           const options: RandomOptions = {
             seededRandom: argv.seed ? createSeededRandom(argv.seed) : undefined,
-            minThresholdOnNested: argv.minThresholdOnNested as number,
+            minThresholdOnNested: argv.minThresholdOnNested,
             checkpointerMode: argv.checkpointer as 'no' | 'random' | 'yes',
           }
-          await generateRandomConfig(argv.maxDepth as number, options)
+          const result = await doRandomConfig(argv.maxDepth as number, options)
+          console.log(result)
         },
       )
       .command(
@@ -227,11 +232,11 @@ const command: CommandModule = {
         async (argv) => {
           const options: RandomOptions = {
             seededRandom: argv.seed ? createSeededRandom(argv.seed) : undefined,
-            maxPermissions: argv.maxPermissions as number,
-            maxRules: argv.maxRules as number,
+            maxPermissions: argv.maxPermissions,
+            maxRules: argv.maxRules,
           }
-          const topology = await generateSessionsTopology(argv.maxDepth as number, options)
-          console.log(sessionsTopologyToJson(topology))
+          const result = await doRandomSessionTopology(argv.maxDepth as number, options)
+          console.log(result)
         },
       )
       .demandCommand(1, 'You must specify a subcommand for dev-tools')

@@ -41,7 +41,7 @@ const SignatureElements = [
   },
 ]
 
-async function doEncode(input: string, signatures: string[] = [], noChainId: boolean): Promise<void> {
+export async function doEncode(input: string, signatures: string[] = [], noChainId: boolean): Promise<string> {
   const config = configFromJson(input)
 
   const allSignatures = signatures.map((s) => {
@@ -121,10 +121,10 @@ async function doEncode(input: string, signatures: string[] = [], noChainId: boo
 
   const encoded = encodeSignature({ noChainId, configuration: { ...config, topology: fullTopology } })
 
-  console.log(Hex.fromBytes(encoded))
+  return Hex.fromBytes(encoded)
 }
 
-async function doConcat(signatures: string[]): Promise<void> {
+export async function doConcat(signatures: string[]): Promise<string> {
   if (signatures.length === 0) {
     throw new Error('No signatures provided')
   }
@@ -136,13 +136,13 @@ async function doConcat(signatures: string[]): Promise<void> {
     suffix: decoded.slice(1),
   })
 
-  console.log(Hex.fromBytes(reEncoded))
+  return Hex.fromBytes(reEncoded)
 }
 
-async function doDecode(signature: string): Promise<void> {
+export async function doDecode(signature: string): Promise<string> {
   const bytes = Bytes.fromHex(signature as `0x${string}`)
   const decoded = decodeSignature(bytes)
-  console.log(rawSignatureToJson(decoded))
+  return rawSignatureToJson(decoded)
 }
 
 const signatureCommand: CommandModule = {
@@ -177,7 +177,7 @@ const signatureCommand: CommandModule = {
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'input')
-          await doEncode(input, argv.signature, !argv.chainId)
+          console.log(await doEncode(input, argv.signature, !argv.chainId))
         },
       )
       .command(
@@ -192,7 +192,7 @@ const signatureCommand: CommandModule = {
           })
         },
         async (argv) => {
-          await doConcat(argv.signatures)
+          console.log(await doConcat(argv.signatures))
         },
       )
       .command(
@@ -207,7 +207,7 @@ const signatureCommand: CommandModule = {
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'signature')
-          await doDecode(input)
+          console.log(await doDecode(input))
         },
       )
       .demandCommand(1, 'You must specify a subcommand for signature')
