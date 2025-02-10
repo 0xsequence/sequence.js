@@ -108,7 +108,7 @@ export class Wallet {
       }),
     )
 
-    if (getWeight(configuration, Array.from(signers.keys())) < configuration.threshold) {
+    if (getWeight(configuration, (signer) => signers.has(signer.address)).potential < configuration.threshold) {
       throw new Error('insufficient potential weight')
     }
 
@@ -118,7 +118,7 @@ export class Wallet {
 
         options?.onSignerError?.(address, error)
 
-        if (getWeight(configuration, Array.from(signers.keys())) < configuration.threshold) {
+        if (getWeight(configuration, (signer) => signers.has(signer.address)).potential < configuration.threshold) {
           const onCancels = Array.from(signers.values()).flatMap(({ onCancel }) => (onCancel ? [onCancel] : []))
           signers.clear()
           onCancels.forEach((onCancel) => onCancel(false))
@@ -141,12 +141,10 @@ export class Wallet {
           ),
         )
 
-        const weight = getWeight(
-          configuration,
-          Array.from(signers.entries()).flatMap(([address, { signature }]) => (signature ? [address] : [])),
-        )
-
-        if (weight < configuration.threshold) {
+        if (
+          getWeight(configuration, (signer) => signers.get(signer.address)?.signature !== undefined).weight <
+          configuration.threshold
+        ) {
           Array.from(signers.values()).forEach(({ onSignerSignature }) =>
             onSignerSignature?.(configuration, signerSignatures, !options?.trustSigners),
           )
