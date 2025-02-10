@@ -1,5 +1,3 @@
-// src/subcommands/server.ts
-
 import type { CommandModule } from 'yargs'
 import { createServer, IncomingMessage, ServerResponse } from 'http'
 import * as config from './config'
@@ -63,17 +61,17 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   // CONFIG
   async config_new(params) {
     const { threshold, checkpoint, from = 'flat', content } = params
-    const result = await config.createConfig({ threshold, checkpoint, from, content })
+    const result = await config.createConfig({ threshold, checkpoint, from, content: content.split(' ') })
     return result
   },
   async config_imageHash(params) {
     const { input } = params
-    const result = await config.calculateImageHash(input)
+    const result = await config.calculateImageHash(JSON.stringify(input))
     return result
   },
   async config_encode(params) {
     const { input } = params
-    const result = await config.doEncode(input)
+    const result = await config.doEncode(JSON.stringify(input))
     return result
   },
 
@@ -119,12 +117,12 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   // PERMISSION
   async permission_toPackedSession(params) {
     const { sessionPermission } = params
-    const result = await permission.doEncodeSessionPermissions(sessionPermission)
+    const result = await permission.doEncodeSessionPermissions(JSON.stringify(sessionPermission))
     return result
   },
   async permission_toPacked(params) {
     const { permission: perm } = params
-    const result = await permission.doEncodePermission(perm)
+    const result = await permission.doEncodePermission(JSON.stringify(perm))
     return result
   },
 
@@ -134,29 +132,29 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   },
   async session_add(params) {
     const { explicitSession, sessionTopology } = params
-    const result = await sessionExplicit.doAddSession(explicitSession, sessionTopology)
+    const result = await sessionExplicit.doAddSession(JSON.stringify(explicitSession), JSON.stringify(sessionTopology))
     return result
   },
   async session_remove(params) {
     const { explicitSessionAddress, sessionTopology } = params
-    const result = await sessionExplicit.doRemoveSession(explicitSessionAddress, sessionTopology)
+    const result = await sessionExplicit.doRemoveSession(explicitSessionAddress, JSON.stringify(sessionTopology))
     return result
   },
   async session_use(params) {
     const { signature, permissionIndexes, sessionTopology } = params
-    const result = await sessionExplicit.doUseSession(signature, permissionIndexes, sessionTopology)
+    const result = await sessionExplicit.doUseSession(signature, permissionIndexes, JSON.stringify(sessionTopology))
     return result
   },
   async session_toPackedTopology(params) {
     const { sessionTopology } = params
-    const result = await sessionExplicit.doEncodeSessionsTopology(sessionTopology)
+    const result = await sessionExplicit.doEncodeSessionsTopology(JSON.stringify(sessionTopology))
     return result
   },
 
   // SIGNATURE
   async signature_encode(params) {
-    const { input, signature: sigArr = [], chainId = true } = params
-    const result = await signatureUtils.doEncode(input, sigArr, !chainId)
+    const { input, signatures, chainId = true } = params
+    const result = await signatureUtils.doEncode(JSON.stringify(input), signatures.split(' '), !chainId)
     return result
   },
   async signature_concat(params) {
@@ -171,26 +169,64 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   },
 }
 
-async function handleSingleRequest(rpcRequest: JsonRpcRequest): Promise<JsonRpcSuccessResponse | JsonRpcErrorResponse> {
+async function handleSingleRequest(
+  rpcRequest: JsonRpcRequest,
+  debug: boolean,
+  silent: boolean,
+): Promise<JsonRpcSuccessResponse | JsonRpcErrorResponse> {
   const { id, jsonrpc, method, params } = rpcRequest
-  if (jsonrpc !== '2.0') {
-    return errorResponse(id, -32600, 'Invalid JSON-RPC version')
+
+  if (!silent) console.log(`[${new Date().toISOString()}] Processing request: method=${method} id=${id}`)
+  if (debug && !silent) {
+    console.log('Request details:', JSON.stringify(rpcRequest, null, 2))
   }
+
+  if (jsonrpc !== '2.0') {
+    const error = errorResponse(id, -32600, 'Invalid JSON-RPC version')
+    if (!silent)
+      console.log(
+        `[${new Date().toISOString()}] Error response:`,
+        debug ? JSON.stringify(error, null, 2) : error.error.message,
+      )
+    return error
+  }
+
   const fn = rpcMethods[method]
   if (!fn) {
-    return errorResponse(id, -32601, `Method not found: ${method}`)
+    const error = errorResponse(id, -32601, `Method not found: ${method}`)
+    if (!silent)
+      console.log(
+        `[${new Date().toISOString()}] Error response:`,
+        debug ? JSON.stringify(error, null, 2) : error.error.message,
+      )
+    return error
   }
+
   try {
     const result = await fn(params ?? {})
-    return successResponse(id, result)
+    const response = successResponse(id, result)
+    if (!silent) console.log(`[${new Date().toISOString()}] Success response for method=${method} id=${id}`)
+    if (debug && !silent) {
+      console.log('Response details:', JSON.stringify(response, null, 2))
+    }
+    return response
   } catch (err: any) {
-    return errorResponse(id, -32000, err?.message ?? 'Unknown error')
+    const error = errorResponse(id, -32000, err?.message ?? 'Unknown error')
+    if (!silent)
+      console.log(
+        `[${new Date().toISOString()}] Error response:`,
+        debug ? JSON.stringify(error, null, 2) : error.error.message,
+      )
+    return error
   }
 }
 
-async function handleHttpRequest(req: IncomingMessage, res: ServerResponse) {
+async function handleHttpRequest(req: IncomingMessage, res: ServerResponse, debug: boolean, silent: boolean) {
+  if (!silent) console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${req.socket.remoteAddress}`)
+
   // Only handle POST /rpc
   if (req.method !== 'POST' || req.url !== '/rpc') {
+    if (!silent) console.log(`[${new Date().toISOString()}] 404 Not Found`)
     res.statusCode = 404
     res.end('Not Found')
     return
@@ -202,11 +238,16 @@ async function handleHttpRequest(req: IncomingMessage, res: ServerResponse) {
     body += chunk
   }
 
+  if (debug && !silent) {
+    console.log('Raw request body:', body)
+  }
+
   // Try to parse JSON. If invalid, return an error
   let rpcRequests: JsonRpcRequest[] | JsonRpcRequest
   try {
     rpcRequests = JSON.parse(body)
   } catch (error) {
+    if (!silent) console.log(`[${new Date().toISOString()}] JSON parse error:`, error)
     res.statusCode = 400
     res.end(JSON.stringify(errorResponse(undefined, -32700, 'Parse error', String(error))))
     return
@@ -214,29 +255,36 @@ async function handleHttpRequest(req: IncomingMessage, res: ServerResponse) {
 
   // Might be a batch request (array of requests) or a single request
   if (Array.isArray(rpcRequests)) {
-    const results = await Promise.all(rpcRequests.map(handleSingleRequest))
+    if (!silent) console.log(`[${new Date().toISOString()}] Processing batch request with ${rpcRequests.length} items`)
+    const results = await Promise.all(rpcRequests.map((req) => handleSingleRequest(req, debug, silent)))
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(results))
   } else {
-    const result = await handleSingleRequest(rpcRequests)
+    const result = await handleSingleRequest(rpcRequests, debug, silent)
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(result))
   }
 }
 
-async function startServer(host: string, port: number) {
+async function startServer(host: string, port: number, debug: boolean, silent: boolean) {
   const server = createServer((req, res) => {
-    handleHttpRequest(req, res).catch((err) => {
+    handleHttpRequest(req, res, debug, silent).catch((err) => {
       // If something truly unexpected happens, respond with 500
+      if (!silent) console.error(`[${new Date().toISOString()}] Internal server error:`, err)
       res.statusCode = 500
       res.end(JSON.stringify(errorResponse(undefined, -32000, 'Internal server error', String(err))))
     })
   })
 
   server.listen(port, host, () => {
-    console.log(`RPC server running at http://${host}:${port}/rpc`)
+    if (!silent) {
+      console.log(`[${new Date().toISOString()}] RPC server running at http://${host}:${port}/rpc`)
+      if (debug) {
+        console.log('Debug mode enabled - detailed logging active')
+      }
+    }
   })
 }
 
@@ -253,13 +301,25 @@ const serverCommand: CommandModule = {
       .option('port', {
         type: 'number',
         description: 'Port to listen on',
-        default: 3000,
+        default: 9999,
+      })
+      .option('debug', {
+        type: 'boolean',
+        description: 'Enable debug logging',
+        default: false,
+      })
+      .option('silent', {
+        type: 'boolean',
+        description: 'Disable all logging output',
+        default: false,
       })
   },
   handler: async (argv) => {
     const host = argv.host as string
     const port = argv.port as number
-    await startServer(host, port)
+    const debug = argv.debug as boolean
+    const silent = argv.silent as boolean
+    await startServer(host, port, debug, silent)
   },
 }
 
