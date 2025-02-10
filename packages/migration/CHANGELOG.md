@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+- Updated dependencies
+  - @0xsequence/abi@2.2.12
+  - @0xsequence/core@2.2.12
+  - @0xsequence/wallet@2.2.12
+
 ## 2.2.11
 
 ### Patch Changes

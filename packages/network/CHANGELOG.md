@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+- Updated dependencies
+  - @0xsequence/core@2.2.12
+  - @0xsequence/indexer@2.2.12
+  - @0xsequence/relayer@2.2.12
+  - @0xsequence/utils@2.2.12
+
 ## 2.2.11
 
 ### Patch Changes

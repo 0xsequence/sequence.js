@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+- Updated dependencies
+  - @0xsequence/abi@2.2.12
+  - @0xsequence/core@2.2.12
+  - @0xsequence/migration@2.2.12
+  - @0xsequence/network@2.2.12
+  - @0xsequence/relayer@2.2.12
+  - @0xsequence/sessions@2.2.12
+  - @0xsequence/utils@2.2.12
+  - @0xsequence/wallet@2.2.12
+
 ## 2.2.11
 
 ### Patch Changes

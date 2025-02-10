@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+
 ## 2.2.11
 
 ### Patch Changes

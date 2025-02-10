@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+- Updated dependencies
+  - @0xsequence/core@2.2.12
+  - @0xsequence/migration@2.2.12
+  - @0xsequence/replacer@2.2.12
+  - @0xsequence/utils@2.2.12
+
 ## 2.2.11
 
 ### Patch Changes

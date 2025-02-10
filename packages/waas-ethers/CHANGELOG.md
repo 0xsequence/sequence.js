@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+- Updated dependencies
+  - @0xsequence/waas@2.2.12
+
 ## 2.2.11
 
 ### Patch Changes
