@@ -1,4 +1,4 @@
-import { Address, Bytes, Hash } from 'ox'
+import { Address, Bytes, Hash, Hex } from 'ox'
 import {
   isRawConfiguration,
   isRawNestedLeaf,
@@ -330,3 +330,192 @@ function decodeTopology(obj: any): Topology {
       throw new Error('Invalid type in topology JSON')
   }
 }
+
+export function sign(
+  topology: RawTopology,
+  sign_: <T extends SignerLeaf | SapientSignerLeaf>(
+    signer: T,
+  ) => SignerSignature<T extends SignerLeaf ? SignatureOfSignerLeaf : SignatureOfSapientSignerLeaf>,
+  options?: {
+    threshold?: bigint
+    isValid?: <T extends SignerLeaf | SapientSignerLeaf>(
+      signer: T,
+      signature: T extends SignerLeaf ? SignatureOfSignerLeaf : SignatureOfSapientSignerLeaf,
+    ) => boolean | Promise<boolean>
+    onError?: (signer: SignerLeaf | SapientSignerLeaf, error: any) => void
+    _signatures?: Map<Hex.Hex, Promise<SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf>>
+  },
+): Promise<RawTopology> {
+  return new Promise((resolve, reject) => {
+    const signatures =
+      options?._signatures ?? new Map<Hex.Hex, Promise<SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf>>()
+
+    const signerSignatureCallbacks: SignerSignatureCallback[] = []
+    const cancelCallbacks: CancelCallback[] = []
+
+    let done = false
+    const check = () => {
+      const { weight, potential } = getWeight(topology)
+      if (options?.threshold !== undefined) {
+        if (weight >= options.threshold) {
+          cancelCallbacks.forEach((callback) => callback(true))
+          cancelCallbacks.length = 0
+          signerSignatureCallbacks.length = 0
+          done = true
+          resolve(topology)
+        } else if (potential < options.threshold) {
+          cancelCallbacks.forEach((callback) => callback(false))
+          cancelCallbacks.length = 0
+          signerSignatureCallbacks.length = 0
+          done = true
+          reject(new Error(`potential weight ${potential} < threshold ${options.threshold}`))
+        }
+      }
+      if (weight === potential) {
+        cancelCallbacks.forEach((callback) => callback(true))
+        cancelCallbacks.length = 0
+        signerSignatureCallbacks.length = 0
+        done = true
+        resolve(topology)
+      }
+    }
+
+    check()
+    if (done) {
+      return
+    }
+
+    const onSignerSignature =
+      <T extends SignerLeaf | SapientSignerLeaf>(signer: T) =>
+      (signature: T extends SignerLeaf ? SignatureOfSignerLeaf : SignatureOfSapientSignerLeaf) => {
+        if (!done) {
+          signer.signed = true
+          signer.signature = signature
+
+          check()
+
+          if (!done) {
+            signerSignatureCallbacks.forEach((callback) => callback(topology, options?.isValid !== undefined))
+          }
+        }
+      }
+
+    const onError = (signer: SignerLeaf | SapientSignerLeaf) => (error: any) => {
+      if (!done) {
+        options?.onError?.(signer, error)
+
+        check()
+      }
+    }
+
+    const search = (topology: RawTopology) => {
+      if (isSignedSignerLeaf(topology)) {
+        return
+      } else if (isSignerLeaf(topology)) {
+        const imageHash = Bytes.toHex(hashConfiguration(topology))
+
+        if (!signatures.has(imageHash)) {
+          let signature = sign_(topology)
+          if (!('signature' in signature)) {
+            if (signature instanceof Promise) {
+              signature = { signature }
+            } else {
+              signature = { signature: Promise.resolve(signature) }
+            }
+          }
+
+          if (signature.onSignerSignature) {
+            signerSignatureCallbacks.push(signature.onSignerSignature)
+          }
+          if (signature.onCancel) {
+            cancelCallbacks.push(signature.onCancel)
+          }
+
+          const isValid = options?.isValid
+          signature.signature = signature.signature.then(async (signature) => {
+            if (signature.type === 'erc1271' && signature.address !== topology.address) {
+              throw new Error(
+                `incorrect erc-1271 signature address ${signature.address} for ${JSON.stringify(topology)}`,
+              )
+            }
+            if (isValid && !(await isValid(topology, signature))) {
+              throw new Error(`invalid signer signature for ${JSON.stringify(topology)}`)
+            }
+            return signature
+          })
+
+          signatures.set(imageHash, signature.signature)
+          signature.signature.catch(onError(topology))
+        }
+
+        const signature = signatures.get(imageHash) as Promise<SignatureOfSignerLeaf>
+        signature.then(onSignerSignature(topology)).catch(() => {})
+      } else if (isSignedSapientSignerLeaf(topology)) {
+        return
+      } else if (isSapientSignerLeaf(topology)) {
+        const imageHash = Bytes.toHex(hashConfiguration(topology))
+
+        if (!signatures.has(imageHash)) {
+          let signature = sign_(topology)
+          if (!('signature' in signature)) {
+            if (signature instanceof Promise) {
+              signature = { signature }
+            } else {
+              signature = { signature: Promise.resolve(signature) }
+            }
+          }
+
+          if (signature.onSignerSignature) {
+            signerSignatureCallbacks.push(signature.onSignerSignature)
+          }
+          if (signature.onCancel) {
+            cancelCallbacks.push(signature.onCancel)
+          }
+
+          const isValid = options?.isValid
+          signature.signature = signature.signature.then(async (signature) => {
+            if (signature.address !== topology.address) {
+              throw new Error(
+                `incorrect sapient signature address ${signature.address} for ${JSON.stringify(topology)}`,
+              )
+            }
+            if (isValid && !(await isValid(topology, signature))) {
+              throw new Error(`invalid signer signature for ${JSON.stringify(topology)}`)
+            }
+            return signature
+          })
+
+          signatures.set(imageHash, signature.signature)
+          signature.signature.catch(onError(topology))
+        }
+
+        const signature = signatures.get(imageHash) as Promise<SignatureOfSapientSignerLeaf>
+        signature.then(onSignerSignature(topology)).catch(() => {})
+      } else if (isSubdigestLeaf(topology)) {
+        return
+      } else if (isNodeLeaf(topology)) {
+        return
+      } else if (isRawSignerLeaf(topology)) {
+        return
+      } else if (isRawNestedLeaf(topology)) {
+        try {
+          sign(topology.tree, sign_, { ...options, threshold: topology.threshold, _signatures: signatures }).catch(
+            () => {},
+          )
+        } catch {}
+      } else {
+        topology.forEach(search)
+      }
+    }
+
+    search(topology)
+  })
+}
+
+type SignerSignature<T> =
+  | T
+  | Promise<T>
+  | { signature: Promise<T>; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
+
+type SignerSignatureCallback = (topology: RawTopology, validated: boolean) => void
+type CancelCallback = (success: boolean) => void
