@@ -10,7 +10,7 @@ import {
 } from '@0xsequence/sequence-primitives'
 import { Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
-import { fromPosOrStdin } from '../utils'
+import { fromPosOrStdin, parseRSV } from '../utils'
 
 export async function doEncodeSessionsTopology(input: string): Promise<string> {
   let topology = sessionsTopologyFromJson(input)
@@ -57,16 +57,7 @@ export async function doUseSession(
   if (!signatureInput) {
     throw new Error('Signature is required')
   }
-  // Decode signature from "r:s:v"
-  const signatureParts = signatureInput.split(':')
-  if (signatureParts.length !== 3) {
-    throw new Error('Signature must be in r:s:v format')
-  }
-  const signature = {
-    r: Bytes.fromHex(signatureParts[0] as `0x${string}`),
-    s: Bytes.fromHex(signatureParts[1] as `0x${string}`),
-    v: parseInt(signatureParts[2] ?? ''),
-  }
+  const signature = parseRSV(signatureInput)
 
   if (!permissionIndexesInput) {
     throw new Error('Permission indexes are required')
@@ -99,6 +90,7 @@ const sessionExplicitCommand: CommandModule = {
             .positional('explicit-session', {
               type: 'string',
               description: 'Explicit session to add',
+              required: true,
             })
             .positional('session-topology', {
               type: 'string',

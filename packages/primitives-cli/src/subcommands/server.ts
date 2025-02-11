@@ -5,6 +5,7 @@ import * as devTools from './devTools'
 import * as payload from './payload'
 import * as permission from './permission'
 import * as sessionExplicit from './sessionExplicit'
+import * as sessionImplicit from './sessionImplicit'
 import * as signatureUtils from './signature'
 
 // Basic JSON-RPC types
@@ -127,28 +128,50 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   },
 
   // SESSION EXPLICIT
-  async session_empty(_params) {
+  async session_explicit_empty(_params) {
     return await sessionExplicit.doEmptySession()
   },
-  async session_add(params) {
+  async session_explicit_add(params) {
     const { explicitSession, sessionTopology } = params
     const result = await sessionExplicit.doAddSession(JSON.stringify(explicitSession), JSON.stringify(sessionTopology))
     return result
   },
-  async session_remove(params) {
+  async session_explicit_remove(params) {
     const { explicitSessionAddress, sessionTopology } = params
     const result = await sessionExplicit.doRemoveSession(explicitSessionAddress, JSON.stringify(sessionTopology))
     return result
   },
-  async session_use(params) {
+  async session_explicit_use(params) {
     const { signature, permissionIndexes, sessionTopology } = params
     const result = await sessionExplicit.doUseSession(signature, permissionIndexes, JSON.stringify(sessionTopology))
     return result
   },
-  async session_toPackedTopology(params) {
+  async session_explicit_toPackedTopology(params) {
     const { sessionTopology } = params
     const result = await sessionExplicit.doEncodeSessionsTopology(JSON.stringify(sessionTopology))
     return result
+  },
+
+  // SESSION IMPLICIT
+  async session_implicit_empty(_params) {
+    return await sessionImplicit.doEmptySession()
+  },
+  async session_implicit_addBlacklistAddress(params) {
+    const { blacklistAddress, sessionConfiguration } = params
+    return await sessionImplicit.doAddBlacklistAddress(blacklistAddress, JSON.stringify(sessionConfiguration))
+  },
+  async session_implicit_removeBlacklistAddress(params) {
+    const { blacklistAddress, sessionConfiguration } = params
+    return await sessionImplicit.doRemoveBlacklistAddress(blacklistAddress, JSON.stringify(sessionConfiguration))
+  },
+  async session_implicit_use(params) {
+    const { sessionSignature, globalSignature, attestation, sessionConfiguration } = params
+    return await sessionImplicit.doUseImplicitSession(
+      sessionSignature,
+      globalSignature,
+      JSON.stringify(attestation),
+      JSON.stringify(sessionConfiguration),
+    )
   },
 
   // SIGNATURE
