@@ -108,8 +108,8 @@ export class Wallet {
       }),
     )
 
-    if (getWeight(configuration, (signer) => signers.has(signer.address)).potential < configuration.threshold) {
-      throw new Error('insufficient potential weight')
+    if (getWeight(configuration, (signer) => signers.has(signer.address)).maxWeight < configuration.threshold) {
+      throw new Error('insufficient max weight')
     }
 
     const signerSignatures = await new Promise<Map<Address.Address, Signature>>((resolve, reject) => {
@@ -118,11 +118,11 @@ export class Wallet {
 
         options?.onSignerError?.(address, error)
 
-        if (getWeight(configuration, (signer) => signers.has(signer.address)).potential < configuration.threshold) {
+        if (getWeight(configuration, (signer) => signers.has(signer.address)).maxWeight < configuration.threshold) {
           const onCancels = Array.from(signers.values()).flatMap(({ onCancel }) => (onCancel ? [onCancel] : []))
           signers.clear()
           onCancels.forEach((onCancel) => onCancel(false))
-          reject(new Error('insufficient potential weight'))
+          reject(new Error('insufficient max weight'))
         }
       }
 

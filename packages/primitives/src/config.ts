@@ -124,33 +124,33 @@ export function getSigners(configuration: Configuration | Topology): {
 export function getWeight(
   topology: RawTopology | RawConfiguration,
   canSign?: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
-): { weight: bigint; potential: bigint } {
+): { weight: bigint; maxWeight: bigint } {
   topology = isRawConfiguration(topology) ? topology.topology : topology
   canSign = canSign || ((_signer: SignerLeaf | SapientSignerLeaf) => true)
 
   if (isSignedSignerLeaf(topology)) {
-    return { weight: topology.weight, potential: topology.weight }
+    return { weight: topology.weight, maxWeight: topology.weight }
   } else if (isSignerLeaf(topology)) {
-    return { weight: 0n, potential: canSign(topology) ? topology.weight : 0n }
+    return { weight: 0n, maxWeight: canSign(topology) ? topology.weight : 0n }
   } else if (isRawSignerLeaf(topology)) {
-    return { weight: topology.weight, potential: topology.weight }
+    return { weight: topology.weight, maxWeight: topology.weight }
   } else if (isSignedSapientSignerLeaf(topology)) {
-    return { weight: topology.weight, potential: topology.weight }
+    return { weight: topology.weight, maxWeight: topology.weight }
   } else if (isSapientSignerLeaf(topology)) {
-    return { weight: topology.weight, potential: canSign(topology) ? topology.weight : 0n }
+    return { weight: topology.weight, maxWeight: canSign(topology) ? topology.weight : 0n }
   } else if (isSubdigestLeaf(topology)) {
-    return { weight: 0n, potential: 0n }
+    return { weight: 0n, maxWeight: 0n }
   } else if (isRawNestedLeaf(topology)) {
-    const { weight, potential } = getWeight(topology.tree)
+    const { weight, maxWeight } = getWeight(topology.tree)
     return {
       weight: weight >= topology.threshold ? topology.weight : 0n,
-      potential: potential >= topology.threshold ? topology.weight : 0n,
+      maxWeight: maxWeight >= topology.threshold ? topology.weight : 0n,
     }
   } else if (isNodeLeaf(topology)) {
-    return { weight: 0n, potential: 0n }
+    return { weight: 0n, maxWeight: 0n }
   } else {
     const [left, right] = [getWeight(topology[0], canSign), getWeight(topology[1], canSign)]
-    return { weight: left.weight + right.weight, potential: left.potential + right.potential }
+    return { weight: left.weight + right.weight, maxWeight: left.maxWeight + right.maxWeight }
   }
 }
 
@@ -355,7 +355,7 @@ export function sign(
 
     let done = false
     const check = () => {
-      const { weight, potential } = getWeight(topology)
+      const { weight, maxWeight } = getWeight(topology)
       if (options?.threshold !== undefined) {
         if (weight >= options.threshold) {
           cancelCallbacks.forEach((callback) => callback(true))
@@ -363,15 +363,15 @@ export function sign(
           signerSignatureCallbacks.length = 0
           done = true
           resolve(topology)
-        } else if (potential < options.threshold) {
+        } else if (maxWeight < options.threshold) {
           cancelCallbacks.forEach((callback) => callback(false))
           cancelCallbacks.length = 0
           signerSignatureCallbacks.length = 0
           done = true
-          reject(new Error(`potential weight ${potential} < threshold ${options.threshold}`))
+          reject(new Error(`max weight ${maxWeight} < threshold ${options.threshold}`))
         }
       }
-      if (weight === potential) {
+      if (weight === maxWeight) {
         cancelCallbacks.forEach((callback) => callback(true))
         cancelCallbacks.length = 0
         signerSignatureCallbacks.length = 0
