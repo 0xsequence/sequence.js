@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.2.13
+
+### Patch Changes
+
+- Add XR1 to all networks
+- Updated dependencies
+  - @0xsequence/waas@2.2.13
+
 ## 2.2.12
 
 ### Patch Changes

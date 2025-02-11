@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.2.13
+
+### Patch Changes
+
+- Add XR1 to all networks
+
 ## 2.2.12
 
 ### Patch Changes

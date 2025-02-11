@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 2.2.13
+
+### Patch Changes
+
+- Add XR1 to all networks
+- Updated dependencies
+  - @0xsequence/abi@2.2.13
+  - @0xsequence/account@2.2.13
+  - @0xsequence/api@2.2.13
+  - @0xsequence/core@2.2.13
+  - @0xsequence/indexer@2.2.13
+  - @0xsequence/metadata@2.2.13
+  - @0xsequence/migration@2.2.13
+  - @0xsequence/network@2.2.13
+  - @0xsequence/sessions@2.2.13
+  - @0xsequence/signhub@2.2.13
+  - @0xsequence/utils@2.2.13
+  - @0xsequence/wallet@2.2.13
+
 ## 2.2.12
 
 ### Patch Changes
