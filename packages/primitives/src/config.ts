@@ -333,7 +333,7 @@ function decodeTopology(obj: any): Topology {
 
 export function sign(
   topology: RawTopology,
-  sign_: <T extends SignerLeaf | SapientSignerLeaf>(
+  signLeaf: <T extends SignerLeaf | SapientSignerLeaf>(
     signer: T,
   ) => SignerSignature<T extends SignerLeaf ? SignatureOfSignerLeaf : SignatureOfSapientSignerLeaf>,
   options?: {
@@ -415,7 +415,7 @@ export function sign(
         const imageHash = Bytes.toHex(hashConfiguration(topology))
 
         if (!signatures.has(imageHash)) {
-          let signature = sign_(topology)
+          let signature = signLeaf(topology)
           if (!('signature' in signature)) {
             if (signature instanceof Promise) {
               signature = { signature }
@@ -456,7 +456,7 @@ export function sign(
         const imageHash = Bytes.toHex(hashConfiguration(topology))
 
         if (!signatures.has(imageHash)) {
-          let signature = sign_(topology)
+          let signature = signLeaf(topology)
           if (!('signature' in signature)) {
             if (signature instanceof Promise) {
               signature = { signature }
@@ -499,7 +499,7 @@ export function sign(
         return
       } else if (isRawNestedLeaf(topology)) {
         try {
-          sign(topology.tree, sign_, { ...options, threshold: topology.threshold, _signatures: signatures }).catch(
+          sign(topology.tree, signLeaf, { ...options, threshold: topology.threshold, _signatures: signatures }).catch(
             () => {},
           )
         } catch {}
