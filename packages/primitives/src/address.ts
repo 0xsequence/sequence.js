@@ -14,7 +14,7 @@ export function getCounterfactualAddress(
         Bytes.from('0xff'),
         Bytes.from(context.factory),
         imageHash,
-        Hash.keccak256(Bytes.concat(Bytes.from(context.creationCode), Bytes.from(context.stage1))),
+        Hash.keccak256(Bytes.concat(Bytes.from(context.creationCode), Bytes.padLeft(Bytes.from(context.stage1), 32))),
       ),
       { as: 'Bytes' },
     ).subarray(12),

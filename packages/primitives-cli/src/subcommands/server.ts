@@ -7,6 +7,7 @@ import * as permission from './permission'
 import * as sessionExplicit from './sessionExplicit'
 import * as sessionImplicit from './sessionImplicit'
 import * as signatureUtils from './signature'
+import * as address from './address'
 
 // Basic JSON-RPC types
 interface JsonRpcRequest {
@@ -189,6 +190,12 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const { signature: sig } = params
     const result = await signatureUtils.doDecode(sig)
     return result
+  },
+
+  // ADDRESS
+  async address_calculate(params) {
+    const { imageHash, factory, module, creationCode } = params
+    return await address.doCalculateAddress({ imageHash, factory, module, creationCode })
   },
 }
 

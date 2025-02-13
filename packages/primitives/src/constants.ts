@@ -1,5 +1,8 @@
 import { Abi, Address, Hex } from 'ox'
 
+export const DEFAULT_CREATION_CODE =
+  '0x603a600e3d39601a805130553df3363d3d373d3d3d363d30545af43d82803e903d91601857fd5bf3'
+
 export type Context = {
   factory: Address.Address
   stage1: Address.Address
@@ -9,7 +12,7 @@ export type Context = {
 export const DevContext1: Context = {
   factory: '0xFaA5c0b14d1bED5C888Ca655B9a8A5911F78eF4A',
   stage1: '0x66155b899d93e255d42a85eb921ead9f2e964ef1',
-  creationCode: '0xe893cfb06ade2c5b81d209aaf650041816c1ac9d6fd6f328dc874b25db149637',
+  creationCode: DEFAULT_CREATION_CODE,
 }
 
 // ERC1271
