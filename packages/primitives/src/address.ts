@@ -1,17 +1,20 @@
 import { Address, Bytes, Hash } from 'ox'
 import { Configuration, hashConfiguration } from './config'
-import { CREATION_CODE, FACTORY, MAIN_MODULE } from './constants'
+import { Context } from './constants'
 
-export function getCounterfactualAddress(configuration: Bytes.Bytes | Configuration): Address.Address {
+export function getCounterfactualAddress(
+  configuration: Bytes.Bytes | Configuration,
+  context: Context,
+): Address.Address {
   const imageHash = configuration instanceof Uint8Array ? configuration : hashConfiguration(configuration)
 
   return Bytes.toHex(
     Hash.keccak256(
       Bytes.concat(
         Bytes.from('0xff'),
-        Bytes.from(FACTORY),
+        Bytes.from(context.factory),
         imageHash,
-        Hash.keccak256(Bytes.concat(Bytes.from(CREATION_CODE), Bytes.from(MAIN_MODULE))),
+        Hash.keccak256(Bytes.concat(Bytes.from(context.creationCode), Bytes.from(context.stage1))),
       ),
       { as: 'Bytes' },
     ).subarray(12),

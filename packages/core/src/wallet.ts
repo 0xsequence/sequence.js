@@ -1,6 +1,8 @@
 import {
   Configuration,
+  Context,
   decodeSignature,
+  DevContext1,
   encodeSignature,
   erc6492,
   erc6492Deploy,
@@ -19,16 +21,27 @@ import { AbiFunction, Address, Bytes, Hex, Provider, Signature as oxSignature } 
 import { CancelCallback, Signature, Signer, SignerSignatureCallback } from './signer'
 import { Sessions, StateReader, StateWriter } from './state'
 
+export type WalletOptions = {
+  context: Context
+}
+
+export const DefaultWalletOptions: WalletOptions = {
+  context: DevContext1,
+}
+
 export class Wallet {
   private readonly signers = new Map<Address.Address, Signer>()
   private readonly stateProvider: StateReader & StateWriter
 
-  constructor(readonly address: Address.Address) {
+  constructor(
+    readonly address: Address.Address,
+    options: WalletOptions = DefaultWalletOptions,
+  ) {
     this.stateProvider = new Sessions()
   }
 
-  static fromConfiguration(configuration: Configuration): Wallet {
-    return new Wallet(getCounterfactualAddress(configuration))
+  static fromConfiguration(configuration: Configuration, options: WalletOptions = DefaultWalletOptions): Wallet {
+    return new Wallet(getCounterfactualAddress(configuration, options.context))
   }
 
   async setSigner(signer: Signer) {

@@ -1,15 +1,18 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hex } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
-import { DEPLOY, FACTORY, MAIN_MODULE } from './constants'
+import { DEPLOY, Context } from './constants'
 
-export function erc6492Deploy<T extends Bytes.Bytes | Hex.Hex>(deployHash: T): { to: Address.Address; data: T } {
-  const encoded = AbiFunction.encodeData(DEPLOY, [MAIN_MODULE, Hex.from(deployHash)])
+export function erc6492Deploy<T extends Bytes.Bytes | Hex.Hex>(
+  deployHash: T,
+  context: Context,
+): { to: Address.Address; data: T } {
+  const encoded = AbiFunction.encodeData(DEPLOY, [context.stage1, Hex.from(deployHash)])
 
   switch (typeof deployHash) {
     case 'object':
-      return { to: FACTORY, data: Hex.toBytes(encoded) as T }
+      return { to: context.factory, data: Hex.toBytes(encoded) as T }
     case 'string':
-      return { to: FACTORY, data: encoded as T }
+      return { to: context.factory, data: encoded as T }
   }
 }
 

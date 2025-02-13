@@ -1,8 +1,16 @@
 import { Abi, Address, Hex } from 'ox'
 
-export const FACTORY: Address.Address = '0xTODO'
-export const MAIN_MODULE: Address.Address = '0xTODO'
-export const CREATION_CODE: Hex.Hex = '0xTODO'
+export type Context = {
+  factory: Address.Address
+  stage1: Address.Address
+  creationCode: Hex.Hex
+}
+
+export const DevContext1: Context = {
+  factory: '0xFaA5c0b14d1bED5C888Ca655B9a8A5911F78eF4A',
+  stage1: '0x66155b899d93e255d42a85eb921ead9f2e964ef1',
+  creationCode: '0xe893cfb06ade2c5b81d209aaf650041816c1ac9d6fd6f328dc874b25db149637',
+}
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([
