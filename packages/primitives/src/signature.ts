@@ -17,6 +17,7 @@ import {
   isTopology,
 } from './config'
 import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
+import { erc6492, erc6492Decode } from './erc-6492'
 import { fromConfigUpdate, hash, ParentedPayload } from './payload'
 import { minBytesFor } from './utils'
 
@@ -92,6 +93,7 @@ export type RawSignature = {
   checkpointerData?: Bytes.Bytes
   configuration: RawConfiguration
   suffix?: RawSignature[]
+  erc6492?: { to: Address.Address; data: Bytes.Bytes }
 }
 
 export function isRawSignature(signature: any): signature is RawSignature {
@@ -153,7 +155,9 @@ export function isRawNestedLeaf(cand: any): cand is RawNestedLeaf {
   return typeof cand === 'object' && 'tree' in cand && 'weight' in cand && 'threshold' in cand
 }
 
-export function decodeSignature(signature: Bytes.Bytes): RawSignature {
+export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
+  const { signature, erc6492 } = erc6492Decode(erc6492Signature)
+
   if (signature.length < 1) {
     throw new Error('Signature is empty')
   }
@@ -226,7 +230,7 @@ export function decodeSignature(signature: Bytes.Bytes): RawSignature {
       throw new Error('Chained signature has no subsignatures')
     }
 
-    return { ...subsignatures[0]!, suffix: subsignatures.slice(1) }
+    return { ...subsignatures[0]!, suffix: subsignatures.slice(1), erc6492 }
   }
 
   const { nodes, leftover } = parseBranch(signature.slice(index))
@@ -239,12 +243,8 @@ export function decodeSignature(signature: Bytes.Bytes): RawSignature {
   return {
     noChainId,
     checkpointerData,
-    configuration: {
-      threshold,
-      checkpoint,
-      topology,
-      checkpointer: checkpointerAddress,
-    },
+    configuration: { threshold, checkpoint, topology, checkpointer: checkpointerAddress },
+    erc6492,
   }
 }
 
@@ -672,7 +672,7 @@ export function encodeSignature(signature: RawSignature, skipCheckpointerData?: 
   const topologyBytes = encodeTopology(config.topology, signature)
   output = Bytes.concat(output, topologyBytes)
 
-  return output
+  return signature.erc6492 ? erc6492(output, signature.erc6492) : output
 }
 
 export function encodeTopology(

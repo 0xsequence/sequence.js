@@ -1,15 +1,15 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hex } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
-import { DEPLOY, MAIN_MODULE } from './constants'
+import { DEPLOY, FACTORY, MAIN_MODULE } from './constants'
 
 export function erc6492Deploy<T extends Bytes.Bytes | Hex.Hex>(deployHash: T): { to: Address.Address; data: T } {
   const encoded = AbiFunction.encodeData(DEPLOY, [MAIN_MODULE, Hex.from(deployHash)])
 
   switch (typeof deployHash) {
     case 'object':
-      return { to: MAIN_MODULE, data: Hex.toBytes(encoded) as T }
+      return { to: FACTORY, data: Hex.toBytes(encoded) as T }
     case 'string':
-      return { to: MAIN_MODULE, data: encoded as T }
+      return { to: FACTORY, data: encoded as T }
   }
 }
 
@@ -35,7 +35,7 @@ export function erc6492<T extends Bytes.Bytes | Hex.Hex>(
 
 export function erc6492Decode<T extends Bytes.Bytes | Hex.Hex>(
   signature: T,
-): { signature: T; to?: Address.Address; data?: T } {
+): { signature: T; erc6492?: { to: Address.Address; data: T } } {
   switch (typeof signature) {
     case 'object':
       if (
@@ -46,7 +46,7 @@ export function erc6492Decode<T extends Bytes.Bytes | Hex.Hex>(
           [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
           signature.subarray(0, -WrappedSignature.magicBytes.slice(2).length / 2),
         )
-        return { signature: Hex.toBytes(decoded) as T, to, data: Hex.toBytes(data) as T }
+        return { signature: Hex.toBytes(decoded) as T, erc6492: { to, data: Hex.toBytes(data) as T } }
       } else {
         return { signature }
       }
@@ -58,7 +58,7 @@ export function erc6492Decode<T extends Bytes.Bytes | Hex.Hex>(
             [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
             signature.slice(0, -WrappedSignature.magicBytes.slice(2).length) as Hex.Hex,
           )
-          return { signature: decoded as T, to, data: data as T }
+          return { signature: decoded as T, erc6492: { to, data: data as T } }
         } catch {
           return { signature }
         }
