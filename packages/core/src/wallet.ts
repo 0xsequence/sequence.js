@@ -19,14 +19,17 @@ import {
 } from '@0xsequence/sequence-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Signature as oxSignature } from 'ox'
 import { CancelCallback, Signature, Signer, SignerSignatureCallback } from './signer'
-import { Sessions, StateReader, StateWriter } from './state'
+import { StateReader, StateWriter } from './state'
+import { MemoryStore } from './state/memory'
 
 export type WalletOptions = {
   context: Context
+  stateProvider: StateReader & StateWriter
 }
 
 export const DefaultWalletOptions: WalletOptions = {
   context: DevContext1,
+  stateProvider: new MemoryStore(),
 }
 
 export class Wallet {
@@ -35,17 +38,47 @@ export class Wallet {
 
   constructor(
     readonly address: Address.Address,
-    readonly options: WalletOptions = DefaultWalletOptions,
+    readonly options: Partial<WalletOptions> = {},
   ) {
-    this.stateProvider = new Sessions()
+    const mergedOptions = { ...DefaultWalletOptions, ...options }
+    this.stateProvider = mergedOptions.stateProvider!
   }
 
-  static fromConfiguration(configuration: Configuration, options: WalletOptions = DefaultWalletOptions): Wallet {
-    return new Wallet(getCounterfactualAddress(configuration, options.context))
+  static async fromConfiguration(configuration: Configuration, options: Partial<WalletOptions> = {}): Promise<Wallet> {
+    const mergedOptions = { ...DefaultWalletOptions, ...options }
+
+    await mergedOptions.stateProvider.saveWallet(configuration, mergedOptions.context)
+    return new Wallet(getCounterfactualAddress(configuration, mergedOptions.context), mergedOptions)
   }
 
   async setSigner(signer: Signer) {
     this.signers.set(await signer.address, signer)
+  }
+
+  async isDeployed(provider: Provider.Provider): Promise<boolean> {
+    const code = await provider.request({ method: 'eth_getCode', params: [this.address, 'latest'] })
+    return code !== '0x'
+  }
+
+  async deploy(provider: Provider.Provider): Promise<void> {
+    console.log('called deploy')
+    if (await this.isDeployed(provider)) {
+      throw new Error('Wallet is already deployed')
+    }
+
+    const { hash: imageHash, context } = await this.stateProvider.getDeployHash(this.address)
+    const deployData = erc6492Deploy(imageHash, context)
+
+    await provider.request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          to: deployData.to,
+          data: deployData.data,
+          gas: '0x27100',
+        },
+      ],
+    })
   }
 
   async setConfiguration(configuration: Configuration, options?: { force: boolean }) {
@@ -70,21 +103,16 @@ export class Wallet {
     let deployContext: Context
 
     if (provider) {
-      const responses = await Promise.all([
-        provider.request({ method: 'eth_chainId' }),
-        provider.request({ method: 'eth_getCode', params: [this.address, 'latest'] }),
-      ])
+      const responses = await Promise.all([provider.request({ method: 'eth_chainId' }), this.isDeployed(provider)])
 
       chainId = BigInt(responses[0])
+      isDeployed = responses[1]
 
-      const code = responses[1]
-      if (code === '0x') {
-        isDeployed = false
+      if (!isDeployed) {
         const { hash, context } = await this.stateProvider.getDeployHash(this.address)
         imageHash = hash
         deployContext = context
       } else {
-        isDeployed = true
         imageHash = await provider.request({
           method: 'eth_call',
           params: [{ data: AbiFunction.encodeData(IMAGE_HASH) }],
