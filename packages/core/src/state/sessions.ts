@@ -1,4 +1,4 @@
-import { Configuration, hash, hashConfiguration, Payload } from '@0xsequence/sequence-primitives'
+import { Configuration, Context, hash, hashConfiguration, Payload } from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex } from 'ox'
 import { Signature, StateReader, StateWriter } from '.'
 import * as service from './sessions.gen'
@@ -20,12 +20,13 @@ export class Sessions implements StateReader, StateWriter {
     return config
   }
 
-  async getDeployHash(wallet: Address.Address): Promise<Hex.Hex> {
-    const { deployHash } = await this.sessions.deployHash({ wallet })
+  async getDeployHash(wallet: Address.Address): Promise<{ hash: Hex.Hex; context: Context }> {
+    const { deployHash, context } = await this.sessions.deployHash({ wallet })
 
     Hex.assert(deployHash)
 
-    return deployHash
+    // TODO: Enforce context type
+    return { hash: deployHash, context: context as any }
   }
 
   async getWallets(

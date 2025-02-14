@@ -35,7 +35,7 @@ export class Wallet {
 
   constructor(
     readonly address: Address.Address,
-    options: WalletOptions = DefaultWalletOptions,
+    readonly options: WalletOptions = DefaultWalletOptions,
   ) {
     this.stateProvider = new Sessions()
   }
@@ -67,6 +67,8 @@ export class Wallet {
     let chainId: bigint
     let isDeployed: boolean
     let imageHash: Hex.Hex
+    let deployContext: Context
+
     if (provider) {
       const responses = await Promise.all([
         provider.request({ method: 'eth_chainId' }),
@@ -78,7 +80,9 @@ export class Wallet {
       const code = responses[1]
       if (code === '0x') {
         isDeployed = false
-        imageHash = await this.stateProvider.getDeployHash(this.address)
+        const { hash, context } = await this.stateProvider.getDeployHash(this.address)
+        imageHash = hash
+        deployContext = context
       } else {
         isDeployed = true
         imageHash = await provider.request({
@@ -102,7 +106,10 @@ export class Wallet {
       chainId = 0n
       isDeployed = true
 
-      imageHash = await this.stateProvider.getDeployHash(this.address)
+      const { hash, context } = await this.stateProvider.getDeployHash(this.address)
+      imageHash = hash
+      deployContext = context
+
       const path = await this.stateProvider.getConfigurationPath(this.address, imageHash)
       if (path.length) {
         imageHash = path[path.length - 1]!.imageHash
@@ -253,6 +260,6 @@ export class Wallet {
       suffix: signatures.reverse(),
     })
 
-    return isDeployed ? signature : erc6492(signature, erc6492Deploy(imageHash))
+    return isDeployed ? signature : erc6492(signature, erc6492Deploy(imageHash, deployContext!))
   }
 }

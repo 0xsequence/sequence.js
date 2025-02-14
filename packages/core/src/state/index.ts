@@ -1,4 +1,4 @@
-import { Configuration, Payload } from '@0xsequence/sequence-primitives'
+import { Configuration, Context, Payload } from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
 
 type MaybePromise<T> = T | Promise<T>
@@ -11,7 +11,7 @@ export type Signature<Block extends number | undefined = number> =
 export interface StateReader {
   getConfiguration(imageHash: Hex.Hex): MaybePromise<Configuration>
 
-  getDeployHash(wallet: Address.Address): MaybePromise<Hex.Hex>
+  getDeployHash(wallet: Address.Address): MaybePromise<{ hash: Hex.Hex; context: Context }>
 
   getWallets(
     signer: Address.Address,
@@ -25,7 +25,7 @@ export interface StateReader {
 }
 
 export interface StateWriter {
-  saveWallet(deployConfiguration: Configuration): MaybePromise<void>
+  saveWallet(deployConfiguration: Configuration, context: Context): MaybePromise<void>
 
   saveWitness(
     signer: Address.Address,

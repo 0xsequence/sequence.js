@@ -1,5 +1,6 @@
 import {
   Configuration,
+  Context,
   decodeSignature,
   fromConfigUpdate,
   getCounterfactualAddress,
@@ -14,7 +15,7 @@ import { Signature, StateReader, StateWriter } from '.'
 export class MemoryStore implements StateReader, StateWriter {
   private readonly objects: {
     configurations: { [imageHash: Hex.Hex]: Configuration }
-    deployHashes: { [wallet: Address.Address]: Hex.Hex }
+    deployHashes: { [wallet: Address.Address]: { hash: Hex.Hex; context: Context } }
     wallets: {
       [signer: Address.Address]: {
         [wallet: Address.Address]: { chainId: bigint; digest: Hex.Hex; signature: Signature }
@@ -36,7 +37,7 @@ export class MemoryStore implements StateReader, StateWriter {
     return configuration
   }
 
-  getDeployHash(wallet: Address.Address): Hex.Hex {
+  getDeployHash(wallet: Address.Address): { hash: Hex.Hex; context: Context } {
     const deployHash = this.objects.deployHashes[wallet]
     if (!deployHash) {
       throw new Error(`no deploy hash for wallet ${wallet}`)
@@ -89,11 +90,11 @@ export class MemoryStore implements StateReader, StateWriter {
     return updates
   }
 
-  saveWallet(deployConfiguration: Configuration): void {
+  saveWallet(deployConfiguration: Configuration, context: Context): void {
     const deployHash = hashConfiguration(deployConfiguration)
-    const wallet = getCounterfactualAddress(deployHash)
+    const wallet = getCounterfactualAddress(deployHash, context)
     this.objects.configurations[Bytes.toHex(deployHash)] = deployConfiguration
-    this.objects.deployHashes[wallet] = Bytes.toHex(deployHash)
+    this.objects.deployHashes[wallet] = { hash: Bytes.toHex(deployHash), context }
 
     let configurationPath = this.objects.configurationPaths[wallet]
     if (!configurationPath) {
@@ -142,7 +143,7 @@ export class MemoryStore implements StateReader, StateWriter {
       if (!deployHash) {
         throw new Error(`no deploy hash for wallet ${wallet}`)
       }
-      latestImageHash = deployHash
+      latestImageHash = deployHash.hash
     }
 
     const latestConfiguration = this.objects.configurations[latestImageHash]
