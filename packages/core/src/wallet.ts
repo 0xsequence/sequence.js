@@ -153,7 +153,7 @@ export class Wallet {
             return signature
           })
 
-          if (options?.trustSigners === false || !signer.isTrusted) {
+          if (options?.trustSigners === false || (!options?.trustSigners && !signer.isTrusted)) {
             signature.signature = signature.signature.then(async (signature) => {
               const digest = hash(this.address, chainId, payload)
 
@@ -228,7 +228,7 @@ export class Wallet {
                 return signature
               })
 
-              if (options?.trustSigners === false || !signer.isTrusted) {
+              if (options?.trustSigners === false || (!options?.trustSigners && !signer.isTrusted)) {
                 signature.signature = signature.signature.then(async (signature) => {
                   const digest = hash(this.address, chainId, payload)
 
