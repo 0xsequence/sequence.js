@@ -1,3 +1,2 @@
-export * from './signer'
+export * from './state'
 export * from './wallet'
-export * as state from './state'

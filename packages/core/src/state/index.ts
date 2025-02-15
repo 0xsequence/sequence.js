@@ -1,41 +1,43 @@
-import { Configuration, Context, Payload } from '@0xsequence/sequence-primitives'
+import {
+  Configuration,
+  Context,
+  ParentedPayload,
+  RawSignature,
+  SignatureOfSignerLeaf,
+} from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
 
-type MaybePromise<T> = T | Promise<T>
-
-export type Signature<Block extends number | undefined = number> =
-  | { type: 'eip-712'; signature: Hex.Hex }
-  | { type: 'eth_sign'; signature: Hex.Hex }
-  | { type: 'erc-1271'; signature: Hex.Hex; validAt: { chainId: bigint; block: Block } }
+export type StateProvider = StateReader & StateWriter
 
 export interface StateReader {
   getConfiguration(imageHash: Hex.Hex): MaybePromise<Configuration>
 
-  getDeployHash(wallet: Address.Address): MaybePromise<{ hash: Hex.Hex; context: Context }>
+  getDeployHash(wallet: Address.Address): MaybePromise<{ deployHash: Hex.Hex; context: Context }>
 
-  getWallets(
-    signer: Address.Address,
-  ): MaybePromise<Array<{ wallet: Address.Address; chainId: bigint; digest: Hex.Hex; signature: Signature }>>
+  getWallets(signer: Address.Address): MaybePromise<{
+    [wallet: Address.Address]: { chainId: bigint; payload: ParentedPayload; signature: SignatureOfSignerLeaf }
+  }>
 
-  getConfigurationPath(
+  getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
-  ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Hex.Hex }>>
+  ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: RawSignature }>>
 }
 
 export interface StateWriter {
   saveWallet(deployConfiguration: Configuration, context: Context): MaybePromise<void>
 
-  saveWitness(
-    signer: Address.Address,
+  saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload,
-    signature: Signature<number | undefined>,
+    payload: ParentedPayload,
+    signatures: SignatureOfSignerLeaf[],
   ): MaybePromise<void>
 
-  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: Hex.Hex): MaybePromise<void>
+  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: RawSignature): MaybePromise<void>
 }
 
-export * from './sessions'
+type MaybePromise<T> = T | Promise<T>
+
+export * from './memory'

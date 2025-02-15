@@ -1,293 +1,321 @@
 import {
   Configuration,
   Context,
-  decodeSignature,
   DevContext1,
-  encodeSignature,
-  erc6492,
+  encodeSapient,
   erc6492Deploy,
-  fillLeaves,
   fromConfigUpdate,
   getCounterfactualAddress,
-  getSigners,
-  getWeight,
+  hash,
   hashConfiguration,
   IMAGE_HASH,
-  isSignerLeaf,
-  Payload,
+  IS_VALID_SAPIENT_SIGNATURE,
+  IS_VALID_SAPIENT_SIGNATURE_COMPACT,
+  IS_VALID_SIGNATURE,
+  normalizeSignerSignature,
+  ParentedPayload,
   RawSignature,
+  sign,
+  SignatureOfSapientSignerLeaf,
+  SignatureOfSignerLeaf,
+  SignerErrorCallback,
+  SignerSignature,
 } from '@0xsequence/sequence-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, Signature as oxSignature } from 'ox'
-import { CancelCallback, Signature, Signer, SignerSignatureCallback } from './signer'
-import { StateReader, StateWriter } from './state'
-import { MemoryStore } from './state/memory'
+import { AbiFunction, Address, Bytes, Hex, PersonalMessage, Provider, Secp256k1, Signature } from 'ox'
+import { MemoryStateProvider, StateProvider } from '.'
 
 export type WalletOptions = {
   context: Context
-  stateProvider: StateReader & StateWriter
+  stateProvider: StateProvider
+  onSignerError?: SignerErrorCallback
 }
 
 export const DefaultWalletOptions: WalletOptions = {
   context: DevContext1,
-  stateProvider: new MemoryStore(),
+  stateProvider: new MemoryStateProvider(),
 }
 
 export class Wallet {
-  private readonly signers = new Map<Address.Address, Signer>()
-  private readonly stateProvider: StateReader & StateWriter
+  private readonly signers = new Map<Address.Address, { signer: Signer; isTrusted: boolean }>()
+  private readonly options: WalletOptions & { stateProvider: StateProvider }
 
   constructor(
     readonly address: Address.Address,
-    readonly options: Partial<WalletOptions> = {},
+    options?: Partial<WalletOptions>,
   ) {
-    const mergedOptions = { ...DefaultWalletOptions, ...options }
-    this.stateProvider = mergedOptions.stateProvider!
+    this.options = { ...DefaultWalletOptions, ...options }
   }
 
-  static async fromConfiguration(configuration: Configuration, options: Partial<WalletOptions> = {}): Promise<Wallet> {
-    const mergedOptions = { ...DefaultWalletOptions, ...options }
-
-    await mergedOptions.stateProvider.saveWallet(configuration, mergedOptions.context)
-    return new Wallet(getCounterfactualAddress(configuration, mergedOptions.context), mergedOptions)
+  static async fromConfiguration(configuration: Configuration, options?: Partial<WalletOptions>): Promise<Wallet> {
+    const merged = { ...DefaultWalletOptions, ...options }
+    await merged.stateProvider.saveWallet(configuration, merged.context)
+    return new Wallet(getCounterfactualAddress(configuration, merged.context), merged)
   }
 
-  async setSigner(signer: Signer) {
-    this.signers.set(await signer.address, signer)
+  async setSigner(signer: Signer, isTrusted = false) {
+    this.signers.set(await signer.address, { signer, isTrusted })
   }
 
   async isDeployed(provider: Provider.Provider): Promise<boolean> {
-    const code = await provider.request({ method: 'eth_getCode', params: [this.address, 'latest'] })
-    return code !== '0x'
+    return (await provider.request({ method: 'eth_getCode', params: [this.address, 'pending'] })) !== '0x'
   }
 
-  async deploy(provider: Provider.Provider): Promise<void> {
-    console.log('called deploy')
-    if (await this.isDeployed(provider)) {
-      throw new Error('Wallet is already deployed')
+  async deploy(provider: Provider.Provider) {
+    if (!(await this.isDeployed(provider))) {
+      return provider.request({ method: 'eth_sendTransaction', params: [await this.getDeployTransaction()] })
     }
-
-    const { hash: imageHash, context } = await this.stateProvider.getDeployHash(this.address)
-    const deployData = erc6492Deploy(imageHash, context)
-
-    await provider.request({
-      method: 'eth_sendTransaction',
-      params: [
-        {
-          to: deployData.to,
-          data: deployData.data,
-          gas: '0x27100',
-        },
-      ],
-    })
   }
 
-  async setConfiguration(configuration: Configuration, options?: { force: boolean }) {
-    if (!options?.force) {
-    }
+  async getDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
+    const { deployHash, context } = await this.options.stateProvider.getDeployHash(this.address)
+    return erc6492Deploy(deployHash, context)
+  }
 
-    const imageHash = Bytes.toHex(hashConfiguration(configuration))
-    const signature = Bytes.toHex(await this.sign(fromConfigUpdate(imageHash)))
-    return this.stateProvider.setConfiguration(this.address, configuration, signature)
+  async setConfiguration(
+    configuration: Configuration,
+    options?: { trustSigners?: boolean; onSignerError?: SignerErrorCallback },
+  ) {
+    const imageHash = hashConfiguration(configuration)
+    const signature = await this.sign(fromConfigUpdate(Bytes.toHex(imageHash)), options)
+    await this.options.stateProvider.setConfiguration(this.address, configuration, signature)
   }
 
   async sign(
-    payload: Payload,
-    provider?: Provider.Provider,
-    options?: { trustSigners?: boolean; onSignerError?: (signer: Address.Address, error: any) => void },
-  ): Promise<Bytes.Bytes> {
-    const signatures: Array<RawSignature & { checkpointerData: undefined }> = []
+    payload: ParentedPayload,
+    options?: { provider?: Provider.Provider; trustSigners?: boolean; onSignerError?: SignerErrorCallback },
+  ): Promise<RawSignature> {
+    const provider = options?.provider
+
+    let updates: Unpromise<ReturnType<StateProvider['getConfigurationUpdates']>> = []
 
     let chainId: bigint
     let isDeployed: boolean
+    let deployHash: { deployHash: Hex.Hex; context: Context } | undefined
     let imageHash: Hex.Hex
-    let deployContext: Context
-
     if (provider) {
-      const responses = await Promise.all([provider.request({ method: 'eth_chainId' }), this.isDeployed(provider)])
+      const requests = await Promise.all([provider.request({ method: 'eth_chainId' }), this.isDeployed(provider)])
+      chainId = BigInt(requests[0])
+      isDeployed = requests[1]
 
-      chainId = BigInt(responses[0])
-      isDeployed = responses[1]
-
-      if (!isDeployed) {
-        const { hash, context } = await this.stateProvider.getDeployHash(this.address)
-        imageHash = hash
-        deployContext = context
-      } else {
-        imageHash = await provider.request({
+      let fromImageHash: Hex.Hex
+      if (isDeployed) {
+        fromImageHash = await provider.request({
           method: 'eth_call',
-          params: [{ data: AbiFunction.encodeData(IMAGE_HASH) }],
+          params: [{ to: this.address, data: AbiFunction.encodeData(IMAGE_HASH) }],
         })
+      } else {
+        deployHash = await this.options.stateProvider.getDeployHash(this.address)
+        fromImageHash = deployHash.deployHash
       }
 
-      const path = await this.stateProvider.getConfigurationPath(this.address, imageHash)
+      updates = await this.options.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
 
-      signatures.push(
-        ...path.map(({ signature }) => {
-          const decoded = decodeSignature(Hex.toBytes(signature))
-          if (decoded.checkpointerData) {
-            throw new Error('chained subsignature has checkpointer data')
-          }
-          return { ...decoded, checkpointerData: undefined }
-        }),
-      )
+      imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
     } else {
       chainId = 0n
       isDeployed = true
 
-      const { hash, context } = await this.stateProvider.getDeployHash(this.address)
-      imageHash = hash
-      deployContext = context
+      const { deployHash } = await this.options.stateProvider.getDeployHash(this.address)
 
-      const path = await this.stateProvider.getConfigurationPath(this.address, imageHash)
-      if (path.length) {
-        imageHash = path[path.length - 1]!.imageHash
-      }
+      const updates = await this.options.stateProvider.getConfigurationUpdates(this.address, deployHash)
+
+      imageHash = updates[updates.length - 1]?.imageHash ?? deployHash
     }
 
-    const configuration = await this.stateProvider.getConfiguration(imageHash)
+    const configuration = await this.options.stateProvider.getConfiguration(imageHash)
 
-    const signers = new Map<
-      Address.Address,
-      { signer: Signer; signature?: Signature; onSignerSignature?: SignerSignatureCallback; onCancel?: CancelCallback }
-    >(
-      getSigners(configuration).signers.flatMap((address) => {
-        const signer = this.signers.get(address)
-        return signer ? [[address, { signer }]] : []
-      }),
-    )
-
-    if (getWeight(configuration, (signer) => signers.has(signer.address)).maxWeight < configuration.threshold) {
-      throw new Error('insufficient max weight')
-    }
-
-    const signerSignatures = await new Promise<Map<Address.Address, Signature>>((resolve, reject) => {
-      const onError = (address: Hex.Hex) => (error: any) => {
-        signers.delete(address)
-
-        options?.onSignerError?.(address, error)
-
-        if (getWeight(configuration, (signer) => signers.has(signer.address)).maxWeight < configuration.threshold) {
-          const onCancels = Array.from(signers.values()).flatMap(({ onCancel }) => (onCancel ? [onCancel] : []))
-          signers.clear()
-          onCancels.forEach((onCancel) => onCancel(false))
-          reject(new Error('insufficient max weight'))
-        }
-      }
-
-      const onSignerSignature = (address: Hex.Hex) => (signature: Signature) => {
-        if (!options?.trustSigners) {
-        }
-
-        const signer = signers.get(address)!
-        signer.signature = signature
-        delete signer.onSignerSignature
-        delete signer.onCancel
-
-        const signerSignatures = new Map(
-          Array.from(signers.entries()).flatMap(([address, { signature }]) =>
-            signature ? [[address, signature]] : [],
-          ),
-        )
-
-        if (
-          getWeight(configuration, (signer) => signers.get(signer.address)?.signature !== undefined).weight <
-          configuration.threshold
-        ) {
-          Array.from(signers.values()).forEach(({ onSignerSignature }) =>
-            onSignerSignature?.(configuration, signerSignatures, !options?.trustSigners),
-          )
-        } else {
-          const onCancels = Array.from(signers.values()).flatMap(({ onCancel }) => (onCancel ? [onCancel] : []))
-          signers.clear()
-          onCancels.forEach((onCancel) => onCancel(true))
-          resolve(signerSignatures)
-        }
-      }
-
-      for (const [address, signer] of signers.entries()) {
-        try {
-          const result = signer.signer.sign(payload)
-
-          if ('type' in result) {
-            Promise.resolve(result).then(onSignerSignature(address)).catch(onError(address))
-          } else if (result instanceof Promise) {
-            result.then(onSignerSignature(address)).catch(onError(address))
-          } else {
-            result.signature.then(onSignerSignature(address)).catch(onError(address))
-            signer.onSignerSignature = result.onSignerSignature
-            signer.onCancel = result.onCancel
+    const topology = await sign(
+      configuration.topology,
+      {
+        sign: (leaf) => {
+          const signer = this.signers.get(leaf.address)
+          if (!signer) {
+            throw new Error(`no signer ${leaf.address}`)
           }
-        } catch (error) {
-          Promise.resolve(error).then(onError(address))
-        }
-      }
-    })
-
-    const signature = encodeSignature({
-      noChainId: !chainId,
-      configuration: {
-        ...configuration,
-        topology: fillLeaves(configuration.topology, (leaf) => {
-          const signerSignature = signerSignatures.get(leaf.address)
-          if (!signerSignature) {
-            return
+          if (typeof signer.signer.sign !== 'function') {
+            throw new Error(`${leaf.address} does not implement Signer.sign()`)
           }
 
-          if (isSignerLeaf(leaf)) {
-            switch (signerSignature.type) {
-              case 'hash': {
-                const { r, s, yParity } = oxSignature.fromHex(signerSignature.signature)
-                return {
-                  type: 'hash',
-                  r: Bytes.fromNumber(r),
-                  s: Bytes.fromNumber(s),
-                  v: oxSignature.yParityToV(yParity),
-                }
-              }
+          const signature = normalizeSignerSignature(signer.signer.sign(this.address, chainId, payload))
 
-              case 'eth_sign': {
-                const { r, s, yParity } = oxSignature.fromHex(signerSignature.signature)
-                return {
-                  type: 'eth_sign',
-                  r: Bytes.fromNumber(r),
-                  s: Bytes.fromNumber(s),
-                  v: oxSignature.yParityToV(yParity),
-                }
-              }
-
-              case 'erc-1271': {
-                return { type: 'erc1271', address: leaf.address, data: Hex.toBytes(signerSignature.signature) }
-              }
-
-              case 'sapient':
-              case 'sapient-compact': {
-                throw new Error(`signature is ${signerSignature.type}, but ${leaf.address} is not a sapient signer`)
-              }
-            }
-          } else {
-            switch (signerSignature.type) {
-              case 'hash':
-              case 'eth_sign':
-              case 'erc-1271': {
+          signature.signature = signature.signature.then((signature) => {
+            if (signature.type === 'erc1271') {
+              if (signature.address !== leaf.address) {
                 throw new Error(
-                  `expected ${leaf.address} to be a sapient signer, but signature is ${signerSignature.type}`,
+                  `expected erc-1271 signature by ${leaf.address}, but received signature from ${signature.address}`,
                 )
               }
-
-              case 'sapient': {
-                return { type: 'sapient', address: leaf.address, data: Hex.toBytes(signerSignature.signature) }
-              }
-
-              case 'sapient-compact': {
-                return { type: 'sapient_compact', address: leaf.address, data: Hex.toBytes(signerSignature.signature) }
+              if (!provider) {
+                throw new Error(`erc-1271 signer ${leaf.address} cannot sign for a no-chain-id signature`)
               }
             }
-          }
-        }),
-      },
-      suffix: signatures.reverse(),
-    })
 
-    return isDeployed ? signature : erc6492(signature, erc6492Deploy(imageHash, deployContext!))
+            return signature
+          })
+
+          if (options?.trustSigners === false || !signer.isTrusted) {
+            signature.signature = signature.signature.then(async (signature) => {
+              const digest = hash(this.address, chainId, payload)
+
+              switch (signature.type) {
+                case 'eth_sign':
+                case 'hash':
+                  if (
+                    !Secp256k1.verify({
+                      payload: signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
+                      address: this.address,
+                      signature: {
+                        r: Bytes.toBigInt(signature.r),
+                        s: Bytes.toBigInt(signature.s),
+                        yParity: Signature.vToYParity(signature.v),
+                      },
+                    })
+                  ) {
+                    throw new Error(`invalid signature for ${leaf.type} signer ${leaf.address}`)
+                  }
+                  break
+
+                case 'erc1271':
+                  if (!provider) {
+                    throw new Error(`erc-1271 signatures are not valid for no-chain-id signatures`)
+                  }
+                  if (
+                    (await provider.request({
+                      method: 'eth_call',
+                      params: [
+                        {
+                          to: leaf.address,
+                          data: AbiFunction.encodeData(IS_VALID_SIGNATURE, [
+                            Bytes.toHex(digest),
+                            Bytes.toHex(signature.data),
+                          ]),
+                        },
+                      ],
+                    })) !== AbiFunction.getSelector(IS_VALID_SIGNATURE)
+                  ) {
+                    throw new Error(`invalid signature for erc-1271 signer ${leaf.address}`)
+                  }
+                  break
+              }
+
+              return signature
+            })
+          }
+
+          return signature
+        },
+        signSapient: provider
+          ? (leaf) => {
+              const signer = this.signers.get(leaf.address)
+              if (!signer) {
+                throw new Error(`no signer ${leaf.address}`)
+              }
+              if (typeof signer.signer.signSapient !== 'function') {
+                throw new Error(`${leaf.address} does not implement Signer.signSapient()`)
+              }
+
+              const signature = normalizeSignerSignature(
+                signer.signer.signSapient(this.address, chainId, payload, Bytes.toHex(leaf.imageHash)),
+              )
+
+              signature.signature = signature.signature.then((signature) => {
+                if (signature.address !== leaf.address) {
+                  throw new Error(
+                    `expected sapient signature by ${leaf.address}, but received signature from ${signature.address}`,
+                  )
+                }
+
+                return signature
+              })
+
+              if (options?.trustSigners === false || !signer.isTrusted) {
+                signature.signature = signature.signature.then(async (signature) => {
+                  const digest = hash(this.address, chainId, payload)
+
+                  switch (signature.type) {
+                    case 'sapient': {
+                      const imageHash = await provider.request({
+                        method: 'eth_call',
+                        params: [
+                          {
+                            to: leaf.address,
+                            data: AbiFunction.encodeData(IS_VALID_SAPIENT_SIGNATURE, [
+                              encodeSapient(chainId, payload),
+                              Bytes.toHex(signature.data),
+                            ]),
+                          },
+                        ],
+                      })
+                      if (imageHash !== Bytes.toHex(leaf.imageHash)) {
+                        throw new Error(
+                          `invalid sapient signature for ${leaf.type} signer ${leaf.address}: expected ${leaf.imageHash}, derived ${imageHash}`,
+                        )
+                      }
+                      break
+                    }
+
+                    case 'sapient_compact': {
+                      const imageHash = await provider.request({
+                        method: 'eth_call',
+                        params: [
+                          {
+                            to: leaf.address,
+                            data: AbiFunction.encodeData(IS_VALID_SAPIENT_SIGNATURE_COMPACT, [
+                              Bytes.toHex(digest),
+                              Bytes.toHex(signature.data),
+                            ]),
+                          },
+                        ],
+                      })
+                      if (imageHash !== Bytes.toHex(leaf.imageHash)) {
+                        throw new Error(
+                          `invalid sapient signature for ${leaf.type} signer ${leaf.address}: expected ${leaf.imageHash}, derived ${imageHash}`,
+                        )
+                      }
+                      break
+                    }
+                  }
+
+                  return signature
+                })
+              }
+
+              return signature
+            }
+          : undefined,
+      },
+      {
+        threshold: configuration.threshold,
+        onSignerError: (leaf, error) => {
+          options?.onSignerError?.(leaf, error)
+          this.options.onSignerError?.(leaf, error)
+        },
+      },
+    )
+
+    const erc6492 = deployHash && erc6492Deploy(deployHash.deployHash, deployHash.context)
+
+    return {
+      noChainId: !chainId,
+      configuration: { ...configuration, topology },
+      suffix: updates.reverse().map(({ signature }) => signature),
+      erc6492: erc6492 && { ...erc6492, data: Hex.toBytes(erc6492.data) },
+    }
   }
 }
+
+export interface Signer {
+  readonly address: MaybePromise<Address.Address>
+
+  sign?: (wallet: Address.Address, chainId: bigint, payload: ParentedPayload) => SignerSignature<SignatureOfSignerLeaf>
+
+  signSapient?: (
+    wallet: Address.Address,
+    chainId: bigint,
+    payload: ParentedPayload,
+    imageHash: Hex.Hex,
+  ) => SignerSignature<SignatureOfSapientSignerLeaf>
+}
+
+type MaybePromise<T> = T | Promise<T>
+type Unpromise<T> = T extends Promise<infer S> ? S : T

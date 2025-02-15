@@ -1,4 +1,5 @@
-import { Address, Bytes, Hash, Hex, TypedData } from 'ox'
+import { AbiFunction, Address, Bytes, Hash, Hex, TypedData } from 'ox'
+import { IS_VALID_SAPIENT_SIGNATURE } from './constants'
 import { minBytesFor } from './utils'
 
 export type Call = {
@@ -219,6 +220,53 @@ export function encode(payload: CallPayload, self?: Address.Address): Bytes.Byte
   }
 
   return out
+}
+
+export function encodeSapient(
+  chainId: bigint,
+  payload: ParentedPayload,
+): Exclude<AbiFunction.encodeData.Args<typeof IS_VALID_SAPIENT_SIGNATURE>[0], undefined>[0] {
+  const encoded: ReturnType<typeof encodeSapient> = {
+    kind: 0,
+    noChainId: !chainId,
+    calls: [],
+    space: 0n,
+    nonce: 0n,
+    message: '0x',
+    imageHash: '0x',
+    digest: '0x',
+    parentWallets: payload.parentWallets ?? [],
+  }
+
+  switch (payload.type) {
+    case 'call':
+      encoded.kind = 0
+      encoded.calls = payload.calls.map((call) => ({
+        ...call,
+        data: Bytes.toHex(call.data),
+        behaviorOnError: BigInt(encodeBehaviorOnError(call.behaviorOnError)),
+      }))
+      encoded.space = payload.space
+      encoded.nonce = payload.nonce
+      break
+
+    case 'message':
+      encoded.kind = 1
+      encoded.message = Bytes.toHex(payload.message)
+      break
+
+    case 'config-update':
+      encoded.kind = 2
+      encoded.imageHash = payload.imageHash
+      break
+
+    case 'digest':
+      encoded.kind = 3
+      encoded.digest = payload.digest
+      break
+  }
+
+  return encoded
 }
 
 export function hash(wallet: Address.Address, chainId: bigint, payload: ParentedPayload): Bytes.Bytes {

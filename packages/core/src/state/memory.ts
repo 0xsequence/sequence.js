@@ -1,176 +1,264 @@
 import {
   Configuration,
   Context,
-  decodeSignature,
   fromConfigUpdate,
   getCounterfactualAddress,
   hash,
   hashConfiguration,
-  Payload,
-  recover,
+  isNodeLeaf,
+  isRawNestedLeaf,
+  isRawSignerLeaf,
+  isSapientSignerLeaf,
+  isSignedSignerLeaf,
+  isSignerLeaf,
+  isSubdigestLeaf,
+  ParentedPayload,
+  RawSignature,
+  RawTopology,
+  sign,
+  SignatureOfSignerLeaf,
 } from '@0xsequence/sequence-primitives'
-import { Address, Bytes, Hex } from 'ox'
-import { Signature, StateReader, StateWriter } from '.'
+import { Address, Bytes, Hex, PersonalMessage, Secp256k1, Signature } from 'ox'
+import { StateProvider } from '.'
 
-export class MemoryStore implements StateReader, StateWriter {
+export class MemoryStateProvider implements StateProvider {
   private readonly objects: {
     configurations: { [imageHash: Hex.Hex]: Configuration }
-    deployHashes: { [wallet: Address.Address]: { hash: Hex.Hex; context: Context } }
+    deployHashes: { [wallet: Address.Address]: { deployHash: Hex.Hex; context: Context } }
     wallets: {
       [signer: Address.Address]: {
-        [wallet: Address.Address]: { chainId: bigint; digest: Hex.Hex; signature: Signature }
+        [wallet: Address.Address]: { chainId: bigint; payload: ParentedPayload; signature: SignatureOfSignerLeaf }
       }
     }
-    configurationPaths: {
+    configurationUpdates: {
       [wallet: Address.Address]: {
-        updates: Array<{ imageHash: Hex.Hex; signature: Hex.Hex }>
-        index: { [imageHash: Hex.Hex]: number }
+        configurations: Hex.Hex[]
+        signerSignatures: { [imageHash: Hex.Hex]: { [signer: Address.Address]: SignatureOfSignerLeaf } }
       }
     }
-  } = { configurations: {}, deployHashes: {}, wallets: {}, configurationPaths: {} }
+  } = { configurations: {}, deployHashes: {}, wallets: {}, configurationUpdates: {} }
 
   getConfiguration(imageHash: Hex.Hex): Configuration {
     const configuration = this.objects.configurations[imageHash]
     if (!configuration) {
-      throw new Error(`no configuration ${imageHash}`)
+      throw new Error(`unknown configuration ${imageHash}`)
     }
     return configuration
   }
 
-  getDeployHash(wallet: Address.Address): { hash: Hex.Hex; context: Context } {
+  getDeployHash(wallet: Address.Address): { deployHash: Hex.Hex; context: Context } {
     const deployHash = this.objects.deployHashes[wallet]
     if (!deployHash) {
-      throw new Error(`no deploy hash for wallet ${wallet}`)
+      throw new Error(`no known deploy hash for ${wallet}`)
     }
     return deployHash
   }
 
-  getWallets(
-    signer: Address.Address,
-  ): Array<{ wallet: Address.Address; chainId: bigint; digest: Hex.Hex; signature: Signature }> {
-    const wallets = this.objects.wallets[signer]
-    if (!wallets) {
-      throw new Error(`no wallets for signer ${signer}`)
-    }
-    return Object.entries(wallets).map(([wallet, signature]) => {
-      Address.assert(wallet)
-      return { wallet, ...signature }
-    })
+  getWallets(signer: Address.Address): {
+    [wallet: Address.Address]: { chainId: bigint; payload: ParentedPayload; signature: SignatureOfSignerLeaf }
+  } {
+    return this.objects.wallets[signer] ?? {}
   }
 
-  getConfigurationPath(
+  async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
-  ): Array<{ imageHash: Hex.Hex; signature: Hex.Hex }> {
-    const configurationPath = this.objects.configurationPaths[wallet]
-    if (!configurationPath) {
-      throw new Error(`no configuration path for wallet ${wallet}`)
+  ): Promise<Array<{ imageHash: Hex.Hex; signature: RawSignature }>> {
+    const objects = this.objects.configurationUpdates[wallet]
+    if (!objects) {
+      throw new Error(`unknown wallet ${wallet}`)
     }
 
-    let index = configurationPath.index[fromImageHash]
-    if (index === undefined) {
-      throw new Error(`no configuration path for wallet ${wallet} from ${fromImageHash}`)
+    let imageHash = fromImageHash
+    let index = objects.configurations.lastIndexOf(imageHash)
+    if (index === -1) {
+      throw new Error(`no configuration update to ${imageHash} by ${wallet}`)
     }
+    let configuration = this.getConfiguration(imageHash)
 
-    if (options?.allUpdates) {
-      return configurationPath.updates.slice(index + 1)
-    }
+    const updates: Unpromise<ReturnType<typeof this.getConfigurationUpdates>> = []
+    while (index + 1 < objects.configurations.length) {
+      const append = async (i: number): Promise<void> => {
+        const toImageHash = objects.configurations[i]
+        if (!toImageHash) {
+          throw new Error(`no configuration at index ${i}`)
+        }
 
-    const updates: Array<{ imageHash: Hex.Hex; signature: Hex.Hex }> = []
-    while (index + 1 < configurationPath.updates.length) {
-      for (let next = configurationPath.updates.length - 1; next > index; next--) {
-        if (next === index + 1) {
-          updates.push(configurationPath.updates[next]!)
-          index = next
-          break
+        updates.push({
+          imageHash: toImageHash,
+          signature: {
+            noChainId: true,
+            configuration: {
+              ...configuration,
+              topology: await sign(
+                configuration.topology,
+                {
+                  sign: (leaf) => {
+                    const signature = objects.signerSignatures[toImageHash]?.[leaf.address]
+                    if (!signature) {
+                      throw new Error(`no signature for signer ${leaf.address}`)
+                    }
+                    return signature
+                  },
+                },
+                { threshold: configuration.threshold },
+              ),
+            },
+          },
+        })
+
+        imageHash = toImageHash
+        configuration = this.getConfiguration(imageHash)
+      }
+
+      if (options?.allUpdates) {
+        for (let i = index + 1; i < objects.configurations.length; i++) {
+          try {
+            await append(i)
+            index = i
+            break
+          } catch {}
+        }
+      } else {
+        for (let i = objects.configurations.length - 1; i > index; i--) {
+          try {
+            await append(i)
+            index = i
+            break
+          } catch {}
         }
       }
     }
+
     return updates
   }
 
-  saveWallet(deployConfiguration: Configuration, context: Context): void {
-    const deployHash = hashConfiguration(deployConfiguration)
-    const wallet = getCounterfactualAddress(deployHash, context)
-    this.objects.configurations[Bytes.toHex(deployHash)] = deployConfiguration
-    this.objects.deployHashes[wallet] = { hash: Bytes.toHex(deployHash), context }
-
-    let configurationPath = this.objects.configurationPaths[wallet]
-    if (!configurationPath) {
-      configurationPath = { updates: [], index: {} }
-      this.objects.configurationPaths[wallet] = configurationPath
-    }
-    configurationPath.index[Bytes.toHex(deployHash)] = -1
+  saveWallet(deployConfiguration: Configuration, context: Context) {
+    const deployHashBytes = hashConfiguration(deployConfiguration)
+    const deployHash = Bytes.toHex(deployHashBytes)
+    const wallet = getCounterfactualAddress(deployHashBytes, context)
+    this.objects.configurations[deployHash] = deployConfiguration
+    this.objects.deployHashes[wallet] = { deployHash, context }
+    this.objects.configurationUpdates[wallet] = { configurations: [deployHash], signerSignatures: {} }
   }
 
-  saveWitness(
-    signer: Address.Address,
+  saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload,
-    signature: Signature<number | undefined>,
-  ): void {
-    if (signature.type === 'erc-1271' && signature.validAt.block === undefined) {
-      throw new Error('memory store requires block number where erc-1271 signature is valid')
-    }
-    let wallets = this.objects.wallets[signer]
-    if (!wallets) {
-      wallets = {}
-      this.objects.wallets[signer] = wallets
-    }
-    if (wallets[wallet]) {
-      return
-    }
-    wallets[wallet] = {
-      chainId,
-      digest: Bytes.toHex(hash(wallet, chainId, payload)),
-      signature: signature as Signature,
-    }
+    payload: ParentedPayload,
+    signatures: SignatureOfSignerLeaf[],
+  ) {
+    const digest = hash(wallet, chainId, payload)
+
+    signatures.forEach((signature) => {
+      let signer: Address.Address
+      switch (signature.type) {
+        case 'eth_sign':
+        case 'hash':
+          signer = Secp256k1.recoverAddress({
+            payload: signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
+            signature: {
+              r: Bytes.toBigInt(signature.r),
+              s: Bytes.toBigInt(signature.s),
+              yParity: Signature.vToYParity(signature.v),
+            },
+          })
+          break
+
+        case 'erc1271':
+          signer = signature.address
+          break
+      }
+
+      let wallets = this.objects.wallets[signer]
+      if (!wallets) {
+        wallets = {}
+        this.objects.wallets[signer] = wallets
+      }
+      wallets[wallet] = { chainId, payload, signature }
+    })
   }
 
-  async setConfiguration(wallet: Address.Address, configuration: Configuration, signature: Hex.Hex): Promise<void> {
-    const configurationPath = this.objects.configurationPaths[wallet]
-    if (!configurationPath) {
-      throw new Error(`no configuration path for wallet ${wallet}`)
-    }
-
-    let latestImageHash: Hex.Hex
-    if (configurationPath.updates.length) {
-      latestImageHash = configurationPath.updates[configurationPath.updates.length - 1]!.imageHash
-    } else {
-      const deployHash = this.objects.deployHashes[wallet]
-      if (!deployHash) {
-        throw new Error(`no deploy hash for wallet ${wallet}`)
+  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: RawSignature) {
+    const configurations = this.objects.configurationUpdates[wallet]?.configurations
+    if (configurations?.length) {
+      const latestImageHash = configurations[configurations.length - 1]!
+      const latestConfiguration = this.getConfiguration(latestImageHash)
+      if (configuration.checkpoint <= latestConfiguration.checkpoint) {
+        throw new Error(`checkpoint ${configuration.checkpoint} <= latest checkpoint ${latestConfiguration.checkpoint}`)
       }
-      latestImageHash = deployHash.hash
     }
 
-    const latestConfiguration = this.objects.configurations[latestImageHash]
-    if (!latestConfiguration) {
-      throw new Error(`no configuration ${latestImageHash}`)
+    const imageHash = Bytes.toHex(hashConfiguration(configuration))
+    const digest = hash(wallet, 0n, fromConfigUpdate(imageHash))
+
+    const search = (topology: RawTopology) => {
+      if (isSignedSignerLeaf(topology)) {
+        switch (topology.signature.type) {
+          case 'eth_sign':
+          case 'hash':
+            let updates = this.objects.configurationUpdates[wallet]
+            if (!updates) {
+              updates = { configurations: [], signerSignatures: {} }
+              this.objects.configurationUpdates[wallet] = updates
+            }
+            updates.configurations.push(imageHash)
+
+            let signatures = updates.signerSignatures[imageHash]
+            if (!signatures) {
+              signatures = {}
+              updates.signerSignatures[imageHash] = signatures
+            }
+            signatures[topology.address] = topology.signature
+            break
+        }
+      } else if (isSignerLeaf(topology)) {
+        return
+      } else if (isSapientSignerLeaf(topology)) {
+        return
+      } else if (isSubdigestLeaf(topology)) {
+        return
+      } else if (isNodeLeaf(topology)) {
+        return
+      } else if (isRawSignerLeaf(topology)) {
+        let updates = this.objects.configurationUpdates[wallet]
+        if (!updates) {
+          updates = { configurations: [], signerSignatures: {} }
+          this.objects.configurationUpdates[wallet] = updates
+        }
+        updates.configurations.push(imageHash)
+
+        let signatures = updates.signerSignatures[imageHash]
+        if (!signatures) {
+          signatures = {}
+          updates.signerSignatures[imageHash] = signatures
+        }
+        switch (topology.signature.type) {
+          case 'eth_sign':
+          case 'hash':
+            signatures[
+              Secp256k1.recoverAddress({
+                payload: topology.signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
+                signature: {
+                  r: Bytes.toBigInt(topology.signature.r),
+                  s: Bytes.toBigInt(topology.signature.s),
+                  yParity: Signature.vToYParity(topology.signature.v),
+                },
+              })
+            ] = topology.signature
+            break
+        }
+      } else if (isRawNestedLeaf(topology)) {
+        search(topology.tree)
+      } else {
+        search(topology[0])
+        search(topology[1])
+      }
     }
 
-    if (configuration.checkpoint <= latestConfiguration.checkpoint) {
-      throw new Error(
-        `configuration checkpoint ${configuration.checkpoint} <= latest checkpoint ${latestConfiguration.checkpoint}`,
-      )
-    }
-
-    const { configuration: recovered, weight } = await recover(
-      decodeSignature(Hex.toBytes(signature)),
-      wallet,
-      0n,
-      fromConfigUpdate(Bytes.toHex(hashConfiguration(configuration))),
-    )
-    if (weight < recovered.threshold) {
-      throw new Error(`invalid signature: weight ${weight} < threshold ${recovered.threshold}`)
-    }
-    const recoveredImageHash = Bytes.toHex(hashConfiguration(recovered))
-    if (recoveredImageHash !== latestImageHash) {
-      throw new Error(`invalid signature: recovered ${recoveredImageHash} != latest ${latestImageHash}`)
-    }
-
-    configurationPath.updates.push({ imageHash: Bytes.toHex(hashConfiguration(configuration)), signature })
+    search(signature.configuration.topology)
   }
 }
+
+type Unpromise<T> = T extends Promise<infer S> ? S : T
