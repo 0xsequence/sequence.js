@@ -116,16 +116,6 @@ export function getImplicitBlacklistNode(topolgy: SessionsTopology): ImplicitBla
 
 // Encoding
 
-export function countSessionsPermissions(topolgy: SessionsTopology): number {
-  if (isSessionsBranch(topolgy)) {
-    return topolgy.reduce((acc, node) => acc + countSessionsPermissions(node), 0)
-  }
-  if (isSessionPermissions(topolgy)) {
-    return 1
-  }
-  return 0
-}
-
 // Encodes only the permissions within a topology
 export function encodeSessionsPermissionsTopology(topolgy: SessionsTopology): Bytes.Bytes {
   if (isSessionsBranch(topolgy)) {
