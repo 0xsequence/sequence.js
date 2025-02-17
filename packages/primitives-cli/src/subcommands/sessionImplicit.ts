@@ -1,27 +1,20 @@
-// packages/primitives-cli/src/subcommands/sessionImplicit.ts
-
 import {
-  ImplicitSessionConfiguration,
-  addToImplicitSessionBlacklist,
+  addToImplicitBlacklist,
   attestationFromJson,
-  emptyImplicitSessionConfiguration,
-  encodeImplicitSessionSignature,
-  removeFromImplicitSessionBlacklist,
+  encodeImplicitSessionCallSignature,
+  removeFromImplicitBlacklist,
+  SessionsTopology,
 } from '@0xsequence/sequence-primitives'
-import { Hex } from 'ox'
+import { Address, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin, parseRSV, requireString } from '../utils'
-
-export async function doEmptySession(): Promise<string> {
-  return JSON.stringify(emptyImplicitSessionConfiguration())
-}
 
 export async function doAddBlacklistAddress(
   blacklistAddress: string,
   sessionConfigurationInput: string,
 ): Promise<string> {
-  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as ImplicitSessionConfiguration
-  const updated = addToImplicitSessionBlacklist(sessionConfiguration, blacklistAddress)
+  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as SessionsTopology
+  const updated = addToImplicitBlacklist(sessionConfiguration, blacklistAddress as Address.Address)
   return JSON.stringify(updated)
 }
 
@@ -29,22 +22,20 @@ export async function doRemoveBlacklistAddress(
   blacklistAddress: string,
   sessionConfigurationInput: string,
 ): Promise<string> {
-  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as ImplicitSessionConfiguration
-  const updated = removeFromImplicitSessionBlacklist(sessionConfiguration, blacklistAddress)
+  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as SessionsTopology
+  const updated = removeFromImplicitBlacklist(sessionConfiguration, blacklistAddress as Address.Address)
   return JSON.stringify(updated)
 }
 
-export async function doUseImplicitSession(
-  sessionSigInput: string,
-  globalSigInput: string,
+export async function doEncodeImplicitSessionCallSignature(
   attestationInput: string,
-  sessionConfigurationInput: string,
+  globalSigInput: string,
+  sessionSigInput: string,
 ): Promise<string> {
-  const sessionSig = parseRSV(sessionSigInput)
-  const globalSig = parseRSV(globalSigInput)
   const attestation = attestationFromJson(attestationInput)
-  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as ImplicitSessionConfiguration
-  const encoded = encodeImplicitSessionSignature(sessionSig, attestation, globalSig, sessionConfiguration)
+  const globalSig = parseRSV(globalSigInput)
+  const sessionSig = parseRSV(sessionSigInput)
+  const encoded = encodeImplicitSessionCallSignature(attestation, globalSig, sessionSig)
   return Hex.from(encoded)
 }
 const sessionImplicitCommand: CommandModule = {
@@ -53,14 +44,6 @@ const sessionImplicitCommand: CommandModule = {
   builder: (yargs) => {
     return yargs
       .command(
-        'empty',
-        'Create an empty implicit session topology',
-        () => {},
-        async () => {
-          console.log(await doEmptySession())
-        },
-      )
-      .command(
         'blacklist-add [blacklist-address] [session-configuration]',
         'Add an address to the implicit session blacklist',
         (yargs) => {
@@ -68,12 +51,12 @@ const sessionImplicitCommand: CommandModule = {
             .positional('blacklist-address', {
               type: 'string',
               description: 'Blacklist address',
-              required: true,
+              demandOption: true,
             })
             .positional('session-configuration', {
               type: 'string',
               description: 'Session configuration',
-              required: true,
+              demandOption: true,
             })
         },
         async (argv) => {
@@ -91,12 +74,12 @@ const sessionImplicitCommand: CommandModule = {
             .positional('blacklist-address', {
               type: 'string',
               description: 'Blacklist address',
-              required: true,
+              demandOption: true,
             })
             .positional('session-configuration', {
               type: 'string',
               description: 'Session configuration',
-              required: true,
+              demandOption: true,
             })
         },
         async (argv) => {
@@ -109,29 +92,24 @@ const sessionImplicitCommand: CommandModule = {
         },
       )
       .command(
-        'use [session-signature] [global-signature] [attestation] [session-configuration]',
+        'encode-call-signature [attestation] [global-signature] [session-signature]',
         'Encode an implicit session signature',
         (yargs) => {
           return yargs
-            .positional('session-signature', {
+            .positional('attestation', {
               type: 'string',
-              description: 'Session signature in r:s:v format',
-              required: true,
+              description: 'Attestation for the implicit session',
+              demandOption: true,
             })
             .positional('global-signature', {
               type: 'string',
               description: 'Global signature in r:s:v format',
-              required: true,
+              demandOption: true,
             })
-            .positional('attestation', {
+            .positional('session-signature', {
               type: 'string',
-              description: 'Attestation in r:s:v format',
-              required: true,
-            })
-            .positional('session-configuration', {
-              type: 'string',
-              description: 'Session configuration',
-              required: true,
+              description: 'Session signature in r:s:v format',
+              demandOption: true,
             })
         },
         async (argv) => {
@@ -141,10 +119,7 @@ const sessionImplicitCommand: CommandModule = {
           requireString(globalSigStr, 'Global signature')
           const attestationInput = argv.attestation
           requireString(attestationInput, 'Attestation')
-          const sessionConfigurationInput = await fromPosOrStdin(argv, 'session-configuration')
-          console.log(
-            await doUseImplicitSession(sessionSigStr, globalSigStr, attestationInput, sessionConfigurationInput),
-          )
+          console.log(await doEncodeImplicitSessionCallSignature(attestationInput, globalSigStr, sessionSigStr))
         },
       )
       .demandCommand(1, 'You must specify a subcommand for implicit session')

@@ -27,25 +27,36 @@ export type SessionPermissions = {
   permissions: Permission[]
 }
 
+export const MAX_PERMISSIONS_COUNT = 2 ** 7 - 1
+export const MAX_RULES_COUNT = 2 ** 8 - 1
+
 // Encoding
 
 export function encodeSessionPermissions(sessionPermissions: SessionPermissions): Bytes.Bytes {
+  if (sessionPermissions.permissions.length > MAX_PERMISSIONS_COUNT) {
+    throw new Error('Too many permissions')
+  }
+
   const encodedPermissions = sessionPermissions.permissions.map(encodePermission)
 
   return Bytes.concat(
     Bytes.padLeft(Bytes.fromHex(sessionPermissions.signer), 20),
     Bytes.padLeft(Bytes.fromNumber(sessionPermissions.valueLimit), 32),
     Bytes.padLeft(Bytes.fromNumber(sessionPermissions.deadline), 32),
-    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.permissions.length), 3),
+    Bytes.fromNumber(sessionPermissions.permissions.length, { size: 1 }),
     Bytes.concat(...encodedPermissions),
   )
 }
 
 export function encodePermission(permission: Permission): Bytes.Bytes {
+  if (permission.rules.length > MAX_RULES_COUNT) {
+    throw new Error('Too many rules')
+  }
+
   const encodedRules = permission.rules.map(encodeParameterRule)
   return Bytes.concat(
     Bytes.padLeft(Bytes.fromHex(permission.target), 20),
-    Bytes.padLeft(Bytes.fromNumber(permission.rules.length), 3),
+    Bytes.fromNumber(permission.rules.length, { size: 1 }),
     Bytes.concat(...encodedRules),
   )
 }

@@ -10,25 +10,17 @@ export type Attestation = {
 }
 
 export function encodeAttestation(attestation: Attestation): Bytes.Bytes {
-  const approvedSignerBytes = Bytes.padLeft(Bytes.fromHex(attestation.approvedSigner), 20)
-  const identityTypeBytes = Bytes.padLeft(attestation.identityType, 4)
-  const issuerHashBytes = Bytes.padLeft(attestation.issuerHash, 32)
-  const audienceHashBytes = Bytes.padLeft(attestation.audienceHash, 32)
-  const authDataLengthBytes = Bytes.padLeft(Bytes.fromNumber(attestation.authData.length), 3)
-  const authDataBytes = attestation.authData
-  const applicationDataLengthBytes = Bytes.padLeft(Bytes.fromNumber(attestation.applicationData.length), 3)
-  const applicationDataBytes = attestation.applicationData
-
-  return Bytes.concat(
-    approvedSignerBytes,
-    identityTypeBytes,
-    issuerHashBytes,
-    audienceHashBytes,
-    authDataLengthBytes,
-    authDataBytes,
-    applicationDataLengthBytes,
-    applicationDataBytes,
-  )
+  const parts: Bytes.Bytes[] = [
+    Bytes.fromHex(attestation.approvedSigner, { size: 20 }),
+    Bytes.padLeft(attestation.identityType.slice(0, 4), 4), // Truncate identity type to 4 bytes
+    Bytes.padLeft(attestation.issuerHash, 32),
+    Bytes.padLeft(attestation.audienceHash, 32),
+    Bytes.fromNumber(attestation.authData.length, { size: 3 }),
+    attestation.authData,
+    Bytes.fromNumber(attestation.applicationData.length, { size: 3 }),
+    attestation.applicationData,
+  ]
+  return Bytes.concat(...parts)
 }
 
 export function hashAttestation(attestation: Attestation): Bytes.Bytes {

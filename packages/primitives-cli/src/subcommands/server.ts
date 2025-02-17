@@ -4,6 +4,7 @@ import * as config from './config'
 import * as devTools from './devTools'
 import * as payload from './payload'
 import * as permission from './permission'
+import * as session from './session'
 import * as sessionExplicit from './sessionExplicit'
 import * as sessionImplicit from './sessionImplicit'
 import * as signatureUtils from './signature'
@@ -128,10 +129,23 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     return result
   },
 
-  // SESSION EXPLICIT
-  async session_explicit_empty(_params) {
-    return await sessionExplicit.doEmptySession()
+  // SESSION
+  async session_empty(params) {
+    const { globalSigner } = params
+    const result = await session.doEmptyTopology(globalSigner)
+    return result
   },
+  async session_encodeCallSignatures(params) {
+    const { sessionTopology, callSignatures, includesImplicitSignature } = params
+    const result = await session.doEncodeSessionCallSignatures(
+      JSON.stringify(sessionTopology),
+      callSignatures,
+      includesImplicitSignature,
+    )
+    return result
+  },
+
+  // SESSION EXPLICIT
   async session_explicit_add(params) {
     const { explicitSession, sessionTopology } = params
     const result = await sessionExplicit.doAddSession(JSON.stringify(explicitSession), JSON.stringify(sessionTopology))
@@ -142,37 +156,34 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const result = await sessionExplicit.doRemoveSession(explicitSessionAddress, JSON.stringify(sessionTopology))
     return result
   },
-  async session_explicit_use(params) {
-    const { signature, permissionIndexes, sessionTopology } = params
-    const result = await sessionExplicit.doUseSession(signature, permissionIndexes, JSON.stringify(sessionTopology))
-    return result
-  },
-  async session_explicit_toPackedTopology(params) {
-    const { sessionTopology } = params
-    const result = await sessionExplicit.doEncodeSessionsTopology(JSON.stringify(sessionTopology))
+  async session_explicit_encodeCallSignature(params) {
+    const { permissionIndex, signature } = params
+    const result = await sessionExplicit.doEncodeExplicitSessionCallSignature(permissionIndex, signature)
     return result
   },
 
   // SESSION IMPLICIT
-  async session_implicit_empty(_params) {
-    return await sessionImplicit.doEmptySession()
-  },
   async session_implicit_addBlacklistAddress(params) {
     const { blacklistAddress, sessionConfiguration } = params
-    return await sessionImplicit.doAddBlacklistAddress(blacklistAddress, JSON.stringify(sessionConfiguration))
+    const result = await sessionImplicit.doAddBlacklistAddress(blacklistAddress, JSON.stringify(sessionConfiguration))
+    return result
   },
   async session_implicit_removeBlacklistAddress(params) {
     const { blacklistAddress, sessionConfiguration } = params
-    return await sessionImplicit.doRemoveBlacklistAddress(blacklistAddress, JSON.stringify(sessionConfiguration))
-  },
-  async session_implicit_use(params) {
-    const { sessionSignature, globalSignature, attestation, sessionConfiguration } = params
-    return await sessionImplicit.doUseImplicitSession(
-      sessionSignature,
-      globalSignature,
-      JSON.stringify(attestation),
+    const result = await sessionImplicit.doRemoveBlacklistAddress(
+      blacklistAddress,
       JSON.stringify(sessionConfiguration),
     )
+    return result
+  },
+  async session_implicit_encodeCallSignature(params) {
+    const { attestation, globalSignature, sessionSignature } = params
+    const result = await sessionImplicit.doEncodeImplicitSessionCallSignature(
+      JSON.stringify(attestation),
+      globalSignature,
+      sessionSignature,
+    )
+    return result
   },
 
   // SIGNATURE

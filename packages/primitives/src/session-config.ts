@@ -1,4 +1,4 @@
-import { Bytes } from 'ox'
+import { Bytes, Address } from 'ox'
 import {
   encodeSessionPermissions,
   encodeSessionPermissionsForJson,
@@ -11,18 +11,37 @@ export const SESSIONS_FLAG_PERMISSIONS = 0
 export const SESSIONS_FLAG_NODE = 1
 export const SESSIONS_FLAG_BRANCH = 2
 
+export type ImplicitBlacklist = {
+  blacklist: Address.Address[]
+}
+
+export type GlobalSignerLeaf = {
+  globalSigner: Address.Address
+}
+
 export type SessionNode = Bytes.Bytes // Hashed
-export type SessionLeaf = SessionPermissions
+export type SessionLeaf = SessionPermissions | ImplicitBlacklist | GlobalSignerLeaf
 export type SessionBranch = [SessionsTopology, SessionsTopology, ...SessionsTopology[]]
 export type SessionsTopology = SessionBranch | SessionLeaf | SessionNode
-export type EmptySessionsTopology = []
 
 function isSessionsNode(topology: any): topology is SessionNode {
   return Bytes.validate(topology)
 }
 
-function isSessionsLeaf(topology: any): topology is SessionLeaf {
+function isImplicitBlacklist(topology: any): topology is ImplicitBlacklist {
+  return typeof topology === 'object' && topology !== null && 'blacklist' in topology
+}
+
+function isGlobalSignerLeaf(topology: any): topology is GlobalSignerLeaf {
+  return typeof topology === 'object' && topology !== null && 'globalSigner' in topology
+}
+
+function isSessionPermissions(topology: any): topology is SessionPermissions {
   return typeof topology === 'object' && topology !== null && 'signer' in topology
+}
+
+function isSessionsLeaf(topology: any): topology is SessionLeaf {
+  return isImplicitBlacklist(topology) || isGlobalSignerLeaf(topology) || isSessionPermissions(topology)
 }
 
 function isSessionsBranch(topology: any): topology is SessionBranch {
@@ -33,18 +52,86 @@ export function isSessionsTopology(topology: any): topology is SessionsTopology 
   return isSessionsBranch(topology) || isSessionsLeaf(topology) || isSessionsNode(topology)
 }
 
-export function isEmptySessionsTopology(topology: any): topology is EmptySessionsTopology {
-  return Array.isArray(topology) && topology.length === 0
+export function isValidSessionsTopology(topology: any): topology is SessionsTopology {
+  // A valid topology has exactly one global signer leaf and blacklist leaf
+  let hasGlobal
+  let hasBlacklist
+  //FIXME This no work
+  if (isSessionsBranch(topology)) {
+    return false
+  }
+  if (isSessionsLeaf(topology)) {
+    return false
+  }
+  return isSessionsNode(topology)
+}
+
+export function getGlobalSigner(topolgy: SessionsTopology): Address.Address | null {
+  if (isGlobalSignerLeaf(topolgy)) {
+    // Got it
+    return topolgy.globalSigner
+  }
+
+  if (isSessionsBranch(topolgy)) {
+    // Check branches
+    const results = topolgy.map(getGlobalSigner).filter((t) => t !== null)
+    if (results.length > 1) {
+      throw new Error('Multiple global signers')
+    }
+    if (results.length === 1) {
+      return results[0]!
+    }
+  }
+
+  return null
+}
+
+export function getImplicitBlacklist(topolgy: SessionsTopology): Address.Address[] | null {
+  const blacklistNode = getImplicitBlacklistNode(topolgy)
+  if (!blacklistNode) {
+    return null
+  }
+  return blacklistNode.blacklist
+}
+
+export function getImplicitBlacklistNode(topolgy: SessionsTopology): ImplicitBlacklist | null {
+  if (isImplicitBlacklist(topolgy)) {
+    // Got it
+    return topolgy
+  }
+
+  if (isSessionsBranch(topolgy)) {
+    // Check branches
+    const results = topolgy.map(getImplicitBlacklistNode).filter((t) => t !== null)
+    if (results.length > 1) {
+      throw new Error('Multiple blacklists')
+    }
+    if (results.length === 1) {
+      return results[0]!
+    }
+  }
+
+  return null
 }
 
 // Encoding
 
-export function encodeSessionsTopology(topolgy: SessionsTopology): Bytes.Bytes {
+export function countSessionsPermissions(topolgy: SessionsTopology): number {
   if (isSessionsBranch(topolgy)) {
-    const branch = topolgy as SessionBranch
+    return topolgy.reduce((acc, node) => acc + countSessionsPermissions(node), 0)
+  }
+  if (isSessionPermissions(topolgy)) {
+    return 1
+  }
+  return 0
+}
+
+// Encodes only the permissions within a topology
+export function encodeSessionsPermissionsTopology(topolgy: SessionsTopology): Bytes.Bytes {
+  if (isSessionsBranch(topolgy)) {
     const encodedBranches = []
-    for (const node of branch) {
-      encodedBranches.push(encodeSessionsTopology(node))
+    for (const node of topolgy) {
+      encodedBranches.push(encodeSessionsPermissionsTopology(node))
     }
     const encoded = Bytes.concat(...encodedBranches)
     const encodedSize = minBytesFor(BigInt(encoded.length))
@@ -59,7 +146,7 @@ export function encodeSessionsTopology(topolgy: SessionsTopology): Bytes.Bytes {
     )
   }
 
-  if (isSessionsLeaf(topolgy)) {
+  if (isSessionPermissions(topolgy)) {
     const flagByte = SESSIONS_FLAG_PERMISSIONS << 4
     const encodedLeaf = encodeSessionPermissions(topolgy)
     return Bytes.concat(Bytes.fromNumber(flagByte), encodedLeaf)
@@ -70,26 +157,31 @@ export function encodeSessionsTopology(topolgy: SessionsTopology): Bytes.Bytes {
     return Bytes.concat(Bytes.fromNumber(flagByte), topolgy)
   }
 
+  if (isImplicitBlacklist(topolgy) || isGlobalSignerLeaf(topolgy)) {
+    // Return empty bytes
+    return new Uint8Array()
+  }
+
   throw new Error('Invalid topology')
 }
 
 // JSON
 
-export function sessionsTopologyToJson(topology: SessionsTopology | EmptySessionsTopology): string {
+export function sessionsTopologyToJson(topology: SessionsTopology): string {
   return JSON.stringify(encodeSessionsTopologyForJson(topology))
 }
 
-function encodeSessionsTopologyForJson(topology: SessionsTopology | EmptySessionsTopology): any {
-  if (isEmptySessionsTopology(topology)) {
-    return []
-  }
-
+function encodeSessionsTopologyForJson(topology: SessionsTopology): any {
   if (isSessionsNode(topology)) {
     return Bytes.toHex(topology)
   }
 
-  if (isSessionsLeaf(topology)) {
+  if (isSessionPermissions(topology)) {
     return encodeSessionPermissionsForJson(topology)
+  }
+
+  if (isImplicitBlacklist(topology) || isGlobalSignerLeaf(topology)) {
+    return topology // No encoding necessary
   }
 
   if (isSessionsBranch(topology)) {
@@ -105,7 +197,13 @@ export function sessionsTopologyFromJson(json: string): SessionsTopology {
 }
 
 function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
-  // If it's a valid hex string, attempt to parse as node
+  // Parse branch
+  if (Array.isArray(parsed)) {
+    const branches = parsed.map((node: any) => sessionsTopologyFromParsed(node))
+    return branches as SessionBranch
+  }
+
+  // Parse node
   if (typeof parsed === 'string' && parsed.startsWith('0x')) {
     const maybeBytes = Bytes.fromHex(parsed as `0x${string}`)
     if (Bytes.validate(maybeBytes)) {
@@ -113,7 +211,7 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
     }
   }
 
-  // If it looks like session permissions
+  // Parse permissions
   if (
     typeof parsed === 'object' &&
     parsed !== null &&
@@ -125,10 +223,16 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
     return sessionPermissionsFromParsed(parsed)
   }
 
-  // If it's an array, try to interpret as a branch
-  if (Array.isArray(parsed)) {
-    const branches = parsed.map((node: any) => sessionsTopologyFromParsed(node))
-    return branches as SessionBranch
+  // Parse global signer
+  if (typeof parsed === 'object' && parsed !== null && 'globalSigner' in parsed) {
+    const globalSigner = parsed.globalSigner as `0x${string}`
+    return { globalSigner }
+  }
+
+  // Parse blacklist
+  if (typeof parsed === 'object' && parsed !== null && 'blacklist' in parsed) {
+    const blacklist = parsed.blacklist.map((address: any) => Address.from(address))
+    return { blacklist }
   }
 
   throw new Error('Invalid topology')
@@ -137,29 +241,19 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
 // Operations
 
 /**
- * Removes all session permissions (leaf nodes) that match the given signer from the topology.
- * Returns the updated topology or EmptySessionsTopology if it becomes empty.
+ * Removes all explicit sessions (permissions leaf nodes) that match the given signer from the topology.
+ * Returns the updated topology or null if it becomes empty (for nesting).
  * If the signer is not found, the topology is returned unchanged.
  */
-export function removeSessionPermission(
-  topology: SessionsTopology | EmptySessionsTopology,
+export function removeExplicitSession(
+  topology: SessionsTopology,
   signerAddress: `0x${string}`,
-): SessionsTopology | EmptySessionsTopology {
-  if (isEmptySessionsTopology(topology)) {
-    return topology
-  }
-
-  // If it's a node (hashed bytes), we leave it as is:
-  if (isSessionsNode(topology)) {
-    return topology
-  }
-
-  // If it's a leaf, remove it if the signer matches:
-  if (isSessionsLeaf(topology)) {
+): SessionsTopology | null {
+  if (isSessionPermissions(topology)) {
     if (topology.signer === signerAddress) {
-      return []
+      return null
     }
-    // Otherwise, keep it as is
+    // Return the leaf unchanged
     return topology
   }
 
@@ -167,15 +261,15 @@ export function removeSessionPermission(
   if (isSessionsBranch(topology)) {
     const newChildren: SessionsTopology[] = []
     for (const child of topology) {
-      const updatedChild = removeSessionPermission(child, signerAddress)
-      if (!isEmptySessionsTopology(updatedChild)) {
+      const updatedChild = removeExplicitSession(child, signerAddress)
+      if (updatedChild != null) {
         newChildren.push(updatedChild)
       }
     }
 
     // If no children remain, return null to remove entire branch
     if (newChildren.length === 0) {
-      return []
+      return null
     }
 
     // If exactly one child remains, collapse upward
@@ -187,28 +281,14 @@ export function removeSessionPermission(
     return newChildren as SessionBranch
   }
 
-  // Unreachable
-  throw new Error('Invalid topology')
+  // Other leaf, return unchanged
+  return topology
 }
 
 /**
  * Merges two topologies into a new branch of [a, b].
  */
-export function mergeSessionsTopologies(
-  a: SessionsTopology | EmptySessionsTopology,
-  b: SessionsTopology | EmptySessionsTopology,
-): SessionsTopology {
-  const isEmptyA = isEmptySessionsTopology(a)
-  const isEmptyB = isEmptySessionsTopology(b)
-  if (isEmptyA && isEmptyB) {
-    throw new Error('Cannot merge two empty topologies')
-  }
-  if (isEmptyA) {
-    return b as SessionsTopology
-  }
-  if (isEmptyB) {
-    return a as SessionsTopology
-  }
+export function mergeSessionsTopologies(a: SessionsTopology, b: SessionsTopology): SessionsTopology {
   return [a, b]
 }
 
@@ -274,14 +354,17 @@ export function cleanSessionsTopology(
   }
 
   // If it's a leaf, check the deadline
-  if (isSessionsLeaf(topology)) {
-    const leaf = topology
-    if (leaf.deadline < currentTime) {
+  if (isSessionPermissions(topology)) {
+    if (topology.deadline < currentTime) {
       // Expired => remove
       return null
     }
     // Valid => keep
-    return leaf
+    return topology
+  }
+
+  if (isGlobalSignerLeaf(topology) || isImplicitBlacklist(topology)) {
+    return topology
   }
 
   // If it's a branch, clean all children
@@ -305,4 +388,50 @@ export function cleanSessionsTopology(
 
   // Otherwise, return a new branch with the cleaned children
   return newChildren as SessionBranch
+}
+
+/**
+ * Adds an address to the implicit session's blacklist.
+ * If the address is not already in the blacklist, it is added and the list is sorted.
+ */
+export function addToImplicitBlacklist(topology: SessionsTopology, address: Address.Address): SessionsTopology {
+  const blacklistNode = getImplicitBlacklistNode(topology)
+  if (!blacklistNode) {
+    throw new Error('No blacklist found')
+  }
+  const { blacklist } = blacklistNode
+  if (blacklist.some((addr) => addr === address)) {
+    return topology
+  }
+  blacklist.push(address)
+  blacklist.sort() // keep sorted so on-chain binary search works as expected
+  return topology
+}
+
+/**
+ * Removes an address from the implicit session's blacklist.
+ */
+export function removeFromImplicitBlacklist(topology: SessionsTopology, address: Address.Address): SessionsTopology {
+  const blacklistNode = getImplicitBlacklistNode(topology)
+  if (!blacklistNode) {
+    throw new Error('No blacklist found')
+  }
+  const { blacklist } = blacklistNode
+  const newBlacklist = blacklist.filter((a) => a !== address)
+  blacklistNode.blacklist = newBlacklist
+  return topology
+}
+
+/**
+ *  Generate an empty sessions topology with the given global signer. No session permission and an empty blacklist
+ */
+export function emptySessionsTopology(globalSigner: Address.Address): SessionsTopology {
+  return [
+    {
+      blacklist: [],
+    },
+    {
+      globalSigner,
+    },
+  ]
 }

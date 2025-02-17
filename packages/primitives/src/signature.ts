@@ -15,7 +15,7 @@ import {
   isSignerLeaf,
   isSubdigestLeaf,
   isTopology,
-} from './config'
+} from './wallet-config'
 import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
 import { erc6492, erc6492Decode } from './erc-6492'
 import { fromConfigUpdate, hash, ParentedPayload } from './payload'
