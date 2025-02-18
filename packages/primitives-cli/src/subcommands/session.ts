@@ -3,7 +3,9 @@ import sessionExplicitCommand from './sessionExplicit'
 import sessionImplicitCommand from './sessionImplicit'
 import {
   emptySessionsTopology,
+  hashConfigurationTree,
   sessionsTopologyFromJson,
+  sessionsTopologyToConfigurationTree,
   sessionsTopologyToJson,
 } from '@0xsequence/sequence-primitives'
 import { encodeSessionCallSignatures } from '@0xsequence/sequence-primitives'
@@ -17,12 +19,25 @@ export async function doEmptyTopology(globalSigner: `0x${string}`): Promise<stri
 export async function doEncodeSessionCallSignatures(
   sessionConfigurationInput: string,
   callSignaturesInput: string[],
-  includesImplicitSignature: boolean,
+  explicitSigners: string[] = [],
+  implicitSigners: string[] = [],
 ): Promise<string> {
   const sessionConfiguration = sessionsTopologyFromJson(sessionConfigurationInput)
   const callSignatures = callSignaturesInput.map((s) => Bytes.fromHex(s as `0x${string}`))
-  const encoded = encodeSessionCallSignatures(callSignatures, sessionConfiguration, includesImplicitSignature)
+  const encoded = encodeSessionCallSignatures(
+    callSignatures,
+    sessionConfiguration,
+    explicitSigners as `0x${string}`[],
+    implicitSigners as `0x${string}`[],
+  )
   return Hex.from(encoded)
+}
+
+export async function doImageHash(sessionConfigurationInput: string): Promise<string> {
+  const sessionConfiguration = sessionsTopologyFromJson(sessionConfigurationInput)
+  const configurationTree = sessionsTopologyToConfigurationTree(sessionConfiguration)
+  const hash = hashConfigurationTree(configurationTree)
+  return Hex.from(hash)
 }
 
 const sessionCommand: CommandModule = {
@@ -46,7 +61,7 @@ const sessionCommand: CommandModule = {
         },
       )
       .command(
-        'encode-calls [session-configuration] [call-signatures] [includes-implicit-signature]',
+        'encode-calls [session-configuration] [call-signatures] [explicit-signers] [implicit-signers]',
         'Encode a call signature for an implicit session',
         (yargs) => {
           return yargs
@@ -61,11 +76,20 @@ const sessionCommand: CommandModule = {
               description: 'The call signatures',
               demandOption: true,
             })
-            .option('includes-implicit-signature', {
-              type: 'boolean',
-              description: 'Whether an implicit signature is included',
+            .option('explicit-signers', {
+              type: 'string',
+              array: true,
+              description: 'The explicit signers',
               demandOption: false,
-              default: false,
+              default: [],
+              alias: 'e',
+            })
+            .option('implicit-signers', {
+              type: 'string',
+              array: true,
+              description: 'The implicit signers',
+              demandOption: false,
+              default: [],
               alias: 'i',
             })
         },
@@ -74,9 +98,24 @@ const sessionCommand: CommandModule = {
             await doEncodeSessionCallSignatures(
               args.sessionConfiguration,
               args.callSignatures,
-              args.includesImplicitSignature,
+              args.explicitSigners,
+              args.implicitSigners,
             ),
           )
+        },
+      )
+      .command(
+        'image-hash [session-configuration]',
+        'Hash a session configuration',
+        (yargs) => {
+          return yargs.positional('session-configuration', {
+            type: 'string',
+            description: 'The session configuration',
+            demandOption: true,
+          })
+        },
+        async (args) => {
+          console.log(await doImageHash(args.sessionConfiguration))
         },
       )
       .command(sessionExplicitCommand)

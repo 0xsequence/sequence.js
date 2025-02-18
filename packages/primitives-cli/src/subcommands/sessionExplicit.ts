@@ -1,4 +1,5 @@
 import {
+  balanceSessionsTopology,
   encodeExplicitSessionCallSignature,
   isSessionsTopology,
   mergeSessionsTopologies,
@@ -12,14 +13,16 @@ import { fromPosOrStdin, parseRSV } from '../utils'
 
 export async function doAddSession(sessionInput: string, topologyInput: string): Promise<string> {
   const session = sessionsTopologyFromJson(sessionInput)
-  const topology = sessionsTopologyFromJson(topologyInput)
+  let topology = sessionsTopologyFromJson(topologyInput)
   if (!isSessionsTopology(session)) {
     throw new Error('Explicit session must be a valid session topology')
   }
   if (!isSessionsTopology(topology)) {
     throw new Error('Session topology must be a valid session topology')
   }
-  return sessionsTopologyToJson(mergeSessionsTopologies(session, topology))
+  topology = mergeSessionsTopologies(session, topology)
+  topology = balanceSessionsTopology(topology)
+  return sessionsTopologyToJson(topology)
 }
 
 export async function doRemoveSession(explicitSessionAddress: string, topologyInput: string): Promise<string> {

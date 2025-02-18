@@ -1,18 +1,16 @@
-import { Bytes } from 'ox'
+import { Address, Bytes } from 'ox'
 import { Attestation, encodeAttestation } from './attestation'
 import { MAX_PERMISSIONS_COUNT } from './permission'
 import {
-  encodeSessionsPermissionsTopology,
-  getGlobalSigner,
-  getImplicitBlacklist,
+  encodeSessionsTopology,
+  minimiseSessionsTopology,
   SessionsTopology,
+  isCompleteSessionsTopology,
 } from './session-config'
 import { minBytesFor, packRSV } from './utils'
 
-export type ExplicitSessionSignature = {
-  sessionsTopology: SessionsTopology
-  permissionIdxPerCall: number[]
-}
+//FIXME Combine the attestation and global signature across multiple calls within a payload.
+// This requires passing around the un-encoded call signatures and encoding them all at once.
 
 export function encodeImplicitSessionCallSignature(
   attestation: Attestation,
@@ -47,33 +45,27 @@ export function encodeExplicitSessionCallSignature(
 
 export function encodeSessionCallSignatures(
   callSignatures: Bytes.Bytes[],
-  topolgy: SessionsTopology,
-  includesImplicitSignature = false, // Implicit can optimise away including global signer
+  topology: SessionsTopology,
+  explicitSigners: Address.Address[] = [],
+  implicitSigners: Address.Address[] = [],
 ): Bytes.Bytes {
-  const parts: Bytes.Bytes[] = [Bytes.fromBoolean(includesImplicitSignature)]
+  const parts: Bytes.Bytes[] = []
 
-  if (!includesImplicitSignature) {
-    // Add the global signer
-    const globalSigner = getGlobalSigner(topolgy)
-    if (!globalSigner) {
-      throw new Error('No global signer')
-    }
-    parts.push(Bytes.fromHex(globalSigner))
+  // Validate the topology
+  if (!isCompleteSessionsTopology(topology)) {
+    // Refuse to encode incomplete topologies
+    throw new Error('Incomplete topology')
   }
 
-  // Explicit session topology
-  let encodedExplicitSessionTopology = encodeSessionsPermissionsTopology(topolgy)
-  if (minBytesFor(BigInt(encodedExplicitSessionTopology.length)) > 3) {
-    throw new Error('Explicit session topology is too large')
-  }
-  parts.push(Bytes.fromNumber(encodedExplicitSessionTopology.length, { size: 3 }), encodedExplicitSessionTopology)
+  // Optimise the configuration tree by rolling unused signers into nodes.
+  topology = minimiseSessionsTopology(topology, explicitSigners, implicitSigners)
 
-  // Add the blacklist
-  const blacklist = getImplicitBlacklist(topolgy)
-  if (!blacklist) {
-    throw new Error('No blacklist')
+  // Session topology
+  const encodedTopology = encodeSessionsTopology(topology)
+  if (minBytesFor(BigInt(encodedTopology.length)) > 3) {
+    throw new Error('Session topology is too large')
   }
-  parts.push(Bytes.fromNumber(blacklist.length, { size: 1 }), Bytes.concat(...blacklist.map((b) => Bytes.fromHex(b))))
+  parts.push(Bytes.fromNumber(encodedTopology.length, { size: 3 }), encodedTopology)
 
   // Call signature parts
   for (const callSignature of callSignatures) {
