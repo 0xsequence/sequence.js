@@ -5,12 +5,14 @@ export const DEFAULT_CREATION_CODE =
 
 export type Context = {
   factory: Address.Address
+  guest: Address.Address
   stage1: Address.Address
   creationCode: Hex.Hex
 }
 
 export const DevContext1: Context = {
   factory: '0xFaA5c0b14d1bED5C888Ca655B9a8A5911F78eF4A',
+  guest: '0xTODO',
   stage1: '0x66155b899d93e255d42a85eb921ead9f2e964ef1',
   creationCode: DEFAULT_CREATION_CODE,
 }
@@ -25,8 +27,10 @@ export const DEPLOY = Abi.from([
   'function deploy(address _mainModule, bytes32 _salt) public payable returns (address _contract)',
 ])[0]
 
-// MainModule
+// Stage2Module
 export const IMAGE_HASH = Abi.from(['function imageHash() external view returns (bytes32)'])[0]
+export const READ_NONCE = Abi.from(['function readNonce(uint256 _space) public view returns (uint256)'])[0]
+export const EXECUTE = Abi.from(['function execute(bytes calldata _payload, bytes calldata _signature) external'])[0]
 
 // Sapient
 export const IS_VALID_SAPIENT_SIGNATURE = Abi.from([

@@ -1,9 +1,14 @@
 import {
+  Call,
+  CallPayload,
   Configuration,
   Context,
   DevContext1,
+  encode,
   encodeSapient,
+  encodeSignature,
   erc6492Deploy,
+  EXECUTE,
   fromConfigUpdate,
   getCounterfactualAddress,
   hash,
@@ -15,6 +20,7 @@ import {
   normalizeSignerSignature,
   ParentedPayload,
   RawSignature,
+  READ_NONCE,
   sign,
   SignatureOfSapientSignerLeaf,
   SignatureOfSignerLeaf,
@@ -78,6 +84,90 @@ export class Wallet {
     const imageHash = hashConfiguration(configuration)
     const signature = await this.sign(fromConfigUpdate(Bytes.toHex(imageHash)), options)
     await this.options.stateProvider.setConfiguration(this.address, configuration, signature)
+  }
+
+  async send(
+    provider: Provider.Provider,
+    calls: Call[],
+    options?: { space?: bigint; trustSigners?: boolean; onSignerError?: SignerErrorCallback },
+  ) {
+    return provider.request({
+      method: 'eth_sendTransaction',
+      params: [await this.getTransaction(provider, calls, options)],
+    })
+  }
+
+  async getTransaction(
+    provider: Provider.Provider,
+    calls: Call[],
+    options?: { space?: bigint; trustSigners?: boolean; onSignerError?: SignerErrorCallback },
+  ): Promise<{ to: Address.Address; data: Hex.Hex }> {
+    const space = options?.space ?? 0n
+
+    if (await this.isDeployed(provider)) {
+      const nonce = BigInt(
+        await provider.request({
+          method: 'eth_call',
+          params: [{ to: this.address, data: AbiFunction.encodeData(READ_NONCE, [space]) }],
+        }),
+      )
+
+      const payload: CallPayload = { type: 'call', space, nonce, calls }
+      const signature = await this.sign(payload, { ...options, provider })
+
+      return {
+        to: this.address,
+        data: AbiFunction.encodeData(EXECUTE, [Bytes.toHex(encode(payload)), Bytes.toHex(encodeSignature(signature))]),
+      }
+    } else {
+      const nonce = 0n
+
+      const payload: CallPayload = { type: 'call', space, nonce, calls }
+      const [signature, { deployHash, context }] = await Promise.all([
+        this.sign(payload, { ...options, provider }),
+        this.options.stateProvider.getDeployHash(this.address),
+      ])
+      const deploy = erc6492Deploy(deployHash, context)
+
+      return {
+        to: context.guest,
+        data: AbiFunction.encodeData(EXECUTE, [
+          Bytes.toHex(
+            encode({
+              type: 'call',
+              space: 0n,
+              nonce: 0n,
+              calls: [
+                {
+                  to: deploy.to,
+                  value: 0n,
+                  data: Hex.toBytes(deploy.data),
+                  gasLimit: 0n,
+                  delegateCall: false,
+                  onlyFallback: false,
+                  behaviorOnError: 'revert',
+                },
+                {
+                  to: this.address,
+                  value: 0n,
+                  data: Hex.toBytes(
+                    AbiFunction.encodeData(EXECUTE, [
+                      Bytes.toHex(encode(payload)),
+                      Bytes.toHex(encodeSignature(signature)),
+                    ]),
+                  ),
+                  gasLimit: 0n,
+                  delegateCall: false,
+                  onlyFallback: false,
+                  behaviorOnError: 'ignore',
+                },
+              ],
+            }),
+          ),
+          '0x',
+        ]),
+      }
+    }
   }
 
   async sign(
