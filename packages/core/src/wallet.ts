@@ -11,6 +11,7 @@ import {
   EXECUTE,
   fromConfigUpdate,
   getCounterfactualAddress,
+  Guest,
   hash,
   hashConfiguration,
   IMAGE_HASH,
@@ -123,14 +124,13 @@ export class Wallet {
       const nonce = 0n
 
       const payload: CallPayload = { type: 'call', space, nonce, calls }
-      const [signature, { deployHash, context }] = await Promise.all([
+      const [signature, deploy] = await Promise.all([
         this.sign(payload, { ...options, provider }),
-        this.options.stateProvider.getDeployHash(this.address),
+        this.getDeployTransaction(),
       ])
-      const deploy = erc6492Deploy(deployHash, context)
 
       return {
-        to: context.guest,
+        to: Guest,
         data: AbiFunction.encodeData(EXECUTE, [
           Bytes.toHex(
             encode({
