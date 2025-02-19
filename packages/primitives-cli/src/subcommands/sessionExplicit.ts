@@ -1,9 +1,11 @@
 import {
   balanceSessionsTopology,
   encodeExplicitSessionCallSignature,
+  getSessionPermissions,
   isSessionsTopology,
   mergeSessionsTopologies,
   removeExplicitSession,
+  sessionPermissionsFromJson,
   sessionsTopologyFromJson,
   sessionsTopologyToJson,
 } from '@0xsequence/sequence-primitives'
@@ -12,7 +14,7 @@ import type { CommandModule } from 'yargs'
 import { fromPosOrStdin, parseRSV } from '../utils'
 
 export async function doAddSession(sessionInput: string, topologyInput: string): Promise<string> {
-  const session = sessionsTopologyFromJson(sessionInput)
+  const session = sessionPermissionsFromJson(sessionInput)
   let topology = sessionsTopologyFromJson(topologyInput)
   if (!isSessionsTopology(session)) {
     throw new Error('Explicit session must be a valid session topology')
@@ -20,6 +22,12 @@ export async function doAddSession(sessionInput: string, topologyInput: string):
   if (!isSessionsTopology(topology)) {
     throw new Error('Session topology must be a valid session topology')
   }
+  // Find the session in the topology
+  const sessionPermissions = getSessionPermissions(topology, session.signer)
+  if (sessionPermissions) {
+    throw new Error('Session already exists')
+  }
+  // Merge the session into the topology
   topology = mergeSessionsTopologies(session, topology)
   topology = balanceSessionsTopology(topology)
   return sessionsTopologyToJson(topology)

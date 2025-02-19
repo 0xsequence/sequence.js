@@ -157,6 +157,23 @@ export function getImplicitBlacklistLeaf(topolgy: SessionsTopology): ImplicitBla
   return null
 }
 
+export function getSessionPermissions(topology: SessionsTopology, address: Address.Address): SessionPermissions | null {
+  if (isSessionPermissions(topology)) {
+    if (topology.signer === address) {
+      return topology
+    }
+  }
+  if (isSessionsBranch(topology)) {
+    for (const child of topology) {
+      const result = getSessionPermissions(child, address)
+      if (result) {
+        return result
+      }
+    }
+  }
+  return null
+}
+
 // Encode / decode to configuration tree
 
 /**
