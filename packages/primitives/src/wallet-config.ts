@@ -33,6 +33,11 @@ export type SubdigestLeaf = {
   digest: Bytes.Bytes
 }
 
+export type AnyAddressSubdigestLeaf = {
+  type: 'any-address-subdigest'
+  digest: Bytes.Bytes
+}
+
 export type NestedLeaf = {
   type: 'nested'
   tree: Topology
@@ -44,7 +49,7 @@ export type NodeLeaf = Bytes.Bytes
 
 export type Node = [Topology, Topology]
 
-export type Leaf = SignerLeaf | SapientSignerLeaf | SubdigestLeaf | NestedLeaf | NodeLeaf
+export type Leaf = SignerLeaf | SapientSignerLeaf | SubdigestLeaf | AnyAddressSubdigestLeaf | NestedLeaf | NodeLeaf
 
 export type Topology = Node | Leaf
 
@@ -67,6 +72,10 @@ export function isSubdigestLeaf(cand: any): cand is SubdigestLeaf {
   return typeof cand === 'object' && cand !== null && cand.type === 'subdigest'
 }
 
+export function isAnyAddressSubdigestLeaf(cand: any): cand is AnyAddressSubdigestLeaf {
+  return typeof cand === 'object' && cand !== null && cand.type === 'any-address-subdigest'
+}
+
 export function isNodeLeaf(cand: any): cand is NodeLeaf {
   return cand instanceof Uint8Array && cand.length === 32
 }
@@ -85,7 +94,12 @@ export function isConfiguration(cand: any): cand is Configuration {
 
 export function isLeaf(cand: Topology): cand is Leaf {
   return (
-    isSignerLeaf(cand) || isSapientSignerLeaf(cand) || isSubdigestLeaf(cand) || isNodeLeaf(cand) || isNestedLeaf(cand)
+    isSignerLeaf(cand) ||
+    isSapientSignerLeaf(cand) ||
+    isSubdigestLeaf(cand) ||
+    isAnyAddressSubdigestLeaf(cand) ||
+    isNodeLeaf(cand) ||
+    isNestedLeaf(cand)
   )
 }
 
@@ -140,6 +154,8 @@ export function getWeight(
     return { weight: topology.weight, maxWeight: canSign(topology) ? topology.weight : 0n }
   } else if (isSubdigestLeaf(topology)) {
     return { weight: 0n, maxWeight: 0n }
+  } else if (isAnyAddressSubdigestLeaf(topology)) {
+    return { weight: 0n, maxWeight: 0n }
   } else if (isRawNestedLeaf(topology)) {
     const { weight, maxWeight } = getWeight(topology.tree)
     return {
@@ -191,6 +207,10 @@ export function hashConfiguration(topology: Topology | Configuration): Bytes.Byt
 
   if (isSubdigestLeaf(topology)) {
     return Hash.keccak256(Bytes.concat(Bytes.fromString('Sequence static digest:\n'), topology.digest))
+  }
+
+  if (isAnyAddressSubdigestLeaf(topology)) {
+    return Hash.keccak256(Bytes.concat(Bytes.fromString('Sequence any address subdigest:\n'), topology.digest))
   }
 
   if (isNodeLeaf(topology)) {
@@ -274,6 +294,11 @@ function encodeTopology(top: Topology): any {
       type: 'subdigest',
       digest: Bytes.toHex(top.digest),
     }
+  } else if (isAnyAddressSubdigestLeaf(top)) {
+    return {
+      type: 'any-address-subdigest',
+      digest: Bytes.toHex(top.digest),
+    }
   } else if (isNodeLeaf(top)) {
     return Bytes.toHex(top)
   } else if (isNestedLeaf(top)) {
@@ -319,6 +344,11 @@ function decodeTopology(obj: any): Topology {
         type: 'subdigest',
         digest: Bytes.fromHex(obj.digest),
       }
+    case 'any-address-subdigest':
+      return {
+        type: 'any-address-subdigest',
+        digest: Bytes.fromHex(obj.digest),
+      }
     case 'nested':
       return {
         type: 'nested',
@@ -349,6 +379,8 @@ export function sign(
     } else if (isSapientSignerLeaf(topology)) {
       return { ...topology }
     } else if (isSubdigestLeaf(topology)) {
+      return topology
+    } else if (isAnyAddressSubdigestLeaf(topology)) {
       return topology
     } else if (isNodeLeaf(topology)) {
       return topology
@@ -497,6 +529,8 @@ export function sign(
 
         signature.then(onSignerSignature(topology)).catch(onSignerError(topology))
       } else if (isSubdigestLeaf(topology)) {
+        return
+      } else if (isAnyAddressSubdigestLeaf(topology)) {
         return
       } else if (isNodeLeaf(topology)) {
         return

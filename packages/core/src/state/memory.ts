@@ -5,6 +5,7 @@ import {
   getCounterfactualAddress,
   hash,
   hashConfiguration,
+  isAnyAddressSubdigestLeaf,
   isNodeLeaf,
   isRawNestedLeaf,
   isRawSignerLeaf,
@@ -218,6 +219,8 @@ export class MemoryStateProvider implements StateProvider {
       } else if (isSapientSignerLeaf(topology)) {
         return
       } else if (isSubdigestLeaf(topology)) {
+        return
+      } else if (isAnyAddressSubdigestLeaf(topology)) {
         return
       } else if (isNodeLeaf(topology)) {
         return

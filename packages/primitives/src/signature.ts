@@ -6,6 +6,7 @@ import {
   SapientSignerLeaf,
   SignerLeaf,
   SubdigestLeaf,
+  AnyAddressSubdigestLeaf,
   Topology,
   hashConfiguration,
   isNestedLeaf,
@@ -14,6 +15,7 @@ import {
   isSapientSignerLeaf,
   isSignerLeaf,
   isSubdigestLeaf,
+  isAnyAddressSubdigestLeaf,
   isTopology,
 } from './wallet-config'
 import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
@@ -29,7 +31,7 @@ export const FLAG_BRANCH = 4
 export const FLAG_SUBDIGEST = 5
 export const FLAG_NESTED = 6
 export const FLAG_SIGNATURE_ETH_SIGN = 7
-export const FLAG_SIGNATURE_EIP712 = 8
+export const FLAG_SIGNATURE_ANY_ADDRESS_SUBDIGEST = 8
 export const FLAG_SIGNATURE_SAPIENT = 9
 export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
@@ -498,7 +500,20 @@ export function parseBranch(signature: Bytes.Bytes): {
       continue
     }
 
-    // FLAG_SIGNATURE_SAPIENT = 9 or FLAG_SIGNATURE_SAPIENT_COMPACT = 10 => bottom 2 bits => weight, next 2 bits => sizeSize
+    // FLAG_SIGNATURE_ANY_ADDRESS_SUBDIGEST = 8 => read 32 bytes => push any address subdigest leaf
+    if (flag === FLAG_SIGNATURE_ANY_ADDRESS_SUBDIGEST) {
+      if (index + 32 > signature.length) {
+        throw new Error('Not enough bytes for any address subdigest')
+      }
+      const anyAddressSubdigest = signature.slice(index, index + 32)
+      index += 32
+      nodes.push({
+        type: 'any-address-subdigest',
+        digest: anyAddressSubdigest,
+      } as AnyAddressSubdigestLeaf)
+      continue
+    }
+
     if (flag === FLAG_SIGNATURE_SAPIENT || flag === FLAG_SIGNATURE_SAPIENT_COMPACT) {
       let addrWeight = firstByte & 0x03
       if (addrWeight === 0) {
@@ -572,6 +587,10 @@ export function fillLeaves(
   }
 
   if (isSubdigestLeaf(topology)) {
+    return topology
+  }
+
+  if (isAnyAddressSubdigestLeaf(topology)) {
     return topology
   }
 
@@ -823,10 +842,6 @@ export function encodeTopology(
     }
   }
 
-  if (isSubdigestLeaf(topology)) {
-    return Bytes.concat(Bytes.fromNumber(FLAG_SUBDIGEST << 4), topology.digest)
-  }
-
   if (isSignerLeaf(topology)) {
     let flag = FLAG_ADDRESS << 4
     let weightBytes = Bytes.fromArray([])
@@ -845,6 +860,14 @@ export function encodeTopology(
     // Encode as node directly
     const hash = hashConfiguration(topology)
     return Bytes.concat(Bytes.fromNumber(FLAG_NODE << 4), hash)
+  }
+
+  if (isSubdigestLeaf(topology)) {
+    return Bytes.concat(Bytes.fromNumber(FLAG_SUBDIGEST << 4), topology.digest)
+  }
+
+  if (isAnyAddressSubdigestLeaf(topology)) {
+    return Bytes.concat(Bytes.fromNumber(FLAG_SIGNATURE_ANY_ADDRESS_SUBDIGEST << 4), topology.digest)
   }
 
   throw new Error('Invalid topology')
@@ -909,6 +932,11 @@ function rawTopologyToJson(top: RawTopology): any {
             type: 'subdigest',
             digest: Bytes.toHex(top.digest),
           }
+        case 'any-address-subdigest':
+          return {
+            type: 'any-address-subdigest',
+            digest: Bytes.toHex(top.digest),
+          }
         case 'nested':
           return {
             type: 'nested',
@@ -962,7 +990,6 @@ function rawSignatureOfLeafToJson(sig: SignatureOfSignerLeaf | SignatureOfSapien
   throw new Error('Unknown signature type in raw signature')
 }
 
-// Re-create a RawSignature from its JSON string representation.
 export function rawSignatureFromJson(json: string): RawSignature {
   const parsed = JSON.parse(json)
   return rawSignatureFromParsed(parsed)
@@ -1008,6 +1035,11 @@ function rawTopologyFromJson(obj: any): RawTopology {
         case 'subdigest':
           return {
             type: 'subdigest',
+            digest: Bytes.fromHex(obj.digest),
+          }
+        case 'any-address-subdigest':
+          return {
+            type: 'any-address-subdigest',
             digest: Bytes.fromHex(obj.digest),
           }
         case 'nested':
@@ -1276,6 +1308,14 @@ async function recoverTopology(
     return {
       topology,
       weight: Bytes.isEqual(topology.digest, digest)
+        ? 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+        : 0n,
+    }
+  } else if (isAnyAddressSubdigestLeaf(topology)) {
+    const anyAddressOpHash = hash('0x0000000000000000000000000000000000000000', chainId, payload)
+    return {
+      topology,
+      weight: Bytes.isEqual(topology.digest, anyAddressOpHash)
         ? 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
         : 0n,
     }
