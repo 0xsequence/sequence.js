@@ -92,7 +92,7 @@ const sessionImplicitCommand: CommandModule = {
         },
       )
       .command(
-        'encode-call-signature [attestation] [global-signature] [session-signature]',
+        'encode-call [attestation] [global-signature] [session-signature]',
         'Encode an implicit session signature',
         (yargs) => {
           return yargs

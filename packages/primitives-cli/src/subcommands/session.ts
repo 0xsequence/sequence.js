@@ -16,6 +16,12 @@ export async function doEmptyTopology(globalSigner: `0x${string}`): Promise<stri
   return sessionsTopologyToJson(topology)
 }
 
+export async function doEncodeConfiguration(sessionConfigurationInput: string): Promise<string> {
+  const sessionConfiguration = sessionsTopologyFromJson(sessionConfigurationInput)
+  const configurationTree = sessionsTopologyToConfigurationTree(sessionConfiguration)
+  return JSON.stringify(configurationTree)
+}
+
 export async function doEncodeSessionCallSignatures(
   sessionConfigurationInput: string,
   callSignaturesInput: string[],
@@ -58,6 +64,20 @@ const sessionCommand: CommandModule = {
         },
         async (args) => {
           console.log(await doEmptyTopology(args.globalSigner as `0x${string}`))
+        },
+      )
+      .command(
+        'encode-configuration [session-configuration]',
+        'Encode a session configuration',
+        (yargs) => {
+          return yargs.positional('session-configuration', {
+            type: 'string',
+            description: 'The session configuration',
+            demandOption: true,
+          })
+        },
+        async (args) => {
+          console.log(await doEncodeConfiguration(args.sessionConfiguration))
         },
       )
       .command(

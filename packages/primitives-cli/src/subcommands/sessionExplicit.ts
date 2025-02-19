@@ -114,7 +114,7 @@ const sessionExplicitCommand: CommandModule = {
         },
       )
       .command(
-        'encode-call-signature [permission-index] [signature]',
+        'encode-call [permission-index] [signature]',
         'Encode a signature with the given permission index',
         (yargs) => {
           return yargs
