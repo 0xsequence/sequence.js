@@ -4,6 +4,7 @@ import sessionImplicitCommand from './sessionImplicit'
 import {
   emptySessionsTopology,
   hashConfigurationTree,
+  sessionCallSignatureFromJson,
   sessionsTopologyFromJson,
   sessionsTopologyToConfigurationTree,
   sessionsTopologyToJson,
@@ -29,7 +30,7 @@ export async function doEncodeSessionCallSignatures(
   implicitSigners: string[] = [],
 ): Promise<string> {
   const sessionConfiguration = sessionsTopologyFromJson(sessionConfigurationInput)
-  const callSignatures = callSignaturesInput.map((s) => Bytes.fromHex(s as `0x${string}`))
+  const callSignatures = callSignaturesInput.map((s) => sessionCallSignatureFromJson(s))
   const encoded = encodeSessionCallSignatures(
     callSignatures,
     sessionConfiguration,

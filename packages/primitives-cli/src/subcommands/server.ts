@@ -144,7 +144,7 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const { sessionTopology, callSignatures, explicitSigners, implicitSigners } = params
     const result = await session.doEncodeSessionCallSignatures(
       JSON.stringify(sessionTopology),
-      callSignatures,
+      callSignatures.map(JSON.stringify),
       explicitSigners,
       implicitSigners,
     )
@@ -167,11 +167,6 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const result = await sessionExplicit.doRemoveSession(explicitSessionAddress, JSON.stringify(sessionTopology))
     return result
   },
-  async session_explicit_encodeCallSignature(params) {
-    const { permissionIndex, signature } = params
-    const result = await sessionExplicit.doEncodeExplicitSessionCallSignature(permissionIndex, signature)
-    return result
-  },
 
   // SESSION IMPLICIT
   async session_implicit_addBlacklistAddress(params) {
@@ -184,15 +179,6 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const result = await sessionImplicit.doRemoveBlacklistAddress(
       blacklistAddress,
       JSON.stringify(sessionConfiguration),
-    )
-    return result
-  },
-  async session_implicit_encodeCallSignature(params) {
-    const { attestation, globalSignature, sessionSignature } = params
-    const result = await sessionImplicit.doEncodeImplicitSessionCallSignature(
-      JSON.stringify(attestation),
-      globalSignature,
-      sessionSignature,
     )
     return result
   },

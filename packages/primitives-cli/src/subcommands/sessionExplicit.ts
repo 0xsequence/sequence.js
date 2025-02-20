@@ -1,6 +1,5 @@
 import {
   balanceSessionsTopology,
-  encodeExplicitSessionCallSignature,
   getSessionPermissions,
   isSessionsTopology,
   mergeSessionsTopologies,
@@ -9,9 +8,8 @@ import {
   sessionsTopologyFromJson,
   sessionsTopologyToJson,
 } from '@0xsequence/sequence-primitives'
-import { Hex } from 'ox'
 import type { CommandModule } from 'yargs'
-import { fromPosOrStdin, parseRSV } from '../utils'
+import { fromPosOrStdin } from '../utils'
 
 export async function doAddSession(sessionInput: string, topologyInput: string): Promise<string> {
   const session = sessionPermissionsFromJson(sessionInput)
@@ -46,19 +44,6 @@ export async function doRemoveSession(explicitSessionAddress: string, topologyIn
     throw new Error('Session topology is empty')
   }
   return sessionsTopologyToJson(updated)
-}
-
-export async function doEncodeExplicitSessionCallSignature(
-  permissionIndex: number,
-  signatureInput: string,
-): Promise<string> {
-  if (!signatureInput) {
-    throw new Error('Signature is required')
-  }
-  const signature = parseRSV(signatureInput)
-
-  const encoded = encodeExplicitSessionCallSignature(BigInt(permissionIndex), signature)
-  return Hex.from(encoded)
 }
 
 const sessionExplicitCommand: CommandModule = {
@@ -111,34 +96,6 @@ const sessionExplicitCommand: CommandModule = {
           const explicitSessionAddress = argv.explicitSessionAddress
           const topologyInput = await fromPosOrStdin(argv, 'session-topology')
           console.log(await doRemoveSession(explicitSessionAddress!, topologyInput))
-        },
-      )
-      .command(
-        'encode-call [permission-index] [signature]',
-        'Encode a signature with the given permission index',
-        (yargs) => {
-          return yargs
-            .positional('signature', {
-              type: 'string',
-              description: 'Signature to encode (r:s:v)',
-              demandOption: true,
-            })
-            .positional('permission-index', {
-              type: 'number',
-              description: 'Index of the permission to use',
-              demandOption: true,
-            })
-        },
-        async (argv) => {
-          const signatureInput = argv.signature
-          if (!signatureInput) {
-            throw new Error('Signature is required')
-          }
-          const permissionIndex = argv.permissionIndex
-          if (!permissionIndex) {
-            throw new Error('Permission index is required')
-          }
-          console.log(await doEncodeExplicitSessionCallSignature(permissionIndex, signatureInput))
         },
       )
       .demandCommand(1, 'You must specify a subcommand for session')
