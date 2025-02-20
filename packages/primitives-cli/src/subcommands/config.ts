@@ -37,6 +37,11 @@ export const PossibleElements = [
     format: 'node:<hash>',
     description: 'A node leaf',
   },
+  {
+    type: 'any-address-subdigest',
+    format: 'any-address-subdigest:<digest>',
+    description: 'An any address subdigest leaf',
+  },
 ]
 
 function parseElements(elements: string): Leaf[] {
@@ -59,6 +64,13 @@ function parseElements(elements: string): Leaf[] {
       const [_, digest] = firstElement!.split(':')
       leaves.push({
         type: 'subdigest',
+        digest: Bytes.fromHex(digest as `0x${string}`),
+      })
+      remainingElements = remainingElements.slice(firstElement!.length + 1)
+    } else if (firstElementType === 'any-address-subdigest') {
+      const [_, digest] = firstElement!.split(':')
+      leaves.push({
+        type: 'any-address-subdigest',
         digest: Bytes.fromHex(digest as `0x${string}`),
       })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
