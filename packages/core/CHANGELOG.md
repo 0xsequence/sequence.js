@@ -1,5 +1,41 @@
 # @0xsequence/core
 
+## 2.2.13
+
+### Patch Changes
+
+- Add XR1 to all networks
+- Updated dependencies
+  - @0xsequence/abi@2.2.13
+  - @0xsequence/utils@2.2.13
+
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+- Updated dependencies
+  - @0xsequence/abi@2.2.12
+  - @0xsequence/utils@2.2.12
+
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+- Updated dependencies
+  - @0xsequence/abi@2.2.11
+  - @0xsequence/utils@2.2.11
+
+## 2.2.10
+
+### Patch Changes
+
+- Etherlink support
+- Updated dependencies
+  - @0xsequence/abi@2.2.10
+  - @0xsequence/utils@2.2.10
+
 ## 2.2.9
 
 ### Patch Changes

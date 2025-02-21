@@ -75,6 +75,14 @@ export abstract class ProviderRelayer implements Relayer {
     transactions: proto.MetaTxnLog[]
   }>
 
+  abstract listGasSponsors(args: proto.ListGasSponsorsArgs): Promise<proto.ListGasSponsorsReturn>
+
+  abstract addGasSponsor(args: proto.AddGasSponsorArgs): Promise<proto.AddGasSponsorReturn>
+
+  abstract updateGasSponsor(args: proto.UpdateGasSponsorArgs): Promise<proto.UpdateGasSponsorReturn>
+
+  abstract removeGasSponsor(args: proto.RemoveGasSponsorArgs): Promise<proto.RemoveGasSponsorReturn>
+
   async simulate(wallet: string, ...transactions: commons.transaction.Transaction[]): Promise<SimulateResult[]> {
     return (
       await Promise.all(

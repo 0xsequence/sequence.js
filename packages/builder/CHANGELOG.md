@@ -1,5 +1,29 @@
 # @0xsequence/builder
 
+## 2.2.13
+
+### Patch Changes
+
+- Add XR1 to all networks
+
+## 2.2.12
+
+### Patch Changes
+
+- Add XR1
+
+## 2.2.11
+
+### Patch Changes
+
+- Relayer updates
+
+## 2.2.10
+
+### Patch Changes
+
+- Etherlink support
+
 ## 2.2.9
 
 ### Patch Changes
