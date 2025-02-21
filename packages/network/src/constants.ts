@@ -136,7 +136,10 @@ export enum ChainId {
 
   // MOONBEAM
   MOONBEAM = 1284,
-  MOONBASE_ALPHA = 1287
+  MOONBASE_ALPHA = 1287,
+
+  //MONAD_TESTNET
+  MONAD_TESTNET = 10143
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1107,6 +1110,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'XTZ',
       name: 'Tez',
+      decimals: 18
+    }
+  },
+  [ChainId.MONAD_TESTNET]: {
+    chainId: ChainId.MONAD_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'monad-testnet',
+    title: 'MONAD Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'MONAD Testnet Explorer',
+      rootUrl: 'https://testnet.monadexplorer.com/'
+    },
+    nativeToken: {
+      symbol: 'MON',
+      name: 'MON',
       decimals: 18
     }
   }
