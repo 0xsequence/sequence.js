@@ -1,6 +1,6 @@
 import { AbiParameters, Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
-import { encode } from '@0xsequence/sequence-primitives'
+import { encode, hash, isCallsPayload, ParentedPayload } from '@0xsequence/sequence-primitives'
 import { fromPosOrStdin, readStdin } from '../utils'
 
 export const KIND_TRANSACTIONS = 0x00
@@ -78,14 +78,9 @@ export async function doConvertToAbi(payload: string): Promise<string> {
   throw new Error('Not implemented')
 }
 
-export async function doConvertToPacked(payload: string): Promise<string> {
-  const decoded = AbiParameters.decode(
-    [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
-    payload as Hex.Hex,
-  )[0] as unknown as SolidityDecoded
-
+export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): ParentedPayload {
   if (decoded.kind === KIND_TRANSACTIONS) {
-    const packed = encode({
+    return {
       type: 'call',
       nonce: decoded.nonce,
       space: decoded.space,
@@ -98,7 +93,47 @@ export async function doConvertToPacked(payload: string): Promise<string> {
         onlyFallback: call.onlyFallback,
         behaviorOnError: behaviorOnError(Number(call.behaviorOnError)),
       })),
-    })
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  if (decoded.kind === KIND_MESSAGE) {
+    return {
+      type: 'message',
+      message: Bytes.fromHex(decoded.message as `0x${string}`),
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  if (decoded.kind === KIND_CONFIG_UPDATE) {
+    return {
+      type: 'config-update',
+      imageHash: decoded.imageHash as `0x${string}`,
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  if (decoded.kind === KIND_DIGEST) {
+    return {
+      type: 'digest',
+      digest: decoded.digest as `0x${string}`,
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  throw new Error('Not implemented')
+}
+
+export async function doConvertToPacked(payload: string): Promise<string> {
+  const decodedPayload = solidityEncodedToParentedPayload(
+    AbiParameters.decode(
+      [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
+      payload as Hex.Hex,
+    )[0] as unknown as SolidityDecoded,
+  )
+
+  if (isCallsPayload(decodedPayload)) {
+    const packed = encode(decodedPayload)
     return Hex.from(packed)
   }
 
@@ -113,6 +148,15 @@ export async function doConvertToJson(payload: string): Promise<string> {
 
   const json = JSON.stringify(decoded)
   return json
+}
+
+export async function doHash(wallet: string, chainId: bigint, payload: string): Promise<string> {
+  const decoded = AbiParameters.decode(
+    [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
+    payload as Hex.Hex,
+  )[0] as unknown as SolidityDecoded
+
+  return Hex.from(hash(Address.from(wallet), chainId, solidityEncodedToParentedPayload(decoded)))
 }
 
 const payloadCommand: CommandModule = {
@@ -162,6 +206,32 @@ const payloadCommand: CommandModule = {
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
           const result = await doConvertToJson(payload)
+          console.log(result)
+        },
+      )
+      .command(
+        'hash [payload]',
+        'Hash the payload',
+        (yargs) => {
+          return yargs
+            .option('wallet', {
+              type: 'string',
+              description: 'Wallet of the wallet to hash the payload',
+              demandOption: true,
+            })
+            .option('chainId', {
+              type: 'string',
+              description: 'Chain ID of the payload',
+              demandOption: true,
+            })
+            .positional('payload', {
+              type: 'string',
+              description: 'Input payload to hash',
+            })
+        },
+        async (argv) => {
+          const payload = await fromPosOrStdin(argv, 'payload')
+          const result = await doHash(argv.wallet, BigInt(argv.chainId), payload)
           console.log(result)
         },
       )

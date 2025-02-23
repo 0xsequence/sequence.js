@@ -116,6 +116,10 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const result = await payload.doConvertToJson(inputPayload)
     return result
   },
+  async payload_hashFor(params) {
+    const result = await payload.doHash(params.wallet, params.chainId, params.payload)
+    return result
+  },
 
   // PERMISSION
   async permission_toPackedSession(params) {

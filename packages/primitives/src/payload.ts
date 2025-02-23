@@ -1,6 +1,7 @@
 import { AbiFunction, Address, Bytes, Hash, Hex, TypedData } from 'ox'
 import { IS_VALID_SAPIENT_SIGNATURE } from './constants'
 import { minBytesFor } from './utils'
+import { getSignPayload } from 'ox/TypedData'
 
 export type Call = {
   to: Address.Address
@@ -42,6 +43,18 @@ export type Payload = CallPayload | MessagePayload | ConfigUpdatePayload | Diges
 
 export type ParentedPayload = Payload & ParentPayload
 
+export type TypedDataToSign = {
+  domain: {
+    name: string
+    version: string
+    chainId: number
+    verifyingContract: Address.Address
+  }
+  types: Record<string, Array<{ name: string; type: string }>>
+  primaryType: string
+  message: Record<string, unknown>
+}
+
 export function fromMessage(message: Bytes.Bytes): Payload {
   return {
     type: 'message',
@@ -70,6 +83,18 @@ export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Payload {
     space,
     calls,
   }
+}
+
+export function isCallsPayload(payload: Payload): payload is CallPayload {
+  return payload.type === 'call'
+}
+
+export function isMessagePayload(payload: Payload): payload is MessagePayload {
+  return payload.type === 'message'
+}
+
+export function isConfigUpdatePayload(payload: Payload): payload is ConfigUpdatePayload {
+  return payload.type === 'config-update'
 }
 
 export function encode(payload: CallPayload, self?: Address.Address): Bytes.Bytes {
@@ -270,88 +295,126 @@ export function encodeSapient(
 }
 
 export function hash(wallet: Address.Address, chainId: bigint, payload: ParentedPayload): Bytes.Bytes {
-  const domain = { name: 'Sequence Wallet', version: '3', chainId, verifyingContract: wallet }
+  const typedData = toTypedPayload(wallet, chainId, payload)
+  return Bytes.fromHex(getSignPayload(typedData))
+}
 
-  let data: Hex.Hex
-  switch (payload.type) {
-    case 'call':
-      data = TypedData.encode({
-        domain,
-        types: {
-          Calls: [
-            { name: 'calls', type: 'Call[]' },
-            { name: 'space', type: 'uint256' },
-            { name: 'nonce', type: 'uint256' },
-            { name: 'wallets', type: 'address[]' },
-          ],
-          Call: [
-            { name: 'to', type: 'address' },
-            { name: 'value', type: 'uint256' },
-            { name: 'data', type: 'bytes' },
-            { name: 'gasLimit', type: 'uint256' },
-            { name: 'delegateCall', type: 'bool' },
-            { name: 'onlyFallback', type: 'bool' },
-            { name: 'behaviorOnError', type: 'uint256' },
-          ],
-        },
-        primaryType: 'Calls',
-        message: {
-          calls: payload.calls.map((call) => ({
-            ...call,
-            data: Bytes.toHex(call.data),
-            behaviorOnError: BigInt(encodeBehaviorOnError(call.behaviorOnError)),
-          })),
-          space: payload.space,
-          nonce: payload.nonce,
-          wallets: payload.parentWallets ?? [],
-        },
-      })
-      break
-
-    case 'message':
-      data = TypedData.encode({
-        domain,
-        types: {
-          Message: [
-            { name: 'message', type: 'bytes' },
-            { name: 'wallets', type: 'address[]' },
-          ],
-        },
-        primaryType: 'Message',
-        message: { message: Bytes.toHex(payload.message), wallets: payload.parentWallets ?? [] },
-      })
-      break
-
-    case 'config-update':
-      data = TypedData.encode({
-        domain,
-        types: {
-          ConfigUpdate: [
-            { name: 'imageHash', type: 'bytes32' },
-            { name: 'wallets', type: 'address[]' },
-          ],
-        },
-        primaryType: 'ConfigUpdate',
-        message: { imageHash: payload.imageHash, wallets: payload.parentWallets ?? [] },
-      })
-      break
-
-    case 'digest':
-      data = TypedData.encode({
-        domain,
-        types: {
-          Digest: [
-            { name: 'digest', type: 'bytes32' },
-            { name: 'wallets', type: 'address[]' },
-          ],
-        },
-        primaryType: 'Digest',
-        message: { digest: payload.digest, wallets: payload.parentWallets ?? [] },
-      })
-      break
+export function toTypedPayload(wallet: Address.Address, chainId: bigint, payload: ParentedPayload): TypedDataToSign {
+  const domain = {
+    name: 'Sequence Wallet',
+    version: '3',
+    chainId: Number(chainId),
+    verifyingContract: wallet,
   }
 
-  return Hash.keccak256(data, { as: 'Bytes' })
+  switch (payload.type) {
+    case 'call': {
+      // This matches the EIP712 structure used in our hash() function
+      const types = {
+        Calls: [
+          { name: 'calls', type: 'Call[]' },
+          { name: 'space', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'wallets', type: 'address[]' },
+        ],
+        Call: [
+          { name: 'to', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'data', type: 'bytes' },
+          { name: 'gasLimit', type: 'uint256' },
+          { name: 'delegateCall', type: 'bool' },
+          { name: 'onlyFallback', type: 'bool' },
+          { name: 'behaviorOnError', type: 'uint256' },
+        ],
+      }
+
+      // We ensure 'behaviorOnError' is turned into a numeric value
+      const message = {
+        calls: payload.calls.map((call) => ({
+          to: call.to,
+          value: call.value.toString(),
+          data: Bytes.toHex(call.data),
+          gasLimit: call.gasLimit.toString(),
+          delegateCall: call.delegateCall,
+          onlyFallback: call.onlyFallback,
+          behaviorOnError: BigInt(encodeBehaviorOnError(call.behaviorOnError)).toString(),
+        })),
+        space: payload.space.toString(),
+        nonce: payload.nonce.toString(),
+        wallets: payload.parentWallets ?? [],
+      }
+
+      return {
+        domain,
+        types,
+        primaryType: 'Calls',
+        message,
+      }
+    }
+
+    case 'message': {
+      const types = {
+        Message: [
+          { name: 'message', type: 'bytes' },
+          { name: 'wallets', type: 'address[]' },
+        ],
+      }
+
+      const message = {
+        message: Bytes.toHex(payload.message),
+        wallets: payload.parentWallets ?? [],
+      }
+
+      return {
+        domain,
+        types,
+        primaryType: 'Message',
+        message,
+      }
+    }
+
+    case 'config-update': {
+      const types = {
+        ConfigUpdate: [
+          { name: 'imageHash', type: 'bytes32' },
+          { name: 'wallets', type: 'address[]' },
+        ],
+      }
+
+      const message = {
+        imageHash: payload.imageHash,
+        wallets: payload.parentWallets ?? [],
+      }
+
+      return {
+        domain,
+        types,
+        primaryType: 'ConfigUpdate',
+        message,
+      }
+    }
+
+    case 'digest': {
+      const types = {
+        Digest: [
+          { name: 'digest', type: 'bytes32' },
+          { name: 'wallets', type: 'address[]' },
+        ],
+      }
+
+      const message = {
+        digest: payload.digest,
+        wallets: payload.parentWallets ?? [],
+      }
+
+      return {
+        domain,
+        types,
+        primaryType: 'Digest',
+        message,
+      }
+    }
+  }
 }
 
 function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']): number {
