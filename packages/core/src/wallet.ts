@@ -11,7 +11,7 @@ import {
   EXECUTE,
   fromConfigUpdate,
   getCounterfactualAddress,
-  Guest,
+  DefautlGuest,
   hash,
   hashConfiguration,
   IMAGE_HASH,
@@ -27,6 +27,7 @@ import {
   SignatureOfSignerLeaf,
   SignerErrorCallback,
   SignerSignature,
+  IMPLEMENTATION_HASH,
 } from '@0xsequence/sequence-primitives'
 import { AbiFunction, Address, Bytes, Hex, PersonalMessage, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryStateProvider, StateProvider } from '.'
@@ -35,11 +36,13 @@ export type WalletOptions = {
   context: Context
   stateProvider: StateProvider
   onSignerError?: SignerErrorCallback
+  guest: Address.Address
 }
 
 export const DefaultWalletOptions: WalletOptions = {
   context: DevContext1,
   stateProvider: new MemoryStateProvider(),
+  guest: DefautlGuest,
 }
 
 export class Wallet {
@@ -69,7 +72,8 @@ export class Wallet {
 
   async deploy(provider: Provider.Provider) {
     if (!(await this.isDeployed(provider))) {
-      return provider.request({ method: 'eth_sendTransaction', params: [await this.getDeployTransaction()] })
+      const deployTx = await this.getDeployTransaction()
+      return provider.request({ method: 'eth_sendTransaction', params: [deployTx] })
     }
   }
 
@@ -130,7 +134,7 @@ export class Wallet {
       ])
 
       return {
-        to: Guest,
+        to: this.options.guest,
         data: AbiFunction.encodeData(EXECUTE, [
           Bytes.toHex(
             encode({
@@ -183,12 +187,24 @@ export class Wallet {
     let deployHash: { deployHash: Hex.Hex; context: Context } | undefined
     let imageHash: Hex.Hex
     if (provider) {
-      const requests = await Promise.all([provider.request({ method: 'eth_chainId' }), this.isDeployed(provider)])
+      const requests = await Promise.all([
+        provider.request({ method: 'eth_chainId' }),
+        this.isDeployed(provider),
+        provider
+          .request({
+            method: 'eth_call',
+            params: [{ to: this.address, data: AbiFunction.encodeData(IMPLEMENTATION_HASH) }],
+          })
+          .then((res) => `0x${res.slice(26)}`)
+          .catch(() => undefined),
+      ])
+
       chainId = BigInt(requests[0])
       isDeployed = requests[1]
+      const implementation = requests[2]
 
       let fromImageHash: Hex.Hex
-      if (isDeployed) {
+      if (isDeployed && implementation !== this.options.context.stage1) {
         fromImageHash = await provider.request({
           method: 'eth_call',
           params: [{ to: this.address, data: AbiFunction.encodeData(IMAGE_HASH) }],

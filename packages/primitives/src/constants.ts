@@ -15,7 +15,7 @@ export const DevContext1: Context = {
   creationCode: DEFAULT_CREATION_CODE,
 }
 
-export const Guest: Address.Address = '0xTODO'
+export const DefautlGuest: Address.Address = '0x294e900a45018d71ffc6ee1f18a205e199f551a1'
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([
@@ -26,6 +26,9 @@ export const IS_VALID_SIGNATURE = Abi.from([
 export const DEPLOY = Abi.from([
   'function deploy(address _mainModule, bytes32 _salt) public payable returns (address _contract)',
 ])[0]
+
+// Stage1Module
+export const IMPLEMENTATION_HASH = Abi.from(['function getImplementation() external view returns (address)'])[0]
 
 // Stage2Module
 export const IMAGE_HASH = Abi.from(['function imageHash() external view returns (bytes32)'])[0]
