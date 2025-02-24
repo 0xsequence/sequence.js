@@ -96,18 +96,18 @@ function checkIsCompleteSessionsBranch(topology: SessionsTopology): {
 
 /**
  * Gets the global signer from the topology.
- * @param topolgy The topology to get the global signer from
+ * @param topology The topology to get the global signer from
  * @returns The global signer or null if it's not present
  */
-export function getGlobalSigner(topolgy: SessionsTopology): Address.Address | null {
-  if (isGlobalSignerLeaf(topolgy)) {
+export function getGlobalSigner(topology: SessionsTopology): Address.Address | null {
+  if (isGlobalSignerLeaf(topology)) {
     // Got it
-    return topolgy.globalSigner
+    return topology.globalSigner
   }
 
-  if (isSessionsBranch(topolgy)) {
+  if (isSessionsBranch(topology)) {
     // Check branches
-    const results = topolgy.map(getGlobalSigner).filter((t) => t !== null)
+    const results = topology.map(getGlobalSigner).filter((t) => t !== null)
     if (results.length > 1) {
       throw new Error('Multiple global signers')
     }
@@ -121,11 +121,11 @@ export function getGlobalSigner(topolgy: SessionsTopology): Address.Address | nu
 
 /**
  * Gets the implicit blacklist from the topology.
- * @param topolgy The topology to get the implicit blacklist from
+ * @param topology The topology to get the implicit blacklist from
  * @returns The implicit blacklist or null if it's not present
  */
-export function getImplicitBlacklist(topolgy: SessionsTopology): Address.Address[] | null {
-  const blacklistNode = getImplicitBlacklistLeaf(topolgy)
+export function getImplicitBlacklist(topology: SessionsTopology): Address.Address[] | null {
+  const blacklistNode = getImplicitBlacklistLeaf(topology)
   if (!blacklistNode) {
     return null
   }
@@ -134,18 +134,18 @@ export function getImplicitBlacklist(topolgy: SessionsTopology): Address.Address
 
 /**
  * Gets the implicit blacklist leaf from the topology.
- * @param topolgy The topology to get the implicit blacklist leaf from
+ * @param topology The topology to get the implicit blacklist leaf from
  * @returns The implicit blacklist leaf or null if it's not present
  */
-export function getImplicitBlacklistLeaf(topolgy: SessionsTopology): ImplicitBlacklist | null {
-  if (isImplicitBlacklist(topolgy)) {
+export function getImplicitBlacklistLeaf(topology: SessionsTopology): ImplicitBlacklist | null {
+  if (isImplicitBlacklist(topology)) {
     // Got it
-    return topolgy
+    return topology
   }
 
-  if (isSessionsBranch(topolgy)) {
+  if (isSessionsBranch(topology)) {
     // Check branches
-    const results = topolgy.map(getImplicitBlacklistLeaf).filter((t) => t !== null)
+    const results = topology.map(getImplicitBlacklistLeaf).filter((t) => t !== null)
     if (results.length > 1) {
       throw new Error('Multiple blacklists')
     }
@@ -252,13 +252,13 @@ export function configurationTreeToSessionsTopology(tree: EncodedConfigurationTr
 
 /**
  * Encodes a topology into bytes for contract validation.
- * @param topolgy The topology to encode
+ * @param topology The topology to encode
  * @returns The encoded topology
  */
-export function encodeSessionsTopology(topolgy: SessionsTopology): Bytes.Bytes {
-  if (isSessionsBranch(topolgy)) {
+export function encodeSessionsTopology(topology: SessionsTopology): Bytes.Bytes {
+  if (isSessionsBranch(topology)) {
     const encodedBranches = []
-    for (const node of topolgy) {
+    for (const node of topology) {
       encodedBranches.push(encodeSessionsTopology(node))
     }
     const encoded = Bytes.concat(...encodedBranches)
@@ -274,36 +274,36 @@ export function encodeSessionsTopology(topolgy: SessionsTopology): Bytes.Bytes {
     )
   }
 
-  if (isSessionPermissions(topolgy)) {
+  if (isSessionPermissions(topology)) {
     const flagByte = SESSIONS_FLAG_PERMISSIONS << 4
-    const encodedLeaf = encodeSessionPermissions(topolgy)
+    const encodedLeaf = encodeSessionPermissions(topology)
     return Bytes.concat(Bytes.fromNumber(flagByte), encodedLeaf)
   }
 
-  if (isSessionsNode(topolgy)) {
+  if (isSessionsNode(topology)) {
     const flagByte = SESSIONS_FLAG_NODE << 4
-    return Bytes.concat(Bytes.fromNumber(flagByte), topolgy)
+    return Bytes.concat(Bytes.fromNumber(flagByte), topology)
   }
 
-  if (isImplicitBlacklist(topolgy)) {
-    const encoded = Bytes.concat(...topolgy.blacklist.map((b) => Bytes.fromHex(b)))
-    if (topolgy.blacklist.length > 14) {
+  if (isImplicitBlacklist(topology)) {
+    const encoded = Bytes.concat(...topology.blacklist.map((b) => Bytes.fromHex(b)))
+    if (topology.blacklist.length > 14) {
       // If the blacklist is too large, we can't encode the length into the flag byte.
       // Instead we encode 0xff and the length in the next byte.
       return Bytes.concat(
         Bytes.fromNumber((SESSIONS_FLAG_BLACKLIST << 4) | 0xff),
-        Bytes.fromNumber(topolgy.blacklist.length),
+        Bytes.fromNumber(topology.blacklist.length),
         encoded,
       )
     }
     // Encode the size into the flag byte
-    const flagByte = (SESSIONS_FLAG_BLACKLIST << 4) | topolgy.blacklist.length
+    const flagByte = (SESSIONS_FLAG_BLACKLIST << 4) | topology.blacklist.length
     return Bytes.concat(Bytes.fromNumber(flagByte), encoded)
   }
 
-  if (isGlobalSignerLeaf(topolgy)) {
+  if (isGlobalSignerLeaf(topology)) {
     const flagByte = SESSIONS_FLAG_GLOBAL_SIGNER << 4
-    return Bytes.concat(Bytes.fromNumber(flagByte), Bytes.padLeft(Bytes.fromHex(topolgy.globalSigner), 20))
+    return Bytes.concat(Bytes.fromNumber(flagByte), Bytes.padLeft(Bytes.fromHex(topology.globalSigner), 20))
   }
 
   throw new Error('Invalid topology')
