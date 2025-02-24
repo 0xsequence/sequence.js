@@ -139,7 +139,10 @@ export enum ChainId {
   MOONBASE_ALPHA = 1287,
 
   //MONAD_TESTNET
-  MONAD_TESTNET = 10143
+  MONAD_TESTNET = 10143,
+
+  //SOMNIA_TESTNET
+  SOMNIA_TESTNET = 50312
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1127,6 +1130,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'MON',
       name: 'MON',
+      decimals: 18
+    }
+  },
+
+  [ChainId.SOMNIA_TESTNET]: {
+    chainId: ChainId.SOMNIA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'somnia-testnet',
+    title: 'SOMNIA Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SOMNIA_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'SOMNIA Testnet Explorer',
+      rootUrl: 'https://somnia-testnet.socialscan.io/'
+    },
+    nativeToken: {
+      symbol: 'STT',
+      name: 'STT',
       decimals: 18
     }
   }
