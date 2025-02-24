@@ -18,7 +18,7 @@ export class IdentitySigner implements Signer {
     return this.authKey.identitySigner
   }
 
-  async sign(wallet: Address.Address, chainId: bigint, payload: ParentedPayload) {
+  async sign(wallet: Address.Address, chainId: bigint, payload: ParentedPayload): Promise<SignatureOfSignerLeaf> {
     const payloadHash = hash(wallet, chainId, payload)
     const authKeySignature = await this.authKey.signMessage(payloadHash.toString())
     const params = {
@@ -35,7 +35,7 @@ export class IdentitySigner implements Signer {
       type: 'hash',
       r: Bytes.fromNumber(sig.r),
       s: Bytes.fromNumber(sig.s),
-      v: sig.yParity,
-    } as SignatureOfSignerLeaf
+      v: Signature.yParityToV(sig.yParity),
+    }
   }
 }
