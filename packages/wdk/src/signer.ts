@@ -1,5 +1,6 @@
-import { Payload } from '@0xsequence/sequence-primitives'
-import { Signer, Signature } from '@0xsequence/sequence-core'
+import { Address, Signature, Hex, Bytes } from 'ox'
+import { ParentedPayload, SignatureOfSignerLeaf, hash } from '@0xsequence/sequence-primitives'
+import { Signer } from '@0xsequence/sequence-core'
 import { AuthKey } from './authkey'
 import { IdentityInstrument } from './nitro'
 
@@ -17,20 +18,24 @@ export class IdentitySigner implements Signer {
     return this.authKey.identitySigner
   }
 
-  async sign(payload: Payload): Promise<Signature> {
-    if (payload.type !== 'digest') {
-      throw new Error(`IdentitySigner cannot sign ${payload.type} payloads`)
-    }
-
-    const authKeySignature = await this.authKey.signMessage(payload.digest.toString())
+  async sign(wallet: Address.Address, chainId: bigint, payload: ParentedPayload) {
+    const payloadHash = hash(wallet, chainId, payload)
+    const authKeySignature = await this.authKey.signMessage(payloadHash.toString())
     const params = {
       ecosystemId: this.ecosystemId,
       signer: this.address,
-      digest: payload.digest,
+      digest: payloadHash.toString(),
       authKey: this.authKey.toProto(),
       signature: authKeySignature,
     }
     const res = await this.nitro.sign({ params })
-    return { type: 'hash', signature: res.signature as `0x${string}` }
+    Hex.assert(res.signature)
+    const sig = Signature.fromHex(res.signature)
+    return {
+      type: 'hash',
+      r: Bytes.fromNumber(sig.r),
+      s: Bytes.fromNumber(sig.s),
+      v: sig.yParity,
+    } as SignatureOfSignerLeaf
   }
 }
