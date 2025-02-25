@@ -1,18 +1,17 @@
-import { boolean, type CommandModule } from 'yargs'
-import { fromPosOrStdin } from '../utils'
 import {
   configFromJson,
-  configToJson,
   decodeSignature,
   encodeSignature,
   fillLeaves,
   isSapientSignerLeaf,
   isSignerLeaf,
   rawSignatureToJson,
+  rsvFromStr,
 } from '@0xsequence/sequence-primitives'
+import { Bytes, Hex, Signature } from 'ox'
+import { type CommandModule } from 'yargs'
+import { fromPosOrStdin } from '../utils'
 import { PossibleElements } from './config'
-import { Bytes, Hex } from 'ox'
-
 const SignatureElements = [
   {
     type: 'eth_sign',
@@ -71,19 +70,17 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
       }
 
       if (candidate.type === 'eth_sign') {
+        const sig = rsvFromStr(candidate.values.join(':'))
         return {
-          r: Bytes.padLeft(Bytes.fromHex(candidate.values[0] as `0x${string}`), 32),
-          s: Bytes.padLeft(Bytes.fromHex(candidate.values[1] as `0x${string}`), 32),
-          v: Number(candidate.values[2]),
+          ...sig,
           type: 'eth_sign',
         }
       }
 
       if (candidate.type === 'hash') {
+        const sig = rsvFromStr(candidate.values.join(':'))
         return {
-          r: Bytes.padLeft(Bytes.fromHex(candidate.values[0] as `0x${string}`), 32),
-          s: Bytes.padLeft(Bytes.fromHex(candidate.values[1] as `0x${string}`), 32),
-          v: Number(candidate.values[2]),
+          ...sig,
           type: 'hash',
         }
       }
