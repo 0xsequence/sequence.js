@@ -10,8 +10,8 @@ export type Context = {
 }
 
 export const DevContext1: Context = {
-  factory: '0xFaA5c0b14d1bED5C888Ca655B9a8A5911F78eF4A',
-  stage1: '0x66155b899d93e255d42a85eb921ead9f2e964ef1',
+  factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447',
+  stage1: '0x9C4953F499f7e63434d76E0735D4707473d92311',
   creationCode: DEFAULT_CREATION_CODE,
 }
 
