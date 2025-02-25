@@ -53,16 +53,16 @@ function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
     }
   }
 
-  const [_, webrpcGenVersion] = versions[0].split('@')
-  const [codeGenName, codeGenVersion] = versions[1].split('@')
-  const [schemaName, schemaVersion] = versions[2].split('@')
+  const [_, webrpcGenVersion] = versions[0]!.split('@')
+  const [codeGenName, codeGenVersion] = versions[1]!.split('@')
+  const [schemaName, schemaVersion] = versions[2]!.split('@')
 
   return {
-    webrpcGenVersion,
-    codeGenName,
-    codeGenVersion,
-    schemaName,
-    schemaVersion,
+    webrpcGenVersion: webrpcGenVersion!,
+    codeGenName: codeGenName!,
+    codeGenVersion: codeGenVersion!,
+    schemaName: schemaName!,
+    schemaVersion: schemaVersion!,
   }
 }
 
