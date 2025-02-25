@@ -269,7 +269,7 @@ export class Wallet {
                   if (
                     !Secp256k1.verify({
                       payload: signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
-                      address: this.address,
+                      address: leaf.address,
                       signature: {
                         r: Bytes.toBigInt(signature.r),
                         s: Bytes.toBigInt(signature.s),
