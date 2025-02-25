@@ -1,7 +1,7 @@
 import { Abi, Address, Hex } from 'ox'
 
 export const DEFAULT_CREATION_CODE: Hex.Hex =
-  '0x603a600e3d39601a805130553df3363d3d373d3d3d363d30545af43d82803e903d91601857fd5bf3'
+  '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3'
 
 export type Context = {
   factory: Address.Address
