@@ -204,18 +204,18 @@ export class Wallet {
       const implementation = requests[2]
 
       let fromImageHash: Hex.Hex
-      if (isDeployed && implementation !== this.options.context.stage1) {
+
+      if (isDeployed && implementation?.toLowerCase() !== this.options.context.stage1.toLowerCase()) {
         fromImageHash = await provider.request({
           method: 'eth_call',
           params: [{ to: this.address, data: AbiFunction.encodeData(IMAGE_HASH) }],
         })
       } else {
-        deployHash = await this.options.stateProvider.getDeployHash(this.address)
-        fromImageHash = deployHash.deployHash
+        // Avoid setting deployHash as it later determines if we use 6492 or not
+        fromImageHash = (await this.options.stateProvider.getDeployHash(this.address)).deployHash
       }
 
       updates = await this.options.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
-
       imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
     } else {
       chainId = 0n
