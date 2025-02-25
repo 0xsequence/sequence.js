@@ -24,7 +24,7 @@ export class Wdk {
     return new IdentitySigner(this.ecosystemId, this.nitro, authKey)
   }
 
-  private async initiateAuth(challenge: Challenge) {
+  public async initiateAuth(challenge: Challenge) {
     const authKey = await this.getAuthKey()
     const challengeParams = challenge.getParams()
     const params = {
@@ -34,10 +34,10 @@ export class Wdk {
       answer: undefined,
     }
     const res = await this.nitro.initiateAuth({ params })
-    return res.challenge
+    return [res.verifier, res.challenge]
   }
 
-  private async completeAuth(challenge: Challenge) {
+  public async completeAuth(challenge: Challenge) {
     const authKey = await this.getAuthKey()
     const challengeParams = challenge.getParams()
     const params = {
