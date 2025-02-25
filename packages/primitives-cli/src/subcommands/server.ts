@@ -135,8 +135,8 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
 
   // SESSION
   async session_empty(params) {
-    const { globalSigner } = params
-    const result = await session.doEmptyTopology(globalSigner)
+    const { identitySigner } = params
+    const result = await session.doEmptyTopology(identitySigner)
     return result
   },
   async session_encodeConfiguration(params) {

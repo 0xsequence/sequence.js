@@ -11,7 +11,7 @@ import { minBytesFor, packRSV, rsvFromStr, rsvToStr } from './utils'
 
 export type ImplicitSessionCallSignature = {
   attestation: Attestation
-  globalSignature: Signature.Signature<true>
+  identitySignature: Signature.Signature<true>
   sessionSignature: Signature.Signature<true>
 }
 
@@ -25,7 +25,7 @@ export type SessionCallSignature = ImplicitSessionCallSignature | ExplicitSessio
 export function isImplicitSessionCallSignature(
   callSignature: SessionCallSignature,
 ): callSignature is ImplicitSessionCallSignature {
-  return 'attestation' in callSignature && 'globalSignature' in callSignature && 'sessionSignature' in callSignature
+  return 'attestation' in callSignature && 'identitySignature' in callSignature && 'sessionSignature' in callSignature
 }
 
 export function isExplicitSessionCallSignature(
@@ -44,7 +44,7 @@ export function encodeSessionCallSignatureForJson(callSignature: SessionCallSign
   if (isImplicitSessionCallSignature(callSignature)) {
     return {
       attestation: encodeAttestationForJson(callSignature.attestation),
-      globalSignature: rsvToStr(callSignature.globalSignature),
+      identitySignature: rsvToStr(callSignature.identitySignature),
       sessionSignature: rsvToStr(callSignature.sessionSignature),
     }
   } else if (isExplicitSessionCallSignature(callSignature)) {
@@ -66,7 +66,7 @@ export function sessionCallSignatureFromParsed(decoded: any): SessionCallSignatu
   if (decoded.attestation) {
     return {
       attestation: attestationFromParsed(decoded.attestation),
-      globalSignature: rsvFromStr(decoded.globalSignature),
+      identitySignature: rsvFromStr(decoded.identitySignature),
       sessionSignature: rsvFromStr(decoded.sessionSignature),
     }
   } else if (decoded.permissionIndex) {
@@ -115,7 +115,9 @@ export function encodeSessionCallSignatures(
       const attestationStr = JSON.stringify(callSig.attestation)
       if (!attestationMap.has(attestationStr)) {
         attestationMap.set(attestationStr, encodedAttestations.length)
-        encodedAttestations.push(Bytes.concat(encodeAttestation(callSig.attestation), packRSV(callSig.globalSignature)))
+        encodedAttestations.push(
+          Bytes.concat(encodeAttestation(callSig.attestation), packRSV(callSig.identitySignature)),
+        )
       }
     }
   })

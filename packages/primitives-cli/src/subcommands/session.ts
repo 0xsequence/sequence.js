@@ -1,19 +1,19 @@
-import { CommandModule } from 'yargs'
-import sessionExplicitCommand from './sessionExplicit'
-import sessionImplicitCommand from './sessionImplicit'
 import {
   emptySessionsTopology,
+  encodeSessionCallSignatures,
   hashConfigurationTree,
   sessionCallSignatureFromJson,
   sessionsTopologyFromJson,
   sessionsTopologyToConfigurationTree,
   sessionsTopologyToJson,
 } from '@0xsequence/sequence-primitives'
-import { encodeSessionCallSignatures } from '@0xsequence/sequence-primitives'
-import { Bytes, Hex } from 'ox'
+import { Hex } from 'ox'
+import { CommandModule } from 'yargs'
+import sessionExplicitCommand from './sessionExplicit'
+import sessionImplicitCommand from './sessionImplicit'
 
-export async function doEmptyTopology(globalSigner: `0x${string}`): Promise<string> {
-  const topology = emptySessionsTopology(globalSigner)
+export async function doEmptyTopology(identitySigner: `0x${string}`): Promise<string> {
+  const topology = emptySessionsTopology(identitySigner)
   return sessionsTopologyToJson(topology)
 }
 
@@ -53,18 +53,18 @@ const sessionCommand: CommandModule = {
   builder: (yargs) => {
     return yargs
       .command(
-        'empty [global-signer]',
-        'Create an empty session topology with the given global signer',
+        'empty [identity-signer]',
+        'Create an empty session topology with the given identity signer',
         (yargs) => {
-          return yargs.positional('global-signer', {
+          return yargs.positional('identity-signer', {
             type: 'string',
-            description: 'The global signer for the session topology',
+            description: 'The identity signer for the session topology',
             demandOption: true,
-            alias: 'g',
+            alias: 'i',
           })
         },
         async (args) => {
-          console.log(await doEmptyTopology(args.globalSigner as `0x${string}`))
+          console.log(await doEmptyTopology(args.identitySigner as `0x${string}`))
         },
       )
       .command(

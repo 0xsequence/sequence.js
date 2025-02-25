@@ -13,18 +13,18 @@ export const SESSIONS_FLAG_PERMISSIONS = 0
 export const SESSIONS_FLAG_NODE = 1
 export const SESSIONS_FLAG_BRANCH = 2
 export const SESSIONS_FLAG_BLACKLIST = 3
-export const SESSIONS_FLAG_GLOBAL_SIGNER = 4
+export const SESSIONS_FLAG_IDENTITY_SIGNER = 4
 
 export type ImplicitBlacklist = {
   blacklist: Address.Address[]
 }
 
-export type GlobalSignerLeaf = {
-  globalSigner: Address.Address
+export type IdentitySignerLeaf = {
+  identitySigner: Address.Address
 }
 
 export type SessionNode = Bytes.Bytes // Hashed
-export type SessionLeaf = SessionPermissions | ImplicitBlacklist | GlobalSignerLeaf
+export type SessionLeaf = SessionPermissions | ImplicitBlacklist | IdentitySignerLeaf
 export type SessionBranch = [SessionsTopology, SessionsTopology, ...SessionsTopology[]]
 export type SessionsTopology = SessionBranch | SessionLeaf | SessionNode
 
@@ -36,8 +36,8 @@ function isImplicitBlacklist(topology: any): topology is ImplicitBlacklist {
   return typeof topology === 'object' && topology !== null && 'blacklist' in topology
 }
 
-function isGlobalSignerLeaf(topology: any): topology is GlobalSignerLeaf {
-  return typeof topology === 'object' && topology !== null && 'globalSigner' in topology
+function isIdentitySignerLeaf(topology: any): topology is IdentitySignerLeaf {
+  return typeof topology === 'object' && topology !== null && 'identitySigner' in topology
 }
 
 function isSessionPermissions(topology: any): topology is SessionPermissions {
@@ -45,7 +45,7 @@ function isSessionPermissions(topology: any): topology is SessionPermissions {
 }
 
 function isSessionsLeaf(topology: any): topology is SessionLeaf {
-  return isImplicitBlacklist(topology) || isGlobalSignerLeaf(topology) || isSessionPermissions(topology)
+  return isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology) || isSessionPermissions(topology)
 }
 
 function isSessionsBranch(topology: any): topology is SessionBranch {
@@ -58,7 +58,7 @@ export function isSessionsTopology(topology: any): topology is SessionsTopology 
 
 /**
  * Checks if the topology is complete.
- * A complete topology has exactly one global signer and one blacklist.
+ * A complete topology has exactly one identity signer and one blacklist.
  * @param topology The topology to check
  * @returns True if the topology is complete
  */
@@ -67,49 +67,49 @@ export function isCompleteSessionsTopology(topology: any): topology is SessionsT
   if (!isSessionsTopology(topology)) {
     return false
   }
-  // Check the topology contains exactly one global signer and one blacklist
-  const { globalSignerCount, blacklistCount } = checkIsCompleteSessionsBranch(topology)
-  return globalSignerCount === 1 && blacklistCount === 1
+  // Check the topology contains exactly one identity signer and one blacklist
+  const { identitySignerCount, blacklistCount } = checkIsCompleteSessionsBranch(topology)
+  return identitySignerCount === 1 && blacklistCount === 1
 }
 
 function checkIsCompleteSessionsBranch(topology: SessionsTopology): {
-  globalSignerCount: number
+  identitySignerCount: number
   blacklistCount: number
 } {
-  let thisHasGlobalSigner = 0
+  let thisHasIdentitySigner = 0
   let thisHasBlacklist = 0
   if (isSessionsBranch(topology)) {
     for (const child of topology) {
-      const { globalSignerCount, blacklistCount } = checkIsCompleteSessionsBranch(child)
-      thisHasGlobalSigner += globalSignerCount
+      const { identitySignerCount, blacklistCount } = checkIsCompleteSessionsBranch(child)
+      thisHasIdentitySigner += identitySignerCount
       thisHasBlacklist += blacklistCount
     }
   }
-  if (isGlobalSignerLeaf(topology)) {
-    thisHasGlobalSigner++
+  if (isIdentitySignerLeaf(topology)) {
+    thisHasIdentitySigner++
   }
   if (isImplicitBlacklist(topology)) {
     thisHasBlacklist++
   }
-  return { globalSignerCount: thisHasGlobalSigner, blacklistCount: thisHasBlacklist }
+  return { identitySignerCount: thisHasIdentitySigner, blacklistCount: thisHasBlacklist }
 }
 
 /**
- * Gets the global signer from the topology.
- * @param topology The topology to get the global signer from
- * @returns The global signer or null if it's not present
+ * Gets the identity signer from the topology.
+ * @param topology The topology to get the identity signer from
+ * @returns The identity signer or null if it's not present
  */
-export function getGlobalSigner(topology: SessionsTopology): Address.Address | null {
-  if (isGlobalSignerLeaf(topology)) {
+export function getIdentitySigner(topology: SessionsTopology): Address.Address | null {
+  if (isIdentitySignerLeaf(topology)) {
     // Got it
-    return topology.globalSigner
+    return topology.identitySigner
   }
 
   if (isSessionsBranch(topology)) {
     // Check branches
-    const results = topology.map(getGlobalSigner).filter((t) => t !== null)
+    const results = topology.map(getIdentitySigner).filter((t) => t !== null)
     if (results.length > 1) {
-      throw new Error('Multiple global signers')
+      throw new Error('Multiple identity signers')
     }
     if (results.length === 1) {
       return results[0]!
@@ -192,10 +192,10 @@ export function encodeLeafToBytes(leaf: SessionLeaf): Bytes.Bytes {
       Bytes.concat(...leaf.blacklist.map((b) => Bytes.padLeft(Bytes.fromHex(b), 20))),
     )
   }
-  if (isGlobalSignerLeaf(leaf)) {
+  if (isIdentitySignerLeaf(leaf)) {
     return Bytes.concat(
-      Bytes.fromNumber(SESSIONS_FLAG_GLOBAL_SIGNER),
-      Bytes.padLeft(Bytes.fromHex(leaf.globalSigner), 20),
+      Bytes.fromNumber(SESSIONS_FLAG_IDENTITY_SIGNER),
+      Bytes.padLeft(Bytes.fromHex(leaf.identitySigner), 20),
     )
   }
   // Unreachable
@@ -211,8 +211,8 @@ export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
     }
     return { blacklist }
   }
-  if (flag === SESSIONS_FLAG_GLOBAL_SIGNER) {
-    return { globalSigner: Bytes.toHex(bytes.slice(1, 21)) }
+  if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
+    return { identitySigner: Bytes.toHex(bytes.slice(1, 21)) }
   }
   if (flag === SESSIONS_FLAG_PERMISSIONS) {
     return sessionPermissionsFromParsed(bytes.slice(1))
@@ -224,7 +224,7 @@ export function sessionsTopologyToConfigurationTree(topology: SessionsTopology):
   if (isSessionsBranch(topology)) {
     return topology.map(sessionsTopologyToConfigurationTree) as EncodedConfigurationBranch
   }
-  if (isImplicitBlacklist(topology) || isGlobalSignerLeaf(topology) || isSessionPermissions(topology)) {
+  if (isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology) || isSessionPermissions(topology)) {
     return encodeLeafToBytes(topology)
   }
   if (isSessionsNode(topology)) {
@@ -301,9 +301,9 @@ export function encodeSessionsTopology(topology: SessionsTopology): Bytes.Bytes 
     return Bytes.concat(Bytes.fromNumber(flagByte), encoded)
   }
 
-  if (isGlobalSignerLeaf(topology)) {
-    const flagByte = SESSIONS_FLAG_GLOBAL_SIGNER << 4
-    return Bytes.concat(Bytes.fromNumber(flagByte), Bytes.padLeft(Bytes.fromHex(topology.globalSigner), 20))
+  if (isIdentitySignerLeaf(topology)) {
+    const flagByte = SESSIONS_FLAG_IDENTITY_SIGNER << 4
+    return Bytes.concat(Bytes.fromNumber(flagByte), Bytes.padLeft(Bytes.fromHex(topology.identitySigner), 20))
   }
 
   throw new Error('Invalid topology')
@@ -324,7 +324,7 @@ function encodeSessionsTopologyForJson(topology: SessionsTopology): any {
     return encodeSessionPermissionsForJson(topology)
   }
 
-  if (isImplicitBlacklist(topology) || isGlobalSignerLeaf(topology)) {
+  if (isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology)) {
     return topology // No encoding necessary
   }
 
@@ -367,10 +367,10 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
     return sessionPermissionsFromParsed(parsed)
   }
 
-  // Parse global signer
-  if (typeof parsed === 'object' && parsed !== null && 'globalSigner' in parsed) {
-    const globalSigner = parsed.globalSigner as `0x${string}`
-    return { globalSigner }
+  // Parse identity signer
+  if (typeof parsed === 'object' && parsed !== null && 'identitySigner' in parsed) {
+    const identitySigner = parsed.identitySigner as `0x${string}`
+    return { identitySigner }
   }
 
   // Parse blacklist
@@ -476,17 +476,17 @@ function buildBalancedSessionsTopology(items: (SessionLeaf | SessionNode)[]): Se
 
 /**
  * Balances the topology by flattening and rebuilding as a balanced binary tree.
- * This does not make a binary tree as the blacklist and global signer are included at the top level.
+ * This does not make a binary tree as the blacklist and identity signer are included at the top level.
  */
 export function balanceSessionsTopology(topology: SessionsTopology): SessionsTopology {
   const flattened = flattenSessionsTopology(topology)
   const blacklist = flattened.find((l) => isImplicitBlacklist(l))
-  const globalSigner = flattened.find((l) => isGlobalSignerLeaf(l))
+  const identitySigner = flattened.find((l) => isIdentitySignerLeaf(l))
   const leaves = flattened.filter((l) => isSessionPermissions(l))
-  if (!blacklist || !globalSigner) {
-    throw new Error('No blacklist or global signer')
+  if (!blacklist || !identitySigner) {
+    throw new Error('No blacklist or identity signer')
   }
-  return buildBalancedSessionsTopology([blacklist, globalSigner, ...leaves])
+  return buildBalancedSessionsTopology([blacklist, identitySigner, ...leaves])
 }
 
 /**
@@ -514,7 +514,7 @@ export function cleanSessionsTopology(
     return topology
   }
 
-  if (isGlobalSignerLeaf(topology) || isImplicitBlacklist(topology)) {
+  if (isIdentitySignerLeaf(topology) || isImplicitBlacklist(topology)) {
     return topology
   }
 
@@ -575,8 +575,8 @@ export function minimiseSessionsTopology(
     // If there are implicit signers, we can't roll up the blacklist
     return topology
   }
-  if (isGlobalSignerLeaf(topology)) {
-    // Never roll up the global signer
+  if (isIdentitySignerLeaf(topology)) {
+    // Never roll up the identity signer
     return topology
   }
   if (isSessionsNode(topology)) {
@@ -620,15 +620,15 @@ export function removeFromImplicitBlacklist(topology: SessionsTopology, address:
 }
 
 /**
- *  Generate an empty sessions topology with the given global signer. No session permission and an empty blacklist
+ *  Generate an empty sessions topology with the given identity signer. No session permission and an empty blacklist
  */
-export function emptySessionsTopology(globalSigner: Address.Address): SessionsTopology {
+export function emptySessionsTopology(identitySigner: Address.Address): SessionsTopology {
   return [
     {
       blacklist: [],
     },
     {
-      globalSigner,
+      identitySigner,
     },
   ]
 }
