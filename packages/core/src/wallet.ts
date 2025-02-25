@@ -3,6 +3,7 @@ import {
   CallPayload,
   Configuration,
   Context,
+  DefaultGuest,
   DevContext1,
   encode,
   encodeSapient,
@@ -10,8 +11,8 @@ import {
   erc6492Deploy,
   EXECUTE,
   fromConfigUpdate,
+  GET_IMPLEMENTATION,
   getCounterfactualAddress,
-  DefautlGuest,
   hash,
   hashConfiguration,
   IMAGE_HASH,
@@ -27,7 +28,6 @@ import {
   SignatureOfSignerLeaf,
   SignerErrorCallback,
   SignerSignature,
-  IMPLEMENTATION_HASH,
 } from '@0xsequence/sequence-primitives'
 import { AbiFunction, Address, Bytes, Hex, PersonalMessage, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryStateProvider, StateProvider } from '.'
@@ -42,7 +42,7 @@ export type WalletOptions = {
 export const DefaultWalletOptions: WalletOptions = {
   context: DevContext1,
   stateProvider: new MemoryStateProvider(),
-  guest: DefautlGuest,
+  guest: DefaultGuest,
 }
 
 export class Wallet {
@@ -72,8 +72,8 @@ export class Wallet {
 
   async deploy(provider: Provider.Provider) {
     if (!(await this.isDeployed(provider))) {
-      const deployTx = await this.getDeployTransaction()
-      return provider.request({ method: 'eth_sendTransaction', params: [deployTx] })
+      const transaction = await this.getDeployTransaction()
+      return provider.request({ method: 'eth_sendTransaction', params: [transaction] })
     }
   }
 
@@ -193,7 +193,7 @@ export class Wallet {
         provider
           .request({
             method: 'eth_call',
-            params: [{ to: this.address, data: AbiFunction.encodeData(IMPLEMENTATION_HASH) }],
+            params: [{ to: this.address, data: AbiFunction.encodeData(GET_IMPLEMENTATION) }],
           })
           .then((res) => `0x${res.slice(26)}`)
           .catch(() => undefined),
