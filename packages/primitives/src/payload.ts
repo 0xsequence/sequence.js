@@ -13,35 +13,35 @@ export type Call = {
   behaviorOnError: 'ignore' | 'revert' | 'abort'
 }
 
-export type CallPayload = {
+export type Calls = {
   type: 'call'
   space: bigint
   nonce: bigint
   calls: Call[]
 }
 
-export type MessagePayload = {
+export type Message = {
   type: 'message'
   message: Bytes.Bytes
 }
 
-export type ConfigUpdatePayload = {
+export type ConfigUpdate = {
   type: 'config-update'
   imageHash: Hex.Hex
 }
 
-export type DigestPayload = {
+export type Digest = {
   type: 'digest'
   digest: Hex.Hex
 }
 
-export type ParentPayload = {
+export type Parent = {
   parentWallets?: Address.Address[]
 }
 
-export type Payload = CallPayload | MessagePayload | ConfigUpdatePayload | DigestPayload
+export type Payload = Calls | Message | ConfigUpdate | Digest
 
-export type ParentedPayload = Payload & ParentPayload
+export type Parented = Payload & Parent
 
 export type TypedDataToSign = {
   domain: {
@@ -85,19 +85,19 @@ export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Payload {
   }
 }
 
-export function isCallsPayload(payload: Payload): payload is CallPayload {
+export function isCalls(payload: Payload): payload is Calls {
   return payload.type === 'call'
 }
 
-export function isMessagePayload(payload: Payload): payload is MessagePayload {
+export function isMessage(payload: Payload): payload is Message {
   return payload.type === 'message'
 }
 
-export function isConfigUpdatePayload(payload: Payload): payload is ConfigUpdatePayload {
+export function isConfigUpdate(payload: Payload): payload is ConfigUpdate {
   return payload.type === 'config-update'
 }
 
-export function encode(payload: CallPayload, self?: Address.Address): Bytes.Bytes {
+export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
   const callsLen = payload.calls.length
   const nonceBytesNeeded = minBytesFor(payload.nonce)
   if (nonceBytesNeeded > 15) {
@@ -249,7 +249,7 @@ export function encode(payload: CallPayload, self?: Address.Address): Bytes.Byte
 
 export function encodeSapient(
   chainId: bigint,
-  payload: ParentedPayload,
+  payload: Parented,
 ): Exclude<AbiFunction.encodeData.Args<typeof IS_VALID_SAPIENT_SIGNATURE>[0], undefined>[0] {
   const encoded: ReturnType<typeof encodeSapient> = {
     kind: 0,
@@ -294,12 +294,12 @@ export function encodeSapient(
   return encoded
 }
 
-export function hash(wallet: Address.Address, chainId: bigint, payload: ParentedPayload): Bytes.Bytes {
-  const typedData = toTypedPayload(wallet, chainId, payload)
+export function hash(wallet: Address.Address, chainId: bigint, payload: Parented): Bytes.Bytes {
+  const typedData = toTyped(wallet, chainId, payload)
   return Bytes.fromHex(getSignPayload(typedData))
 }
 
-export function toTypedPayload(wallet: Address.Address, chainId: bigint, payload: ParentedPayload): TypedDataToSign {
+export function toTyped(wallet: Address.Address, chainId: bigint, payload: Parented): TypedDataToSign {
   const domain = {
     name: 'Sequence Wallet',
     version: '3',

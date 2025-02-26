@@ -19,8 +19,8 @@ import {
   isTopology,
 } from './wallet-config'
 import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
-import { erc6492, erc6492Decode } from './erc-6492'
-import { fromConfigUpdate, hash, ParentedPayload } from './payload'
+import { wrap, decode } from './erc-6492'
+import { fromConfigUpdate, hash, Parented } from './payload'
 import { minBytesFor } from './utils'
 
 export const FLAG_SIGNATURE_HASH = 0
@@ -158,7 +158,7 @@ export function isRawNestedLeaf(cand: any): cand is RawNestedLeaf {
 }
 
 export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
-  const { signature, erc6492 } = erc6492Decode(erc6492Signature)
+  const { signature, erc6492 } = decode(erc6492Signature)
 
   if (signature.length < 1) {
     throw new Error('Signature is empty')
@@ -691,7 +691,7 @@ export function encodeSignature(signature: RawSignature, skipCheckpointerData?: 
   const topologyBytes = encodeTopology(config.topology, signature)
   output = Bytes.concat(output, topologyBytes)
 
-  return signature.erc6492 ? erc6492(output, signature.erc6492) : output
+  return signature.erc6492 ? wrap(output, signature.erc6492) : output
 }
 
 export function encodeTopology(
@@ -1098,7 +1098,7 @@ export async function recover(
   signature: RawSignature,
   wallet: Address.Address,
   chainId: bigint,
-  payload: ParentedPayload,
+  payload: Parented,
   options?: {
     provider?: Provider.Provider | { provider: Provider.Provider; block: number } | 'assume-valid' | 'assume-invalid'
   },
@@ -1150,7 +1150,7 @@ async function recoverTopology(
   topology: RawTopology,
   wallet: Address.Address,
   chainId: bigint,
-  payload: ParentedPayload,
+  payload: Parented,
   options?: {
     provider?: Provider.Provider | { provider: Provider.Provider; block: number } | 'assume-valid' | 'assume-invalid'
     throw?: boolean
@@ -1331,7 +1331,7 @@ async function recoverTopology(
 
 function encode(
   chainId: bigint,
-  payload: ParentedPayload,
+  payload: Parented,
 ): Exclude<AbiFunction.encodeData.Args<typeof IS_VALID_SAPIENT_SIGNATURE>, []>[0][0] {
   switch (payload.type) {
     case 'call':

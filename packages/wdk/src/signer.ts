@@ -2,7 +2,7 @@ import { Address, Signature, Hex, Bytes } from 'ox'
 import { Signer } from '@0xsequence/sequence-core'
 import { AuthKey } from './authkey'
 import { IdentityInstrument } from './nitro'
-import { Payload, Signature as SignaturePrimitives } from '@0xsequence/sequence-primitives'
+import { Payload, Signature as SequenceSignature } from '@0xsequence/sequence-primitives'
 
 export class IdentitySigner implements Signer {
   constructor(
@@ -21,8 +21,8 @@ export class IdentitySigner implements Signer {
   async sign(
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload.ParentedPayload,
-  ): Promise<SignaturePrimitives.SignatureOfSignerLeaf> {
+    payload: Payload.Parented,
+  ): Promise<SequenceSignature.SignatureOfSignerLeaf> {
     const payloadHash = Payload.hash(wallet, chainId, payload)
     const authKeySignature = await this.authKey.signMessage(payloadHash.toString())
     const params = {

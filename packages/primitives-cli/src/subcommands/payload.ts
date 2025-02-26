@@ -78,7 +78,7 @@ export async function doConvertToAbi(payload: string): Promise<string> {
   throw new Error('Not implemented')
 }
 
-export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payload.ParentedPayload {
+export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payload.Parented {
   if (decoded.kind === KIND_TRANSACTIONS) {
     return {
       type: 'call',
@@ -132,7 +132,7 @@ export async function doConvertToPacked(payload: string): Promise<string> {
     )[0] as unknown as SolidityDecoded,
   )
 
-  if (Payload.isCallsPayload(decodedPayload)) {
+  if (Payload.isCalls(decodedPayload)) {
     const packed = Payload.encode(decodedPayload)
     return Hex.from(packed)
   }

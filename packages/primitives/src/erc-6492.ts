@@ -3,7 +3,7 @@ import { WrappedSignature } from 'ox/erc6492'
 import { DEPLOY } from './constants'
 import { Context } from './context'
 
-export function erc6492Deploy<T extends Bytes.Bytes | Hex.Hex>(
+export function deploy<T extends Bytes.Bytes | Hex.Hex>(
   deployHash: T,
   context: Context,
 ): { to: Address.Address; data: T } {
@@ -17,7 +17,7 @@ export function erc6492Deploy<T extends Bytes.Bytes | Hex.Hex>(
   }
 }
 
-export function erc6492<T extends Bytes.Bytes | Hex.Hex>(
+export function wrap<T extends Bytes.Bytes | Hex.Hex>(
   signature: T,
   { to, data }: { to: Address.Address; data: Bytes.Bytes | Hex.Hex },
 ): T {
@@ -37,7 +37,7 @@ export function erc6492<T extends Bytes.Bytes | Hex.Hex>(
   }
 }
 
-export function erc6492Decode<T extends Bytes.Bytes | Hex.Hex>(
+export function decode<T extends Bytes.Bytes | Hex.Hex>(
   signature: T,
 ): { signature: T; erc6492?: { to: Address.Address; data: T } } {
   switch (typeof signature) {

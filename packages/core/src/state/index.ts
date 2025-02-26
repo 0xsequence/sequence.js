@@ -11,7 +11,7 @@ export interface StateReader {
   getWallets(signer: Address.Address): MaybePromise<{
     [wallet: Address.Address]: {
       chainId: bigint
-      payload: Payload.ParentedPayload
+      payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
     }
   }>
@@ -29,7 +29,7 @@ export interface StateWriter {
   saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload.ParentedPayload,
+    payload: Payload.Parented,
     signatures: Signature.SignatureOfSignerLeaf[],
   ): MaybePromise<void>
 

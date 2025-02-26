@@ -1,5 +1,5 @@
 import { Address, Bytes, Hex } from 'ox'
-import { Attestation, attestationFromParsed, encodeAttestation, encodeAttestationForJson } from './attestation'
+import { Attestation, fromParsed, encode, encodeForJson } from './attestation'
 import { MAX_PERMISSIONS_COUNT } from './permission'
 import {
   encodeSessionsTopology,
@@ -43,7 +43,7 @@ export function sessionCallSignatureToJson(callSignature: SessionCallSignature):
 export function encodeSessionCallSignatureForJson(callSignature: SessionCallSignature): any {
   if (isImplicitSessionCallSignature(callSignature)) {
     return {
-      attestation: encodeAttestationForJson(callSignature.attestation),
+      attestation: encodeForJson(callSignature.attestation),
       identitySignature: rsvToStr(callSignature.identitySignature),
       sessionSignature: rsvToStr(callSignature.sessionSignature),
     }
@@ -65,7 +65,7 @@ export function sessionCallSignatureFromJson(json: string): SessionCallSignature
 export function sessionCallSignatureFromParsed(decoded: any): SessionCallSignature {
   if (decoded.attestation) {
     return {
-      attestation: attestationFromParsed(decoded.attestation),
+      attestation: fromParsed(decoded.attestation),
       identitySignature: rsvFromStr(decoded.identitySignature),
       sessionSignature: rsvFromStr(decoded.sessionSignature),
     }
@@ -135,9 +135,7 @@ export function encodeSessionCallSignatures(
       const attestationStr = JSON.stringify(callSig.attestation)
       if (!attestationMap.has(attestationStr)) {
         attestationMap.set(attestationStr, encodedAttestations.length)
-        encodedAttestations.push(
-          Bytes.concat(encodeAttestation(callSig.attestation), packRSV(callSig.identitySignature)),
-        )
+        encodedAttestations.push(Bytes.concat(encode(callSig.attestation), packRSV(callSig.identitySignature)))
       }
     }
   })

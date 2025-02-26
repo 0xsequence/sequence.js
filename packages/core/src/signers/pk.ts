@@ -15,7 +15,7 @@ export class Pk implements Signer {
   async sign(
     wallet: Address.Address,
     chainId: bigint,
-    payload: PayloadTypes.ParentedPayload,
+    payload: PayloadTypes.Parented,
   ): Promise<SignatureTypes.SignatureOfSignerLeaf> {
     throw new Error('Not implemented')
   }

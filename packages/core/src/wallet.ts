@@ -4,10 +4,10 @@ import {
   Constants,
   Context,
   WalletConfig,
-  Address as AddressPrimitives,
+  Address as SequenceAddress,
   Erc6492,
   Payload,
-  Signature as SignaturePrimitives,
+  Signature as SequenceSignature,
 } from '@0xsequence/sequence-primitives'
 
 export type WalletOptions = {
@@ -40,7 +40,7 @@ export class Wallet {
   ): Promise<Wallet> {
     const merged = { ...DefaultWalletOptions, ...options }
     await merged.stateProvider.saveWallet(configuration, merged.context)
-    return new Wallet(AddressPrimitives.getCounterfactualAddress(configuration, merged.context), merged)
+    return new Wallet(SequenceAddress.from(configuration, merged.context), merged)
   }
 
   async setSigner(signer: Signer, isTrusted = false) {
@@ -60,7 +60,7 @@ export class Wallet {
 
   async getDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
     const { deployHash, context } = await this.options.stateProvider.getDeployHash(this.address)
-    return Erc6492.erc6492Deploy(deployHash, context)
+    return Erc6492.deploy(deployHash, context)
   }
 
   async setConfiguration(
@@ -98,20 +98,20 @@ export class Wallet {
         }),
       )
 
-      const payload: Payload.CallPayload = { type: 'call', space, nonce, calls }
+      const payload: Payload.Calls = { type: 'call', space, nonce, calls }
       const signature = await this.sign(payload, { ...options, provider })
 
       return {
         to: this.address,
         data: AbiFunction.encodeData(Constants.EXECUTE, [
           Bytes.toHex(Payload.encode(payload)),
-          Bytes.toHex(SignaturePrimitives.encodeSignature(signature)),
+          Bytes.toHex(SequenceSignature.encodeSignature(signature)),
         ]),
       }
     } else {
       const nonce = 0n
 
-      const payload: Payload.CallPayload = { type: 'call', space, nonce, calls }
+      const payload: Payload.Calls = { type: 'call', space, nonce, calls }
       const [signature, deploy] = await Promise.all([
         this.sign(payload, { ...options, provider }),
         this.getDeployTransaction(),
@@ -141,7 +141,7 @@ export class Wallet {
                   data: Hex.toBytes(
                     AbiFunction.encodeData(Constants.EXECUTE, [
                       Bytes.toHex(Payload.encode(payload)),
-                      Bytes.toHex(SignaturePrimitives.encodeSignature(signature)),
+                      Bytes.toHex(SequenceSignature.encodeSignature(signature)),
                     ]),
                   ),
                   gasLimit: 0n,
@@ -159,13 +159,13 @@ export class Wallet {
   }
 
   async sign(
-    payload: Payload.ParentedPayload,
+    payload: Payload.Parented,
     options?: {
       provider?: Provider.Provider
       trustSigners?: boolean
       onSignerError?: WalletConfig.SignerErrorCallback
     },
-  ): Promise<SignaturePrimitives.RawSignature> {
+  ): Promise<SequenceSignature.RawSignature> {
     const provider = options?.provider
 
     let updates: Unpromise<ReturnType<StateProvider['getConfigurationUpdates']>> = []
@@ -387,7 +387,7 @@ export class Wallet {
       },
     )
 
-    const erc6492 = deployHash && Erc6492.erc6492Deploy(deployHash.deployHash, deployHash.context)
+    const erc6492 = deployHash && Erc6492.deploy(deployHash.deployHash, deployHash.context)
 
     return {
       noChainId: !chainId,
@@ -404,15 +404,15 @@ export interface Signer {
   sign?: (
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload.ParentedPayload,
-  ) => WalletConfig.SignerSignature<SignaturePrimitives.SignatureOfSignerLeaf>
+    payload: Payload.Parented,
+  ) => WalletConfig.SignerSignature<SequenceSignature.SignatureOfSignerLeaf>
 
   signSapient?: (
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload.ParentedPayload,
+    payload: Payload.Parented,
     imageHash: Hex.Hex,
-  ) => WalletConfig.SignerSignature<SignaturePrimitives.SignatureOfSapientSignerLeaf>
+  ) => WalletConfig.SignerSignature<SequenceSignature.SignatureOfSapientSignerLeaf>
 }
 
 type MaybePromise<T> = T | Promise<T>

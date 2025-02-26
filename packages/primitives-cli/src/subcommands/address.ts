@@ -14,7 +14,7 @@ export async function doCalculateAddress(options: {
     creationCode: (options.creationCode || Constants.DEFAULT_CREATION_CODE) as `0x${string}`,
   }
 
-  return SequenceAddress.getCounterfactualAddress(Bytes.fromHex(options.imageHash as `0x${string}`), context)
+  return SequenceAddress.from(Bytes.fromHex(options.imageHash as `0x${string}`), context)
 }
 
 const addressCommand: CommandModule = {

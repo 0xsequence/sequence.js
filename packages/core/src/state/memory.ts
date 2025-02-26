@@ -4,8 +4,8 @@ import {
   Context,
   WalletConfig,
   Payload,
-  Signature as SignaturePrimitives,
-  Address as AddressPrimitives,
+  Signature as SequenceSignature,
+  Address as SequenceAddress,
 } from '@0xsequence/sequence-primitives'
 
 export class MemoryStateProvider implements StateProvider {
@@ -16,8 +16,8 @@ export class MemoryStateProvider implements StateProvider {
       [signer: Address.Address]: {
         [wallet: Address.Address]: {
           chainId: bigint
-          payload: Payload.ParentedPayload
-          signature: SignaturePrimitives.SignatureOfSignerLeaf
+          payload: Payload.Parented
+          signature: SequenceSignature.SignatureOfSignerLeaf
         }
       }
     }
@@ -25,7 +25,7 @@ export class MemoryStateProvider implements StateProvider {
       [wallet: Address.Address]: {
         configurations: Hex.Hex[]
         signerSignatures: {
-          [imageHash: Hex.Hex]: { [signer: Address.Address]: SignaturePrimitives.SignatureOfSignerLeaf }
+          [imageHash: Hex.Hex]: { [signer: Address.Address]: SequenceSignature.SignatureOfSignerLeaf }
         }
       }
     }
@@ -50,8 +50,8 @@ export class MemoryStateProvider implements StateProvider {
   getWallets(signer: Address.Address): {
     [wallet: Address.Address]: {
       chainId: bigint
-      payload: Payload.ParentedPayload
-      signature: SignaturePrimitives.SignatureOfSignerLeaf
+      payload: Payload.Parented
+      signature: SequenceSignature.SignatureOfSignerLeaf
     }
   } {
     return this.objects.wallets[signer] ?? {}
@@ -61,7 +61,7 @@ export class MemoryStateProvider implements StateProvider {
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
-  ): Promise<Array<{ imageHash: Hex.Hex; signature: SignaturePrimitives.RawSignature }>> {
+  ): Promise<Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>> {
     const objects = this.objects.configurationUpdates[wallet]
     if (!objects) {
       throw new Error(`unknown wallet ${wallet}`)
@@ -134,7 +134,7 @@ export class MemoryStateProvider implements StateProvider {
   saveWallet(deployConfiguration: WalletConfig.Configuration, context: Context.Context) {
     const deployHashBytes = WalletConfig.hashConfiguration(deployConfiguration)
     const deployHash = Bytes.toHex(deployHashBytes)
-    const wallet = AddressPrimitives.getCounterfactualAddress(deployHashBytes, context)
+    const wallet = SequenceAddress.from(deployHashBytes, context)
     this.objects.configurations[deployHash] = deployConfiguration
     this.objects.deployHashes[wallet] = { deployHash, context }
     this.objects.configurationUpdates[wallet] = { configurations: [deployHash], signerSignatures: {} }
@@ -143,8 +143,8 @@ export class MemoryStateProvider implements StateProvider {
   saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload.ParentedPayload,
-    signatures: SignaturePrimitives.SignatureOfSignerLeaf[],
+    payload: Payload.Parented,
+    signatures: SequenceSignature.SignatureOfSignerLeaf[],
   ) {
     const digest = Payload.hash(wallet, chainId, payload)
 
@@ -180,7 +180,7 @@ export class MemoryStateProvider implements StateProvider {
   setConfiguration(
     wallet: Address.Address,
     configuration: WalletConfig.Configuration,
-    signature: SignaturePrimitives.RawSignature,
+    signature: SequenceSignature.RawSignature,
   ) {
     const configurations = this.objects.configurationUpdates[wallet]?.configurations
     if (configurations?.length) {
@@ -194,8 +194,8 @@ export class MemoryStateProvider implements StateProvider {
     const imageHash = Bytes.toHex(WalletConfig.hashConfiguration(configuration))
     const digest = Payload.hash(wallet, 0n, Payload.fromConfigUpdate(imageHash))
 
-    const search = (topology: SignaturePrimitives.RawTopology) => {
-      if (SignaturePrimitives.isSignedSignerLeaf(topology)) {
+    const search = (topology: SequenceSignature.RawTopology) => {
+      if (SequenceSignature.isSignedSignerLeaf(topology)) {
         switch (topology.signature.type) {
           case 'eth_sign':
           case 'hash':
@@ -224,7 +224,7 @@ export class MemoryStateProvider implements StateProvider {
         return
       } else if (WalletConfig.isNodeLeaf(topology)) {
         return
-      } else if (SignaturePrimitives.isRawSignerLeaf(topology)) {
+      } else if (SequenceSignature.isRawSignerLeaf(topology)) {
         let updates = this.objects.configurationUpdates[wallet]
         if (!updates) {
           updates = { configurations: [], signerSignatures: {} }
@@ -252,7 +252,7 @@ export class MemoryStateProvider implements StateProvider {
             ] = topology.signature
             break
         }
-      } else if (SignaturePrimitives.isRawNestedLeaf(topology)) {
+      } else if (SequenceSignature.isRawNestedLeaf(topology)) {
         search(topology.tree)
       } else {
         search(topology[0])

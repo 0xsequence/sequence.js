@@ -9,7 +9,7 @@ export type Attestation = {
   applicationData: Bytes.Bytes // bytes
 }
 
-export function encodeAttestation(attestation: Attestation): Bytes.Bytes {
+export function encode(attestation: Attestation): Bytes.Bytes {
   const parts: Bytes.Bytes[] = [
     Bytes.fromHex(attestation.approvedSigner, { size: 20 }),
     Bytes.padLeft(attestation.identityType.slice(0, 4), 4), // Truncate identity type to 4 bytes
@@ -23,15 +23,15 @@ export function encodeAttestation(attestation: Attestation): Bytes.Bytes {
   return Bytes.concat(...parts)
 }
 
-export function hashAttestation(attestation: Attestation): Bytes.Bytes {
-  return Hash.keccak256(encodeAttestation(attestation))
+export function hash(attestation: Attestation): Bytes.Bytes {
+  return Hash.keccak256(encode(attestation))
 }
 
-export function attestationToJson(attestation: Attestation): string {
-  return JSON.stringify(encodeAttestationForJson(attestation))
+export function toJson(attestation: Attestation): string {
+  return JSON.stringify(encodeForJson(attestation))
 }
 
-export function encodeAttestationForJson(attestation: Attestation): any {
+export function encodeForJson(attestation: Attestation): any {
   return {
     approvedSigner: attestation.approvedSigner.toString(),
     identityType: Bytes.toHex(attestation.identityType),
@@ -42,11 +42,11 @@ export function encodeAttestationForJson(attestation: Attestation): any {
   }
 }
 
-export function attestationFromJson(json: string): Attestation {
-  return attestationFromParsed(JSON.parse(json))
+export function fromJson(json: string): Attestation {
+  return fromParsed(JSON.parse(json))
 }
 
-export function attestationFromParsed(parsed: any): Attestation {
+export function fromParsed(parsed: any): Attestation {
   return {
     approvedSigner: Address.from(parsed.approvedSigner),
     identityType: Bytes.fromHex(parsed.identityType),
