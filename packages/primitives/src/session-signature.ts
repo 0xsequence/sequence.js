@@ -1,4 +1,4 @@
-import { Address, Bytes, Signature } from 'ox'
+import { Address, Bytes, Hex } from 'ox'
 import { Attestation, attestationFromParsed, encodeAttestation, encodeAttestationForJson } from './attestation'
 import { MAX_PERMISSIONS_COUNT } from './permission'
 import {
@@ -7,17 +7,17 @@ import {
   minimiseSessionsTopology,
   SessionsTopology,
 } from './session-config'
-import { minBytesFor, packRSV, rsvFromStr, rsvToStr } from './utils'
+import { minBytesFor, packRSV } from './utils'
 
 export type ImplicitSessionCallSignature = {
   attestation: Attestation
-  identitySignature: Signature.Signature<true>
-  sessionSignature: Signature.Signature<true>
+  identitySignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }
+  sessionSignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }
 }
 
 export type ExplicitSessionCallSignature = {
   permissionIndex: bigint
-  sessionSignature: Signature.Signature<true>
+  sessionSignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }
 }
 
 export type SessionCallSignature = ImplicitSessionCallSignature | ExplicitSessionCallSignature
@@ -76,6 +76,26 @@ export function sessionCallSignatureFromParsed(decoded: any): SessionCallSignatu
     }
   } else {
     throw new Error('Invalid call signature')
+  }
+}
+
+function rsvToStr(rsv: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }): string {
+  return `${rsv.r.toString()}:${rsv.s.toString()}:${rsv.v}`
+}
+
+function rsvFromStr(sigStr: string): { v: number; r: Bytes.Bytes; s: Bytes.Bytes } {
+  const parts = sigStr.split(':')
+  if (parts.length !== 3) {
+    throw new Error('Signature must be in r:s:v format')
+  }
+  const [rStr, sStr, vStr] = parts
+  if (!rStr || !sStr || !vStr) {
+    throw new Error('Invalid signature format')
+  }
+  return {
+    v: parseInt(vStr, 10),
+    r: Bytes.fromHex(rStr as `0x${string}`),
+    s: Bytes.fromHex(sStr as `0x${string}`),
   }
 }
 

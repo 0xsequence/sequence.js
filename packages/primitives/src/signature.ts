@@ -21,7 +21,7 @@ import {
 import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
 import { erc6492, erc6492Decode } from './erc-6492'
 import { fromConfigUpdate, hash, ParentedPayload } from './payload'
-import { minBytesFor, packRSV, unpackRSV } from './utils'
+import { minBytesFor } from './utils'
 
 export const FLAG_SIGNATURE_HASH = 0
 export const FLAG_ADDRESS = 1
@@ -36,9 +36,12 @@ export const FLAG_SIGNATURE_SAPIENT = 9
 export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
 export type SignatureOfSignerLeaf =
-  | (Signature.Signature<true> & {
+  | {
+      r: Bytes.Bytes
+      s: Bytes.Bytes
+      v: number
       type: 'eth_sign' | 'hash'
-    })
+    }
   | {
       address: `0x${string}`
       data: Bytes.Bytes
@@ -274,15 +277,24 @@ export function parseBranch(signature: Bytes.Bytes): {
       if (index + 64 > signature.length) {
         throw new Error('Not enough bytes for hash signature (r + yParityAndS)')
       }
-      const unpackedRSV = unpackRSV(signature.slice(index, index + 64))
+      const r = signature.slice(index, index + 32)
+      const yParityAndS = signature.slice(index + 32, index + 64)
       index += 64
 
+      const yParity = (yParityAndS[0]! & 0x80) !== 0 ? 1 : 0
+      const s = new Uint8Array(32)
+      s.set(yParityAndS)
+      s[0] = s[0]! & 0x7f // clear the top bit
+
+      const v = 27 + yParity
       nodes.push({
         type: 'unrecovered-signer',
         weight: BigInt(weight),
         signature: {
           type: 'hash',
-          ...unpackedRSV,
+          r,
+          s,
+          v,
         },
       } as RawSignerLeaf)
       continue
@@ -474,14 +486,15 @@ export function parseBranch(signature: Bytes.Bytes): {
       s.set(yParityAndS)
       s[0] = s[0]! & 0x7f
 
+      const v = 27 + yParity
       nodes.push({
         type: 'unrecovered-signer',
         weight: BigInt(weight),
         signature: {
           type: 'eth_sign',
-          r: Bytes.toBigInt(r),
-          s: Bytes.toBigInt(s),
-          yParity,
+          r,
+          s,
+          v,
         },
       } as RawSignerLeaf)
       continue
@@ -765,8 +778,13 @@ export function encodeTopology(
         throw new Error('Weight too large')
       }
 
-      const packedRSV = packRSV(topology.signature)
-      return Bytes.concat(Bytes.fromNumber(flag), weightBytes, packedRSV)
+      const r = Bytes.padLeft(topology.signature.r, 32)
+      const s = Bytes.padLeft(topology.signature.s, 32)
+      if (topology.signature.v % 2 === 0) {
+        s[0]! |= 0x80
+      }
+
+      return Bytes.concat(Bytes.fromNumber(flag), weightBytes, r, s)
     } else if (topology.signature.type === 'erc1271') {
       let flag = FLAG_SIGNATURE_ERC1271 << 4
 
@@ -950,9 +968,9 @@ function rawSignatureOfLeafToJson(sig: SignatureOfSignerLeaf | SignatureOfSapien
   if (sig.type === 'eth_sign' || sig.type === 'hash') {
     return {
       type: sig.type,
-      r: sig.r,
-      s: sig.s,
-      yParity: sig.yParity,
+      r: Bytes.toHex(sig.r),
+      s: Bytes.toHex(sig.s),
+      v: sig.v,
     }
   }
   if (sig.type === 'erc1271') {
@@ -1054,9 +1072,9 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
     case 'hash':
       return {
         type: obj.type,
-        r: obj.r,
-        s: obj.s,
-        yParity: obj.yParity,
+        r: Bytes.fromHex(obj.r),
+        s: Bytes.fromHex(obj.s),
+        v: obj.v,
       }
     case 'erc1271':
       return {
@@ -1157,7 +1175,11 @@ async function recoverTopology(
                       ),
                     )
                   : digest,
-              signature: topology.signature,
+              signature: {
+                r: Bytes.toBigInt(topology.signature.r),
+                s: Bytes.toBigInt(topology.signature.s),
+                yParity: Signature.vToYParity(topology.signature.v),
+              },
             }),
             weight: topology.weight,
             signed: true,

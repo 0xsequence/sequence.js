@@ -19,7 +19,7 @@ import {
   sign,
   SignatureOfSignerLeaf,
 } from '@0xsequence/sequence-primitives'
-import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
+import { Address, Bytes, Hex, PersonalMessage, Secp256k1, Signature } from 'ox'
 import { StateProvider } from '.'
 
 export class MemoryStateProvider implements StateProvider {
@@ -159,7 +159,11 @@ export class MemoryStateProvider implements StateProvider {
         case 'hash':
           signer = Secp256k1.recoverAddress({
             payload: signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
-            signature,
+            signature: {
+              r: Bytes.toBigInt(signature.r),
+              s: Bytes.toBigInt(signature.s),
+              yParity: Signature.vToYParity(signature.v),
+            },
           })
           break
 
@@ -239,7 +243,11 @@ export class MemoryStateProvider implements StateProvider {
             signatures[
               Secp256k1.recoverAddress({
                 payload: topology.signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
-                signature: topology.signature,
+                signature: {
+                  r: Bytes.toBigInt(topology.signature.r),
+                  s: Bytes.toBigInt(topology.signature.s),
+                  yParity: Signature.vToYParity(topology.signature.v),
+                },
               })
             ] = topology.signature
             break

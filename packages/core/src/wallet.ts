@@ -270,7 +270,11 @@ export class Wallet {
                     !Secp256k1.verify({
                       payload: signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
                       address: leaf.address,
-                      signature,
+                      signature: {
+                        r: Bytes.toBigInt(signature.r),
+                        s: Bytes.toBigInt(signature.s),
+                        yParity: Signature.vToYParity(signature.v),
+                      },
                     })
                   ) {
                     throw new Error(`invalid signature for ${leaf.type} signer ${leaf.address}`)
