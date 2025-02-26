@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.2.14
+
+### Patch Changes
+
+- Somnia Testnet and Monad Testnet
+
 ## 2.2.13
 
 ### Patch Changes

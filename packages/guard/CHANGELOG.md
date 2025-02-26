@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.2.14
+
+### Patch Changes
+
+- Somnia Testnet and Monad Testnet
+- Updated dependencies
+  - @0xsequence/account@2.2.14
+  - @0xsequence/core@2.2.14
+  - @0xsequence/signhub@2.2.14
+  - @0xsequence/utils@2.2.14
+
 ## 2.2.13
 
 ### Patch Changes
