@@ -65,7 +65,12 @@ export const getDefaultSubtleCryptoBackend = (): SubtleCryptoBackend | undefined
 }
 
 export function isWindowSubtleCryptoAvailable(): boolean {
-  return typeof window === 'object' && typeof window.crypto === 'object' && typeof window.crypto.subtle === 'object'
+  return (
+    typeof window === 'object' &&
+    typeof window.crypto === 'object' &&
+    window.crypto !== null &&
+    typeof (window.crypto as any).subtle === 'object'
+  )
 }
 
 export class WindowSubtleCryptoBackend implements SubtleCryptoBackend {
