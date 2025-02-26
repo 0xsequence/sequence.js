@@ -1,41 +1,43 @@
-import {
-  Configuration,
-  Context,
-  ParentedPayload,
-  RawSignature,
-  SignatureOfSignerLeaf,
-} from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
+import { Context, WalletConfig, Payload, Signature } from '@0xsequence/sequence-primitives'
 
 export type StateProvider = StateReader & StateWriter
 
 export interface StateReader {
-  getConfiguration(imageHash: Hex.Hex): MaybePromise<Configuration>
+  getConfiguration(imageHash: Hex.Hex): MaybePromise<WalletConfig.Configuration>
 
-  getDeployHash(wallet: Address.Address): MaybePromise<{ deployHash: Hex.Hex; context: Context }>
+  getDeployHash(wallet: Address.Address): MaybePromise<{ deployHash: Hex.Hex; context: Context.Context }>
 
   getWallets(signer: Address.Address): MaybePromise<{
-    [wallet: Address.Address]: { chainId: bigint; payload: ParentedPayload; signature: SignatureOfSignerLeaf }
+    [wallet: Address.Address]: {
+      chainId: bigint
+      payload: Payload.ParentedPayload
+      signature: Signature.SignatureOfSignerLeaf
+    }
   }>
 
   getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
-  ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: RawSignature }>>
+  ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>>
 }
 
 export interface StateWriter {
-  saveWallet(deployConfiguration: Configuration, context: Context): MaybePromise<void>
+  saveWallet(deployConfiguration: WalletConfig.Configuration, context: Context.Context): MaybePromise<void>
 
   saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,
-    payload: ParentedPayload,
-    signatures: SignatureOfSignerLeaf[],
+    payload: Payload.ParentedPayload,
+    signatures: Signature.SignatureOfSignerLeaf[],
   ): MaybePromise<void>
 
-  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: RawSignature): MaybePromise<void>
+  setConfiguration(
+    wallet: Address.Address,
+    configuration: WalletConfig.Configuration,
+    signature: Signature.RawSignature,
+  ): MaybePromise<void>
 }
 
 type MaybePromise<T> = T | Promise<T>

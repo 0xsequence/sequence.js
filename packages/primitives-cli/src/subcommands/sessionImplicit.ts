@@ -1,4 +1,4 @@
-import { addToImplicitBlacklist, removeFromImplicitBlacklist, SessionsTopology } from '@0xsequence/sequence-primitives'
+import { SessionConfig } from '@0xsequence/sequence-primitives'
 import { Address } from 'ox'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin, requireString } from '../utils'
@@ -7,8 +7,8 @@ export async function doAddBlacklistAddress(
   blacklistAddress: string,
   sessionConfigurationInput: string,
 ): Promise<string> {
-  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as SessionsTopology
-  const updated = addToImplicitBlacklist(sessionConfiguration, blacklistAddress as Address.Address)
+  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as SessionConfig.SessionsTopology
+  const updated = SessionConfig.addToImplicitBlacklist(sessionConfiguration, blacklistAddress as Address.Address)
   return JSON.stringify(updated)
 }
 
@@ -16,8 +16,8 @@ export async function doRemoveBlacklistAddress(
   blacklistAddress: string,
   sessionConfigurationInput: string,
 ): Promise<string> {
-  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as SessionsTopology
-  const updated = removeFromImplicitBlacklist(sessionConfiguration, blacklistAddress as Address.Address)
+  const sessionConfiguration = JSON.parse(sessionConfigurationInput) as SessionConfig.SessionsTopology
+  const updated = SessionConfig.removeFromImplicitBlacklist(sessionConfiguration, blacklistAddress as Address.Address)
   return JSON.stringify(updated)
 }
 

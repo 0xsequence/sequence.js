@@ -1,45 +1,37 @@
-import {
-  Configuration,
-  Context,
-  fromConfigUpdate,
-  getCounterfactualAddress,
-  hash,
-  hashConfiguration,
-  isAnyAddressSubdigestLeaf,
-  isNodeLeaf,
-  isRawNestedLeaf,
-  isRawSignerLeaf,
-  isSapientSignerLeaf,
-  isSignedSignerLeaf,
-  isSignerLeaf,
-  isSubdigestLeaf,
-  ParentedPayload,
-  RawSignature,
-  RawTopology,
-  sign,
-  SignatureOfSignerLeaf,
-} from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1, Signature } from 'ox'
 import { StateProvider } from '.'
+import {
+  Context,
+  WalletConfig,
+  Payload,
+  Signature as SignaturePrimitives,
+  Address as AddressPrimitives,
+} from '@0xsequence/sequence-primitives'
 
 export class MemoryStateProvider implements StateProvider {
   private readonly objects: {
-    configurations: { [imageHash: Hex.Hex]: Configuration }
-    deployHashes: { [wallet: Address.Address]: { deployHash: Hex.Hex; context: Context } }
+    configurations: { [imageHash: Hex.Hex]: WalletConfig.Configuration }
+    deployHashes: { [wallet: Address.Address]: { deployHash: Hex.Hex; context: Context.Context } }
     wallets: {
       [signer: Address.Address]: {
-        [wallet: Address.Address]: { chainId: bigint; payload: ParentedPayload; signature: SignatureOfSignerLeaf }
+        [wallet: Address.Address]: {
+          chainId: bigint
+          payload: Payload.ParentedPayload
+          signature: SignaturePrimitives.SignatureOfSignerLeaf
+        }
       }
     }
     configurationUpdates: {
       [wallet: Address.Address]: {
         configurations: Hex.Hex[]
-        signerSignatures: { [imageHash: Hex.Hex]: { [signer: Address.Address]: SignatureOfSignerLeaf } }
+        signerSignatures: {
+          [imageHash: Hex.Hex]: { [signer: Address.Address]: SignaturePrimitives.SignatureOfSignerLeaf }
+        }
       }
     }
   } = { configurations: {}, deployHashes: {}, wallets: {}, configurationUpdates: {} }
 
-  getConfiguration(imageHash: Hex.Hex): Configuration {
+  getConfiguration(imageHash: Hex.Hex): WalletConfig.Configuration {
     const configuration = this.objects.configurations[imageHash]
     if (!configuration) {
       throw new Error(`unknown configuration ${imageHash}`)
@@ -47,7 +39,7 @@ export class MemoryStateProvider implements StateProvider {
     return configuration
   }
 
-  getDeployHash(wallet: Address.Address): { deployHash: Hex.Hex; context: Context } {
+  getDeployHash(wallet: Address.Address): { deployHash: Hex.Hex; context: Context.Context } {
     const deployHash = this.objects.deployHashes[wallet]
     if (!deployHash) {
       throw new Error(`no known deploy hash for ${wallet}`)
@@ -56,7 +48,11 @@ export class MemoryStateProvider implements StateProvider {
   }
 
   getWallets(signer: Address.Address): {
-    [wallet: Address.Address]: { chainId: bigint; payload: ParentedPayload; signature: SignatureOfSignerLeaf }
+    [wallet: Address.Address]: {
+      chainId: bigint
+      payload: Payload.ParentedPayload
+      signature: SignaturePrimitives.SignatureOfSignerLeaf
+    }
   } {
     return this.objects.wallets[signer] ?? {}
   }
@@ -65,7 +61,7 @@ export class MemoryStateProvider implements StateProvider {
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
-  ): Promise<Array<{ imageHash: Hex.Hex; signature: RawSignature }>> {
+  ): Promise<Array<{ imageHash: Hex.Hex; signature: SignaturePrimitives.RawSignature }>> {
     const objects = this.objects.configurationUpdates[wallet]
     if (!objects) {
       throw new Error(`unknown wallet ${wallet}`)
@@ -92,7 +88,7 @@ export class MemoryStateProvider implements StateProvider {
             noChainId: true,
             configuration: {
               ...configuration,
-              topology: await sign(
+              topology: await WalletConfig.sign(
                 configuration.topology,
                 {
                   sign: (leaf) => {
@@ -135,10 +131,10 @@ export class MemoryStateProvider implements StateProvider {
     return updates
   }
 
-  saveWallet(deployConfiguration: Configuration, context: Context) {
-    const deployHashBytes = hashConfiguration(deployConfiguration)
+  saveWallet(deployConfiguration: WalletConfig.Configuration, context: Context.Context) {
+    const deployHashBytes = WalletConfig.hashConfiguration(deployConfiguration)
     const deployHash = Bytes.toHex(deployHashBytes)
-    const wallet = getCounterfactualAddress(deployHashBytes, context)
+    const wallet = AddressPrimitives.getCounterfactualAddress(deployHashBytes, context)
     this.objects.configurations[deployHash] = deployConfiguration
     this.objects.deployHashes[wallet] = { deployHash, context }
     this.objects.configurationUpdates[wallet] = { configurations: [deployHash], signerSignatures: {} }
@@ -147,10 +143,10 @@ export class MemoryStateProvider implements StateProvider {
   saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,
-    payload: ParentedPayload,
-    signatures: SignatureOfSignerLeaf[],
+    payload: Payload.ParentedPayload,
+    signatures: SignaturePrimitives.SignatureOfSignerLeaf[],
   ) {
-    const digest = hash(wallet, chainId, payload)
+    const digest = Payload.hash(wallet, chainId, payload)
 
     signatures.forEach((signature) => {
       let signer: Address.Address
@@ -181,7 +177,11 @@ export class MemoryStateProvider implements StateProvider {
     })
   }
 
-  setConfiguration(wallet: Address.Address, configuration: Configuration, signature: RawSignature) {
+  setConfiguration(
+    wallet: Address.Address,
+    configuration: WalletConfig.Configuration,
+    signature: SignaturePrimitives.RawSignature,
+  ) {
     const configurations = this.objects.configurationUpdates[wallet]?.configurations
     if (configurations?.length) {
       const latestImageHash = configurations[configurations.length - 1]!
@@ -191,11 +191,11 @@ export class MemoryStateProvider implements StateProvider {
       }
     }
 
-    const imageHash = Bytes.toHex(hashConfiguration(configuration))
-    const digest = hash(wallet, 0n, fromConfigUpdate(imageHash))
+    const imageHash = Bytes.toHex(WalletConfig.hashConfiguration(configuration))
+    const digest = Payload.hash(wallet, 0n, Payload.fromConfigUpdate(imageHash))
 
-    const search = (topology: RawTopology) => {
-      if (isSignedSignerLeaf(topology)) {
+    const search = (topology: SignaturePrimitives.RawTopology) => {
+      if (SignaturePrimitives.isSignedSignerLeaf(topology)) {
         switch (topology.signature.type) {
           case 'eth_sign':
           case 'hash':
@@ -214,17 +214,17 @@ export class MemoryStateProvider implements StateProvider {
             signatures[topology.address] = topology.signature
             break
         }
-      } else if (isSignerLeaf(topology)) {
+      } else if (WalletConfig.isSignerLeaf(topology)) {
         return
-      } else if (isSapientSignerLeaf(topology)) {
+      } else if (WalletConfig.isSapientSignerLeaf(topology)) {
         return
-      } else if (isSubdigestLeaf(topology)) {
+      } else if (WalletConfig.isSubdigestLeaf(topology)) {
         return
-      } else if (isAnyAddressSubdigestLeaf(topology)) {
+      } else if (WalletConfig.isAnyAddressSubdigestLeaf(topology)) {
         return
-      } else if (isNodeLeaf(topology)) {
+      } else if (WalletConfig.isNodeLeaf(topology)) {
         return
-      } else if (isRawSignerLeaf(topology)) {
+      } else if (SignaturePrimitives.isRawSignerLeaf(topology)) {
         let updates = this.objects.configurationUpdates[wallet]
         if (!updates) {
           updates = { configurations: [], signerSignatures: {} }
@@ -252,7 +252,7 @@ export class MemoryStateProvider implements StateProvider {
             ] = topology.signature
             break
         }
-      } else if (isRawNestedLeaf(topology)) {
+      } else if (SignaturePrimitives.isRawNestedLeaf(topology)) {
         search(topology.tree)
       } else {
         search(topology[0])

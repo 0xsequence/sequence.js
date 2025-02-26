@@ -1,49 +1,40 @@
-import {
-  balanceSessionsTopology,
-  getSessionPermissions,
-  isSessionsTopology,
-  mergeSessionsTopologies,
-  removeExplicitSession,
-  sessionPermissionsFromJson,
-  sessionsTopologyFromJson,
-  sessionsTopologyToJson,
-} from '@0xsequence/sequence-primitives'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
+import { Permission, SessionConfig } from '@0xsequence/sequence-primitives'
 
 export async function doAddSession(sessionInput: string, topologyInput: string): Promise<string> {
-  const session = sessionPermissionsFromJson(sessionInput)
-  let topology = sessionsTopologyFromJson(topologyInput)
-  if (!isSessionsTopology(session)) {
+  const session = Permission.sessionPermissionsFromJson(sessionInput)
+  let topology = SessionConfig.sessionsTopologyFromJson(topologyInput)
+  if (!SessionConfig.isSessionsTopology(session)) {
     throw new Error('Explicit session must be a valid session topology')
   }
-  if (!isSessionsTopology(topology)) {
+  if (!SessionConfig.isSessionsTopology(topology)) {
     throw new Error('Session topology must be a valid session topology')
   }
   // Find the session in the topology
-  const sessionPermissions = getSessionPermissions(topology, session.signer)
+  const sessionPermissions = SessionConfig.getSessionPermissions(topology, session.signer)
   if (sessionPermissions) {
     throw new Error('Session already exists')
   }
   // Merge the session into the topology
-  topology = mergeSessionsTopologies(session, topology)
-  topology = balanceSessionsTopology(topology)
-  return sessionsTopologyToJson(topology)
+  topology = SessionConfig.mergeSessionsTopologies(session, topology)
+  topology = SessionConfig.balanceSessionsTopology(topology)
+  return SessionConfig.sessionsTopologyToJson(topology)
 }
 
 export async function doRemoveSession(explicitSessionAddress: string, topologyInput: string): Promise<string> {
-  const topology = sessionsTopologyFromJson(topologyInput)
-  if (!isSessionsTopology(topology)) {
+  const topology = SessionConfig.sessionsTopologyFromJson(topologyInput)
+  if (!SessionConfig.isSessionsTopology(topology)) {
     throw new Error('Session topology must be a valid session topology')
   }
   if (!explicitSessionAddress || !explicitSessionAddress.startsWith('0x')) {
     throw new Error('Explicit session address must be a valid address')
   }
-  const updated = removeExplicitSession(topology, explicitSessionAddress as `0x${string}`)
+  const updated = SessionConfig.removeExplicitSession(topology, explicitSessionAddress as `0x${string}`)
   if (!updated) {
     throw new Error('Session topology is empty')
   }
-  return sessionsTopologyToJson(updated)
+  return SessionConfig.sessionsTopologyToJson(updated)
 }
 
 const sessionExplicitCommand: CommandModule = {

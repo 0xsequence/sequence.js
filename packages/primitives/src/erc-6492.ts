@@ -1,6 +1,7 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hex } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
-import { DEPLOY, Context } from './constants'
+import { DEPLOY } from './constants'
+import { Context } from './context'
 
 export function erc6492Deploy<T extends Bytes.Bytes | Hex.Hex>(
   deployHash: T,

@@ -1,17 +1,18 @@
 import { boolean, type CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
-import {
-  configFromJson,
-  configToJson,
-  decodeSignature,
-  encodeSignature,
-  fillLeaves,
-  isSapientSignerLeaf,
-  isSignerLeaf,
-  rawSignatureToJson,
-} from '@0xsequence/sequence-primitives'
+// import {
+//   configFromJson,
+//   configToJson,
+//   decodeSignature,
+//   encodeSignature,
+//   fillLeaves,
+//   isSapientSignerLeaf,
+//   isSignerLeaf,
+//   rawSignatureToJson,
+// } from '@0xsequence/sequence-primitives'
 import { PossibleElements } from './config'
 import { Bytes, Hex } from 'ox'
+import { Signature, WalletConfig } from '@0xsequence/sequence-primitives'
 
 const SignatureElements = [
   {
@@ -42,7 +43,7 @@ const SignatureElements = [
 ]
 
 export async function doEncode(input: string, signatures: string[] = [], noChainId: boolean): Promise<string> {
-  const config = configFromJson(input)
+  const config = WalletConfig.configFromJson(input)
 
   const allSignatures = signatures.map((s) => {
     const values = s.split(':')
@@ -53,8 +54,8 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
     }
   })
 
-  const fullTopology = fillLeaves(config.topology, (leaf) => {
-    if (isSignerLeaf(leaf)) {
+  const fullTopology = Signature.fillLeaves(config.topology, (leaf) => {
+    if (WalletConfig.isSignerLeaf(leaf)) {
       // Type must be 1271, eth_sign, or hash
       const candidate = allSignatures.find((s) => s.address === leaf.address)
 
@@ -95,7 +96,7 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
       throw new Error(`Unsupported signature type: ${candidate.type}`)
     }
 
-    if (isSapientSignerLeaf(leaf)) {
+    if (WalletConfig.isSapientSignerLeaf(leaf)) {
       const candidate = allSignatures.find((s) => s.address === leaf.address)
       if (!candidate) {
         return undefined
@@ -119,7 +120,7 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
     return undefined
   })
 
-  const encoded = encodeSignature({ noChainId, configuration: { ...config, topology: fullTopology } })
+  const encoded = Signature.encodeSignature({ noChainId, configuration: { ...config, topology: fullTopology } })
 
   return Hex.fromBytes(encoded)
 }
@@ -129,9 +130,9 @@ export async function doConcat(signatures: string[]): Promise<string> {
     throw new Error('No signatures provided')
   }
 
-  const decoded = signatures.map((s) => decodeSignature(Bytes.fromHex(s as `0x${string}`)))
+  const decoded = signatures.map((s) => Signature.decodeSignature(Bytes.fromHex(s as `0x${string}`)))
 
-  const reEncoded = encodeSignature({
+  const reEncoded = Signature.encodeSignature({
     ...decoded[0]!,
     suffix: decoded.slice(1),
   })
@@ -141,8 +142,8 @@ export async function doConcat(signatures: string[]): Promise<string> {
 
 export async function doDecode(signature: string): Promise<string> {
   const bytes = Bytes.fromHex(signature as `0x${string}`)
-  const decoded = decodeSignature(bytes)
-  return rawSignatureToJson(decoded)
+  const decoded = Signature.decodeSignature(bytes)
+  return Signature.rawSignatureToJson(decoded)
 }
 
 const signatureCommand: CommandModule = {

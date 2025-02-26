@@ -1,25 +1,18 @@
-import {
-  emptySessionsTopology,
-  encodeSessionCallSignatures,
-  hashConfigurationTree,
-  sessionCallSignatureFromJson,
-  sessionsTopologyFromJson,
-  sessionsTopologyToConfigurationTree,
-  sessionsTopologyToJson,
-} from '@0xsequence/sequence-primitives'
 import { Hex } from 'ox'
 import { CommandModule } from 'yargs'
 import sessionExplicitCommand from './sessionExplicit'
 import sessionImplicitCommand from './sessionImplicit'
 
+import { Config, SessionConfig, SessionSignature, WalletConfig } from '@0xsequence/sequence-primitives'
+
 export async function doEmptyTopology(identitySigner: `0x${string}`): Promise<string> {
-  const topology = emptySessionsTopology(identitySigner)
-  return sessionsTopologyToJson(topology)
+  const topology = SessionConfig.emptySessionsTopology(identitySigner)
+  return SessionConfig.sessionsTopologyToJson(topology)
 }
 
 export async function doEncodeConfiguration(sessionConfigurationInput: string): Promise<string> {
-  const sessionConfiguration = sessionsTopologyFromJson(sessionConfigurationInput)
-  const configurationTree = sessionsTopologyToConfigurationTree(sessionConfiguration)
+  const sessionConfiguration = SessionConfig.sessionsTopologyFromJson(sessionConfigurationInput)
+  const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionConfiguration)
   return JSON.stringify(configurationTree)
 }
 
@@ -29,9 +22,9 @@ export async function doEncodeSessionCallSignatures(
   explicitSigners: string[] = [],
   implicitSigners: string[] = [],
 ): Promise<string> {
-  const sessionConfiguration = sessionsTopologyFromJson(sessionConfigurationInput)
-  const callSignatures = callSignaturesInput.map((s) => sessionCallSignatureFromJson(s))
-  const encoded = encodeSessionCallSignatures(
+  const sessionConfiguration = SessionConfig.sessionsTopologyFromJson(sessionConfigurationInput)
+  const callSignatures = callSignaturesInput.map((s) => SessionSignature.sessionCallSignatureFromJson(s))
+  const encoded = SessionSignature.encodeSessionCallSignatures(
     callSignatures,
     sessionConfiguration,
     explicitSigners as `0x${string}`[],
@@ -41,9 +34,9 @@ export async function doEncodeSessionCallSignatures(
 }
 
 export async function doImageHash(sessionConfigurationInput: string): Promise<string> {
-  const sessionConfiguration = sessionsTopologyFromJson(sessionConfigurationInput)
-  const configurationTree = sessionsTopologyToConfigurationTree(sessionConfiguration)
-  const hash = hashConfigurationTree(configurationTree)
+  const sessionConfiguration = SessionConfig.sessionsTopologyFromJson(sessionConfigurationInput)
+  const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionConfiguration)
+  const hash = Config.hashConfigurationTree(configurationTree)
   return Hex.from(hash)
 }
 

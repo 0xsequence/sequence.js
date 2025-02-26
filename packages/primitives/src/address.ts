@@ -1,5 +1,5 @@
 import { Address, Bytes, Hash } from 'ox'
-import { Context } from './constants'
+import { Context } from './context'
 import { Configuration, hashConfiguration } from './wallet-config'
 
 export function getCounterfactualAddress(

@@ -1,22 +1,17 @@
-import {
-  encodePermission,
-  encodeSessionPermissions,
-  permissionFromJson,
-  sessionPermissionsFromJson,
-} from '@0xsequence/sequence-primitives'
 import { Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils'
+import { Permission } from '@0xsequence/sequence-primitives'
 
 export async function doEncodeSessionPermissions(input: string): Promise<string> {
-  const permission = sessionPermissionsFromJson(input)
-  const packed = encodeSessionPermissions(permission)
+  const permission = Permission.sessionPermissionsFromJson(input)
+  const packed = Permission.encodeSessionPermissions(permission)
   return Hex.from(packed)
 }
 
 export async function doEncodePermission(input: string): Promise<string> {
-  const permission = permissionFromJson(input)
-  const packed = encodePermission(permission)
+  const permission = Permission.permissionFromJson(input)
+  const packed = Permission.encodePermission(permission)
   return Hex.from(packed)
 }
 

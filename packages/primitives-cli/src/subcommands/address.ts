@@ -1,7 +1,6 @@
 import { Address, Bytes } from 'ox'
 import type { CommandModule } from 'yargs'
-import { getCounterfactualAddress } from '@0xsequence/sequence-primitives'
-import { DEFAULT_CREATION_CODE } from '@0xsequence/sequence-primitives'
+import { Constants, Address as SequenceAddress } from '@0xsequence/sequence-primitives'
 
 export async function doCalculateAddress(options: {
   imageHash: string
@@ -12,10 +11,10 @@ export async function doCalculateAddress(options: {
   const context = {
     factory: Address.from(options.factory),
     stage1: Address.from(options.module),
-    creationCode: (options.creationCode || DEFAULT_CREATION_CODE) as `0x${string}`,
+    creationCode: (options.creationCode || Constants.DEFAULT_CREATION_CODE) as `0x${string}`,
   }
 
-  return getCounterfactualAddress(Bytes.fromHex(options.imageHash as `0x${string}`), context)
+  return SequenceAddress.getCounterfactualAddress(Bytes.fromHex(options.imageHash as `0x${string}`), context)
 }
 
 const addressCommand: CommandModule = {
@@ -46,7 +45,7 @@ const addressCommand: CommandModule = {
             .option('creationCode', {
               type: 'string',
               description: 'Creation code (optional)',
-              default: DEFAULT_CREATION_CODE,
+              default: Constants.DEFAULT_CREATION_CODE,
             })
         },
         async (argv) => {

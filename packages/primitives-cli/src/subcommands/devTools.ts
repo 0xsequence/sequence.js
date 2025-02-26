@@ -1,12 +1,4 @@
-import {
-  Configuration,
-  ParameterRule,
-  Permission,
-  SessionsTopology,
-  Topology,
-  configToJson,
-  sessionsTopologyToJson,
-} from '@0xsequence/sequence-primitives'
+import { Permission, SessionConfig, WalletConfig } from '@0xsequence/sequence-primitives'
 import crypto from 'crypto'
 import type { CommandModule } from 'yargs'
 
@@ -58,7 +50,7 @@ function randomAddress(options?: RandomOptions): `0x${string}` {
   return `0x${Buffer.from(randomBytes(20, options)).toString('hex')}`
 }
 
-function generateRandomTopology(depth: number, options?: RandomOptions): Topology {
+function generateRandomTopology(depth: number, options?: RandomOptions): WalletConfig.Topology {
   if (depth <= 0) {
     const leafType = Math.floor((options?.seededRandom ?? Math.random)() * 5)
 
@@ -102,7 +94,10 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Topolog
   return [generateRandomTopology(depth - 1, options), generateRandomTopology(depth - 1, options)]
 }
 
-async function generateSessionsTopology(depth: number, options?: RandomOptions): Promise<SessionsTopology> {
+async function generateSessionsTopology(
+  depth: number,
+  options?: RandomOptions,
+): Promise<SessionConfig.SessionsTopology> {
   const isLeaf = (options?.seededRandom ?? Math.random)() * 2 > 1
 
   if (isLeaf || depth <= 1) {
@@ -118,7 +113,7 @@ async function generateSessionsTopology(depth: number, options?: RandomOptions):
   return [await generateSessionsTopology(depth - 1, options), await generateSessionsTopology(depth - 1, options)]
 }
 
-async function generateRandomPermission(options?: RandomOptions): Promise<Permission> {
+async function generateRandomPermission(options?: RandomOptions): Promise<Permission.Permission> {
   const rulesCount = Math.floor((options?.seededRandom ?? Math.random)() * (options?.maxRules ?? 5)) + 1
   return {
     target: randomAddress(options),
@@ -126,7 +121,7 @@ async function generateRandomPermission(options?: RandomOptions): Promise<Permis
   }
 }
 
-async function generateRandomRule(options?: RandomOptions): Promise<ParameterRule> {
+async function generateRandomRule(options?: RandomOptions): Promise<Permission.ParameterRule> {
   return {
     cumulative: (options?.seededRandom ?? Math.random)() * 2 > 1,
     operation: Math.floor((options?.seededRandom ?? Math.random)() * 4),
@@ -137,7 +132,7 @@ async function generateRandomRule(options?: RandomOptions): Promise<ParameterRul
 }
 
 export async function doRandomConfig(maxDepth: number, options?: RandomOptions): Promise<string> {
-  const config: Configuration = {
+  const config: WalletConfig.Configuration = {
     threshold: randomBigInt(100n, options),
     checkpoint: randomBigInt(1000n, options),
     topology: generateRandomTopology(maxDepth, options),
@@ -153,12 +148,12 @@ export async function doRandomConfig(maxDepth: number, options?: RandomOptions):
       }
     })(),
   }
-  return configToJson(config)
+  return WalletConfig.configToJson(config)
 }
 
 export async function doRandomSessionTopology(maxDepth: number, options?: RandomOptions): Promise<string> {
   const topology = await generateSessionsTopology(maxDepth, options)
-  return sessionsTopologyToJson(topology)
+  return SessionConfig.sessionsTopologyToJson(topology)
 }
 
 const command: CommandModule = {

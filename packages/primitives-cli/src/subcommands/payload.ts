@@ -1,6 +1,6 @@
 import { AbiParameters, Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
-import { encode, hash, isCallsPayload, ParentedPayload } from '@0xsequence/sequence-primitives'
+import { Payload } from '@0xsequence/sequence-primitives'
 import { fromPosOrStdin, readStdin } from '../utils'
 
 export const KIND_TRANSACTIONS = 0x00
@@ -78,7 +78,7 @@ export async function doConvertToAbi(payload: string): Promise<string> {
   throw new Error('Not implemented')
 }
 
-export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): ParentedPayload {
+export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payload.ParentedPayload {
   if (decoded.kind === KIND_TRANSACTIONS) {
     return {
       type: 'call',
@@ -132,8 +132,8 @@ export async function doConvertToPacked(payload: string): Promise<string> {
     )[0] as unknown as SolidityDecoded,
   )
 
-  if (isCallsPayload(decodedPayload)) {
-    const packed = encode(decodedPayload)
+  if (Payload.isCallsPayload(decodedPayload)) {
+    const packed = Payload.encode(decodedPayload)
     return Hex.from(packed)
   }
 
@@ -156,7 +156,7 @@ export async function doHash(wallet: string, chainId: bigint, payload: string): 
     payload as Hex.Hex,
   )[0] as unknown as SolidityDecoded
 
-  return Hex.from(hash(Address.from(wallet), chainId, solidityEncodedToParentedPayload(decoded)))
+  return Hex.from(Payload.hash(Address.from(wallet), chainId, solidityEncodedToParentedPayload(decoded)))
 }
 
 const payloadCommand: CommandModule = {

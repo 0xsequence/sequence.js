@@ -3,18 +3,6 @@ import { Abi, Address, Hex } from 'ox'
 export const DEFAULT_CREATION_CODE: Hex.Hex =
   '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3'
 
-export type Context = {
-  factory: Address.Address
-  stage1: Address.Address
-  creationCode: Hex.Hex
-}
-
-export const DevContext1: Context = {
-  factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447',
-  stage1: '0x9C4953F499f7e63434d76E0735D4707473d92311',
-  creationCode: DEFAULT_CREATION_CODE,
-}
-
 export const DefaultGuest: Address.Address = '0x294e900a45018d71ffc6ee1f18a205e199f551a1'
 
 // ERC1271
