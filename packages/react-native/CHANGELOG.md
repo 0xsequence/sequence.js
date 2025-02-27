@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.2.14
+
+### Patch Changes
+
+- Somnia Testnet and Monad Testnet
+- Updated dependencies
+  - @0xsequence/waas@2.2.14
+
 ## 2.2.13
 
 ### Patch Changes

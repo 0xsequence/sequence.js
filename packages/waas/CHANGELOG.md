@@ -1,5 +1,15 @@
 # @0xsequence/waas
 
+## 2.2.14
+
+### Patch Changes
+
+- Somnia Testnet and Monad Testnet
+- Updated dependencies
+  - @0xsequence/core@2.2.14
+  - @0xsequence/network@2.2.14
+  - @0xsequence/utils@2.2.14
+
 ## 2.2.13
 
 ### Patch Changes

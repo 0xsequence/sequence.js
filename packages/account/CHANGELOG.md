@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.2.14
+
+### Patch Changes
+
+- Somnia Testnet and Monad Testnet
+- Updated dependencies
+  - @0xsequence/abi@2.2.14
+  - @0xsequence/core@2.2.14
+  - @0xsequence/migration@2.2.14
+  - @0xsequence/network@2.2.14
+  - @0xsequence/relayer@2.2.14
+  - @0xsequence/sessions@2.2.14
+  - @0xsequence/utils@2.2.14
+  - @0xsequence/wallet@2.2.14
+
 ## 2.2.13
 
 ### Patch Changes
