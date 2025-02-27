@@ -11,7 +11,7 @@ import { fromPosOrStdin } from '../utils'
 //   rawSignatureToJson,
 // } from '@0xsequence/sequence-primitives'
 import { PossibleElements } from './config'
-import { Bytes, Hex } from 'ox'
+import { Bytes, Hex, Signature as OxSignature } from 'ox'
 import { Signature, WalletConfig } from '@0xsequence/sequence-primitives'
 
 const SignatureElements = [
@@ -73,18 +73,18 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
 
       if (candidate.type === 'eth_sign') {
         return {
-          r: Bytes.padLeft(Bytes.fromHex(candidate.values[0] as `0x${string}`), 32),
-          s: Bytes.padLeft(Bytes.fromHex(candidate.values[1] as `0x${string}`), 32),
-          v: Number(candidate.values[2]),
+          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0] as `0x${string}`, { size: 32 })),
+          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1] as `0x${string}`, { size: 32 })),
+          yParity: OxSignature.vToYParity(Number(candidate.values[2])),
           type: 'eth_sign',
         }
       }
 
       if (candidate.type === 'hash') {
         return {
-          r: Bytes.padLeft(Bytes.fromHex(candidate.values[0] as `0x${string}`), 32),
-          s: Bytes.padLeft(Bytes.fromHex(candidate.values[1] as `0x${string}`), 32),
-          v: Number(candidate.values[2]),
+          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0] as `0x${string}`, { size: 32 })),
+          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1] as `0x${string}`, { size: 32 })),
+          yParity: OxSignature.vToYParity(Number(candidate.values[2])),
           type: 'hash',
         }
       }

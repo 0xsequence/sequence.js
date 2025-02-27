@@ -155,11 +155,7 @@ export class MemoryStateProvider implements StateProvider {
         case 'hash':
           signer = Secp256k1.recoverAddress({
             payload: signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
-            signature: {
-              r: Bytes.toBigInt(signature.r),
-              s: Bytes.toBigInt(signature.s),
-              yParity: Signature.vToYParity(signature.v),
-            },
+            signature,
           })
           break
 
@@ -243,11 +239,7 @@ export class MemoryStateProvider implements StateProvider {
             signatures[
               Secp256k1.recoverAddress({
                 payload: topology.signature.type === 'eth_sign' ? PersonalMessage.getSignPayload(digest) : digest,
-                signature: {
-                  r: Bytes.toBigInt(topology.signature.r),
-                  s: Bytes.toBigInt(topology.signature.s),
-                  yParity: Signature.vToYParity(topology.signature.v),
-                },
+                signature: topology.signature,
               })
             ] = topology.signature
             break

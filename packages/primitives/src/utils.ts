@@ -5,12 +5,23 @@ export function minBytesFor(val: bigint): number {
 }
 
 // ERC-2098
-export function packRSV({ r, s, v }: { r: Bytes.Bytes; s: Bytes.Bytes; v: number }): Bytes.Bytes {
-  r = Bytes.padLeft(r, 32)
-  s = Bytes.padLeft(s, 32)
-  if (v % 2 === 0) {
-    s[0]! |= 0x80
+export function packRSY({ r, s, yParity }: { r: bigint; s: bigint; yParity: number }): Bytes.Bytes {
+  const rBytes = Bytes.padLeft(Bytes.fromNumber(r), 32)
+  let sBytes = Bytes.padLeft(Bytes.fromNumber(s), 32)
+  if (yParity % 2 === 1) {
+    sBytes[0]! |= 0x80
   }
 
-  return Bytes.concat(r, s)
+  return Bytes.concat(rBytes, sBytes)
+}
+
+export function unpackRSY(rsy: Bytes.Bytes): { r: bigint; s: bigint; yParity: number } {
+  const r = Bytes.toBigInt(rsy.slice(0, 32))
+  const yParityAndS = rsy.slice(32, 64)
+  const yParity = (yParityAndS[0]! & 0x80) !== 0 ? 1 : 0
+  const sBytes = new Uint8Array(32)
+  sBytes.set(yParityAndS)
+  sBytes[0] = sBytes[0]! & 0x7f
+  const s = Bytes.toBigInt(sBytes)
+  return { r, s, yParity }
 }

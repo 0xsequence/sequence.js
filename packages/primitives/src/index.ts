@@ -7,7 +7,7 @@ export * as Payload from './payload'
 export * as Permission from './permission'
 export * as SessionConfig from './session-config'
 export * as SessionSignature from './session-signature'
-export * as Signature from './signature'
+export * as Signature from './signature' //FIXME This name conflicts with oxlib
 export * as Utils from './utils'
 export * as WalletConfig from './wallet-config'
 export * as Context from './context'

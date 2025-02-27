@@ -37,9 +37,7 @@ export class IdentitySigner implements Signer {
     const sig = Signature.fromHex(res.signature)
     return {
       type: 'hash',
-      r: Bytes.fromNumber(sig.r),
-      s: Bytes.fromNumber(sig.s),
-      v: Signature.yParityToV(sig.yParity),
+      ...sig,
     }
   }
 }

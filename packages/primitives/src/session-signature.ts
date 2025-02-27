@@ -1,5 +1,5 @@
-import { Address, Bytes, Hex } from 'ox'
-import { Attestation, fromParsed, encode, encodeForJson } from './attestation'
+import { Address, Bytes, Signature } from 'ox'
+import { Attestation, encode, encodeForJson, fromParsed } from './attestation'
 import { MAX_PERMISSIONS_COUNT } from './permission'
 import {
   encodeSessionsTopology,
@@ -7,7 +7,7 @@ import {
   minimiseSessionsTopology,
   SessionsTopology,
 } from './session-config'
-import { minBytesFor, packRSV } from './utils'
+import { minBytesFor, packRSY } from './utils'
 
 export type ImplicitSessionCallSignature = {
   attestation: Attestation
@@ -135,7 +135,12 @@ export function encodeSessionCallSignatures(
       const attestationStr = JSON.stringify(callSig.attestation)
       if (!attestationMap.has(attestationStr)) {
         attestationMap.set(attestationStr, encodedAttestations.length)
-        encodedAttestations.push(Bytes.concat(encode(callSig.attestation), packRSV(callSig.identitySignature)))
+        const packedRSY = packRSY({
+          r: Bytes.toBigInt(callSig.identitySignature.r),
+          s: Bytes.toBigInt(callSig.identitySignature.s),
+          yParity: Signature.vToYParity(callSig.identitySignature.v),
+        })
+        encodedAttestations.push(Bytes.concat(encode(callSig.attestation), packedRSY))
       }
     }
   })
@@ -156,14 +161,24 @@ export function encodeSessionCallSignatures(
         throw new Error('Failed to find attestation index')
       }
       const packedFlag = 0x80 | attestationIndex // Implicit flag (MSB) true + attestation index
-      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packRSV(callSignature.sessionSignature))
+      const packedRSY = packRSY({
+        r: Bytes.toBigInt(callSignature.sessionSignature.r),
+        s: Bytes.toBigInt(callSignature.sessionSignature.s),
+        yParity: Signature.vToYParity(callSignature.sessionSignature.v),
+      })
+      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packedRSY)
     } else if (isExplicitSessionCallSignature(callSignature)) {
       // Explicit
       if (callSignature.permissionIndex > MAX_PERMISSIONS_COUNT) {
         throw new Error('Permission index is too large')
       }
       const packedFlag = callSignature.permissionIndex // Implicit flag (MSB) false + permission index
-      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packRSV(callSignature.sessionSignature))
+      const packedRSY = packRSY({
+        r: Bytes.toBigInt(callSignature.sessionSignature.r),
+        s: Bytes.toBigInt(callSignature.sessionSignature.s),
+        yParity: Signature.vToYParity(callSignature.sessionSignature.v),
+      })
+      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packedRSY)
     } else {
       // Invalid call signature
       throw new Error('Invalid call signature')
