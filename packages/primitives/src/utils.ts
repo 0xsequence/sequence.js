@@ -19,8 +19,7 @@ export function unpackRSY(rsy: Bytes.Bytes): { r: bigint; s: bigint; yParity: nu
   const r = Bytes.toBigInt(rsy.slice(0, 32))
   const yParityAndS = rsy.slice(32, 64)
   const yParity = (yParityAndS[0]! & 0x80) !== 0 ? 1 : 0
-  const sBytes = new Uint8Array(32)
-  sBytes.set(yParityAndS)
+  const sBytes = new Uint8Array(yParityAndS)
   sBytes[0] = sBytes[0]! & 0x7f
   const s = Bytes.toBigInt(sBytes)
   return { r, s, yParity }

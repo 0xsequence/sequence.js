@@ -35,13 +35,16 @@ export const FLAG_SIGNATURE_ANY_ADDRESS_SUBDIGEST = 8
 export const FLAG_SIGNATURE_SAPIENT = 9
 export const FLAG_SIGNATURE_SAPIENT_COMPACT = 10
 
+export type RSY = {
+  r: bigint
+  s: bigint
+  yParity: number
+}
+
 export type SignatureOfSignerLeaf =
-  | {
-      r: bigint
-      s: bigint
-      yParity: number
+  | ({
       type: 'eth_sign' | 'hash'
-    }
+    } & RSY)
   | {
       address: `0x${string}`
       data: Bytes.Bytes

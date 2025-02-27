@@ -1,4 +1,4 @@
-import { Address, Bytes, Signature } from 'ox'
+import { Address, Bytes } from 'ox'
 import { Attestation, encode, encodeForJson, fromParsed } from './attestation'
 import { MAX_PERMISSIONS_COUNT } from './permission'
 import {
@@ -7,17 +7,18 @@ import {
   minimiseSessionsTopology,
   SessionsTopology,
 } from './session-config'
+import { RSY } from './signature'
 import { minBytesFor, packRSY } from './utils'
 
 export type ImplicitSessionCallSignature = {
   attestation: Attestation
-  identitySignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }
-  sessionSignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }
+  identitySignature: RSY
+  sessionSignature: RSY
 }
 
 export type ExplicitSessionCallSignature = {
   permissionIndex: bigint
-  sessionSignature: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }
+  sessionSignature: RSY
 }
 
 export type SessionCallSignature = ImplicitSessionCallSignature | ExplicitSessionCallSignature
@@ -44,13 +45,13 @@ export function encodeSessionCallSignatureForJson(callSignature: SessionCallSign
   if (isImplicitSessionCallSignature(callSignature)) {
     return {
       attestation: encodeForJson(callSignature.attestation),
-      identitySignature: rsvToStr(callSignature.identitySignature),
-      sessionSignature: rsvToStr(callSignature.sessionSignature),
+      identitySignature: rsyToRsvStr(callSignature.identitySignature),
+      sessionSignature: rsyToRsvStr(callSignature.sessionSignature),
     }
   } else if (isExplicitSessionCallSignature(callSignature)) {
     return {
       permissionIndex: callSignature.permissionIndex,
-      sessionSignature: rsvToStr(callSignature.sessionSignature),
+      sessionSignature: rsyToRsvStr(callSignature.sessionSignature),
     }
   } else {
     throw new Error('Invalid call signature')
@@ -66,24 +67,24 @@ export function sessionCallSignatureFromParsed(decoded: any): SessionCallSignatu
   if (decoded.attestation) {
     return {
       attestation: fromParsed(decoded.attestation),
-      identitySignature: rsvFromStr(decoded.identitySignature),
-      sessionSignature: rsvFromStr(decoded.sessionSignature),
+      identitySignature: rsyFromRsvStr(decoded.identitySignature),
+      sessionSignature: rsyFromRsvStr(decoded.sessionSignature),
     }
   } else if (decoded.permissionIndex) {
     return {
       permissionIndex: decoded.permissionIndex,
-      sessionSignature: rsvFromStr(decoded.sessionSignature),
+      sessionSignature: rsyFromRsvStr(decoded.sessionSignature),
     }
   } else {
     throw new Error('Invalid call signature')
   }
 }
 
-function rsvToStr(rsv: { v: number; r: Bytes.Bytes; s: Bytes.Bytes }): string {
-  return `${rsv.r.toString()}:${rsv.s.toString()}:${rsv.v}`
+function rsyToRsvStr(sig: RSY): string {
+  return `${sig.r.toString()}:${sig.s.toString()}:${sig.yParity + 27}`
 }
 
-function rsvFromStr(sigStr: string): { v: number; r: Bytes.Bytes; s: Bytes.Bytes } {
+function rsyFromRsvStr(sigStr: string): RSY {
   const parts = sigStr.split(':')
   if (parts.length !== 3) {
     throw new Error('Signature must be in r:s:v format')
@@ -93,9 +94,9 @@ function rsvFromStr(sigStr: string): { v: number; r: Bytes.Bytes; s: Bytes.Bytes
     throw new Error('Invalid signature format')
   }
   return {
-    v: parseInt(vStr, 10),
-    r: Bytes.fromHex(rStr as `0x${string}`),
-    s: Bytes.fromHex(sStr as `0x${string}`),
+    r: Bytes.toBigInt(Bytes.fromHex(rStr as `0x${string}`, { size: 32 })),
+    s: Bytes.toBigInt(Bytes.fromHex(sStr as `0x${string}`, { size: 32 })),
+    yParity: parseInt(vStr, 10) - 27,
   }
 }
 
@@ -135,12 +136,7 @@ export function encodeSessionCallSignatures(
       const attestationStr = JSON.stringify(callSig.attestation)
       if (!attestationMap.has(attestationStr)) {
         attestationMap.set(attestationStr, encodedAttestations.length)
-        const packedRSY = packRSY({
-          r: Bytes.toBigInt(callSig.identitySignature.r),
-          s: Bytes.toBigInt(callSig.identitySignature.s),
-          yParity: Signature.vToYParity(callSig.identitySignature.v),
-        })
-        encodedAttestations.push(Bytes.concat(encode(callSig.attestation), packedRSY))
+        encodedAttestations.push(Bytes.concat(encode(callSig.attestation), packRSY(callSig.identitySignature)))
       }
     }
   })
@@ -155,30 +151,21 @@ export function encodeSessionCallSignatures(
   for (const callSignature of callSignatures) {
     if (isImplicitSessionCallSignature(callSignature)) {
       // Implicit
-      const attestationIndex = attestationMap.get(JSON.stringify(callSignature.attestation))
+      const attestationStr = JSON.stringify(callSignature.attestation)
+      const attestationIndex = attestationMap.get(attestationStr)
       if (attestationIndex === undefined) {
         // Unreachable
         throw new Error('Failed to find attestation index')
       }
       const packedFlag = 0x80 | attestationIndex // Implicit flag (MSB) true + attestation index
-      const packedRSY = packRSY({
-        r: Bytes.toBigInt(callSignature.sessionSignature.r),
-        s: Bytes.toBigInt(callSignature.sessionSignature.s),
-        yParity: Signature.vToYParity(callSignature.sessionSignature.v),
-      })
-      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packedRSY)
+      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packRSY(callSignature.sessionSignature))
     } else if (isExplicitSessionCallSignature(callSignature)) {
       // Explicit
       if (callSignature.permissionIndex > MAX_PERMISSIONS_COUNT) {
         throw new Error('Permission index is too large')
       }
       const packedFlag = callSignature.permissionIndex // Implicit flag (MSB) false + permission index
-      const packedRSY = packRSY({
-        r: Bytes.toBigInt(callSignature.sessionSignature.r),
-        s: Bytes.toBigInt(callSignature.sessionSignature.s),
-        yParity: Signature.vToYParity(callSignature.sessionSignature.v),
-      })
-      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packedRSY)
+      parts.push(Bytes.fromNumber(packedFlag, { size: 1 }), packRSY(callSignature.sessionSignature))
     } else {
       // Invalid call signature
       throw new Error('Invalid call signature')
