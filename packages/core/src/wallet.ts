@@ -119,41 +119,38 @@ export class Wallet {
 
       return {
         to: this.options.guest,
-        data: AbiFunction.encodeData(Constants.EXECUTE, [
-          Bytes.toHex(
-            Payload.encode({
-              type: 'call',
-              space: 0n,
-              nonce: 0n,
-              calls: [
-                {
-                  to: deploy.to,
-                  value: 0n,
-                  data: Hex.toBytes(deploy.data),
-                  gasLimit: 0n,
-                  delegateCall: false,
-                  onlyFallback: false,
-                  behaviorOnError: 'revert',
-                },
-                {
-                  to: this.address,
-                  value: 0n,
-                  data: Hex.toBytes(
-                    AbiFunction.encodeData(Constants.EXECUTE, [
-                      Bytes.toHex(Payload.encode(payload)),
-                      Bytes.toHex(SequenceSignature.encodeSignature(signature)),
-                    ]),
-                  ),
-                  gasLimit: 0n,
-                  delegateCall: false,
-                  onlyFallback: false,
-                  behaviorOnError: 'ignore',
-                },
-              ],
-            }),
-          ),
-          '0x',
-        ]),
+        data: Bytes.toHex(
+          Payload.encode({
+            type: 'call',
+            space: 0n,
+            nonce: 0n,
+            calls: [
+              {
+                to: deploy.to,
+                value: 0n,
+                data: Hex.toBytes(deploy.data),
+                gasLimit: 0n,
+                delegateCall: false,
+                onlyFallback: false,
+                behaviorOnError: 'revert',
+              },
+              {
+                to: this.address,
+                value: 0n,
+                data: Hex.toBytes(
+                  AbiFunction.encodeData(Constants.EXECUTE, [
+                    Bytes.toHex(Payload.encode(payload)),
+                    Bytes.toHex(SequenceSignature.encodeSignature(signature)),
+                  ]),
+                ),
+                gasLimit: 0n,
+                delegateCall: false,
+                onlyFallback: false,
+                behaviorOnError: 'revert',
+              },
+            ],
+          }),
+        ),
       }
     }
   }

@@ -17,6 +17,8 @@ export class Pk implements Signer {
     chainId: bigint,
     payload: PayloadTypes.Parented,
   ): Promise<SignatureTypes.SignatureOfSignerLeaf> {
-    throw new Error('Not implemented')
+    const hash = Payload.hash(wallet, chainId, payload)
+    const signature = Secp256k1.sign({ payload: hash, privateKey: this.privateKey })
+    return { ...signature, type: 'hash' }
   }
 }
