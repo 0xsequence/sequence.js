@@ -1,12 +1,12 @@
 import { Address, Hex } from 'ox'
 import { Context, WalletConfig, Payload, Signature } from '@0xsequence/sequence-primitives'
 
-export type StateProvider = StateReader & StateWriter
+export type Provider = Reader & Writer
 
-export interface StateReader {
-  getConfiguration(imageHash: Hex.Hex): MaybePromise<WalletConfig.Configuration>
+export interface Reader {
+  getConfiguration(imageHash: Hex.Hex): MaybePromise<WalletConfig.Configuration | undefined>
 
-  getDeployHash(wallet: Address.Address): MaybePromise<{ deployHash: Hex.Hex; context: Context.Context }>
+  getDeploy(wallet: Address.Address): MaybePromise<{ imageHash: Hex.Hex; context: Context.Context } | undefined>
 
   getWallets(signer: Address.Address): MaybePromise<{
     [wallet: Address.Address]: {
@@ -23,7 +23,7 @@ export interface StateReader {
   ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>>
 }
 
-export interface StateWriter {
+export interface Writer {
   saveWallet(deployConfiguration: WalletConfig.Configuration, context: Context.Context): MaybePromise<void>
 
   saveWitnesses(
@@ -33,7 +33,7 @@ export interface StateWriter {
     signatures: Signature.SignatureOfSignerLeaf[],
   ): MaybePromise<void>
 
-  setConfiguration(
+  saveUpdate(
     wallet: Address.Address,
     configuration: WalletConfig.Configuration,
     signature: Signature.RawSignature,
@@ -42,4 +42,4 @@ export interface StateWriter {
 
 type MaybePromise<T> = T | Promise<T>
 
-export * from './memory'
+export * as Local from './local'

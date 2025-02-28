@@ -1,5 +1,5 @@
-import { AbiFunction, Address, Bytes, Hex, PersonalMessage, Provider, Secp256k1, Signature } from 'ox'
-import { MemoryStateProvider, StateProvider } from '.'
+import { AbiFunction, Address, Bytes, Hex, PersonalMessage, Provider, Secp256k1 } from 'ox'
+import * as State from './state'
 import {
   Constants,
   Context,
@@ -12,20 +12,32 @@ import {
 
 export type WalletOptions = {
   context: Context.Context
-  stateProvider: StateProvider
+  stateProvider: State.Provider
   onSignerError?: WalletConfig.SignerErrorCallback
   guest: Address.Address
 }
 
 export const DefaultWalletOptions: WalletOptions = {
   context: Context.Dev1,
-  stateProvider: new MemoryStateProvider(),
+  stateProvider: new State.Local.Provider(),
   guest: Constants.DefaultGuest,
+}
+
+export type WalletStatus = {
+  address: Address.Address
+  isDeployed: boolean
+  implementation?: Address.Address
+  stage?: 'stage1' | 'stage2'
+  configuration: WalletConfig.Configuration
+  imageHash: Hex.Hex
+  /** Pending updates in reverse chronological order (newest first) */
+  pendingUpdates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>
+  chainId?: bigint
 }
 
 export class Wallet {
   private readonly signers = new Map<Address.Address, { signer: Signer; isTrusted: boolean }>()
-  private readonly options: WalletOptions & { stateProvider: StateProvider }
+  private readonly options: WalletOptions & { stateProvider: State.Provider }
 
   constructor(
     readonly address: Address.Address,
@@ -47,6 +59,10 @@ export class Wallet {
     this.signers.set(await signer.address, { signer, isTrusted })
   }
 
+  removeSigner(address: Address.Address) {
+    this.signers.delete(address)
+  }
+
   async isDeployed(provider: Provider.Provider): Promise<boolean> {
     return (await provider.request({ method: 'eth_getCode', params: [this.address, 'pending'] })) !== '0x'
   }
@@ -59,8 +75,11 @@ export class Wallet {
   }
 
   async getDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
-    const { deployHash, context } = await this.options.stateProvider.getDeployHash(this.address)
-    return Erc6492.deploy(deployHash, context)
+    const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+    if (!deployInformation) {
+      throw new Error(`cannot find deploy information for ${this.address}`)
+    }
+    return Erc6492.deploy(deployInformation.imageHash, deployInformation.context)
   }
 
   async setConfiguration(
@@ -69,7 +88,90 @@ export class Wallet {
   ) {
     const imageHash = WalletConfig.hashConfiguration(configuration)
     const signature = await this.sign(Payload.fromConfigUpdate(Bytes.toHex(imageHash)), options)
-    await this.options.stateProvider.setConfiguration(this.address, configuration, signature)
+    await this.options.stateProvider.saveUpdate(this.address, configuration, signature)
+  }
+
+  async getStatus(provider?: Provider.Provider): Promise<WalletStatus> {
+    let isDeployed = false
+    let implementation: Address.Address | undefined
+    let stage: 'stage1' | 'stage2' | undefined
+    let chainId: bigint | undefined
+    let imageHash: Hex.Hex
+    let updates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }> = []
+
+    if (provider) {
+      // Get chain ID, deployment status, and implementation
+      const requests = await Promise.all([
+        provider.request({ method: 'eth_chainId' }),
+        this.isDeployed(provider),
+        provider
+          .request({
+            method: 'eth_call',
+            params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }],
+          })
+          .then((res) => `0x${res.slice(26)}` as Address.Address)
+          .catch(() => undefined),
+      ])
+
+      chainId = BigInt(requests[0])
+      isDeployed = requests[1]
+      implementation = requests[2]
+
+      // Determine stage based on implementation address
+      if (implementation) {
+        if (implementation.toLowerCase() === this.options.context.stage1.toLowerCase()) {
+          stage = 'stage1'
+        } else {
+          stage = 'stage2'
+        }
+      }
+
+      // Get image hash and updates
+      let fromImageHash: Hex.Hex
+      if (isDeployed && stage === 'stage2') {
+        // For deployed stage2 wallets, get the image hash from the contract
+        fromImageHash = await provider.request({
+          method: 'eth_call',
+          params: [{ to: this.address, data: AbiFunction.encodeData(Constants.IMAGE_HASH) }],
+        })
+      } else {
+        // For non-deployed or stage1 wallets, get the deploy hash
+        const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+        if (!deployInformation) {
+          throw new Error(`cannot find deploy information for ${this.address}`)
+        }
+        fromImageHash = deployInformation.imageHash
+      }
+
+      // Get configuration updates
+      updates = await this.options.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
+      imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
+    } else {
+      // Without a provider, we can only get information from the state provider
+      const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+      if (!deployInformation) {
+        throw new Error(`cannot find deploy information for ${this.address}`)
+      }
+      updates = await this.options.stateProvider.getConfigurationUpdates(this.address, deployInformation.imageHash)
+      imageHash = updates[updates.length - 1]?.imageHash ?? deployInformation.imageHash
+    }
+
+    // Get the current configuration
+    const configuration = await this.options.stateProvider.getConfiguration(imageHash)
+    if (!configuration) {
+      throw new Error(`cannot find configuration details for ${this.address}`)
+    }
+
+    return {
+      address: this.address,
+      isDeployed,
+      implementation,
+      stage,
+      configuration,
+      imageHash,
+      pendingUpdates: [...updates].reverse(),
+      chainId,
+    }
   }
 
   async send(
@@ -90,7 +192,10 @@ export class Wallet {
   ): Promise<{ to: Address.Address; data: Hex.Hex }> {
     const space = options?.space ?? 0n
 
-    if (await this.isDeployed(provider)) {
+    // Use getStatus to check if the wallet is deployed
+    const status = await this.getStatus(provider)
+
+    if (status.isDeployed) {
       const nonce = BigInt(
         await provider.request({
           method: 'eth_call',
@@ -165,55 +270,26 @@ export class Wallet {
   ): Promise<SequenceSignature.RawSignature> {
     const provider = options?.provider
 
-    let updates: Unpromise<ReturnType<StateProvider['getConfigurationUpdates']>> = []
+    // Use getStatus to get the wallet status
+    const status = await this.getStatus(provider)
 
-    let chainId: bigint
-    let isDeployed: boolean
+    console.log('status', status)
+
+    const chainId = status.chainId ?? 0n
+    const isDeployed = status.isDeployed
+
+    // Get deploy hash if needed for ERC-6492
     let deployHash: { deployHash: Hex.Hex; context: Context.Context } | undefined
-    let imageHash: Hex.Hex
-    if (provider) {
-      const requests = await Promise.all([
-        provider.request({ method: 'eth_chainId' }),
-        this.isDeployed(provider),
-        provider
-          .request({
-            method: 'eth_call',
-            params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }],
-          })
-          .then((res) => `0x${res.slice(26)}`)
-          .catch(() => undefined),
-      ])
-
-      chainId = BigInt(requests[0])
-      isDeployed = requests[1]
-      const implementation = requests[2]
-
-      let fromImageHash: Hex.Hex
-
-      if (isDeployed && implementation?.toLowerCase() !== this.options.context.stage1.toLowerCase()) {
-        fromImageHash = await provider.request({
-          method: 'eth_call',
-          params: [{ to: this.address, data: AbiFunction.encodeData(Constants.IMAGE_HASH) }],
-        })
-      } else {
-        // Avoid setting deployHash as it later determines if we use 6492 or not
-        fromImageHash = (await this.options.stateProvider.getDeployHash(this.address)).deployHash
+    if (!isDeployed || status.stage === 'stage1') {
+      const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+      if (!deployInformation) {
+        throw new Error(`cannot find deploy information for ${this.address}`)
       }
-
-      updates = await this.options.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
-      imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
-    } else {
-      chainId = 0n
-      isDeployed = true
-
-      const { deployHash } = await this.options.stateProvider.getDeployHash(this.address)
-
-      const updates = await this.options.stateProvider.getConfigurationUpdates(this.address, deployHash)
-
-      imageHash = updates[updates.length - 1]?.imageHash ?? deployHash
+      deployHash = { deployHash: deployInformation.imageHash, context: deployInformation.context }
     }
 
-    const configuration = await this.options.stateProvider.getConfiguration(imageHash)
+    const configuration = status.configuration
+    const updates = status.pendingUpdates
 
     const topology = await WalletConfig.sign(
       configuration.topology,
@@ -380,12 +456,13 @@ export class Wallet {
       },
     )
 
-    const erc6492 = deployHash && Erc6492.deploy(deployHash.deployHash, deployHash.context)
+    const erc6492 =
+      !status.isDeployed && deployHash ? Erc6492.deploy(deployHash.deployHash, deployHash.context) : undefined
 
     return {
       noChainId: !chainId,
       configuration: { ...configuration, topology },
-      suffix: updates.reverse().map(({ signature }) => signature),
+      suffix: updates.map(({ signature }) => signature),
       erc6492: erc6492 && { ...erc6492, data: Hex.toBytes(erc6492.data) },
     }
   }

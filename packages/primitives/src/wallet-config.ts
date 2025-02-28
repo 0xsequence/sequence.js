@@ -583,3 +583,107 @@ export type SignerErrorCallback = (signer: SignerLeaf | SapientSignerLeaf, error
 type SignerSignatureCallback = (topology: RawTopology) => void
 type CancelCallback = (success: boolean) => void
 type MaybePromise<T> = T | Promise<T>
+
+export function mergeTopology(a: Topology, b: Topology): Topology {
+  if (isNode(a) && isNode(b)) {
+    return [mergeTopology(a[0], b[0]), mergeTopology(a[1], b[1])]
+  }
+
+  if (isNode(a) && !isNode(b)) {
+    if (!isNodeLeaf(b)) {
+      throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
+    }
+    const hb = hashConfiguration(b)
+    if (!Bytes.isEqual(hb, hashConfiguration(a))) {
+      throw new Error('Topology mismatch: node hash does not match')
+    }
+    return a
+  }
+
+  if (!isNode(a) && isNode(b)) {
+    if (!isNodeLeaf(a)) {
+      throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
+    }
+    const ha = hashConfiguration(a)
+    if (!Bytes.isEqual(ha, hashConfiguration(b))) {
+      throw new Error('Topology mismatch: node hash does not match')
+    }
+    return b
+  }
+
+  return mergeLeaf(a as Leaf, b as Leaf)
+}
+
+function mergeLeaf(a: Leaf, b: Leaf): Leaf {
+  if (isNodeLeaf(a) && isNodeLeaf(b)) {
+    if (!Bytes.isEqual(a, b)) {
+      throw new Error('Topology mismatch: different node leaves')
+    }
+    return a
+  }
+
+  if (isNodeLeaf(a) && !isNodeLeaf(b)) {
+    const hb = hashConfiguration(b)
+    if (!Bytes.isEqual(hb, a)) {
+      throw new Error('Topology mismatch: node leaf hash does not match')
+    }
+    return b
+  }
+
+  if (!isNodeLeaf(a) && isNodeLeaf(b)) {
+    const ha = hashConfiguration(a)
+    if (!Bytes.isEqual(ha, b)) {
+      throw new Error('Topology mismatch: node leaf hash does not match')
+    }
+    return a
+  }
+
+  if (isSignerLeaf(a) && isSignerLeaf(b)) {
+    if (a.address !== b.address || a.weight !== b.weight) {
+      throw new Error('Topology mismatch: signer fields differ')
+    }
+    if (!!a.signed !== !!b.signed || !!a.signature !== !!b.signature) {
+      throw new Error('Topology mismatch: signer signature fields differ')
+    }
+    return a
+  }
+
+  if (isSapientSignerLeaf(a) && isSapientSignerLeaf(b)) {
+    if (a.address !== b.address || a.weight !== b.weight || !Bytes.isEqual(a.imageHash, b.imageHash)) {
+      throw new Error('Topology mismatch: sapient signer fields differ')
+    }
+    if (!!a.signed !== !!b.signed || !!a.signature !== !!b.signature) {
+      throw new Error('Topology mismatch: sapient signature fields differ')
+    }
+    return a
+  }
+
+  if (isSubdigestLeaf(a) && isSubdigestLeaf(b)) {
+    if (!Bytes.isEqual(a.digest, b.digest)) {
+      throw new Error('Topology mismatch: subdigest fields differ')
+    }
+    return a
+  }
+
+  if (isAnyAddressSubdigestLeaf(a) && isAnyAddressSubdigestLeaf(b)) {
+    if (!Bytes.isEqual(a.digest, b.digest)) {
+      throw new Error('Topology mismatch: any-address-subdigest fields differ')
+    }
+    return a
+  }
+
+  if (isNestedLeaf(a) && isNestedLeaf(b)) {
+    if (a.weight !== b.weight || a.threshold !== b.threshold) {
+      throw new Error('Topology mismatch: nested leaf fields differ')
+    }
+    const mergedTree = mergeTopology(a.tree, b.tree)
+    return {
+      type: 'nested',
+      weight: a.weight,
+      threshold: a.threshold,
+      tree: mergedTree,
+    }
+  }
+
+  throw new Error('Topology mismatch: incompatible leaf types')
+}
