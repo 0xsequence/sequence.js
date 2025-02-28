@@ -1,4 +1,5 @@
-import { Address, Bytes } from 'ox'
+import { AbiParameters, Address, Bytes } from 'ox'
+import { Call } from './payload'
 
 export enum ParameterOperation {
   EQUAL = 0,
@@ -71,6 +72,51 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
     Bytes.padLeft(rule.value, 32),
     Bytes.padLeft(Bytes.fromNumber(rule.offset), 32),
     Bytes.padLeft(rule.mask, 32),
+  )
+}
+
+// ABI encode
+
+export const permissionStructAbi = {
+  internalType: 'struct Permission',
+  name: 'permission',
+  type: 'tuple',
+  components: [
+    { internalType: 'address', name: 'target', type: 'address' },
+    {
+      internalType: 'struct ParameterRule[]',
+      name: 'rules',
+      type: 'tuple[]',
+      components: [
+        { internalType: 'bool', name: 'cumulative', type: 'bool' },
+        {
+          internalType: 'enum ParameterOperation',
+          name: 'operation',
+          type: 'uint8',
+        },
+        { internalType: 'bytes32', name: 'value', type: 'bytes32' },
+        { internalType: 'uint256', name: 'offset', type: 'uint256' },
+        { internalType: 'bytes32', name: 'mask', type: 'bytes32' },
+      ],
+    },
+  ],
+} as const
+
+export function abiEncodePermission(permission: Permission): string {
+  return AbiParameters.encode(
+    [permissionStructAbi],
+    [
+      {
+        target: permission.target,
+        rules: permission.rules.map((rule) => ({
+          cumulative: rule.cumulative,
+          operation: rule.operation,
+          value: Bytes.toHex(rule.value),
+          offset: rule.offset,
+          mask: Bytes.toHex(rule.mask),
+        })),
+      },
+    ],
   )
 }
 

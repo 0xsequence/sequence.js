@@ -12,13 +12,11 @@ export async function doAddSession(sessionInput: string, topologyInput: string):
     throw new Error('Session topology must be a valid session topology')
   }
   // Find the session in the topology
-  const sessionPermissions = SessionConfig.getSessionPermissions(topology, session.signer)
-  if (sessionPermissions) {
+  if (SessionConfig.getSessionPermissions(topology, session.signer)) {
     throw new Error('Session already exists')
   }
   // Merge the session into the topology
-  topology = SessionConfig.mergeSessionsTopologies(session, topology)
-  topology = SessionConfig.balanceSessionsTopology(topology)
+  topology = SessionConfig.addExplicitSession(topology, session)
   return SessionConfig.sessionsTopologyToJson(topology)
 }
 

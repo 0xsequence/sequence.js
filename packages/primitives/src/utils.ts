@@ -1,4 +1,4 @@
-import { Bytes } from 'ox'
+import { AbiParameters, Bytes, Hash, Hex } from 'ox'
 
 export function minBytesFor(val: bigint): number {
   return Math.ceil(val.toString(16).length / 2)
@@ -23,4 +23,9 @@ export function unpackRSY(rsy: Bytes.Bytes): { r: bigint; s: bigint; yParity: nu
   sBytes[0] = sBytes[0]! & 0x7f
   const s = Bytes.toBigInt(sBytes)
   return { r, s, yParity }
+}
+
+export function getStorageSlotForMappingWithKey(mappingSlot: bigint, key: Hex.Hex): Hex.Hex {
+  const paddedKey = Hex.padLeft(key, 32)
+  return Hash.keccak256(AbiParameters.encode([{ type: 'bytes32' }, { type: 'uint256' }], [paddedKey, mappingSlot]))
 }

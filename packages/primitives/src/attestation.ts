@@ -56,3 +56,18 @@ export function fromParsed(parsed: any): Attestation {
     applicationData: Bytes.fromHex(parsed.applicationData),
   }
 }
+
+// Library functions
+
+export const ACCEPT_IMPLICIT_REQUEST_MAGIC_PREFIX = Hash.keccak256(Bytes.fromString('acceptImplicitRequest'))
+
+export function generateImplicitRequestMagic(attestation: Attestation, wallet: Address.Address): Bytes.Bytes {
+  return Hash.keccak256(
+    Bytes.concat(
+      ACCEPT_IMPLICIT_REQUEST_MAGIC_PREFIX,
+      Bytes.fromHex(wallet, { size: 20 }),
+      attestation.audienceHash,
+      attestation.issuerHash,
+    ),
+  )
+}

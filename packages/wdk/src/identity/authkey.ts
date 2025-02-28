@@ -1,4 +1,4 @@
-import { Secp256k1, Address, Signature, PersonalMessage, Hash, Hex } from 'ox'
+import { Secp256k1, Address, Signature, PersonalMessage, Hex } from 'ox'
 import { AuthKey as ProtoAuthKey, KeyType } from './nitro'
 import { SecureStoreBackend } from './secure-store'
 import { SubtleCryptoBackend } from './subtle-crypto'

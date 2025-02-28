@@ -429,6 +429,19 @@ export function removeExplicitSession(
   return topology
 }
 
+export function addExplicitSession(
+  topology: SessionsTopology,
+  sessionPermissions: SessionPermissions,
+): SessionsTopology {
+  // Find the session in the topology
+  if (getSessionPermissions(topology, sessionPermissions.signer)) {
+    throw new Error('Session already exists')
+  }
+  // Merge and balance
+  const merged = mergeSessionsTopologies(topology, sessionPermissions)
+  return balanceSessionsTopology(merged)
+}
+
 /**
  * Merges two topologies into a new branch of [a, b].
  */

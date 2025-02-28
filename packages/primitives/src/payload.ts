@@ -417,7 +417,7 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
   }
 }
 
-function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']): number {
+export function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']): number {
   switch (behaviorOnError) {
     case 'ignore':
       return 0
@@ -426,4 +426,25 @@ function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']): number
     case 'abort':
       return 2
   }
+}
+
+export function hashCall(call: Call): Bytes.Bytes {
+  const CALL_TYPEHASH = Hash.keccak256(
+    Bytes.fromString(
+      'Call(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)',
+    ),
+  )
+
+  return Hash.keccak256(
+    Bytes.concat(
+      CALL_TYPEHASH,
+      Bytes.fromHex(call.to),
+      Bytes.fromNumber(call.value, { size: 32 }),
+      Hash.keccak256(call.data),
+      Bytes.fromNumber(call.gasLimit, { size: 32 }),
+      Bytes.fromBoolean(call.delegateCall),
+      Bytes.fromBoolean(call.onlyFallback),
+      Bytes.fromNumber(encodeBehaviorOnError(call.behaviorOnError), { size: 32 }),
+    ),
+  )
 }
