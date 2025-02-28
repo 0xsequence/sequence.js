@@ -73,9 +73,7 @@ export class Provider implements ProviderInterface {
     return this.store.loadCounterfactualWallet(wallet)
   }
 
-  async getWallets(
-    signer: Address.Address,
-  ): Promise<{
+  async getWallets(signer: Address.Address): Promise<{
     [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf }
   }> {
     const subdigests = await this.store.loadSubdigestsOfSigner(signer)
@@ -154,7 +152,7 @@ export class Provider implements ProviderInterface {
       | {
           nextImageHash: Hex.Hex
           checkpoint: bigint
-          signature: Hex.Hex
+          signature: Signature.RawSignature
         }
       | undefined
 
@@ -219,7 +217,14 @@ export class Provider implements ProviderInterface {
       best = {
         nextImageHash: candidate.nextImageHash,
         checkpoint: candidate.config!.checkpoint,
-        signature: Bytes.toHex(Signature.encodeTopology(encoded, { noChainId: true })),
+        signature: {
+          noChainId: true,
+          configuration: {
+            threshold: fromConfig.threshold,
+            checkpoint: fromConfig.checkpoint,
+            topology: encoded,
+          },
+        },
       }
     }
 
@@ -227,12 +232,15 @@ export class Provider implements ProviderInterface {
       return []
     }
 
-    const nextStep = await this.store.loadConfig(best.nextImageHash)
-    if (!nextStep) {
-      return []
-    }
+    const nextStep = await this.getConfigurationUpdates(wallet, best.nextImageHash, { allUpdates: true })
 
-    return [{ imageHash: best.nextImageHash, signature: { noChainId: true, configuration: nextStep } }]
+    return [
+      {
+        imageHash: best.nextImageHash,
+        signature: best.signature,
+      },
+      ...nextStep,
+    ]
   }
 
   async saveUpdate(

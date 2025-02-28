@@ -273,8 +273,6 @@ export class Wallet {
     // Use getStatus to get the wallet status
     const status = await this.getStatus(provider)
 
-    console.log('status', status)
-
     const chainId = status.chainId ?? 0n
     const isDeployed = status.isDeployed
 
