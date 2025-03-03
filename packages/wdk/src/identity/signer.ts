@@ -24,11 +24,15 @@ export class IdentitySigner implements Signer {
     payload: Payload.Parented,
   ): Promise<SequenceSignature.SignatureOfSignerLeaf> {
     const payloadHash = Payload.hash(wallet, chainId, payload)
-    const authKeySignature = await this.authKey.signMessage(payloadHash.toString())
+    return this.signDigest(payloadHash)
+  }
+
+  async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeaf> {
+    const authKeySignature = await this.authKey.signMessage(digest.toString())
     const params = {
       ecosystemId: this.ecosystemId,
       signer: this.address,
-      digest: payloadHash.toString(),
+      digest: digest.toString(),
       authKey: this.authKey.toProto(),
       signature: authKeySignature,
     }

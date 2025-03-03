@@ -1,14 +1,14 @@
-import { Hex, Bytes, PublicKey, Address, Secp256k1 } from 'ox'
-import { Signer } from '../wallet'
-import { Payload, Signature } from '@0xsequence/sequence-primitives'
 import type { Payload as PayloadTypes, Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
+import { Payload } from '@0xsequence/sequence-primitives'
+import { Address, Bytes, Hex, PublicKey, Secp256k1 } from 'ox'
+import { Signer as SignerInterface } from '../wallet'
 
-export class Pk implements Signer {
+export class Pk implements SignerInterface {
   public readonly address: Address.Address
   public readonly pubKey: PublicKey.PublicKey
 
   constructor(private readonly privateKey: Hex.Hex | Bytes.Bytes) {
-    this.pubKey = Secp256k1.getPublicKey({ privateKey })
+    this.pubKey = Secp256k1.getPublicKey({ privateKey: this.privateKey })
     this.address = Address.fromPublicKey(this.pubKey)
   }
 
