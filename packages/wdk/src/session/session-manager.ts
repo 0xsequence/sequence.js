@@ -16,7 +16,7 @@ type SessionManagerConfiguration = {
   address?: Address.Address
 }
 
-const DEFAULT_SESSION_MANAGER_ADDRESS: Address.Address = '0x1D23F28a45769693b4C462f7628A204389388E3B'
+const DEFAULT_SESSION_MANAGER_ADDRESS: Address.Address = '0x3e1b5D56980B339B410B57e5Dd3d3FA93FF14C4F'
 
 export class SessionManager implements SignerInterface {
   readonly address: Address.Address
@@ -25,6 +25,7 @@ export class SessionManager implements SignerInterface {
 
   private _implicitSigners: Signers.Session.Implicit[] = []
   private _explicitSigners: Signers.Session.Explicit[] = []
+
   constructor(configuration: SessionManagerConfiguration) {
     this.address = configuration.address ?? DEFAULT_SESSION_MANAGER_ADDRESS
     this._topology = configuration.topology
