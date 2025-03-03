@@ -8,7 +8,7 @@ import {
   Signature as SignatureTypes,
 } from '@0xsequence/sequence-primitives'
 import { Address, Provider, Secp256k1 } from 'ox'
-import { IdentitySigner } from './signer'
+import { IdentitySigner } from '../identity'
 
 type SessionManagerConfiguration = {
   topology: SessionConfig.SessionsTopology

@@ -5,22 +5,35 @@ export type Attestation = {
   identityType: Bytes.Bytes // bytes4
   issuerHash: Bytes.Bytes // bytes32
   audienceHash: Bytes.Bytes // bytes32
-  authData: Bytes.Bytes // bytes
   applicationData: Bytes.Bytes // bytes
+  authData: AuthData
 }
 
+export type AuthData = {
+  redirectUrl: string // bytes
+}
+
+// Encoding and decoding
+
 export function encode(attestation: Attestation): Bytes.Bytes {
+  const authDataBytes = encodeAuthData(attestation.authData)
   const parts: Bytes.Bytes[] = [
     Bytes.fromHex(attestation.approvedSigner, { size: 20 }),
     Bytes.padLeft(attestation.identityType.slice(0, 4), 4), // Truncate identity type to 4 bytes
     Bytes.padLeft(attestation.issuerHash, 32),
     Bytes.padLeft(attestation.audienceHash, 32),
-    Bytes.fromNumber(attestation.authData.length, { size: 3 }),
-    attestation.authData,
     Bytes.fromNumber(attestation.applicationData.length, { size: 3 }),
     attestation.applicationData,
+    authDataBytes,
   ]
   return Bytes.concat(...parts)
+}
+
+export function encodeAuthData(authData: AuthData): Bytes.Bytes {
+  return Bytes.concat(
+    Bytes.fromNumber(authData.redirectUrl.length, { size: 3 }),
+    Bytes.fromString(authData.redirectUrl),
+  )
 }
 
 export function hash(attestation: Attestation): Bytes.Bytes {
@@ -37,8 +50,8 @@ export function encodeForJson(attestation: Attestation): any {
     identityType: Bytes.toHex(attestation.identityType),
     issuerHash: Bytes.toHex(attestation.issuerHash),
     audienceHash: Bytes.toHex(attestation.audienceHash),
-    authData: Bytes.toHex(attestation.authData),
     applicationData: Bytes.toHex(attestation.applicationData),
+    authData: attestation.authData,
   }
 }
 
@@ -52,8 +65,8 @@ export function fromParsed(parsed: any): Attestation {
     identityType: Bytes.fromHex(parsed.identityType),
     issuerHash: Bytes.fromHex(parsed.issuerHash),
     audienceHash: Bytes.fromHex(parsed.audienceHash),
-    authData: Bytes.fromHex(parsed.authData),
     applicationData: Bytes.fromHex(parsed.applicationData),
+    authData: parsed.authData,
   }
 }
 

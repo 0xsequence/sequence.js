@@ -1,2 +1,2 @@
 export * as Identity from './identity'
-export * from './account'
+export * as Session from './session'
