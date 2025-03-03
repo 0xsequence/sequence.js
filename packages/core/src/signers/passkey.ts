@@ -11,7 +11,7 @@ export type PasskeyOptions = {
   x: Hex.Hex
   y: Hex.Hex
 
-  credentialId: Hex.Hex
+  credentialId: string
   requireUserVerification: boolean
 }
 
@@ -32,6 +32,8 @@ function _encodeSignature(
   s: Bytes.Bytes,
   authenticatorData: Bytes.Bytes,
   clientDataJSON: string,
+  x: Bytes.Bytes,
+  y: Bytes.Bytes,
 ): Bytes.Bytes {
   const challengeIndex = clientDataJSON.indexOf('"challenge"')
   const typeIndex = clientDataJSON.indexOf('"type"')
@@ -53,7 +55,7 @@ function _encodeSignature(
 
   let flags = 0
 
-  flags |= requireUserVerification ? 0 : 1 // 0x01 bit
+  flags |= requireUserVerification ? 1 : 0 // 0x01 bit
   flags |= (bytesAuthDataSize - 1) << 1 // 0x02 bit
   flags |= (bytesClientDataJSONSize - 1) << 2 // 0x04 bit
   flags |= (bytesChallengeIndex - 1) << 3 // 0x08 bit
@@ -73,6 +75,9 @@ function _encodeSignature(
   result = Bytes.concat(result, Bytes.padLeft(r, 32))
   result = Bytes.concat(result, Bytes.padLeft(s, 32))
 
+  result = Bytes.concat(result, x)
+  result = Bytes.concat(result, y)
+
   return result
 }
 
@@ -89,15 +94,21 @@ export class Passkey implements Signer {
     extensions: Pick<Extensions.Extensions, 'passkeys'>,
     options: { requireUserVerification: boolean } = { requireUserVerification: true },
   ) {
+    // Use WebAuthnP256's built-in secure challenge generation
+    const challengeAndId = Bytes.random(32)
     const credential = await WebAuthnP256.createCredential({
-      name: 'Sequence (WIP DEVELOPMENT)',
+      challenge: challengeAndId,
+      user: {
+        name: 'Sequence (WIP DEVELOPMENT)',
+        id: challengeAndId,
+      },
     })
 
     const x = Hex.fromNumber(credential.publicKey.x)
     const y = Hex.fromNumber(credential.publicKey.y)
 
     return new Passkey({
-      credentialId: Hex.fromString(credential.id),
+      credentialId: credential.id,
       requireUserVerification: options.requireUserVerification,
       extensions,
       x,
@@ -117,6 +128,7 @@ export class Passkey implements Signer {
     }
 
     const challenge = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
+
     const response = await WebAuthnP256.sign({
       challenge,
       credentialId: this.options.credentialId,
@@ -133,6 +145,8 @@ export class Passkey implements Signer {
       sBytes,
       authenticatorData,
       response.metadata.clientDataJSON,
+      Bytes.fromHex(this.options.x),
+      Bytes.fromHex(this.options.y),
     )
 
     return {
