@@ -1,5 +1,5 @@
 import { Attestation, Payload, SessionSignature, Signature } from '@0xsequence/sequence-primitives'
-import { AbiFunction, Address, Bytes, Provider, Secp256k1 } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
 import { SignerInterface } from './session'
 
 export type AttestationParams = Omit<Attestation.Attestation, 'approvedSigner'>
@@ -33,7 +33,6 @@ export class Implicit implements SignerInterface {
         applicationData: Bytes.toHex(this._attestation.applicationData),
         authData: this._attestation.authData,
       },
-      '0x',
       {
         to: call.to,
         value: call.value,
@@ -48,12 +47,11 @@ export class Implicit implements SignerInterface {
       method: 'eth_call',
       params: [{ from: this._sessionManager, to: call.to, data: encodedCallData }, 'latest'],
     })
-    const acceptImplicitRequest = AbiFunction.decodeResult(
-      acceptImplicitRequestFunctionAbi,
-      acceptImplicitRequestResult,
+    const acceptImplicitRequest = Hex.from(
+      AbiFunction.decodeResult(acceptImplicitRequestFunctionAbi, acceptImplicitRequestResult),
     )
-    const expectedResult = Attestation.generateImplicitRequestMagic(this._attestation, this.address)
-    return acceptImplicitRequest === Bytes.toHex(expectedResult)
+    const expectedResult = Bytes.toHex(Attestation.generateImplicitRequestMagic(this._attestation, wallet))
+    return acceptImplicitRequest === expectedResult
   }
 
   async signCall(
@@ -99,7 +97,6 @@ const acceptImplicitRequestFunctionAbi = {
         },
       ],
     },
-    { name: 'redirectUrlHash', type: 'bytes32', internalType: 'bytes32' },
     {
       name: 'call',
       type: 'tuple',
