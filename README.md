@@ -21,6 +21,9 @@
 - Run development mode across all packages:
   `pnpm dev`
 
+- Run tests:
+  `pnpm test`
+
 - Linting and formatting is enforced via git hooks
 
 ## License
