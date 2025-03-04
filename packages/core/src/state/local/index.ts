@@ -1,4 +1,11 @@
-import { Context, Payload, Signature, WalletConfig, Address as SequenceAddress } from '@0xsequence/sequence-primitives'
+import {
+  Context,
+  Payload,
+  Signature,
+  WalletConfig,
+  Address as SequenceAddress,
+  Extensions,
+} from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '..'
 import { MemoryStore } from './memory'
@@ -37,7 +44,10 @@ export interface Store {
 }
 
 export class Provider implements ProviderInterface {
-  constructor(private readonly store: Store = new MemoryStore()) {}
+  constructor(
+    private readonly store: Store = new MemoryStore(),
+    public readonly extensions: Extensions.Extensions = Extensions.Dev1,
+  ) {}
 
   getConfiguration(imageHash: Hex.Hex): Promise<WalletConfig.Configuration | undefined> {
     return this.store.loadConfig(imageHash)
@@ -278,6 +288,15 @@ export class Provider implements ProviderInterface {
           })
 
           return this.store.saveSignatureOfSubdigest(address, Hex.fromBytes(subdigest), topology.signature)
+        }
+      }
+
+      if (Signature.isSignedSapientSignerLeaf(topology)) {
+        switch (topology.address.toLowerCase()) {
+          case this.extensions.passkeys.toLowerCase():
+
+          default:
+            throw new Error(`Unsupported sapient signer: ${topology.address}`)
         }
       }
     }
