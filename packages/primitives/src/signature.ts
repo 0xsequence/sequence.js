@@ -948,8 +948,8 @@ function rawSignatureOfLeafToJson(sig: SignatureOfSignerLeaf | SignatureOfSapien
   if (sig.type === 'eth_sign' || sig.type === 'hash') {
     return {
       type: sig.type,
-      r: sig.r,
-      s: sig.s,
+      r: Hex.fromNumber(sig.r, { size: 32 }),
+      s: Hex.fromNumber(sig.s, { size: 32 }),
       yParity: sig.yParity,
     }
   }
@@ -1052,8 +1052,8 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
     case 'hash':
       return {
         type: obj.type,
-        r: obj.r,
-        s: obj.s,
+        r: Hex.toBigInt(obj.r),
+        s: Hex.toBigInt(obj.s),
         yParity: obj.yParity,
       }
     case 'erc1271':
