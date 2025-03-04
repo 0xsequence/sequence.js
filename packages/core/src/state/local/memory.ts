@@ -9,8 +9,15 @@ export class MemoryStore implements Store {
   private signerSubdigests = new Map<string, Set<string>>()
   private signatures = new Map<`0x${string}`, Signature.SignatureOfSignerLeaf>()
 
+  private sapientSignerSubdigests = new Map<string, Set<string>>()
+  private sapientSignatures = new Map<`0x${string}`, Signature.SignatureOfSapientSignerLeaf>()
+
   private getSignatureKey(signer: Address.Address, subdigest: Hex.Hex): string {
     return `${signer.toLowerCase()}-${subdigest.toLowerCase()}`
+  }
+
+  private getSapientSignatureKey(signer: Address.Address, subdigest: Hex.Hex, imageHash: Hex.Hex): string {
+    return `${signer.toLowerCase()}-${imageHash.toLowerCase()}-${subdigest.toLowerCase()}`
   }
 
   async loadConfig(imageHash: Hex.Hex): Promise<WalletConfig.Configuration | undefined> {
@@ -65,14 +72,45 @@ export class MemoryStore implements Store {
     const key = this.getSignatureKey(signer, subdigest)
     this.signatures.set(key as `0x${string}`, signature)
 
-    // Also track this subdigest for the signer
     const signerKey = signer.toLowerCase()
     const subdigestKey = subdigest.toLowerCase()
 
     if (!this.signerSubdigests.has(signerKey)) {
       this.signerSubdigests.set(signerKey, new Set())
     }
-
     this.signerSubdigests.get(signerKey)!.add(subdigestKey)
+  }
+
+  async loadSubdigestsOfSapientSigner(signer: Address.Address, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
+    const key = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
+    const subdigests = this.sapientSignerSubdigests.get(key)
+    return subdigests ? Array.from(subdigests).map((s) => s as Hex.Hex) : []
+  }
+
+  async loadSapientSignatureOfSubdigest(
+    signer: Address.Address,
+    subdigest: Hex.Hex,
+    imageHash: Hex.Hex,
+  ): Promise<Signature.SignatureOfSapientSignerLeaf | undefined> {
+    const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
+    return this.sapientSignatures.get(key as `0x${string}`)
+  }
+
+  async saveSapientSignatureOfSubdigest(
+    signer: Address.Address,
+    subdigest: Hex.Hex,
+    imageHash: Hex.Hex,
+    signature: Signature.SignatureOfSapientSignerLeaf,
+  ): Promise<void> {
+    const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
+    this.sapientSignatures.set(key as `0x${string}`, signature)
+
+    const signerKey = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
+    const subdigestKey = subdigest.toLowerCase()
+
+    if (!this.sapientSignerSubdigests.has(signerKey)) {
+      this.sapientSignerSubdigests.set(signerKey, new Set())
+    }
+    this.sapientSignerSubdigests.get(signerKey)!.add(subdigestKey)
   }
 }

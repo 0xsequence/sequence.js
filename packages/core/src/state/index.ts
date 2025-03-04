@@ -30,7 +30,7 @@ export interface Writer {
     wallet: Address.Address,
     chainId: bigint,
     payload: Payload.Parented,
-    signatures: Signature.SignatureOfSignerLeaf[],
+    signatures: Signature.RawTopology,
   ): MaybePromise<void>
 
   saveUpdate(

@@ -41,6 +41,20 @@ export interface Store {
     subdigest: Hex.Hex,
     signature: Signature.SignatureOfSignerLeaf,
   ) => Promise<void>
+
+  // sapient signatures
+  loadSubdigestsOfSapientSigner: (signer: Address.Address, imageHash: Hex.Hex) => Promise<Hex.Hex[]>
+  loadSapientSignatureOfSubdigest: (
+    signer: Address.Address,
+    subdigest: Hex.Hex,
+    imageHash: Hex.Hex,
+  ) => Promise<Signature.SignatureOfSapientSignerLeaf | undefined>
+  saveSapientSignatureOfSubdigest: (
+    signer: Address.Address,
+    subdigest: Hex.Hex,
+    imageHash: Hex.Hex,
+    signature: Signature.SignatureOfSapientSignerLeaf,
+  ) => Promise<void>
 }
 
 export class Provider implements ProviderInterface {
@@ -124,12 +138,10 @@ export class Provider implements ProviderInterface {
     wallet: Address.Address,
     chainId: bigint,
     payload: Payload.Parented,
-    signatures: Signature.SignatureOfSignerLeaf[],
+    signatures: Signature.RawTopology,
   ): void | Promise<void> {
     const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
-    for (const signature of signatures) {
-      this.store.saveSignatureOfSubdigest(wallet, subdigest, signature)
-    }
+    return this.saveSignature(subdigest, signatures)
   }
 
   async getConfigurationUpdates(
@@ -142,10 +154,13 @@ export class Provider implements ProviderInterface {
       return []
     }
 
-    const { signers } = WalletConfig.getSigners(fromConfig)
-    const subdigestsOfSigner = await Promise.all(signers.map((s) => this.store.loadSubdigestsOfSigner(s)))
-    const subdigests = [...new Set(subdigestsOfSigner.flat())]
+    const { signers, sapientSigners } = WalletConfig.getSigners(fromConfig)
+    const subdigestsOfSigner = await Promise.all([
+      ...signers.map((s) => this.store.loadSubdigestsOfSigner(s)),
+      ...sapientSigners.map((s) => this.store.loadSubdigestsOfSapientSigner(s.address, Hex.fromBytes(s.imageHash))),
+    ])
 
+    const subdigests = [...new Set(subdigestsOfSigner.flat())]
     const payloads = await Promise.all(subdigests.map((subdigest) => this.store.loadPayloadOfSubdigest(subdigest)))
 
     const nextCandidates = await Promise.all(
@@ -199,16 +214,36 @@ export class Provider implements ProviderInterface {
       const expectedSubdigest = Hex.fromBytes(
         Payload.hash(wallet, candidate.payload.chainId, candidate.payload.content),
       )
-      const signaturesOfSigners = await Promise.all(
-        signers.map(async (signer) => {
+      const signaturesOfSigners = await Promise.all([
+        ...signers.map(async (signer) => {
           return { signer, signature: await this.store.loadSignatureOfSubdigest(signer, expectedSubdigest) }
         }),
-      )
+        ...sapientSigners.map(async (signer) => {
+          return {
+            signer: signer.address,
+            imageHash: signer.imageHash,
+            signature: await this.store.loadSapientSignatureOfSubdigest(
+              signer.address,
+              expectedSubdigest,
+              Hex.fromBytes(signer.imageHash),
+            ),
+          }
+        }),
+      ])
 
       let totalWeight = 0n
       const encoded = Signature.fillLeaves(fromConfig.topology, (leaf) => {
         if (WalletConfig.isSapientSignerLeaf(leaf)) {
-          return undefined
+          const sapientSignature = signaturesOfSigners.find(
+            ({ signer, imageHash }: { signer: Address.Address; imageHash?: Bytes.Bytes }) => {
+              return imageHash && signer === leaf.address && imageHash === leaf.imageHash
+            },
+          )?.signature
+
+          if (sapientSignature) {
+            totalWeight += leaf.weight
+            return sapientSignature
+          }
         }
 
         const signature = signaturesOfSigners.find(({ signer }) => signer === leaf.address)?.signature
@@ -269,39 +304,53 @@ export class Provider implements ProviderInterface {
     await this.store.savePayloadOfSubdigest(Hex.fromBytes(subdigest), { content: payload, chainId: 0n, wallet })
     await this.saveConfig(configuration)
 
-    const walk = async (topology: Signature.RawTopology): Promise<void> => {
-      if (Signature.isRawNode(topology)) {
-        await Promise.all([walk(topology[0]), walk(topology[1])])
-        return
-      }
+    await this.saveSignature(Hex.fromBytes(subdigest), signature.configuration.topology)
+  }
 
-      if (Signature.isRawNestedLeaf(topology)) {
-        return walk(topology.tree)
-      }
+  async saveSignature(subdigest: Hex.Hex, topology: Signature.RawTopology): Promise<void> {
+    if (Signature.isRawNode(topology)) {
+      await Promise.all([this.saveSignature(subdigest, topology[0]), this.saveSignature(subdigest, topology[1])])
+      return
+    }
 
-      if (Signature.isRawSignerLeaf(topology)) {
-        const type = topology.signature.type
-        if (type === 'eth_sign' || type === 'hash') {
-          const address = Secp256k1.recoverAddress({
-            payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
-            signature: topology.signature,
-          })
+    if (Signature.isRawNestedLeaf(topology)) {
+      return this.saveSignature(subdigest, topology.tree)
+    }
 
-          return this.store.saveSignatureOfSubdigest(address, Hex.fromBytes(subdigest), topology.signature)
-        }
-      }
+    if (Signature.isRawSignerLeaf(topology)) {
+      const type = topology.signature.type
+      if (type === 'eth_sign' || type === 'hash') {
+        const address = Secp256k1.recoverAddress({
+          payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
+          signature: topology.signature,
+        })
 
-      if (Signature.isSignedSapientSignerLeaf(topology)) {
-        switch (topology.address.toLowerCase()) {
-          case this.extensions.passkeys.toLowerCase():
-
-          default:
-            throw new Error(`Unsupported sapient signer: ${topology.address}`)
-        }
+        return this.store.saveSignatureOfSubdigest(address, subdigest, topology.signature)
       }
     }
 
-    await walk(signature.configuration.topology)
+    if (Signature.isSignedSapientSignerLeaf(topology)) {
+      switch (topology.address.toLowerCase()) {
+        case this.extensions.passkeys.toLowerCase():
+          const decoded = Extensions.Passkeys.decode(topology.signature.data)
+          if (Extensions.Passkeys.rootFor(decoded.publicKey) !== subdigest) {
+            throw new Error('Incorrect passkey signature')
+          }
+
+          if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
+            throw new Error('Invalid passkey signature')
+          }
+
+          return this.store.saveSapientSignatureOfSubdigest(
+            topology.address,
+            subdigest,
+            Hex.fromBytes(topology.imageHash),
+            topology.signature,
+          )
+        default:
+          throw new Error(`Unsupported sapient signer: ${topology.address}`)
+      }
+    }
   }
 }
 

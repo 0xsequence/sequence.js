@@ -101,6 +101,16 @@ export type RawSignature = {
   erc6492?: { to: Address.Address; data: Bytes.Bytes }
 }
 
+export function isSignatureOfSapientSignerLeaf(signature: any): signature is SignatureOfSapientSignerLeaf {
+  return (
+    'type' in signature &&
+    (signature.type === 'sapient_compact' || signature.type === 'sapient') &&
+    typeof signature === 'object' &&
+    'address' in signature &&
+    'data' in signature
+  )
+}
+
 export function isRawSignature(signature: any): signature is RawSignature {
   return (
     typeof signature === 'object' &&

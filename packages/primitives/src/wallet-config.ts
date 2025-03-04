@@ -109,9 +109,12 @@ export function isTopology(cand: any): cand is Topology {
 
 export function getSigners(configuration: Configuration | Topology): {
   signers: Address.Address[]
+  sapientSigners: { address: Address.Address; imageHash: Bytes.Bytes }[]
   isComplete: boolean
 } {
   const signers = new Set<Address.Address>()
+  const sapientSigners = new Set<{ address: Address.Address; imageHash: Bytes.Bytes }>()
+
   let isComplete = true
 
   const scan = (topology: Topology) => {
@@ -122,6 +125,8 @@ export function getSigners(configuration: Configuration | Topology): {
       if (topology.weight) {
         signers.add(topology.address)
       }
+    } else if (isSapientSignerLeaf(topology)) {
+      sapientSigners.add({ address: topology.address, imageHash: topology.imageHash })
     } else if (isNodeLeaf(topology)) {
       isComplete = false
     } else if (isNestedLeaf(topology)) {
@@ -132,7 +137,7 @@ export function getSigners(configuration: Configuration | Topology): {
   }
 
   scan(isConfiguration(configuration) ? configuration.topology : configuration)
-  return { signers: Array.from(signers), isComplete }
+  return { signers: Array.from(signers), sapientSigners: Array.from(sapientSigners), isComplete }
 }
 
 export function getWeight(
