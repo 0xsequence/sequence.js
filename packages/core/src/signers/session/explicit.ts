@@ -121,7 +121,7 @@ async function validatePermission(
     // Extract value from calldata at offset
     const callValue = call.data.slice(Number(rule.offset), Number(rule.offset) + 32)
     // Apply mask
-    let value = callValue.map((b, i) => b & rule.mask[i]!)
+    let value: Uint8Array<ArrayBufferLike> = callValue.map((b, i) => b & rule.mask[i]!)
 
     if (rule.cumulative) {
       if (provider && usageHash) {
