@@ -58,13 +58,17 @@ export class Implicit implements SignerInterface {
     wallet: Address.Address,
     chainId: bigint,
     call: Payload.Call,
+    nonce: {
+      space: bigint
+      nonce: bigint
+    },
     provider: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
     const isSupported = await this.supportedCall(wallet, chainId, call, provider)
     if (!isSupported) {
       throw new Error('Unsupported call')
     }
-    const callHash = Payload.hashCall(call)
+    const callHash = SessionSignature.hashCallWithReplayProtection(call, chainId, nonce.space, nonce.nonce)
     const sessionSignature = Secp256k1.sign({ payload: callHash, privateKey: this._privateKey })
     return {
       attestation: this._attestation,

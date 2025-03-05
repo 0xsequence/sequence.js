@@ -14,6 +14,10 @@ export interface SignerInterface {
     wallet: Address.Address,
     chainId: bigint,
     call: Payload.Call,
+    nonce: {
+      space: bigint
+      nonce: bigint
+    },
     provider: Provider.Provider,
   ) => Promise<SessionSignature.SessionCallSignature>
 }

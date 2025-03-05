@@ -136,7 +136,7 @@ export class SessionManager implements SapientSigner {
       payload.calls.map(async (call) => {
         for (const signer of signers) {
           if (await signer.supportedCall(wallet, chainId, call, this._provider)) {
-            const signature = await signer.signCall(wallet, chainId, call, this._provider)
+            const signature = await signer.signCall(wallet, chainId, call, payload, this._provider)
             return {
               ...signature,
               signer: signer.address,

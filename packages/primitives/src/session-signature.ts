@@ -1,4 +1,4 @@
-import { Address, Bytes } from 'ox'
+import { Address, Bytes, Hash, Hex } from 'ox'
 import { Attestation, encode, encodeForJson, fromParsed } from './attestation'
 import { MAX_PERMISSIONS_COUNT } from './permission'
 import {
@@ -9,6 +9,7 @@ import {
 } from './session-config'
 import { RSY } from './signature'
 import { minBytesFor, packRSY } from './utils'
+import { Payload } from '.'
 
 export type ImplicitSessionCallSignature = {
   attestation: Attestation
@@ -173,4 +174,24 @@ export function encodeSessionCallSignatures(
   }
 
   return Bytes.concat(...parts)
+}
+
+// Helper
+
+export function hashCallWithReplayProtection(
+  call: Payload.Call,
+  chainId: bigint,
+  space: bigint,
+  nonce: bigint,
+): Hex.Hex {
+  return Hex.fromBytes(
+    Hash.keccak256(
+      Bytes.concat(
+        Bytes.fromNumber(Number(chainId), { size: 32 }),
+        Bytes.fromNumber(Number(space), { size: 32 }),
+        Bytes.fromNumber(Number(nonce), { size: 32 }),
+        Bytes.fromHex(Payload.hashCall(call)),
+      ),
+    ),
+  )
 }
