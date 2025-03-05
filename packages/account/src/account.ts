@@ -788,12 +788,44 @@ export class Account {
     return this.relayer(chainId).relay({ ...bootstrapTxs, chainId }, feeQuote)
   }
 
+  /**
+    * Signs a message.
+    * 
+    * This method will sign the message using the account associated with this signer
+    * and the specified chain ID. The message is already being prefixed with the EIP-191 prefix.
+    * 
+    * @param message - The message to sign. Can be a string or BytesLike.
+    * @returns A Promise that resolves to the signature as a hexadecimal string
+    * 
+    * @example
+    * ```typescript
+    * const message = "Hello, Sequence!";
+    * const signature = await account.signMessage(message);
+    * console.log(signature);
+    * // => "0x123abc..." (hexadecimal signature)
+    */
   signMessage(
-    message: ethers.BytesLike,
+    message: ethers.BytesLike | string,
     chainId: ethers.BigNumberish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
-    return this.signDigest(ethers.keccak256(message), chainId, true, cantValidateBehavior)
+    const messageBytes = typeof message === 'string' ? ethers.toUtf8Bytes(message) : message
+    const eip191prefix = ethers.toUtf8Bytes('\x19Ethereum Signed Message:\n')
+    
+    const messageHex = ethers.hexlify(messageBytes)
+    const prefixHex = ethers.hexlify(eip191prefix)
+    
+    let prefixedMessage: Uint8Array
+    
+    if (messageHex.startsWith(prefixHex)) {
+      prefixedMessage = ethers.getBytes(messageBytes)
+    } else {
+      prefixedMessage = ethers.getBytes(
+        ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes])
+      )
+    }
+    
+    return this.signDigest(ethers.keccak256(prefixedMessage), chainId, true, cantValidateBehavior)
   }
 
   async signTransactions(
