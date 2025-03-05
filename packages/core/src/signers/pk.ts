@@ -18,7 +18,11 @@ export class Pk implements SignerInterface {
     payload: PayloadTypes.Parented,
   ): Promise<SignatureTypes.SignatureOfSignerLeaf> {
     const hash = Payload.hash(wallet, chainId, payload)
-    const signature = Secp256k1.sign({ payload: hash, privateKey: this.privateKey })
+    return this.signDigest(hash)
+  }
+
+  async signDigest(digest: Bytes.Bytes): Promise<SignatureTypes.SignatureOfSignerLeaf> {
+    const signature = Secp256k1.sign({ payload: digest, privateKey: this.privateKey })
     return { ...signature, type: 'hash' }
   }
 }

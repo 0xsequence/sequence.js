@@ -1,9 +1,10 @@
 import { Attestation, Payload } from '@0xsequence/sequence-primitives'
 import { Identity, Session } from '@0xsequence/sequence-wdk'
-import { Address, Bytes, Provider } from 'ox'
-import { MOCK_IMPLICIT_CONTRACT } from './constants'
+import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
+import { MOCK_IMPLICIT_CONTRACT, CAN_RUN_LIVE, RPC_URL, PRIVATE_KEY } from './constants'
+import { Signers } from '@0xsequence/sequence-core'
 
-describe('SessionManager', () => {
+describe('SessionManager (mocked)', () => {
   // Mock provider for testing
   const mockProvider = jest.mocked<Provider.Provider>({
     request: jest.fn().mockResolvedValue(Bytes.fromHex(MOCK_IMPLICIT_CONTRACT)),
@@ -80,7 +81,6 @@ describe('SessionManager', () => {
 
     // Configure the provider mock
     const generateImplicitRequestMagicResult = Attestation.generateImplicitRequestMagic(attestation, testWallet)
-    console.log('in test block', Bytes.toHex(generateImplicitRequestMagicResult))
     mockProvider.request.mockResolvedValue(generateImplicitRequestMagicResult)
 
     // Create a test transaction
@@ -152,3 +152,59 @@ describe('SessionManager', () => {
     expect(signature.data).toBeDefined()
   })
 })
+
+// Only run real tests when RPC is provided
+if (CAN_RUN_LIVE) {
+  describe('SessionManager (live)', () => {
+    const walletAddress: Address.Address = '0x1234567890123456789012345678901234567890'
+
+    const rpcTransport = RpcTransport.fromHttp(RPC_URL!!)
+    const provider = Provider.from(rpcTransport)
+
+    // Mock the identity signer using a local private key instead of calling nitro
+    const pkHex = Hex.from(PRIVATE_KEY as `0x${string}`)
+    const pk = new Signers.Pk(pkHex)
+    const mockIdentitySigner = pk as unknown as Identity.IdentitySigner
+
+    const sessionManager = Session.SessionManager.createEmpty(mockIdentitySigner.address, {
+      provider,
+    })
+
+    it('should create and sign with an implicit session', async () => {
+      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+
+      const attestation = {
+        identityType: new Uint8Array(4),
+        issuerHash: new Uint8Array(32),
+        audienceHash: new Uint8Array(32),
+        applicationData: new Uint8Array(),
+        authData: {
+          redirectUrl: 'https://test.com/redirect',
+        },
+      }
+
+      const implicitSession = await sessionManager.createImplicitSession(mockIdentitySigner, attestation)
+      const payload: Payload.Calls = {
+        type: 'call',
+        nonce: 0n,
+        space: 0n,
+        calls: [
+          {
+            to: MOCK_IMPLICIT_CONTRACT,
+            value: 0n,
+            data: new Uint8Array(),
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          },
+        ],
+      }
+      const signature = await sessionManager.signSapient(walletAddress, chainId, payload)
+
+      // Check if the signature is valid
+      const isValid = await sessionManager.isValidSapientSignature(walletAddress, chainId, payload, signature)
+      expect(isValid).toBe(true)
+    })
+  })
+}
