@@ -1,5 +1,5 @@
 import { Hex, Bytes, Address } from 'ox'
-import { SapientSigner, Signer } from '../wallet'
+import { SapientSigner } from '../wallet'
 import { Payload, Extensions } from '@0xsequence/sequence-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
 import { WebAuthnP256 } from 'ox'
@@ -7,17 +7,21 @@ import { WebAuthnP256 } from 'ox'
 export type PasskeyOptions = {
   extensions: Pick<Extensions.Extensions, 'passkeys'>
   publicKey: Extensions.Passkeys.PublicKey
-
   credentialId: string
 }
 
 export class Passkey implements SapientSigner {
+  public readonly credentialId: string
+
+  public readonly publicKey: Extensions.Passkeys.PublicKey
   public readonly address: Address.Address
   public readonly imageHash: Hex.Hex
 
-  constructor(public readonly options: PasskeyOptions) {
+  constructor(options: PasskeyOptions) {
     this.imageHash = Extensions.Passkeys.rootFor(options.publicKey)
     this.address = options.extensions.passkeys
+    this.publicKey = options.publicKey
+    this.credentialId = options.credentialId
   }
 
   static async create(
@@ -26,12 +30,9 @@ export class Passkey implements SapientSigner {
     options: { requireUserVerification: boolean } = { requireUserVerification: true },
   ) {
     // Use WebAuthnP256's built-in secure challenge generation
-    const challengeAndId = Bytes.random(32)
     const credential = await WebAuthnP256.createCredential({
-      challenge: challengeAndId,
       user: {
         name: `Sequence (${name})`,
-        id: challengeAndId,
       },
     })
 
@@ -64,8 +65,8 @@ export class Passkey implements SapientSigner {
 
     const response = await WebAuthnP256.sign({
       challenge,
-      credentialId: this.options.credentialId,
-      userVerification: this.options.publicKey.requireUserVerification ? 'required' : 'discouraged',
+      credentialId: this.credentialId,
+      userVerification: this.publicKey.requireUserVerification ? 'required' : 'discouraged',
     })
 
     const authenticatorData = Bytes.fromHex(response.metadata.authenticatorData)
@@ -73,7 +74,7 @@ export class Passkey implements SapientSigner {
     const sBytes = Bytes.fromNumber(response.signature.s)
 
     const signature = Extensions.Passkeys.encode({
-      publicKey: this.options.publicKey,
+      publicKey: this.publicKey,
       r: rBytes,
       s: sBytes,
       authenticatorData,

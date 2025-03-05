@@ -5,14 +5,19 @@ export type PublicKey = {
   requireUserVerification: boolean
   x: Hex.Hex
   y: Hex.Hex
+  metadata?: Hex.Hex
 }
 
 export function rootFor(publicKey: PublicKey): Hex.Hex {
   const a = keccak256(
     Bytes.concat(Bytes.padLeft(Bytes.fromHex(publicKey.x), 32), Bytes.padLeft(Bytes.fromHex(publicKey.y), 32)),
   )
-  const b = Bytes.padLeft(publicKey.requireUserVerification ? Bytes.from([1]) : Bytes.from([0]), 32)
-  return Hex.fromBytes(keccak256(Bytes.concat(b, a)))
+
+  const ruv = Bytes.padLeft(publicKey.requireUserVerification ? Bytes.from([1]) : Bytes.from([0]), 32)
+  const metadata = publicKey.metadata ? Bytes.fromHex(publicKey.metadata) : Bytes.padLeft(Bytes.from([]), 32)
+
+  const b = keccak256(Bytes.concat(ruv, metadata))
+  return Hex.fromBytes(keccak256(Bytes.concat(a, b)))
 }
 
 export type DecodedSignature = {
@@ -50,7 +55,17 @@ export function encode(decoded: DecodedSignature): Bytes.Bytes {
   flags |= (bytesChallengeIndex - 1) << 3 // 0x08 bit
   flags |= (bytesTypeIndex - 1) << 4 // 0x10 bit
 
+  // Set metadata flag if metadata exists
+  if (decoded.publicKey.metadata) {
+    flags |= 1 << 6 // 0x40 bit
+  }
+
   let result: Bytes.Bytes = Bytes.from([flags])
+
+  // Add metadata if it exists
+  if (decoded.publicKey.metadata) {
+    result = Bytes.concat(result, Bytes.fromHex(decoded.publicKey.metadata))
+  }
 
   result = Bytes.concat(result, Bytes.padLeft(Bytes.fromNumber(authDataSize), bytesAuthDataSize))
   result = Bytes.concat(result, decoded.authenticatorData)
@@ -107,6 +122,21 @@ export function decode(data: Bytes.Bytes): DecodedSignature & { challengeIndex: 
   const bytesClientDataJSONSize = ((flags >> 2) & 0x01) + 1
   const bytesChallengeIndex = ((flags >> 3) & 0x01) + 1
   const bytesTypeIndex = ((flags >> 4) & 0x01) + 1
+  const hasMetadata = ((flags >> 6) & 0x01) === 0x01
+
+  // Check if fallback to abi decode is needed
+  if ((flags & 0x20) !== 0) {
+    throw new Error('Fallback to abi decode is not supported in this implementation')
+  }
+
+  let metadata: Hex.Hex | undefined
+
+  // Read metadata if present
+  if (hasMetadata) {
+    const metadataBytes = Bytes.slice(data, offset, offset + 32)
+    metadata = Hex.fromBytes(metadataBytes)
+    offset += 32
+  }
 
   const authDataSize = Bytes.toNumber(Bytes.slice(data, offset, offset + bytesAuthDataSize))
   offset += bytesAuthDataSize
@@ -138,6 +168,7 @@ export function decode(data: Bytes.Bytes): DecodedSignature & { challengeIndex: 
       requireUserVerification,
       x: Hex.fromBytes(xBytes),
       y: Hex.fromBytes(yBytes),
+      metadata,
     },
     r,
     s,
