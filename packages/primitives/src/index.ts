@@ -11,4 +11,4 @@ export * as Signature from './signature' //FIXME This name conflicts with oxlib
 export * as Utils from './utils'
 export * as WalletConfig from './wallet-config'
 export * as Context from './context'
-export * as Extensions from './extensions'
+export * as Extensions from './extensions/index'
