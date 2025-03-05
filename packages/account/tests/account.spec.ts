@@ -1,7 +1,7 @@
 import { walletContracts } from '@0xsequence/abi'
 import { commons, v1, v2 } from '@0xsequence/core'
-import { migrator } from '@0xsequence/migration'
-import { NetworkConfig } from '@0xsequence/network'
+import type { migrator } from '@0xsequence/migration'
+import type { NetworkConfig } from '@0xsequence/network'
 import { LocalRelayer, Relayer } from '@0xsequence/relayer'
 import { tracker, trackers } from '@0xsequence/sessions'
 import { Orchestrator } from '@0xsequence/signhub'
@@ -9,7 +9,7 @@ import * as utils from '@0xsequence/tests'
 import { Wallet } from '@0xsequence/wallet'
 import * as chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { ethers } from 'ethers'
+import { concat, ethers, MessagePrefix, toUtf8Bytes } from 'ethers'
 import hardhat from 'hardhat'
 
 import { Account } from '../src/account'
@@ -284,7 +284,7 @@ describe('Account', () => {
 
       const valid = await commons.EIP1271.isValidEIP1271Signature(
         account.address,
-        ethers.keccak256(msg),
+        ethers.hashMessage(msg),
         sig,
         networks[0].provider!
       )
@@ -300,7 +300,7 @@ describe('Account', () => {
 
       const valid = await commons.EIP1271.isValidEIP1271Signature(
         accountOuter.address,
-        ethers.keccak256(msg),
+        ethers.hashMessage(msg),
         sig,
         networks[0].provider!
       )
@@ -369,7 +369,7 @@ describe('Account', () => {
       const msg = ethers.toUtf8Bytes('Hello World')
       const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
 
-      const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
+      const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.hashMessage(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -382,7 +382,7 @@ describe('Account', () => {
 
       const valid = await accountOuter
         .reader(networks[0].chainId)
-        .isValidSignature(accountOuter.address, ethers.keccak256(msg), sig)
+        .isValidSignature(accountOuter.address, ethers.hashMessage(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -423,7 +423,7 @@ describe('Account', () => {
 
       const valid = await accountOuter
         .reader(networks[0].chainId)
-        .isValidSignature(accountOuter.address, ethers.keccak256(msg), sig)
+        .isValidSignature(accountOuter.address, ethers.hashMessage(msg), sig)
 
       expect(valid).to.be.true
     })
@@ -573,7 +573,32 @@ describe('Account', () => {
 
         const valid = await commons.EIP1271.isValidEIP1271Signature(
           account.address,
-          ethers.keccak256(msg),
+          ethers.hashMessage(msg),
+          sig,
+          networks[0].provider!
+        )
+
+        expect(valid).to.be.true
+      })
+
+      it('Should sign a message, already prefixed with EIP-191', async () => {
+        const msg = ethers.toUtf8Bytes('Hello World')
+
+        const prefixedMessage = concat([
+          toUtf8Bytes(MessagePrefix),
+          toUtf8Bytes(String(msg.length)),
+          msg
+        ])
+        
+        const sig = await account.signMessage(prefixedMessage, networks[0].chainId)
+
+        const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)
+        expect(canOnchainValidate).to.be.false
+        await account.doBootstrap(networks[0].chainId)
+
+        const valid = await commons.EIP1271.isValidEIP1271Signature(
+          account.address,
+          ethers.hashMessage(msg),
           sig,
           networks[0].provider!
         )
@@ -627,7 +652,7 @@ describe('Account', () => {
 
           const valid = await commons.EIP1271.isValidEIP1271Signature(
             account.address,
-            ethers.keccak256(msg),
+            ethers.hashMessage(msg),
             sig,
             networks[0].provider!
           )
@@ -705,7 +730,7 @@ describe('Account', () => {
 
           const valid = await commons.EIP1271.isValidEIP1271Signature(
             account.address,
-            ethers.keccak256(msg),
+            ethers.hashMessage(msg),
             sig,
             networks[0].provider!
           )
@@ -1281,7 +1306,7 @@ describe('Account', () => {
           const msg = ethers.toUtf8Bytes('I like that you are reading our tests')
           const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
 
-          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.hashMessage(msg), sig)
 
           expect(valid).to.be.true
         })
@@ -1297,7 +1322,7 @@ describe('Account', () => {
           const msg = ethers.toUtf8Bytes('Sending a hug')
           const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
 
-          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.hashMessage(msg), sig)
 
           expect(valid).to.be.false
         })
@@ -1316,7 +1341,7 @@ describe('Account', () => {
           const msg = ethers.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'eip6492')
 
-          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.hashMessage(msg), sig)
 
           expect(valid).to.be.true
         })
@@ -1350,7 +1375,7 @@ describe('Account', () => {
 
           const msg = ethers.toUtf8Bytes('Everything seems to be working fine so far')
           const sig = await account.signMessage(msg, networks[0].chainId, 'ignore')
-          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.keccak256(msg), sig)
+          const valid = await account.reader(networks[0].chainId).isValidSignature(account.address, ethers.hashMessage(msg), sig)
 
           expect(valid).to.be.false
         })

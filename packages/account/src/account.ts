@@ -2,12 +2,12 @@ import { walletContracts } from '@0xsequence/abi'
 import { commons, universal } from '@0xsequence/core'
 import { migrator, defaults, version } from '@0xsequence/migration'
 import { ChainId, NetworkConfig } from '@0xsequence/network'
-import { FeeOption, FeeQuote, isRelayer, Relayer, RpcRelayer } from '@0xsequence/relayer'
-import { tracker } from '@0xsequence/sessions'
-import { SignatureOrchestrator } from '@0xsequence/signhub'
+import { type FeeOption, type FeeQuote, isRelayer, type Relayer, RpcRelayer } from '@0xsequence/relayer'
+import type { tracker } from '@0xsequence/sessions'
+import type { SignatureOrchestrator } from '@0xsequence/signhub'
 import { encodeTypedDataDigest, getFetchRequest } from '@0xsequence/utils'
 import { Wallet } from '@0xsequence/wallet'
-import { ethers } from 'ethers'
+import { ethers, MessagePrefix } from 'ethers'
 import { AccountSigner, AccountSignerOptions } from './signer'
 
 export type AccountStatus = {
@@ -789,43 +789,36 @@ export class Account {
   }
 
   /**
-    * Signs a message.
-    * 
-    * This method will sign the message using the account associated with this signer
-    * and the specified chain ID. The message is already being prefixed with the EIP-191 prefix.
-    * 
-    * @param message - The message to sign. Can be a string or BytesLike.
-    * @returns A Promise that resolves to the signature as a hexadecimal string
-    * 
-    * @example
-    * ```typescript
-    * const message = "Hello, Sequence!";
-    * const signature = await account.signMessage(message);
-    * console.log(signature);
-    * // => "0x123abc..." (hexadecimal signature)
-    */
+   * Signs a message.
+   * 
+   * This method will sign the message using the account associated with this signer
+   * and the specified chain ID. If the message is already prefixed with the EIP-191 
+   * prefix, it will be hashed directly. Otherwise, it will be prefixed before hashing.
+   * 
+   * @param message - The message to sign. Can be a string or BytesLike.
+   * @param chainId - The chain ID to use for signing
+   * @param cantValidateBehavior - Behavior when the wallet cannot validate on-chain
+   * @returns A Promise that resolves to the signature as a hexadecimal string
+   */
   signMessage(
-    message: ethers.BytesLike | string,
+    message: ethers.BytesLike,
     chainId: ethers.BigNumberish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
-    const messageBytes = typeof message === 'string' ? ethers.toUtf8Bytes(message) : message
-    const eip191prefix = ethers.toUtf8Bytes('\x19Ethereum Signed Message:\n')
+    const messageHex = ethers.hexlify(message);
+    const prefixHex = ethers.hexlify(ethers.toUtf8Bytes(MessagePrefix));
     
-    const messageHex = ethers.hexlify(messageBytes)
-    const prefixHex = ethers.hexlify(eip191prefix)
+    let digest: string;
     
-    let prefixedMessage: Uint8Array
-    
-    if (messageHex.startsWith(prefixHex)) {
-      prefixedMessage = ethers.getBytes(messageBytes)
+    // We check if the message is already prefixed with EIP-191
+    // This will avoid breaking changes for codebases where the message is already prefixed
+    if (messageHex.substring(2).startsWith(prefixHex.substring(2))) {
+      digest = ethers.keccak256(message);
     } else {
-      prefixedMessage = ethers.getBytes(
-        ethers.concat([eip191prefix, ethers.toUtf8Bytes(String(messageBytes.length)), messageBytes])
-      )
+      digest = ethers.hashMessage(message);
     }
     
-    return this.signDigest(ethers.keccak256(prefixedMessage), chainId, true, cantValidateBehavior)
+    return this.signDigest(digest, chainId, true, cantValidateBehavior);
   }
 
   async signTransactions(
