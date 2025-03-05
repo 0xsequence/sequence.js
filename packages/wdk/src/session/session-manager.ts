@@ -17,7 +17,7 @@ type SessionManagerConfiguration = {
   address?: Address.Address
 }
 
-const DEFAULT_SESSION_MANAGER_ADDRESS: Address.Address = '0x3e1b5D56980B339B410B57e5Dd3d3FA93FF14C4F'
+const DEFAULT_SESSION_MANAGER_ADDRESS: Address.Address = '0x0D3b3497f4B7E99239aE748Fc45216F45431B105'
 
 export class SessionManager implements SapientSigner {
   readonly address: Address.Address
