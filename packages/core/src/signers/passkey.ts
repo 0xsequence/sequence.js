@@ -1,5 +1,5 @@
 import { Hex, Bytes, Address } from 'ox'
-import { Signer } from '../wallet'
+import { SapientSigner, Signer } from '../wallet'
 import { Payload, Extensions } from '@0xsequence/sequence-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
 import { WebAuthnP256 } from 'ox'
@@ -11,16 +11,17 @@ export type PasskeyOptions = {
   credentialId: string
 }
 
-export class Passkey implements Signer {
+export class Passkey implements SapientSigner {
   public readonly address: Address.Address
-  public readonly rootHash: Hex.Hex
+  public readonly imageHash: Hex.Hex
 
   constructor(public readonly options: PasskeyOptions) {
-    this.rootHash = Extensions.Passkeys.rootFor(options.publicKey)
+    this.imageHash = Extensions.Passkeys.rootFor(options.publicKey)
     this.address = options.extensions.passkeys
   }
 
   static async create(
+    name: string,
     extensions: Pick<Extensions.Extensions, 'passkeys'>,
     options: { requireUserVerification: boolean } = { requireUserVerification: true },
   ) {
@@ -29,7 +30,7 @@ export class Passkey implements Signer {
     const credential = await WebAuthnP256.createCredential({
       challenge: challengeAndId,
       user: {
-        name: 'Sequence (WIP DEVELOPMENT)',
+        name: `Sequence (${name})`,
         id: challengeAndId,
       },
     })
@@ -54,7 +55,7 @@ export class Passkey implements Signer {
     payload: Payload.Parented,
     imageHash: Hex.Hex,
   ): Promise<SignatureTypes.SignatureOfSapientSignerLeaf> {
-    if (this.rootHash !== imageHash) {
+    if (this.imageHash !== imageHash) {
       // TODO: This should never get called, why do we have this?
       throw new Error('Unexpected image hash')
     }

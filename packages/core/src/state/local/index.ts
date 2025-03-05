@@ -333,8 +333,10 @@ export class Provider implements ProviderInterface {
       switch (topology.address.toLowerCase()) {
         case this.extensions.passkeys.toLowerCase():
           const decoded = Extensions.Passkeys.decode(topology.signature.data)
-          if (Extensions.Passkeys.rootFor(decoded.publicKey) !== subdigest) {
-            throw new Error('Incorrect passkey signature')
+          if (Extensions.Passkeys.rootFor(decoded.publicKey) !== Hex.fromBytes(topology.imageHash)) {
+            throw new Error(
+              `Incorrect passkey signature: ${Extensions.Passkeys.rootFor(decoded.publicKey)} !== ${Hex.fromBytes(topology.imageHash)}`,
+            )
           }
 
           if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {

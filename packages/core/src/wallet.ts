@@ -37,6 +37,7 @@ export type WalletStatus = {
 
 export class Wallet {
   private readonly signers = new Map<Address.Address, { signer: Signer; isTrusted: boolean }>()
+  private readonly sapientSigners = new Map<string, { signer: SapientSigner; isTrusted: boolean }>()
   private readonly options: WalletOptions & { stateProvider: State.Provider }
 
   constructor(
@@ -59,8 +60,20 @@ export class Wallet {
     this.signers.set(await signer.address, { signer, isTrusted })
   }
 
+  async setSapientSigner(signer: SapientSigner, isTrusted = false) {
+    this.sapientSigners.set(this.getSapientKey(await signer.address, await signer.imageHash), { signer, isTrusted })
+  }
+
+  private getSapientKey(address: Address.Address, imageHash?: Hex.Hex): string {
+    return `${address}:${imageHash ?? 'any'}`
+  }
+
   removeSigner(address: Address.Address) {
     this.signers.delete(address)
+  }
+
+  removeSapientSigner(address: Address.Address, imageHash?: Hex.Hex) {
+    this.sapientSigners.delete(this.getSapientKey(address, imageHash))
   }
 
   async isDeployed(provider: Provider.Provider): Promise<boolean> {
@@ -204,7 +217,7 @@ export class Wallet {
       )
 
       const payload: Payload.Calls = { type: 'call', space, nonce, calls }
-      const signature = await this.sign(payload, { ...options, provider })
+      const signature = await this.sign(payload, { ...options, provider, skip6492: true })
 
       return {
         to: this.address,
@@ -218,7 +231,7 @@ export class Wallet {
 
       const payload: Payload.Calls = { type: 'call', space, nonce, calls }
       const [signature, deploy] = await Promise.all([
-        this.sign(payload, { ...options, provider }),
+        this.sign(payload, { ...options, provider, skip6492: true }),
         this.getDeployTransaction(),
       ])
 
@@ -263,6 +276,7 @@ export class Wallet {
   async sign(
     payload: Payload.Parented,
     options?: {
+      skip6492?: boolean
       provider?: Provider.Provider
       trustSigners?: boolean
       onSignerError?: WalletConfig.SignerErrorCallback
@@ -365,85 +379,92 @@ export class Wallet {
 
           return signature
         },
-        signSapient: provider
-          ? (leaf) => {
-              const signer = this.signers.get(leaf.address)
-              if (!signer) {
-                throw new Error(`no signer ${leaf.address}`)
-              }
-              if (typeof signer.signer.signSapient !== 'function') {
-                throw new Error(`${leaf.address} does not implement Signer.signSapient()`)
-              }
+        signSapient: (leaf) => {
+          // If we have a signer for this imageHash, we give it priority
+          // if not, then we fetch the signer for any imageHash (undefined)
+          const signer =
+            this.sapientSigners.get(this.getSapientKey(leaf.address, Hex.fromBytes(leaf.imageHash))) ||
+            this.sapientSigners.get(this.getSapientKey(leaf.address, undefined))
 
-              const signature = WalletConfig.normalizeSignerSignature(
-                signer.signer.signSapient(this.address, chainId, payload, Bytes.toHex(leaf.imageHash)),
+          if (!signer) {
+            throw new Error(`no signer ${leaf.address}`)
+          }
+          if (typeof signer.signer.signSapient !== 'function') {
+            throw new Error(`${leaf.address} does not implement Signer.signSapient()`)
+          }
+
+          const signature = WalletConfig.normalizeSignerSignature(
+            signer.signer.signSapient(this.address, chainId, payload, Bytes.toHex(leaf.imageHash)),
+          )
+
+          signature.signature = signature.signature.then((signature) => {
+            if (signature.address !== leaf.address) {
+              throw new Error(
+                `expected sapient signature by ${leaf.address}, but received signature from ${signature.address}`,
               )
+            }
 
-              signature.signature = signature.signature.then((signature) => {
-                if (signature.address !== leaf.address) {
-                  throw new Error(
-                    `expected sapient signature by ${leaf.address}, but received signature from ${signature.address}`,
-                  )
+            return signature
+          })
+
+          if (options?.trustSigners === false || (!options?.trustSigners && !signer.isTrusted)) {
+            signature.signature = signature.signature.then(async (signature) => {
+              if (!provider) {
+                throw new Error(`sapient signer ${leaf.address} cannot sign for a no-chain-id signature`)
+              }
+
+              const digest = Payload.hash(this.address, chainId, payload)
+
+              switch (signature.type) {
+                case 'sapient': {
+                  const imageHash = await provider.request({
+                    method: 'eth_call',
+                    params: [
+                      {
+                        to: leaf.address,
+                        data: AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE, [
+                          Payload.encodeSapient(chainId, payload),
+                          Bytes.toHex(signature.data),
+                        ]),
+                      },
+                    ],
+                  })
+                  if (imageHash !== Bytes.toHex(leaf.imageHash)) {
+                    throw new Error(
+                      `invalid sapient signature for ${leaf.type} signer ${leaf.address}: expected ${leaf.imageHash}, derived ${imageHash}`,
+                    )
+                  }
+                  break
                 }
 
-                return signature
-              })
-
-              if (options?.trustSigners === false || (!options?.trustSigners && !signer.isTrusted)) {
-                signature.signature = signature.signature.then(async (signature) => {
-                  const digest = Payload.hash(this.address, chainId, payload)
-
-                  switch (signature.type) {
-                    case 'sapient': {
-                      const imageHash = await provider.request({
-                        method: 'eth_call',
-                        params: [
-                          {
-                            to: leaf.address,
-                            data: AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE, [
-                              Payload.encodeSapient(chainId, payload),
-                              Bytes.toHex(signature.data),
-                            ]),
-                          },
-                        ],
-                      })
-                      if (imageHash !== Bytes.toHex(leaf.imageHash)) {
-                        throw new Error(
-                          `invalid sapient signature for ${leaf.type} signer ${leaf.address}: expected ${leaf.imageHash}, derived ${imageHash}`,
-                        )
-                      }
-                      break
-                    }
-
-                    case 'sapient_compact': {
-                      const imageHash = await provider.request({
-                        method: 'eth_call',
-                        params: [
-                          {
-                            to: leaf.address,
-                            data: AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE_COMPACT, [
-                              Bytes.toHex(digest),
-                              Bytes.toHex(signature.data),
-                            ]),
-                          },
-                        ],
-                      })
-                      if (imageHash !== Bytes.toHex(leaf.imageHash)) {
-                        throw new Error(
-                          `invalid sapient signature for ${leaf.type} signer ${leaf.address}: expected ${leaf.imageHash}, derived ${imageHash}`,
-                        )
-                      }
-                      break
-                    }
+                case 'sapient_compact': {
+                  const imageHash = await provider.request({
+                    method: 'eth_call',
+                    params: [
+                      {
+                        to: leaf.address,
+                        data: AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE_COMPACT, [
+                          Bytes.toHex(digest),
+                          Bytes.toHex(signature.data),
+                        ]),
+                      },
+                    ],
+                  })
+                  if (imageHash !== Bytes.toHex(leaf.imageHash)) {
+                    throw new Error(
+                      `invalid sapient signature for ${leaf.type} signer ${leaf.address}: expected ${leaf.imageHash}, derived ${imageHash}`,
+                    )
                   }
-
-                  return signature
-                })
+                  break
+                }
               }
 
               return signature
-            }
-          : undefined,
+            })
+          }
+
+          return signature
+        },
       },
       {
         threshold: configuration.threshold,
@@ -455,7 +476,9 @@ export class Wallet {
     )
 
     const erc6492 =
-      !status.isDeployed && deployHash ? Erc6492.deploy(deployHash.deployHash, deployHash.context) : undefined
+      !status.isDeployed && deployHash && !options?.skip6492
+        ? Erc6492.deploy(deployHash.deployHash, deployHash.context)
+        : undefined
 
     return {
       noChainId: !chainId,
@@ -469,13 +492,18 @@ export class Wallet {
 export interface Signer {
   readonly address: MaybePromise<Address.Address>
 
-  sign?: (
+  sign: (
     wallet: Address.Address,
     chainId: bigint,
     payload: Payload.Parented,
   ) => WalletConfig.SignerSignature<SequenceSignature.SignatureOfSignerLeaf>
+}
 
-  signSapient?: (
+export interface SapientSigner {
+  readonly address: MaybePromise<Address.Address>
+  readonly imageHash: MaybePromise<Hex.Hex | undefined>
+
+  signSapient: (
     wallet: Address.Address,
     chainId: bigint,
     payload: Payload.Parented,

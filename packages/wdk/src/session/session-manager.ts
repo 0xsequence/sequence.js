@@ -1,4 +1,4 @@
-import { Signer as SignerInterface, Signers } from '@0xsequence/sequence-core'
+import { SapientSigner, Signers } from '@0xsequence/sequence-core'
 import {
   Attestation,
   Config,
@@ -7,7 +7,7 @@ import {
   SessionSignature,
   Signature as SignatureTypes,
 } from '@0xsequence/sequence-primitives'
-import { Address, Provider, Secp256k1 } from 'ox'
+import { Address, Hex, Provider, Secp256k1 } from 'ox'
 import { IdentitySigner } from '../identity'
 
 type SessionManagerConfiguration = {
@@ -18,7 +18,7 @@ type SessionManagerConfiguration = {
 
 const DEFAULT_SESSION_MANAGER_ADDRESS: Address.Address = '0x3e1b5D56980B339B410B57e5Dd3d3FA93FF14C4F'
 
-export class SessionManager implements SignerInterface {
+export class SessionManager implements SapientSigner {
   readonly address: Address.Address
   private _topology: SessionConfig.SessionsTopology
   private _provider: Provider.Provider
@@ -46,9 +46,9 @@ export class SessionManager implements SignerInterface {
     return this._topology
   }
 
-  get imageHash() {
+  get imageHash(): Hex.Hex {
     const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(this._topology)
-    return Config.hashConfigurationTree(configurationTree)
+    return Hex.fromBytes(Config.hashConfigurationTree(configurationTree))
   }
 
   withProvider(provider: Provider.Provider): SessionManager {
