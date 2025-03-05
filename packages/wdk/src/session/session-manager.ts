@@ -2,12 +2,13 @@ import { SapientSigner, Signers } from '@0xsequence/sequence-core'
 import {
   Attestation,
   Config,
+  Constants,
   Payload,
   SessionConfig,
   SessionSignature,
   Signature as SignatureTypes,
 } from '@0xsequence/sequence-primitives'
-import { Address, Hex, Provider, Secp256k1 } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
 import { IdentitySigner } from '../identity'
 
 type SessionManagerConfiguration = {
@@ -71,9 +72,11 @@ export class SessionManager implements SapientSigner {
     identitySigner: IdentitySigner,
     attestationParams: Signers.Session.AttestationParams,
   ): Promise<Signers.Session.Implicit> {
+    const implicitPrivateKey = Secp256k1.randomPrivateKey()
+    const implicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: implicitPrivateKey }))
     const attestation: Attestation.Attestation = {
       ...attestationParams,
-      approvedSigner: identitySigner.address,
+      approvedSigner: implicitAddress,
     }
     const attestationHash = Attestation.hash(attestation)
     const identitySignature = await identitySigner.signDigest(attestationHash)
@@ -82,8 +85,7 @@ export class SessionManager implements SapientSigner {
       throw new Error('Identity signature must be a hash')
     }
 
-    const privateKey = Secp256k1.randomPrivateKey()
-    const signer = new Signers.Session.Implicit(privateKey, attestation, identitySignature, this.address)
+    const signer = new Signers.Session.Implicit(implicitPrivateKey, attestation, identitySignature, this.address)
     this._implicitSigners.push(signer)
     return signer
   }
@@ -158,5 +160,30 @@ export class SessionManager implements SapientSigner {
       address: this.address,
       data: SessionSignature.encodeSessionCallSignatures(signatures, this.topology, explicitSigners, implicitSigners),
     }
+  }
+
+  async isValidSapientSignature(
+    wallet: Address.Address,
+    chainId: bigint,
+    payload: Payload.Parented,
+    signature: SignatureTypes.SignatureOfSapientSignerLeaf,
+  ): Promise<boolean> {
+    if (!Payload.isCalls(payload)) {
+      // Only calls are supported
+      return false
+    }
+    const encodedPayload = Payload.encodeSapient(chainId, payload)
+    const encodedCallData = AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE, [
+      encodedPayload,
+      Bytes.toHex(signature.data),
+    ])
+    const isValidSapientSignatureResult = await this._provider.request({
+      method: 'eth_call',
+      params: [{ from: wallet, to: this.address, data: encodedCallData }],
+    })
+    const resultImageHash = Hex.from(
+      AbiFunction.decodeResult(Constants.IS_VALID_SAPIENT_SIGNATURE, isValidSapientSignatureResult),
+    )
+    return resultImageHash === Hex.from(this.imageHash)
   }
 }

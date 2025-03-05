@@ -288,11 +288,10 @@ export class Wallet {
     const status = await this.getStatus(provider)
 
     const chainId = status.chainId ?? 0n
-    const isDeployed = status.isDeployed
 
     // Get deploy hash if needed for ERC-6492
     let deployHash: { deployHash: Hex.Hex; context: Context.Context } | undefined
-    if (!isDeployed || status.stage === 'stage1') {
+    if (!status.isDeployed || status.stage === 'stage1') {
       const deployInformation = await this.options.stateProvider.getDeploy(this.address)
       if (!deployInformation) {
         throw new Error(`cannot find deploy information for ${this.address}`)

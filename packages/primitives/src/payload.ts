@@ -1,4 +1,4 @@
-import { AbiFunction, Address, Bytes, Hash, Hex, TypedData } from 'ox'
+import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, TypedData } from 'ox'
 import { IS_VALID_SAPIENT_SIGNATURE } from './constants'
 import { minBytesFor } from './utils'
 import { getSignPayload } from 'ox/TypedData'
@@ -258,8 +258,8 @@ export function encodeSapient(
     space: 0n,
     nonce: 0n,
     message: '0x',
-    imageHash: '0x',
-    digest: '0x',
+    imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
     parentWallets: payload.parentWallets ?? [],
   }
 
@@ -428,7 +428,7 @@ export function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']):
   }
 }
 
-export function hashCall(call: Call): Bytes.Bytes {
+export function hashCall(call: Call): Hex.Hex {
   const CALL_TYPEHASH = Hash.keccak256(
     Bytes.fromString(
       'Call(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)',
@@ -436,15 +436,27 @@ export function hashCall(call: Call): Bytes.Bytes {
   )
 
   return Hash.keccak256(
-    Bytes.concat(
-      CALL_TYPEHASH,
-      Bytes.fromHex(call.to),
-      Bytes.fromNumber(call.value, { size: 32 }),
-      Hash.keccak256(call.data),
-      Bytes.fromNumber(call.gasLimit, { size: 32 }),
-      Bytes.fromBoolean(call.delegateCall),
-      Bytes.fromBoolean(call.onlyFallback),
-      Bytes.fromNumber(encodeBehaviorOnError(call.behaviorOnError), { size: 32 }),
+    AbiParameters.encode(
+      [
+        { type: 'bytes32' },
+        { type: 'address' },
+        { type: 'uint256' },
+        { type: 'bytes32' },
+        { type: 'uint256' },
+        { type: 'bool' },
+        { type: 'bool' },
+        { type: 'uint256' },
+      ],
+      [
+        Hex.from(CALL_TYPEHASH),
+        Hex.from(call.to),
+        call.value,
+        Hex.from(Hash.keccak256(call.data)),
+        call.gasLimit,
+        call.delegateCall,
+        call.onlyFallback,
+        BigInt(encodeBehaviorOnError(call.behaviorOnError)),
+      ],
     ),
   )
 }
