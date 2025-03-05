@@ -258,8 +258,8 @@ export function encodeSapient(
     space: 0n,
     nonce: 0n,
     message: '0x',
-    imageHash: '0x',
-    digest: '0x',
+    imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
     parentWallets: payload.parentWallets ?? [],
   }
 
