@@ -119,6 +119,7 @@ export type DecodedSignature = {
   s: Bytes.Bytes
   authenticatorData: Bytes.Bytes
   clientDataJSON: string
+  embedMetadata?: boolean
 }
 
 export function encode(decoded: DecodedSignature): Bytes.Bytes {
@@ -156,7 +157,10 @@ export function encode(decoded: DecodedSignature): Bytes.Bytes {
   let result: Bytes.Bytes = Bytes.from([flags])
 
   // Add metadata if it exists
-  if (decoded.publicKey.metadata) {
+  if (decoded.embedMetadata) {
+    if (!decoded.publicKey.metadata) {
+      throw new Error('Metadata is not present in the public key')
+    }
     result = Bytes.concat(result, metadataNode(decoded.publicKey.metadata))
   }
 

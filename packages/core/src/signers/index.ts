@@ -1,5 +1,6 @@
 import { Config, Payload, Signature } from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
+import { State } from '..'
 
 export * from './pk'
 export * from './passkey'
@@ -25,6 +26,10 @@ export interface SapientSigner {
     payload: Payload.Parented,
     imageHash: Hex.Hex,
   ) => Config.SignerSignature<Signature.SignatureOfSapientSignerLeaf>
+}
+
+export interface Witnessable {
+  witness: (stateWriter: State.Writer, wallet: Address.Address) => Promise<void>
 }
 
 type MaybePromise<T> = T | Promise<T>

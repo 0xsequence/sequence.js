@@ -2,22 +2,21 @@ import { Hex, Bytes, Address } from 'ox'
 import { Payload, Extensions } from '@0xsequence/sequence-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
 import { WebAuthnP256 } from 'ox'
-import { keccak256 } from 'ox/Hash'
 import { State } from '..'
-import { SapientSigner } from '.'
+import { SapientSigner, Witnessable } from '.'
 
 export type PasskeyOptions = {
   extensions: Pick<Extensions.Extensions, 'passkeys'>
   publicKey: Extensions.Passkeys.PublicKey
   credentialId: string
-  metadata?: PasskeyMetadata
+  embedMetadata?: boolean
 }
 
 export type CreaetePasskeyOptions = {
   stateProvider?: State.Provider
   requireUserVerification?: boolean
   credentialName?: string
-  noEmbedMetadata?: boolean
+  embedMetadata?: boolean
 }
 
 export type PasskeyMetadata = {
@@ -25,18 +24,20 @@ export type PasskeyMetadata = {
   createdAt: number
 }
 
-export class Passkey implements SapientSigner {
+export class Passkey implements SapientSigner, Witnessable {
   public readonly credentialId: string
 
   public readonly publicKey: Extensions.Passkeys.PublicKey
   public readonly address: Address.Address
   public readonly imageHash: Hex.Hex
+  public readonly embedMetadata: boolean
 
   constructor(options: PasskeyOptions) {
     this.imageHash = Extensions.Passkeys.rootFor(options.publicKey)
     this.address = options.extensions.passkeys
     this.publicKey = options.publicKey
     this.credentialId = options.credentialId
+    this.embedMetadata = options.embedMetadata ?? false
   }
 
   static async create(extensions: Pick<Extensions.Extensions, 'passkeys'>, options?: CreaetePasskeyOptions) {
@@ -58,12 +59,10 @@ export class Passkey implements SapientSigner {
         requireUserVerification: options?.requireUserVerification ?? true,
         x,
         y,
-        metadata: options?.noEmbedMetadata
-          ? undefined
-          : {
-              name,
-              createdAt: Date.now(),
-            },
+        metadata: {
+          name,
+          createdAt: Date.now(),
+        },
       },
     })
 
@@ -103,6 +102,7 @@ export class Passkey implements SapientSigner {
       s: sBytes,
       authenticatorData,
       clientDataJSON: response.metadata.clientDataJSON,
+      embedMetadata: this.embedMetadata,
     })
 
     return {
@@ -110,5 +110,25 @@ export class Passkey implements SapientSigner {
       data: signature,
       type: 'sapient_compact',
     }
+  }
+
+  async witness(stateWriter: State.Writer, wallet: Address.Address): Promise<void> {
+    const payload = Payload.fromMessage(
+      Bytes.fromString(
+        JSON.stringify({
+          action: 'consent-to-be-part-of-wallet',
+          wallet,
+          publicKey: this.publicKey,
+          timestamp: Date.now(),
+        }),
+      ),
+    )
+
+    const signature = await this.signSapient(wallet, 0n, payload, this.imageHash)
+    await stateWriter.saveWitnesses(wallet, 0n, payload, {
+      type: 'unrecovered-signer',
+      weight: 1n,
+      signature,
+    })
   }
 }

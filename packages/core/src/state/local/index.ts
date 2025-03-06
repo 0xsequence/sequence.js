@@ -139,14 +139,20 @@ export class Provider implements ProviderInterface {
     return response
   }
 
-  saveWitnesses(
+  async saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
-  ): void | Promise<void> {
+  ): Promise<void> {
     const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
-    return this.saveSignature(subdigest, signatures)
+
+    await Promise.all([
+      this.saveSignature(subdigest, signatures),
+      this.store.savePayloadOfSubdigest(subdigest, { content: payload, chainId, wallet }),
+    ])
+
+    return
   }
 
   async getConfigurationUpdates(
