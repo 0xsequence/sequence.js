@@ -3,7 +3,7 @@ import { CommandModule } from 'yargs'
 import sessionExplicitCommand from './sessionExplicit'
 import sessionImplicitCommand from './sessionImplicit'
 
-import { Config, SessionConfig, SessionSignature, WalletConfig } from '@0xsequence/sequence-primitives'
+import { GenericTree, SessionConfig, SessionSignature, WalletConfig } from '@0xsequence/sequence-primitives'
 
 export async function doEmptyTopology(identitySigner: `0x${string}`): Promise<string> {
   const topology = SessionConfig.emptySessionsTopology(identitySigner)
@@ -36,7 +36,7 @@ export async function doEncodeSessionCallSignatures(
 export async function doImageHash(sessionConfigurationInput: string): Promise<string> {
   const sessionConfiguration = SessionConfig.sessionsTopologyFromJson(sessionConfigurationInput)
   const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionConfiguration)
-  const hash = Config.hashConfigurationTree(configurationTree)
+  const hash = GenericTree.hash(configurationTree)
   return Hex.from(hash)
 }
 

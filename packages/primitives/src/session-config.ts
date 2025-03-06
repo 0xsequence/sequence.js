@@ -1,5 +1,5 @@
 import { Address, Bytes, Hash } from 'ox'
-import { EncodedConfigurationBranch, EncodedConfigurationTree, isEncodedConfigurationBranch } from './config'
+import * as GenericTree from './generic-tree'
 import {
   encodeSessionPermissions,
   encodeSessionPermissionsForJson,
@@ -220,9 +220,9 @@ export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
   throw new Error('Invalid leaf')
 }
 
-export function sessionsTopologyToConfigurationTree(topology: SessionsTopology): EncodedConfigurationTree {
+export function sessionsTopologyToConfigurationTree(topology: SessionsTopology): GenericTree.Tree {
   if (isSessionsBranch(topology)) {
-    return topology.map(sessionsTopologyToConfigurationTree) as EncodedConfigurationBranch
+    return topology.map(sessionsTopologyToConfigurationTree) as GenericTree.Branch
   }
   if (isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology) || isSessionPermissions(topology)) {
     return encodeLeafToBytes(topology)
@@ -234,8 +234,8 @@ export function sessionsTopologyToConfigurationTree(topology: SessionsTopology):
   throw new Error('Invalid topology')
 }
 
-export function configurationTreeToSessionsTopology(tree: EncodedConfigurationTree): SessionsTopology {
-  if (isEncodedConfigurationBranch(tree)) {
+export function configurationTreeToSessionsTopology(tree: GenericTree.Tree): SessionsTopology {
+  if (GenericTree.isBranch(tree)) {
     return tree.map(configurationTreeToSessionsTopology) as SessionBranch
   }
 

@@ -1,12 +1,12 @@
 import { SapientSigner, Signers } from '@0xsequence/sequence-core'
 import {
   Attestation,
-  Config,
   Constants,
   Payload,
   SessionConfig,
   SessionSignature,
   Signature as SignatureTypes,
+  GenericTree,
 } from '@0xsequence/sequence-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
 import { IdentitySigner } from '../identity'
@@ -49,7 +49,7 @@ export class SessionManager implements SapientSigner {
 
   get imageHash(): Hex.Hex {
     const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(this._topology)
-    return Hex.fromBytes(Config.hashConfigurationTree(configurationTree))
+    return Hex.fromBytes(GenericTree.hash(configurationTree))
   }
 
   withProvider(provider: Provider.Provider): SessionManager {
