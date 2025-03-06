@@ -9,6 +9,7 @@ import {
   Payload,
   Signature as SequenceSignature,
 } from '@0xsequence/sequence-primitives'
+import { SapientSigner, Signer } from './signers'
 
 export type WalletOptions = {
   context: Context.Context
@@ -485,27 +486,4 @@ export class Wallet {
   }
 }
 
-export interface Signer {
-  readonly address: MaybePromise<Address.Address>
-
-  sign: (
-    wallet: Address.Address,
-    chainId: bigint,
-    payload: Payload.Parented,
-  ) => Config.SignerSignature<SequenceSignature.SignatureOfSignerLeaf>
-}
-
-export interface SapientSigner {
-  readonly address: MaybePromise<Address.Address>
-  readonly imageHash: MaybePromise<Hex.Hex | undefined>
-
-  signSapient: (
-    wallet: Address.Address,
-    chainId: bigint,
-    payload: Payload.Parented,
-    imageHash: Hex.Hex,
-  ) => Config.SignerSignature<SequenceSignature.SignatureOfSapientSignerLeaf>
-}
-
-type MaybePromise<T> = T | Promise<T>
 type Unpromise<T> = T extends Promise<infer S> ? S : T

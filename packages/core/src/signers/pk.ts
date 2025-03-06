@@ -1,7 +1,7 @@
 import type { Payload as PayloadTypes, Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
 import { Payload } from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex, PublicKey, Secp256k1 } from 'ox'
-import { Signer as SignerInterface } from '../wallet'
+import { Signer as SignerInterface } from '.'
 
 export class Pk implements SignerInterface {
   public readonly address: Address.Address
