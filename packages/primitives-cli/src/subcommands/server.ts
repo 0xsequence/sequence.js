@@ -3,7 +3,6 @@ import { createServer, IncomingMessage, ServerResponse } from 'http'
 import * as config from './config'
 import * as devTools from './devTools'
 import * as payload from './payload'
-import * as permission from './permission'
 import * as session from './session'
 import * as sessionExplicit from './sessionExplicit'
 import * as sessionImplicit from './sessionImplicit'
@@ -118,18 +117,6 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   },
   async payload_hashFor(params) {
     const result = await payload.doHash(params.wallet, params.chainId, params.payload)
-    return result
-  },
-
-  // PERMISSION
-  async permission_toPackedSession(params) {
-    const { sessionPermission } = params
-    const result = await permission.doEncodeSessionPermissions(JSON.stringify(sessionPermission))
-    return result
-  },
-  async permission_toPacked(params) {
-    const { permission: perm } = params
-    const result = await permission.doEncodePermission(JSON.stringify(perm))
     return result
   },
 
