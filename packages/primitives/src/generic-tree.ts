@@ -4,20 +4,30 @@ import { Bytes, Hash } from 'ox'
 // It can be used to represent a configuration tree in a compact form.
 // Implementations are free to use any encoding they want, as long as the encoding is consistent and can be decoded.
 
-export type Leaf = Bytes.Bytes
+export type Leaf = {
+  type: 'leaf'
+  value: Bytes.Bytes
+}
+
+export type Node = Bytes.Bytes
+
 export type Branch = [Tree, Tree, ...Tree[]]
-export type Tree = Branch | Leaf
+export type Tree = Branch | Leaf | Node
 
 export function isBranch(tree: Tree): tree is Branch {
   return Array.isArray(tree) && tree.length >= 2 && tree.every((child) => isTree(child))
 }
 
 export function isLeaf(tree: any): tree is Leaf {
-  return Bytes.validate(tree)
+  return tree.type === 'leaf' && Bytes.validate(tree.value)
 }
 
 export function isTree(tree: any): tree is Tree {
-  return isBranch(tree) || isLeaf(tree)
+  return isBranch(tree) || isLeaf(tree) || isNode(tree)
+}
+
+export function isNode(node: any): node is Node {
+  return Bytes.validate(node) && node.length === 32
 }
 
 export function hash(tree: Tree): Bytes.Bytes {
@@ -34,6 +44,11 @@ export function hash(tree: Tree): Bytes.Bytes {
     return chash
   }
 
+  // Nodes are already hashed
+  if (isNode(tree)) {
+    return tree
+  }
+
   // Hash the leaf
-  return Hash.keccak256(tree)
+  return Hash.keccak256(tree.value)
 }

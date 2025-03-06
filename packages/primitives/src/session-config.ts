@@ -182,21 +182,30 @@ export function getSessionPermissions(topology: SessionsTopology, address: Addre
  * @param leaf The leaf to encode
  * @returns The encoded leaf
  */
-export function encodeLeafToBytes(leaf: SessionLeaf): Bytes.Bytes {
+export function encodeLeafToGeneric(leaf: SessionLeaf): GenericTree.Leaf {
   if (isSessionPermissions(leaf)) {
-    return Bytes.concat(Bytes.fromNumber(SESSIONS_FLAG_PERMISSIONS), encodeSessionPermissions(leaf))
+    return {
+      type: 'leaf',
+      value: Bytes.concat(Bytes.fromNumber(SESSIONS_FLAG_PERMISSIONS), encodeSessionPermissions(leaf)),
+    }
   }
   if (isImplicitBlacklist(leaf)) {
-    return Bytes.concat(
-      Bytes.fromNumber(SESSIONS_FLAG_BLACKLIST),
-      Bytes.concat(...leaf.blacklist.map((b) => Bytes.padLeft(Bytes.fromHex(b), 20))),
-    )
+    return {
+      type: 'leaf',
+      value: Bytes.concat(
+        Bytes.fromNumber(SESSIONS_FLAG_BLACKLIST),
+        Bytes.concat(...leaf.blacklist.map((b) => Bytes.padLeft(Bytes.fromHex(b), 20))),
+      ),
+    }
   }
   if (isIdentitySignerLeaf(leaf)) {
-    return Bytes.concat(
-      Bytes.fromNumber(SESSIONS_FLAG_IDENTITY_SIGNER),
-      Bytes.padLeft(Bytes.fromHex(leaf.identitySigner), 20),
-    )
+    return {
+      type: 'leaf',
+      value: Bytes.concat(
+        Bytes.fromNumber(SESSIONS_FLAG_IDENTITY_SIGNER),
+        Bytes.padLeft(Bytes.fromHex(leaf.identitySigner), 20),
+      ),
+    }
   }
   // Unreachable
   throw new Error('Invalid leaf')
@@ -225,7 +234,7 @@ export function sessionsTopologyToConfigurationTree(topology: SessionsTopology):
     return topology.map(sessionsTopologyToConfigurationTree) as GenericTree.Branch
   }
   if (isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology) || isSessionPermissions(topology)) {
-    return encodeLeafToBytes(topology)
+    return encodeLeafToGeneric(topology)
   }
   if (isSessionsNode(topology)) {
     // A node is already encoded and hashed
@@ -239,13 +248,11 @@ export function configurationTreeToSessionsTopology(tree: GenericTree.Tree): Ses
     return tree.map(configurationTreeToSessionsTopology) as SessionBranch
   }
 
-  try {
-    return decodeLeafFromBytes(tree)
-  } catch (error) {
-    // If we can't decode it, it's a node.
-    // This is _probably_ a bug as decoding a node in a configuration tree leads to incomplete topologies.
-    return tree as SessionNode
+  if (GenericTree.isNode(tree)) {
+    throw new Error('Unknown in configuration tree')
   }
+
+  return decodeLeafFromBytes(tree.value)
 }
 
 // Encoding for contract validation
@@ -578,12 +585,12 @@ export function minimiseSessionsTopology(
       // Don't role it up as signer permissions must be visible
       return topology
     }
-    return Hash.keccak256(encodeLeafToBytes(topology))
+    return GenericTree.hash(encodeLeafToGeneric(topology))
   }
   if (isImplicitBlacklist(topology)) {
     if (implicitSigners.length === 0) {
       // No implicit signers, so we can roll up the blacklist
-      return Hash.keccak256(encodeLeafToBytes(topology))
+      return GenericTree.hash(encodeLeafToGeneric(topology))
     }
     // If there are implicit signers, we can't roll up the blacklist
     return topology
