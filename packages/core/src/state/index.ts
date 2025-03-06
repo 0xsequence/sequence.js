@@ -1,5 +1,5 @@
 import { Address, Hex } from 'ox'
-import { Context, Config, Payload, Signature } from '@0xsequence/sequence-primitives'
+import { Context, Config, Payload, Signature, GenericTree } from '@0xsequence/sequence-primitives'
 
 export type Provider = Reader & Writer
 
@@ -21,6 +21,8 @@ export interface Reader {
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>>
+
+  getTree(rootHash: Hex.Hex): MaybePromise<GenericTree.Tree | undefined>
 }
 
 export interface Writer {
@@ -38,6 +40,8 @@ export interface Writer {
     configuration: Config.Config,
     signature: Signature.RawSignature,
   ): MaybePromise<void>
+
+  saveTree(tree: GenericTree.Tree): MaybePromise<void>
 }
 
 type MaybePromise<T> = T | Promise<T>

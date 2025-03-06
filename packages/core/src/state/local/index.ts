@@ -5,6 +5,7 @@ import {
   Config,
   Address as SequenceAddress,
   Extensions,
+  GenericTree,
 } from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '..'
@@ -55,6 +56,10 @@ export interface Store {
     imageHash: Hex.Hex,
     signature: Signature.SignatureOfSapientSignerLeaf,
   ) => Promise<void>
+
+  // generic trees
+  loadTree: (rootHash: Hex.Hex) => Promise<GenericTree.Tree | undefined>
+  saveTree: (rootHash: Hex.Hex, tree: GenericTree.Tree) => Promise<void>
 }
 
 export class Provider implements ProviderInterface {
@@ -353,6 +358,14 @@ export class Provider implements ProviderInterface {
           throw new Error(`Unsupported sapient signer: ${topology.address}`)
       }
     }
+  }
+
+  getTree(rootHash: Hex.Hex): GenericTree.Tree | Promise<GenericTree.Tree | undefined> | undefined {
+    return this.store.loadTree(rootHash)
+  }
+
+  saveTree(tree: GenericTree.Tree): void | Promise<void> {
+    return this.store.saveTree(Bytes.toHex(GenericTree.hash(tree)), tree)
   }
 }
 

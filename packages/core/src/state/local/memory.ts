@@ -1,4 +1,4 @@
-import { Context, Payload, Signature, Config } from '@0xsequence/sequence-primitives'
+import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
 import { Store } from './index'
 
@@ -11,6 +11,8 @@ export class MemoryStore implements Store {
 
   private sapientSignerSubdigests = new Map<string, Set<string>>()
   private sapientSignatures = new Map<`0x${string}`, Signature.SignatureOfSapientSignerLeaf>()
+
+  private trees = new Map<`0x${string}`, GenericTree.Tree>()
 
   private getSignatureKey(signer: Address.Address, subdigest: Hex.Hex): string {
     return `${signer.toLowerCase()}-${subdigest.toLowerCase()}`
@@ -112,5 +114,13 @@ export class MemoryStore implements Store {
       this.sapientSignerSubdigests.set(signerKey, new Set())
     }
     this.sapientSignerSubdigests.get(signerKey)!.add(subdigestKey)
+  }
+
+  async loadTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
+    return this.trees.get(rootHash.toLowerCase() as `0x${string}`)
+  }
+
+  async saveTree(rootHash: Hex.Hex, tree: GenericTree.Tree): Promise<void> {
+    this.trees.set(rootHash.toLowerCase() as `0x${string}`, tree)
   }
 }
