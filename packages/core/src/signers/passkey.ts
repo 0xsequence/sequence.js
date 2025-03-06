@@ -24,6 +24,22 @@ export type PasskeyMetadata = {
   createdAt: number
 }
 
+export type WitnessMessage = {
+  action: 'consent-to-be-part-of-wallet'
+  wallet: Address.Address
+  publicKey: Extensions.Passkeys.PublicKey
+  timestamp: number
+}
+
+export function isWitnessMessage(message: unknown): message is WitnessMessage {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    'action' in message &&
+    message.action === 'consent-to-be-part-of-wallet'
+  )
+}
+
 export class Passkey implements SapientSigner, Witnessable {
   public readonly credentialId: string
 
@@ -38,6 +54,46 @@ export class Passkey implements SapientSigner, Witnessable {
     this.publicKey = options.publicKey
     this.credentialId = options.credentialId
     this.embedMetadata = options.embedMetadata ?? false
+  }
+
+  static async loadFromWitness(
+    stateReader: State.Reader,
+    extensions: Pick<Extensions.Extensions, 'passkeys'>,
+    wallet: Address.Address,
+    address: Address.Address,
+    imageHash: Hex.Hex,
+  ) {
+    // In the witness we will find the public key, and may find the credential id
+    const wallets = await stateReader.getWalletsForSapient(address, imageHash)
+    const witness = wallets[wallet]
+
+    if (!witness) {
+      throw new Error('Witness for wallet not found')
+    }
+
+    const payload = witness.payload
+    if (!Payload.isMessage(payload)) {
+      throw new Error('Witness payload is not a message')
+    }
+
+    const message = JSON.parse(Bytes.toString(payload.message))
+    if (!isWitnessMessage(message)) {
+      throw new Error('Witness payload is not a witness message')
+    }
+
+    const metadata = message.publicKey.metadata
+    if (typeof metadata === 'string' || !metadata) {
+      throw new Error('Metadata does not contain credential id')
+    }
+
+    const decodedSignature = Extensions.Passkeys.decode(witness.signature.data)
+
+    return new Passkey({
+      credentialId: metadata.credentialId,
+      extensions,
+      publicKey: message.publicKey,
+      embedMetadata: decodedSignature.embedMetadata,
+    })
   }
 
   static async create(extensions: Pick<Extensions.Extensions, 'passkeys'>, options?: CreaetePasskeyOptions) {
@@ -60,6 +116,7 @@ export class Passkey implements SapientSigner, Witnessable {
         x,
         y,
         metadata: {
+          credentialId: credential.id,
           name,
           createdAt: Date.now(),
         },
@@ -120,7 +177,7 @@ export class Passkey implements SapientSigner, Witnessable {
           wallet,
           publicKey: this.publicKey,
           timestamp: Date.now(),
-        }),
+        } as WitnessMessage),
       ),
     )
 

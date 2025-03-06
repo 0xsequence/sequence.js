@@ -1,4 +1,4 @@
-import { SapientSigner, Signers } from '@0xsequence/sequence-core'
+import { Signers } from '@0xsequence/sequence-core'
 import {
   Attestation,
   Constants,
@@ -19,7 +19,7 @@ type SessionManagerConfiguration = {
 
 const DEFAULT_SESSION_MANAGER_ADDRESS: Address.Address = '0x0D3b3497f4B7E99239aE748Fc45216F45431B105'
 
-export class SessionManager implements SapientSigner {
+export class SessionManager implements Signers.SapientSigner {
   readonly address: Address.Address
   private _topology: SessionConfig.SessionsTopology
   private _provider: Provider.Provider

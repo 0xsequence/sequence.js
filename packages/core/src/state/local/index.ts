@@ -102,41 +102,39 @@ export class Provider implements ProviderInterface {
     return this.store.loadCounterfactualWallet(wallet)
   }
 
-  async getWallets(signer: Address.Address): Promise<{
-    [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf }
-  }> {
+  private async getWalletsGeneric<T>(
+    signer: Address.Address,
+    loadSignatureFn: (subdigest: Hex.Hex) => Promise<T | undefined>,
+  ): Promise<{ [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: T } }> {
     const subdigests = await this.store.loadSubdigestsOfSigner(signer)
-    const payloads = await Promise.all(subdigests.map((subdigest) => this.store.loadPayloadOfSubdigest(subdigest)))
-
-    let response: {
-      [wallet: `0x${string}`]: {
-        chainId: bigint
-        payload: Payload.Parented
-        signature: Signature.SignatureOfSignerLeaf
-      }
-    } = {}
+    const payloads = await Promise.all(subdigests.map((sd) => this.store.loadPayloadOfSubdigest(sd)))
+    const response: { [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: T } } = {}
 
     for (const payload of payloads) {
-      if (!payload || response[payload.wallet]) {
-        continue
-      }
-
-      const signature = await this.store.loadSignatureOfSubdigest(
-        signer,
-        Hex.fromBytes(Payload.hash(payload.wallet, payload.chainId, payload.content)),
-      )
-      if (!signature) {
-        continue
-      }
-
+      if (!payload || response[payload.wallet]) continue
+      const subdigest = Hex.fromBytes(Payload.hash(payload.wallet, payload.chainId, payload.content))
+      const signature = await loadSignatureFn(subdigest)
+      if (!signature) continue
       response[payload.wallet] = {
         chainId: payload.chainId,
         payload: payload.content,
-        signature: signature,
+        signature,
       }
     }
 
     return response
+  }
+
+  async getWallets(signer: Address.Address) {
+    return this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(signer, (subdigest) =>
+      this.store.loadSignatureOfSubdigest(signer, subdigest),
+    )
+  }
+
+  async getWalletsForSapient(signer: Address.Address, imageHash: Hex.Hex) {
+    return this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(signer, (subdigest) =>
+      this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
+    )
   }
 
   async saveWitnesses(

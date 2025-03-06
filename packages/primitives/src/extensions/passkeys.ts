@@ -9,6 +9,7 @@ export type PublicKey = {
   metadata?:
     | {
         name: string
+        credentialId: string
         createdAt: number
       }
     | Hex.Hex
@@ -31,12 +32,18 @@ export function metadataTree(metadata: Required<PublicKey>['metadata']): Generic
     return [
       {
         type: 'leaf',
-        value: Bytes.fromString(metadata.name),
+        value: Bytes.fromString(metadata.credentialId),
       },
-      {
-        type: 'leaf',
-        value: Bytes.fromNumber(metadata.createdAt),
-      },
+      [
+        {
+          type: 'leaf',
+          value: Bytes.fromString(metadata.name),
+        },
+        {
+          type: 'leaf',
+          value: Bytes.fromNumber(metadata.createdAt),
+        },
+      ],
     ]
   } else {
     return Bytes.fromHex(metadata)
@@ -70,6 +77,7 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
   if (!GenericTree.isBranch(p1) || p1.length !== 2) {
     throw new Error('Invalid tree for x,y')
   }
+
   const [xBytes, yBytes] = p1
   if (!GenericTree.isNode(xBytes) || xBytes.length !== 32) {
     throw new Error('Invalid x bytes')
@@ -77,35 +85,58 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
   if (!GenericTree.isNode(yBytes) || yBytes.length !== 32) {
     throw new Error('Invalid y bytes')
   }
+
   const x = Hex.fromBytes(xBytes)
   const y = Hex.fromBytes(yBytes)
   let requireUserVerification = false
-  let metadata: PublicKey['metadata'] = undefined
+  let metadata: PublicKey['metadata']
+
   if (GenericTree.isBranch(p2)) {
     if (p2.length !== 2) {
       throw new Error('Invalid tree for c,metadata')
     }
+
     const [c, meta] = p2
     if (!GenericTree.isNode(c) || c.length !== 32) {
       throw new Error('Invalid c bytes')
     }
     requireUserVerification = c[31] === 1
-    if (!GenericTree.isBranch(meta) || meta.length !== 2) {
-      throw new Error('Invalid metadata tree')
+
+    if (GenericTree.isBranch(meta)) {
+      if (meta.length !== 2) {
+        throw new Error('Invalid metadata tree')
+      }
+
+      const [credLeaf, sub] = meta
+      if (!GenericTree.isLeaf(credLeaf)) {
+        throw new Error('Invalid credentialId leaf')
+      }
+      const credentialId = new TextDecoder().decode(credLeaf.value)
+
+      if (!GenericTree.isBranch(sub) || sub.length !== 2) {
+        throw new Error('Invalid sub-branch for name and createdAt')
+      }
+
+      const [nameLeaf, createdAtLeaf] = sub
+      if (!GenericTree.isLeaf(nameLeaf) || !GenericTree.isLeaf(createdAtLeaf)) {
+        throw new Error('Invalid metadata leaves')
+      }
+
+      const name = new TextDecoder().decode(nameLeaf.value)
+      const createdAt = Number(Bytes.toBigInt(createdAtLeaf.value))
+      metadata = { credentialId, name, createdAt }
+    } else if (GenericTree.isNode(meta) && meta.length === 32) {
+      metadata = Hex.fromBytes(meta)
+    } else {
+      throw new Error('Invalid metadata node')
     }
-    const [nameLeaf, createdAtLeaf] = meta
-    if (!GenericTree.isLeaf(nameLeaf) || !GenericTree.isLeaf(createdAtLeaf)) {
-      throw new Error('Invalid metadata leaves')
-    }
-    const name = new TextDecoder().decode(nameLeaf.value)
-    const createdAt = Number(Bytes.toBigInt(createdAtLeaf.value))
-    metadata = { name, createdAt }
   } else {
     if (!GenericTree.isNode(p2) || p2.length !== 32) {
       throw new Error('Invalid c bytes')
     }
     requireUserVerification = p2[31] === 1
   }
+
   return { requireUserVerification, x, y, metadata }
 }
 
@@ -204,7 +235,7 @@ export function isValidSignature(challenge: Hex.Hex, decoded: DecodedSignature):
   })
 }
 
-export function decode(data: Bytes.Bytes): DecodedSignature & { challengeIndex: number; typeIndex: number } {
+export function decode(data: Bytes.Bytes): Required<DecodedSignature> & { challengeIndex: number; typeIndex: number } {
   let offset = 0
 
   const flags = data[0]
@@ -273,5 +304,6 @@ export function decode(data: Bytes.Bytes): DecodedSignature & { challengeIndex: 
     clientDataJSON,
     challengeIndex,
     typeIndex,
+    embedMetadata: hasMetadata,
   }
 }

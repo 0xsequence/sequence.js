@@ -16,6 +16,17 @@ export interface Reader {
     }
   }>
 
+  getWalletsForSapient(
+    signer: Address.Address,
+    imageHash: Hex.Hex,
+  ): MaybePromise<{
+    [wallet: Address.Address]: {
+      chainId: bigint
+      payload: Payload.Parented
+      signature: Signature.SignatureOfSapientSignerLeaf
+    }
+  }>
+
   getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,

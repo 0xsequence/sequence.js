@@ -1,10 +1,10 @@
 import { Address, Signature, Hex, Bytes } from 'ox'
-import { Signer } from '@0xsequence/sequence-core'
+import { Signers } from '@0xsequence/sequence-core'
 import { AuthKey } from './authkey'
 import { IdentityInstrument } from './nitro'
 import { Payload, Signature as SequenceSignature } from '@0xsequence/sequence-primitives'
 
-export class IdentitySigner implements Signer {
+export class IdentitySigner implements Signers.Signer {
   constructor(
     readonly ecosystemId: string,
     readonly nitro: IdentityInstrument,
