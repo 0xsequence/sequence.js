@@ -1,11 +1,17 @@
 import { Bytes, Hex, WebAuthnP256 } from 'ox'
 import { keccak256 } from 'ox/Hash'
+import { GenericTree } from '..'
 
 export type PublicKey = {
   requireUserVerification: boolean
   x: Hex.Hex
   y: Hex.Hex
-  metadata?: Hex.Hex
+  metadata?:
+    | {
+        name: string
+        createdAt: number
+      }
+    | Hex.Hex
 }
 
 export function rootFor(publicKey: PublicKey): Hex.Hex {
@@ -14,10 +20,97 @@ export function rootFor(publicKey: PublicKey): Hex.Hex {
   )
 
   const ruv = Bytes.padLeft(publicKey.requireUserVerification ? Bytes.from([1]) : Bytes.from([0]), 32)
-  const metadata = publicKey.metadata ? Bytes.fromHex(publicKey.metadata) : Bytes.padLeft(Bytes.from([]), 32)
+  const metadata = publicKey.metadata ? metadataNode(publicKey.metadata) : Bytes.padLeft(Bytes.from([]), 32)
 
   const b = keccak256(Bytes.concat(ruv, metadata))
   return Hex.fromBytes(keccak256(Bytes.concat(a, b)))
+}
+
+export function metadataTree(metadata: Required<PublicKey>['metadata']): GenericTree.Tree {
+  if (typeof metadata === 'object') {
+    return [
+      {
+        type: 'leaf',
+        value: Bytes.fromString(metadata.name),
+      },
+      {
+        type: 'leaf',
+        value: Bytes.fromNumber(metadata.createdAt),
+      },
+    ]
+  } else {
+    return Bytes.fromHex(metadata)
+  }
+}
+
+export function metadataNode(metadata: Required<PublicKey>['metadata']): GenericTree.Node {
+  return GenericTree.hash(metadataTree(metadata))
+}
+
+export function toTree(publicKey: PublicKey): GenericTree.Tree {
+  const a = Bytes.padLeft(Bytes.fromHex(publicKey.x), 32)
+  const b = Bytes.padLeft(Bytes.fromHex(publicKey.y), 32)
+  const c = Bytes.padLeft(publicKey.requireUserVerification ? Bytes.from([1]) : Bytes.from([0]), 32)
+
+  if (publicKey.metadata) {
+    return [
+      [a, b],
+      [c, metadataTree(publicKey.metadata)],
+    ]
+  }
+
+  return [[a, b], c]
+}
+
+export function fromTree(tree: GenericTree.Tree): PublicKey {
+  if (!GenericTree.isBranch(tree) || tree.length !== 2) {
+    throw new Error('Invalid tree')
+  }
+  const [p1, p2] = tree
+  if (!GenericTree.isBranch(p1) || p1.length !== 2) {
+    throw new Error('Invalid tree for x,y')
+  }
+  const [xBytes, yBytes] = p1
+  if (!GenericTree.isNode(xBytes) || xBytes.length !== 32) {
+    throw new Error('Invalid x bytes')
+  }
+  if (!GenericTree.isNode(yBytes) || yBytes.length !== 32) {
+    throw new Error('Invalid y bytes')
+  }
+  const x = Hex.fromBytes(xBytes)
+  const y = Hex.fromBytes(yBytes)
+  let requireUserVerification = false
+  let metadata: PublicKey['metadata'] = undefined
+  if (GenericTree.isBranch(p2)) {
+    if (p2.length !== 2) {
+      throw new Error('Invalid tree for c,metadata')
+    }
+    const [c, meta] = p2
+    if (!GenericTree.isNode(c) || c.length !== 32) {
+      throw new Error('Invalid c bytes')
+    }
+    requireUserVerification = c[31] === 1
+    if (!GenericTree.isBranch(meta) || meta.length !== 2) {
+      throw new Error('Invalid metadata tree')
+    }
+    const [nameLeaf, createdAtLeaf] = meta
+    if (!GenericTree.isLeaf(nameLeaf) || !GenericTree.isLeaf(createdAtLeaf)) {
+      throw new Error('Invalid metadata leaves')
+    }
+    const name = new TextDecoder().decode(nameLeaf.value)
+    const createdAt = Number(Bytes.toBigInt(createdAtLeaf.value))
+    metadata = { name, createdAt }
+  } else {
+    if (!GenericTree.isNode(p2) || p2.length !== 32) {
+      throw new Error('Invalid c bytes')
+    }
+    requireUserVerification = p2[31] === 1
+  }
+  return { requireUserVerification, x, y, metadata }
+}
+
+export function rootFor2(publicKey: PublicKey): Hex.Hex {
+  return Hex.fromBytes(GenericTree.hash(toTree(publicKey)))
 }
 
 export type DecodedSignature = {
@@ -64,7 +157,7 @@ export function encode(decoded: DecodedSignature): Bytes.Bytes {
 
   // Add metadata if it exists
   if (decoded.publicKey.metadata) {
-    result = Bytes.concat(result, Bytes.fromHex(decoded.publicKey.metadata))
+    result = Bytes.concat(result, metadataNode(decoded.publicKey.metadata))
   }
 
   result = Bytes.concat(result, Bytes.padLeft(Bytes.fromNumber(authDataSize), bytesAuthDataSize))

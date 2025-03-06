@@ -1,9 +1,10 @@
 import { Hex, Bytes, Address } from 'ox'
-import { SapientSigner } from '../wallet'
 import { Payload, Extensions } from '@0xsequence/sequence-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
 import { WebAuthnP256 } from 'ox'
 import { keccak256 } from 'ox/Hash'
+import { State } from '..'
+import { SapientSigner } from '.'
 
 export type PasskeyOptions = {
   extensions: Pick<Extensions.Extensions, 'passkeys'>
@@ -13,6 +14,7 @@ export type PasskeyOptions = {
 }
 
 export type CreaetePasskeyOptions = {
+  stateProvider?: State.Provider
   requireUserVerification?: boolean
   credentialName?: string
   noEmbedMetadata?: boolean
@@ -21,12 +23,6 @@ export type CreaetePasskeyOptions = {
 export type PasskeyMetadata = {
   name: string
   createdAt: number
-}
-
-function metadataHash(metadata: PasskeyMetadata): Hex.Hex {
-  const a = keccak256(Bytes.fromString(metadata.name))
-  const b = keccak256(Bytes.fromNumber(metadata.createdAt))
-  return Hex.fromBytes(keccak256(Bytes.concat(a, b)))
 }
 
 export class Passkey implements SapientSigner {
@@ -55,21 +51,27 @@ export class Passkey implements SapientSigner {
     const x = Hex.fromNumber(credential.publicKey.x)
     const y = Hex.fromNumber(credential.publicKey.y)
 
-    const metadata = {
-      name,
-      createdAt: Date.now(),
-    }
-
-    return new Passkey({
+    const passkey = new Passkey({
       credentialId: credential.id,
       extensions,
       publicKey: {
         requireUserVerification: options?.requireUserVerification ?? true,
         x,
         y,
-        metadata: options?.noEmbedMetadata ? undefined : metadataHash(metadata),
+        metadata: options?.noEmbedMetadata
+          ? undefined
+          : {
+              name,
+              createdAt: Date.now(),
+            },
       },
     })
+
+    if (options?.stateProvider) {
+      await options.stateProvider.saveTree(Extensions.Passkeys.toTree(passkey.publicKey))
+    }
+
+    return passkey
   }
 
   async signSapient(
