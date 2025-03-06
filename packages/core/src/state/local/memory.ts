@@ -1,9 +1,9 @@
-import { Context, Payload, Signature, WalletConfig } from '@0xsequence/sequence-primitives'
+import { Context, Payload, Signature, Config } from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
 import { Store } from './index'
 
 export class MemoryStore implements Store {
-  private configs = new Map<`0x${string}`, WalletConfig.Configuration>()
+  private configs = new Map<`0x${string}`, Config.Config>()
   private counterfactualWallets = new Map<`0x${string}`, { imageHash: Hex.Hex; context: Context.Context }>()
   private payloads = new Map<`0x${string}`, { content: Payload.Parented; chainId: bigint; wallet: Address.Address }>()
   private signerSubdigests = new Map<string, Set<string>>()
@@ -20,11 +20,11 @@ export class MemoryStore implements Store {
     return `${signer.toLowerCase()}-${imageHash.toLowerCase()}-${subdigest.toLowerCase()}`
   }
 
-  async loadConfig(imageHash: Hex.Hex): Promise<WalletConfig.Configuration | undefined> {
+  async loadConfig(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
     return this.configs.get(imageHash.toLowerCase() as `0x${string}`)
   }
 
-  async saveConfig(imageHash: Hex.Hex, config: WalletConfig.Configuration): Promise<void> {
+  async saveConfig(imageHash: Hex.Hex, config: Config.Config): Promise<void> {
     this.configs.set(imageHash.toLowerCase() as `0x${string}`, config)
   }
 

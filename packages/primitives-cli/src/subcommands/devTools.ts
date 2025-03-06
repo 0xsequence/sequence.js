@@ -1,4 +1,4 @@
-import { Permission, SessionConfig, WalletConfig } from '@0xsequence/sequence-primitives'
+import { Permission, SessionConfig, Config } from '@0xsequence/sequence-primitives'
 import crypto from 'crypto'
 import type { CommandModule } from 'yargs'
 
@@ -50,7 +50,7 @@ function randomAddress(options?: RandomOptions): `0x${string}` {
   return `0x${Buffer.from(randomBytes(20, options)).toString('hex')}`
 }
 
-function generateRandomTopology(depth: number, options?: RandomOptions): WalletConfig.Topology {
+function generateRandomTopology(depth: number, options?: RandomOptions): Config.Topology {
   if (depth <= 0) {
     const leafType = Math.floor((options?.seededRandom ?? Math.random)() * 5)
 
@@ -132,7 +132,7 @@ async function generateRandomRule(options?: RandomOptions): Promise<Permission.P
 }
 
 export async function doRandomConfig(maxDepth: number, options?: RandomOptions): Promise<string> {
-  const config: WalletConfig.Configuration = {
+  const config: Config.Config = {
     threshold: randomBigInt(100n, options),
     checkpoint: randomBigInt(1000n, options),
     topology: generateRandomTopology(maxDepth, options),
@@ -148,7 +148,7 @@ export async function doRandomConfig(maxDepth: number, options?: RandomOptions):
       }
     })(),
   }
-  return WalletConfig.configToJson(config)
+  return Config.configToJson(config)
 }
 
 export async function doRandomSessionTopology(maxDepth: number, options?: RandomOptions): Promise<string> {

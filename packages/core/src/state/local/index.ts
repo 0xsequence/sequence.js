@@ -2,7 +2,7 @@ import {
   Context,
   Payload,
   Signature,
-  WalletConfig,
+  Config,
   Address as SequenceAddress,
   Extensions,
 } from '@0xsequence/sequence-primitives'
@@ -12,8 +12,8 @@ import { MemoryStore } from './memory'
 
 export interface Store {
   // top level configurations store
-  loadConfig: (imageHash: Hex.Hex) => Promise<WalletConfig.Configuration | undefined>
-  saveConfig: (imageHash: Hex.Hex, config: WalletConfig.Configuration) => Promise<void>
+  loadConfig: (imageHash: Hex.Hex) => Promise<Config.Config | undefined>
+  saveConfig: (imageHash: Hex.Hex, config: Config.Config) => Promise<void>
 
   // counterfactual wallets
   loadCounterfactualWallet: (
@@ -63,22 +63,22 @@ export class Provider implements ProviderInterface {
     public readonly extensions: Extensions.Extensions = Extensions.Dev1,
   ) {}
 
-  getConfiguration(imageHash: Hex.Hex): Promise<WalletConfig.Configuration | undefined> {
+  getConfiguration(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
     return this.store.loadConfig(imageHash)
   }
 
-  async saveWallet(deployConfiguration: WalletConfig.Configuration, context: Context.Context): Promise<void> {
+  async saveWallet(deployConfiguration: Config.Config, context: Context.Context): Promise<void> {
     // Save both the configuration and the deploy hash
     await this.saveConfig(deployConfiguration)
-    const imageHash = WalletConfig.hashConfiguration(deployConfiguration)
+    const imageHash = Config.hashConfiguration(deployConfiguration)
     await this.saveCounterfactualWallet(SequenceAddress.from(imageHash, context), Hex.fromBytes(imageHash), context)
   }
 
-  async saveConfig(config: WalletConfig.Configuration): Promise<void> {
-    const imageHash = Bytes.toHex(WalletConfig.hashConfiguration(config))
+  async saveConfig(config: Config.Config): Promise<void> {
+    const imageHash = Bytes.toHex(Config.hashConfiguration(config))
     const previous = await this.store.loadConfig(imageHash)
     if (previous) {
-      const combined = WalletConfig.mergeTopology(previous.topology, config.topology)
+      const combined = Config.mergeTopology(previous.topology, config.topology)
       return this.store.saveConfig(imageHash, { ...previous, topology: combined })
     } else {
       return this.store.saveConfig(imageHash, config)
@@ -154,7 +154,7 @@ export class Provider implements ProviderInterface {
       return []
     }
 
-    const { signers, sapientSigners } = WalletConfig.getSigners(fromConfig)
+    const { signers, sapientSigners } = Config.getSigners(fromConfig)
     const subdigestsOfSigner = await Promise.all([
       ...signers.map((s) => this.store.loadSubdigestsOfSigner(s)),
       ...sapientSigners.map((s) => this.store.loadSubdigestsOfSapientSigner(s.address, Hex.fromBytes(s.imageHash))),
@@ -233,7 +233,7 @@ export class Provider implements ProviderInterface {
 
       let totalWeight = 0n
       const encoded = Signature.fillLeaves(fromConfig.topology, (leaf) => {
-        if (WalletConfig.isSapientSignerLeaf(leaf)) {
+        if (Config.isSapientSignerLeaf(leaf)) {
           const sapientSignature = signaturesOfSigners.find(
             ({ signer, imageHash }: { signer: Address.Address; imageHash?: Bytes.Bytes }) => {
               return imageHash && signer === leaf.address && imageHash === leaf.imageHash
@@ -290,10 +290,10 @@ export class Provider implements ProviderInterface {
 
   async saveUpdate(
     wallet: Address.Address,
-    configuration: WalletConfig.Configuration,
+    configuration: Config.Config,
     signature: Signature.RawSignature,
   ): Promise<void> {
-    const nextImageHash = Bytes.toHex(WalletConfig.hashConfiguration(configuration))
+    const nextImageHash = Bytes.toHex(Config.hashConfiguration(configuration))
     const payload: Payload.ConfigUpdate = {
       type: 'config-update',
       imageHash: nextImageHash,

@@ -1,10 +1,10 @@
 import { Address, Hex } from 'ox'
-import { Context, WalletConfig, Payload, Signature } from '@0xsequence/sequence-primitives'
+import { Context, Config, Payload, Signature } from '@0xsequence/sequence-primitives'
 
 export type Provider = Reader & Writer
 
 export interface Reader {
-  getConfiguration(imageHash: Hex.Hex): MaybePromise<WalletConfig.Configuration | undefined>
+  getConfiguration(imageHash: Hex.Hex): MaybePromise<Config.Config | undefined>
 
   getDeploy(wallet: Address.Address): MaybePromise<{ imageHash: Hex.Hex; context: Context.Context } | undefined>
 
@@ -24,7 +24,7 @@ export interface Reader {
 }
 
 export interface Writer {
-  saveWallet(deployConfiguration: WalletConfig.Configuration, context: Context.Context): MaybePromise<void>
+  saveWallet(deployConfiguration: Config.Config, context: Context.Context): MaybePromise<void>
 
   saveWitnesses(
     wallet: Address.Address,
@@ -35,7 +35,7 @@ export interface Writer {
 
   saveUpdate(
     wallet: Address.Address,
-    configuration: WalletConfig.Configuration,
+    configuration: Config.Config,
     signature: Signature.RawSignature,
   ): MaybePromise<void>
 }

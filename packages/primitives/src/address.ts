@@ -1,8 +1,8 @@
 import { Address, Bytes, Hash } from 'ox'
 import { Context } from './context'
-import { Configuration, hashConfiguration } from './wallet-config'
+import { Config, hashConfiguration } from './config'
 
-export function from(configuration: Bytes.Bytes | Configuration, context: Context): Address.Address {
+export function from(configuration: Bytes.Bytes | Config, context: Context): Address.Address {
   const imageHash = configuration instanceof Uint8Array ? configuration : hashConfiguration(configuration)
 
   return Bytes.toHex(

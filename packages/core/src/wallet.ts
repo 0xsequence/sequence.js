@@ -3,7 +3,7 @@ import * as State from './state'
 import {
   Constants,
   Context,
-  WalletConfig,
+  Config,
   Address as SequenceAddress,
   Erc6492,
   Payload,
@@ -13,7 +13,7 @@ import {
 export type WalletOptions = {
   context: Context.Context
   stateProvider: State.Provider
-  onSignerError?: WalletConfig.SignerErrorCallback
+  onSignerError?: Config.SignerErrorCallback
   guest: Address.Address
 }
 
@@ -28,7 +28,7 @@ export type WalletStatus = {
   isDeployed: boolean
   implementation?: Address.Address
   stage?: 'stage1' | 'stage2'
-  configuration: WalletConfig.Configuration
+  configuration: Config.Config
   imageHash: Hex.Hex
   /** Pending updates in reverse chronological order (newest first) */
   pendingUpdates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>
@@ -47,10 +47,7 @@ export class Wallet {
     this.options = { ...DefaultWalletOptions, ...options }
   }
 
-  static async fromConfiguration(
-    configuration: WalletConfig.Configuration,
-    options?: Partial<WalletOptions>,
-  ): Promise<Wallet> {
+  static async fromConfiguration(configuration: Config.Config, options?: Partial<WalletOptions>): Promise<Wallet> {
     const merged = { ...DefaultWalletOptions, ...options }
     await merged.stateProvider.saveWallet(configuration, merged.context)
     return new Wallet(SequenceAddress.from(configuration, merged.context), merged)
@@ -96,10 +93,10 @@ export class Wallet {
   }
 
   async setConfiguration(
-    configuration: WalletConfig.Configuration,
-    options?: { trustSigners?: boolean; onSignerError?: WalletConfig.SignerErrorCallback },
+    configuration: Config.Config,
+    options?: { trustSigners?: boolean; onSignerError?: Config.SignerErrorCallback },
   ) {
-    const imageHash = WalletConfig.hashConfiguration(configuration)
+    const imageHash = Config.hashConfiguration(configuration)
     const signature = await this.sign(Payload.fromConfigUpdate(Bytes.toHex(imageHash)), options)
     await this.options.stateProvider.saveUpdate(this.address, configuration, signature)
   }
@@ -190,7 +187,7 @@ export class Wallet {
   async send(
     provider: Provider.Provider,
     calls: Payload.Call[],
-    options?: { space?: bigint; trustSigners?: boolean; onSignerError?: WalletConfig.SignerErrorCallback },
+    options?: { space?: bigint; trustSigners?: boolean; onSignerError?: Config.SignerErrorCallback },
   ) {
     return provider.request({
       method: 'eth_sendTransaction',
@@ -201,7 +198,7 @@ export class Wallet {
   async getTransaction(
     provider: Provider.Provider,
     calls: Payload.Call[],
-    options?: { space?: bigint; trustSigners?: boolean; onSignerError?: WalletConfig.SignerErrorCallback },
+    options?: { space?: bigint; trustSigners?: boolean; onSignerError?: Config.SignerErrorCallback },
   ): Promise<{ to: Address.Address; data: Hex.Hex }> {
     const space = options?.space ?? 0n
 
@@ -279,7 +276,7 @@ export class Wallet {
       skip6492?: boolean
       provider?: Provider.Provider
       trustSigners?: boolean
-      onSignerError?: WalletConfig.SignerErrorCallback
+      onSignerError?: Config.SignerErrorCallback
     },
   ): Promise<SequenceSignature.RawSignature> {
     const provider = options?.provider
@@ -302,7 +299,7 @@ export class Wallet {
     const configuration = status.configuration
     const updates = status.pendingUpdates
 
-    const topology = await WalletConfig.sign(
+    const topology = await Config.sign(
       configuration.topology,
       {
         sign: (leaf) => {
@@ -314,7 +311,7 @@ export class Wallet {
             throw new Error(`${leaf.address} does not implement Signer.sign()`)
           }
 
-          const signature = WalletConfig.normalizeSignerSignature(signer.signer.sign(this.address, chainId, payload))
+          const signature = Config.normalizeSignerSignature(signer.signer.sign(this.address, chainId, payload))
 
           signature.signature = signature.signature.then((signature) => {
             if (signature.type === 'erc1271') {
@@ -392,7 +389,7 @@ export class Wallet {
             throw new Error(`${leaf.address} does not implement Signer.signSapient()`)
           }
 
-          const signature = WalletConfig.normalizeSignerSignature(
+          const signature = Config.normalizeSignerSignature(
             signer.signer.signSapient(this.address, chainId, payload, Bytes.toHex(leaf.imageHash)),
           )
 
@@ -495,7 +492,7 @@ export interface Signer {
     wallet: Address.Address,
     chainId: bigint,
     payload: Payload.Parented,
-  ) => WalletConfig.SignerSignature<SequenceSignature.SignatureOfSignerLeaf>
+  ) => Config.SignerSignature<SequenceSignature.SignatureOfSignerLeaf>
 }
 
 export interface SapientSigner {
@@ -507,7 +504,7 @@ export interface SapientSigner {
     chainId: bigint,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
-  ) => WalletConfig.SignerSignature<SequenceSignature.SignatureOfSapientSignerLeaf>
+  ) => Config.SignerSignature<SequenceSignature.SignatureOfSapientSignerLeaf>
 }
 
 type MaybePromise<T> = T | Promise<T>

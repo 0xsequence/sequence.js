@@ -1,7 +1,7 @@
 import type { CommandModule } from 'yargs'
 import { Address, Bytes, Hex } from 'ox'
 import { fromPosOrStdin } from '../utils'
-import { Signature, WalletConfig } from '@0xsequence/sequence-primitives'
+import { Signature, Config } from '@0xsequence/sequence-primitives'
 
 export const PossibleElements = [
   {
@@ -36,8 +36,8 @@ export const PossibleElements = [
   },
 ]
 
-function parseElements(elements: string): WalletConfig.Leaf[] {
-  const leaves: WalletConfig.Leaf[] = []
+function parseElements(elements: string): Config.Leaf[] {
+  const leaves: Config.Leaf[] = []
   let remainingElements = elements
 
   // Split by space and get first element
@@ -89,7 +89,7 @@ function parseElements(elements: string): WalletConfig.Leaf[] {
         type: 'nested',
         threshold: BigInt(threshold!),
         weight: BigInt(weight!),
-        tree: WalletConfig.flatLeavesToTopology(parseElements(innerSubElements)),
+        tree: Config.flatLeavesToTopology(parseElements(innerSubElements)),
       })
       remainingElements = remainingElements.slice(endSubElements + 1).trim()
     } else if (firstElementType === 'node') {
@@ -111,24 +111,24 @@ export async function createConfig(options: {
   content: string[]
 }): Promise<string> {
   const leaves = parseElements(options.content.join(' '))
-  const config: WalletConfig.Configuration = {
+  const config: Config.Config = {
     threshold: BigInt(options.threshold),
     checkpoint: BigInt(options.checkpoint),
     // Starts with empty topology
-    topology: WalletConfig.flatLeavesToTopology(leaves),
+    topology: Config.flatLeavesToTopology(leaves),
     checkpointer: undefined,
   }
 
-  return WalletConfig.configToJson(config)
+  return Config.configToJson(config)
 }
 
 export async function calculateImageHash(input: string): Promise<string> {
-  const config = WalletConfig.configFromJson(input)
-  return Hex.fromBytes(WalletConfig.hashConfiguration(config))
+  const config = Config.configFromJson(input)
+  return Hex.fromBytes(Config.hashConfiguration(config))
 }
 
 export async function doEncode(input: string): Promise<string> {
-  const configuration = WalletConfig.configFromJson(input)
+  const configuration = Config.configFromJson(input)
   return Hex.fromBytes(Signature.encodeSignature({ noChainId: true, configuration }))
 }
 

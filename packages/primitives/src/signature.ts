@@ -1,6 +1,6 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
 import {
-  Configuration,
+  Config,
   Leaf,
   NestedLeaf,
   SapientSignerLeaf,
@@ -17,7 +17,7 @@ import {
   isSubdigestLeaf,
   isAnyAddressSubdigestLeaf,
   isTopology,
-} from './wallet-config'
+} from './config'
 import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
 import { wrap, decode } from './erc-6492'
 import { fromConfigUpdate, hash, Parented } from './payload'
@@ -86,7 +86,7 @@ export type RawNode = [RawTopology, RawTopology]
 
 export type RawTopology = RawNode | RawLeaf
 
-export type RawConfiguration = {
+export type RawConfig = {
   threshold: bigint
   checkpoint: bigint
   topology: RawTopology
@@ -96,7 +96,7 @@ export type RawConfiguration = {
 export type RawSignature = {
   noChainId: boolean
   checkpointerData?: Bytes.Bytes
-  configuration: RawConfiguration
+  configuration: RawConfig
   suffix?: RawSignature[]
   erc6492?: { to: Address.Address; data: Bytes.Bytes }
 }
@@ -117,7 +117,7 @@ export function isRawSignature(signature: any): signature is RawSignature {
     signature &&
     typeof signature.noChainId === 'boolean' &&
     (signature.checkpointerData === undefined || Bytes.validate(signature.checkpointerData)) &&
-    isRawConfiguration(signature.configuration) &&
+    isRawConfig(signature.configuration) &&
     (signature.suffix === undefined ||
       (Array.isArray(signature.suffix) &&
         signature.suffix.every(
@@ -126,7 +126,7 @@ export function isRawSignature(signature: any): signature is RawSignature {
   )
 }
 
-export function isRawConfiguration(configuration: any): configuration is RawConfiguration {
+export function isRawConfig(configuration: any): configuration is RawConfig {
   return (
     typeof configuration === 'object' &&
     configuration &&
@@ -1092,7 +1092,7 @@ export async function recover(
   options?: {
     provider?: Provider.Provider | { provider: Provider.Provider; block: number } | 'assume-valid' | 'assume-invalid'
   },
-): Promise<{ configuration: Configuration; weight: bigint }> {
+): Promise<{ configuration: Config; weight: bigint }> {
   if (signature.suffix?.length) {
     let invalid = false
 

@@ -12,7 +12,7 @@ import { fromPosOrStdin } from '../utils'
 // } from '@0xsequence/sequence-primitives'
 import { PossibleElements } from './config'
 import { Bytes, Hex, Signature as OxSignature } from 'ox'
-import { Signature, WalletConfig } from '@0xsequence/sequence-primitives'
+import { Signature, Config } from '@0xsequence/sequence-primitives'
 
 const SignatureElements = [
   {
@@ -43,7 +43,7 @@ const SignatureElements = [
 ]
 
 export async function doEncode(input: string, signatures: string[] = [], noChainId: boolean): Promise<string> {
-  const config = WalletConfig.configFromJson(input)
+  const config = Config.configFromJson(input)
 
   const allSignatures = signatures.map((s) => {
     const values = s.split(':')
@@ -55,7 +55,7 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
   })
 
   const fullTopology = Signature.fillLeaves(config.topology, (leaf) => {
-    if (WalletConfig.isSignerLeaf(leaf)) {
+    if (Config.isSignerLeaf(leaf)) {
       // Type must be 1271, eth_sign, or hash
       const candidate = allSignatures.find((s) => s.address === leaf.address)
 
@@ -96,7 +96,7 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
       throw new Error(`Unsupported signature type: ${candidate.type}`)
     }
 
-    if (WalletConfig.isSapientSignerLeaf(leaf)) {
+    if (Config.isSapientSignerLeaf(leaf)) {
       const candidate = allSignatures.find((s) => s.address === leaf.address)
       if (!candidate) {
         return undefined

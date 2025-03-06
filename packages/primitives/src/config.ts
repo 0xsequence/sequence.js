@@ -1,11 +1,11 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
 import {
-  isRawConfiguration,
+  isRawConfig,
   isRawNestedLeaf,
   isRawSignerLeaf,
   isSignedSapientSignerLeaf,
   isSignedSignerLeaf,
-  RawConfiguration,
+  RawConfig,
   RawTopology,
   SignatureOfSapientSignerLeaf,
   SignatureOfSignerLeaf,
@@ -53,7 +53,7 @@ export type Leaf = SignerLeaf | SapientSignerLeaf | SubdigestLeaf | AnyAddressSu
 
 export type Topology = Node | Leaf
 
-export type Configuration = {
+export type Config = {
   threshold: bigint
   checkpoint: bigint
   topology: Topology
@@ -88,7 +88,7 @@ export function isNode(cand: any): cand is Node {
   return Array.isArray(cand) && cand.length === 2 && isTopology(cand[0]) && isTopology(cand[1])
 }
 
-export function isConfiguration(cand: any): cand is Configuration {
+export function isConfig(cand: any): cand is Config {
   return typeof cand === 'object' && 'threshold' in cand && 'checkpoint' in cand && 'topology' in cand
 }
 
@@ -107,7 +107,7 @@ export function isTopology(cand: any): cand is Topology {
   return isNode(cand) || isLeaf(cand)
 }
 
-export function getSigners(configuration: Configuration | Topology): {
+export function getSigners(configuration: Config | Topology): {
   signers: Address.Address[]
   sapientSigners: { address: Address.Address; imageHash: Bytes.Bytes }[]
   isComplete: boolean
@@ -136,15 +136,15 @@ export function getSigners(configuration: Configuration | Topology): {
     }
   }
 
-  scan(isConfiguration(configuration) ? configuration.topology : configuration)
+  scan(isConfig(configuration) ? configuration.topology : configuration)
   return { signers: Array.from(signers), sapientSigners: Array.from(sapientSigners), isComplete }
 }
 
 export function getWeight(
-  topology: RawTopology | RawConfiguration,
+  topology: RawTopology | RawConfig,
   canSign?: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
 ): { weight: bigint; maxWeight: bigint } {
-  topology = isRawConfiguration(topology) ? topology.topology : topology
+  topology = isRawConfig(topology) ? topology.topology : topology
   canSign = canSign || ((_signer: SignerLeaf | SapientSignerLeaf) => true)
 
   if (isSignedSignerLeaf(topology)) {
@@ -175,8 +175,8 @@ export function getWeight(
   }
 }
 
-export function hashConfiguration(topology: Topology | Configuration): Bytes.Bytes {
-  if (isConfiguration(topology)) {
+export function hashConfiguration(topology: Topology | Config): Bytes.Bytes {
+  if (isConfig(topology)) {
     let root = hashConfiguration(topology.topology)
     root = Hash.keccak256(Bytes.concat(root, Bytes.padLeft(Bytes.fromNumber(topology.threshold), 32)))
     root = Hash.keccak256(Bytes.concat(root, Bytes.padLeft(Bytes.fromNumber(topology.checkpoint), 32)))
@@ -259,7 +259,7 @@ export function flatLeavesToTopology(leaves: Leaf[]): Topology {
   ]
 }
 
-export function configToJson(config: Configuration): string {
+export function configToJson(config: Config): string {
   return JSON.stringify({
     threshold: config.threshold.toString(),
     checkpoint: config.checkpoint.toString(),
@@ -268,7 +268,7 @@ export function configToJson(config: Configuration): string {
   })
 }
 
-export function configFromJson(json: string): Configuration {
+export function configFromJson(json: string): Config {
   const parsed = JSON.parse(json)
   return {
     threshold: BigInt(parsed.threshold),
