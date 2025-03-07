@@ -50,6 +50,7 @@ export class Wallet {
 
   static async fromConfiguration(configuration: Config.Config, options?: Partial<WalletOptions>): Promise<Wallet> {
     const merged = { ...DefaultWalletOptions, ...options }
+    //FIXME Validate configuration (weights not too large, total weights above threshold, etc)
     await merged.stateProvider.saveWallet(configuration, merged.context)
     return new Wallet(SequenceAddress.from(configuration, merged.context), merged)
   }
@@ -418,6 +419,7 @@ export class Wallet {
                     method: 'eth_call',
                     params: [
                       {
+                        from: this.address,
                         to: leaf.address,
                         data: AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE, [
                           Payload.encodeSapient(chainId, payload),
