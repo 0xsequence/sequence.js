@@ -28,7 +28,7 @@ export class Wdk {
     const authKey = await this.getAuthKey()
     const challengeParams = challenge.getParams()
     const params = {
-      ecosystemId: this.ecosystemId,
+      ecosystem: this.ecosystemId,
       authKey: authKey.toProto(),
       ...challengeParams,
       answer: undefined,
@@ -43,7 +43,7 @@ export class Wdk {
     const params = {
       answer: '',
       ...challengeParams,
-      ecosystemId: this.ecosystemId,
+      ecosystem: this.ecosystemId,
       authKey: authKey.toProto(),
     }
     const res = await this.nitro.registerAuth({ params })
