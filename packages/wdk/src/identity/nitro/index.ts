@@ -1,1 +1,1 @@
-export * from './nitro.gen'
+export * from './identity-instrument.gen'

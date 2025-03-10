@@ -28,11 +28,12 @@ export class IdentitySigner implements Signers.Signer {
   }
 
   async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeaf> {
-    const authKeySignature = await this.authKey.signMessage(digest.toString())
+    const digestHex = Hex.fromBytes(digest)
+    const authKeySignature = await this.authKey.signMessage(digestHex)
     const params = {
-      ecosystemId: this.ecosystemId,
+      ecosystem: this.ecosystemId,
       signer: this.address,
-      digest: digest.toString(),
+      digest: digestHex,
       authKey: this.authKey.toProto(),
       signature: authKeySignature,
     }
