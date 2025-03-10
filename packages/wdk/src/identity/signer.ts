@@ -30,7 +30,7 @@ export class IdentitySigner implements Signers.Signer {
   async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeaf> {
     const authKeySignature = await this.authKey.signMessage(digest.toString())
     const params = {
-      ecosystemId: this.ecosystemId,
+      ecosystem: this.ecosystemId,
       signer: this.address,
       digest: digest.toString(),
       authKey: this.authKey.toProto(),
