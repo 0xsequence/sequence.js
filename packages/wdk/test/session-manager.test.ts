@@ -1,8 +1,15 @@
-import { Attestation, Payload } from '@0xsequence/sequence-primitives'
+import { Signers, Wallet } from '@0xsequence/sequence-core'
+import { Attestation, Constants, Payload } from '@0xsequence/sequence-primitives'
 import { Identity, Session } from '@0xsequence/sequence-wdk'
-import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
-import { MOCK_IMPLICIT_CONTRACT, CAN_RUN_LIVE, RPC_URL, PRIVATE_KEY } from './constants'
-import { Signers } from '@0xsequence/sequence-core'
+import { AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
+import {
+  CAN_RUN_LIVE,
+  ERC20_IMPLICIT_MINT_CONTRACT,
+  ERC20_MINT_ONCE,
+  MOCK_IMPLICIT_CONTRACT,
+  PRIVATE_KEY,
+  RPC_URL,
+} from './constants'
 
 describe('SessionManager (mocked)', () => {
   // Mock provider for testing
@@ -170,6 +177,13 @@ if (CAN_RUN_LIVE) {
       provider,
     })
 
+    const requireContractDeployed = async (contract: Address.Address) => {
+      const code = await provider.request({ method: 'eth_getCode', params: [contract, 'latest'] })
+      if (code === '0x') {
+        throw new Error('Contract not deployed')
+      }
+    }
+
     it('should create and sign with an implicit session', async () => {
       const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
 
@@ -183,7 +197,7 @@ if (CAN_RUN_LIVE) {
         },
       }
 
-      const implicitSession = await sessionManager.createImplicitSession(mockIdentitySigner, attestation)
+      await sessionManager.createImplicitSession(mockIdentitySigner, attestation)
       const payload: Payload.Calls = {
         type: 'call',
         nonce: 0n,
@@ -206,5 +220,198 @@ if (CAN_RUN_LIVE) {
       const isValid = await sessionManager.isValidSapientSignature(walletAddress, chainId, payload, signature)
       expect(isValid).toBe(true)
     })
+
+    it('Submits a real transaction with a wallet that has a SessionManager using implicit session', async () => {
+      // Check the contracts have been deployed
+      await requireContractDeployed(ERC20_IMPLICIT_MINT_CONTRACT)
+      await requireContractDeployed(Constants.DefaultGuest)
+
+      // Check balance of the private key account
+      const senderAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pkHex }))
+
+      const wallet = await Wallet.fromConfiguration({
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: {
+          type: 'sapient-signer',
+          address: sessionManager.address,
+          weight: 100n,
+          imageHash: Bytes.fromHex(sessionManager.imageHash),
+        },
+      })
+      wallet.setSapientSigner(sessionManager)
+
+      const call: Payload.Call = {
+        to: ERC20_IMPLICIT_MINT_CONTRACT,
+        value: 0n,
+        data: Bytes.fromHex(AbiFunction.encodeData(ERC20_MINT_ONCE, [wallet.address, 1000000000000000000n])),
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+
+      // Add an implicit session
+      const attestation = {
+        identityType: new Uint8Array(4),
+        issuerHash: new Uint8Array(32),
+        audienceHash: new Uint8Array(32),
+        applicationData: new Uint8Array(),
+        authData: {
+          redirectUrl: 'https://example.com',
+        },
+      }
+      await sessionManager.createImplicitSession(mockIdentitySigner, attestation)
+
+      // Send the transaction
+      const transaction = await wallet.getTransaction(provider, [call])
+
+      // Estimate gas with a safety buffer
+      const estimatedGas = BigInt(await provider.request({ method: 'eth_estimateGas', params: [transaction] }))
+      const safeGasLimit = estimatedGas > 21000n ? (estimatedGas * 12n) / 10n : 50000n
+
+      // Get base fee and priority fee
+      const baseFee = BigInt(await provider.request({ method: 'eth_gasPrice' }))
+      const priorityFee = 100000000n // 0.1 gwei priority fee
+      const maxFeePerGas = baseFee + priorityFee
+
+      // Check sender have enough balance
+      const senderBalance = BigInt(
+        await provider.request({ method: 'eth_getBalance', params: [senderAddress, 'latest'] }),
+      )
+      if (senderBalance < maxFeePerGas * safeGasLimit) {
+        console.log('Sender balance:', senderBalance.toString(), 'wei')
+        throw new Error('Sender has insufficient balance to pay for gas')
+      }
+      const nonce = BigInt(
+        await provider.request({
+          method: 'eth_getTransactionCount',
+          params: [senderAddress, 'latest'],
+        }),
+      )
+
+      const chainId = await provider.request({ method: 'eth_chainId' })
+      const envelope = TransactionEnvelopeEip1559.from({
+        chainId: Number(chainId),
+        type: 'eip1559',
+        from: senderAddress,
+        to: transaction.to,
+        data: transaction.data,
+        gas: safeGasLimit,
+        maxFeePerGas: maxFeePerGas,
+        maxPriorityFeePerGas: priorityFee,
+        nonce: nonce,
+        value: 0n,
+      })
+      const relayerSignature = Secp256k1.sign({
+        payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
+        privateKey: pkHex,
+      })
+      const signedEnvelope = TransactionEnvelopeEip1559.from(envelope, {
+        signature: relayerSignature,
+      })
+      const tx = await provider.request({
+        method: 'eth_sendRawTransaction',
+        params: [TransactionEnvelopeEip1559.serialize(signedEnvelope)],
+      })
+      console.log('Transaction sent', tx)
+      await provider.request({ method: 'eth_getTransactionReceipt', params: [tx] })
+    }, 60000)
+
+    it('Submits a real transaction with a wallet that has a SessionManager using explicit session', async () => {
+      // Check the contracts have been deployed
+      await requireContractDeployed(ERC20_IMPLICIT_MINT_CONTRACT)
+      await requireContractDeployed(Constants.DefaultGuest)
+
+      // Check balance of the private key account
+      const senderAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pkHex }))
+
+      // Add an implicit session
+      const sessionPermissions: Signers.Session.ExplicitParams = {
+        valueLimit: 0n, // Can't send ETH
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          { target: ERC20_IMPLICIT_MINT_CONTRACT, rules: [] }, // Anything on this contract is allowed
+        ],
+      }
+      await sessionManager.createExplicitSession(sessionPermissions)
+
+      // FIXME This is the wrong order to do this but the wallet doesn't currently support a sapient signer with an image hash that changes
+      const wallet = await Wallet.fromConfiguration({
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: {
+          type: 'sapient-signer',
+          address: sessionManager.address,
+          weight: 100n,
+          imageHash: Bytes.fromHex(sessionManager.imageHash),
+        },
+      })
+      wallet.setSapientSigner(sessionManager)
+
+      const call: Payload.Call = {
+        to: ERC20_IMPLICIT_MINT_CONTRACT,
+        value: 0n,
+        data: Bytes.fromHex(AbiFunction.encodeData(ERC20_MINT_ONCE, [wallet.address, 1000000000000000000n])),
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+
+      // Send the transaction
+      const transaction = await wallet.getTransaction(provider, [call])
+
+      // Estimate gas with a safety buffer
+      const estimatedGas = BigInt(await provider.request({ method: 'eth_estimateGas', params: [transaction] }))
+      const safeGasLimit = estimatedGas > 21000n ? (estimatedGas * 12n) / 10n : 50000n
+
+      // Get base fee and priority fee
+      const baseFee = BigInt(await provider.request({ method: 'eth_gasPrice' }))
+      const priorityFee = 100000000n // 0.1 gwei priority fee
+      const maxFeePerGas = baseFee + priorityFee
+
+      // Check sender have enough balance
+      const senderBalance = BigInt(
+        await provider.request({ method: 'eth_getBalance', params: [senderAddress, 'latest'] }),
+      )
+      if (senderBalance < maxFeePerGas * safeGasLimit) {
+        console.log('Sender balance:', senderBalance.toString(), 'wei')
+        throw new Error('Sender has insufficient balance to pay for gas')
+      }
+      const nonce = BigInt(
+        await provider.request({
+          method: 'eth_getTransactionCount',
+          params: [senderAddress, 'latest'],
+        }),
+      )
+
+      const chainId = await provider.request({ method: 'eth_chainId' })
+      const envelope = TransactionEnvelopeEip1559.from({
+        chainId: Number(chainId),
+        type: 'eip1559',
+        from: senderAddress,
+        to: transaction.to,
+        data: transaction.data,
+        gas: safeGasLimit,
+        maxFeePerGas: maxFeePerGas,
+        maxPriorityFeePerGas: priorityFee,
+        nonce: nonce,
+        value: 0n,
+      })
+      const relayerSignature = Secp256k1.sign({
+        payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
+        privateKey: pkHex,
+      })
+      const signedEnvelope = TransactionEnvelopeEip1559.from(envelope, {
+        signature: relayerSignature,
+      })
+      const tx = await provider.request({
+        method: 'eth_sendRawTransaction',
+        params: [TransactionEnvelopeEip1559.serialize(signedEnvelope)],
+      })
+      console.log('Transaction sent', tx)
+      await provider.request({ method: 'eth_getTransactionReceipt', params: [tx] })
+    }, 60000)
   })
 }

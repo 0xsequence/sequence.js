@@ -22,36 +22,52 @@ export class Implicit implements SignerInterface {
     call: Payload.Call,
     provider: Provider.Provider,
   ): Promise<boolean> {
-    // Call the acceptImplicitRequest function on the called contract
-    const encodedCallData = AbiFunction.encodeData(acceptImplicitRequestFunctionAbi, [
-      wallet,
-      {
-        approvedSigner: this._attestation.approvedSigner,
-        identityType: Bytes.toHex(this._attestation.identityType),
-        issuerHash: Bytes.toHex(this._attestation.issuerHash),
-        audienceHash: Bytes.toHex(this._attestation.audienceHash),
-        applicationData: Bytes.toHex(this._attestation.applicationData),
-        authData: this._attestation.authData,
-      },
-      {
-        to: call.to,
-        value: call.value,
-        data: Bytes.toHex(call.data),
-        gasLimit: call.gasLimit,
-        delegateCall: call.delegateCall,
-        onlyFallback: call.onlyFallback,
-        behaviorOnError: BigInt(Payload.encodeBehaviorOnError(call.behaviorOnError)),
-      },
-    ])
-    const acceptImplicitRequestResult = await provider.request({
-      method: 'eth_call',
-      params: [{ from: this._sessionManager, to: call.to, data: encodedCallData }, 'latest'],
-    })
-    const acceptImplicitRequest = Hex.from(
-      AbiFunction.decodeResult(acceptImplicitRequestFunctionAbi, acceptImplicitRequestResult),
-    )
-    const expectedResult = Bytes.toHex(Attestation.generateImplicitRequestMagic(this._attestation, wallet))
-    return acceptImplicitRequest === expectedResult
+    try {
+      console.log('implicit signer supportedCall', call, 'to', call.to, 'sessionManager', this._sessionManager)
+      // Call the acceptImplicitRequest function on the called contract
+      const encodedCallData = AbiFunction.encodeData(acceptImplicitRequestFunctionAbi, [
+        wallet,
+        {
+          approvedSigner: this._attestation.approvedSigner,
+          identityType: Bytes.toHex(this._attestation.identityType),
+          issuerHash: Bytes.toHex(this._attestation.issuerHash),
+          audienceHash: Bytes.toHex(this._attestation.audienceHash),
+          applicationData: Bytes.toHex(this._attestation.applicationData),
+          authData: this._attestation.authData,
+        },
+        {
+          to: call.to,
+          value: call.value,
+          data: Bytes.toHex(call.data),
+          gasLimit: call.gasLimit,
+          delegateCall: call.delegateCall,
+          onlyFallback: call.onlyFallback,
+          behaviorOnError: BigInt(Payload.encodeBehaviorOnError(call.behaviorOnError)),
+        },
+      ])
+      console.log(
+        'implicit signer supported call',
+        call,
+        'to',
+        call.to,
+        'sessionManager',
+        this._sessionManager,
+        'encodedCallData',
+        encodedCallData,
+      )
+      const acceptImplicitRequestResult = await provider.request({
+        method: 'eth_call',
+        params: [{ from: this._sessionManager, to: call.to, data: encodedCallData }],
+      })
+      const acceptImplicitRequest = Hex.from(
+        AbiFunction.decodeResult(acceptImplicitRequestFunctionAbi, acceptImplicitRequestResult),
+      )
+      const expectedResult = Bytes.toHex(Attestation.generateImplicitRequestMagic(this._attestation, wallet))
+      return acceptImplicitRequest === expectedResult
+    } catch (error) {
+      console.log('implicit signer unsupported call', call, error)
+      return false
+    }
   }
 
   async signCall(
