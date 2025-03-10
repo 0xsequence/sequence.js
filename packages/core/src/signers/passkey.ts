@@ -19,16 +19,12 @@ export type CreaetePasskeyOptions = {
   embedMetadata?: boolean
 }
 
-export type PasskeyMetadata = {
-  name: string
-  createdAt: number
-}
-
 export type WitnessMessage = {
   action: 'consent-to-be-part-of-wallet'
   wallet: Address.Address
   publicKey: Extensions.Passkeys.PublicKey
   timestamp: number
+  metadata?: Extensions.Passkeys.PasskeyMetadata
 }
 
 export function isWitnessMessage(message: unknown): message is WitnessMessage {
@@ -47,24 +43,25 @@ export class Passkey implements SapientSigner, Witnessable {
   public readonly address: Address.Address
   public readonly imageHash: Hex.Hex
   public readonly embedMetadata: boolean
+  public readonly metadata?: Extensions.Passkeys.PasskeyMetadata
 
   constructor(options: PasskeyOptions) {
-    this.imageHash = Extensions.Passkeys.rootFor(options.publicKey)
     this.address = options.extensions.passkeys
     this.publicKey = options.publicKey
     this.credentialId = options.credentialId
     this.embedMetadata = options.embedMetadata ?? false
+    this.imageHash = Extensions.Passkeys.rootFor(options.publicKey)
   }
 
   static async loadFromWitness(
     stateReader: State.Reader,
     extensions: Pick<Extensions.Extensions, 'passkeys'>,
     wallet: Address.Address,
-    address: Address.Address,
     imageHash: Hex.Hex,
   ) {
     // In the witness we will find the public key, and may find the credential id
-    const wallets = await stateReader.getWalletsForSapient(address, imageHash)
+    const wallets = await stateReader.getWalletsForSapient(extensions.passkeys, imageHash)
+    console.log('Got wallets', extensions.passkeys, imageHash, wallets)
     const witness = wallets[wallet]
 
     if (!witness) {
@@ -81,7 +78,8 @@ export class Passkey implements SapientSigner, Witnessable {
       throw new Error('Witness payload is not a witness message')
     }
 
-    const metadata = message.publicKey.metadata
+    const metadata = message.publicKey.metadata || message.metadata
+    console.log(metadata, message, message.publicKey, message.metadata)
     if (typeof metadata === 'string' || !metadata) {
       throw new Error('Metadata does not contain credential id')
     }
@@ -108,6 +106,12 @@ export class Passkey implements SapientSigner, Witnessable {
     const x = Hex.fromNumber(credential.publicKey.x)
     const y = Hex.fromNumber(credential.publicKey.y)
 
+    const metadata = {
+      credentialId: credential.id,
+      name,
+      createdAt: Date.now(),
+    }
+
     const passkey = new Passkey({
       credentialId: credential.id,
       extensions,
@@ -115,12 +119,9 @@ export class Passkey implements SapientSigner, Witnessable {
         requireUserVerification: options?.requireUserVerification ?? true,
         x,
         y,
-        metadata: {
-          credentialId: credential.id,
-          name,
-          createdAt: Date.now(),
-        },
+        metadata: options?.embedMetadata ? metadata : undefined,
       },
+      embedMetadata: options?.embedMetadata,
     })
 
     if (options?.stateProvider) {
@@ -176,6 +177,7 @@ export class Passkey implements SapientSigner, Witnessable {
           action: 'consent-to-be-part-of-wallet',
           wallet,
           publicKey: this.publicKey,
+          metadata: this.metadata,
           timestamp: Date.now(),
         } as WitnessMessage),
       ),

@@ -1,30 +1,17 @@
 import { Bytes, Hex, WebAuthnP256 } from 'ox'
-import { keccak256 } from 'ox/Hash'
 import { GenericTree } from '..'
+
+export type PasskeyMetadata = {
+  name: string
+  credentialId: string
+  createdAt: number
+}
 
 export type PublicKey = {
   requireUserVerification: boolean
   x: Hex.Hex
   y: Hex.Hex
-  metadata?:
-    | {
-        name: string
-        credentialId: string
-        createdAt: number
-      }
-    | Hex.Hex
-}
-
-export function rootFor(publicKey: PublicKey): Hex.Hex {
-  const a = keccak256(
-    Bytes.concat(Bytes.padLeft(Bytes.fromHex(publicKey.x), 32), Bytes.padLeft(Bytes.fromHex(publicKey.y), 32)),
-  )
-
-  const ruv = Bytes.padLeft(publicKey.requireUserVerification ? Bytes.from([1]) : Bytes.from([0]), 32)
-  const metadata = publicKey.metadata ? metadataNode(publicKey.metadata) : Bytes.padLeft(Bytes.from([]), 32)
-
-  const b = keccak256(Bytes.concat(ruv, metadata))
-  return Hex.fromBytes(keccak256(Bytes.concat(a, b)))
+  metadata?: PasskeyMetadata | Hex.Hex
 }
 
 export function metadataTree(metadata: Required<PublicKey>['metadata']): GenericTree.Tree {
@@ -140,7 +127,7 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
   return { requireUserVerification, x, y, metadata }
 }
 
-export function rootFor2(publicKey: PublicKey): Hex.Hex {
+export function rootFor(publicKey: PublicKey): Hex.Hex {
   return Hex.fromBytes(GenericTree.hash(toTree(publicKey)))
 }
 
@@ -181,7 +168,7 @@ export function encode(decoded: DecodedSignature): Bytes.Bytes {
   flags |= (bytesTypeIndex - 1) << 4 // 0x10 bit
 
   // Set metadata flag if metadata exists
-  if (decoded.publicKey.metadata) {
+  if (decoded.embedMetadata) {
     flags |= 1 << 6 // 0x40 bit
   }
 

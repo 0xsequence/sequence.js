@@ -103,15 +103,16 @@ export class Provider implements ProviderInterface {
   }
 
   private async getWalletsGeneric<T>(
-    signer: Address.Address,
+    subdigests: Hex.Hex[],
     loadSignatureFn: (subdigest: Hex.Hex) => Promise<T | undefined>,
   ): Promise<{ [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: T } }> {
-    const subdigests = await this.store.loadSubdigestsOfSigner(signer)
     const payloads = await Promise.all(subdigests.map((sd) => this.store.loadPayloadOfSubdigest(sd)))
     const response: { [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: T } } = {}
 
     for (const payload of payloads) {
-      if (!payload || response[payload.wallet]) continue
+      if (!payload || response[payload.wallet]) {
+        continue
+      }
       const subdigest = Hex.fromBytes(Payload.hash(payload.wallet, payload.chainId, payload.content))
       const signature = await loadSignatureFn(subdigest)
       if (!signature) continue
@@ -126,14 +127,16 @@ export class Provider implements ProviderInterface {
   }
 
   async getWallets(signer: Address.Address) {
-    return this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(signer, (subdigest) =>
-      this.store.loadSignatureOfSubdigest(signer, subdigest),
+    return this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(
+      await this.store.loadSubdigestsOfSigner(signer),
+      (subdigest) => this.store.loadSignatureOfSubdigest(signer, subdigest),
     )
   }
 
   async getWalletsForSapient(signer: Address.Address, imageHash: Hex.Hex) {
-    return this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(signer, (subdigest) =>
-      this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
+    return this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(
+      await this.store.loadSubdigestsOfSapientSigner(signer, imageHash),
+      (subdigest) => this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
     )
   }
 
@@ -336,32 +339,29 @@ export class Provider implements ProviderInterface {
 
         return this.store.saveSignatureOfSubdigest(address, subdigest, topology.signature)
       }
-    }
 
-    if (Signature.isSignedSapientSignerLeaf(topology)) {
-      switch (topology.address.toLowerCase()) {
-        case this.extensions.passkeys.toLowerCase():
-          const decoded = Extensions.Passkeys.decode(topology.signature.data)
-          if (Extensions.Passkeys.rootFor(decoded.publicKey) !== Hex.fromBytes(topology.imageHash)) {
-            throw new Error(
-              `Incorrect passkey signature: ${Extensions.Passkeys.rootFor(decoded.publicKey)} !== ${Hex.fromBytes(topology.imageHash)}`,
+      if (Signature.isSignatureOfSapientSignerLeaf(topology.signature)) {
+        switch (topology.signature.address.toLowerCase()) {
+          case this.extensions.passkeys.toLowerCase():
+            const decoded = Extensions.Passkeys.decode(topology.signature.data)
+
+            if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
+              throw new Error('Invalid passkey signature')
+            }
+
+            return this.store.saveSapientSignatureOfSubdigest(
+              topology.signature.address,
+              subdigest,
+              Extensions.Passkeys.rootFor(decoded.publicKey),
+              topology.signature,
             )
-          }
-
-          if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
-            throw new Error('Invalid passkey signature')
-          }
-
-          return this.store.saveSapientSignatureOfSubdigest(
-            topology.address,
-            subdigest,
-            Hex.fromBytes(topology.imageHash),
-            topology.signature,
-          )
-        default:
-          throw new Error(`Unsupported sapient signer: ${topology.address}`)
+          default:
+            throw new Error(`Unsupported sapient signer: ${topology.signature.address}`)
+        }
       }
     }
+
+    throw new Error('Unsupported signature type')
   }
 
   getTree(rootHash: Hex.Hex): GenericTree.Tree | Promise<GenericTree.Tree | undefined> | undefined {

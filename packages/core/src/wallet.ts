@@ -39,13 +39,20 @@ export type WalletStatus = {
 export class Wallet {
   private readonly signers = new Map<Address.Address, { signer: Signer; isTrusted: boolean }>()
   private readonly sapientSigners = new Map<string, { signer: SapientSigner; isTrusted: boolean }>()
-  private readonly options: WalletOptions & { stateProvider: State.Provider }
+  private readonly onSignerError?: Config.SignerErrorCallback
+
+  public readonly context: Context.Context
+  public readonly guest: Address.Address
+  public readonly stateProvider: State.Provider
 
   constructor(
     readonly address: Address.Address,
     options?: Partial<WalletOptions>,
   ) {
-    this.options = { ...DefaultWalletOptions, ...options }
+    const combinedOptions = { ...DefaultWalletOptions, ...options }
+    this.context = combinedOptions.context
+    this.guest = combinedOptions.guest
+    this.stateProvider = combinedOptions.stateProvider
   }
 
   static async fromConfiguration(configuration: Config.Config, options?: Partial<WalletOptions>): Promise<Wallet> {
@@ -86,7 +93,7 @@ export class Wallet {
   }
 
   async getDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
-    const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+    const deployInformation = await this.stateProvider.getDeploy(this.address)
     if (!deployInformation) {
       throw new Error(`cannot find deploy information for ${this.address}`)
     }
@@ -99,7 +106,7 @@ export class Wallet {
   ) {
     const imageHash = Config.hashConfiguration(configuration)
     const signature = await this.sign(Payload.fromConfigUpdate(Bytes.toHex(imageHash)), options)
-    await this.options.stateProvider.saveUpdate(this.address, configuration, signature)
+    await this.stateProvider.saveUpdate(this.address, configuration, signature)
   }
 
   async getStatus(provider?: Provider.Provider): Promise<WalletStatus> {
@@ -130,7 +137,7 @@ export class Wallet {
 
       // Determine stage based on implementation address
       if (implementation) {
-        if (implementation.toLowerCase() === this.options.context.stage1.toLowerCase()) {
+        if (implementation.toLowerCase() === this.context.stage1.toLowerCase()) {
           stage = 'stage1'
         } else {
           stage = 'stage2'
@@ -147,7 +154,7 @@ export class Wallet {
         })
       } else {
         // For non-deployed or stage1 wallets, get the deploy hash
-        const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+        const deployInformation = await this.stateProvider.getDeploy(this.address)
         if (!deployInformation) {
           throw new Error(`cannot find deploy information for ${this.address}`)
         }
@@ -155,20 +162,20 @@ export class Wallet {
       }
 
       // Get configuration updates
-      updates = await this.options.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
+      updates = await this.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
       imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
     } else {
       // Without a provider, we can only get information from the state provider
-      const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+      const deployInformation = await this.stateProvider.getDeploy(this.address)
       if (!deployInformation) {
         throw new Error(`cannot find deploy information for ${this.address}`)
       }
-      updates = await this.options.stateProvider.getConfigurationUpdates(this.address, deployInformation.imageHash)
+      updates = await this.stateProvider.getConfigurationUpdates(this.address, deployInformation.imageHash)
       imageHash = updates[updates.length - 1]?.imageHash ?? deployInformation.imageHash
     }
 
     // Get the current configuration
-    const configuration = await this.options.stateProvider.getConfiguration(imageHash)
+    const configuration = await this.stateProvider.getConfiguration(imageHash)
     if (!configuration) {
       throw new Error(`cannot find configuration details for ${this.address}`)
     }
@@ -234,7 +241,7 @@ export class Wallet {
       ])
 
       return {
-        to: this.options.guest,
+        to: this.guest,
         data: Bytes.toHex(
           Payload.encode({
             type: 'call',
@@ -290,7 +297,7 @@ export class Wallet {
     // Get deploy hash if needed for ERC-6492
     let deployHash: { deployHash: Hex.Hex; context: Context.Context } | undefined
     if (!status.isDeployed || status.stage === 'stage1') {
-      const deployInformation = await this.options.stateProvider.getDeploy(this.address)
+      const deployInformation = await this.stateProvider.getDeploy(this.address)
       if (!deployInformation) {
         throw new Error(`cannot find deploy information for ${this.address}`)
       }
@@ -467,7 +474,7 @@ export class Wallet {
         threshold: configuration.threshold,
         onSignerError: (leaf, error) => {
           options?.onSignerError?.(leaf, error)
-          this.options.onSignerError?.(leaf, error)
+          this.onSignerError?.(leaf, error)
         },
       },
     )
