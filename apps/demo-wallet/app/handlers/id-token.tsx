@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { redirect } from 'next/navigation'
-import { PersonalMessage, Hex, Bytes } from 'ox'
+import { PersonalMessage, Hex, Bytes, Signature } from 'ox'
 import { Identity } from '@0xsequence/sequence-wdk'
 import type { ClientParams } from '../lib/client-params'
 
@@ -38,8 +38,18 @@ export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer,
       const attestationSignature = await signer.signDigest(Bytes.fromHex(personalMessage))
       console.log({ attestationSignature, attestationMessage })
 
+      if (attestationSignature.type !== 'hash') {
+        throw new Error('Invalid signature type')
+      }
+
+      const sig = Signature.toHex({
+        r: attestationSignature.r,
+        s: attestationSignature.s,
+        yParity: attestationSignature.yParity,
+      })
+
       const returnParams = new URLSearchParams({
-        attestation_signature: JSON.stringify(attestationSignature),
+        attestation_signature: sig,
         attestation_message: attestationMessage,
         state: clientParams.state,
         session_address: clientParams.sessionAddress,
