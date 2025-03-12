@@ -10,9 +10,9 @@ export async function getClientParams(state: string) {
 export async function storeClientParams(state: string, searchParams: URLSearchParams) {
   const cookieStore = await cookies()
   const clientParams: ClientParams = {
-    appId: searchParams.get('app_id') || '',
-    redirectUri: searchParams.get('redirect_uri') || '',
-    sessionAddress: searchParams.get('session_address') || '',
+    app_id: searchParams.get('app_id') || '',
+    redirect_uri: searchParams.get('redirect_uri') || '',
+    session_address: searchParams.get('session_address') || '',
     state: searchParams.get('state') || '',
   }
   cookieStore.set(`client-params-${state}`, JSON.stringify(clientParams))
