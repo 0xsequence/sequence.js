@@ -1,4 +1,5 @@
-import { Signers } from '@0xsequence/sequence-core'
+import { SapientSigner } from '.'
+import { Implicit, Explicit, AttestationParams } from './session'
 import {
   Attestation,
   Constants,
@@ -9,28 +10,30 @@ import {
   GenericTree,
 } from '@0xsequence/sequence-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
-import { IdentitySigner } from '../identity'
 
 type SessionManagerConfiguration = {
   topology: SessionConfig.SessionsTopology
   provider: Provider.Provider
+  implicitSigners?: Implicit[]
+  explicitSigners?: Explicit[]
   address?: Address.Address
 }
 
-const DEFAULT_SESSION_MANAGER_ADDRESS: Address.Address = '0x0D3b3497f4B7E99239aE748Fc45216F45431B105'
-
-export class SessionManager implements Signers.SapientSigner {
-  readonly address: Address.Address
-  private _topology: SessionConfig.SessionsTopology
-  private _provider: Provider.Provider
-
-  private _implicitSigners: Signers.Session.Implicit[] = []
-  private _explicitSigners: Signers.Session.Explicit[] = []
+export class SessionManager implements SapientSigner {
+  private readonly _address: Address.Address
+  private readonly _topology: SessionConfig.SessionsTopology
+  private readonly _provider: Provider.Provider
+  private readonly _implicitSigners: Implicit[]
+  private readonly _explicitSigners: Explicit[]
 
   constructor(configuration: SessionManagerConfiguration) {
-    this.address = configuration.address ?? DEFAULT_SESSION_MANAGER_ADDRESS
+    this._address = configuration.address ?? Constants.DefaultSessionManager
     this._topology = configuration.topology
     this._provider = configuration.provider
+    // FIXME: Validate that the implicit signers attestations are signed by the identity signer?
+    this._implicitSigners = configuration.implicitSigners ?? []
+    // FIXME: Validate that the configuration contains the explicit signers?
+    this._explicitSigners = configuration.explicitSigners ?? []
   }
 
   static createEmpty(
@@ -41,6 +44,10 @@ export class SessionManager implements Signers.SapientSigner {
       ...configuration,
       topology: SessionConfig.emptySessionsTopology(identitySignerAddress),
     })
+  }
+
+  get address(): Address.Address {
+    return this._address
   }
 
   get topology(): SessionConfig.SessionsTopology {
@@ -68,67 +75,69 @@ export class SessionManager implements Signers.SapientSigner {
     })
   }
 
-  async createImplicitSession(
-    identitySigner: IdentitySigner,
-    attestationParams: Signers.Session.AttestationParams,
-  ): Promise<Signers.Session.Implicit> {
-    const implicitPrivateKey = Secp256k1.randomPrivateKey()
-    const implicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: implicitPrivateKey }))
-    const attestation: Attestation.Attestation = {
-      ...attestationParams,
-      approvedSigner: implicitAddress,
-    }
-    const attestationHash = Attestation.hash(attestation)
-    const identitySignature = await identitySigner.signDigest(attestationHash)
-    if (identitySignature.type !== 'hash') {
-      // Unreachable
-      throw new Error('Identity signature must be a hash')
-    }
-
-    const signer = new Signers.Session.Implicit(implicitPrivateKey, attestation, identitySignature, this.address)
-    this._implicitSigners.push(signer)
-    return signer
+  withImplicitSigner(signer: Implicit): SessionManager {
+    const implicitSigners = [...this._implicitSigners, signer]
+    return new SessionManager({
+      topology: this.topology,
+      address: this.address,
+      provider: this._provider,
+      implicitSigners,
+      explicitSigners: this._explicitSigners,
+    })
   }
 
-  async createExplicitSession(permissions: Signers.Session.ExplicitParams): Promise<Signers.Session.Explicit> {
-    const privateKey = Secp256k1.randomPrivateKey()
-    const signer = new Signers.Session.Explicit(privateKey, permissions)
-    this._explicitSigners.push(signer)
+  withExplicitSigner(signer: Explicit): SessionManager {
+    const explicitSigners = [...this._explicitSigners, signer]
 
-    // Update configuration
-    const topology = SessionConfig.addExplicitSession(this.topology, signer.sessionPermissions)
-    this._topology = topology
+    // FIXME Update the topology?
+    // const topology = SessionConfig.addExplicitSession(this.topology, signer.sessionPermissions)
+    const topology = this.topology
 
-    return signer
+    return new SessionManager({
+      topology,
+      address: this.address,
+      provider: this._provider,
+      implicitSigners: this._implicitSigners,
+      explicitSigners,
+    })
   }
 
-  async removeExplicitSession(signerAddress: Address.Address): Promise<void> {
-    const topology = SessionConfig.removeExplicitSession(this.topology, signerAddress)
-    if (!topology) {
-      throw new Error('Session not found')
-    }
-    this._explicitSigners = this._explicitSigners.filter((signer) => signer.address !== signerAddress)
-    this._topology = topology
-  }
-
-  async addBlacklistAddress(address: Address.Address): Promise<void> {
+  withBlacklistAddress(address: Address.Address): SessionManager {
     const topology = SessionConfig.addToImplicitBlacklist(this.topology, address)
-    this._topology = topology
+    return new SessionManager({
+      topology,
+      address: this.address,
+      provider: this._provider,
+      implicitSigners: this._implicitSigners,
+      explicitSigners: this._explicitSigners,
+    })
   }
 
-  async removeBlacklistAddress(address: Address.Address): Promise<void> {
+  withoutBlacklistAddress(address: Address.Address): SessionManager {
     const topology = SessionConfig.removeFromImplicitBlacklist(this.topology, address)
-    this._topology = topology
+    return new SessionManager({
+      topology,
+      address: this.address,
+      provider: this._provider,
+      implicitSigners: this._implicitSigners,
+      explicitSigners: this._explicitSigners,
+    })
   }
 
   async signSapient(
     wallet: Address.Address,
     chainId: bigint,
     payload: Payload.Parented,
+    imageHash: Hex.Hex,
   ): Promise<SignatureTypes.SignatureOfSapientSignerLeaf> {
+    if (this.imageHash !== imageHash) {
+      throw new Error('Unexpected image hash')
+    }
+
     if (!Payload.isCalls(payload)) {
       throw new Error('Only calls are supported')
     }
+
     // Try to sign with each signer, prioritizing implicit signers
     const signers = [...this._implicitSigners, ...this._explicitSigners]
     const signatures = await Promise.all(

@@ -140,6 +140,26 @@ export function getSigners(configuration: Config | Topology): {
   return { signers: Array.from(signers), sapientSigners: Array.from(sapientSigners), isComplete }
 }
 
+export function findSignerLeaf(
+  configuration: Config | Topology,
+  address: Address.Address,
+): SignerLeaf | SapientSignerLeaf | undefined {
+  if (isConfig(configuration)) {
+    return findSignerLeaf(configuration.topology, address)
+  } else if (isNode(configuration)) {
+    return findSignerLeaf(configuration[0], address) || findSignerLeaf(configuration[1], address)
+  } else if (isSignerLeaf(configuration)) {
+    if (configuration.address === address) {
+      return configuration
+    }
+  } else if (isSapientSignerLeaf(configuration)) {
+    if (configuration.address === address) {
+      return configuration
+    }
+  }
+  return undefined
+}
+
 export function getWeight(
   topology: RawTopology | RawConfig,
   canSign?: (signer: SignerLeaf | SapientSignerLeaf) => boolean,

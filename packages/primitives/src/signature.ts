@@ -41,15 +41,24 @@ export type RSY = {
   yParity: number
 }
 
+export type SignatureOfSignerLeafEthSign = {
+  type: 'eth_sign'
+} & RSY
+
+export type SignatureOfSignerLeafHash = {
+  type: 'hash'
+} & RSY
+
+export type SignatureOfSignerLeafErc1271 = {
+  type: 'erc1271'
+  address: `0x${string}`
+  data: Bytes.Bytes
+}
+
 export type SignatureOfSignerLeaf =
-  | ({
-      type: 'eth_sign' | 'hash'
-    } & RSY)
-  | {
-      address: `0x${string}`
-      data: Bytes.Bytes
-      type: 'erc1271'
-    }
+  | SignatureOfSignerLeafEthSign
+  | SignatureOfSignerLeafHash
+  | SignatureOfSignerLeafErc1271
 
 export type SignatureOfSapientSignerLeaf = {
   address: `0x${string}`
