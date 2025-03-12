@@ -47,6 +47,7 @@ export class AuthCodePkceChallenge extends Challenge {
   constructor(
     readonly issuer: string,
     readonly audience: string,
+    readonly redirectUri: string,
   ) {
     super()
   }
@@ -60,12 +61,13 @@ export class AuthCodePkceChallenge extends Challenge {
       metadata: {
         iss: this.issuer,
         aud: this.audience,
+        redirect_uri: this.redirectUri,
       },
     }
   }
 
   public withAnswer(verifier: string, authCode: string): AuthCodePkceChallenge {
-    const challenge = new AuthCodePkceChallenge(this.issuer, this.audience)
+    const challenge = new AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
     challenge.verifier = verifier
     challenge.authCode = authCode
     return challenge

@@ -1,8 +1,24 @@
-import { Challenge, IdTokenChallenge } from './challenge'
+import { Challenge, IdTokenChallenge, AuthCodePkceChallenge } from './challenge'
 import { IdentityInstrument } from './nitro'
 import { AuthKey } from './authkey'
 import { IdentitySigner } from './signer'
 import { getDefaultSecureStoreBackend } from './secure-store'
+import { Hex } from 'ox'
+
+interface OAuthParams {
+  pkceMethod: 'S256' | 'none'
+  oauthUrl: string
+  issuer: string
+  audience: string
+  clientId: string
+  redirectUri: string
+  state?: string
+}
+
+interface OAuthState {
+  verifier: string
+  params: OAuthParams
+}
 
 export class Wdk {
   constructor(
@@ -16,6 +32,46 @@ export class Wdk {
     return await this.completeAuth(challenge)
   }
 
+  public async loginWithOAuthRedirect(params: OAuthParams) {
+    if (params.pkceMethod !== 'S256') {
+      // TODO: support 'none'
+      throw new Error('PKCE method not supported')
+    }
+
+    const challenge = new AuthCodePkceChallenge(params.issuer, params.audience, params.redirectUri)
+    const [verifier, codeChallenge] = await this.initiateAuth(challenge)
+    const state = params.state || Hex.random(32)
+    const stateJson = JSON.stringify({ verifier, params })
+
+    sessionStorage.setItem(state, stateJson)
+
+    const searchParams = new URLSearchParams({
+      code_challenge: codeChallenge,
+      code_challenge_method: params.pkceMethod,
+      client_id: params.clientId,
+      redirect_uri: params.redirectUri,
+      response_type: 'code',
+      scope: 'openid profile email',
+      state,
+    })
+    return `${params.oauthUrl}?${searchParams.toString()}`
+  }
+
+  public async completeOAuthLogin(state: string, code: string) {
+    const stateJson = sessionStorage.getItem(state)
+    if (!stateJson) {
+      throw new Error('Invalid state')
+    }
+    const {
+      verifier,
+      params: { issuer, audience, redirectUri },
+    } = JSON.parse(stateJson) as OAuthState
+    const challenge = new AuthCodePkceChallenge(issuer, audience, redirectUri)
+    const signer = await this.completeAuth(challenge.withAnswer(verifier, code))
+    sessionStorage.removeItem(state)
+    return signer
+  }
+
   public async getSigner() {
     const authKey = await this.getAuthKey()
     if (!authKey.identitySigner) {
@@ -24,7 +80,7 @@ export class Wdk {
     return new IdentitySigner(this.ecosystemId, this.nitro, authKey)
   }
 
-  public async initiateAuth(challenge: Challenge) {
+  private async initiateAuth(challenge: Challenge): Promise<[string, string]> {
     const authKey = await this.getAuthKey()
     const challengeParams = challenge.getParams()
     const params = {
@@ -37,7 +93,7 @@ export class Wdk {
     return [res.verifier, res.challenge]
   }
 
-  public async completeAuth(challenge: Challenge) {
+  private async completeAuth(challenge: Challenge) {
     const authKey = await this.getAuthKey()
     const challengeParams = challenge.getParams()
     const params = {
