@@ -156,7 +156,7 @@ export function getWeight(
   } else if (isSignedSapientSignerLeaf(topology)) {
     return { weight: topology.weight, maxWeight: topology.weight }
   } else if (isSapientSignerLeaf(topology)) {
-    return { weight: topology.weight, maxWeight: canSign(topology) ? topology.weight : 0n }
+    return { weight: 0n, maxWeight: canSign(topology) ? topology.weight : 0n }
   } else if (isSubdigestLeaf(topology)) {
     return { weight: 0n, maxWeight: 0n }
   } else if (isAnyAddressSubdigestLeaf(topology)) {
