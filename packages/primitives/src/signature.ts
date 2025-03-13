@@ -1200,8 +1200,8 @@ async function recoverTopology(
             }
 
           default:
-            const { provider, block } =
-              'block' in options!.provider ? options!.provider : { provider: options!.provider }
+            const provider = 'provider' in options!.provider ? options!.provider.provider : options!.provider
+            const block = 'block' in options!.provider ? options!.provider.block : undefined
 
             const call = {
               to: topology.signature.address,
@@ -1248,8 +1248,8 @@ async function recoverTopology(
             throw new Error(`unable to validate sapient signer ${topology.signature.address} signature`)
 
           default:
-            const { provider, block } =
-              'block' in options!.provider ? options!.provider : { provider: options!.provider }
+            const provider = 'provider' in options!.provider ? options!.provider.provider : options!.provider
+            const block = 'block' in options!.provider ? options!.provider.block : undefined
 
             const call = {
               to: topology.signature.address,

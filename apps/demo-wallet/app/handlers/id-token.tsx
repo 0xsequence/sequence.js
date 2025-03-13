@@ -25,13 +25,13 @@ export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer,
       console.log(signer)
 
       const attestationMessage = [
-        `SessionAddress=${clientParams.sessionAddress}`,
+        `SessionAddress=${clientParams.session_address}`,
         `EcosystemID=${ecosystemId}`,
-        `AppID=${clientParams.appId}`,
+        `AppID=${clientParams.app_id}`,
         `IdentityType=OIDC`,
         `Issuer=${issuer}`,
         `Audience=${audience}`,
-        `RedirectURI=${clientParams.redirectUri}`,
+        `RedirectURI=${clientParams.redirect_uri}`,
       ].join('; ')
 
       const personalMessage = PersonalMessage.getSignPayload(Hex.fromString(attestationMessage))
@@ -52,10 +52,10 @@ export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer,
         attestation_signature: sig,
         attestation_message: attestationMessage,
         state: clientParams.state,
-        session_address: clientParams.sessionAddress,
+        session_address: clientParams.session_address,
       })
 
-      redirect(`${clientParams.redirectUri}?${returnParams.toString()}`)
+      redirect(`${clientParams.redirect_uri}?${returnParams.toString()}`)
     })()
   }, [
     nitroRpc,
@@ -63,9 +63,9 @@ export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer,
     ecosystemId,
     issuer,
     audience,
-    clientParams.sessionAddress,
-    clientParams.appId,
-    clientParams.redirectUri,
+    clientParams.session_address,
+    clientParams.app_id,
+    clientParams.redirect_uri,
     clientParams.state,
   ])
 
