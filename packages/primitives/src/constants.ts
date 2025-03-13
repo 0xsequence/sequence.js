@@ -3,8 +3,8 @@ import { Abi, Address, Hex } from 'ox'
 export const DEFAULT_CREATION_CODE: Hex.Hex =
   '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3'
 
-export const DefaultGuest: Address.Address = '0xd17b93dEC460956aeCc45fD9614Dbd163623aE30'
-export const DefaultSessionManager: Address.Address = '0x0D3b3497f4B7E99239aE748Fc45216F45431B105'
+export const DefaultGuest: Address.Address = '0x6b38229f7F0f0bcfe777c1bB5F127e1dAaC5aFaC'
+export const DefaultSessionManager: Address.Address = '0xC3A9e9cCEFF60CadE0976AD521E37bb632FDF24b'
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([
@@ -25,11 +25,11 @@ export const READ_NONCE = Abi.from(['function readNonce(uint256 _space) public v
 export const EXECUTE = Abi.from(['function execute(bytes calldata _payload, bytes calldata _signature) external'])[0]
 
 // Sapient
-export const IS_VALID_SAPIENT_SIGNATURE = Abi.from([
-  'function isValidSapientSignature((uint8 kind,bool noChainId,(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)[] calls,uint256 space,uint256 nonce,bytes message,bytes32 imageHash,bytes32 digest,address[] parentWallets) calldata _payload, bytes calldata _signature) external view returns (bytes32)',
+export const RECOVER_SAPIENT_SIGNATURE = Abi.from([
+  'function recoverSapientSignature((uint8 kind,bool noChainId,(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)[] calls,uint256 space,uint256 nonce,bytes message,bytes32 imageHash,bytes32 digest,address[] parentWallets) calldata _payload, bytes calldata _signature) external view returns (bytes32)',
 ])[0]
 
 // SapientCompact
-export const IS_VALID_SAPIENT_SIGNATURE_COMPACT = Abi.from([
-  'function isValidSapientSignatureCompact(bytes32 _digest, bytes calldata _signature) external view returns (bytes32)',
+export const RECOVER_SAPIENT_SIGNATURE_COMPACT = Abi.from([
+  'function recoverSapientSignatureCompact(bytes32 _digest, bytes calldata _signature) external view returns (bytes32)',
 ])[0]

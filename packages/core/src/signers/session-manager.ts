@@ -1,15 +1,14 @@
-import { SapientSigner } from '.'
-import { Implicit, Explicit, AttestationParams } from './session'
 import {
-  Attestation,
   Constants,
+  GenericTree,
   Payload,
   SessionConfig,
   SessionSignature,
   Signature as SignatureTypes,
-  GenericTree,
 } from '@0xsequence/sequence-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { SapientSigner } from '.'
+import { Explicit, Implicit } from './session'
 
 type SessionManagerConfiguration = {
   topology: SessionConfig.SessionsTopology
@@ -89,9 +88,8 @@ export class SessionManager implements SapientSigner {
   withExplicitSigner(signer: Explicit): SessionManager {
     const explicitSigners = [...this._explicitSigners, signer]
 
-    // FIXME Update the topology?
-    // const topology = SessionConfig.addExplicitSession(this.topology, signer.sessionPermissions)
-    const topology = this.topology
+    // Update the topology
+    const topology = SessionConfig.addExplicitSession(this.topology, signer.sessionPermissions)
 
     return new SessionManager({
       topology,
@@ -182,17 +180,22 @@ export class SessionManager implements SapientSigner {
       return false
     }
     const encodedPayload = Payload.encodeSapient(chainId, payload)
-    const encodedCallData = AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE, [
+    const encodedCallData = AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE, [
       encodedPayload,
       Bytes.toHex(signature.data),
     ])
-    const isValidSapientSignatureResult = await this._provider.request({
-      method: 'eth_call',
-      params: [{ from: wallet, to: this.address, data: encodedCallData }],
-    })
-    const resultImageHash = Hex.from(
-      AbiFunction.decodeResult(Constants.IS_VALID_SAPIENT_SIGNATURE, isValidSapientSignatureResult),
-    )
-    return resultImageHash === Hex.from(this.imageHash)
+    try {
+      const recoverSapientSignatureResult = await this._provider.request({
+        method: 'eth_call',
+        params: [{ from: wallet, to: this.address, data: encodedCallData }],
+      })
+      const resultImageHash = Hex.from(
+        AbiFunction.decodeResult(Constants.RECOVER_SAPIENT_SIGNATURE, recoverSapientSignatureResult),
+      )
+      return resultImageHash === Hex.from(this.imageHash)
+    } catch (error) {
+      console.error('recoverSapientSignature error', error)
+      return false
+    }
   }
 }

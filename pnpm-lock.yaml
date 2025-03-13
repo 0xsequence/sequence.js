@@ -144,6 +144,21 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../typescript-config
+      '@types/jest':
+        specifier: ^29.5.14
+        version: 29.5.14
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.13.9
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@22.13.9)(ts-node@10.9.2(@types/node@22.13.9)(typescript@5.7.3))
+      ts-jest:
+        specifier: ^29.2.6
+        version: 29.2.6(@babel/core@7.26.9)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.9))(jest@29.7.0(@types/node@22.13.9)(ts-node@10.9.2(@types/node@22.13.9)(typescript@5.7.3)))(typescript@5.7.3)
       typescript:
         specifier: ^5.7.3
         version: 5.7.3

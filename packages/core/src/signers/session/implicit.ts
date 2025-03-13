@@ -14,6 +14,9 @@ export class Implicit implements SignerInterface {
     private readonly _sessionManager: Address.Address,
   ) {
     this.address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: this._privateKey }))
+    if (this._attestation.approvedSigner !== this.address) {
+      throw new Error('Invalid attestation')
+    }
   }
 
   async supportedCall(
@@ -23,7 +26,6 @@ export class Implicit implements SignerInterface {
     provider: Provider.Provider,
   ): Promise<boolean> {
     try {
-      console.log('implicit signer supportedCall', call, 'to', call.to, 'sessionManager', this._sessionManager)
       // Call the acceptImplicitRequest function on the called contract
       const encodedCallData = AbiFunction.encodeData(acceptImplicitRequestFunctionAbi, [
         wallet,
@@ -45,16 +47,6 @@ export class Implicit implements SignerInterface {
           behaviorOnError: BigInt(Payload.encodeBehaviorOnError(call.behaviorOnError)),
         },
       ])
-      console.log(
-        'implicit signer supported call',
-        call,
-        'to',
-        call.to,
-        'sessionManager',
-        this._sessionManager,
-        'encodedCallData',
-        encodedCallData,
-      )
       const acceptImplicitRequestResult = await provider.request({
         method: 'eth_call',
         params: [{ from: this._sessionManager, to: call.to, data: encodedCallData }],

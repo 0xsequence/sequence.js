@@ -423,7 +423,7 @@ export class Wallet {
 
               switch (signature.type) {
                 case 'sapient': {
-                  const callData = AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE, [
+                  const callData = AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE, [
                     Payload.encodeSapient(chainId, payload),
                     Bytes.toHex(signature.data),
                   ])
@@ -451,7 +451,7 @@ export class Wallet {
                     params: [
                       {
                         to: leaf.address,
-                        data: AbiFunction.encodeData(Constants.IS_VALID_SAPIENT_SIGNATURE_COMPACT, [
+                        data: AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE_COMPACT, [
                           Bytes.toHex(digest),
                           Bytes.toHex(signature.data),
                         ]),

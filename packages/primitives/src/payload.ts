@@ -1,5 +1,5 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, TypedData } from 'ox'
-import { IS_VALID_SAPIENT_SIGNATURE } from './constants'
+import { RECOVER_SAPIENT_SIGNATURE } from './constants'
 import { minBytesFor } from './utils'
 import { getSignPayload } from 'ox/TypedData'
 
@@ -250,7 +250,7 @@ export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
 export function encodeSapient(
   chainId: bigint,
   payload: Parented,
-): Exclude<AbiFunction.encodeData.Args<typeof IS_VALID_SAPIENT_SIGNATURE>[0], undefined>[0] {
+): Exclude<AbiFunction.encodeData.Args<typeof RECOVER_SAPIENT_SIGNATURE>[0], undefined>[0] {
   const encoded: ReturnType<typeof encodeSapient> = {
     kind: 0,
     noChainId: !chainId,
