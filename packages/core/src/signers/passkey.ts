@@ -10,6 +10,7 @@ export type PasskeyOptions = {
   publicKey: Extensions.Passkeys.PublicKey
   credentialId: string
   embedMetadata?: boolean
+  metadata?: Extensions.Passkeys.PasskeyMetadata
 }
 
 export type CreaetePasskeyOptions = {
@@ -51,6 +52,7 @@ export class Passkey implements SapientSigner, Witnessable {
     this.credentialId = options.credentialId
     this.embedMetadata = options.embedMetadata ?? false
     this.imageHash = Extensions.Passkeys.rootFor(options.publicKey)
+    this.metadata = options.metadata
   }
 
   static async loadFromWitness(
@@ -61,7 +63,6 @@ export class Passkey implements SapientSigner, Witnessable {
   ) {
     // In the witness we will find the public key, and may find the credential id
     const wallets = await stateReader.getWalletsForSapient(extensions.passkeys, imageHash)
-    console.log('Got wallets', extensions.passkeys, imageHash, wallets)
     const witness = wallets[wallet]
 
     if (!witness) {
@@ -79,7 +80,6 @@ export class Passkey implements SapientSigner, Witnessable {
     }
 
     const metadata = message.publicKey.metadata || message.metadata
-    console.log(metadata, message, message.publicKey, message.metadata)
     if (typeof metadata === 'string' || !metadata) {
       throw new Error('Metadata does not contain credential id')
     }
@@ -91,6 +91,7 @@ export class Passkey implements SapientSigner, Witnessable {
       extensions,
       publicKey: message.publicKey,
       embedMetadata: decodedSignature.embedMetadata,
+      metadata,
     })
   }
 
@@ -122,6 +123,7 @@ export class Passkey implements SapientSigner, Witnessable {
         metadata: options?.embedMetadata ? metadata : undefined,
       },
       embedMetadata: options?.embedMetadata,
+      metadata,
     })
 
     if (options?.stateProvider) {
