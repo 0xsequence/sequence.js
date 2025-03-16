@@ -1,4 +1,4 @@
-import { Signers, Wallet } from '@0xsequence/sequence-core'
+import { Signers, State, Wallet } from '@0xsequence/sequence-core'
 import {
   Attestation,
   Config,
@@ -6,7 +6,7 @@ import {
   Signature as SequenceSignature,
   SessionConfig,
 } from '@0xsequence/sequence-primitives'
-import { Address, Bytes, Provider } from 'ox'
+import { Address, Bytes, Hex, Provider } from 'ox'
 import { IdentitySigner } from '../identity'
 
 type SessionControllerConfiguration = {
@@ -14,12 +14,14 @@ type SessionControllerConfiguration = {
   identitySigner: IdentitySigner
   topology: SessionConfig.SessionsTopology
   provider: Provider.Provider
+  stateProvider?: State.Provider
 }
 
 export class SessionController {
   private _manager: Signers.SessionManager
-  private _wallet: Wallet
+  private readonly _wallet: Wallet
   private readonly _identitySigner: IdentitySigner
+  private readonly _stateProvider: State.Provider | null
 
   constructor(configuration: SessionControllerConfiguration) {
     this._manager = new Signers.SessionManager({
@@ -28,6 +30,7 @@ export class SessionController {
     })
     this._wallet = configuration.wallet
     this._identitySigner = configuration.identitySigner
+    this._stateProvider = configuration.stateProvider ?? null
   }
 
   static createEmpty(
@@ -37,6 +40,23 @@ export class SessionController {
     return new SessionController({
       ...configuration,
       topology: SessionConfig.emptySessionsTopology(identitySignerAddress),
+    })
+  }
+
+  static async createFromStorage(
+    imageHash: Hex.Hex,
+    configuration: Omit<SessionControllerConfiguration, 'topology'>,
+  ): Promise<SessionController> {
+    if (!configuration.stateProvider) {
+      throw new Error('State provider not provided')
+    }
+    const configurationTree = await configuration.stateProvider.getTree(imageHash)
+    if (!configurationTree) {
+      throw new Error('Configuration not found')
+    }
+    return new SessionController({
+      ...configuration,
+      topology: SessionConfig.configurationTreeToSessionsTopology(configurationTree),
     })
   }
 
@@ -100,6 +120,9 @@ export class SessionController {
 
     // Update the manager with the new topology
     this._manager = this._manager.withTopology(topology)
+
+    // Store the new configuration
+    await this._stateProvider?.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
 
     // Add the new manager to the wallet
     this._wallet.setSapientSigner(this._manager, true)
