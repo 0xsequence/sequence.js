@@ -1,14 +1,12 @@
-import { Signers, Wallet } from '@0xsequence/sequence-core'
-import { Attestation, Constants, Payload, Permission, SessionConfig } from '@0xsequence/sequence-primitives'
+import { Signers, State, Wallet } from '@0xsequence/sequence-core'
+import { Attestation, Constants, GenericTree, Payload, SessionConfig } from '@0xsequence/sequence-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
-import {
-  CAN_RUN_LIVE,
-  ERC20_IMPLICIT_MINT_CONTRACT,
-  ERC20_MINT_ONCE,
-  MOCK_IMPLICIT_CONTRACT,
-  PRIVATE_KEY,
-  RPC_URL,
-} from './constants'
+import { CAN_RUN_LIVE, ERC20_IMPLICIT_MINT_CONTRACT, ERC20_MINT_ONCE, PRIVATE_KEY, RPC_URL } from './constants'
+import { ParameterOperation } from '../../primitives/src/permission'
+
+function randomAddress(): Address.Address {
+  return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
+}
 
 describe('SessionManager', () => {
   const getProvider = async (): Promise<{ provider: Provider.Provider; chainId: bigint }> => {
@@ -27,7 +25,7 @@ describe('SessionManager', () => {
     return { provider: provider!, chainId }
   }
 
-  const testWalletAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
+  const testWalletAddress = randomAddress()
   const identityPrivateKey = Secp256k1.randomPrivateKey()
   const testIdentityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
 
@@ -52,6 +50,68 @@ describe('SessionManager', () => {
     expect(SessionConfig.isCompleteSessionsTopology(sessionManager.topology)).toBe(true)
     expect(SessionConfig.getIdentitySigner(sessionManager.topology)).toBe(testIdentityAddress)
     expect(SessionConfig.getImplicitBlacklist(sessionManager.topology)).toStrictEqual([])
+  })
+
+  it('should load from state', async () => {
+    const { provider } = await getProvider()
+    const stateProvider = new State.Local.Provider()
+
+    let topology = SessionConfig.emptySessionsTopology(testIdentityAddress)
+    // Add random signer to the topology
+    const sessionPermission: Signers.Session.ExplicitParams = {
+      valueLimit: 1000000000000000000n,
+      deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+      permissions: [
+        {
+          target: randomAddress(),
+          rules: [
+            {
+              cumulative: true,
+              operation: ParameterOperation.EQUAL,
+              value: Bytes.padLeft(Bytes.fromHex('0x'), 32),
+              offset: 0n,
+              mask: Bytes.padLeft(Bytes.fromHex('0x'), 32),
+            },
+            {
+              cumulative: false,
+              operation: ParameterOperation.EQUAL,
+              value: Bytes.padLeft(Bytes.fromHex('0x01'), 32),
+              offset: 2n,
+              mask: Bytes.padLeft(Bytes.fromHex('0x03'), 32),
+            },
+          ],
+        },
+      ],
+    }
+    const randomSigner = randomAddress()
+    topology = SessionConfig.addExplicitSession(topology, {
+      ...sessionPermission,
+      signer: randomSigner,
+    })
+    // Add random blacklist to the topology
+    const randomBlacklistAddress = randomAddress()
+    topology = SessionConfig.addToImplicitBlacklist(topology, randomBlacklistAddress)
+
+    const imageHash = Hex.fromBytes(GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology)))
+
+    // Save the topology to storage
+    await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+
+    // Create the session manager using the storage
+    const sessionManager = await Signers.SessionManager.createFromStorage(imageHash, stateProvider, {
+      provider,
+    })
+
+    // Check config is correct
+    expect(sessionManager.imageHash).toBe(imageHash)
+    expect(SessionConfig.isCompleteSessionsTopology(sessionManager.topology)).toBe(true)
+    expect(SessionConfig.getIdentitySigner(sessionManager.topology)).toBe(testIdentityAddress)
+    expect(SessionConfig.getImplicitBlacklist(sessionManager.topology)).toStrictEqual([randomBlacklistAddress])
+    const actualPermissions = SessionConfig.getSessionPermissions(sessionManager.topology, randomSigner)
+    expect(actualPermissions).toStrictEqual({
+      ...sessionPermission,
+      signer: randomSigner,
+    })
   })
 
   it('should create and sign with an implicit session', async () => {

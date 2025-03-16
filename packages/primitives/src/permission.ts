@@ -1,5 +1,4 @@
 import { AbiParameters, Address, Bytes } from 'ox'
-import { Call } from './payload'
 
 export enum ParameterOperation {
   EQUAL = 0,
@@ -73,6 +72,65 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
     Bytes.padLeft(Bytes.fromNumber(rule.offset), 32),
     Bytes.padLeft(rule.mask, 32),
   )
+}
+
+// Decoding
+
+export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions {
+  const signer = Bytes.toHex(bytes.slice(0, 20))
+  const valueLimit = Bytes.toBigInt(bytes.slice(20, 52))
+  const deadline = Bytes.toBigInt(bytes.slice(52, 84))
+  const permissionsLength = Number(bytes[84]!)
+  const permissions = []
+  let pointer = 85
+  for (let i = 0; i < permissionsLength; i++) {
+    // Pass the remaining bytes instead of a fixed slice length
+    const { permission, consumed } = decodePermission(bytes.slice(pointer))
+    permissions.push(permission)
+    pointer += consumed
+  }
+  return {
+    signer,
+    valueLimit,
+    deadline,
+    permissions,
+  }
+}
+
+// Returns the permission and the number of bytes consumed in the permission block
+function decodePermission(bytes: Bytes.Bytes): { permission: Permission; consumed: number } {
+  const target = Bytes.toHex(bytes.slice(0, 20))
+  const rulesLength = Number(bytes[20]!)
+  const rules = []
+  let pointer = 21
+  for (let i = 0; i < rulesLength; i++) {
+    const ruleBytes = bytes.slice(pointer, pointer + 97)
+    rules.push(decodeParameterRule(ruleBytes))
+    pointer += 97
+  }
+  return {
+    permission: {
+      target,
+      rules,
+    },
+    consumed: pointer,
+  }
+}
+
+function decodeParameterRule(bytes: Bytes.Bytes): ParameterRule {
+  const operationCumulative = Number(bytes[0]!)
+  const cumulative = (operationCumulative & 1) === 1
+  const operation = operationCumulative >> 1
+  const value = bytes.slice(1, 33)
+  const offset = Bytes.toBigInt(bytes.slice(33, 65))
+  const mask = bytes.slice(65, 97)
+  return {
+    cumulative,
+    operation,
+    value,
+    offset,
+    mask,
+  }
 }
 
 // ABI encode

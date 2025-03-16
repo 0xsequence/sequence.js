@@ -1,6 +1,7 @@
 import { Address, Bytes, Hash } from 'ox'
 import * as GenericTree from './generic-tree'
 import {
+  decodeSessionPermissions,
   encodeSessionPermissions,
   encodeSessionPermissionsForJson,
   SessionPermissions,
@@ -174,6 +175,24 @@ export function getSessionPermissions(topology: SessionsTopology, address: Addre
   return null
 }
 
+export function getExplicitSigners(topology: SessionsTopology): Address.Address[] {
+  return getExplicitSignersFromBranch(topology, [])
+}
+
+function getExplicitSignersFromBranch(topology: SessionsTopology, current: Address.Address[]): Address.Address[] {
+  if (isSessionPermissions(topology)) {
+    return [...current, topology.signer]
+  }
+  if (isSessionsBranch(topology)) {
+    const result: Address.Address[] = [...current]
+    for (const child of topology) {
+      result.push(...getExplicitSignersFromBranch(child, current))
+    }
+    return result
+  }
+  return current
+}
+
 // Encode / decode to configuration tree
 
 /**
@@ -224,7 +243,7 @@ export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
     return { identitySigner: Bytes.toHex(bytes.slice(1, 21)) }
   }
   if (flag === SESSIONS_FLAG_PERMISSIONS) {
-    return sessionPermissionsFromParsed(bytes.slice(1))
+    return decodeSessionPermissions(bytes.slice(1))
   }
   throw new Error('Invalid leaf')
 }

@@ -9,6 +9,7 @@ import {
 import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
 import { SapientSigner } from '.'
 import { Explicit, Implicit } from './session'
+import { State } from '..'
 
 type SessionManagerConfiguration = {
   topology: SessionConfig.SessionsTopology
@@ -42,6 +43,21 @@ export class SessionManager implements SapientSigner {
     return new SessionManager({
       ...configuration,
       topology: SessionConfig.emptySessionsTopology(identitySignerAddress),
+    })
+  }
+
+  static async createFromStorage(
+    imageHash: Hex.Hex,
+    stateProvider: State.Provider,
+    configuration: Omit<SessionManagerConfiguration, 'topology'>,
+  ): Promise<SessionManager> {
+    const configurationTree = await stateProvider.getTree(imageHash)
+    if (!configurationTree) {
+      throw new Error('Configuration not found')
+    }
+    return new SessionManager({
+      ...configuration,
+      topology: SessionConfig.configurationTreeToSessionsTopology(configurationTree),
     })
   }
 
