@@ -46,6 +46,16 @@ export class SessionManager implements SapientSigner {
     })
   }
 
+  static createFromConfigurationTree(
+    configurationTree: GenericTree.Tree,
+    configuration: Omit<SessionManagerConfiguration, 'topology'>,
+  ): SessionManager {
+    return new SessionManager({
+      ...configuration,
+      topology: SessionConfig.configurationTreeToSessionsTopology(configurationTree),
+    })
+  }
+
   static async createFromStorage(
     imageHash: Hex.Hex,
     stateProvider: State.Provider,
@@ -55,10 +65,7 @@ export class SessionManager implements SapientSigner {
     if (!configurationTree) {
       throw new Error('Configuration not found')
     }
-    return new SessionManager({
-      ...configuration,
-      topology: SessionConfig.configurationTreeToSessionsTopology(configurationTree),
-    })
+    return SessionManager.createFromConfigurationTree(configurationTree, configuration)
   }
 
   get address(): Address.Address {
