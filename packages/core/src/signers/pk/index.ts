@@ -1,16 +1,41 @@
 import type { Payload as PayloadTypes, Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
 import { Payload } from '@0xsequence/sequence-primitives'
 import { Address, Bytes, Hex, PublicKey, Secp256k1 } from 'ox'
-import { Signer as SignerInterface, Witnessable } from '.'
-import { State } from '..'
+import { Signer as SignerInterface, Witnessable } from '..'
+import { State } from '../..'
+
+export interface PkStore {
+  address(): Address.Address
+  publicKey(): PublicKey.PublicKey
+  signDigest(digest: Bytes.Bytes): Promise<{ r: bigint; s: bigint; yParity: number }>
+}
+
+export class MemoryPkStore implements PkStore {
+  constructor(private readonly privateKey: Hex.Hex) {}
+
+  address(): Address.Address {
+    return Address.fromPublicKey(this.publicKey())
+  }
+
+  publicKey(): PublicKey.PublicKey {
+    return Secp256k1.getPublicKey({ privateKey: this.privateKey })
+  }
+
+  signDigest(digest: Bytes.Bytes): Promise<{ r: bigint; s: bigint; yParity: number }> {
+    return Promise.resolve(Secp256k1.sign({ payload: digest, privateKey: this.privateKey }))
+  }
+}
 
 export class Pk implements SignerInterface, Witnessable {
+  private readonly privateKey: PkStore
+
   public readonly address: Address.Address
   public readonly pubKey: PublicKey.PublicKey
 
-  constructor(private readonly privateKey: Hex.Hex | Bytes.Bytes) {
-    this.pubKey = Secp256k1.getPublicKey({ privateKey: this.privateKey })
-    this.address = Address.fromPublicKey(this.pubKey)
+  constructor(privateKey: Hex.Hex | PkStore) {
+    this.privateKey = typeof privateKey === 'string' ? new MemoryPkStore(privateKey) : privateKey
+    this.pubKey = this.privateKey.publicKey()
+    this.address = this.privateKey.address()
   }
 
   async sign(
@@ -23,7 +48,7 @@ export class Pk implements SignerInterface, Witnessable {
   }
 
   async signDigest(digest: Bytes.Bytes): Promise<SignatureTypes.SignatureOfSignerLeaf> {
-    const signature = Secp256k1.sign({ payload: digest, privateKey: this.privateKey })
+    const signature = await this.privateKey.signDigest(digest)
     return { ...signature, type: 'hash' }
   }
 
