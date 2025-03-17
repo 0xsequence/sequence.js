@@ -5,6 +5,7 @@ import { State } from '..'
 export * from './pk'
 export * from './passkey'
 export * as Session from './session'
+export * from './session-manager'
 
 export interface Signer {
   readonly address: MaybePromise<Address.Address>

@@ -18,7 +18,7 @@ import {
   isAnyAddressSubdigestLeaf,
   isTopology,
 } from './config'
-import { IS_VALID_SAPIENT_SIGNATURE, IS_VALID_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
+import { RECOVER_SAPIENT_SIGNATURE, RECOVER_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
 import { wrap, decode } from './erc-6492'
 import { fromConfigUpdate, hash, Parented } from './payload'
 import { minBytesFor, packRSY, unpackRSY } from './utils'
@@ -41,15 +41,24 @@ export type RSY = {
   yParity: number
 }
 
+export type SignatureOfSignerLeafEthSign = {
+  type: 'eth_sign'
+} & RSY
+
+export type SignatureOfSignerLeafHash = {
+  type: 'hash'
+} & RSY
+
+export type SignatureOfSignerLeafErc1271 = {
+  type: 'erc1271'
+  address: `0x${string}`
+  data: Bytes.Bytes
+}
+
 export type SignatureOfSignerLeaf =
-  | ({
-      type: 'eth_sign' | 'hash'
-    } & RSY)
-  | {
-      address: `0x${string}`
-      data: Bytes.Bytes
-      type: 'erc1271'
-    }
+  | SignatureOfSignerLeafEthSign
+  | SignatureOfSignerLeafHash
+  | SignatureOfSignerLeafErc1271
 
 export type SignatureOfSapientSignerLeaf = {
   address: `0x${string}`
@@ -1255,11 +1264,11 @@ async function recoverTopology(
               to: topology.signature.address,
               data:
                 topology.signature.type === 'sapient'
-                  ? AbiFunction.encodeData(IS_VALID_SAPIENT_SIGNATURE, [
+                  ? AbiFunction.encodeData(RECOVER_SAPIENT_SIGNATURE, [
                       encode(chainId, payload),
                       Bytes.toHex(topology.signature.data),
                     ])
-                  : AbiFunction.encodeData(IS_VALID_SAPIENT_SIGNATURE_COMPACT, [
+                  : AbiFunction.encodeData(RECOVER_SAPIENT_SIGNATURE_COMPACT, [
                       Bytes.toHex(digest),
                       Bytes.toHex(topology.signature.data),
                     ]),
@@ -1318,7 +1327,7 @@ async function recoverTopology(
 function encode(
   chainId: bigint,
   payload: Parented,
-): Exclude<AbiFunction.encodeData.Args<typeof IS_VALID_SAPIENT_SIGNATURE>, []>[0][0] {
+): Exclude<AbiFunction.encodeData.Args<typeof RECOVER_SAPIENT_SIGNATURE>, []>[0][0] {
   switch (payload.type) {
     case 'call':
       return {

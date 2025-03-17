@@ -372,5 +372,3 @@ export class Provider implements ProviderInterface {
     return this.store.saveTree(Bytes.toHex(GenericTree.hash(tree)), tree)
   }
 }
-
-type Unpromise<T> = T extends Promise<infer S> ? S : T

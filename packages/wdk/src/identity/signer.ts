@@ -27,7 +27,7 @@ export class IdentitySigner implements Signers.Signer {
     return this.signDigest(payloadHash)
   }
 
-  async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeaf> {
+  async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeafHash> {
     const digestHex = Hex.fromBytes(digest)
     const authKeySignature = await this.authKey.signMessage(digestHex)
     const params = {
