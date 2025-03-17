@@ -49,7 +49,7 @@
     "@babel/plugin-transform-class-properties": "^7.23.3",
     "@babel/preset-env": "^7.21.4",
     "@babel/preset-typescript": "^7.21.4",
-    "@babel/runtime": "^7.21.0",
+    "@babel/runtime": "^7.26.10",
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.26.1",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
