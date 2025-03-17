@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.2.15
+
+### Patch Changes
+
+- API updates
+- Updated dependencies
+  - @0xsequence/abi@2.2.15
+  - @0xsequence/core@2.2.15
+  - @0xsequence/migration@2.2.15
+  - @0xsequence/network@2.2.15
+  - @0xsequence/relayer@2.2.15
+  - @0xsequence/sessions@2.2.15
+  - @0xsequence/utils@2.2.15
+  - @0xsequence/wallet@2.2.15
+
 ## 2.2.14
 
 ### Patch Changes

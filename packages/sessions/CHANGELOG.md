@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.2.15
+
+### Patch Changes
+
+- API updates
+- Updated dependencies
+  - @0xsequence/core@2.2.15
+  - @0xsequence/migration@2.2.15
+  - @0xsequence/replacer@2.2.15
+  - @0xsequence/utils@2.2.15
+
 ## 2.2.14
 
 ### Patch Changes

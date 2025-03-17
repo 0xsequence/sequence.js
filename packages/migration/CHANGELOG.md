@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.2.15
+
+### Patch Changes
+
+- API updates
+- Updated dependencies
+  - @0xsequence/abi@2.2.15
+  - @0xsequence/core@2.2.15
+  - @0xsequence/wallet@2.2.15
+
 ## 2.2.14
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.2.15
+
+### Patch Changes
+
+- API updates
+- Updated dependencies
+  - @0xsequence/waas@2.2.15
+
 ## 2.2.14
 
 ### Patch Changes
