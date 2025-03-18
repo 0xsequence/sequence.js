@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react'
 import { redirect } from 'next/navigation'
-import { PersonalMessage, Hex, Bytes, Signature } from 'ox'
 import { Identity } from '@0xsequence/sequence-wdk'
 import type { ClientParams } from '../lib/client-params'
+import { Attestation } from '../lib/attestation'
 
 interface Props {
   nitroRpc: string
@@ -22,35 +22,23 @@ export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer,
       const signer = await wdk.loginWithIdToken(issuer, audience, idToken)
 
       // We have the signer, now we can use it to sign a message
-      console.log(signer)
+      console.log({ signer })
 
-      const attestationMessage = [
-        `SessionAddress=${clientParams.session_address}`,
-        `EcosystemID=${ecosystemId}`,
-        `AppID=${clientParams.app_id}`,
-        `IdentityType=OIDC`,
-        `Issuer=${issuer}`,
-        `Audience=${audience}`,
-        `RedirectURI=${clientParams.redirect_uri}`,
-      ].join('; ')
-
-      const personalMessage = PersonalMessage.getSignPayload(Hex.fromString(attestationMessage))
-      const attestationSignature = await signer.signDigest(Bytes.fromHex(personalMessage))
-      console.log({ attestationSignature, attestationMessage })
-
-      if (attestationSignature.type !== 'hash') {
-        throw new Error('Invalid signature type')
-      }
-
-      const sig = Signature.toHex({
-        r: attestationSignature.r,
-        s: attestationSignature.s,
-        yParity: attestationSignature.yParity,
+      const attestation = await Attestation.create(signer, {
+        sessionAddress: clientParams.session_address,
+        ecosystemId,
+        appId: clientParams.app_id,
+        identityType: 'OIDC',
+        issuer,
+        audience,
+        redirectUri: clientParams.redirect_uri,
       })
 
+      console.log({ attestation })
+
       const returnParams = new URLSearchParams({
-        attestation_signature: sig,
-        attestation_message: attestationMessage,
+        attestation_message: attestation.message,
+        attestation_signature: attestation.signature,
         state: clientParams.state,
         session_address: clientParams.session_address,
       })
