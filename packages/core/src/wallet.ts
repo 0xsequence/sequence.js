@@ -86,7 +86,7 @@ export class Wallet {
     return (await provider.request({ method: 'eth_getCode', params: [this.address, 'pending'] })) !== '0x'
   }
 
-  async getDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
+  async buildDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
     const deployInformation = await this.stateProvider.getDeploy(this.address)
     if (!deployInformation) {
       throw new Error(`cannot find deploy information for ${this.address}`)
@@ -186,7 +186,7 @@ export class Wallet {
     }
   }
 
-  async getTransaction(
+  async buildTransaction(
     provider: Provider.Provider,
     calls: Payload.Call[],
     options?: { space?: bigint; trustSigners?: boolean; onSignerError?: Config.SignerErrorCallback },
@@ -220,7 +220,7 @@ export class Wallet {
       const payload: Payload.Calls = { type: 'call', space, nonce, calls }
       const [signature, deploy] = await Promise.all([
         this.sign(payload, { ...options, provider, skip6492: true }),
-        this.getDeployTransaction(),
+        this.buildDeployTransaction(),
       ])
 
       return {
