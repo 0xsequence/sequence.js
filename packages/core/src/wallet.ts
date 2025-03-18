@@ -86,13 +86,6 @@ export class Wallet {
     return (await provider.request({ method: 'eth_getCode', params: [this.address, 'pending'] })) !== '0x'
   }
 
-  async deploy(provider: Provider.Provider) {
-    if (!(await this.isDeployed(provider))) {
-      const transaction = await this.getDeployTransaction()
-      return provider.request({ method: 'eth_sendTransaction', params: [transaction] })
-    }
-  }
-
   async getDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
     const deployInformation = await this.stateProvider.getDeploy(this.address)
     if (!deployInformation) {
@@ -191,18 +184,6 @@ export class Wallet {
       pendingUpdates: [...updates].reverse(),
       chainId,
     }
-  }
-
-  async send(
-    provider: Provider.Provider,
-    calls: Payload.Call[],
-    options?: { space?: bigint; trustSigners?: boolean; onSignerError?: Config.SignerErrorCallback },
-  ) {
-    const transaction = await this.getTransaction(provider, calls, options)
-    return provider.request({
-      method: 'eth_sendTransaction',
-      params: [transaction],
-    })
   }
 
   async getTransaction(
