@@ -68,27 +68,20 @@ export class EncryptedPksDb {
     })
   }
 
-  private randomHexString(length: number): Hex.Hex {
-    const bytes = new Uint8Array(length)
-    window.crypto.getRandomValues(bytes)
-    return Array.from(bytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('') as Hex.Hex
-  }
-
   async generateAndStore(): Promise<EncryptedData> {
     const encryptionKey = await window.crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
       'encrypt',
       'decrypt',
     ])
 
-    const keyPointer = this.localStorageKeyPrefix + this.randomHexString(8)
-    const exportedKey = await window.crypto.subtle.exportKey('jwk', encryptionKey)
-    window.localStorage.setItem(keyPointer, JSON.stringify(exportedKey))
+    const privateKey = Hex.random(32)
 
-    const privateKey = this.randomHexString(32)
     const publicKey = Secp256k1.getPublicKey({ privateKey })
     const address = Address.fromPublicKey(publicKey)
+    const keyPointer = this.localStorageKeyPrefix + address
+
+    const exportedKey = await window.crypto.subtle.exportKey('jwk', encryptionKey)
+    window.localStorage.setItem(keyPointer, JSON.stringify(exportedKey))
 
     const encoder = new TextEncoder()
     const encodedPk = encoder.encode(privateKey)

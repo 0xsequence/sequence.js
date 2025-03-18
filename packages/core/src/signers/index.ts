@@ -2,8 +2,8 @@ import { Config, Payload, Signature } from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
 import { State } from '..'
 
-export * from './pk'
-export * from './passkey'
+export * as Pk from './pk/index'
+export * as Passkey from './passkey'
 export * as Session from './session'
 export * from './session-manager'
 

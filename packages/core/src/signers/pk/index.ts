@@ -72,3 +72,5 @@ export class Pk implements SignerInterface, Witnessable {
     })
   }
 }
+
+export * as Encrypted from './encrypted'

@@ -372,3 +372,6 @@ export class Provider implements ProviderInterface {
     return this.store.saveTree(Bytes.toHex(GenericTree.hash(tree)), tree)
   }
 }
+
+export * from './memory'
+export * from './indexed-db'
