@@ -1,4 +1,4 @@
-import { Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 import { jwtDecode } from 'jwt-decode'
 import { IdentityType, AuthMode } from './nitro'
 
@@ -70,6 +70,34 @@ export class AuthCodePkceChallenge extends Challenge {
     const challenge = new AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
     challenge.verifier = verifier
     challenge.authCode = authCode
+    return challenge
+  }
+}
+
+export class OtpChallenge extends Challenge {
+  private answer?: string
+
+  constructor(
+    readonly identityType: IdentityType,
+    readonly verifier: string,
+  ) {
+    super()
+  }
+
+  public getParams(): ChallengeParams {
+    return {
+      authMode: AuthMode.OTP,
+      identityType: this.identityType,
+      verifier: this.verifier,
+      answer: this.answer,
+      metadata: {},
+    }
+  }
+
+  public withAnswer(verifier: string, codeChallenge: string, otp: string): OtpChallenge {
+    const challenge = new OtpChallenge(this.identityType, verifier)
+    const answerHash = Hash.keccak256(Bytes.fromString(codeChallenge + otp))
+    challenge.answer = Hex.fromBytes(answerHash)
     return challenge
   }
 }

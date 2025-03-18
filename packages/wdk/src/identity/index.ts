@@ -1,5 +1,5 @@
-import { IdentityInstrument } from './nitro'
-export { IdentityInstrument }
+import { IdentityInstrument, IdentityType } from './nitro'
+export { IdentityInstrument, IdentityType }
 
 export * from './wdk'
 export * from './authkey'
