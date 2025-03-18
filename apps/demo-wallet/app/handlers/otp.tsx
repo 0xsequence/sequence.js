@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { redirect } from 'next/navigation'
 import { Identity } from '@0xsequence/sequence-wdk'
 import type { ClientParams } from '../lib/client-params'
@@ -8,18 +8,27 @@ import { Attestation } from '../lib/attestation'
 
 interface Props {
   nitroRpc: string
-  idToken: string
   ecosystemId: string
-  issuer: string
-  audience: string
+  identityType: Identity.IdentityType
+  recipient: string
   clientParams: ClientParams
 }
 
-export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer, audience, clientParams }: Props) {
+export default function OtpHandler({ nitroRpc, ecosystemId, identityType, recipient, clientParams }: Props) {
+  const wdk = new Identity.Wdk(ecosystemId, new Identity.IdentityInstrument(nitroRpc, window.fetch))
+
+  const [code, setCode] = useState('')
+  const [respondToChallenge, setRespondToChallenge] = useState<((code: string) => Promise<void>) | null>(null)
+
   useEffect(() => {
     ;(async () => {
-      const wdk = new Identity.Wdk(ecosystemId, new Identity.IdentityInstrument(nitroRpc, window.fetch))
-      const signer = await wdk.loginWithIdToken(issuer, audience, idToken)
+      if (respondToChallenge) {
+        return
+      }
+
+      const signer = await wdk.loginWithOtp(identityType, recipient, (respondToChallenge) => {
+        setRespondToChallenge(() => respondToChallenge)
+      })
 
       // We have the signer, now we can use it to sign a message
       console.log({ signer })
@@ -28,9 +37,7 @@ export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer,
         sessionAddress: clientParams.session_address,
         ecosystemId,
         appId: clientParams.app_id,
-        identityType: 'OIDC',
-        issuer,
-        audience,
+        identityType,
         redirectUri: clientParams.redirect_uri,
       })
 
@@ -45,17 +52,12 @@ export default function IdTokenHandler({ nitroRpc, idToken, ecosystemId, issuer,
 
       redirect(`${clientParams.redirect_uri}?${returnParams.toString()}`)
     })()
-  }, [
-    nitroRpc,
-    idToken,
-    ecosystemId,
-    issuer,
-    audience,
-    clientParams.session_address,
-    clientParams.app_id,
-    clientParams.redirect_uri,
-    clientParams.state,
-  ])
+  }, [])
 
-  return <div>Signing in...</div>
+  return (
+    <div>
+      <input type="text" value={code} onChange={(e) => setCode(e.target.value)} />
+      {respondToChallenge && <button onClick={() => respondToChallenge(code)}>Submit</button>}
+    </div>
+  )
 }

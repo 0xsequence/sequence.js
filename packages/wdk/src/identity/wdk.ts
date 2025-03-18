@@ -1,5 +1,5 @@
-import { Challenge, IdTokenChallenge, AuthCodePkceChallenge } from './challenge'
-import { IdentityInstrument } from './nitro'
+import { Challenge, IdTokenChallenge, AuthCodePkceChallenge, OtpChallenge } from './challenge'
+import { IdentityInstrument, IdentityType } from './nitro'
 import { AuthKey } from './authkey'
 import { IdentitySigner } from './signer'
 import { getDefaultSecureStoreBackend } from './secure-store'
@@ -25,6 +25,27 @@ export class Wdk {
     readonly ecosystemId: string,
     readonly nitro: IdentityInstrument,
   ) {}
+
+  public async loginWithOtp(
+    identityType: IdentityType,
+    recipient: string,
+    callback: (respondToChallenge: (code: string) => Promise<void>) => void,
+  ) {
+    const challenge = new OtpChallenge(identityType, recipient)
+    const [verifier, codeChallenge] = await this.initiateAuth(challenge)
+
+    return new Promise<IdentitySigner>((resolve, reject) => {
+      const respondToChallenge = async (code: string) => {
+        try {
+          const signer = await this.completeAuth(challenge.withAnswer(verifier, codeChallenge, code))
+          resolve(signer)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      callback(respondToChallenge)
+    })
+  }
 
   public async loginWithIdToken(issuer: string, audience: string, idToken: string) {
     const challenge = new IdTokenChallenge(issuer, audience, idToken)
