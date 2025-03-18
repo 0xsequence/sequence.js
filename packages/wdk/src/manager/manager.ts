@@ -1,9 +1,8 @@
 import { Address } from 'ox'
 
-import { Extensions, Context, Config, Constants } from '@0xsequence/sequence-primitives'
+import { Extensions, Context, Config, Constants, Network } from '@0xsequence/sequence-primitives'
 import { Signers, Wallet as CoreWallet, State } from '@0xsequence/sequence-core'
 import { ManagerDb } from './db'
-import { Network } from '..'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -31,7 +30,7 @@ export const ManagerOptionsDefaults = {
   managerDb: new ManagerDb(),
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
-  network: Network.Defaults.All,
+  network: Network.All,
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
