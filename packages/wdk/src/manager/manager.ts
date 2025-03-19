@@ -1,9 +1,8 @@
 import { Address } from 'ox'
 
-import { Extensions, Context, Config, Constants } from '@0xsequence/sequence-primitives'
-import { Signers, Wallet as CoreWallet, State } from '@0xsequence/sequence-core'
+import { Extensions, Context, Config, Constants, Network } from '@0xsequence/sequence-primitives'
+import { Signers, Wallet as CoreWallet, State, Relayer } from '@0xsequence/sequence-core'
 import { ManagerDb } from './db'
-import { Network } from '..'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -17,6 +16,7 @@ export type ManagerOptions = {
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
+  relayers?: Relayer.Relayer[]
 
   defaultGuardTopology?: Config.Topology
 }
@@ -31,7 +31,8 @@ export const ManagerOptionsDefaults = {
   managerDb: new ManagerDb(),
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
-  network: Network.Defaults.All,
+  network: Network.All,
+  relayers: [], // TODO: How to auto-populate local relayer?
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
