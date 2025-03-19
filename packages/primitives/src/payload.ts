@@ -460,3 +460,147 @@ export function hashCall(call: Call): Hex.Hex {
     ),
   )
 }
+
+export function decode(packed: Bytes.Bytes, self?: Address.Address): Calls {
+  let pointer = 0
+  if (packed.length < 1) {
+    throw new Error('Invalid packed data: missing globalFlag')
+  }
+
+  // Read globalFlag
+  const globalFlag = Bytes.toNumber(packed.slice(pointer, pointer + 1))
+  pointer += 1
+
+  // bit 0 => spaceZeroFlag
+  const spaceZeroFlag = (globalFlag & 0x01) === 0x01
+  let space = 0n
+  if (!spaceZeroFlag) {
+    if (pointer + 20 > packed.length) {
+      throw new Error('Invalid packed data: not enough bytes for space')
+    }
+    space = Bytes.toBigInt(packed.slice(pointer, pointer + 20))
+    pointer += 20
+  }
+
+  // bits [1..3] => nonceSize
+  const nonceSize = (globalFlag >> 1) & 0x07
+  let nonce = 0n
+  if (nonceSize > 0) {
+    if (pointer + nonceSize > packed.length) {
+      throw new Error('Invalid packed data: not enough bytes for nonce')
+    }
+    nonce = Bytes.toBigInt(packed.slice(pointer, pointer + nonceSize))
+    pointer += nonceSize
+  }
+
+  // bit [4] => singleCallFlag
+  let callsCount = 1
+  const singleCallFlag = (globalFlag & 0x10) === 0x10
+  if (!singleCallFlag) {
+    // bit [5] => callsCountSizeFlag => 1 => 2 bytes, 0 => 1 byte
+    const callsCountSizeFlag = (globalFlag & 0x20) === 0x20
+    const countSize = callsCountSizeFlag ? 2 : 1
+    if (pointer + countSize > packed.length) {
+      throw new Error('Invalid packed data: not enough bytes for callsCount')
+    }
+    callsCount = Bytes.toNumber(packed.slice(pointer, pointer + countSize))
+    pointer += countSize
+  }
+
+  const calls: Call[] = []
+  for (let i = 0; i < callsCount; i++) {
+    if (pointer + 1 > packed.length) {
+      throw new Error('Invalid packed data: missing call flags')
+    }
+    const flags = Bytes.toNumber(packed.slice(pointer, pointer + 1))
+    pointer += 1
+
+    // bit 0 => toSelf
+    let to: Address.Address
+    if ((flags & 0x01) === 0x01) {
+      if (!self) {
+        throw new Error('Missing "self" address for toSelf call')
+      }
+      to = self
+    } else {
+      if (pointer + 20 > packed.length) {
+        throw new Error('Invalid packed data: not enough bytes for address')
+      }
+      to = Bytes.toHex(packed.slice(pointer, pointer + 20)) as Address.Address
+      pointer += 20
+    }
+
+    // bit 1 => hasValue
+    let value = 0n
+    if ((flags & 0x02) === 0x02) {
+      if (pointer + 32 > packed.length) {
+        throw new Error('Invalid packed data: not enough bytes for value')
+      }
+      value = Bytes.toBigInt(packed.slice(pointer, pointer + 32))
+      pointer += 32
+    }
+
+    // bit 2 => hasData
+    let data = Bytes.fromHex('0x')
+    if ((flags & 0x04) === 0x04) {
+      if (pointer + 3 > packed.length) {
+        throw new Error('Invalid packed data: not enough bytes for data length')
+      }
+      const dataLen = Bytes.toNumber(packed.slice(pointer, pointer + 3))
+      pointer += 3
+      if (pointer + dataLen > packed.length) {
+        throw new Error('Invalid packed data: not enough bytes for call data')
+      }
+      data = packed.slice(pointer, pointer + dataLen)
+      pointer += dataLen
+    }
+
+    // bit 3 => hasGasLimit
+    let gasLimit = 0n
+    if ((flags & 0x08) === 0x08) {
+      if (pointer + 32 > packed.length) {
+        throw new Error('Invalid packed data: not enough bytes for gasLimit')
+      }
+      gasLimit = Bytes.toBigInt(packed.slice(pointer, pointer + 32))
+      pointer += 32
+    }
+
+    // bits 4..5 => delegateCall, onlyFallback
+    const delegateCall = (flags & 0x10) === 0x10
+    const onlyFallback = (flags & 0x20) === 0x20
+
+    // bits 6..7 => behaviorOnError
+    const behaviorCode = (flags & 0xc0) >> 6
+    const behaviorOnError = decodeBehaviorOnError(behaviorCode)
+
+    calls.push({
+      to,
+      value,
+      data,
+      gasLimit,
+      delegateCall,
+      onlyFallback,
+      behaviorOnError,
+    })
+  }
+
+  return {
+    type: 'call',
+    space,
+    nonce,
+    calls,
+  }
+}
+
+export function decodeBehaviorOnError(value: number): Call['behaviorOnError'] {
+  switch (value) {
+    case 0:
+      return 'ignore'
+    case 1:
+      return 'revert'
+    case 2:
+      return 'abort'
+    default:
+      throw new Error(`Invalid behaviorOnError value: ${value}`)
+  }
+}
