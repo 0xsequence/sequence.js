@@ -312,7 +312,7 @@ describe('SessionManager', () => {
       }
 
       // Send the transaction
-      const transaction = await wallet.getTransaction(provider, [call])
+      const transaction = await wallet.buildTransaction(provider, [call])
       console.log('transaction', transaction)
 
       // Estimate gas with a safety buffer
@@ -419,7 +419,7 @@ describe('SessionManager', () => {
       }
 
       // Send the transaction
-      const transaction = await wallet.getTransaction(provider, [call])
+      const transaction = await wallet.buildTransaction(provider, [call])
       console.log('transaction', transaction)
 
       // Estimate gas with a safety buffer
