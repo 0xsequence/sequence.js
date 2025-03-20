@@ -115,33 +115,34 @@ export class SessionController {
 
   // Update the configuration to use the new topology
   private async updateConfiguration(topology: SessionConfig.SessionsTopology): Promise<void> {
-    // Remove the old manager from the wallet
-    this._wallet.removeSapientSigner(this._manager.address, this._manager.imageHash)
+    throw new Error('TODO: re-implemented')
+    // // Remove the old manager from the wallet
+    // // this._wallet.removeSapientSigner(this._manager.address, this._manager.imageHash)
 
-    // Update the manager with the new topology
-    this._manager = this._manager.withTopology(topology)
+    // // Update the manager with the new topology
+    // this._manager = this._manager.withTopology(topology)
 
-    // Store the new configuration
-    await this._stateProvider?.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+    // // Store the new configuration
+    // await this._stateProvider?.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
 
-    // Add the new manager to the wallet
-    this._wallet.setSapientSigner(this._manager, true)
+    // // Add the new manager to the wallet
+    // // this._wallet.setSapientSigner(this._manager, true)
 
-    // Get the old wallet configuration
-    const status = await this._wallet.getStatus()
-    const oldConfiguration = status.configuration
+    // // Get the old wallet configuration
+    // const status = await this._wallet.getStatus()
+    // const oldConfiguration = status.configuration
 
-    // Find the session manager in the old configuration
-    const managerLeaf = Config.findSignerLeaf(oldConfiguration, this._manager.address)
-    if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
-      // FIXME: Just add it?
-      throw new Error('Session manager not found in configuration')
-    }
+    // // Find the session manager in the old configuration
+    // const managerLeaf = Config.findSignerLeaf(oldConfiguration, this._manager.address)
+    // if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
+    //   // FIXME: Just add it?
+    //   throw new Error('Session manager not found in configuration')
+    // }
 
-    // Update the configuration to use the new session manager image hash
-    managerLeaf.imageHash = this.imageHash
+    // // Update the configuration to use the new session manager image hash
+    // managerLeaf.imageHash = this.imageHash
 
-    // Update the wallet configuration
-    await this._wallet.setConfiguration(oldConfiguration)
+    // // Update the wallet configuration
+    // // await this._wallet.setConfiguration(oldConfiguration)
   }
 }
