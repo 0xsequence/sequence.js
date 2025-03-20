@@ -9,7 +9,7 @@ import {
   Payload,
   Signature as SequenceSignature,
 } from '@0xsequence/sequence-primitives'
-import { encodeSignature, Envelope, SignedEnvelope, weightOf } from './envelope'
+import * as Envelope from './envelope'
 
 export type WalletOptions = {
   context: Context.Context
@@ -70,7 +70,7 @@ export class Wallet {
     return Erc6492.deploy(deployInformation.imageHash, deployInformation.context)
   }
 
-  async prepareUpdate(configuration: Config.Config): Promise<Envelope<Payload.ConfigUpdate>> {
+  async prepareUpdate(configuration: Config.Config): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
     const imageHash = Config.hashConfiguration(configuration)
     const blankEvelope = (
       await Promise.all([
@@ -86,7 +86,7 @@ export class Wallet {
     }
   }
 
-  async submitUpdate(envelope: SignedEnvelope<Payload.ConfigUpdate>, provider: Provider.Provider): Promise<void> {
+  async submitUpdate(envelope: Envelope.Signed<Payload.ConfigUpdate>, provider: Provider.Provider): Promise<void> {
     const [status, newConfig] = await Promise.all([
       this.getStatus(provider),
       this.stateProvider.getConfiguration(envelope.payload.imageHash),
@@ -97,12 +97,12 @@ export class Wallet {
     }
 
     const updatedEnvelope = { ...envelope, configuration: status.configuration }
-    const { weight, threshold } = weightOf(updatedEnvelope)
+    const { weight, threshold } = Envelope.weightOf(updatedEnvelope)
     if (weight < threshold) {
       throw new Error('insufficient weight in envelope')
     }
 
-    const signature = encodeSignature(updatedEnvelope)
+    const signature = Envelope.encodeSignature(updatedEnvelope)
     await this.stateProvider.saveUpdate(this.address, newConfig, signature)
   }
 
@@ -193,7 +193,7 @@ export class Wallet {
     provider: Provider.Provider,
     calls: Payload.Call[],
     options?: { space?: bigint },
-  ): Promise<Envelope<Payload.Calls>> {
+  ): Promise<Envelope.Envelope<Payload.Calls>> {
     const space = options?.space ?? 0n
     const status = await this.getStatus(provider)
 
@@ -218,16 +218,16 @@ export class Wallet {
     }
   }
 
-  async buildTransaction(provider: Provider.Provider, envelope: SignedEnvelope<Payload.Calls>) {
+  async buildTransaction(provider: Provider.Provider, envelope: Envelope.Signed<Payload.Calls>) {
     const status = await this.getStatus(provider)
 
     const updatedEnvelope = { ...envelope, configuration: status.configuration }
-    const { weight, threshold } = weightOf(updatedEnvelope)
+    const { weight, threshold } = Envelope.weightOf(updatedEnvelope)
     if (weight < threshold) {
       throw new Error('insufficient weight in envelope')
     }
 
-    const signature = encodeSignature(updatedEnvelope)
+    const signature = Envelope.encodeSignature(updatedEnvelope)
 
     if (status.isDeployed) {
       return {

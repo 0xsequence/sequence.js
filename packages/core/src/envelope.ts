@@ -8,46 +8,45 @@ export type Envelope<T extends Payload.Payload> = {
   payload: T
 }
 
-export type EnvelopeSignature = {
+export type Signature = {
   address: Address.Address
   signature: Signature.SignatureOfSignerLeaf
 }
 
 // Address not included as it is included in the signature
-export type EnvelopeSapientSignature = {
+export type SapientSignature = {
   imageHash: Bytes.Bytes
   signature: Signature.SignatureOfSapientSignerLeaf
 }
 
-export function isEnvelopeSignature(sig: any): sig is EnvelopeSignature {
+export function isSignature(sig: any): sig is Signature {
   return typeof sig === 'object' && 'address' in sig && 'signature' in sig && !('imageHash' in sig)
 }
 
-export function isEnvelopeSapientSignature(sig: any): sig is EnvelopeSapientSignature {
+export function isSapientSignature(sig: any): sig is SapientSignature {
   return typeof sig === 'object' && 'signature' in sig && 'imageHash' in sig
 }
 
-export type SignedEnvelope<T extends Payload.Payload> = Envelope<T> & {
-  signatures: (EnvelopeSignature | EnvelopeSapientSignature)[]
+export type Signed<T extends Payload.Payload> = Envelope<T> & {
+  signatures: (Signature | SapientSignature)[]
 }
 
-export function envelopeSignatureForLeaf(envelope: SignedEnvelope<Payload.Payload>, leaf: Config.Leaf) {
+export function signatureForLeaf(envelope: Signed<Payload.Payload>, leaf: Config.Leaf) {
   if (Config.isSignerLeaf(leaf)) {
-    return envelope.signatures.find((sig) => isEnvelopeSignature(sig) && sig.address === leaf.address)
+    return envelope.signatures.find((sig) => isSignature(sig) && sig.address === leaf.address)
   }
 
   if (Config.isSapientSignerLeaf(leaf)) {
     return envelope.signatures.find(
-      (sig) =>
-        isEnvelopeSapientSignature(sig) && sig.imageHash === leaf.imageHash && sig.signature.address === leaf.address,
+      (sig) => isSapientSignature(sig) && sig.imageHash === leaf.imageHash && sig.signature.address === leaf.address,
     )
   }
 
   return undefined
 }
 
-export function weightOf(envelope: SignedEnvelope<Payload.Payload>): { weight: bigint; threshold: bigint } {
-  const { maxWeight } = Config.getWeight(envelope.configuration, (s) => !!envelopeSignatureForLeaf(envelope, s))
+export function weightOf(envelope: Signed<Payload.Payload>): { weight: bigint; threshold: bigint } {
+  const { maxWeight } = Config.getWeight(envelope.configuration, (s) => !!signatureForLeaf(envelope, s))
 
   return {
     weight: maxWeight,
@@ -55,10 +54,10 @@ export function weightOf(envelope: SignedEnvelope<Payload.Payload>): { weight: b
   }
 }
 
-export function encodeSignature(envelope: SignedEnvelope<Payload.Payload>): Signature.RawSignature {
+export function encodeSignature(envelope: Signed<Payload.Payload>): Signature.RawSignature {
   const topology = Signature.fillLeaves(
     envelope.configuration.topology,
-    (s) => envelopeSignatureForLeaf(envelope, s)?.signature,
+    (s) => signatureForLeaf(envelope, s)?.signature,
   )
   return {
     noChainId: envelope.chainId === 0n,
