@@ -14,7 +14,6 @@ import * as Envelope from './envelope'
 export type WalletOptions = {
   context: Context.Context
   stateProvider: State.Provider
-  onSignerError?: Config.SignerErrorCallback
   guest: Address.Address
 }
 
