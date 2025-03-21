@@ -10,33 +10,33 @@ export async function doEmptyTopology(identitySigner: `0x${string}`): Promise<st
   return SessionConfig.sessionsTopologyToJson(topology)
 }
 
-export async function doEncodeConfiguration(sessionConfigurationInput: string): Promise<string> {
-  const sessionConfiguration = SessionConfig.sessionsTopologyFromJson(sessionConfigurationInput)
-  const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionConfiguration)
-  return JSON.stringify(configurationTree)
+export async function doEncodeTopology(sessionTopologyInput: string): Promise<string> {
+  const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
+  const encoded = SessionConfig.encodeSessionsTopology(sessionTopology)
+  return Hex.from(encoded)
 }
 
 export async function doEncodeSessionCallSignatures(
-  sessionConfigurationInput: string,
+  sessionTopologyInput: string,
   callSignaturesInput: string[],
   explicitSigners: string[] = [],
   implicitSigners: string[] = [],
 ): Promise<string> {
-  const sessionConfiguration = SessionConfig.sessionsTopologyFromJson(sessionConfigurationInput)
+  const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
   const callSignatures = callSignaturesInput.map((s) => SessionSignature.sessionCallSignatureFromJson(s))
   const encoded = SessionSignature.encodeSessionCallSignatures(
     callSignatures,
-    sessionConfiguration,
+    sessionTopology,
     explicitSigners as `0x${string}`[],
     implicitSigners as `0x${string}`[],
   )
   return Hex.from(encoded)
 }
 
-export async function doImageHash(sessionConfigurationInput: string): Promise<string> {
-  const sessionConfiguration = SessionConfig.sessionsTopologyFromJson(sessionConfigurationInput)
-  const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionConfiguration)
-  const hash = GenericTree.hash(configurationTree)
+export async function doImageHash(sessionTopologyInput: string): Promise<string> {
+  const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
+  const encoded = SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology)
+  const hash = GenericTree.hash(encoded)
   return Hex.from(hash)
 }
 
@@ -61,27 +61,27 @@ const sessionCommand: CommandModule = {
         },
       )
       .command(
-        'encode-configuration [session-configuration]',
-        'Encode a session configuration',
+        'encode-topology [session-topology]',
+        'Encode a session topology',
         (yargs) => {
-          return yargs.positional('session-configuration', {
+          return yargs.positional('session-topology', {
             type: 'string',
-            description: 'The session configuration',
+            description: 'The session topology',
             demandOption: true,
           })
         },
         async (args) => {
-          console.log(await doEncodeConfiguration(args.sessionConfiguration))
+          console.log(await doEncodeTopology(args.sessionTopology))
         },
       )
       .command(
-        'encode-calls [session-configuration] [call-signatures] [explicit-signers] [implicit-signers]',
+        'encode-calls [session-topology] [call-signatures] [explicit-signers] [implicit-signers]',
         'Encode a call signature for an implicit session',
         (yargs) => {
           return yargs
-            .positional('session-configuration', {
+            .positional('session-topology', {
               type: 'string',
-              description: 'The session configuration',
+              description: 'The session topology',
               demandOption: true,
             })
             .positional('call-signatures', {
@@ -110,7 +110,7 @@ const sessionCommand: CommandModule = {
         async (args) => {
           console.log(
             await doEncodeSessionCallSignatures(
-              args.sessionConfiguration,
+              args.sessionTopology,
               args.callSignatures,
               args.explicitSigners,
               args.implicitSigners,
@@ -119,17 +119,17 @@ const sessionCommand: CommandModule = {
         },
       )
       .command(
-        'image-hash [session-configuration]',
-        'Hash a session configuration',
+        'image-hash [session-topology]',
+        'Hash a session topology',
         (yargs) => {
-          return yargs.positional('session-configuration', {
+          return yargs.positional('session-topology', {
             type: 'string',
-            description: 'The session configuration',
+            description: 'The session topology',
             demandOption: true,
           })
         },
         async (args) => {
-          console.log(await doImageHash(args.sessionConfiguration))
+          console.log(await doImageHash(args.sessionTopology))
         },
       )
       .command(sessionExplicitCommand)

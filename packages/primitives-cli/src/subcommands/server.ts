@@ -126,9 +126,9 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const result = await session.doEmptyTopology(identitySigner)
     return result
   },
-  async session_encodeConfiguration(params) {
+  async session_encodeTopology(params) {
     const { sessionTopology } = params
-    const result = await session.doEncodeConfiguration(JSON.stringify(sessionTopology))
+    const result = await session.doEncodeTopology(JSON.stringify(sessionTopology))
     return result
   },
   async session_encodeCallSignatures(params) {
