@@ -35,7 +35,7 @@ export async function doEncodeSessionCallSignatures(
 
 export async function doImageHash(sessionTopologyInput: string): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
-  const encoded = SessionConfig.encodeSessionsTopology(sessionTopology)
+  const encoded = SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology)
   const hash = GenericTree.hash(encoded)
   return Hex.from(hash)
 }
