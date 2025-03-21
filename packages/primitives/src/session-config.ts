@@ -313,12 +313,15 @@ export function encodeSessionsTopology(topology: SessionsTopology): Bytes.Bytes 
 
   if (isImplicitBlacklist(topology)) {
     const encoded = Bytes.concat(...topology.blacklist.map((b) => Bytes.fromHex(b)))
-    if (topology.blacklist.length > 14) {
+    if (topology.blacklist.length >= 0x0f) {
       // If the blacklist is too large, we can't encode the length into the flag byte.
-      // Instead we encode 0xff and the length in the next byte.
+      // Instead we encode 0x0f and the length in the next 2 bytes.
+      if (topology.blacklist.length > 0xffff) {
+        throw new Error('Blacklist too large')
+      }
       return Bytes.concat(
-        Bytes.fromNumber((SESSIONS_FLAG_BLACKLIST << 4) | 0xff),
-        Bytes.fromNumber(topology.blacklist.length),
+        Bytes.fromNumber((SESSIONS_FLAG_BLACKLIST << 4) | 0x0f),
+        Bytes.fromNumber(topology.blacklist.length, { size: 2 }),
         encoded,
       )
     }
