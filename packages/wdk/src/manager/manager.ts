@@ -1,4 +1,4 @@
-import { Address, Provider } from 'ox'
+import { Address } from 'ox'
 
 import { Extensions, Context, Config, Constants, Network } from '@0xsequence/sequence-primitives'
 import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-core'
@@ -8,8 +8,8 @@ import { Devices } from './devices'
 import { CreateWalletOptions, Wallets } from './wallets'
 import { Transactions } from './transactions'
 import { Signatures, Signer } from './signatures'
-import { Signers } from './signers'
-import { SignerHandler } from '../signers/signer'
+import { Kinds, Signers } from './signers'
+import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
 
 export type Transaction = {
   to: Address.Address
@@ -103,7 +103,7 @@ export type Shared = {
   readonly sequence: Sequence
   readonly databases: Databases
 
-  readonly handlers: Map<string, SignerHandler>
+  readonly handlers: Map<string, Handler>
 
   modules: Modules
 }
@@ -148,6 +148,13 @@ export class Manager {
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
     }
+
+    shared.handlers.set(Kinds.LocalDevice, new DevicesHandler(modules.signatures, modules.devices))
+
+    shared.handlers.set(
+      Kinds.LoginPasskey,
+      new PasskeysHandler(modules.signatures, shared.sequence.extensions, shared.sequence.stateProvider),
+    )
 
     shared.modules = modules
     this.shared = shared

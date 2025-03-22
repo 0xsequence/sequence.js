@@ -1,12 +1,12 @@
 import { Signers, State } from '@0xsequence/sequence-core'
-import * as Db from '../dbs'
+import * as Db from '../../dbs'
 import { Address, Bytes, Hex } from 'ox'
-import { SignerHandler } from './signer'
-import { Kinds } from '../manager/signers'
-import { Signatures, SignerActionable, SignerUnavailable } from '../manager/signatures'
+import { Kinds } from '../signers'
+import { Signatures, SignerActionable, SignerUnavailable } from '../signatures'
 import { Extensions } from '@0xsequence/sequence-primitives'
+import { Handler } from '.'
 
-export class PasskeySigner implements SignerHandler {
+export class PasskeysHandler implements Handler {
   kind = Kinds.LoginPasskey
 
   constructor(

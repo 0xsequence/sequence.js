@@ -1,9 +1,8 @@
-import * as Db from '../dbs'
+import * as Db from '../../dbs'
 import { Address, Bytes } from 'ox'
-import { SignerActionable, SignerReady, SignerUnavailable } from '../manager/signatures'
-import { Envelope } from '@0xsequence/sequence-core'
+import { SignerActionable, SignerReady, SignerUnavailable } from '../signatures'
 
-export interface SignerHandler {
+export interface Handler {
   kind: string
 
   uiStatus(): 'non-required' | 'non-registered' | 'registered'
@@ -14,3 +13,6 @@ export interface SignerHandler {
     request: Db.SignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable>
 }
+
+export * from './devices'
+export * from './passkeys'

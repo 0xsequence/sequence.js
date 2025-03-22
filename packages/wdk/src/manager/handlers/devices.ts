@@ -1,11 +1,11 @@
-import * as Db from '../dbs'
-import { SignerHandler } from './signer'
-import { Kinds } from '../manager/signers'
-import { Signatures, SignerReady, SignerUnavailable } from '../manager/signatures'
+import * as Db from '../../dbs'
+import { Kinds } from '../signers'
+import { Signatures, SignerReady, SignerUnavailable } from '../signatures'
 import { Address, Bytes } from 'ox'
-import { Devices } from '../manager/devices'
+import { Devices } from '../devices'
+import { Handler } from '.'
 
-export class DeviceSignerHandler implements SignerHandler {
+export class DevicesHandler implements Handler {
   kind = Kinds.LocalDevice
 
   constructor(
