@@ -1,41 +1,51 @@
-import { Envelope, Signers } from '@0xsequence/sequence-core'
-import { InteractiveSigner, InteractiveSignerStatus } from './signer'
 import * as Db from '../dbs'
-import { Address } from 'ox'
+import { SignerHandler } from './signer'
+import { Kinds } from '../manager/signers'
+import { Signatures, SignerReady, SignerUnavailable } from '../manager/signatures'
+import { Address, Bytes } from 'ox'
+import { Devices } from '../manager/devices'
 
-export class DeviceSigner implements InteractiveSigner {
-  address: Address.Address
+export class DeviceSignerHandler implements SignerHandler {
+  kind = Kinds.LocalDevice
 
-  constructor(private readonly innerSigner: Signers.Pk.Pk) {
-    this.address = this.innerSigner.address
+  constructor(
+    private readonly signatures: Signatures,
+    private readonly devices: Devices,
+  ) {}
+
+  uiStatus(): 'non-required' {
+    return 'non-required'
   }
 
-  icon(): string {
-    return 'device'
-  }
-
-  label(): string {
-    return 'Device (TODO add deterministic name)'
-  }
-
-  prepare(_request: Db.SignatureRequest): void {
-    // NO-OP
-  }
-
-  async sign(request: Db.SignatureRequest): Promise<Envelope.SapientSignature | Envelope.Signature> {
-    const ie = request.envelope
-    const signature = await this.innerSigner.sign(ie.wallet, ie.chainId, ie.payload)
-    return {
-      address: this.address,
-      signature,
+  async status(
+    address: Address.Address,
+    _imageHash: Bytes.Bytes | undefined,
+    request: Db.SignatureRequest,
+  ): Promise<SignerUnavailable | SignerReady> {
+    const signer = await this.devices.get(address)
+    if (!signer) {
+      return {
+        address,
+        handler: this,
+        reason: 'not-local-key',
+        status: 'unavailable',
+      } as SignerUnavailable
     }
-  }
 
-  status(_requestId?: string): InteractiveSignerStatus {
     return {
-      // TODO: Handle localisation
-      message: 'Device is ready to sign',
+      address,
+      handler: this,
       status: 'ready',
-    }
+      sign: async () => {
+        const signature = await signer.sign(request.envelope.wallet, request.envelope.chainId, request.envelope.payload)
+
+        await this.signatures.addSignature(request.id, {
+          address,
+          signature,
+        })
+
+        return true
+      },
+    } as SignerReady
   }
 }

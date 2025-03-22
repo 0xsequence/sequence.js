@@ -1,6 +1,7 @@
 export * from './manager'
 export * from './signatures'
 export * from './transactions'
+export * from './signers'
 
 export type DbUpdateType = 'added' | 'updated' | 'removed'
 

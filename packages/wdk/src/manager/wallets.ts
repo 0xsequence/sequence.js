@@ -4,6 +4,7 @@ import { Address } from 'ox'
 import { Signers, State, Wallet } from '@0xsequence/sequence-core'
 import { Config, Context, Extensions } from '@0xsequence/sequence-primitives'
 import { Devices } from './devices'
+import { Kinds, WitnessExtraSignerKind } from './signers'
 
 export type CreateWalletOptions = {
   kind: 'passkey'
@@ -148,7 +149,9 @@ export class Wallets {
         await device.witness(this.stateProvider, wallet.address)
 
         // Sign witness using the passkey signer
-        await passkeySigner.witness(this.stateProvider, wallet.address)
+        await passkeySigner.witness(this.stateProvider, wallet.address, {
+          signerKind: Kinds.LoginPasskey,
+        } as WitnessExtraSignerKind)
 
         // Save entry in the manager db
         await this.managerDb.set({

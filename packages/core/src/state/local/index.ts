@@ -140,6 +140,29 @@ export class Provider implements ProviderInterface {
     )
   }
 
+  getWitnessFor(
+    wallet: Address.Address,
+    signer: Address.Address,
+  ):
+    | { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf }
+    | Promise<{ chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined>
+    | undefined {
+    return this.getWallets(signer).then((wallets) => wallets[wallet])
+  }
+
+  getWitnessForSapient(
+    wallet: Address.Address,
+    signer: Address.Address,
+    imageHash: Hex.Hex,
+  ):
+    | { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf }
+    | Promise<
+        { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
+      >
+    | undefined {
+    return this.getWalletsForSapient(signer, imageHash).then((wallets) => wallets[wallet])
+  }
+
   async saveWitnesses(
     wallet: Address.Address,
     chainId: bigint,

@@ -1,7 +1,7 @@
 import { Address, Provider } from 'ox'
 
 import { Extensions, Context, Config, Constants, Network, Payload } from '@0xsequence/sequence-primitives'
-import { Signers, Wallet as CoreWallet, State, Relayer, Wallet } from '@0xsequence/sequence-core'
+import { Signers as CoreSigners, Wallet as CoreWallet, State, Relayer, Wallet } from '@0xsequence/sequence-core'
 import * as Db from '../dbs'
 import { v7 as uuidv7 } from 'uuid'
 import { Logger } from './logger'
@@ -9,6 +9,7 @@ import { Devices } from './devices'
 import { CreateWalletOptions, Wallets } from './wallets'
 import { Transactions } from './transactions'
 import { Signatures } from './signatures'
+import { Signers } from './signers'
 
 export type Transaction = {
   to: Address.Address
@@ -23,7 +24,7 @@ export type ManagerOptions = {
   context?: Context.Context
   guest?: Address.Address
 
-  encryptedPksDb?: Signers.Pk.Encrypted.EncryptedPksDb
+  encryptedPksDb?: CoreSigners.Pk.Encrypted.EncryptedPksDb
   managerDb?: Db.Manager
   transactionsDb?: Db.Transactions
   signaturesDb?: Db.Signatures
@@ -42,7 +43,7 @@ export const ManagerOptionsDefaults = {
   context: Context.Dev1,
   guest: Constants.DefaultGuest,
 
-  encryptedPksDb: new Signers.Pk.Encrypted.EncryptedPksDb(),
+  encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
   managerDb: new Db.Manager(),
   signaturesDb: new Db.Signatures(),
   transactionsDb: new Db.Transactions(),
@@ -102,7 +103,7 @@ export class Manager {
     this.relayers = ops.relayers
 
     const logger = new Logger(this.verbose)
-    const devices = new Devices(logger, this.encryptedPksDb)
+    const devices = new Devices(logger, this.stateProvider, this.encryptedPksDb)
     const wallets = new Wallets(
       logger,
       devices,
@@ -113,7 +114,8 @@ export class Manager {
       this.stateProvider,
       this.guestModule,
     )
-    const signatures = new Signatures(this.signaturesDb, this.networks, this.stateProvider)
+    const signers = new Signers(devices, this.stateProvider)
+    const signatures = new Signatures(signers, this.signaturesDb, new Map())
     const transactions = new Transactions(
       signatures,
       this.transactionsDb,
