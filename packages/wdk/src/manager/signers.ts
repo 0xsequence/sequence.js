@@ -1,7 +1,6 @@
 import { Address, Bytes, Hex } from 'ox'
-import { State } from '@0xsequence/sequence-core'
-import { Devices } from './devices'
 import { Payload } from '@0xsequence/sequence-primitives'
+import { Shared } from './manager'
 
 export const Kinds = {
   LocalDevice: 'local-device',
@@ -33,10 +32,7 @@ function toKnownKind(kind: string): Kind {
 // i.e., when a signature is requested, we only get address and imageHash (if sapient)
 // this module takes care of figuring out the kind of signer (e.g., device, passkey, recovery, etc.)
 export class Signers {
-  constructor(
-    private readonly devices: Devices,
-    private readonly stateProvider: State.Provider,
-  ) {}
+  constructor(private readonly shared: Shared) {}
 
   async kindOf(wallet: Address.Address, address: Address.Address, imageHash?: Hex.Hex): Promise<Kind | undefined> {
     // // The device may be among the local devices, in that case it is a local device
@@ -49,8 +45,8 @@ export class Signers {
     // We need to use the state provider (and witness) this will tell us the kind of signer
     // NOTICE: This looks expensive, but this operation should be cached by the state provider
     const witness = await (imageHash
-      ? this.stateProvider.getWitnessForSapient(wallet, address, imageHash)
-      : this.stateProvider.getWitnessFor(wallet, address))
+      ? this.shared.sequence.stateProvider.getWitnessForSapient(wallet, address, imageHash)
+      : this.shared.sequence.stateProvider.getWitnessFor(wallet, address))
 
     if (!witness) {
       return undefined

@@ -1,10 +1,8 @@
-import { Logger } from './logger'
-import * as Db from '../dbs'
 import { Address } from 'ox'
-import { Signers, State, Wallet } from '@0xsequence/sequence-core'
-import { Config, Context, Extensions } from '@0xsequence/sequence-primitives'
-import { Devices } from './devices'
+import { Signers, Wallet } from '@0xsequence/sequence-core'
+import { Config } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
+import { Shared } from './manager'
 
 export type CreateWalletOptions = {
   kind: 'passkey'
@@ -57,28 +55,19 @@ export class Wallets {
   private walletsDbListener: (() => void) | undefined
   private walletsListeners: ((wallets: Address.Address[]) => void)[] = []
 
-  constructor(
-    private readonly logger: Logger,
-    private readonly devices: Devices,
-    private readonly managerDb: Db.Manager,
-    private readonly extensions: Extensions.Extensions,
-    private readonly context: Context.Context,
-    private readonly defaultGuardTopology: Config.Topology,
-    private readonly stateProvider: State.Provider,
-    private readonly guestModule: Address.Address,
-  ) {}
+  constructor(private readonly shared: Shared) {}
 
   public async exists(wallet: Address.Address): Promise<boolean> {
-    return this.managerDb.get(wallet).then((r) => r !== undefined)
+    return this.shared.databases.manager.get(wallet).then((r) => r !== undefined)
   }
 
   public async list(): Promise<Address.Address[]> {
-    return this.managerDb.list().then((r) => r.map((x) => x.wallet))
+    return this.shared.databases.manager.list().then((r) => r.map((x) => x.wallet))
   }
 
   public onWalletsUpdate(cb: (wallets: Address.Address[]) => void, trigger?: boolean) {
     if (!this.walletsDbListener) {
-      this.walletsDbListener = this.managerDb.addListener(() => {
+      this.walletsDbListener = this.shared.databases.manager.addListener(() => {
         this.list().then((wallets) => {
           this.walletsListeners.forEach((cb) => cb(wallets))
         })
@@ -109,20 +98,20 @@ export class Wallets {
   async create(args: CreateWalletOptions) {
     switch (args.kind) {
       case 'passkey':
-        const passkeySigner = await Signers.Passkey.Passkey.create(this.extensions)
+        const passkeySigner = await Signers.Passkey.Passkey.create(this.shared.sequence.extensions)
 
-        this.logger.log('Created new passkey signer:', passkeySigner.address)
+        this.shared.modules.logger.log('Created new passkey signer:', passkeySigner.address)
 
         // Create the first session
-        const device = await this.devices.create()
+        const device = await this.shared.modules.devices.create()
 
         // If the guard is defined, set threshold to 2, if not, set to 1
-        const threshold = this.defaultGuardTopology ? 2n : 1n
+        const threshold = this.shared.sequence.defaultGuardTopology ? 2n : 1n
 
         // Build the login tree
         const loginTopology = buildCappedTree([passkeySigner.address])
         const devicesTopology = buildCappedTree([device.address])
-        const guardTopology = buildCappedTreeFromTopology(1n, this.defaultGuardTopology)
+        const guardTopology = buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
 
         // TODO: Add recovery module
         // TODO: Add smart sessions module
@@ -138,23 +127,23 @@ export class Wallets {
 
         // Create wallet
         const wallet = await Wallet.fromConfiguration(initialConfiguration, {
-          context: this.context,
-          stateProvider: this.stateProvider,
-          guest: this.guestModule,
+          context: this.shared.sequence.context,
+          stateProvider: this.shared.sequence.stateProvider,
+          guest: this.shared.sequence.guest,
         })
 
-        this.logger.log('Created new sequence wallet:', wallet.address)
+        this.shared.modules.logger.log('Created new sequence wallet:', wallet.address)
 
         // Sign witness using device signer
-        await device.witness(this.stateProvider, wallet.address)
+        await device.witness(this.shared.sequence.stateProvider, wallet.address)
 
         // Sign witness using the passkey signer
-        await passkeySigner.witness(this.stateProvider, wallet.address, {
+        await passkeySigner.witness(this.shared.sequence.stateProvider, wallet.address, {
           signerKind: Kinds.LoginPasskey,
         } as WitnessExtraSignerKind)
 
         // Save entry in the manager db
-        await this.managerDb.set({
+        await this.shared.databases.manager.set({
           wallet: wallet.address,
           status: 'logged-in',
           loginDate: new Date().toISOString(),

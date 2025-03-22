@@ -1,8 +1,10 @@
+import { Shared } from './manager'
+
 export class Logger {
-  constructor(public readonly verbose: boolean) {}
+  constructor(private readonly shared: Shared) {}
 
   log(...args: any[]) {
-    if (this.verbose) {
+    if (this.shared.verbose) {
       console.log(...args)
     }
   }

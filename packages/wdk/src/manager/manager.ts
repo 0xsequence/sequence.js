@@ -1,15 +1,15 @@
 import { Address, Provider } from 'ox'
 
-import { Extensions, Context, Config, Constants, Network, Payload } from '@0xsequence/sequence-primitives'
-import { Signers as CoreSigners, Wallet as CoreWallet, State, Relayer, Wallet } from '@0xsequence/sequence-core'
+import { Extensions, Context, Config, Constants, Network } from '@0xsequence/sequence-primitives'
+import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-core'
 import * as Db from '../dbs'
-import { v7 as uuidv7 } from 'uuid'
 import { Logger } from './logger'
 import { Devices } from './devices'
 import { CreateWalletOptions, Wallets } from './wallets'
 import { Transactions } from './transactions'
-import { Signatures } from './signatures'
+import { Signatures, Signer } from './signatures'
 import { Signers } from './signers'
+import { SignerHandler } from '../signers/signer'
 
 export type Transaction = {
   to: Address.Address
@@ -68,81 +68,101 @@ export function applyDefaults(options?: ManagerOptions) {
   return { ...ManagerOptionsDefaults, ...options }
 }
 
+export type Databases = {
+  readonly encryptedPks: CoreSigners.Pk.Encrypted.EncryptedPksDb
+  readonly manager: Db.Manager
+  readonly signatures: Db.Signatures
+  readonly transactions: Db.Transactions
+}
+
+export type Sequence = {
+  readonly context: Context.Context
+  readonly extensions: Extensions.Extensions
+  readonly guest: Address.Address
+
+  readonly stateProvider: State.Provider
+
+  readonly networks: Network.Network[]
+  readonly relayers: Relayer.Relayer[]
+
+  readonly defaultGuardTopology: Config.Topology
+}
+
+export type Modules = {
+  readonly logger: Logger
+  readonly devices: Devices
+  readonly wallets: Wallets
+  readonly signers: Signers
+  readonly signatures: Signatures
+  readonly transactions: Transactions
+}
+
+export type Shared = {
+  readonly verbose: boolean
+
+  readonly sequence: Sequence
+  readonly databases: Databases
+
+  readonly handlers: Map<string, SignerHandler>
+
+  modules: Modules
+}
+
 export class Manager {
-  public readonly verbose: boolean
-
-  public readonly extensions: Extensions.Extensions
-  public readonly context: Context.Context
-  public readonly guestModule: Address.Address
-
-  public readonly stateProvider: State.Provider
-  public readonly networks: Network.Network[]
-  public readonly relayers: Relayer.Relayer[]
-
-  private readonly encryptedPksDb
-  private readonly managerDb
-  private readonly signaturesDb
-  private readonly transactionsDb
-
-  public readonly defaultGuardTopology: Config.Topology
-  private readonly modules
+  private readonly shared: Shared
 
   constructor(options?: ManagerOptions) {
     const ops = applyDefaults(options)
-    this.extensions = ops.extensions
-    this.context = ops.context
-    this.verbose = ops.verbose
-    this.defaultGuardTopology = ops.defaultGuardTopology
-    this.stateProvider = ops.stateProvider
-    this.guestModule = ops.guest
-    this.encryptedPksDb = ops.encryptedPksDb
-    this.managerDb = ops.managerDb
-    this.signaturesDb = ops.signaturesDb
-    this.transactionsDb = ops.transactionsDb
-    this.networks = ops.networks
-    this.relayers = ops.relayers
 
-    const logger = new Logger(this.verbose)
-    const devices = new Devices(logger, this.stateProvider, this.encryptedPksDb)
-    const wallets = new Wallets(
-      logger,
-      devices,
-      this.managerDb,
-      this.extensions,
-      this.context,
-      this.defaultGuardTopology,
-      this.stateProvider,
-      this.guestModule,
-    )
-    const signers = new Signers(devices, this.stateProvider)
-    const signatures = new Signatures(signers, this.signaturesDb, new Map())
-    const transactions = new Transactions(
-      signatures,
-      this.transactionsDb,
-      this.networks,
-      this.stateProvider,
-      this.relayers,
-    )
+    const shared: Shared = {
+      verbose: ops.verbose,
 
-    this.modules = {
-      logger,
-      devices,
-      wallets,
-      signatures,
-      transactions,
+      sequence: {
+        context: ops.context,
+        extensions: ops.extensions,
+        guest: ops.guest,
+
+        stateProvider: ops.stateProvider,
+        networks: ops.networks,
+        relayers: ops.relayers,
+
+        defaultGuardTopology: ops.defaultGuardTopology,
+      },
+
+      databases: {
+        encryptedPks: ops.encryptedPksDb,
+        manager: ops.managerDb,
+        signatures: ops.signaturesDb,
+        transactions: ops.transactionsDb,
+      },
+
+      modules: {} as any,
+      handlers: new Map(),
     }
+
+    const modules: Modules = {
+      logger: new Logger(shared),
+      devices: new Devices(shared),
+      wallets: new Wallets(shared),
+      signers: new Signers(shared),
+      signatures: new Signatures(shared),
+      transactions: new Transactions(shared),
+    }
+
+    shared.modules = modules
+    this.shared = shared
   }
 
   public async createWallet(options: CreateWalletOptions) {
-    return this.modules.wallets.create(options)
+    return this.shared.modules.wallets.create(options)
   }
 
   public async listWallets() {
-    return this.modules.wallets.list()
+    return this.shared.modules.wallets.list()
   }
 
   public async hasWallet(address: Address.Address) {
-    return this.modules.wallets.exists(address)
+    return this.shared.modules.wallets.exists(address)
   }
 
   public async requestTransaction(
@@ -151,6 +171,6 @@ export class Manager {
     txs: Db.TransactionRequest[],
     options?: { skipDefineGas?: boolean; source?: string },
   ) {
-    return this.modules.transactions.request(from, chainId, txs, options)
+    return this.shared.modules.transactions.request(from, chainId, txs, options)
   }
 }

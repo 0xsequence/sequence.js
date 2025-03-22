@@ -1,10 +1,10 @@
-import { Address, Bytes, Hex, Provider } from 'ox'
+import { Address, Bytes, Hex } from 'ox'
 import * as Db from '../dbs'
 import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Envelope } from '@0xsequence/sequence-core'
 import { v7 as uuidv7 } from 'uuid'
-import { Signers } from './signers'
 import { SignerHandler } from '../signers/signer'
+import { Shared } from './manager'
 
 export type SignerBase = {
   address: Address.Address
@@ -42,14 +42,10 @@ export type SignatureRequest = Db.SignatureRequest & {
 }
 
 export class Signatures {
-  constructor(
-    private readonly signers: Signers,
-    private readonly signaturesDb: Db.Signatures,
-    private readonly handlers: Map<string, SignerHandler>,
-  ) {}
+  constructor(private readonly shared: Shared) {}
 
   async list(): Promise<Db.SignatureRequest[]> {
-    return this.signaturesDb.list()
+    return this.shared.databases.signatures.list()
   }
 
   async request(
@@ -61,7 +57,7 @@ export class Signatures {
   ): Promise<string> {
     const id = uuidv7()
 
-    await this.signaturesDb.set({
+    await this.shared.databases.signatures.set({
       id,
       wallet: envelope.wallet,
       envelope: Envelope.toSigned(envelope),
@@ -74,18 +70,18 @@ export class Signatures {
   }
 
   async addSignature(requestId: string, signature: Envelope.SapientSignature | Envelope.Signature) {
-    const request = await this.signaturesDb.get(requestId)
+    const request = await this.shared.databases.signatures.get(requestId)
     if (!request) {
       throw new Error(`Request not found for ${requestId}`)
     }
 
     Envelope.addSignature(request.envelope, signature)
 
-    await this.signaturesDb.set(request)
+    await this.shared.databases.signatures.set(request)
   }
 
   async sign(requestId: string, onSigners: (signers: Signer[]) => void): Promise<boolean> {
-    const request = await this.signaturesDb.get(requestId)
+    const request = await this.shared.databases.signatures.get(requestId)
     if (!request) {
       throw new Error(`Request not found for ${requestId}`)
     }
@@ -93,7 +89,7 @@ export class Signatures {
     const signers = Config.getSigners(request.envelope.configuration.topology)
     const signersAndKinds = await Promise.all([
       ...signers.signers.map(async (signer) => {
-        const kind = await this.signers.kindOf(request.wallet, signer)
+        const kind = await this.shared.modules.signers.kindOf(request.wallet, signer)
         return {
           address: signer,
           imageHash: undefined,
@@ -101,7 +97,11 @@ export class Signatures {
         }
       }),
       ...signers.sapientSigners.map(async (signer) => {
-        const kind = await this.signers.kindOf(request.wallet, signer.address, Hex.from(signer.imageHash))
+        const kind = await this.shared.modules.signers.kindOf(
+          request.wallet,
+          signer.address,
+          Hex.from(signer.imageHash),
+        )
         return {
           address: signer.address,
           imageHash: signer.imageHash,
@@ -125,7 +125,7 @@ export class Signatures {
           return sig.address === sak.address
         })
 
-        const handler = sak.kind && this.handlers.get(sak.kind)
+        const handler = sak.kind && this.shared.handlers.get(sak.kind)
         if (signed) {
           return {
             ...base,
