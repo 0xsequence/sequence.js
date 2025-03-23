@@ -172,6 +172,10 @@ export class Manager {
     return this.shared.modules.wallets.exists(address)
   }
 
+  public onWalletsUpdate(cb: (wallets: Address.Address[]) => void, trigger?: boolean) {
+    return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
+  }
+
   public async requestTransaction(
     from: Address.Address,
     chainId: bigint,

@@ -1,7 +1,7 @@
 import { Address } from 'ox'
 import { Payload } from '@0xsequence/sequence-primitives'
 import { Relayer, Envelope } from '@0xsequence/sequence-core'
-import { Generic } from '.'
+import { Generic } from './generic'
 
 export type TransactionRequest = {
   to: Address.Address
@@ -42,8 +42,16 @@ export type TransactionFormedRow = TransactionBase & {
 
 export type TransactionRow = TransactionRequestedRow | TransactionDefinedRow | TransactionFormedRow
 
+const TABLE_NAME = 'transactions'
+
 export class Transactions extends Generic<TransactionRow, 'id'> {
   constructor(dbName: string = 'sequence-transactions') {
-    super(dbName, 'transactions', 'id')
+    super(dbName, TABLE_NAME, 'id', [
+      (db: IDBDatabase) => {
+        if (!db.objectStoreNames.contains(TABLE_NAME)) {
+          db.createObjectStore(TABLE_NAME)
+        }
+      },
+    ])
   }
 }

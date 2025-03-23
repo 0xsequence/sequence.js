@@ -9,7 +9,8 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "postinstall": "lefthook install",
-    "dev:server": "node packages/primitives-cli/dist/index.js server"
+    "dev:server": "node packages/primitives-cli/dist/index.js server",
+    "build:packages": "turbo build --filter=\"./packages/*\""
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.11",
