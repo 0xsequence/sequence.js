@@ -1,13 +1,25 @@
-import { Address } from 'ox'
+import { Address, Hex, Mnemonic } from 'ox'
 import { Signers, Wallet } from '@0xsequence/sequence-core'
 import { Config } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Shared } from './manager'
+import { MnemonicHandler } from './handlers/mnemonic'
 
-export type CreateWalletOptions = {
+export type CommonSignupArgs = {
+  useGuard?: boolean
+}
+
+export type PasskeySignupArgs = CommonSignupArgs & {
   kind: 'passkey'
   useGuard?: boolean
 }
+
+export type MnemonicSignupArgs = CommonSignupArgs & {
+  kind: 'mnemonic'
+  mnemonic: string
+}
+
+export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs
 
 function buildCappedTree(members: Address.Address[]): Config.Topology {
   const loginMemberWeight = 1n
@@ -95,66 +107,94 @@ export class Wallets {
     }
   }
 
-  async create(args: CreateWalletOptions) {
+  private async prepareSignUp(
+    args: SignupArgs,
+  ): Promise<{
+    signer: (Signers.Signer | Signers.SapientSigner) & Signers.Witnessable
+    extra: WitnessExtraSignerKind
+  }> {
     switch (args.kind) {
       case 'passkey':
         const passkeySigner = await Signers.Passkey.Passkey.create(this.shared.sequence.extensions)
-
         this.shared.modules.logger.log('Created new passkey signer:', passkeySigner.address)
 
-        // Create the first session
-        const device = await this.shared.modules.devices.create()
-
-        // If the guard is defined, set threshold to 2, if not, set to 1
-        const threshold = this.shared.sequence.defaultGuardTopology ? 2n : 1n
-
-        // Build the login tree
-        const loginTopology = buildCappedTree([passkeySigner.address])
-        const devicesTopology = buildCappedTree([device.address])
-        const guardTopology = buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
-
-        // TODO: Add recovery module
-        // TODO: Add smart sessions module
-
-        // Create initial configuration
-        const initialConfiguration: Config.Config = {
-          checkpoint: 0n,
-          threshold,
-          topology: Config.flatLeavesToTopology(
-            [loginTopology, devicesTopology, guardTopology].filter((x) => x !== undefined) as Config.Leaf[],
-          ),
+        return {
+          signer: passkeySigner,
+          extra: {
+            signerKind: Kinds.LoginPasskey,
+          },
         }
 
-        // Create wallet
-        const wallet = await Wallet.fromConfiguration(initialConfiguration, {
-          context: this.shared.sequence.context,
-          stateProvider: this.shared.sequence.stateProvider,
-          guest: this.shared.sequence.guest,
-        })
+      case 'mnemonic':
+        const mnemonicSigner = MnemonicHandler.toSigner(args.mnemonic)
+        if (!mnemonicSigner) {
+          throw new Error('invalid-mnemonic')
+        }
 
-        this.shared.modules.logger.log('Created new sequence wallet:', wallet.address)
+        this.shared.modules.logger.log('Created new mnemonic signer:', mnemonicSigner.address)
 
-        // Sign witness using device signer
-        await device.witness(this.shared.sequence.stateProvider, wallet.address)
-
-        // Sign witness using the passkey signer
-        await passkeySigner.witness(this.shared.sequence.stateProvider, wallet.address, {
-          signerKind: Kinds.LoginPasskey,
-        } as WitnessExtraSignerKind)
-
-        // Save entry in the manager db
-        await this.shared.databases.manager.set({
-          wallet: wallet.address,
-          status: 'logged-in',
-          loginDate: new Date().toISOString(),
-          device: device.address,
-          loginType: 'passkey',
-          useGuard: args.useGuard || false,
-        })
-
-        return wallet.address
-      default:
-        throw new Error(`Unsupported wallet kind: ${args.kind}`)
+        return {
+          signer: mnemonicSigner,
+          extra: {
+            signerKind: Kinds.LoginMnemonic,
+          },
+        }
     }
+  }
+
+  async signUp(args: SignupArgs) {
+    const loginSigner = await this.prepareSignUp(args)
+
+    // Create the first session
+    const device = await this.shared.modules.devices.create()
+
+    // If the guard is defined, set threshold to 2, if not, set to 1
+    const threshold = this.shared.sequence.defaultGuardTopology ? 2n : 1n
+
+    // Build the login tree
+    const loginTopology = buildCappedTree([await loginSigner.signer.address])
+    const devicesTopology = buildCappedTree([device.address])
+    const guardTopology = buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
+
+    // TODO: Add recovery module
+    // TODO: Add smart sessions module
+
+    // Create initial configuration
+    const initialConfiguration: Config.Config = {
+      checkpoint: 0n,
+      threshold,
+      topology: Config.flatLeavesToTopology(
+        [loginTopology, devicesTopology, guardTopology].filter((x) => x !== undefined) as Config.Leaf[],
+      ),
+    }
+
+    // Create wallet
+    const wallet = await Wallet.fromConfiguration(initialConfiguration, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    this.shared.modules.logger.log('Created new sequence wallet:', wallet.address)
+
+    // Sign witness using device signer
+    await device.witness(this.shared.sequence.stateProvider, wallet.address)
+
+    // Sign witness using the passkey signer
+    await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, {
+      signerKind: Kinds.LoginPasskey,
+    } as WitnessExtraSignerKind)
+
+    // Save entry in the manager db
+    await this.shared.databases.manager.set({
+      wallet: wallet.address,
+      status: 'logged-in',
+      loginDate: new Date().toISOString(),
+      device: device.address,
+      loginType: 'passkey',
+      useGuard: args.useGuard || false,
+    })
+
+    return wallet.address
   }
 }

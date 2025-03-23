@@ -5,7 +5,7 @@ import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-cor
 import * as Db from '../dbs'
 import { Logger } from './logger'
 import { Devices } from './devices'
-import { CreateWalletOptions, Wallets } from './wallets'
+import { SignupArgs, Wallets } from './wallets'
 import { Transactions } from './transactions'
 import { Signatures, Signer } from './signatures'
 import { Kinds, Signers } from './signers'
@@ -160,8 +160,8 @@ export class Manager {
     this.shared = shared
   }
 
-  public async createWallet(options: CreateWalletOptions) {
-    return this.shared.modules.wallets.create(options)
+  public async signUp(options: SignupArgs) {
+    return this.shared.modules.wallets.signUp(options)
   }
 
   public async listWallets() {

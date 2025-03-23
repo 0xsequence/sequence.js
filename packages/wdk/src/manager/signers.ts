@@ -5,6 +5,7 @@ import { Shared } from './manager'
 export const Kinds = {
   LocalDevice: 'local-device',
   LoginPasskey: 'login-passkey',
+  LoginMnemonic: 'login-mnemonic',
   Unknown: 'unknown',
 } as const
 
