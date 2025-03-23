@@ -161,16 +161,13 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
 
   // SESSION IMPLICIT
   async session_implicit_addBlacklistAddress(params) {
-    const { blacklistAddress, sessionConfiguration } = params
-    const result = await sessionImplicit.doAddBlacklistAddress(blacklistAddress, JSON.stringify(sessionConfiguration))
+    const { blacklistAddress, sessionTopology } = params
+    const result = await sessionImplicit.doAddBlacklistAddress(blacklistAddress, JSON.stringify(sessionTopology))
     return result
   },
   async session_implicit_removeBlacklistAddress(params) {
-    const { blacklistAddress, sessionConfiguration } = params
-    const result = await sessionImplicit.doRemoveBlacklistAddress(
-      blacklistAddress,
-      JSON.stringify(sessionConfiguration),
-    )
+    const { blacklistAddress, sessionTopology } = params
+    const result = await sessionImplicit.doRemoveBlacklistAddress(blacklistAddress, JSON.stringify(sessionTopology))
     return result
   },
 
