@@ -15,9 +15,9 @@ export class PasskeysHandler implements Handler {
     private readonly stateReader: State.Reader,
   ) {}
 
-  uiStatus(): 'non-required' {
-    return 'non-required'
-  }
+  // uiStatus(): 'non-required' {
+  //   return 'non-required'
+  // }
 
   private async loadPasskey(
     wallet: Address.Address,

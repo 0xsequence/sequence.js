@@ -3,8 +3,8 @@ import * as Db from '../dbs'
 import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Envelope } from '@0xsequence/sequence-core'
 import { v7 as uuidv7 } from 'uuid'
-import { SignerHandler } from '../signers/signer'
 import { Shared } from './manager'
+import { Handler } from './handlers'
 
 export type SignerBase = {
   address: Address.Address
@@ -12,24 +12,24 @@ export type SignerBase = {
 }
 
 export type SignerSigned = SignerBase & {
-  handler?: SignerHandler
+  handler?: Handler
   status: 'signed'
 }
 
 export type SignerUnavailable = SignerBase & {
-  handler?: SignerHandler
+  handler?: Handler
   reason: string
   status: 'unavailable'
 }
 
 export type SignerReady = SignerBase & {
-  handler: SignerHandler
+  handler: Handler
   status: 'ready'
   sign: () => Promise<boolean>
 }
 
 export type SignerActionable = SignerBase & {
-  handler: SignerHandler
+  handler: Handler
   status: 'actionable'
   message: string // TODO: Localization?
   sign: () => Promise<boolean>
