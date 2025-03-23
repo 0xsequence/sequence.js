@@ -38,6 +38,8 @@ export type OperationStatus =
   | OperationFailedStatus
 
 export interface Relayer {
+  id: string
+
   feeOptions(
     wallet: Address.Address,
     chainId: bigint,

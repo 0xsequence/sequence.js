@@ -55,28 +55,28 @@ export type TypedDataToSign = {
   message: Record<string, unknown>
 }
 
-export function fromMessage(message: Bytes.Bytes): Payload {
+export function fromMessage(message: Bytes.Bytes): Message {
   return {
     type: 'message',
     message,
   }
 }
 
-export function fromConfigUpdate(imageHash: Hex.Hex): Payload {
+export function fromConfigUpdate(imageHash: Hex.Hex): ConfigUpdate {
   return {
     type: 'config-update',
     imageHash,
   }
 }
 
-export function fromDigest(digest: Hex.Hex): Payload {
+export function fromDigest(digest: Hex.Hex): Digest {
   return {
     type: 'digest',
     digest,
   }
 }
 
-export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Payload {
+export function fromCall(nonce: bigint, space: bigint, calls: Call[]): Calls {
   return {
     type: 'call',
     nonce,

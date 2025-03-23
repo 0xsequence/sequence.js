@@ -1,8 +1,21 @@
 import { Address } from 'ox'
 
 import { Extensions, Context, Config, Constants, Network } from '@0xsequence/sequence-primitives'
-import { Signers, Wallet as CoreWallet, State, Relayer } from '@0xsequence/sequence-core'
-import { ManagerDb } from './db'
+import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-core'
+import * as Db from '../dbs'
+import { Logger } from './logger'
+import { Devices } from './devices'
+import { CreateWalletOptions, Wallets } from './wallets'
+import { Transactions } from './transactions'
+import { Signatures, Signer } from './signatures'
+import { Kinds, Signers } from './signers'
+import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
+
+export type Transaction = {
+  to: Address.Address
+  value?: bigint
+  data?: Uint8Array
+}
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -11,8 +24,10 @@ export type ManagerOptions = {
   context?: Context.Context
   guest?: Address.Address
 
-  encryptedPksDb?: Signers.Pk.Encrypted.EncryptedPksDb
-  managerDb?: ManagerDb
+  encryptedPksDb?: CoreSigners.Pk.Encrypted.EncryptedPksDb
+  managerDb?: Db.Manager
+  transactionsDb?: Db.Transactions
+  signaturesDb?: Db.Signatures
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
@@ -27,11 +42,14 @@ export const ManagerOptionsDefaults = {
   extensions: Extensions.Dev1,
   context: Context.Dev1,
   guest: Constants.DefaultGuest,
-  encryptedPksDb: new Signers.Pk.Encrypted.EncryptedPksDb(),
-  managerDb: new ManagerDb(),
+
+  encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
+  managerDb: new Db.Manager(),
+  signaturesDb: new Db.Signatures(),
+  transactionsDb: new Db.Transactions(),
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
-  network: Network.All,
+  networks: Network.All,
   relayers: [], // TODO: How to auto-populate local relayer?
 
   defaultGuardTopology: {
@@ -42,11 +60,6 @@ export const ManagerOptionsDefaults = {
   } as Config.SignerLeaf,
 }
 
-export type CreateWalletOptions = {
-  kind: 'passkey'
-  useGuard?: boolean
-}
-
 export const CreateWalletOptionsDefaults = {
   useGuard: false,
 }
@@ -55,187 +68,116 @@ export function applyDefaults(options?: ManagerOptions) {
   return { ...ManagerOptionsDefaults, ...options }
 }
 
-function buildCappedTreeFromTopology(weight: bigint, topology: Config.Topology): Config.Topology {
-  // We may optimize this for some topology types
-  // but it is not worth it, because the topology
-  // that we will use for prod won't be optimizable
-  return {
-    type: 'nested',
-    weight: weight,
-    threshold: weight,
-    tree: topology,
-  }
+export type Databases = {
+  readonly encryptedPks: CoreSigners.Pk.Encrypted.EncryptedPksDb
+  readonly manager: Db.Manager
+  readonly signatures: Db.Signatures
+  readonly transactions: Db.Transactions
 }
 
-function buildCappedTree(weight: bigint, members: Address.Address[]): Config.Topology {
-  const loginMemberWeight = 1n
+export type Sequence = {
+  readonly context: Context.Context
+  readonly extensions: Extensions.Extensions
+  readonly guest: Address.Address
 
-  if (members.length === 0) {
-    throw new Error('Cannot build login tree with no members')
-  }
+  readonly stateProvider: State.Provider
 
-  if (members.length === 1) {
-    return {
-      type: 'signer',
-      address: members[0],
-      weight: loginMemberWeight,
-    } as Config.SignerLeaf
-  }
+  readonly networks: Network.Network[]
+  readonly relayers: Relayer.Relayer[]
 
-  // Limit their total signing power
-  return {
-    type: 'nested',
-    weight: loginMemberWeight,
-    threshold: 1n,
-    tree: Config.flatLeavesToTopology(
-      members.map((member) => ({
-        type: 'signer',
-        address: member,
-        weight: 1n,
-      })),
-    ),
-  } as Config.NestedLeaf
+  readonly defaultGuardTopology: Config.Topology
+}
+
+export type Modules = {
+  readonly logger: Logger
+  readonly devices: Devices
+  readonly wallets: Wallets
+  readonly signers: Signers
+  readonly signatures: Signatures
+  readonly transactions: Transactions
+}
+
+export type Shared = {
+  readonly verbose: boolean
+
+  readonly sequence: Sequence
+  readonly databases: Databases
+
+  readonly handlers: Map<string, Handler>
+
+  modules: Modules
 }
 
 export class Manager {
-  public readonly verbose: boolean
-
-  public readonly extensions: Extensions.Extensions
-  public readonly context: Context.Context
-  public readonly guestModule: Address.Address
-
-  public readonly stateProvider: State.Provider
-
-  private readonly encryptedPksDb
-  private readonly managerDb
-
-  public readonly defaultGuardTopology: Config.Topology
-
-  private walletsDbListener: (() => void) | undefined
-  private walletsListeners: ((wallets: Address.Address[]) => void)[] = []
+  private readonly shared: Shared
 
   constructor(options?: ManagerOptions) {
     const ops = applyDefaults(options)
-    this.extensions = ops.extensions
-    this.context = ops.context
-    this.verbose = ops.verbose
-    this.defaultGuardTopology = ops.defaultGuardTopology
-    this.stateProvider = ops.stateProvider
-    this.guestModule = ops.guest
-    this.encryptedPksDb = ops.encryptedPksDb
-    this.managerDb = ops.managerDb
+
+    const shared: Shared = {
+      verbose: ops.verbose,
+
+      sequence: {
+        context: ops.context,
+        extensions: ops.extensions,
+        guest: ops.guest,
+
+        stateProvider: ops.stateProvider,
+        networks: ops.networks,
+        relayers: ops.relayers,
+
+        defaultGuardTopology: ops.defaultGuardTopology,
+      },
+
+      databases: {
+        encryptedPks: ops.encryptedPksDb,
+        manager: ops.managerDb,
+        signatures: ops.signaturesDb,
+        transactions: ops.transactionsDb,
+      },
+
+      modules: {} as any,
+      handlers: new Map(),
+    }
+
+    const modules: Modules = {
+      logger: new Logger(shared),
+      devices: new Devices(shared),
+      wallets: new Wallets(shared),
+      signers: new Signers(shared),
+      signatures: new Signatures(shared),
+      transactions: new Transactions(shared),
+    }
+
+    shared.handlers.set(Kinds.LocalDevice, new DevicesHandler(modules.signatures, modules.devices))
+
+    shared.handlers.set(
+      Kinds.LoginPasskey,
+      new PasskeysHandler(modules.signatures, shared.sequence.extensions, shared.sequence.stateProvider),
+    )
+
+    shared.modules = modules
+    this.shared = shared
   }
 
-  public async listWallets(): Promise<Address.Address[]> {
-    return this.managerDb.listWallets().then((r) => r.map((x) => x.wallet))
+  public async createWallet(options: CreateWalletOptions) {
+    return this.shared.modules.wallets.create(options)
   }
 
-  public onWalletsUpdate(cb: (wallets: Address.Address[]) => void, trigger?: boolean) {
-    if (!this.walletsDbListener) {
-      this.walletsDbListener = this.managerDb.addListener(() => {
-        this.listWallets().then((wallets) => {
-          this.walletsListeners.forEach((cb) => cb(wallets))
-        })
-      })
-    }
-
-    this.walletsListeners.push(cb)
-
-    if (trigger) {
-      this.listWallets().then((wallets) => {
-        cb(wallets)
-      })
-    }
-
-    return () => {
-      this.removeOnWalletsUpdate(cb)
-    }
+  public async listWallets() {
+    return this.shared.modules.wallets.list()
   }
 
-  public removeOnWalletsUpdate(cb: (wallets: Address.Address[]) => void) {
-    this.walletsListeners = this.walletsListeners.filter((x) => x !== cb)
-    if (this.walletsListeners.length === 0 && this.walletsDbListener) {
-      this.walletsDbListener()
-      this.walletsDbListener = undefined
-    }
+  public async hasWallet(address: Address.Address) {
+    return this.shared.modules.wallets.exists(address)
   }
 
-  private log(...args: any[]) {
-    if (this.verbose) {
-      console.log(...args)
-    }
-  }
-
-  private async createDevice() {
-    const e = await this.encryptedPksDb.generateAndStore()
-    const s = await this.encryptedPksDb.getEncryptedPkStore(e.address)
-
-    if (!s) {
-      throw new Error('Failed to create session')
-    }
-
-    this.log('Created new session:', s.address)
-    return new Signers.Pk.Pk(s)
-  }
-
-  async create(args: CreateWalletOptions) {
-    switch (args.kind) {
-      case 'passkey':
-        const passkeySigner = await Signers.Passkey.Passkey.create(this.extensions)
-
-        this.log('Created new passkey signer:', passkeySigner.address)
-
-        // Create the first session
-        const device = await this.createDevice()
-
-        // If the guard is defined, set threshold to 2, if not, set to 1
-        const threshold = this.defaultGuardTopology ? 2n : 1n
-
-        // Build the login tree
-        const loginTopology = buildCappedTree(1n, [passkeySigner.address])
-        const devicesTopology = buildCappedTree(1n, [device.address])
-        const guardTopology = buildCappedTreeFromTopology(1n, this.defaultGuardTopology)
-
-        // TODO: Add recovery module
-        // TODO: Add smart sessions module
-
-        // Create initial configuration
-        const initialConfiguration: Config.Config = {
-          checkpoint: 0n,
-          threshold,
-          topology: Config.flatLeavesToTopology(
-            [loginTopology, devicesTopology, guardTopology].filter((x) => x !== undefined) as Config.Leaf[],
-          ),
-        }
-
-        // Create wallet
-        const wallet = await CoreWallet.fromConfiguration(initialConfiguration, {
-          context: this.context,
-          stateProvider: this.stateProvider,
-          guest: this.guestModule,
-        })
-
-        this.log('Created new sequence wallet:', wallet.address)
-
-        // Sign witness using device signer
-        await device.witness(this.stateProvider, wallet.address)
-
-        // Sign witness using the passkey signer
-        await passkeySigner.witness(this.stateProvider, wallet.address)
-
-        // Save entry in the manager db
-        await this.managerDb.saveWallet({
-          wallet: wallet.address,
-          status: 'logged-in',
-          loginDate: new Date().toISOString(),
-          device: device.address,
-          loginType: 'passkey',
-          useGuard: args.useGuard || false,
-        })
-
-        return wallet.address
-      default:
-        throw new Error(`Unsupported wallet kind: ${args.kind}`)
-    }
+  public async requestTransaction(
+    from: Address.Address,
+    chainId: bigint,
+    txs: Db.TransactionRequest[],
+    options?: { skipDefineGas?: boolean; source?: string },
+  ) {
+    return this.shared.modules.transactions.request(from, chainId, txs, options)
   }
 }

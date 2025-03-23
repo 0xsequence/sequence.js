@@ -27,6 +27,7 @@
     "@0xsequence/sequence-primitives": "workspace:^",
     "idb": "^7.1.1",
     "jwt-decode": "^4.0.0",
-    "ox": "^0.6.7"
+    "ox": "^0.6.7",
+    "uuid": "^11.1.0"
   }
 }

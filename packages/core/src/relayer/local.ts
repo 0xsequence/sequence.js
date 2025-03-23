@@ -7,6 +7,8 @@ export interface GenericProvider {
 }
 
 export class LocalRelayer implements Relayer {
+  public readonly id = 'local'
+
   constructor(public readonly provider: GenericProvider) {}
 
   feeOptions(

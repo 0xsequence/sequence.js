@@ -27,6 +27,21 @@ export interface Reader {
     }
   }>
 
+  getWitnessFor(
+    wallet: Address.Address,
+    signer: Address.Address,
+  ): MaybePromise<
+    { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined
+  >
+
+  getWitnessForSapient(
+    wallet: Address.Address,
+    signer: Address.Address,
+    imageHash: Hex.Hex,
+  ): MaybePromise<
+    { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
+  >
+
   getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,

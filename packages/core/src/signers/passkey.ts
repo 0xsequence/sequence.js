@@ -62,9 +62,7 @@ export class Passkey implements SapientSigner, Witnessable {
     imageHash: Hex.Hex,
   ) {
     // In the witness we will find the public key, and may find the credential id
-    const wallets = await stateReader.getWalletsForSapient(extensions.passkeys, imageHash)
-    const witness = wallets[wallet]
-
+    const witness = await stateReader.getWitnessForSapient(wallet, extensions.passkeys, imageHash)
     if (!witness) {
       throw new Error('Witness for wallet not found')
     }
@@ -172,7 +170,7 @@ export class Passkey implements SapientSigner, Witnessable {
     }
   }
 
-  async witness(stateWriter: State.Writer, wallet: Address.Address): Promise<void> {
+  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
       Bytes.fromString(
         JSON.stringify({
@@ -181,6 +179,7 @@ export class Passkey implements SapientSigner, Witnessable {
           publicKey: this.publicKey,
           metadata: this.metadata,
           timestamp: Date.now(),
+          ...extra,
         } as WitnessMessage),
       ),
     )

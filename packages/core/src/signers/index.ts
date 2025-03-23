@@ -30,7 +30,7 @@ export interface SapientSigner {
 }
 
 export interface Witnessable {
-  witness: (stateWriter: State.Writer, wallet: Address.Address) => Promise<void>
+  witness: (stateWriter: State.Writer, wallet: Address.Address, extra?: Object) => Promise<void>
 }
 
 type MaybePromise<T> = T | Promise<T>
