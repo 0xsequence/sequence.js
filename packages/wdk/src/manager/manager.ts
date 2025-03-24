@@ -10,6 +10,7 @@ import { Transactions } from './transactions'
 import { Signatures, Signer } from './signatures'
 import { Kinds, Signers } from './signers'
 import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
+import { MnemonicHandler } from './handlers/mnemonic'
 
 export type Transaction = {
   to: Address.Address
@@ -111,6 +112,10 @@ export type Shared = {
 export class Manager {
   private readonly shared: Shared
 
+  private readonly mnemonicHandler: MnemonicHandler
+  private readonly devicesHandler: DevicesHandler
+  private readonly passkeysHandler: PasskeysHandler
+
   constructor(options?: ManagerOptions) {
     const ops = applyDefaults(options)
 
@@ -149,12 +154,18 @@ export class Manager {
       transactions: new Transactions(shared),
     }
 
-    shared.handlers.set(Kinds.LocalDevice, new DevicesHandler(modules.signatures, modules.devices))
+    this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
+    shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
 
-    shared.handlers.set(
-      Kinds.LoginPasskey,
-      new PasskeysHandler(modules.signatures, shared.sequence.extensions, shared.sequence.stateProvider),
+    this.passkeysHandler = new PasskeysHandler(
+      modules.signatures,
+      shared.sequence.extensions,
+      shared.sequence.stateProvider,
     )
+    shared.handlers.set(Kinds.LoginPasskey, this.passkeysHandler)
+
+    this.mnemonicHandler = new MnemonicHandler(modules.signatures)
+    shared.handlers.set(Kinds.LocalDevice, this.mnemonicHandler)
 
     shared.modules = modules
     this.shared = shared
@@ -183,5 +194,9 @@ export class Manager {
     options?: { skipDefineGas?: boolean; source?: string },
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
+  }
+
+  public async registerMnmemonicUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
+    return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
 }

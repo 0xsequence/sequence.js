@@ -12,6 +12,17 @@ export class MnemonicHandler implements Handler {
 
   constructor(private readonly signatures: Signatures) {}
 
+  public registerUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
+    this.onPromptMnemonic = onPromptMnemonic
+    return () => {
+      this.onPromptMnemonic = undefined
+    }
+  }
+
+  public unregisterUI() {
+    this.onPromptMnemonic = undefined
+  }
+
   public static toSigner(mnemonic: string): Signers.Pk.Pk | undefined {
     try {
       const pk = Mnemonic.toPrivateKey(mnemonic)

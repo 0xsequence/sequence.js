@@ -6,12 +6,11 @@ import { Shared } from './manager'
 import { MnemonicHandler } from './handlers/mnemonic'
 
 export type CommonSignupArgs = {
-  useGuard?: boolean
+  ignoreGuard?: boolean
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
   kind: 'passkey'
-  useGuard?: boolean
 }
 
 export type MnemonicSignupArgs = CommonSignupArgs & {
@@ -20,6 +19,16 @@ export type MnemonicSignupArgs = CommonSignupArgs & {
 }
 
 export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs
+
+export type LoginToWalletArgs = {
+  wallet: Address.Address
+}
+
+export type LoginArgs = LoginToWalletArgs
+
+export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
+  return 'wallet' in args
+}
 
 function buildCappedTree(members: Address.Address[]): Config.Topology {
   const loginMemberWeight = 1n
@@ -61,6 +70,59 @@ function buildCappedTreeFromTopology(weight: bigint, topology: Config.Topology):
     threshold: weight,
     tree: topology,
   }
+}
+
+function toConfig(
+  loginTopology: Config.Topology,
+  devicesTopology: Config.Topology,
+  modules: Config.Topology,
+  guardTopology?: Config.Topology,
+): Config.Config {
+  if (!guardTopology) {
+    return {
+      checkpoint: 0n,
+      threshold: 1n,
+      topology: [[loginTopology, devicesTopology], modules],
+    }
+  } else {
+    return {
+      checkpoint: 0n,
+      threshold: 2n,
+      topology: [[[loginTopology, devicesTopology], guardTopology], modules],
+    }
+  }
+}
+
+function fromConfig(config: Config.Config): {
+  loginTopology: Config.Topology
+  devicesTopology: Config.Topology
+  modules: Config.Topology
+  guardTopology?: Config.Topology
+} {
+  if (config.threshold === 1n) {
+    if (Config.isNode(config.topology) && Config.isNode(config.topology[0])) {
+      return {
+        loginTopology: config.topology[0][0],
+        devicesTopology: config.topology[0][1],
+        modules: config.topology[1],
+      }
+    } else {
+      throw new Error('unknown-config-format')
+    }
+  } else if (config.threshold === 2n) {
+    if (Config.isNode(config.topology) && Config.isNode(config.topology[0]) && Config.isNode(config.topology[0][0])) {
+      return {
+        loginTopology: config.topology[0][0][0],
+        devicesTopology: config.topology[0][0][1],
+        guardTopology: config.topology[0][1],
+        modules: config.topology[1],
+      }
+    } else {
+      throw new Error('unknown-config-format')
+    }
+  }
+
+  throw new Error('unknown-config-format')
 }
 
 export class Wallets {
@@ -107,9 +169,7 @@ export class Wallets {
     }
   }
 
-  private async prepareSignUp(
-    args: SignupArgs,
-  ): Promise<{
+  private async prepareSignUp(args: SignupArgs): Promise<{
     signer: (Signers.Signer | Signers.SapientSigner) & Signers.Witnessable
     extra: WitnessExtraSignerKind
   }> {
@@ -148,8 +208,9 @@ export class Wallets {
     // Create the first session
     const device = await this.shared.modules.devices.create()
 
-    // If the guard is defined, set threshold to 2, if not, set to 1
-    const threshold = this.shared.sequence.defaultGuardTopology ? 2n : 1n
+    if (!args.ignoreGuard && !this.shared.sequence.defaultGuardTopology) {
+      throw new Error('guard is required for signup')
+    }
 
     // Build the login tree
     const loginTopology = buildCappedTree([await loginSigner.signer.address])
@@ -158,15 +219,15 @@ export class Wallets {
 
     // TODO: Add recovery module
     // TODO: Add smart sessions module
+    // Placeholder
+    const modules = {
+      type: 'signer',
+      address: '0x0000000000000000000000000000000000000000',
+      weight: 0n,
+    } as Config.SignerLeaf
 
     // Create initial configuration
-    const initialConfiguration: Config.Config = {
-      checkpoint: 0n,
-      threshold,
-      topology: Config.flatLeavesToTopology(
-        [loginTopology, devicesTopology, guardTopology].filter((x) => x !== undefined) as Config.Leaf[],
-      ),
-    }
+    const initialConfiguration = toConfig(loginTopology, devicesTopology, modules, guardTopology)
 
     // Create wallet
     const wallet = await Wallet.fromConfiguration(initialConfiguration, {
@@ -192,9 +253,41 @@ export class Wallets {
       loginDate: new Date().toISOString(),
       device: device.address,
       loginType: 'passkey',
-      useGuard: args.useGuard || false,
+      useGuard: !args.ignoreGuard,
     })
 
     return wallet.address
+  }
+
+  async login(args: LoginArgs) {
+    if (isLoginToWalletArgs(args)) {
+      const wallet = new Wallet(args.wallet, {
+        context: this.shared.sequence.context,
+        stateProvider: this.shared.sequence.stateProvider,
+        guest: this.shared.sequence.guest,
+      })
+
+      const device = await this.shared.modules.devices.create()
+      const status = await wallet.getStatus()
+
+      const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
+
+      // Add device to devices topology
+      const prevDevices = Config.getSigners(devicesTopology)
+      if (prevDevices.sapientSigners.length > 0) {
+        throw new Error('found-sapient-signer-in-devices-topology')
+      }
+
+      if (!prevDevices.isComplete) {
+        throw new Error('devices-topology-incomplete')
+      }
+
+      const nextDevicesTopology = buildCappedTree([...prevDevices.signers, device.address])
+
+      const envelope = await wallet.prepareUpdate({
+        ...status.configuration,
+        topology: [[loginTopology, nextDevicesTopology], modules],
+      })
+    }
   }
 }
