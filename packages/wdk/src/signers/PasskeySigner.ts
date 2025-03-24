@@ -1,12 +1,12 @@
 import { Signers, State } from '@0xsequence/sequence-core'
-import * as Db from '../../dbs'
+import * as Db from '../dbs'
 import { Address, Bytes, Hex } from 'ox'
-import { Kinds } from '../signers'
-import { Signatures, SignerActionable, SignerUnavailable } from '../signatures'
+import { Kinds } from '../manager/signers'
+import { Signatures, SignerActionable, SignerUnavailable } from '../manager/signatures'
 import { Extensions } from '@0xsequence/sequence-primitives'
-import { Handler } from '.'
+import { Handler } from '../manager/handlers'
 
-export class PasskeysHandler implements Handler {
+export class PasskeySigner implements Handler {
   kind = Kinds.LoginPasskey
 
   constructor(
@@ -15,9 +15,9 @@ export class PasskeysHandler implements Handler {
     private readonly stateReader: State.Reader,
   ) {}
 
-  // uiStatus(): 'non-required' {
-  //   return 'non-required'
-  // }
+  uiStatus(): 'non-required' {
+    return 'non-required'
+  }
 
   private async loadPasskey(
     wallet: Address.Address,

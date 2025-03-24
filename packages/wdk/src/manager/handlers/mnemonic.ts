@@ -40,7 +40,7 @@ export class MnemonicHandler implements Handler {
       address,
       handler: this,
       status: 'ready',
-      sign: async () => {
+      handle: async () => {
         const { mnemonic, error } = await onPromptMnemonic()
         const signer = MnemonicHandler.toSigner(mnemonic)
         if (!signer) {

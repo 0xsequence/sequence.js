@@ -25,14 +25,14 @@ export type SignerUnavailable = SignerBase & {
 export type SignerReady = SignerBase & {
   handler: Handler
   status: 'ready'
-  sign: () => Promise<boolean>
+  handle: () => Promise<boolean>
 }
 
 export type SignerActionable = SignerBase & {
   handler: Handler
   status: 'actionable'
   message: string // TODO: Localization?
-  sign: () => Promise<boolean>
+  handle: () => Promise<boolean>
 }
 
 export type Signer = SignerSigned | SignerUnavailable | SignerReady | SignerActionable

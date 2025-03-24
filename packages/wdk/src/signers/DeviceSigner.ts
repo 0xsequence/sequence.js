@@ -1,11 +1,11 @@
-import * as Db from '../../dbs'
-import { Kinds } from '../signers'
-import { Signatures, SignerReady, SignerUnavailable } from '../signatures'
+import * as Db from '../dbs'
+import { Kinds } from '../manager/signers'
+import { Signatures, SignerReady, SignerUnavailable } from '../manager/signatures'
 import { Address, Bytes } from 'ox'
-import { Devices } from '../devices'
-import { Handler } from '.'
+import { Devices } from '../manager/devices'
+import { Handler } from '../manager/handlers'
 
-export class DevicesHandler implements Handler {
+export class DeviceSignerHandler implements Handler {
   kind = Kinds.LocalDevice
 
   constructor(
@@ -13,9 +13,9 @@ export class DevicesHandler implements Handler {
     private readonly devices: Devices,
   ) {}
 
-  // uiStatus(): 'non-required' {
-  //   return 'non-required'
-  // }
+  uiStatus(): 'non-required' {
+    return 'non-required'
+  }
 
   async status(
     address: Address.Address,
