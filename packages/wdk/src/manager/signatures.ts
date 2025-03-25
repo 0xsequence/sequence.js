@@ -40,6 +40,8 @@ export type Signer = SignerSigned | SignerUnavailable | SignerReady | SignerActi
 export type BaseSignatureRequest = Db.SignatureRequest
 
 export type SignatureRequest = BaseSignatureRequest & {
+  weight: bigint
+  threshold: bigint
   signers: Signer[]
 }
 
@@ -128,6 +130,7 @@ export class Signatures {
 
     return {
       ...request,
+      ...Envelope.weightOf(request.envelope),
       signers: statuses,
     }
   }
@@ -177,22 +180,14 @@ export class Signatures {
   }
 
   async complete(requestId: string) {
-    const request = await this.get(requestId)
-    if (request.status !== 'pending') {
-      throw new Error('request-not-pending')
-    }
-
-    return this.shared.databases.signatures.set({
-      ...request,
-      status: 'completed',
-    })
+    await this.shared.databases.signatures.del(requestId)
   }
 
-  async request(
-    envelope: Envelope.Envelope<Payload.Payload>,
+  async request<A extends Db.Action>(
+    envelope: Envelope.Envelope<Db.ActionToPayload[A]>,
+    action: A,
     options: {
       origin?: string
-      reason?: string
     },
   ): Promise<string> {
     const id = uuidv7()
@@ -202,8 +197,7 @@ export class Signatures {
       wallet: envelope.wallet,
       envelope: Envelope.toSigned(envelope),
       origin: options.origin ?? 'unknown',
-      reason: options.reason ?? 'unknown',
-      status: 'pending',
+      action,
       createdAt: new Date().toISOString(),
     })
 

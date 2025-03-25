@@ -162,10 +162,9 @@ export function findSignerLeaf(
 
 export function getWeight(
   topology: RawTopology | RawConfig,
-  canSign?: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
+  canSign: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
 ): { weight: bigint; maxWeight: bigint } {
   topology = isRawConfig(topology) ? topology.topology : topology
-  canSign = canSign || ((_signer: SignerLeaf | SapientSignerLeaf) => true)
 
   if (isSignedSignerLeaf(topology)) {
     return { weight: topology.weight, maxWeight: topology.weight }
@@ -182,7 +181,7 @@ export function getWeight(
   } else if (isAnyAddressSubdigestLeaf(topology)) {
     return { weight: 0n, maxWeight: 0n }
   } else if (isRawNestedLeaf(topology)) {
-    const { weight, maxWeight } = getWeight(topology.tree)
+    const { weight, maxWeight } = getWeight(topology.tree, canSign)
     return {
       weight: weight >= topology.threshold ? topology.weight : 0n,
       maxWeight: maxWeight >= topology.threshold ? topology.weight : 0n,

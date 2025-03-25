@@ -146,9 +146,8 @@ export class Transactions {
     })
 
     // Pass to the signatures manager
-    return this.shared.modules.signatures.request(tx.envelope, {
+    return this.shared.modules.signatures.request(tx.envelope, 'send-transaction', {
       origin: tx.source,
-      reason: 'transaction',
     })
   }
 }

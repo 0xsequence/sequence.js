@@ -6,7 +6,7 @@ import { Shared } from './manager'
 import { MnemonicHandler } from './handlers/mnemonic'
 
 export type CommonSignupArgs = {
-  ignoreGuard?: boolean
+  noGuard?: boolean
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
@@ -197,7 +197,7 @@ export class Wallets {
     // Create the first session
     const device = await this.shared.modules.devices.create()
 
-    if (!args.ignoreGuard && !this.shared.sequence.defaultGuardTopology) {
+    if (!args.noGuard && !this.shared.sequence.defaultGuardTopology) {
       throw new Error('guard is required for signup')
     }
 
@@ -240,7 +240,7 @@ export class Wallets {
       loginDate: new Date().toISOString(),
       device: device.address,
       loginType: 'passkey',
-      useGuard: !args.ignoreGuard,
+      useGuard: !args.noGuard,
     })
 
     return wallet.address
@@ -275,9 +275,8 @@ export class Wallets {
       ])
       const envelope = await wallet.prepareUpdate(toConfig(loginTopology, nextDevicesTopology, modules, guardTopology))
 
-      const requestId = await this.shared.modules.signatures.request(envelope, {
-        origin: 'login',
-        reason: 'login',
+      const requestId = await this.shared.modules.signatures.request(envelope, 'login', {
+        origin: 'wallet-webapp',
       })
 
       await this.shared.modules.devices.witness(device.address, wallet.address)
@@ -368,11 +367,35 @@ export class Wallets {
 
     const envelope = await walletObj.prepareUpdate(toConfig(loginTopology, nextDevicesTopology, modules, guardTopology))
 
-    const requestId = await this.shared.modules.signatures.request(envelope, {
-      origin: 'logout',
-      reason: 'logout',
+    const requestId = await this.shared.modules.signatures.request(envelope, 'logout', {
+      origin: 'wallet-webapp',
     })
 
     return requestId as any
+  }
+
+  async completeLogout(requestId: string, options?: { skipValidateSave?: boolean }) {
+    const request = await this.shared.modules.signatures.get(requestId)
+    if (!Payload.isConfigUpdate(request.envelope.payload)) {
+      throw new Error('invalid-request-payload')
+    }
+
+    const walletEntry = await this.shared.databases.manager.get(request.wallet)
+    if (!walletEntry) {
+      throw new Error('wallet-not-found')
+    }
+
+    const wallet = new Wallet(request.wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>, {
+      validateSave: !options?.skipValidateSave,
+    })
+
+    await this.shared.modules.signatures.complete(requestId)
+    await this.shared.databases.manager.del(request.wallet)
   }
 }

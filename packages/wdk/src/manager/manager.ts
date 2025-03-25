@@ -179,6 +179,10 @@ export class Manager {
     return this.shared.modules.wallets.logout(wallet, options)
   }
 
+  public async completeLogout(requestId: string, options?: { skipValidateSave?: boolean }) {
+    return this.shared.modules.wallets.completeLogout(requestId, options)
+  }
+
   public async listWallets() {
     return this.shared.modules.wallets.list()
   }
@@ -221,7 +225,7 @@ export class Manager {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
   }
 
-  public async registerMnmemonicUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
+  public async registerMnemonicUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
 }

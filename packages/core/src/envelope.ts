@@ -46,10 +46,10 @@ export function signatureForLeaf(envelope: Signed<Payload.Payload>, leaf: Config
 }
 
 export function weightOf(envelope: Signed<Payload.Payload>): { weight: bigint; threshold: bigint } {
-  const { maxWeight } = Config.getWeight(envelope.configuration, (s) => !!signatureForLeaf(envelope, s))
+  const { weight } = Config.getWeight(envelope.configuration, (s) => !!signatureForLeaf(envelope, s))
 
   return {
-    weight: maxWeight,
+    weight: weight,
     threshold: envelope.configuration.threshold,
   }
 }

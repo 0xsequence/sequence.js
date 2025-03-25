@@ -3,14 +3,28 @@ import { Payload } from '@0xsequence/sequence-primitives'
 import { Envelope } from '@0xsequence/sequence-core'
 import { Generic } from './generic'
 
-export type SignatureRequest = {
+export type ActionToPayload = {
+  [Actions.Logout]: Payload.ConfigUpdate
+  [Actions.Login]: Payload.ConfigUpdate
+  [Actions.SendTransaction]: Payload.Calls
+}
+
+export const Actions = {
+  Logout: 'logout',
+  Login: 'login',
+  SendTransaction: 'send-transaction',
+} as const
+
+export type Action = (typeof Actions)[keyof typeof Actions]
+
+export type SignatureRequest<A extends Action = Action> = {
   id: string
   wallet: Address.Address
-  envelope: Envelope.Signed<Payload.Payload>
   origin: string
-  reason: string
   createdAt: string
-  status: 'pending' | 'completed' | 'rejected'
+
+  action: A
+  envelope: Envelope.Signed<ActionToPayload[A]>
 }
 
 const TABLE_NAME = 'envelopes'

@@ -85,7 +85,10 @@ export class Wallet {
     }
   }
 
-  async submitUpdate(envelope: Envelope.Signed<Payload.ConfigUpdate>): Promise<void> {
+  async submitUpdate(
+    envelope: Envelope.Signed<Payload.ConfigUpdate>,
+    options?: { validateSave?: boolean },
+  ): Promise<void> {
     const [status, newConfig] = await Promise.all([
       this.getStatus(),
       this.stateProvider.getConfiguration(envelope.payload.imageHash),
@@ -103,6 +106,13 @@ export class Wallet {
 
     const signature = Envelope.encodeSignature(updatedEnvelope)
     await this.stateProvider.saveUpdate(this.address, newConfig, signature)
+
+    if (options?.validateSave) {
+      const status = await this.getStatus()
+      if (Hex.from(Config.hashConfiguration(status.configuration)) !== envelope.payload.imageHash) {
+        throw new Error('configuration not saved')
+      }
+    }
   }
 
   async getStatus(provider?: Provider.Provider): Promise<WalletStatus> {

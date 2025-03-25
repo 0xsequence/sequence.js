@@ -9,6 +9,27 @@ export type DbUpdateListener<T, K extends keyof T> = (
 
 export type Migration = (db: IDBDatabase, transaction: IDBTransaction, event: IDBVersionChangeEvent) => void
 
+function deepEqual(a: any, b: any): boolean {
+  if (a === b) {
+    return true
+  }
+
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') {
+    return false
+  }
+
+  const keysA = Object.keys(a)
+  const keysB = Object.keys(b)
+  if (keysA.length !== keysB.length) return false
+
+  for (const key of keysA) {
+    if (!keysB.includes(key)) return false
+    if (!deepEqual(a[key], b[key])) return false
+  }
+
+  return true
+}
+
 export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
   private _db: IDBDatabase | null = null
   private listeners: DbUpdateListener<T, K>[] = []
@@ -105,7 +126,7 @@ export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
           let updateType: DbUpdateType | null = null
           if (!oldItem) {
             updateType = 'added'
-          } else if (JSON.stringify(oldItem) !== JSON.stringify(item)) {
+          } else if (!deepEqual(oldItem, item)) {
             updateType = 'updated'
           }
           if (updateType) {

@@ -383,8 +383,6 @@ export class Provider implements ProviderInterface {
         }
       }
     }
-
-    throw new Error('Unsupported signature type')
   }
 
   getTree(rootHash: Hex.Hex): GenericTree.Tree | Promise<GenericTree.Tree | undefined> | undefined {
