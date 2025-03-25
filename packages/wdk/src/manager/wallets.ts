@@ -204,7 +204,9 @@ export class Wallets {
     // Build the login tree
     const loginTopology = buildCappedTree([await loginSigner.signer.address])
     const devicesTopology = buildCappedTree([device.address])
-    const guardTopology = buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
+    const guardTopology = args.noGuard
+      ? undefined
+      : buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
 
     // TODO: Add recovery module
     // TODO: Add smart sessions module
