@@ -5,7 +5,7 @@ import { SignerActionable, SignerReady, SignerUnavailable } from '../signatures'
 export interface Handler {
   kind: string
 
-  // uiStatus(): 'non-required' | 'non-registered' | 'registered'
+  onStatusChange(cb: () => void): () => void
 
   status(
     address: Address.Address,

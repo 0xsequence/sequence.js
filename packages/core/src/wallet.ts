@@ -85,9 +85,9 @@ export class Wallet {
     }
   }
 
-  async submitUpdate(envelope: Envelope.Signed<Payload.ConfigUpdate>, provider: Provider.Provider): Promise<void> {
+  async submitUpdate(envelope: Envelope.Signed<Payload.ConfigUpdate>): Promise<void> {
     const [status, newConfig] = await Promise.all([
-      this.getStatus(provider),
+      this.getStatus(),
       this.stateProvider.getConfiguration(envelope.payload.imageHash),
     ])
 

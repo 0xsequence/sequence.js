@@ -9,7 +9,8 @@ export type SignatureRequest = {
   envelope: Envelope.Signed<Payload.Payload>
   origin: string
   reason: string
-  status: 'pending' | 'done' | 'rejected'
+  createdAt: string
+  status: 'pending' | 'completed' | 'rejected'
 }
 
 const TABLE_NAME = 'envelopes'

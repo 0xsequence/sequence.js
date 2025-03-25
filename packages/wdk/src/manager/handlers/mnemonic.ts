@@ -6,7 +6,7 @@ import { Handler } from '.'
 import { Signers } from '@0xsequence/sequence-core'
 
 export class MnemonicHandler implements Handler {
-  kind = Kinds.LocalDevice
+  kind = Kinds.LoginMnemonic
 
   private onPromptMnemonic: undefined | (() => Promise<{ mnemonic: string; error: (e: string) => void }>)
 
@@ -21,6 +21,10 @@ export class MnemonicHandler implements Handler {
 
   public unregisterUI() {
     this.onPromptMnemonic = undefined
+  }
+
+  onStatusChange(_cb: () => void): () => void {
+    return () => {}
   }
 
   public static toSigner(mnemonic: string): Signers.Pk.Pk | undefined {

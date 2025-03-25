@@ -2,10 +2,10 @@ import { Config, Payload, Signature } from '@0xsequence/sequence-primitives'
 import { Address, Bytes } from 'ox'
 
 export type Envelope<T extends Payload.Payload> = {
-  wallet: Address.Address
-  chainId: bigint
-  configuration: Config.Config
-  payload: T
+  readonly wallet: Address.Address
+  readonly chainId: bigint
+  readonly configuration: Config.Config
+  readonly payload: T
 }
 
 export type Signature = {
@@ -52,6 +52,11 @@ export function weightOf(envelope: Signed<Payload.Payload>): { weight: bigint; t
     weight: maxWeight,
     threshold: envelope.configuration.threshold,
   }
+}
+
+export function reachedThreshold(envelope: Signed<Payload.Payload>): boolean {
+  const { weight, threshold } = weightOf(envelope)
+  return weight >= threshold
 }
 
 export function encodeSignature(envelope: Signed<Payload.Payload>): Signature.RawSignature {

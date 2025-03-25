@@ -37,7 +37,9 @@ export type SignerActionable = SignerBase & {
 
 export type Signer = SignerSigned | SignerUnavailable | SignerReady | SignerActionable
 
-export type SignatureRequest = Db.SignatureRequest & {
+export type BaseSignatureRequest = Db.SignatureRequest
+
+export type SignatureRequest = BaseSignatureRequest & {
   signers: Signer[]
 }
 
@@ -48,39 +50,7 @@ export class Signatures {
     return this.shared.databases.signatures.list()
   }
 
-  async request(
-    envelope: Envelope.Envelope<Payload.Payload>,
-    options: {
-      origin?: string
-      reason?: string
-    },
-  ): Promise<string> {
-    const id = uuidv7()
-
-    await this.shared.databases.signatures.set({
-      id,
-      wallet: envelope.wallet,
-      envelope: Envelope.toSigned(envelope),
-      origin: options.origin ?? 'unknown',
-      reason: options.reason ?? 'unknown',
-      status: 'pending',
-    })
-
-    return id
-  }
-
-  async addSignature(requestId: string, signature: Envelope.SapientSignature | Envelope.Signature) {
-    const request = await this.shared.databases.signatures.get(requestId)
-    if (!request) {
-      throw new Error(`Request not found for ${requestId}`)
-    }
-
-    Envelope.addSignature(request.envelope, signature)
-
-    await this.shared.databases.signatures.set(request)
-  }
-
-  async sign(requestId: string, onSigners: (signers: Signer[]) => void): Promise<boolean> {
+  async get(requestId: string): Promise<SignatureRequest> {
     const request = await this.shared.databases.signatures.get(requestId)
     if (!request) {
       throw new Error(`Request not found for ${requestId}`)
@@ -125,7 +95,16 @@ export class Signatures {
           return sig.address === sak.address
         })
 
-        const handler = sak.kind && this.shared.handlers.get(sak.kind)
+        if (!sak.kind) {
+          return {
+            ...base,
+            handler: undefined,
+            reason: 'unknown-signer-kind',
+            status: 'unavailable',
+          } as SignerUnavailable
+        }
+
+        const handler = this.shared.handlers.get(sak.kind)
         if (signed) {
           return {
             ...base,
@@ -138,7 +117,7 @@ export class Signatures {
           return {
             ...base,
             handler: undefined,
-            reason: 'unknown-kind',
+            reason: 'no-handler',
             status: 'unavailable',
           } as SignerUnavailable
         }
@@ -147,8 +126,98 @@ export class Signatures {
       }),
     )
 
-    onSigners(statuses)
+    return {
+      ...request,
+      signers: statuses,
+    }
+  }
 
-    return false
+  async onSignatureRequestUpdate(
+    requestId: string,
+    cb: (requests: SignatureRequest) => void,
+    onError?: (error: Error) => void,
+    trigger?: boolean,
+  ): Promise<() => void> {
+    const undoDbListener = this.shared.databases.signatures.addListener(() => {
+      this.get(requestId)
+        .then((request) => cb(request))
+        .catch((error) => onError?.(error))
+    })
+
+    const undoHandlerListeners = Object.values(this.shared.handlers).map((handler) =>
+      handler.onStatusChange(() => {
+        this.get(requestId)
+          .then((request) => cb(request))
+          .catch((error) => onError?.(error))
+      }),
+    )
+
+    if (trigger) {
+      this.get(requestId)
+        .then((request) => cb(request))
+        .catch((error) => onError?.(error))
+    }
+
+    return () => {
+      undoDbListener()
+      undoHandlerListeners.forEach((undoFn) => undoFn())
+    }
+  }
+
+  onSignatureRequestsUpdate(cb: (requests: BaseSignatureRequest[]) => void, trigger?: boolean) {
+    const undo = this.shared.databases.signatures.addListener(() => {
+      this.list().then((l) => cb(l))
+    })
+
+    if (trigger) {
+      this.list().then((l) => cb(l))
+    }
+
+    return undo
+  }
+
+  async complete(requestId: string) {
+    const request = await this.get(requestId)
+    if (request.status !== 'pending') {
+      throw new Error('request-not-pending')
+    }
+
+    return this.shared.databases.signatures.set({
+      ...request,
+      status: 'completed',
+    })
+  }
+
+  async request(
+    envelope: Envelope.Envelope<Payload.Payload>,
+    options: {
+      origin?: string
+      reason?: string
+    },
+  ): Promise<string> {
+    const id = uuidv7()
+
+    await this.shared.databases.signatures.set({
+      id,
+      wallet: envelope.wallet,
+      envelope: Envelope.toSigned(envelope),
+      origin: options.origin ?? 'unknown',
+      reason: options.reason ?? 'unknown',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    })
+
+    return id
+  }
+
+  async addSignature(requestId: string, signature: Envelope.SapientSignature | Envelope.Signature) {
+    const request = await this.shared.databases.signatures.get(requestId)
+    if (!request) {
+      throw new Error(`Request not found for ${requestId}`)
+    }
+
+    Envelope.addSignature(request.envelope, signature)
+
+    await this.shared.databases.signatures.set(request)
   }
 }

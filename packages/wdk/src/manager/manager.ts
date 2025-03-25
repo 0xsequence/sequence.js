@@ -7,7 +7,7 @@ import { Logger } from './logger'
 import { Devices } from './devices'
 import { SignupArgs, Wallets } from './wallets'
 import { Transactions } from './transactions'
-import { Signatures, Signer } from './signatures'
+import { BaseSignatureRequest, SignatureRequest, Signatures } from './signatures'
 import { Kinds, Signers } from './signers'
 import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
 import { MnemonicHandler } from './handlers/mnemonic'
@@ -165,7 +165,7 @@ export class Manager {
     shared.handlers.set(Kinds.LoginPasskey, this.passkeysHandler)
 
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
-    shared.handlers.set(Kinds.LocalDevice, this.mnemonicHandler)
+    shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
 
     shared.modules = modules
     this.shared = shared
@@ -173,6 +173,10 @@ export class Manager {
 
   public async signUp(options: SignupArgs) {
     return this.shared.modules.wallets.signUp(options)
+  }
+
+  public async logout(wallet: Address.Address, options?: { skipRemoveDevice?: boolean }) {
+    return this.shared.modules.wallets.logout(wallet, options)
   }
 
   public async listWallets() {
@@ -185,6 +189,27 @@ export class Manager {
 
   public onWalletsUpdate(cb: (wallets: Address.Address[]) => void, trigger?: boolean) {
     return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
+  }
+
+  public async listSignatureRequests(): Promise<BaseSignatureRequest[]> {
+    return this.shared.modules.signatures.list()
+  }
+
+  public async getSignatureRequest(requestId: string): Promise<BaseSignatureRequest> {
+    return this.shared.modules.signatures.get(requestId)
+  }
+
+  public onSignatureRequestsUpdate(cb: (requests: BaseSignatureRequest[]) => void, trigger?: boolean) {
+    return this.shared.modules.signatures.onSignatureRequestsUpdate(cb, trigger)
+  }
+
+  public async onSignatureRequestUpdate(
+    requestId: string,
+    cb: (requests: SignatureRequest) => void,
+    onError?: (error: Error) => void,
+    trigger?: boolean,
+  ) {
+    return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
 
   public async requestTransaction(

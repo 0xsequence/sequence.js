@@ -13,9 +13,9 @@ export class DevicesHandler implements Handler {
     private readonly devices: Devices,
   ) {}
 
-  // uiStatus(): 'non-required' {
-  //   return 'non-required'
-  // }
+  onStatusChange(cb: () => void): () => void {
+    return () => {}
+  }
 
   async status(
     address: Address.Address,

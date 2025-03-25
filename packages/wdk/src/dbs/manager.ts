@@ -3,7 +3,7 @@ import { Generic } from './generic'
 
 export interface WalletRow {
   wallet: Address.Address
-  status: string
+  status: 'ready' | 'logging-in'
   loginDate: string
   device: Address.Address
   loginType: string

@@ -1,6 +1,6 @@
 import { Address, Hex, Mnemonic } from 'ox'
-import { Signers, Wallet } from '@0xsequence/sequence-core'
-import { Config } from '@0xsequence/sequence-primitives'
+import { Envelope, Signers, Wallet } from '@0xsequence/sequence-core'
+import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Shared } from './manager'
 import { MnemonicHandler } from './handlers/mnemonic'
@@ -34,7 +34,13 @@ function buildCappedTree(members: Address.Address[]): Config.Topology {
   const loginMemberWeight = 1n
 
   if (members.length === 0) {
-    throw new Error('Cannot build login tree with no members')
+    // We need to maintain the general structure of the tree, so we can't have an empty node here
+    // instead, we add a dummy signer with weight 0
+    return {
+      type: 'signer',
+      address: '0x0000000000000000000000000000000000000000',
+      weight: 0n,
+    } as Config.SignerLeaf
   }
 
   if (members.length === 1) {
@@ -126,9 +132,6 @@ function fromConfig(config: Config.Config): {
 }
 
 export class Wallets {
-  private walletsDbListener: (() => void) | undefined
-  private walletsListeners: ((wallets: Address.Address[]) => void)[] = []
-
   constructor(private readonly shared: Shared) {}
 
   public async exists(wallet: Address.Address): Promise<boolean> {
@@ -140,15 +143,11 @@ export class Wallets {
   }
 
   public onWalletsUpdate(cb: (wallets: Address.Address[]) => void, trigger?: boolean) {
-    if (!this.walletsDbListener) {
-      this.walletsDbListener = this.shared.databases.manager.addListener(() => {
-        this.list().then((wallets) => {
-          this.walletsListeners.forEach((cb) => cb(wallets))
-        })
+    const undo = this.shared.databases.manager.addListener((wallets) => {
+      this.list().then((wallets) => {
+        cb(wallets)
       })
-    }
-
-    this.walletsListeners.push(cb)
+    })
 
     if (trigger) {
       this.list().then((wallets) => {
@@ -156,17 +155,7 @@ export class Wallets {
       })
     }
 
-    return () => {
-      this.removeOnWalletsUpdate(cb)
-    }
-  }
-
-  public removeOnWalletsUpdate(cb: (wallets: Address.Address[]) => void) {
-    this.walletsListeners = this.walletsListeners.filter((x) => x !== cb)
-    if (this.walletsListeners.length === 0 && this.walletsDbListener) {
-      this.walletsDbListener()
-      this.walletsDbListener = undefined
-    }
+    return undo
   }
 
   private async prepareSignUp(args: SignupArgs): Promise<{
@@ -239,17 +228,15 @@ export class Wallets {
     this.shared.modules.logger.log('Created new sequence wallet:', wallet.address)
 
     // Sign witness using device signer
-    await device.witness(this.shared.sequence.stateProvider, wallet.address)
+    await this.shared.modules.devices.witness(device.address, wallet.address)
 
     // Sign witness using the passkey signer
-    await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, {
-      signerKind: Kinds.LoginPasskey,
-    } as WitnessExtraSignerKind)
+    await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, loginSigner.extra)
 
     // Save entry in the manager db
     await this.shared.databases.manager.set({
       wallet: wallet.address,
-      status: 'logged-in',
+      status: 'ready',
       loginDate: new Date().toISOString(),
       device: device.address,
       loginType: 'passkey',
@@ -282,12 +269,110 @@ export class Wallets {
         throw new Error('devices-topology-incomplete')
       }
 
-      const nextDevicesTopology = buildCappedTree([...prevDevices.signers, device.address])
+      const nextDevicesTopology = buildCappedTree([
+        ...prevDevices.signers.filter((x) => x !== '0x0000000000000000000000000000000000000000'),
+        device.address,
+      ])
+      const envelope = await wallet.prepareUpdate(toConfig(loginTopology, nextDevicesTopology, modules, guardTopology))
 
-      const envelope = await wallet.prepareUpdate({
-        ...status.configuration,
-        topology: [[loginTopology, nextDevicesTopology], modules],
+      const requestId = await this.shared.modules.signatures.request(envelope, {
+        origin: 'login',
+        reason: 'login',
       })
+
+      await this.shared.modules.devices.witness(device.address, wallet.address)
+
+      await this.shared.databases.manager.set({
+        wallet: wallet.address,
+        status: 'logging-in',
+        loginDate: new Date().toISOString(),
+        device: device.address,
+        loginType: 'passkey',
+        useGuard: guardTopology !== undefined,
+      })
+
+      return requestId
     }
+  }
+
+  async completeLogin(requestId: string) {
+    const request = await this.shared.modules.signatures.get(requestId)
+
+    const envelope = request.envelope
+    if (!Payload.isConfigUpdate(envelope.payload)) {
+      throw new Error('invalid-request-payload')
+    }
+
+    if (!Envelope.reachedThreshold(envelope)) {
+      throw new Error('insufficient-weight')
+    }
+
+    const walletEntry = await this.shared.databases.manager.get(request.wallet)
+    if (!walletEntry) {
+      throw new Error('login-for-wallet-not-found')
+    }
+
+    const wallet = new Wallet(request.wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    await wallet.submitUpdate(envelope as Envelope.Signed<Payload.ConfigUpdate>)
+    await this.shared.modules.signatures.complete(requestId)
+
+    // Save entry in the manager db
+    await this.shared.databases.manager.set({
+      ...walletEntry,
+      status: 'ready',
+      loginDate: new Date().toISOString(),
+    })
+  }
+
+  async logout<T extends { skipRemoveDevice?: boolean } | undefined = undefined>(
+    wallet: Address.Address,
+    options?: T,
+  ): Promise<T extends { skipRemoveDevice: true } ? undefined : string> {
+    const walletEntry = await this.shared.databases.manager.get(wallet)
+    if (!walletEntry) {
+      throw new Error('wallet-not-found')
+    }
+
+    if (options?.skipRemoveDevice) {
+      await Promise.all([
+        this.shared.databases.manager.del(wallet),
+        this.shared.modules.devices.remove(walletEntry.device),
+      ])
+      return undefined as any
+    }
+
+    const device = await this.shared.modules.devices.get(walletEntry.device)
+    if (!device) {
+      throw new Error('device-not-found')
+    }
+
+    const walletObj = new Wallet(wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const status = await walletObj.getStatus()
+    const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
+
+    const nextDevicesTopology = buildCappedTree(
+      Config.getSigners(devicesTopology).signers.filter(
+        (x) => x !== device.address && x !== '0x0000000000000000000000000000000000000000',
+      ),
+    )
+
+    const envelope = await walletObj.prepareUpdate(toConfig(loginTopology, nextDevicesTopology, modules, guardTopology))
+
+    const requestId = await this.shared.modules.signatures.request(envelope, {
+      origin: 'logout',
+      reason: 'logout',
+    })
+
+    return requestId as any
   }
 }

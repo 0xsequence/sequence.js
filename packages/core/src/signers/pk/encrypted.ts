@@ -116,6 +116,13 @@ export class EncryptedPksDb {
     const allEntries = await this.getAllData<EncryptedData>()
     return allEntries.map((entry) => entry.address)
   }
+
+  async remove(address: Address.Address) {
+    const dbKey = `pk_${address}`
+    await this.putData(dbKey, undefined)
+    const keyPointer = this.localStorageKeyPrefix + address
+    window.localStorage.removeItem(keyPointer)
+  }
 }
 
 export class EncryptedPkStore implements PkStore {

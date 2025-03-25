@@ -46,4 +46,8 @@ export class Devices {
       signerKind: Kinds.LocalDevice,
     } as WitnessExtraSignerKind)
   }
+
+  async remove(address: Address.Address) {
+    await this.shared.databases.encryptedPks.remove(address)
+  }
 }
