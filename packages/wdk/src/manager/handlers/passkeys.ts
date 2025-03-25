@@ -19,17 +19,9 @@ export class PasskeysHandler implements Handler {
     return () => {}
   }
 
-  private async loadPasskey(
-    wallet: Address.Address,
-    imageHash: Bytes.Bytes,
-  ): Promise<Signers.Passkey.Passkey | undefined> {
+  private async loadPasskey(wallet: Address.Address, imageHash: Hex.Hex): Promise<Signers.Passkey.Passkey | undefined> {
     try {
-      return await Signers.Passkey.Passkey.loadFromWitness(
-        this.stateReader,
-        this.extensions,
-        wallet,
-        Hex.from(imageHash),
-      )
+      return await Signers.Passkey.Passkey.loadFromWitness(this.stateReader, this.extensions, wallet, imageHash)
     } catch (e) {
       console.warn('Failed to load passkey:', e)
       return undefined
@@ -38,7 +30,7 @@ export class PasskeysHandler implements Handler {
 
   async status(
     address: Address.Address,
-    imageHash: Bytes.Bytes | undefined,
+    imageHash: Hex.Hex | undefined,
     request: Db.SignatureRequest,
   ): Promise<SignerActionable | SignerUnavailable> {
     const base = { address, imageHash, handler: this }
@@ -74,7 +66,7 @@ export class PasskeysHandler implements Handler {
           request.envelope.wallet,
           request.envelope.chainId,
           request.envelope.payload,
-          Hex.from(imageHash),
+          imageHash,
         )
         await this.signatures.addSignature(request.id, {
           address,

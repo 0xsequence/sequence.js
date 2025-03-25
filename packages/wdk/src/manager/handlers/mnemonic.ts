@@ -1,9 +1,9 @@
-import * as Db from '../../dbs'
-import { Kinds } from '../signers'
-import { Signatures, Signer, SignerReady, SignerUnavailable } from '../signatures'
-import { Address, Bytes, Hex, Mnemonic } from 'ox'
-import { Handler } from '.'
 import { Signers } from '@0xsequence/sequence-core'
+import { Address, Hex, Mnemonic } from 'ox'
+import { Handler } from '.'
+import * as Db from '../../dbs'
+import { Signatures, SignerReady, SignerUnavailable } from '../signatures'
+import { Kinds } from '../signers'
 
 export class MnemonicHandler implements Handler {
   kind = Kinds.LoginMnemonic
@@ -38,7 +38,7 @@ export class MnemonicHandler implements Handler {
 
   async status(
     address: Address.Address,
-    _imageHash: Bytes.Bytes | undefined,
+    _imageHash: Hex.Hex | undefined,
     request: Db.SignatureRequest,
   ): Promise<SignerUnavailable | SignerReady> {
     const onPromptMnemonic = this.onPromptMnemonic

@@ -1,5 +1,5 @@
 import { Config, Payload, Signature } from '@0xsequence/sequence-primitives'
-import { Address, Bytes } from 'ox'
+import { Address, Hex } from 'ox'
 
 export type Envelope<T extends Payload.Payload> = {
   readonly wallet: Address.Address
@@ -15,7 +15,7 @@ export type Signature = {
 
 // Address not included as it is included in the signature
 export type SapientSignature = {
-  imageHash: Bytes.Bytes
+  imageHash: Hex.Hex
   signature: Signature.SignatureOfSapientSignerLeaf
 }
 
