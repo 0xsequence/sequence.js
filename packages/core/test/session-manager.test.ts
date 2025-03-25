@@ -98,7 +98,7 @@ describe('SessionManager', () => {
     const randomBlacklistAddress = randomAddress()
     topology = SessionConfig.addToImplicitBlacklist(topology, randomBlacklistAddress)
 
-    const imageHash = Hex.fromBytes(GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology)))
+    const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
 
     // Save the topology to storage
     await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))

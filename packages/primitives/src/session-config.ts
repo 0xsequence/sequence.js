@@ -1,4 +1,4 @@
-import { Address, Bytes, Hash } from 'ox'
+import { Address, Bytes, Hash, Hex } from 'ox'
 import * as GenericTree from './generic-tree'
 import {
   decodeSessionPermissions,
@@ -30,13 +30,13 @@ export type SessionPermissionsLeaf = SessionPermissions & {
   type: 'session-permissions'
 }
 
-export type SessionNode = Bytes.Bytes // Hashed
+export type SessionNode = Hex.Hex // Hashed leaf
 export type SessionLeaf = SessionPermissionsLeaf | ImplicitBlacklistLeaf | IdentitySignerLeaf
 export type SessionBranch = [SessionsTopology, SessionsTopology, ...SessionsTopology[]]
 export type SessionsTopology = SessionBranch | SessionLeaf | SessionNode
 
 function isSessionsNode(topology: any): topology is SessionNode {
-  return Bytes.validate(topology)
+  return Hex.validate(topology) && Hex.size(topology) === 32
 }
 
 function isImplicitBlacklist(topology: any): topology is ImplicitBlacklistLeaf {
@@ -314,7 +314,7 @@ export function encodeSessionsTopology(topology: SessionsTopology): Bytes.Bytes 
 
   if (isSessionsNode(topology)) {
     const flagByte = SESSIONS_FLAG_NODE << 4
-    return Bytes.concat(Bytes.fromNumber(flagByte), topology)
+    return Bytes.concat(Bytes.fromNumber(flagByte), Hex.toBytes(topology))
   }
 
   if (isImplicitBlacklist(topology)) {
@@ -352,7 +352,7 @@ export function sessionsTopologyToJson(topology: SessionsTopology): string {
 
 function encodeSessionsTopologyForJson(topology: SessionsTopology): any {
   if (isSessionsNode(topology)) {
-    return Bytes.toHex(topology)
+    return topology
   }
 
   if (isSessionPermissions(topology)) {
@@ -383,11 +383,8 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
   }
 
   // Parse node
-  if (typeof parsed === 'string' && parsed.startsWith('0x')) {
-    const maybeBytes = Bytes.fromHex(parsed as `0x${string}`)
-    if (Bytes.validate(maybeBytes)) {
-      return maybeBytes
-    }
+  if (typeof parsed === 'string' && Hex.validate(parsed) && Hex.size(parsed) === 32) {
+    return parsed
   }
 
   // Parse permissions
@@ -604,7 +601,7 @@ export function minimiseSessionsTopology(
     const branches = topology.map((b) => minimiseSessionsTopology(b, explicitSigners, implicitSigners))
     // If all branches are nodes, the branch can be a node too
     if (branches.every((b) => isSessionsNode(b))) {
-      return Hash.keccak256(Bytes.concat(...branches))
+      return Hash.keccak256(Bytes.concat(...branches.map((b) => Hex.toBytes(b))), { as: 'Hex' })
     }
     return branches as SessionBranch
   }

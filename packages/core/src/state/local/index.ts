@@ -390,7 +390,7 @@ export class Provider implements ProviderInterface {
   }
 
   saveTree(tree: GenericTree.Tree): void | Promise<void> {
-    return this.store.saveTree(Bytes.toHex(GenericTree.hash(tree)), tree)
+    return this.store.saveTree(GenericTree.hash(tree), tree)
   }
 }
 

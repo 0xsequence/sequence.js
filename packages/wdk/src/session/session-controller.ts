@@ -64,7 +64,7 @@ export class SessionController {
     return this._manager.topology
   }
 
-  get imageHash(): Bytes.Bytes {
+  get imageHash(): Hex.Hex {
     const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(this._manager.topology)
     return GenericTree.hash(configurationTree)
   }

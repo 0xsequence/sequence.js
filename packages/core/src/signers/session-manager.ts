@@ -78,7 +78,7 @@ export class SessionManager implements SapientSigner {
 
   get imageHash(): Hex.Hex {
     const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(this._topology)
-    return Hex.fromBytes(GenericTree.hash(configurationTree))
+    return GenericTree.hash(configurationTree)
   }
 
   withProvider(provider: Provider.Provider): SessionManager {

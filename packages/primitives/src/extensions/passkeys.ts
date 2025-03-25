@@ -33,7 +33,7 @@ export function metadataTree(metadata: Required<PublicKey>['metadata']): Generic
       ],
     ]
   } else {
-    return Bytes.fromHex(metadata)
+    return metadata
   }
 }
 
@@ -42,9 +42,9 @@ export function metadataNode(metadata: Required<PublicKey>['metadata']): Generic
 }
 
 export function toTree(publicKey: PublicKey): GenericTree.Tree {
-  const a = Bytes.padLeft(Bytes.fromHex(publicKey.x), 32)
-  const b = Bytes.padLeft(Bytes.fromHex(publicKey.y), 32)
-  const c = Bytes.padLeft(publicKey.requireUserVerification ? Bytes.from([1]) : Bytes.from([0]), 32)
+  const a = Hex.padLeft(publicKey.x, 32)
+  const b = Hex.padLeft(publicKey.y, 32)
+  const c = Hex.padLeft(publicKey.requireUserVerification ? '0x01' : '0x00', 32)
 
   if (publicKey.metadata) {
     return [
@@ -65,16 +65,14 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
     throw new Error('Invalid tree for x,y')
   }
 
-  const [xBytes, yBytes] = p1
-  if (!GenericTree.isNode(xBytes) || xBytes.length !== 32) {
+  const [x, y] = p1
+  if (!GenericTree.isNode(x)) {
     throw new Error('Invalid x bytes')
   }
-  if (!GenericTree.isNode(yBytes) || yBytes.length !== 32) {
+  if (!GenericTree.isNode(y)) {
     throw new Error('Invalid y bytes')
   }
 
-  const x = Hex.fromBytes(xBytes)
-  const y = Hex.fromBytes(yBytes)
   let requireUserVerification = false
   let metadata: PublicKey['metadata']
 
@@ -87,7 +85,8 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
     if (!GenericTree.isNode(c) || c.length !== 32) {
       throw new Error('Invalid c bytes')
     }
-    requireUserVerification = c[31] === 1
+    const cBytes = Hex.toBytes(c)
+    requireUserVerification = cBytes[31] === 1
 
     if (GenericTree.isBranch(meta)) {
       if (meta.length !== 2) {
@@ -113,7 +112,7 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
       const createdAt = Number(Bytes.toBigInt(createdAtLeaf.value))
       metadata = { credentialId, name, createdAt }
     } else if (GenericTree.isNode(meta) && meta.length === 32) {
-      metadata = Hex.fromBytes(meta)
+      metadata = meta
     } else {
       throw new Error('Invalid metadata node')
     }
@@ -121,14 +120,15 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
     if (!GenericTree.isNode(p2) || p2.length !== 32) {
       throw new Error('Invalid c bytes')
     }
-    requireUserVerification = p2[31] === 1
+    const p2Bytes = Hex.toBytes(p2)
+    requireUserVerification = p2Bytes[31] === 1
   }
 
   return { requireUserVerification, x, y, metadata }
 }
 
 export function rootFor(publicKey: PublicKey): Hex.Hex {
-  return Hex.fromBytes(GenericTree.hash(toTree(publicKey)))
+  return GenericTree.hash(toTree(publicKey))
 }
 
 export type DecodedSignature = {
@@ -179,7 +179,7 @@ export function encode(decoded: DecodedSignature): Bytes.Bytes {
     if (!decoded.publicKey.metadata) {
       throw new Error('Metadata is not present in the public key')
     }
-    result = Bytes.concat(result, metadataNode(decoded.publicKey.metadata))
+    result = Bytes.concat(result, Hex.toBytes(metadataNode(decoded.publicKey.metadata)))
   }
 
   result = Bytes.concat(result, Bytes.padLeft(Bytes.fromNumber(authDataSize), bytesAuthDataSize))

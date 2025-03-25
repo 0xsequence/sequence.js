@@ -1,4 +1,4 @@
-import { Bytes, Hash } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 
 // An encoded configuration tree is a generic configuration tree that has been encoded into a bytes sequence.
 // It can be used to represent a configuration tree in a compact form.
@@ -9,7 +9,8 @@ export type Leaf = {
   value: Bytes.Bytes
 }
 
-export type Node = Bytes.Bytes
+// Hashed leaf
+export type Node = Hex.Hex
 
 export type Branch = [Tree, Tree, ...Tree[]]
 export type Tree = Branch | Leaf | Node
@@ -27,21 +28,21 @@ export function isTree(tree: any): tree is Tree {
 }
 
 export function isNode(node: any): node is Node {
-  return Bytes.validate(node) && node.length === 32
+  return Hex.validate(node) && Hex.size(node) === 32
 }
 
-export function hash(tree: Tree): Bytes.Bytes {
+export function hash(tree: Tree): Hex.Hex {
   if (isBranch(tree)) {
     // Sequentially hash the children
     const hashedChildren = tree.map(hash)
     if (hashedChildren.length === 0) {
       throw new Error('Empty branch')
     }
-    let chash = hashedChildren[0]!
+    let chashBytes = Hex.toBytes(hashedChildren[0]!)
     for (let i = 1; i < hashedChildren.length; i++) {
-      chash = Hash.keccak256(Bytes.concat(chash, hashedChildren[i]!))
+      chashBytes = Hash.keccak256(Bytes.concat(chashBytes, Hex.toBytes(hashedChildren[i]!)))
     }
-    return chash
+    return Hex.fromBytes(chashBytes)
   }
 
   // Nodes are already hashed
@@ -50,5 +51,5 @@ export function hash(tree: Tree): Bytes.Bytes {
   }
 
   // Hash the leaf
-  return Hash.keccak256(tree.value)
+  return Hash.keccak256(tree.value, { as: 'Hex' })
 }
