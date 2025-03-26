@@ -79,6 +79,7 @@ function buildCappedTreeFromTopology(weight: bigint, topology: Config.Topology):
 }
 
 function toConfig(
+  checkpoint: bigint,
   loginTopology: Config.Topology,
   devicesTopology: Config.Topology,
   modules: Config.Topology,
@@ -86,13 +87,13 @@ function toConfig(
 ): Config.Config {
   if (!guardTopology) {
     return {
-      checkpoint: 0n,
+      checkpoint: checkpoint,
       threshold: 1n,
       topology: [[loginTopology, devicesTopology], modules],
     }
   } else {
     return {
-      checkpoint: 0n,
+      checkpoint: checkpoint,
       threshold: 2n,
       topology: [[[loginTopology, devicesTopology], guardTopology], modules],
     }
@@ -218,7 +219,7 @@ export class Wallets {
     } as Config.SignerLeaf
 
     // Create initial configuration
-    const initialConfiguration = toConfig(loginTopology, devicesTopology, modules, guardTopology)
+    const initialConfiguration = toConfig(0n, loginTopology, devicesTopology, modules, guardTopology)
 
     // Create wallet
     const wallet = await Wallet.fromConfiguration(initialConfiguration, {
@@ -275,7 +276,9 @@ export class Wallets {
         ...prevDevices.signers.filter((x) => x !== '0x0000000000000000000000000000000000000000'),
         device.address,
       ])
-      const envelope = await wallet.prepareUpdate(toConfig(loginTopology, nextDevicesTopology, modules, guardTopology))
+      const envelope = await wallet.prepareUpdate(
+        toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
+      )
 
       const requestId = await this.shared.modules.signatures.request(envelope, 'login', {
         origin: 'wallet-webapp',
@@ -367,7 +370,9 @@ export class Wallets {
       ),
     )
 
-    const envelope = await walletObj.prepareUpdate(toConfig(loginTopology, nextDevicesTopology, modules, guardTopology))
+    const envelope = await walletObj.prepareUpdate(
+      toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
+    )
 
     const requestId = await this.shared.modules.signatures.request(envelope, 'logout', {
       origin: 'wallet-webapp',
