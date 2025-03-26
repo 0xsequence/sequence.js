@@ -4,6 +4,9 @@ import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Shared } from './manager'
 import { MnemonicHandler } from './handlers/mnemonic'
+import * as Db from '../dbs'
+
+export type WalletRow = Db.WalletRow
 
 export type CommonSignupArgs = {
   noGuard?: boolean
@@ -139,12 +142,12 @@ export class Wallets {
     return this.shared.databases.manager.get(wallet).then((r) => r !== undefined)
   }
 
-  public async list(): Promise<Address.Address[]> {
-    return this.shared.databases.manager.list().then((r) => r.map((x) => x.wallet))
+  public async list(): Promise<WalletRow[]> {
+    return this.shared.databases.manager.list()
   }
 
-  public onWalletsUpdate(cb: (wallets: Address.Address[]) => void, trigger?: boolean) {
-    const undo = this.shared.databases.manager.addListener((wallets) => {
+  public onWalletsUpdate(cb: (wallets: WalletRow[]) => void, trigger?: boolean) {
+    const undo = this.shared.databases.manager.addListener(() => {
       this.list().then((wallets) => {
         cb(wallets)
       })
@@ -238,7 +241,7 @@ export class Wallets {
 
     // Save entry in the manager db
     await this.shared.databases.manager.set({
-      wallet: wallet.address,
+      address: wallet.address,
       status: 'ready',
       loginDate: new Date().toISOString(),
       device: device.address,
@@ -251,6 +254,11 @@ export class Wallets {
 
   async login(args: LoginArgs) {
     if (isLoginToWalletArgs(args)) {
+      const prevWallet = await this.exists(args.wallet)
+      if (prevWallet) {
+        throw new Error('wallet-already-logged-in')
+      }
+
       const wallet = new Wallet(args.wallet, {
         context: this.shared.sequence.context,
         stateProvider: this.shared.sequence.stateProvider,
@@ -287,7 +295,7 @@ export class Wallets {
       await this.shared.modules.devices.witness(device.address, wallet.address)
 
       await this.shared.databases.manager.set({
-        wallet: wallet.address,
+        address: wallet.address,
         status: 'logging-in',
         loginDate: new Date().toISOString(),
         device: device.address,

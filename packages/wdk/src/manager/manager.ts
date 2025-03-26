@@ -5,7 +5,7 @@ import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-cor
 import * as Db from '../dbs'
 import { Logger } from './logger'
 import { Devices } from './devices'
-import { SignupArgs, Wallets } from './wallets'
+import { LoginArgs, SignupArgs, WalletRow, Wallets } from './wallets'
 import { Transactions } from './transactions'
 import { BaseSignatureRequest, SignatureRequest, Signatures } from './signatures'
 import { Kinds, Signers } from './signers'
@@ -185,6 +185,14 @@ export class Manager {
     return this.shared.modules.wallets.completeLogout(requestId, options)
   }
 
+  public async login(args: LoginArgs) {
+    return this.shared.modules.wallets.login(args)
+  }
+
+  public async completeLogin(requestId: string) {
+    return this.shared.modules.wallets.completeLogin(requestId)
+  }
+
   public async listWallets() {
     return this.shared.modules.wallets.list()
   }
@@ -193,7 +201,7 @@ export class Manager {
     return this.shared.modules.wallets.exists(address)
   }
 
-  public onWalletsUpdate(cb: (wallets: Address.Address[]) => void, trigger?: boolean) {
+  public onWalletsUpdate(cb: (wallets: WalletRow[]) => void, trigger?: boolean) {
     return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
   }
 
