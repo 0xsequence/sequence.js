@@ -12,6 +12,15 @@ export class Transactions {
     return this.shared.databases.transactions.list()
   }
 
+  public async get(transactionId: string): Promise<Db.TransactionRow> {
+    const tx = await this.shared.databases.transactions.get(transactionId)
+    if (!tx) {
+      throw new Error(`Transaction ${transactionId} not found`)
+    }
+
+    return tx
+  }
+
   async request(
     from: Address.Address,
     chainId: bigint,
@@ -64,11 +73,7 @@ export class Transactions {
       calls?: Pick<Payload.Call, 'gasLimit'>[]
     },
   ): Promise<void> {
-    const tx = await this.shared.databases.transactions.get(transactionId)
-    if (!tx) {
-      throw new Error(`Transaction ${transactionId} not found`)
-    }
-
+    const tx = await this.get(transactionId)
     if (tx.status !== 'requested') {
       throw new Error(`Transaction ${transactionId} is not in the requested state`)
     }
@@ -102,11 +107,7 @@ export class Transactions {
     transactionId: string,
     selectRelayer: (relayerOptions: Db.RelayerOption[]) => Promise<Db.RelayerOption | undefined>,
   ): Promise<string | undefined> {
-    const tx = await this.shared.databases.transactions.get(transactionId)
-    if (!tx) {
-      throw new Error(`Transaction ${transactionId} not found`)
-    }
-
+    const tx = await this.get(transactionId)
     if (tx.status !== 'defined') {
       throw new Error(`Transaction ${transactionId} is not in the defined state`)
     }
@@ -149,5 +150,29 @@ export class Transactions {
     return this.shared.modules.signatures.request(tx.envelope, 'send-transaction', {
       origin: tx.source,
     })
+  }
+
+  onTransactionsUpdate(cb: (transactions: Db.TransactionRow[]) => void, trigger?: boolean) {
+    const undo = this.shared.databases.transactions.addListener(() => {
+      this.list().then((l) => cb(l))
+    })
+
+    if (trigger) {
+      this.list().then((l) => cb(l))
+    }
+
+    return undo
+  }
+
+  onTransactionUpdate(transactionId: string, cb: (transaction: Db.TransactionRow) => void, trigger?: boolean) {
+    const undo = this.shared.databases.transactions.addListener(() => {
+      this.get(transactionId).then((t) => cb(t))
+    })
+
+    if (trigger) {
+      this.get(transactionId).then((t) => cb(t))
+    }
+
+    return undo
   }
 }

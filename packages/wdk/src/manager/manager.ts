@@ -1,6 +1,6 @@
 import { Address } from 'ox'
 
-import { Extensions, Context, Config, Constants, Network } from '@0xsequence/sequence-primitives'
+import { Extensions, Context, Config, Constants, Network, Payload } from '@0xsequence/sequence-primitives'
 import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-core'
 import * as Db from '../dbs'
 import { Logger } from './logger'
@@ -171,6 +171,8 @@ export class Manager {
     this.shared = shared
   }
 
+  // Wallets
+
   public async signUp(options: SignupArgs) {
     return this.shared.modules.wallets.signUp(options)
   }
@@ -195,6 +197,8 @@ export class Manager {
     return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
   }
 
+  // Signatures
+
   public async listSignatureRequests(): Promise<BaseSignatureRequest[]> {
     return this.shared.modules.signatures.list()
   }
@@ -216,6 +220,8 @@ export class Manager {
     return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
 
+  // Transactions
+
   public async requestTransaction(
     from: Address.Address,
     chainId: bigint,
@@ -223,6 +229,28 @@ export class Manager {
     options?: { skipDefineGas?: boolean; source?: string },
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
+  }
+
+  public async defineTransaction(
+    transactionId: string,
+    changes?: { nonce?: bigint; space?: bigint; calls?: Pick<Payload.Call, 'gasLimit'>[] },
+  ) {
+    return this.shared.modules.transactions.define(transactionId, changes)
+  }
+
+  public async selectRelayer(
+    transactionId: string,
+    selectRelayer: (relayerOptions: Db.RelayerOption[]) => Promise<Db.RelayerOption | undefined>,
+  ) {
+    return this.shared.modules.transactions.selectRelayer(transactionId, selectRelayer)
+  }
+
+  public onTransactionsUpdate(cb: (transactions: Db.TransactionRow[]) => void, trigger?: boolean) {
+    return this.shared.modules.transactions.onTransactionsUpdate(cb, trigger)
+  }
+
+  public onTransactionUpdate(transactionId: string, cb: (transaction: Db.TransactionRow) => void, trigger?: boolean) {
+    return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
   }
 
   public async registerMnemonicUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
