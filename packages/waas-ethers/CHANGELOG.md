@@ -1,5 +1,16 @@
 # @0xsequence/waas-ethers
 
+## 2.3.0
+
+### Minor Changes
+
+- update metadata rpc client
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/waas@2.3.0
+
 ## 2.2.15
 
 ### Patch Changes

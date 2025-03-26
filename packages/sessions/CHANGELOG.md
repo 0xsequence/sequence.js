@@ -1,5 +1,19 @@
 # @0xsequence/sessions
 
+## 2.3.0
+
+### Minor Changes
+
+- update metadata rpc client
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/core@2.3.0
+  - @0xsequence/migration@2.3.0
+  - @0xsequence/replacer@2.3.0
+  - @0xsequence/utils@2.3.0
+
 ## 2.2.15
 
 ### Patch Changes
