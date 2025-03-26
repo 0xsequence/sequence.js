@@ -23,7 +23,7 @@ export type SapientSignerLeaf = {
   type: 'sapient-signer'
   address: Address.Address
   weight: bigint
-  imageHash: Bytes.Bytes
+  imageHash: Hex.Hex
   signed?: boolean
   signature?: SignatureOfSapientSignerLeaf
 }
@@ -109,11 +109,11 @@ export function isTopology(cand: any): cand is Topology {
 
 export function getSigners(configuration: Config | Topology): {
   signers: Address.Address[]
-  sapientSigners: { address: Address.Address; imageHash: Bytes.Bytes }[]
+  sapientSigners: { address: Address.Address; imageHash: Hex.Hex }[]
   isComplete: boolean
 } {
   const signers = new Set<Address.Address>()
-  const sapientSigners = new Set<{ address: Address.Address; imageHash: Bytes.Bytes }>()
+  const sapientSigners = new Set<{ address: Address.Address; imageHash: Hex.Hex }>()
 
   let isComplete = true
 
@@ -224,7 +224,7 @@ export function hashConfiguration(topology: Topology | Config): Bytes.Bytes {
         Bytes.fromString('Sequence sapient config:\n'),
         Bytes.fromHex(topology.address),
         Bytes.padLeft(Bytes.fromNumber(topology.weight), 32),
-        topology.imageHash,
+        Bytes.padLeft(Bytes.fromHex(topology.imageHash), 32),
       ),
     )
   }
@@ -311,7 +311,7 @@ function encodeTopology(top: Topology): any {
       type: 'sapient-signer',
       address: top.address,
       weight: top.weight.toString(),
-      imageHash: Bytes.toHex(Bytes.padLeft(top.imageHash, 32)),
+      imageHash: top.imageHash,
     }
   } else if (isSubdigestLeaf(top)) {
     return {
@@ -361,7 +361,7 @@ function decodeTopology(obj: any): Topology {
         type: 'sapient-signer',
         address: obj.address,
         weight: BigInt(obj.weight),
-        imageHash: Bytes.padLeft(Bytes.fromHex(obj.imageHash), 32),
+        imageHash: obj.imageHash,
       }
     case 'subdigest':
       return {
@@ -479,7 +479,7 @@ function mergeLeaf(a: Leaf, b: Leaf): Leaf {
   }
 
   if (isSapientSignerLeaf(a) && isSapientSignerLeaf(b)) {
-    if (a.address !== b.address || a.weight !== b.weight || !Bytes.isEqual(a.imageHash, b.imageHash)) {
+    if (a.address !== b.address || a.weight !== b.weight || a.imageHash !== b.imageHash) {
       throw new Error('Topology mismatch: sapient signer fields differ')
     }
     if (!!a.signed !== !!b.signed || !!a.signature !== !!b.signature) {

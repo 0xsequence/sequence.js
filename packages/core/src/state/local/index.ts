@@ -192,7 +192,7 @@ export class Provider implements ProviderInterface {
     const { signers, sapientSigners } = Config.getSigners(fromConfig)
     const subdigestsOfSigner = await Promise.all([
       ...signers.map((s) => this.store.loadSubdigestsOfSigner(s)),
-      ...sapientSigners.map((s) => this.store.loadSubdigestsOfSapientSigner(s.address, Hex.fromBytes(s.imageHash))),
+      ...sapientSigners.map((s) => this.store.loadSubdigestsOfSapientSigner(s.address, s.imageHash)),
     ])
 
     const subdigests = [...new Set(subdigestsOfSigner.flat())]
@@ -260,7 +260,7 @@ export class Provider implements ProviderInterface {
             signature: await this.store.loadSapientSignatureOfSubdigest(
               signer.address,
               expectedSubdigest,
-              Hex.fromBytes(signer.imageHash),
+              signer.imageHash,
             ),
           }
         }),
@@ -270,7 +270,7 @@ export class Provider implements ProviderInterface {
       const encoded = Signature.fillLeaves(fromConfig.topology, (leaf) => {
         if (Config.isSapientSignerLeaf(leaf)) {
           const sapientSignature = signaturesOfSigners.find(
-            ({ signer, imageHash }: { signer: Address.Address; imageHash?: Bytes.Bytes }) => {
+            ({ signer, imageHash }: { signer: Address.Address; imageHash?: Hex.Hex }) => {
               return imageHash && signer === leaf.address && imageHash === leaf.imageHash
             },
           )?.signature

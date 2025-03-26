@@ -924,7 +924,7 @@ function rawTopologyToJson(top: RawTopology): any {
             type: 'sapient-signer',
             address: top.address,
             weight: top.weight.toString(),
-            imageHash: Bytes.toHex(Bytes.padLeft(top.imageHash, 32)),
+            imageHash: top.imageHash,
           }
         case 'subdigest':
           return {
@@ -1029,7 +1029,7 @@ function rawTopologyFromJson(obj: any): RawTopology {
             type: 'sapient-signer',
             address: obj.address,
             weight: BigInt(obj.weight),
-            imageHash: Bytes.fromHex(obj.imageHash),
+            imageHash: obj.imageHash,
           }
         case 'subdigest':
           return {
@@ -1284,7 +1284,7 @@ async function recoverTopology(
                 type: 'sapient-signer',
                 address: topology.signature.address,
                 weight: topology.weight,
-                imageHash: Hex.toBytes(response),
+                imageHash: response,
                 signed: true,
                 signature: topology.signature,
               },

@@ -16,16 +16,22 @@ export const SESSIONS_FLAG_BRANCH = 2
 export const SESSIONS_FLAG_BLACKLIST = 3
 export const SESSIONS_FLAG_IDENTITY_SIGNER = 4
 
-export type ImplicitBlacklist = {
+export type ImplicitBlacklistLeaf = {
+  type: 'implicit-blacklist'
   blacklist: Address.Address[]
 }
 
 export type IdentitySignerLeaf = {
+  type: 'identity-signer'
   identitySigner: Address.Address
 }
 
+export type SessionPermissionsLeaf = SessionPermissions & {
+  type: 'session-permissions'
+}
+
 export type SessionNode = Bytes.Bytes // Hashed
-export type SessionLeaf = SessionPermissions | ImplicitBlacklist | IdentitySignerLeaf
+export type SessionLeaf = SessionPermissionsLeaf | ImplicitBlacklistLeaf | IdentitySignerLeaf
 export type SessionBranch = [SessionsTopology, SessionsTopology, ...SessionsTopology[]]
 export type SessionsTopology = SessionBranch | SessionLeaf | SessionNode
 
@@ -33,7 +39,7 @@ function isSessionsNode(topology: any): topology is SessionNode {
   return Bytes.validate(topology)
 }
 
-function isImplicitBlacklist(topology: any): topology is ImplicitBlacklist {
+function isImplicitBlacklist(topology: any): topology is ImplicitBlacklistLeaf {
   return typeof topology === 'object' && topology !== null && 'blacklist' in topology
 }
 
@@ -41,7 +47,7 @@ function isIdentitySignerLeaf(topology: any): topology is IdentitySignerLeaf {
   return typeof topology === 'object' && topology !== null && 'identitySigner' in topology
 }
 
-function isSessionPermissions(topology: any): topology is SessionPermissions {
+function isSessionPermissions(topology: any): topology is SessionPermissionsLeaf {
   return typeof topology === 'object' && topology !== null && 'signer' in topology
 }
 
@@ -138,7 +144,7 @@ export function getImplicitBlacklist(topology: SessionsTopology): Address.Addres
  * @param topology The topology to get the implicit blacklist leaf from
  * @returns The implicit blacklist leaf or null if it's not present
  */
-export function getImplicitBlacklistLeaf(topology: SessionsTopology): ImplicitBlacklist | null {
+export function getImplicitBlacklistLeaf(topology: SessionsTopology): ImplicitBlacklistLeaf | null {
   if (isImplicitBlacklist(topology)) {
     // Got it
     return topology
@@ -237,13 +243,13 @@ export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
     for (let i = 1; i < bytes.length; i += 20) {
       blacklist.push(Bytes.toHex(bytes.slice(i, i + 20)))
     }
-    return { blacklist }
+    return { type: 'implicit-blacklist', blacklist }
   }
   if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
-    return { identitySigner: Bytes.toHex(bytes.slice(1, 21)) }
+    return { type: 'identity-signer', identitySigner: Bytes.toHex(bytes.slice(1, 21)) }
   }
   if (flag === SESSIONS_FLAG_PERMISSIONS) {
-    return decodeSessionPermissions(bytes.slice(1))
+    return { type: 'session-permissions', ...decodeSessionPermissions(bytes.slice(1)) }
   }
   throw new Error('Invalid leaf')
 }
@@ -393,19 +399,19 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
     'deadline' in parsed &&
     'permissions' in parsed
   ) {
-    return sessionPermissionsFromParsed(parsed)
+    return { type: 'session-permissions', ...sessionPermissionsFromParsed(parsed) }
   }
 
   // Parse identity signer
   if (typeof parsed === 'object' && parsed !== null && 'identitySigner' in parsed) {
     const identitySigner = parsed.identitySigner as `0x${string}`
-    return { identitySigner }
+    return { type: 'identity-signer', identitySigner }
   }
 
   // Parse blacklist
   if (typeof parsed === 'object' && parsed !== null && 'blacklist' in parsed) {
     const blacklist = parsed.blacklist.map((address: any) => Address.from(address))
-    return { blacklist }
+    return { type: 'implicit-blacklist', blacklist }
   }
 
   throw new Error('Invalid topology')
@@ -467,7 +473,7 @@ export function addExplicitSession(
     throw new Error('Session already exists')
   }
   // Merge and balance
-  const merged = mergeSessionsTopologies(topology, sessionPermissions)
+  const merged = mergeSessionsTopologies(topology, { type: 'session-permissions', ...sessionPermissions })
   return balanceSessionsTopology(merged)
 }
 
@@ -667,9 +673,11 @@ export function removeFromImplicitBlacklist(topology: SessionsTopology, address:
 export function emptySessionsTopology(identitySigner: Address.Address): SessionsTopology {
   return [
     {
+      type: 'implicit-blacklist',
       blacklist: [],
     },
     {
+      type: 'identity-signer',
       identitySigner,
     },
   ]

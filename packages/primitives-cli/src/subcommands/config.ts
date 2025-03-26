@@ -68,9 +68,12 @@ function parseElements(elements: string): Config.Leaf[] {
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'sapient') {
       const [_, imageHash, address, weight] = firstElement!.split(':')
+      if (!imageHash || !imageHash.startsWith('0x') || imageHash.length !== 66) {
+        throw new Error(`Invalid image hash: ${imageHash}`)
+      }
       leaves.push({
         type: 'sapient-signer',
-        imageHash: Bytes.fromHex(imageHash as `0x${string}`),
+        imageHash: imageHash as `0x${string}`,
         address: Address.from(address!),
         weight: BigInt(weight!),
       })

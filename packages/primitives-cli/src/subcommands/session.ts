@@ -76,7 +76,7 @@ const sessionCommand: CommandModule = {
       )
       .command(
         'encode-calls [session-topology] [call-signatures] [explicit-signers] [implicit-signers]',
-        'Encode a call signature for an implicit session',
+        'Encode call signatures for sessions',
         (yargs) => {
           return yargs
             .positional('session-topology', {

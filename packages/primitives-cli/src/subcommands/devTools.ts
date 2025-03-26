@@ -1,5 +1,6 @@
 import { Permission, SessionConfig, Config } from '@0xsequence/sequence-primitives'
 import crypto from 'crypto'
+import { Bytes } from 'ox'
 import type { CommandModule } from 'yargs'
 
 export interface RandomOptions {
@@ -39,6 +40,10 @@ function randomBytes(length: number, options?: RandomOptions): Uint8Array {
   return crypto.getRandomValues(bytes)
 }
 
+function randomHex(length: number, options?: RandomOptions): `0x${string}` {
+  return `0x${Bytes.toHex(randomBytes(length, options))}`
+}
+
 function randomBigInt(max: bigint, options?: RandomOptions): bigint {
   if (options?.seededRandom) {
     return BigInt(Math.floor(options.seededRandom() * Number(max)))
@@ -67,7 +72,7 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Config.
           type: 'sapient-signer',
           address: randomAddress(options),
           weight: randomBigInt(256n, options),
-          imageHash: randomBytes(32, options),
+          imageHash: randomHex(32, options),
         }
 
       case 2: // SubdigestLeaf
@@ -103,6 +108,7 @@ async function generateSessionsTopology(
   if (isLeaf || depth <= 1) {
     const permissionsCount = Math.floor((options?.seededRandom ?? Math.random)() * (options?.maxPermissions ?? 5)) + 1
     return {
+      type: 'session-permissions',
       signer: randomAddress(options),
       valueLimit: randomBigInt(100n, options),
       deadline: randomBigInt(1000n, options),
