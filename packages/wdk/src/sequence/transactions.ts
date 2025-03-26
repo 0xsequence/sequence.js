@@ -4,15 +4,16 @@ import { Wallet } from '@0xsequence/sequence-core'
 import { Address, Provider } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager'
+import { RelayerOption, Transaction, TransactionRequest } from './types/transactionRequest'
 
 export class Transactions {
   constructor(private readonly shared: Shared) {}
 
-  public async list(): Promise<Db.TransactionRow[]> {
+  public async list(): Promise<Transaction[]> {
     return this.shared.databases.transactions.list()
   }
 
-  public async get(transactionId: string): Promise<Db.TransactionRow> {
+  public async get(transactionId: string): Promise<Transaction> {
     const tx = await this.shared.databases.transactions.get(transactionId)
     if (!tx) {
       throw new Error(`Transaction ${transactionId} not found`)
@@ -24,7 +25,7 @@ export class Transactions {
   async request(
     from: Address.Address,
     chainId: bigint,
-    txs: Db.TransactionRequest[],
+    txs: TransactionRequest[],
     options?: {
       skipDefineGas?: boolean
       source?: string
@@ -105,7 +106,7 @@ export class Transactions {
 
   async selectRelayer(
     transactionId: string,
-    selectRelayer: (relayerOptions: Db.RelayerOption[]) => Promise<Db.RelayerOption | undefined>,
+    selectRelayer: (relayerOptions: RelayerOption[]) => Promise<RelayerOption | undefined>,
   ): Promise<string | undefined> {
     const tx = await this.get(transactionId)
     if (tx.status !== 'defined') {
@@ -114,7 +115,7 @@ export class Transactions {
 
     // Obtain the relayer options for the next stage
     const allRelayerOptions = await Promise.all(
-      this.shared.sequence.relayers.map(async (relayer): Promise<Db.RelayerOption[]> => {
+      this.shared.sequence.relayers.map(async (relayer): Promise<RelayerOption[]> => {
         const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
         if (feeOptions.options.length === 0) {
@@ -122,7 +123,7 @@ export class Transactions {
             {
               id: uuidv7(),
               relayerId: relayer.id,
-            } as Db.RelayerOption,
+            } as RelayerOption,
           ]
         }
 
@@ -152,7 +153,7 @@ export class Transactions {
     })
   }
 
-  onTransactionsUpdate(cb: (transactions: Db.TransactionRow[]) => void, trigger?: boolean) {
+  onTransactionsUpdate(cb: (transactions: Transaction[]) => void, trigger?: boolean) {
     const undo = this.shared.databases.transactions.addListener(() => {
       this.list().then((l) => cb(l))
     })
@@ -164,7 +165,7 @@ export class Transactions {
     return undo
   }
 
-  onTransactionUpdate(transactionId: string, cb: (transaction: Db.TransactionRow) => void, trigger?: boolean) {
+  onTransactionUpdate(transactionId: string, cb: (transaction: Transaction) => void, trigger?: boolean) {
     const undo = this.shared.databases.transactions.addListener(() => {
       this.get(transactionId).then((t) => cb(t))
     })

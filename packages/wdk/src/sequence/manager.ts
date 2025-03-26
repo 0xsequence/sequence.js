@@ -5,18 +5,14 @@ import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-cor
 import * as Db from '../dbs'
 import { Logger } from './logger'
 import { Devices } from './devices'
-import { LoginArgs, SignupArgs, WalletRow, Wallets } from './wallets'
+import { LoginArgs, SignupArgs, Wallets } from './wallets'
 import { Transactions } from './transactions'
-import { BaseSignatureRequest, SignatureRequest, Signatures } from './signatures'
+import { Signatures } from './signatures'
 import { Kinds, Signers } from './signers'
 import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
 import { MnemonicHandler } from './handlers/mnemonic'
-
-export type Transaction = {
-  to: Address.Address
-  value?: bigint
-  data?: Uint8Array
-}
+import { RelayerOption, TransactionRequest, Transaction } from './types/transactionRequest'
+import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -26,7 +22,7 @@ export type ManagerOptions = {
   guest?: Address.Address
 
   encryptedPksDb?: CoreSigners.Pk.Encrypted.EncryptedPksDb
-  managerDb?: Db.Manager
+  managerDb?: Db.Wallets
   transactionsDb?: Db.Transactions
   signaturesDb?: Db.Signatures
 
@@ -45,7 +41,7 @@ export const ManagerOptionsDefaults = {
   guest: Constants.DefaultGuest,
 
   encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
-  managerDb: new Db.Manager(),
+  managerDb: new Db.Wallets(),
   signaturesDb: new Db.Signatures(),
   transactionsDb: new Db.Transactions(),
 
@@ -71,7 +67,7 @@ export function applyDefaults(options?: ManagerOptions) {
 
 export type Databases = {
   readonly encryptedPks: CoreSigners.Pk.Encrypted.EncryptedPksDb
-  readonly manager: Db.Manager
+  readonly manager: Db.Wallets
   readonly signatures: Db.Signatures
   readonly transactions: Db.Transactions
 }
@@ -201,7 +197,7 @@ export class Manager {
     return this.shared.modules.wallets.exists(address)
   }
 
-  public onWalletsUpdate(cb: (wallets: WalletRow[]) => void, trigger?: boolean) {
+  public onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean) {
     return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
   }
 
@@ -233,7 +229,7 @@ export class Manager {
   public async requestTransaction(
     from: Address.Address,
     chainId: bigint,
-    txs: Db.TransactionRequest[],
+    txs: TransactionRequest[],
     options?: { skipDefineGas?: boolean; source?: string },
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
@@ -248,16 +244,16 @@ export class Manager {
 
   public async selectRelayer(
     transactionId: string,
-    selectRelayer: (relayerOptions: Db.RelayerOption[]) => Promise<Db.RelayerOption | undefined>,
+    selectRelayer: (relayerOptions: RelayerOption[]) => Promise<RelayerOption | undefined>,
   ) {
     return this.shared.modules.transactions.selectRelayer(transactionId, selectRelayer)
   }
 
-  public onTransactionsUpdate(cb: (transactions: Db.TransactionRow[]) => void, trigger?: boolean) {
+  public onTransactionsUpdate(cb: (transactions: Transaction[]) => void, trigger?: boolean) {
     return this.shared.modules.transactions.onTransactionsUpdate(cb, trigger)
   }
 
-  public onTransactionUpdate(transactionId: string, cb: (transaction: Db.TransactionRow) => void, trigger?: boolean) {
+  public onTransactionUpdate(transactionId: string, cb: (transaction: Transaction) => void, trigger?: boolean) {
     return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
   }
 

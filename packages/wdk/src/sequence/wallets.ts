@@ -1,12 +1,10 @@
 import { Address, Hex, Mnemonic } from 'ox'
-import { Envelope, Signers, Wallet } from '@0xsequence/sequence-core'
+import { Envelope, Signers, Wallet as CoreWallet } from '@0xsequence/sequence-core'
 import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Shared } from './manager'
 import { MnemonicHandler } from './handlers/mnemonic'
-import * as Db from '../dbs'
-
-export type WalletRow = Db.WalletRow
+import { Wallet } from './types'
 
 export type CommonSignupArgs = {
   noGuard?: boolean
@@ -142,11 +140,11 @@ export class Wallets {
     return this.shared.databases.manager.get(wallet).then((r) => r !== undefined)
   }
 
-  public async list(): Promise<WalletRow[]> {
+  public async list(): Promise<Wallet[]> {
     return this.shared.databases.manager.list()
   }
 
-  public onWalletsUpdate(cb: (wallets: WalletRow[]) => void, trigger?: boolean) {
+  public onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean) {
     const undo = this.shared.databases.manager.addListener(() => {
       this.list().then((wallets) => {
         cb(wallets)
@@ -225,7 +223,7 @@ export class Wallets {
     const initialConfiguration = toConfig(0n, loginTopology, devicesTopology, modules, guardTopology)
 
     // Create wallet
-    const wallet = await Wallet.fromConfiguration(initialConfiguration, {
+    const wallet = await CoreWallet.fromConfiguration(initialConfiguration, {
       context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -259,7 +257,7 @@ export class Wallets {
         throw new Error('wallet-already-logged-in')
       }
 
-      const wallet = new Wallet(args.wallet, {
+      const wallet = new CoreWallet(args.wallet, {
         context: this.shared.sequence.context,
         stateProvider: this.shared.sequence.stateProvider,
         guest: this.shared.sequence.guest,
@@ -324,7 +322,7 @@ export class Wallets {
       throw new Error('login-for-wallet-not-found')
     }
 
-    const wallet = new Wallet(request.wallet, {
+    const wallet = new CoreWallet(request.wallet, {
       context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -363,7 +361,7 @@ export class Wallets {
       throw new Error('device-not-found')
     }
 
-    const walletObj = new Wallet(wallet, {
+    const walletObj = new CoreWallet(wallet, {
       context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -400,7 +398,7 @@ export class Wallets {
       throw new Error('wallet-not-found')
     }
 
-    const wallet = new Wallet(request.wallet, {
+    const wallet = new CoreWallet(request.wallet, {
       context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,

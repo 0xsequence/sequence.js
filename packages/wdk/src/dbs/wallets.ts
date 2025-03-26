@@ -1,18 +1,9 @@
-import { Address } from 'ox'
 import { Generic } from './generic'
-
-export interface WalletRow {
-  address: Address.Address
-  status: 'ready' | 'logging-in'
-  loginDate: string
-  device: Address.Address
-  loginType: string
-  useGuard: boolean
-}
+import { Wallet } from '../sequence/types'
 
 const TABLE_NAME = 'wallets'
 
-export class Manager extends Generic<WalletRow, 'address'> {
+export class Wallets extends Generic<Wallet, 'address'> {
   constructor(dbName: string = 'sequence-manager') {
     super(dbName, TABLE_NAME, 'address', [
       (db: IDBDatabase) => {

@@ -1,9 +1,10 @@
 import * as Db from '../../dbs'
 import { Kinds } from '../signers'
-import { Signatures, SignerReady, SignerUnavailable } from '../signatures'
+import { Signatures } from '../signatures'
 import { Address, Hex } from 'ox'
 import { Devices } from '../devices'
 import { Handler } from '.'
+import { SignerReady, SignerUnavailable } from '../types'
 
 export class DevicesHandler implements Handler {
   kind = Kinds.LocalDevice

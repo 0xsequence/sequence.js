@@ -2,8 +2,9 @@ import { Signers } from '@0xsequence/sequence-core'
 import { Address, Hex, Mnemonic } from 'ox'
 import { Handler } from '.'
 import * as Db from '../../dbs'
-import { Signatures, SignerReady, SignerUnavailable } from '../signatures'
+import { Signatures } from '../signatures'
 import { Kinds } from '../signers'
+import { SignerReady, SignerUnavailable } from '../types'
 
 export class MnemonicHandler implements Handler {
   kind = Kinds.LoginMnemonic

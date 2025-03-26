@@ -1,6 +1,6 @@
 import * as Db from '../../dbs'
 import { Address, Hex } from 'ox'
-import { SignerActionable, SignerReady, SignerUnavailable } from '../signatures'
+import { SignerActionable, SignerReady, SignerUnavailable } from '../types'
 
 export interface Handler {
   kind: string

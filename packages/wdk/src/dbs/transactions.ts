@@ -1,50 +1,9 @@
-import { Address } from 'ox'
-import { Payload } from '@0xsequence/sequence-primitives'
-import { Relayer, Envelope } from '@0xsequence/sequence-core'
+import { Transaction } from '../sequence/types/transactionRequest'
 import { Generic } from './generic'
-
-export type TransactionRequest = {
-  to: Address.Address
-  value?: bigint
-  data?: Uint8Array
-  gasLimit?: bigint
-}
-
-export type RelayerOption = {
-  id: string
-  relayerId: string
-  feeOption?: Relayer.FeeOption
-  quote?: Relayer.FeeQuote
-}
-
-export type EnvelopeStatus = 'requested' | 'defined' | 'formed'
-
-type TransactionBase = {
-  id: string
-  wallet: Address.Address
-  requests: TransactionRequest[]
-  source: string
-  envelope: Envelope.Envelope<Payload.Calls>
-}
-
-export type TransactionRequestedRow = TransactionBase & {
-  status: 'requested'
-}
-
-export type TransactionDefinedRow = TransactionBase & {
-  status: 'defined'
-}
-
-export type TransactionFormedRow = TransactionBase & {
-  relayerOption: RelayerOption
-  status: 'formed'
-}
-
-export type TransactionRow = TransactionRequestedRow | TransactionDefinedRow | TransactionFormedRow
 
 const TABLE_NAME = 'transactions'
 
-export class Transactions extends Generic<TransactionRow, 'id'> {
+export class Transactions extends Generic<Transaction, 'id'> {
   constructor(dbName: string = 'sequence-transactions') {
     super(dbName, TABLE_NAME, 'id', [
       (db: IDBDatabase) => {

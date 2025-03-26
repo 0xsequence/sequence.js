@@ -5,45 +5,7 @@ import { Envelope } from '@0xsequence/sequence-core'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager'
 import { Handler } from './handlers'
-
-export type SignerBase = {
-  address: Address.Address
-  imageHash?: Bytes.Bytes
-}
-
-export type SignerSigned = SignerBase & {
-  handler?: Handler
-  status: 'signed'
-}
-
-export type SignerUnavailable = SignerBase & {
-  handler?: Handler
-  reason: string
-  status: 'unavailable'
-}
-
-export type SignerReady = SignerBase & {
-  handler: Handler
-  status: 'ready'
-  handle: () => Promise<boolean>
-}
-
-export type SignerActionable = SignerBase & {
-  handler: Handler
-  status: 'actionable'
-  message: string // TODO: Localization?
-  handle: () => Promise<boolean>
-}
-
-export type Signer = SignerSigned | SignerUnavailable | SignerReady | SignerActionable
-
-export type BaseSignatureRequest = Db.SignatureRequest
-
-export type SignatureRequest = BaseSignatureRequest & {
-  weight: bigint
-  threshold: bigint
-  signers: Signer[]
-}
+import { BaseSignatureRequest, SignatureRequest, SignerBase, SignerSigned, SignerUnavailable } from './types'
 
 export class Signatures {
   constructor(private readonly shared: Shared) {}
