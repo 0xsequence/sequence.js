@@ -2104,6 +2104,40 @@ export class Admin implements Admin {
     )
   }
 
+  addContractToTokenDirectory = (
+    args: AddContractToTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddContractToTokenDirectoryReturn> => {
+    return this.fetch(this.url('AddContractToTokenDirectory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
+  }
+
+  removeContractFromTokenDirectory = (
+    args: RemoveContractFromTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveContractFromTokenDirectoryReturn> => {
+    return this.fetch(this.url('RemoveContractFromTokenDirectory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
+  }
+
   refreshTokenDirectory = (headers?: object, signal?: AbortSignal): Promise<RefreshTokenDirectoryReturn> => {
     return this.fetch(this.url('RefreshTokenDirectory'), createHTTPRequest({}, headers, signal)).then(
       res => {
