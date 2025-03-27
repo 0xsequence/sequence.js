@@ -818,9 +818,9 @@ export interface SearchTokenIDsArgs {
   page?: Page
 }
 
-export interface SearchTokenMetadataTokenIDsReturn {
+export interface SearchTokenIDsReturn {
   page: Page
-  tokenIDs: Array<string>
+  tokenIds: Array<string>
 }
 export interface GetTokenDirectoryNetworksArgs {
   includeTestnets?: boolean
