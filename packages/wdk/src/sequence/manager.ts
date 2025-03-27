@@ -242,11 +242,15 @@ export class Manager {
     return this.shared.modules.transactions.define(transactionId, changes)
   }
 
-  public async selectRelayer(
+  public async selectTransactionRelayer(
     transactionId: string,
     selectRelayer: (relayerOptions: RelayerOption[]) => Promise<RelayerOption | undefined>,
   ) {
     return this.shared.modules.transactions.selectRelayer(transactionId, selectRelayer)
+  }
+
+  public async deleteTransaction(transactionId: string) {
+    return this.shared.modules.transactions.delete(transactionId)
   }
 
   public onTransactionsUpdate(cb: (transactions: Transaction[]) => void, trigger?: boolean) {

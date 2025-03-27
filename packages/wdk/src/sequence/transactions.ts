@@ -1,7 +1,7 @@
 import { Payload } from '@0xsequence/sequence-primitives'
 import * as Db from '../dbs'
 import { Wallet } from '@0xsequence/sequence-core'
-import { Address, Provider } from 'ox'
+import { Address, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager'
 import { RelayerOption, Transaction, TransactionRequest } from './types/transactionRequest'
@@ -36,7 +36,8 @@ export class Transactions {
       throw new Error(`Network not found for ${chainId}`)
     }
 
-    const provider = Provider.from(network.rpc)
+    const transport = RpcTransport.fromHttp(network.rpc)
+    const provider = Provider.from(transport)
     const wallet = new Wallet(from, { stateProvider: this.shared.sequence.stateProvider })
 
     const calls = txs.map(
@@ -175,5 +176,9 @@ export class Transactions {
     }
 
     return undo
+  }
+
+  async delete(transactionId: string) {
+    await this.shared.databases.transactions.del(transactionId)
   }
 }
