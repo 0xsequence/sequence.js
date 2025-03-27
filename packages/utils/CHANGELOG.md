@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.1
+
+### Patch Changes
+
+- indexer: update rpc client
+
 ## 2.3.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.3.1
+
+### Patch Changes
+
+- indexer: update rpc client
+- Updated dependencies
+  - @0xsequence/utils@2.3.1
+
 ## 2.3.0
 
 ### Minor Changes

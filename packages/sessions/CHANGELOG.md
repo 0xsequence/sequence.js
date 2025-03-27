@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.1
+
+### Patch Changes
+
+- indexer: update rpc client
+- Updated dependencies
+  - @0xsequence/core@2.3.1
+  - @0xsequence/migration@2.3.1
+  - @0xsequence/replacer@2.3.1
+  - @0xsequence/utils@2.3.1
+
 ## 2.3.0
 
 ### Minor Changes
