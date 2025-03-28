@@ -139,3 +139,7 @@ export function addSignature(
     throw new Error('Unsupported signature type')
   }
 }
+
+export function isSigned(envelope: Envelope<Payload.Payload>): envelope is Signed<Payload.Payload> {
+  return typeof envelope === 'object' && 'signatures' in envelope
+}

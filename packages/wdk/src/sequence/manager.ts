@@ -47,7 +47,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
-  relayers: [], // TODO: How to auto-populate local relayer?
+  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -242,11 +242,12 @@ export class Manager {
     return this.shared.modules.transactions.define(transactionId, changes)
   }
 
-  public async selectTransactionRelayer(
-    transactionId: string,
-    selectRelayer: (relayerOptions: RelayerOption[]) => Promise<RelayerOption | undefined>,
-  ) {
-    return this.shared.modules.transactions.selectRelayer(transactionId, selectRelayer)
+  public async selectTransactionRelayer(transactionId: string, relayerOptionId: string) {
+    return this.shared.modules.transactions.selectRelayer(transactionId, relayerOptionId)
+  }
+
+  public async relayTransaction(transactionOrSignatureId: string) {
+    return this.shared.modules.transactions.relay(transactionOrSignatureId)
   }
 
   public async deleteTransaction(transactionId: string) {

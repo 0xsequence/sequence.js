@@ -11,6 +11,37 @@ export class LocalRelayer implements Relayer {
 
   constructor(public readonly provider: GenericProvider) {}
 
+  static createFromWindow(window: Window): LocalRelayer | undefined {
+    const eth = (window as any).ethereum
+    if (!eth) {
+      console.warn('Window.ethereum not found, skipping local relayer')
+      return undefined
+    }
+
+    return new LocalRelayer({
+      sendTransaction: async (args) => {
+        const accounts: string[] = await eth.request({ method: 'eth_requestAccounts' })
+        const from = accounts[0]
+        if (!from) {
+          console.warn('No account selected, skipping local relayer')
+          return undefined
+        }
+
+        const tx = await eth.request({
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from,
+              to: args.to,
+              data: args.data,
+            },
+          ],
+        })
+        return tx
+      },
+    })
+  }
+
   feeOptions(
     wallet: Address.Address,
     chainId: bigint,

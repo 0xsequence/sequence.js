@@ -32,11 +32,13 @@ export type TransactionRequested = TransactionBase & {
 
 export type TransactionDefined = TransactionBase & {
   status: 'defined'
+  relayerOptions: RelayerOption[]
 }
 
 export type TransactionFormed = TransactionBase & {
   relayerOption: RelayerOption
   status: 'formed'
+  signatureId: string
 }
 
 export type Transaction = TransactionRequested | TransactionDefined | TransactionFormed
