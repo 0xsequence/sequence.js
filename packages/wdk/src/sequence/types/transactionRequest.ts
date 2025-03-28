@@ -16,7 +16,7 @@ export type RelayerOption = {
   quote?: Relayer.FeeQuote
 }
 
-export type EnvelopeStatus = 'requested' | 'defined' | 'formed'
+export type EnvelopeStatus = 'requested' | 'defined' | 'formed' | 'relayed'
 
 type TransactionBase = {
   id: string
@@ -41,4 +41,9 @@ export type TransactionFormed = TransactionBase & {
   signatureId: string
 }
 
-export type Transaction = TransactionRequested | TransactionDefined | TransactionFormed
+export type TransactionRelayed = TransactionBase & {
+  status: 'relayed'
+  opHash: string
+}
+
+export type Transaction = TransactionRequested | TransactionDefined | TransactionFormed | TransactionRelayed

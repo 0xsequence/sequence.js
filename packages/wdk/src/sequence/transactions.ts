@@ -4,7 +4,13 @@ import { Envelope, Wallet } from '@0xsequence/sequence-core'
 import { Address, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager'
-import { RelayerOption, Transaction, TransactionFormed, TransactionRequest } from './types/transactionRequest'
+import {
+  RelayerOption,
+  Transaction,
+  TransactionFormed,
+  TransactionRelayed,
+  TransactionRequest,
+} from './types/transactionRequest'
 
 export class Transactions {
   constructor(private readonly shared: Shared) {}
@@ -218,7 +224,22 @@ export class Transactions {
       throw new Error(`Relayer ${tx.relayerOption.relayerId} not found for transaction ${transactionId}`)
     }
 
-    return relayer.relay(transaction.to, transaction.data, tx.envelope.chainId, tx.relayerOption.quote)
+    const { opHash } = await relayer.relay(
+      transaction.to,
+      transaction.data,
+      tx.envelope.chainId,
+      tx.relayerOption.quote,
+    )
+
+    await this.shared.databases.transactions.set({
+      ...tx,
+      status: 'relayed',
+      opHash,
+    } as TransactionRelayed)
+
+    await this.shared.modules.signatures.delete(signature.id)
+
+    return opHash
   }
 
   onTransactionsUpdate(cb: (transactions: Transaction[]) => void, trigger?: boolean) {

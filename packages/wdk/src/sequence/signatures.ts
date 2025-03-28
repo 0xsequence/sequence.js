@@ -176,4 +176,8 @@ export class Signatures {
 
     await this.shared.databases.signatures.set(request)
   }
+
+  async delete(requestId: string) {
+    await this.shared.databases.signatures.del(requestId)
+  }
 }

@@ -224,6 +224,10 @@ export class Manager {
     return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
 
+  public async deleteSignatureRequest(requestId: string) {
+    return this.shared.modules.signatures.delete(requestId)
+  }
+
   // Transactions
 
   public async requestTransaction(
