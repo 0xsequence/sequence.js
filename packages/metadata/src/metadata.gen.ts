@@ -2104,6 +2104,43 @@ export class Admin implements Admin {
     )
   }
 
+  isInTokenDirectory = (
+    args: IsInTokenDirectoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsInTokenDirectoryReturn> => {
+    return this.fetch(this.url('IsInTokenDirectory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok,
+            featureIndex: <number>_data.featureIndex
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
+  }
+
+  setTokenDirectoryFeatureIndex = (
+    args: SetTokenDirectoryFeatureIndexArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SetTokenDirectoryFeatureIndexReturn> => {
+    return this.fetch(this.url('SetTokenDirectoryFeatureIndex'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
+  }
+
   addContractToTokenDirectory = (
     args: AddContractToTokenDirectoryArgs,
     headers?: object,
