@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.2
+
+### Patch Changes
+
+- metadata: update rpc client
+
 ## 2.3.1
 
 ### Patch Changes

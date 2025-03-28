@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.2
+
+### Patch Changes
+
+- metadata: update rpc client
+- Updated dependencies
+  - @0xsequence/core@2.3.2
+  - @0xsequence/indexer@2.3.2
+  - @0xsequence/relayer@2.3.2
+  - @0xsequence/utils@2.3.2
+
 ## 2.3.1
 
 ### Patch Changes

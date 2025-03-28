@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.3.2
+
+### Patch Changes
+
+- metadata: update rpc client
+- Updated dependencies
+  - @0xsequence/utils@2.3.2
+
 ## 2.3.1
 
 ### Patch Changes

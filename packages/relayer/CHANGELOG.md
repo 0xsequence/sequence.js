@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 2.3.2
+
+### Patch Changes
+
+- metadata: update rpc client
+- Updated dependencies
+  - @0xsequence/abi@2.3.2
+  - @0xsequence/core@2.3.2
+  - @0xsequence/utils@2.3.2
+
 ## 2.3.1
 
 ### Patch Changes
