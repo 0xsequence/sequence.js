@@ -51,9 +51,12 @@ export function toTree(publicKey: PublicKey): GenericTree.Tree {
       [a, b],
       [c, metadataTree(publicKey.metadata)],
     ]
+  } else {
+    return [
+      [a, b],
+      [c, Hex.padLeft('0x00', 32)],
+    ]
   }
-
-  return [[a, b], c]
 }
 
 export function fromTree(tree: GenericTree.Tree): PublicKey {
@@ -232,7 +235,7 @@ export function decode(data: Bytes.Bytes): Required<DecodedSignature> & { challe
     throw new Error('Invalid flags')
   }
 
-  const requireUserVerification = (flags & 0x01) === 0x01
+  const requireUserVerification = (flags & 0x01) !== 0x00
   const bytesAuthDataSize = ((flags >> 1) & 0x01) + 1
   const bytesClientDataJSONSize = ((flags >> 2) & 0x01) + 1
   const bytesChallengeIndex = ((flags >> 3) & 0x01) + 1

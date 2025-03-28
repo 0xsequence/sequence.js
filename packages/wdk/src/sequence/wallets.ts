@@ -183,7 +183,9 @@ export class Wallets {
   }> {
     switch (args.kind) {
       case 'passkey':
-        const passkeySigner = await Signers.Passkey.Passkey.create(this.shared.sequence.extensions)
+        const passkeySigner = await Signers.Passkey.Passkey.create(this.shared.sequence.extensions, {
+          stateProvider: this.shared.sequence.stateProvider,
+        })
         this.shared.modules.logger.log('Created new passkey signer:', passkeySigner.address)
 
         return {
