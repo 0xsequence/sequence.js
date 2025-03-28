@@ -34,3 +34,11 @@ export interface Witnessable {
 }
 
 type MaybePromise<T> = T | Promise<T>
+
+export function isSapientSigner(signer: Signer | SapientSigner): signer is SapientSigner {
+  return 'signSapient' in signer
+}
+
+export function isSigner(signer: Signer | SapientSigner): signer is Signer {
+  return 'sign' in signer
+}

@@ -5,7 +5,7 @@ export type Extensions = {
 }
 
 export const Dev1: Extensions = {
-  passkeys: '0x38A6E2281C1A010e2F98159f5Fc44787957a6725',
+  passkeys: '0x8f26281dB84C18aAeEa8a53F94c835393229d296',
 }
 
 export * as Passkeys from './passkeys'

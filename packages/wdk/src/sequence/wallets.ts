@@ -1,4 +1,4 @@
-import { Address, Hex, Mnemonic } from 'ox'
+import { Address, Hex } from 'ox'
 import { Envelope, Signers, Wallet as CoreWallet } from '@0xsequence/sequence-core'
 import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
@@ -31,7 +31,7 @@ export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs 
   return 'wallet' in args
 }
 
-function buildCappedTree(members: Address.Address[]): Config.Topology {
+function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
   const loginMemberWeight = 1n
 
   if (members.length === 0) {
@@ -45,24 +45,41 @@ function buildCappedTree(members: Address.Address[]): Config.Topology {
   }
 
   if (members.length === 1) {
-    return {
-      type: 'signer',
-      address: members[0],
-      weight: loginMemberWeight,
-    } as Config.SignerLeaf
+    if (members[0]!.imageHash) {
+      return {
+        type: 'sapient-signer',
+        address: members[0]!.address,
+        imageHash: members[0]!.imageHash,
+        weight: loginMemberWeight,
+      } as Config.SapientSignerLeaf
+    } else {
+      return {
+        type: 'signer',
+        address: members[0]!.address,
+        weight: loginMemberWeight,
+      } as Config.SignerLeaf
+    }
   }
 
-  // Limit their total signing power
   return {
     type: 'nested',
     weight: loginMemberWeight,
     threshold: 1n,
     tree: Config.flatLeavesToTopology(
-      members.map((member) => ({
-        type: 'signer',
-        address: member,
-        weight: 1n,
-      })),
+      members.map((member) =>
+        member.imageHash
+          ? {
+              type: 'sapient-signer',
+              address: member.address,
+              imageHash: member.imageHash,
+              weight: 1n,
+            }
+          : {
+              type: 'signer',
+              address: member.address,
+              weight: 1n,
+            },
+      ),
     ),
   } as Config.NestedLeaf
 }
@@ -204,8 +221,14 @@ export class Wallets {
     }
 
     // Build the login tree
-    const loginTopology = buildCappedTree([await loginSigner.signer.address])
-    const devicesTopology = buildCappedTree([device.address])
+    const loginTopology = buildCappedTree([
+      {
+        address: await loginSigner.signer.address,
+        imageHash: Signers.isSapientSigner(loginSigner.signer) ? await loginSigner.signer.imageHash : undefined,
+      },
+    ])
+
+    const devicesTopology = buildCappedTree([{ address: device.address }])
     const guardTopology = args.noGuard
       ? undefined
       : buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
@@ -221,6 +244,7 @@ export class Wallets {
 
     // Create initial configuration
     const initialConfiguration = toConfig(0n, loginTopology, devicesTopology, modules, guardTopology)
+    console.log('initialConfiguration', initialConfiguration)
 
     // Create wallet
     const wallet = await CoreWallet.fromConfiguration(initialConfiguration, {
@@ -279,8 +303,11 @@ export class Wallets {
       }
 
       const nextDevicesTopology = buildCappedTree([
-        ...prevDevices.signers.filter((x) => x !== '0x0000000000000000000000000000000000000000'),
-        device.address,
+        ...prevDevices.signers
+          .filter((x) => x !== '0x0000000000000000000000000000000000000000')
+          .map((x) => ({ address: x })),
+        ...prevDevices.sapientSigners.map((x) => ({ address: x.address, imageHash: x.imageHash })),
+        { address: device.address },
       ])
       const envelope = await wallet.prepareUpdate(
         toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
@@ -370,11 +397,12 @@ export class Wallets {
     const status = await walletObj.getStatus()
     const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
 
-    const nextDevicesTopology = buildCappedTree(
-      Config.getSigners(devicesTopology).signers.filter(
-        (x) => x !== device.address && x !== '0x0000000000000000000000000000000000000000',
-      ),
-    )
+    const nextDevicesTopology = buildCappedTree([
+      ...Config.getSigners(devicesTopology)
+        .signers.filter((x) => x !== '0x0000000000000000000000000000000000000000')
+        .map((x) => ({ address: x })),
+      ...Config.getSigners(devicesTopology).sapientSigners,
+    ])
 
     const envelope = await walletObj.prepareUpdate(
       toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
