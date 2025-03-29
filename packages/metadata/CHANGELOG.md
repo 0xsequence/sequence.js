@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.3.3
+
+### Patch Changes
+
+- metadata: client update
+
 ## 2.3.2
 
 ### Patch Changes

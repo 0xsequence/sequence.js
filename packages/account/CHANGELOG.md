@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.3.3
+
+### Patch Changes
+
+- metadata: client update
+- Updated dependencies
+  - @0xsequence/abi@2.3.3
+  - @0xsequence/core@2.3.3
+  - @0xsequence/migration@2.3.3
+  - @0xsequence/network@2.3.3
+  - @0xsequence/relayer@2.3.3
+  - @0xsequence/sessions@2.3.3
+  - @0xsequence/utils@2.3.3
+  - @0xsequence/wallet@2.3.3
+
 ## 2.3.2
 
 ### Patch Changes
