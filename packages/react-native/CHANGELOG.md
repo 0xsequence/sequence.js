@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.4
+
+### Patch Changes
+
+- metadata: exclude deprecated methods on rpc client
+- Updated dependencies
+  - @0xsequence/waas@2.3.4
+
 ## 2.3.3
 
 ### Patch Changes

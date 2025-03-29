@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.3.4
+
+### Patch Changes
+
+- metadata: exclude deprecated methods on rpc client
+
 ## 2.3.3
 
 ### Patch Changes
