@@ -41,27 +41,30 @@ export class PasskeysHandler implements Handler {
         address,
         this.extensions.passkeys,
       )
-      return {
+      const status: SignerUnavailable = {
         ...base,
         status: 'unavailable',
         reason: 'unknown-error',
-      } as SignerUnavailable
+      }
+      return status
     }
 
     const passkey = imageHash && (await this.loadPasskey(request.envelope.wallet, imageHash))
     if (!passkey) {
       console.warn('PasskeySigner: status failed to load passkey', address, imageHash)
-      return {
+      const status: SignerUnavailable = {
         ...base,
         status: 'unavailable',
         reason: 'unknown-error',
-      } as SignerUnavailable
+      }
+      return status
     }
 
-    return {
+    const status: SignerActionable = {
       ...base,
       status: 'actionable',
       message: 'request-interaction-with-passkey',
+      imageHash: imageHash,
       handle: async () => {
         const signature = await passkey.signSapient(
           request.envelope.wallet,
@@ -76,6 +79,7 @@ export class PasskeysHandler implements Handler {
         })
         return true
       },
-    } as SignerActionable
+    }
+    return status
   }
 }

@@ -1,6 +1,6 @@
 import { Envelope } from '@0xsequence/sequence-core'
 import { Payload } from '@0xsequence/sequence-primitives'
-import { Address, Bytes } from 'ox'
+import { Address, Hex } from 'ox'
 import { Handler } from '../handlers'
 
 export type ActionToPayload = {
@@ -29,7 +29,7 @@ export type BaseSignatureRequest<A extends Action = Action> = {
 
 export type SignerBase = {
   address: Address.Address
-  imageHash?: Bytes.Bytes
+  imageHash?: Hex.Hex
 }
 
 export type SignerSigned = SignerBase & {

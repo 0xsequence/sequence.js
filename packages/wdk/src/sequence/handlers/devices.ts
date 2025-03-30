@@ -25,15 +25,16 @@ export class DevicesHandler implements Handler {
   ): Promise<SignerUnavailable | SignerReady> {
     const signer = await this.devices.get(address)
     if (!signer) {
-      return {
+      const status: SignerUnavailable = {
         address,
         handler: this,
         reason: 'not-local-key',
         status: 'unavailable',
-      } as SignerUnavailable
+      }
+      return status
     }
 
-    return {
+    const status: SignerReady = {
       address,
       handler: this,
       status: 'ready',
@@ -47,6 +48,7 @@ export class DevicesHandler implements Handler {
 
         return true
       },
-    } as SignerReady
+    }
+    return status
   }
 }
