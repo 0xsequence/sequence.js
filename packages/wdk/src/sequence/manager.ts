@@ -1,21 +1,21 @@
+import { Signers as CoreSigners, Relayer, State } from '@0xsequence/sequence-core'
+import { Config, Constants, Context, Extensions, Network, Payload } from '@0xsequence/sequence-primitives'
 import { Address } from 'ox'
-
-import { Extensions, Context, Config, Constants, Network, Payload } from '@0xsequence/sequence-primitives'
-import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-core'
 import * as Db from '../dbs'
-import { Logger } from './logger'
+import * as Identity from '../identity'
 import { Devices } from './devices'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
-import { Transactions } from './transactions'
+import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
+import { AuthCodePkceHandler } from './handlers/authcode-pkce'
+import { MnemonicHandler } from './handlers/mnemonic'
+import { OtpHandler } from './handlers/otp'
+import { Logger } from './logger'
+import { Sessions } from './sessions'
 import { Signatures } from './signatures'
 import { Kinds, Signers } from './signers'
-import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
-import { MnemonicHandler } from './handlers/mnemonic'
-import { RelayerOption, TransactionRequest, Transaction } from './types/transactionRequest'
+import { Transactions } from './transactions'
 import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
-import { OtpHandler } from './handlers/otp'
-import { AuthCodePkceHandler } from './handlers/authcode-pkce'
-import * as Identity from '../identity'
+import { Transaction, TransactionRequest } from './types/transactionRequest'
+import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -60,6 +60,13 @@ export const ManagerOptionsDefaults = {
     address: '0xf71eC72C8C03a0857DD7601ACeF1e42b85983e99',
     weight: 1n,
   } as Config.SignerLeaf,
+
+  defaultSessionTopology: {
+    // TODO: Move this somewhere else
+    type: 'sapient-signer',
+    address: Constants.DefaultSessionManager,
+    weight: 1n,
+  } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
 }
 
 export const CreateWalletOptionsDefaults = {
@@ -89,12 +96,14 @@ export type Sequence = {
   readonly relayers: Relayer.Relayer[]
 
   readonly defaultGuardTopology: Config.Topology
+  readonly defaultSessionTopology: Omit<Config.SapientSignerLeaf, 'imageHash'>
 }
 
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
   readonly wallets: Wallets
+  readonly sessions: Sessions
   readonly signers: Signers
   readonly signatures: Signatures
   readonly transactions: Transactions
@@ -135,6 +144,7 @@ export class Manager {
         relayers: ops.relayers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
+        defaultSessionTopology: ops.defaultSessionTopology,
       },
 
       databases: {
@@ -153,6 +163,7 @@ export class Manager {
       logger: new Logger(shared),
       devices: new Devices(shared),
       wallets: new Wallets(shared),
+      sessions: new Sessions(shared),
       signers: new Signers(shared),
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),

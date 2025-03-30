@@ -13,7 +13,7 @@ import { State } from '..'
 
 type SessionManagerConfiguration = {
   topology: SessionConfig.SessionsTopology
-  provider: Provider.Provider
+  provider?: Provider.Provider
   implicitSigners?: Implicit[]
   explicitSigners?: Explicit[]
   address?: Address.Address
@@ -22,7 +22,7 @@ type SessionManagerConfiguration = {
 export class SessionManager implements SapientSigner {
   private readonly _address: Address.Address
   private readonly _topology: SessionConfig.SessionsTopology
-  private readonly _provider: Provider.Provider
+  private readonly _provider: Provider.Provider | undefined
   private readonly _implicitSigners: Implicit[]
   private readonly _explicitSigners: Explicit[]
 
@@ -159,13 +159,17 @@ export class SessionManager implements SapientSigner {
       throw new Error('Only calls are supported')
     }
 
+    if (!this._provider) {
+      throw new Error('Provider not set')
+    }
+
     // Try to sign with each signer, prioritizing implicit signers
     const signers = [...this._implicitSigners, ...this._explicitSigners]
     const signatures = await Promise.all(
       //FIXME Run sync to support cumulative rules within a payload
       payload.calls.map(async (call) => {
         for (const signer of signers) {
-          if (await signer.supportedCall(wallet, chainId, call, this._provider)) {
+          if (this._provider && (await signer.supportedCall(wallet, chainId, call, this._provider))) {
             const signature = await signer.signCall(wallet, chainId, call, payload, this._provider)
             return {
               ...signature,
@@ -202,6 +206,11 @@ export class SessionManager implements SapientSigner {
       // Only calls are supported
       return false
     }
+
+    if (!this._provider) {
+      throw new Error('Provider not set')
+    }
+
     const encodedPayload = Payload.encodeSapient(chainId, payload)
     const encodedCallData = AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE, [
       encodedPayload,

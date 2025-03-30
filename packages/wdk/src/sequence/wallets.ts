@@ -1,13 +1,13 @@
+import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/sequence-core'
+import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
-import { Envelope, Signers, Wallet as CoreWallet, State } from '@0xsequence/sequence-core'
-import { Config, Payload } from '@0xsequence/sequence-primitives'
-import { Kinds, WitnessExtraSignerKind } from './signers'
-import { Shared } from './manager'
+import { AuthCommitment } from '../dbs/auth-commitments'
+import { AuthCodePkceHandler } from './handlers/authcode-pkce'
 import { MnemonicHandler } from './handlers/mnemonic'
 import { OtpHandler } from './handlers/otp'
+import { Shared } from './manager'
+import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Wallet } from './types'
-import { AuthCodePkceHandler } from './handlers/authcode-pkce'
-import { AuthCommitment } from '../dbs/auth-commitments'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple-pkce'
@@ -17,6 +17,7 @@ export type StartSignUpWithRedirectArgs = {
 
 export type CommonSignupArgs = {
   noGuard?: boolean
+  noSessionManager?: boolean
   onExistingWallets?: (wallets: Address.Address[]) => Promise<boolean>
 }
 
@@ -350,13 +351,13 @@ export class Wallets {
     }
 
     // Build the login tree
+    const loginSignerAddress = await loginSigner.signer.address
     const loginTopology = buildCappedTree([
       {
-        address: await loginSigner.signer.address,
+        address: loginSignerAddress,
         imageHash: Signers.isSapientSigner(loginSigner.signer) ? await loginSigner.signer.imageHash : undefined,
       },
     ])
-
     const devicesTopology = buildCappedTree([{ address: device.address }])
     const guardTopology = args.noGuard
       ? undefined
@@ -365,11 +366,24 @@ export class Wallets {
     // TODO: Add recovery module
     // TODO: Add smart sessions module
     // Placeholder
-    const modules = {
+    let modules: Config.Topology = {
       type: 'signer',
       address: '0x0000000000000000000000000000000000000000',
       weight: 0n,
-    } as Config.SignerLeaf
+    }
+    if (!args.noSessionManager) {
+      // FIXME: Calculate image hash with the identity signer
+      const sessionManagerTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
+      const sessionConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionManagerTopology)
+      const sessionImageHash = GenericTree.hash(sessionConfigTree)
+      modules = [
+        {
+          ...this.shared.sequence.defaultSessionTopology,
+          imageHash: sessionImageHash,
+        },
+        modules,
+      ]
+    }
 
     // Create initial configuration
     const initialConfiguration = toConfig(0n, loginTopology, devicesTopology, modules, guardTopology)
