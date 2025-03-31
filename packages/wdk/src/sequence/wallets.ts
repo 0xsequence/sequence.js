@@ -1,5 +1,5 @@
 import { Address, Hex } from 'ox'
-import { Envelope, Signers, Wallet as CoreWallet } from '@0xsequence/sequence-core'
+import { Envelope, Signers, Wallet as CoreWallet, State } from '@0xsequence/sequence-core'
 import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Shared } from './manager'
@@ -8,6 +8,7 @@ import { Wallet } from './types'
 
 export type CommonSignupArgs = {
   noGuard?: boolean
+  onExistingWallets?: (wallets: Address.Address[]) => Promise<boolean>
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
@@ -25,7 +26,18 @@ export type LoginToWalletArgs = {
   wallet: Address.Address
 }
 
-export type LoginArgs = LoginToWalletArgs
+export type LoginToMnemonicArgs = {
+  kind: 'mnemonic'
+  mnemonic: string
+  selectWallet: (wallets: Wallet[]) => Promise<Address.Address>
+}
+
+export type LoginToPasskeyArgs = {
+  kind: 'passkey'
+  selectWallet: (wallets: Wallet[]) => Promise<Address.Address>
+}
+
+export type LoginArgs = LoginToWalletArgs | LoginToMnemonicArgs | LoginToPasskeyArgs
 
 export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
   return 'wallet' in args
@@ -214,6 +226,17 @@ export class Wallets {
 
   async signUp(args: SignupArgs) {
     const loginSigner = await this.prepareSignUp(args)
+
+    // If there is an existing wallet callback, we check if any wallet already exist for this login signer
+    if (args.onExistingWallets) {
+      const existingWallets = await State.getWalletsFor(this.shared.sequence.stateProvider, loginSigner.signer)
+      if (existingWallets.length > 0) {
+        const result = await args.onExistingWallets(existingWallets.map((w) => w.wallet))
+        if (result) {
+          return
+        }
+      }
+    }
 
     // Create the first session
     const device = await this.shared.modules.devices.create()
