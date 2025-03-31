@@ -29,18 +29,26 @@ export type LoginToWalletArgs = {
 export type LoginToMnemonicArgs = {
   kind: 'mnemonic'
   mnemonic: string
-  selectWallet: (wallets: Wallet[]) => Promise<Address.Address>
+  selectWallet: (wallets: Address.Address[]) => Promise<Address.Address>
 }
 
 export type LoginToPasskeyArgs = {
   kind: 'passkey'
-  selectWallet: (wallets: Wallet[]) => Promise<Address.Address>
+  selectWallet: (wallets: Address.Address[]) => Promise<Address.Address>
 }
 
 export type LoginArgs = LoginToWalletArgs | LoginToMnemonicArgs | LoginToPasskeyArgs
 
 export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
   return 'wallet' in args
+}
+
+export function isLoginToMnemonicArgs(args: LoginArgs): args is LoginToMnemonicArgs {
+  return 'kind' in args && args.kind === 'mnemonic'
+}
+
+export function isLoginToPasskeyArgs(args: LoginArgs): args is LoginToPasskeyArgs {
+  return 'kind' in args && args.kind === 'passkey'
 }
 
 function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
@@ -354,6 +362,25 @@ export class Wallets {
       })
 
       return requestId
+    }
+
+    if (isLoginToMnemonicArgs(args)) {
+      const mnemonicSigner = MnemonicHandler.toSigner(args.mnemonic)
+      if (!mnemonicSigner) {
+        throw new Error('invalid-mnemonic')
+      }
+
+      const wallets = await State.getWalletsFor(this.shared.sequence.stateProvider, mnemonicSigner)
+      if (wallets.length === 0) {
+        throw new Error('no-wallets-found')
+      }
+
+      const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
+      if (!wallets.some((w) => w.wallet === wallet)) {
+        throw new Error('wallet-not-found')
+      }
+
+      return this.login({ wallet })
     }
   }
 
