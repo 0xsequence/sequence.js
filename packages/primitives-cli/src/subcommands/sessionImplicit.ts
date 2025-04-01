@@ -6,7 +6,7 @@ import { fromPosOrStdin, requireString } from '../utils'
 export async function doAddBlacklistAddress(blacklistAddress: string, sessionTopologyInput: string): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
   const updated = SessionConfig.addToImplicitBlacklist(sessionTopology, blacklistAddress as Address.Address)
-  return JSON.stringify(updated)
+  return SessionConfig.sessionsTopologyToJson(updated)
 }
 
 export async function doRemoveBlacklistAddress(
@@ -15,7 +15,7 @@ export async function doRemoveBlacklistAddress(
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
   const updated = SessionConfig.removeFromImplicitBlacklist(sessionTopology, blacklistAddress as Address.Address)
-  return JSON.stringify(updated)
+  return SessionConfig.sessionsTopologyToJson(updated)
 }
 
 const sessionImplicitCommand: CommandModule = {
