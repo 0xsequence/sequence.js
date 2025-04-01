@@ -1,5 +1,13 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/sequence-core'
-import { Config, Constants, Context, Extensions, Network, Payload } from '@0xsequence/sequence-primitives'
+import {
+  Config,
+  Constants,
+  Context,
+  Extensions,
+  Network,
+  Payload,
+  SessionConfig,
+} from '@0xsequence/sequence-primitives'
 import { Address } from 'ox'
 import * as Db from '../dbs'
 import * as Identity from '../identity'
@@ -246,7 +254,7 @@ export class Manager {
 
   // Signatures
 
-  public async listSignatureRequests(): Promise<BaseSignatureRequest[]> {
+  public async listSignatureRequests(): Promise<SignatureRequest[]> {
     return this.shared.modules.signatures.list()
   }
 
@@ -323,5 +331,44 @@ export class Manager {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })
+  }
+
+  // Sessions
+
+  public async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
+    return this.shared.modules.sessions.getSessionTopology(walletAddress)
+  }
+
+  public async addImplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address) {
+    return this.shared.modules.sessions.addImplicitSession(walletAddress, sessionAddress)
+  }
+
+  public async addExplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    permissions: CoreSigners.Session.ExplicitParams,
+  ): Promise<string> {
+    return this.shared.modules.sessions.addExplicitSession(walletAddress, sessionAddress, permissions)
+  }
+
+  public async removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
+    return this.shared.modules.sessions.removeExplicitSession(walletAddress, sessionAddress)
+  }
+
+  public async addBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
+    return this.shared.modules.sessions.addBlacklistAddress(walletAddress, address)
+  }
+
+  public async removeBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
+    return this.shared.modules.sessions.removeBlacklistAddress(walletAddress, address)
+  }
+
+  public async completeSessionUpdate(requestId: string) {
+    const sigRequest = await this.shared.modules.signatures.get(requestId)
+    if (sigRequest.action !== 'session-update' || !Payload.isConfigUpdate(sigRequest.envelope.payload)) {
+      throw new Error('Invalid action')
+    }
+    console.log('Completing session update:', requestId)
+    return this.shared.modules.sessions.completeSessionUpdate(sigRequest.wallet, requestId)
   }
 }

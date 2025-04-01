@@ -1,5 +1,4 @@
 import { Payload } from '@0xsequence/sequence-primitives'
-import * as Db from '../dbs'
 import { Envelope, Wallet } from '@0xsequence/sequence-core'
 import { Address, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
@@ -161,6 +160,7 @@ export class Transactions {
 
     return signatureId
   }
+
   async relay(transactionOrSignatureId: string) {
     // First, try to get the transaction directly
     let tx: Transaction | undefined

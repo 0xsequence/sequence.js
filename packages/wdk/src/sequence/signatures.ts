@@ -10,8 +10,8 @@ import { BaseSignatureRequest, SignatureRequest, SignerBase, SignerSigned, Signe
 export class Signatures {
   constructor(private readonly shared: Shared) {}
 
-  async list(): Promise<Db.SignatureRequest[]> {
-    return this.shared.databases.signatures.list()
+  async list(): Promise<SignatureRequest[]> {
+    return this.shared.databases.signatures.list() as any as SignatureRequest[]
   }
 
   async get(requestId: string): Promise<SignatureRequest> {
@@ -94,7 +94,7 @@ export class Signatures {
       ...request,
       ...Envelope.weightOf(request.envelope),
       signers: statuses,
-    }
+    } as SignatureRequest
   }
 
   onSignatureRequestUpdate(

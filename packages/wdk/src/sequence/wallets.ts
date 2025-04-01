@@ -204,6 +204,10 @@ export class Wallets {
     return this.shared.databases.manager.get(wallet).then((r) => r !== undefined)
   }
 
+  public async get(walletAddress: Address.Address): Promise<Wallet | undefined> {
+    return await this.shared.databases.manager.get(walletAddress)
+  }
+
   public async list(): Promise<Wallet[]> {
     return this.shared.databases.manager.list()
   }
@@ -374,7 +378,10 @@ export class Wallets {
     if (!args.noSessionManager) {
       // FIXME: Calculate image hash with the identity signer
       const sessionManagerTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
+      // Store this tree in the state provider
       const sessionConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionManagerTopology)
+      this.shared.sequence.stateProvider.saveTree(sessionConfigTree)
+      // Prepare the configuration leaf
       const sessionImageHash = GenericTree.hash(sessionConfigTree)
       modules = [
         {

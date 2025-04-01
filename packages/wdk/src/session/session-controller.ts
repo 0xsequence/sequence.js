@@ -24,11 +24,6 @@ export class SessionController {
   private readonly _identitySigner: IdentitySigner | null
   private readonly _stateProvider: State.Provider | null
 
-  private _pendingUpdate: {
-    envelope: Envelope.Envelope<Payload.ConfigUpdate>
-    topology: SessionConfig.SessionsTopology
-  } | null = null
-
   constructor(configuration: SessionControllerConfiguration) {
     this._manager = new Signers.SessionManager({
       topology: configuration.topology,
@@ -132,7 +127,14 @@ export class SessionController {
     // Create a new manager with the new topology
 
     // Store the new configuration
-    await this._stateProvider?.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+    if (!this._stateProvider) {
+      throw new Error('State provider not provided')
+    }
+    const tree = SessionConfig.sessionsTopologyToConfigurationTree(topology)
+    console.log('prepareUpdateConfiguration Tree:', tree)
+    const newImageHash = GenericTree.hash(tree)
+    console.log('New image hash:', newImageHash)
+    await this._stateProvider.saveTree(tree)
 
     // Get the old wallet configuration
     const { configuration } = await this._wallet.getStatus()
@@ -144,26 +146,36 @@ export class SessionController {
       throw new Error('Session manager not found in configuration')
     }
 
-    // Update the configuration to use the new session manager image hash
-    managerLeaf.imageHash = this.imageHash
+    console.log('prepareUpdateConfiguration Manager Leaf:', managerLeaf)
+    console.log('New image hash:', newImageHash)
 
-    // Update the wallet configuration
-    const envelope = await this._wallet.prepareUpdate(configuration)
-    return envelope
+    // Update the configuration to use the new session manager image hash
+    managerLeaf.imageHash = newImageHash
+    return await this._wallet.prepareUpdate(configuration)
   }
 
   // Complete the configuration update
-  protected async completeUpdateConfiguration(envelope: Envelope.Signed<Payload.ConfigUpdate>): Promise<void> {
-    // Verify this is the pending configuration update
-    if (!this._pendingUpdate) {
-      throw new Error('No pending configuration update')
-    }
-    if (this._pendingUpdate.envelope.payload.imageHash !== envelope.payload.imageHash) {
-      throw new Error('Invalid configuration update')
+  async completeUpdateConfiguration(envelope: Envelope.Signed<Payload.ConfigUpdate>): Promise<void> {
+    const configuration = await this._stateProvider?.getConfiguration(envelope.payload.imageHash)
+    if (!configuration) {
+      throw new Error('Wallet configuration not found')
     }
 
-    // Update the manager and wallet with the new topology
-    this._manager = this._manager.withTopology(this._pendingUpdate.topology)
+    // Find the session manager in the new configuration
+    const managerLeaf = Config.findSignerLeaf(configuration, this._manager.address)
+    if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
+      throw new Error('Session manager not found in configuration')
+    }
+    const sessionTree = await this._stateProvider?.getTree(managerLeaf.imageHash)
+    if (!sessionTree) {
+      throw new Error('Session tree not found')
+    }
+    const topology = SessionConfig.configurationTreeToSessionsTopology(sessionTree)
+    console.log('completeUpdateConfiguration Topology:', topology)
+
+    // Update the manager and wallet with the new topology and submit the update
+    this._manager = this._manager.withTopology(topology)
+    console.log('Submitting update:', envelope.payload.imageHash)
     await this._wallet.submitUpdate(envelope)
   }
 }

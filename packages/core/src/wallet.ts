@@ -98,6 +98,7 @@ export class Wallet {
       throw new Error(`cannot find configuration details for ${envelope.payload.imageHash}`)
     }
 
+    // Verify the new configuration is valid
     const updatedEnvelope = { ...envelope, configuration: status.configuration }
     const { weight, threshold } = Envelope.weightOf(updatedEnvelope)
     if (weight < threshold) {
