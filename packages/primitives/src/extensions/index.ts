@@ -9,3 +9,4 @@ export const Dev1: Extensions = {
 }
 
 export * as Passkeys from './passkeys'
+export * as Recovery from './recovery'
