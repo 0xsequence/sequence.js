@@ -307,7 +307,7 @@ export class Wallets {
     return wallet.address
   }
 
-  async login(args: LoginArgs) {
+  async login(args: LoginArgs): Promise<string | undefined> {
     if (isLoginToWalletArgs(args)) {
       const prevWallet = await this.exists(args.wallet)
       if (prevWallet) {
@@ -382,6 +382,30 @@ export class Wallets {
 
       return this.login({ wallet })
     }
+
+    if (isLoginToPasskeyArgs(args)) {
+      const passkeySigner = await Signers.Passkey.Passkey.find(
+        this.shared.sequence.stateProvider,
+        this.shared.sequence.extensions,
+      )
+      if (!passkeySigner) {
+        throw new Error('no-passkey-found')
+      }
+
+      const wallets = await State.getWalletsFor(this.shared.sequence.stateProvider, passkeySigner)
+      if (wallets.length === 0) {
+        throw new Error('no-wallets-found')
+      }
+
+      const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
+      if (!wallets.some((w) => w.wallet === wallet)) {
+        throw new Error('wallet-not-found')
+      }
+
+      return this.login({ wallet })
+    }
+
+    throw new Error('invalid-login-args')
   }
 
   async completeLogin(requestId: string) {

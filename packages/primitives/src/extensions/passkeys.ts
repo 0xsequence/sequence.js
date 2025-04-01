@@ -2,9 +2,7 @@ import { Bytes, Hex, WebAuthnP256 } from 'ox'
 import { GenericTree } from '..'
 
 export type PasskeyMetadata = {
-  name: string
   credentialId: string
-  createdAt: number
 }
 
 export type PublicKey = {
@@ -16,22 +14,10 @@ export type PublicKey = {
 
 export function metadataTree(metadata: Required<PublicKey>['metadata']): GenericTree.Tree {
   if (typeof metadata === 'object') {
-    return [
-      {
-        type: 'leaf',
-        value: Bytes.fromString(metadata.credentialId),
-      },
-      [
-        {
-          type: 'leaf',
-          value: Bytes.fromString(metadata.name),
-        },
-        {
-          type: 'leaf',
-          value: Bytes.fromNumber(metadata.createdAt),
-        },
-      ],
-    ]
+    return {
+      type: 'leaf',
+      value: Bytes.fromString(metadata.credentialId),
+    }
   } else {
     return metadata
   }
@@ -111,9 +97,7 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
         throw new Error('Invalid metadata leaves')
       }
 
-      const name = new TextDecoder().decode(nameLeaf.value)
-      const createdAt = Number(Bytes.toBigInt(createdAtLeaf.value))
-      metadata = { credentialId, name, createdAt }
+      metadata = { credentialId }
     } else if (GenericTree.isNode(meta) && meta.length === 32) {
       metadata = meta
     } else {

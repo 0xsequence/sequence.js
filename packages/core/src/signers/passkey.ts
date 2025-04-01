@@ -1,4 +1,4 @@
-import { Hex, Bytes, Address } from 'ox'
+import { Hex, Bytes, Address, P256 } from 'ox'
 import { Payload, Extensions } from '@0xsequence/sequence-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
 import { WebAuthnP256 } from 'ox'
@@ -129,6 +129,79 @@ export class Passkey implements SapientSigner, Witnessable {
     }
 
     return passkey
+  }
+
+  static async find(
+    stateReader: State.Reader,
+    extensions: Pick<Extensions.Extensions, 'passkeys'>,
+  ): Promise<Passkey | undefined> {
+    const challenge = Hex.random(32)
+    const response = await WebAuthnP256.sign({
+      challenge,
+    })
+
+    const credential = response.raw
+    if (!credential) {
+      throw new Error('No credential returned')
+    }
+
+    // Recover the public key from the credential
+    const publicKey = P256.recoverPublicKey({
+      payload: challenge,
+      signature: {
+        r: BigInt(response.signature.r),
+        s: BigInt(response.signature.s),
+        yParity: 0,
+      },
+    })
+
+    // Compute the imageHash for all public key combinations
+    // - requireUserVerification: true / false
+    // - embedMetadata: true / false
+
+    const base = {
+      x: Hex.fromNumber(publicKey.x),
+      y: Hex.fromNumber(publicKey.y),
+    }
+
+    const metadata = {
+      credentialId: credential.id,
+    }
+
+    const imageHashes = [
+      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: true }),
+      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: true }),
+      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: false, metadata }),
+      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: false, metadata }),
+    ]
+    // Find wallets for all possible image hashes
+    const signers = await Promise.all(
+      imageHashes.map(async (imageHash) => {
+        const wallets = await stateReader.getWalletsForSapient(extensions.passkeys, imageHash)
+        return Object.keys(wallets).map((wallet) => ({
+          wallet: Address.from(wallet),
+          imageHash,
+        }))
+      }),
+    )
+
+    // Flatten and remove duplicates
+    const flattened = signers
+      .flat()
+      .filter((v, i, self) => self.findIndex((t) => t.wallet === v.wallet && t.imageHash === v.imageHash) === i)
+
+    // If there are no signers, return undefined
+    if (flattened.length === 0) {
+      return undefined
+    }
+
+    // If there are multiple signers log a warning
+    // but we still return the first one
+    if (flattened.length > 1) {
+      console.warn('Multiple signers found for passkey', flattened)
+    }
+
+    return Passkey.loadFromWitness(stateReader, extensions, flattened[0]!.wallet, flattened[0]!.imageHash)
   }
 
   async signSapient(
