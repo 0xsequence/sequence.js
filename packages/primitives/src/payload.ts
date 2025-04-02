@@ -395,24 +395,7 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
     }
 
     case 'digest': {
-      const types = {
-        Digest: [
-          { name: 'digest', type: 'bytes32' },
-          { name: 'wallets', type: 'address[]' },
-        ],
-      }
-
-      const message = {
-        digest: payload.digest,
-        wallets: payload.parentWallets ?? [],
-      }
-
-      return {
-        domain,
-        types,
-        primaryType: 'Digest',
-        message,
-      }
+      throw new Error('Digest is not supported - Use message instead')
     }
   }
 }
