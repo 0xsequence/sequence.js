@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+
 ## 2.3.4
 
 ### Patch Changes

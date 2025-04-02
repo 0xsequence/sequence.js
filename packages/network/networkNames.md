@@ -29,7 +29,7 @@ You can use this file as a reference to look up the correct network name slug a 
 | The Root Network Porcini Testnet | 7672 | rootnet-porcini |
 | B3 | 8333 | b3 |
 | Base (Coinbase) | 8453 | base |
-| MONAD Testnet | 10143 | monad-testnet |
+| Monad Testnet | 10143 | monad-testnet |
 | Immutable zkEVM | 13371 | immutable-zkevm |
 | Immutable zkEVM Testnet | 13473 | immutable-zkevm-testnet |
 | Oasys Homeverse | 19011 | homeverse |
@@ -40,16 +40,17 @@ You can use this file as a reference to look up the correct network name slug a 
 | Oasys Homeverse Testnet | 40875 | homeverse-testnet |
 | Arbitrum One | 42161 | arbitrum |
 | Arbitrum Nova | 42170 | arbitrum-nova |
-| ETHERLINK | 42793 | etherlink |
+| Etherlink | 42793 | etherlink |
 | Avalanche Testnet | 43113 | avalanche-testnet |
 | Avalanche | 43114 | avalanche |
-| SOMNIA Testnet | 50312 | somnia-testnet |
+| Somnia Testnet | 50312 | somnia-testnet |
+| Frequency Testnet | 53716 | frequency-testnet |
 | LAOS Sigma Testnet | 62850 | laos-sigma-testnet |
 | Polygon Amoy | 80002 | amoy |
 | Blast | 81457 | blast |
 | Base Sepolia | 84532 | base-sepolia |
 | Borne Testnet | 94984 | borne-testnet |
-| ETHERLINK Testnet | 128123 | etherlink-testnet |
+| Etherlink Testnet | 128123 | etherlink-testnet |
 | Arbitrum Sepolia | 421614 | arbitrum-sepolia |
 | Xai | 660279 | xai |
 | Sepolia | 11155111 | sepolia |

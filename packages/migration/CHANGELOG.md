@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+- Updated dependencies
+  - @0xsequence/abi@2.3.5
+  - @0xsequence/core@2.3.5
+  - @0xsequence/wallet@2.3.5
+
 ## 2.3.4
 
 ### Patch Changes

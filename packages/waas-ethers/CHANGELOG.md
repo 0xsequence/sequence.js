@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+- Updated dependencies
+  - @0xsequence/waas@2.3.5
+
 ## 2.3.4
 
 ### Patch Changes

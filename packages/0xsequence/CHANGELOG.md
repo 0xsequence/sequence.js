@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+- Updated dependencies
+  - @0xsequence/abi@2.3.5
+  - @0xsequence/account@2.3.5
+  - @0xsequence/api@2.3.5
+  - @0xsequence/auth@2.3.5
+  - @0xsequence/core@2.3.5
+  - @0xsequence/guard@2.3.5
+  - @0xsequence/indexer@2.3.5
+  - @0xsequence/metadata@2.3.5
+  - @0xsequence/migration@2.3.5
+  - @0xsequence/network@2.3.5
+  - @0xsequence/provider@2.3.5
+  - @0xsequence/relayer@2.3.5
+  - @0xsequence/sessions@2.3.5
+  - @0xsequence/signhub@2.3.5
+  - @0xsequence/utils@2.3.5
+  - @0xsequence/wallet@2.3.5
+
 ## 2.3.4
 
 ### Patch Changes

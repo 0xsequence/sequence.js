@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+- Updated dependencies
+  - @0xsequence/core@2.3.5
+  - @0xsequence/migration@2.3.5
+  - @0xsequence/replacer@2.3.5
+  - @0xsequence/utils@2.3.5
+
 ## 2.3.4
 
 ### Patch Changes
