@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.6
+
+### Patch Changes
+
+- New chains
+
 ## 2.3.5
 
 ### Patch Changes

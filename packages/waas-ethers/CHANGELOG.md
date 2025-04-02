@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.6
+
+### Patch Changes
+
+- New chains
+- Updated dependencies
+  - @0xsequence/waas@2.3.6
+
 ## 2.3.5
 
 ### Patch Changes

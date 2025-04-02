@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.6
+
+### Patch Changes
+
+- New chains
+- Updated dependencies
+  - @0xsequence/core@2.3.6
+  - @0xsequence/migration@2.3.6
+  - @0xsequence/replacer@2.3.6
+  - @0xsequence/utils@2.3.6
+
 ## 2.3.5
 
 ### Patch Changes
