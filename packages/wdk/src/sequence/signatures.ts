@@ -97,12 +97,12 @@ export class Signatures {
     }
   }
 
-  async onSignatureRequestUpdate(
+  onSignatureRequestUpdate(
     requestId: string,
     cb: (requests: SignatureRequest) => void,
     onError?: (error: Error) => void,
     trigger?: boolean,
-  ): Promise<() => void> {
+  ) {
     const undoDbListener = this.shared.databases.signatures.addListener(() => {
       this.get(requestId)
         .then((request) => cb(request))
