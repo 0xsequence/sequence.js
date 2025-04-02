@@ -55,7 +55,14 @@ export function isNodeLeaf(cand: any): cand is NodeLeaf {
  * Type guard to check if a value is a Node (pair of subtrees)
  */
 export function isNode(cand: any): cand is Node {
-  return Array.isArray(cand) && cand.length === 2 && isNode(cand[0]) && isNode(cand[1])
+  return Array.isArray(cand) && cand.length === 2 && isTopology(cand[0]) && isTopology(cand[1])
+}
+
+/**
+ * Type guard to check if a value is a Topology
+ */
+export function isTopology(cand: any): cand is Topology {
+  return isRecoveryLeaf(cand) || isNodeLeaf(cand) || isNode(cand)
 }
 
 /**
@@ -150,20 +157,20 @@ export function parseBranch(encoded: Bytes.Bytes): { nodes: Topology[]; leftover
   while (index < encoded.length) {
     const flag = encoded[index]!
     if (flag === FLAG_RECOVERY_LEAF) {
-      if (encoded.length < index + 85) {
+      if (encoded.length < index + 32) {
         throw new Error('Invalid recovery leaf')
       }
       const signer = Address.from(Hex.fromBytes(encoded.slice(index + 1, index + 21)))
-      const requiredDeltaTime = Bytes.toBigInt(encoded.slice(index + 21, index + 53))
-      const minTimestamp = Bytes.toBigInt(encoded.slice(index + 53, index + 85))
+      const requiredDeltaTime = Bytes.toBigInt(encoded.slice(index + 21, index + 24))
+      const minTimestamp = Bytes.toBigInt(encoded.slice(index + 24, index + 32))
       nodes.push({ type: 'leaf', signer, requiredDeltaTime, minTimestamp })
-      index += 85
+      index += 32
       continue
     } else if (flag === FLAG_NODE) {
+      // total = 1 (flag) + 32 (node hash)
       if (encoded.length < index + 33) {
         throw new Error('Invalid node')
       }
-      // Read just the first 32 bytes of the node
       const node = Hex.fromBytes(encoded.slice(index + 1, index + 33))
       nodes.push(node)
       index += 33
@@ -263,8 +270,17 @@ export function encodeTopology(topology: Topology): Bytes.Bytes {
   if (isRecoveryLeaf(topology)) {
     const flag = Bytes.fromNumber(FLAG_RECOVERY_LEAF)
     const signer = Bytes.fromHex(topology.signer, { size: 20 })
-    const requiredDeltaTime = Bytes.padLeft(Bytes.fromNumber(topology.requiredDeltaTime), 32)
-    const minTimestamp = Bytes.padLeft(Bytes.fromNumber(topology.minTimestamp), 32)
+
+    if (topology.requiredDeltaTime > 16777215n) {
+      throw new Error('Required delta time too large')
+    }
+
+    const requiredDeltaTime = Bytes.padLeft(Bytes.fromNumber(topology.requiredDeltaTime), 3)
+    if (topology.minTimestamp > 18446744073709551615n) {
+      throw new Error('Min timestamp too large')
+    }
+
+    const minTimestamp = Bytes.padLeft(Bytes.fromNumber(topology.minTimestamp), 8)
     return Bytes.concat(flag, signer, requiredDeltaTime, minTimestamp)
   }
 

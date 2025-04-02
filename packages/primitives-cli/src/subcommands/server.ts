@@ -8,6 +8,7 @@ import * as sessionExplicit from './sessionExplicit'
 import * as sessionImplicit from './sessionImplicit'
 import * as signatureUtils from './signature'
 import * as address from './address'
+import * as recovery from './recovery'
 
 // Basic JSON-RPC types
 interface JsonRpcRequest {
@@ -192,6 +193,28 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   async address_calculate(params) {
     const { imageHash, factory, module, creationCode } = params
     return await address.doCalculateAddress({ imageHash, factory, module, creationCode })
+  },
+
+  // RECOVERY
+  async recovery_hashFromLeaves(params) {
+    const { leaves } = params
+    const result = await recovery.doHashFromLeaves(leaves)
+    return result
+  },
+  async recovery_encode(params) {
+    const { leaves } = params
+    const result = await recovery.doEncode(leaves)
+    return result
+  },
+  async recovery_trim(params) {
+    const { leaves, signer } = params
+    const result = await recovery.doTrim(leaves, signer)
+    return result
+  },
+  async recovery_hashEncoded(params) {
+    const { encoded } = params
+    const result = await recovery.doHashEncoded(encoded)
+    return result
   },
 }
 

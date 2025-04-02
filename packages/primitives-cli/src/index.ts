@@ -9,6 +9,7 @@ import signatureCommand from './subcommands/signature'
 import sessionCommand from './subcommands/session'
 import serverCommand from './subcommands/server'
 import addressCommand from './subcommands/address'
+import recoveryCommand from './subcommands/recovery'
 
 void yargs(hideBin(process.argv))
   .command(payloadCommand)
@@ -18,6 +19,7 @@ void yargs(hideBin(process.argv))
   .command(sessionCommand)
   .command(serverCommand)
   .command(addressCommand)
+  .command(recoveryCommand)
   .demandCommand(1)
   .strict()
   .help().argv
