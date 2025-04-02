@@ -1160,6 +1160,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     type: NetworkType.TESTNET,
     name: 'frequency-testnet',
     title: 'Frequency Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.FREQUENCY_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
       name: 'Frequency Testnet Explorer',
