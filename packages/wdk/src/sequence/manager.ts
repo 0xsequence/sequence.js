@@ -215,7 +215,7 @@ export class Manager {
     return this.shared.modules.signatures.onSignatureRequestsUpdate(cb, trigger)
   }
 
-  public async onSignatureRequestUpdate(
+  public onSignatureRequestUpdate(
     requestId: string,
     cb: (requests: SignatureRequest) => void,
     onError?: (error: Error) => void,
