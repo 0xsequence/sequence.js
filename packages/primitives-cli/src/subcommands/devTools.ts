@@ -41,7 +41,7 @@ function randomBytes(length: number, options?: RandomOptions): Uint8Array {
 }
 
 function randomHex(length: number, options?: RandomOptions): `0x${string}` {
-  return `0x${Bytes.toHex(randomBytes(length, options))}`
+  return Bytes.toHex(randomBytes(length, options))
 }
 
 function randomBigInt(max: bigint, options?: RandomOptions): bigint {
