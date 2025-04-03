@@ -112,6 +112,7 @@ export async function createConfig(options: {
   checkpoint: string
   from: string
   content: string[]
+  checkpointer?: string
 }): Promise<string> {
   const leaves = parseElements(options.content.join(' '))
   const config: Config.Config = {
@@ -119,7 +120,7 @@ export async function createConfig(options: {
     checkpoint: BigInt(options.checkpoint),
     // Starts with empty topology
     topology: Config.flatLeavesToTopology(leaves),
-    checkpointer: undefined,
+    checkpointer: options.checkpointer ? Address.from(options.checkpointer) : undefined,
   }
 
   return Config.configToJson(config)
@@ -156,6 +157,12 @@ const configCommand: CommandModule = {
               description: 'Checkpoint value for the configuration',
               demandOption: true,
               alias: 'c',
+            })
+            .option('checkpointer', {
+              type: 'string',
+              description: 'Checkpointer address for the configuration',
+              demandOption: false,
+              alias: 'p',
             })
             .option('from', {
               type: 'string',

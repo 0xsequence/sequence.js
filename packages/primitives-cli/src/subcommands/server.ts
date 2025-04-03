@@ -63,8 +63,8 @@ function errorResponse(
 const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   // CONFIG
   async config_new(params) {
-    const { threshold, checkpoint, from = 'flat', content } = params
-    const result = await config.createConfig({ threshold, checkpoint, from, content: content.split(' ') })
+    const { threshold, checkpoint, from = 'flat', content, checkpointer } = params
+    const result = await config.createConfig({ threshold, checkpoint, from, content: content.split(' '), checkpointer })
     return result
   },
   async config_imageHash(params) {
@@ -174,8 +174,13 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
 
   // SIGNATURE
   async signature_encode(params) {
-    const { input, signatures, chainId = true } = params
-    const result = await signatureUtils.doEncode(JSON.stringify(input), signatures.split(' '), !chainId)
+    const { input, signatures, chainId = true, checkpointerData } = params
+    const result = await signatureUtils.doEncode(
+      JSON.stringify(input),
+      signatures.split(' '),
+      !chainId,
+      checkpointerData,
+    )
     return result
   },
   async signature_concat(params) {

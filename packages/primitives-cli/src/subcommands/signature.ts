@@ -42,7 +42,12 @@ const SignatureElements = [
   },
 ]
 
-export async function doEncode(input: string, signatures: string[] = [], noChainId: boolean): Promise<string> {
+export async function doEncode(
+  input: string,
+  signatures: string[] = [],
+  noChainId: boolean,
+  checkpointerData?: string,
+): Promise<string> {
   const config = Config.configFromJson(input)
 
   const allSignatures = signatures.map((s) => {
@@ -120,7 +125,11 @@ export async function doEncode(input: string, signatures: string[] = [], noChain
     return undefined
   })
 
-  const encoded = Signature.encodeSignature({ noChainId, configuration: { ...config, topology: fullTopology } })
+  const encoded = Signature.encodeSignature({
+    noChainId,
+    configuration: { ...config, topology: fullTopology },
+    checkpointerData: checkpointerData ? Bytes.fromHex(checkpointerData as `0x${string}`) : undefined,
+  })
 
   return Hex.fromBytes(encoded)
 }
@@ -171,6 +180,11 @@ const signatureCommand: CommandModule = {
               demandOption: false,
               default: true,
             })
+            .option('checkpointer-data', {
+              type: 'string',
+              description: 'Checkpointer data in hex format',
+              demandOption: false,
+            })
             .positional('input', {
               type: 'string',
               description: 'Hex input to encode (if not using pipe)',
@@ -178,7 +192,7 @@ const signatureCommand: CommandModule = {
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'input')
-          console.log(await doEncode(input, argv.signature, !argv.chainId))
+          console.log(await doEncode(input, argv.signature, !argv.chainId, argv.checkpointerData))
         },
       )
       .command(
