@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.7
+
+### Patch Changes
+
+- Metadata updates
+
 ## 2.3.6
 
 ### Patch Changes

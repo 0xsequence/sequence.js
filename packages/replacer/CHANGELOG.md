@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 2.3.7
+
+### Patch Changes
+
+- Metadata updates
+- Updated dependencies
+  - @0xsequence/abi@2.3.7
+  - @0xsequence/core@2.3.7
+
 ## 2.3.6
 
 ### Patch Changes

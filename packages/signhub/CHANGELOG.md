@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.3.7
+
+### Patch Changes
+
+- Metadata updates
+- Updated dependencies
+  - @0xsequence/core@2.3.7
+
 ## 2.3.6
 
 ### Patch Changes
