@@ -2,40 +2,61 @@ import { Bytes, Hash, Hex } from 'ox'
 import { jwtDecode } from 'jwt-decode'
 import { IdentityType, AuthMode } from './nitro'
 
-export interface ChallengeParams {
+export interface CommitChallengeParams {
   authMode: AuthMode
   identityType: IdentityType
-  verifier: string
-  answer?: string
+  handle?: string
+  signer?: string
   metadata: { [key: string]: string }
 }
 
+export interface CompleteChallengeParams {
+  authMode: AuthMode
+  identityType: IdentityType
+  verifier: string
+  answer: string
+}
+
 export abstract class Challenge {
-  public abstract getParams(): ChallengeParams
+  public abstract getCommitParams(): CommitChallengeParams
+  public abstract getCompleteParams(): CompleteChallengeParams
 }
 
 export class IdTokenChallenge extends Challenge {
+  private handle = ''
+  private exp = ''
+
   constructor(
     readonly issuer: string,
     readonly audience: string,
     readonly idToken: string,
   ) {
     super()
-  }
-
-  public getParams(): ChallengeParams {
     const decoded = jwtDecode(this.idToken)
     const idTokenHash = Hash.keccak256(new TextEncoder().encode(this.idToken))
+    this.handle = Hex.fromBytes(idTokenHash)
+    this.exp = decoded.exp?.toString() ?? ''
+  }
+
+  public getCommitParams(): CommitChallengeParams {
     return {
       authMode: AuthMode.IDToken,
       identityType: IdentityType.OIDC,
-      verifier: Hex.fromBytes(idTokenHash),
-      answer: this.idToken,
+      handle: this.handle,
       metadata: {
         iss: this.issuer,
         aud: this.audience,
-        exp: decoded.exp?.toString() ?? '',
+        exp: this.exp,
       },
+    }
+  }
+
+  public getCompleteParams(): CompleteChallengeParams {
+    return {
+      authMode: AuthMode.IDToken,
+      identityType: IdentityType.OIDC,
+      verifier: this.handle,
+      answer: this.idToken,
     }
   }
 }
@@ -43,6 +64,7 @@ export class IdTokenChallenge extends Challenge {
 export class AuthCodePkceChallenge extends Challenge {
   private verifier?: string
   private authCode?: string
+  private signer?: string
 
   constructor(
     readonly issuer: string,
@@ -52,12 +74,11 @@ export class AuthCodePkceChallenge extends Challenge {
     super()
   }
 
-  public getParams(): ChallengeParams {
+  public getCommitParams(): CommitChallengeParams {
     return {
       authMode: AuthMode.AuthCodePKCE,
       identityType: IdentityType.OIDC,
-      verifier: this.verifier ?? '',
-      answer: this.authCode ?? '',
+      signer: this.signer,
       metadata: {
         iss: this.issuer,
         aud: this.audience,
@@ -66,8 +87,29 @@ export class AuthCodePkceChallenge extends Challenge {
     }
   }
 
+  public getCompleteParams(): CompleteChallengeParams {
+    if (!this.verifier || !this.authCode) {
+      throw new Error('AuthCodePkceChallenge is not complete')
+    }
+
+    return {
+      authMode: AuthMode.AuthCodePKCE,
+      identityType: IdentityType.OIDC,
+      verifier: this.verifier,
+      answer: this.authCode,
+    }
+  }
+
+  public withSigner(signer: string): AuthCodePkceChallenge {
+    const challenge = new AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
+    challenge.verifier = this.verifier
+    challenge.signer = signer
+    return challenge
+  }
+
   public withAnswer(verifier: string, authCode: string): AuthCodePkceChallenge {
     const challenge = new AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
+    challenge.signer = this.signer
     challenge.verifier = verifier
     challenge.authCode = authCode
     return challenge
@@ -76,26 +118,56 @@ export class AuthCodePkceChallenge extends Challenge {
 
 export class OtpChallenge extends Challenge {
   private answer?: string
+  private recipient?: string
+  private signer?: string
 
-  constructor(
-    readonly identityType: IdentityType,
-    readonly verifier: string,
-  ) {
+  private constructor(readonly identityType: IdentityType) {
     super()
   }
 
-  public getParams(): ChallengeParams {
+  public static fromRecipient(identityType: IdentityType, recipient: string): OtpChallenge {
+    const challenge = new OtpChallenge(identityType)
+    challenge.recipient = recipient
+    return challenge
+  }
+
+  public static fromSigner(identityType: IdentityType, signer: string): OtpChallenge {
+    const challenge = new OtpChallenge(identityType)
+    challenge.signer = signer
+    return challenge
+  }
+
+  public getCommitParams(): CommitChallengeParams {
+    if (!this.recipient && !this.signer) {
+      throw new Error('OtpChallenge is not complete')
+    }
+
     return {
       authMode: AuthMode.OTP,
       identityType: this.identityType,
-      verifier: this.verifier,
-      answer: this.answer,
+      handle: this.recipient,
+      signer: this.signer,
       metadata: {},
     }
   }
 
-  public withAnswer(verifier: string, codeChallenge: string, otp: string): OtpChallenge {
-    const challenge = new OtpChallenge(this.identityType, verifier)
+  public getCompleteParams(): CompleteChallengeParams {
+    if (!this.answer || (!this.recipient && !this.signer)) {
+      throw new Error('OtpChallenge is not complete')
+    }
+
+    return {
+      authMode: AuthMode.OTP,
+      identityType: this.identityType,
+      verifier: this.recipient ?? this.signer ?? '',
+      answer: this.answer,
+    }
+  }
+
+  public withAnswer(codeChallenge: string, otp: string): OtpChallenge {
+    const challenge = new OtpChallenge(this.identityType)
+    challenge.recipient = this.recipient
+    challenge.signer = this.signer
     const answerHash = Hash.keccak256(Bytes.fromString(codeChallenge + otp))
     challenge.answer = Hex.fromBytes(answerHash)
     return challenge
