@@ -16,3 +16,4 @@ export interface Handler {
 
 export * from './devices'
 export * from './passkeys'
+export * from './otp'
