@@ -191,6 +191,30 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
 
   const noChainId = (flag & 0x02) === 0x02
 
+  let checkpointerAddress: Address.Address | undefined
+  let checkpointerData: Bytes.Bytes | undefined
+
+  // bit [6] => checkpointer address + data
+  if ((flag & 0x40) === 0x40) {
+    if (index + 20 > signature.length) {
+      throw new Error('Not enough bytes for checkpointer address')
+    }
+    checkpointerAddress = Bytes.toHex(signature.slice(index, index + 20))
+    index += 20
+
+    if (index + 3 > signature.length) {
+      throw new Error('Not enough bytes for checkpointer data size')
+    }
+    const checkpointerDataSize = Bytes.toNumber(signature.slice(index, index + 3))
+    index += 3
+
+    if (index + checkpointerDataSize > signature.length) {
+      throw new Error('Not enough bytes for checkpointer data')
+    }
+    checkpointerData = signature.slice(index, index + checkpointerDataSize)
+    index += checkpointerDataSize
+  }
+
   // bits [2..4] => checkpoint size
   const checkpointSize = (flag & 0x1c) >> 2
   if (index + checkpointSize > signature.length) {
@@ -206,25 +230,6 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
   }
   const threshold = Bytes.toBigInt(signature.slice(index, index + thresholdSize))
   index += thresholdSize
-
-  let checkpointerAddress: Address.Address | undefined
-  let checkpointerData: Bytes.Bytes | undefined
-
-  // bit [6] => checkpointer address + data
-  if ((flag & 0x40) === 0x40) {
-    if (index + 20 > signature.length) {
-      throw new Error('Not enough bytes for checkpointer address')
-    }
-    checkpointerAddress = Bytes.toHex(signature.slice(index, index + 20))
-    index += 20
-
-    const checkpointerDataSize = (flag & 0x1c) >> 2
-    if (index + checkpointerDataSize > signature.length) {
-      throw new Error('Not enough bytes for checkpointer data')
-    }
-    checkpointerData = signature.slice(index, index + checkpointerDataSize)
-    index += checkpointerDataSize
-  }
 
   // If bit 1 is set => chained signature
   if ((flag & 0x01) === 0x01) {
@@ -631,7 +636,7 @@ export function encodeChainedSignature(signatures: RawSignature[]): Uint8Array {
 
   for (let i = 0; i < signatures.length; i++) {
     const signature = signatures[i]!
-    const encoded = encodeSignature(signature, true)
+    const encoded = encodeSignature(signature, true, i === signatures.length - 1)
     if (encoded.length > 16777215) {
       throw new Error('Chained signature too large')
     }
@@ -642,7 +647,11 @@ export function encodeChainedSignature(signatures: RawSignature[]): Uint8Array {
   return output
 }
 
-export function encodeSignature(signature: RawSignature, skipCheckpointerData?: boolean): Uint8Array {
+export function encodeSignature(
+  signature: RawSignature,
+  skipCheckpointerData?: boolean,
+  skipCheckpointerAddress?: boolean,
+): Uint8Array {
   const { noChainId, checkpointerData, configuration: config, suffix } = signature
 
   if (suffix?.length) {
@@ -668,22 +677,23 @@ export function encodeSignature(signature: RawSignature, skipCheckpointerData?: 
   }
   flag |= bytesForThreshold == 2 ? 0x20 : 0x00
 
-  if (config.checkpointer) {
+  if (config.checkpointer && !skipCheckpointerAddress) {
     flag |= 0x40
   }
 
   let output = Bytes.fromNumber(flag)
 
-  if (config.checkpointer && !skipCheckpointerData) {
+  if (config.checkpointer && !skipCheckpointerAddress) {
     output = Bytes.concat(output, Bytes.padLeft(Bytes.fromHex(config.checkpointer), 20))
+    if (!skipCheckpointerData) {
+      const checkpointerDataSize = checkpointerData?.length ?? 0
+      if (checkpointerDataSize > 16777215) {
+        throw new Error('Checkpointer data too large')
+      }
 
-    const checkpointerDataSize = checkpointerData?.length ?? 0
-    if (checkpointerDataSize > 16777215) {
-      throw new Error('Checkpointer data too large')
+      const checkpointerDataSizeBytes = Bytes.padLeft(Bytes.fromNumber(checkpointerDataSize), 3)
+      output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData ?? Bytes.fromArray([]))
     }
-
-    const checkpointerDataSizeBytes = Bytes.padLeft(Bytes.fromNumber(checkpointerDataSize), 3)
-    output = Bytes.concat(output, checkpointerDataSizeBytes, checkpointerData ?? Bytes.fromArray([]))
   }
 
   const checkpointBytes = Bytes.padLeft(Bytes.fromNumber(config.checkpoint), bytesForCheckpoint)
