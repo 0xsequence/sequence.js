@@ -1,5 +1,5 @@
 import { Address, Signature, Hex, Bytes } from 'ox'
-import { Signers } from '@0xsequence/sequence-core'
+import { Signers, State } from '@0xsequence/sequence-core'
 import { AuthKey } from './authkey'
 import { IdentityInstrument } from './nitro'
 import { Payload, Signature as SequenceSignature } from '@0xsequence/sequence-primitives'
@@ -44,5 +44,26 @@ export class IdentitySigner implements Signers.Signer {
       type: 'hash',
       ...sig,
     }
+  }
+
+  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
+    const payload = Payload.fromMessage(
+      Bytes.fromString(
+        JSON.stringify({
+          action: 'consent-to-be-part-of-wallet',
+          wallet,
+          signer: this.address,
+          timestamp: Date.now(),
+          ...extra,
+        }),
+      ),
+    )
+
+    const signature = await this.sign(wallet, 0n, payload)
+    await stateWriter.saveWitnesses(wallet, 0n, payload, {
+      type: 'unrecovered-signer',
+      weight: 1n,
+      signature,
+    })
   }
 }
