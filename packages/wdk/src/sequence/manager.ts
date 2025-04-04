@@ -5,7 +5,7 @@ import { Signers as CoreSigners, State, Relayer } from '@0xsequence/sequence-cor
 import * as Db from '../dbs'
 import { Logger } from './logger'
 import { Devices } from './devices'
-import { LoginArgs, SignupArgs, Wallets } from './wallets'
+import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
 import { Transactions } from './transactions'
 import { Signatures } from './signatures'
 import { Kinds, Signers } from './signers'
@@ -13,6 +13,9 @@ import { DevicesHandler, Handler, PasskeysHandler } from './handlers'
 import { MnemonicHandler } from './handlers/mnemonic'
 import { RelayerOption, TransactionRequest, Transaction } from './types/transactionRequest'
 import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
+import { OtpHandler } from './handlers/otp'
+import { AuthCodePkceHandler } from './handlers/authcode-pkce'
+import * as Identity from '../identity'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -25,6 +28,7 @@ export type ManagerOptions = {
   managerDb?: Db.Wallets
   transactionsDb?: Db.Transactions
   signaturesDb?: Db.Signatures
+  authCommitmentsDb?: Db.AuthCommitments
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
@@ -44,6 +48,7 @@ export const ManagerOptionsDefaults = {
   managerDb: new Db.Wallets(),
   signaturesDb: new Db.Signatures(),
   transactionsDb: new Db.Transactions(),
+  authCommitmentsDb: new Db.AuthCommitments(),
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
@@ -70,6 +75,7 @@ export type Databases = {
   readonly manager: Db.Wallets
   readonly signatures: Db.Signatures
   readonly transactions: Db.Transactions
+  readonly authCommitments: Db.AuthCommitments
 }
 
 export type Sequence = {
@@ -111,6 +117,7 @@ export class Manager {
   private readonly mnemonicHandler: MnemonicHandler
   private readonly devicesHandler: DevicesHandler
   private readonly passkeysHandler: PasskeysHandler
+  private readonly otpHandler: OtpHandler
 
   constructor(options?: ManagerOptions) {
     const ops = applyDefaults(options)
@@ -135,6 +142,7 @@ export class Manager {
         manager: ops.managerDb,
         signatures: ops.signaturesDb,
         transactions: ops.transactionsDb,
+        authCommitments: ops.authCommitmentsDb,
       },
 
       modules: {} as any,
@@ -163,11 +171,35 @@ export class Manager {
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
 
+    // TODO: configurable nitro rpc
+    const nitro = new Identity.IdentityInstrument('https://dev-identity.sequence-dev.app', window.fetch)
+    this.otpHandler = new OtpHandler(nitro, modules.signatures)
+    shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
+    shared.handlers.set(
+      Kinds.LoginGooglePkce,
+      new AuthCodePkceHandler(
+        'google-pkce',
+        'https://accounts.google.com',
+        '970987756660-1evc76k7g9sd51qn9lodiu7e97ls0mmm.apps.googleusercontent.com',
+        nitro,
+        modules.signatures,
+        shared.databases.authCommitments,
+      ),
+    )
+
     shared.modules = modules
     this.shared = shared
   }
 
   // Wallets
+
+  public async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
+    return this.shared.modules.wallets.startSignUpWithRedirect(args)
+  }
+
+  public async completeRedirect(args: CompleteRedirectArgs) {
+    return this.shared.modules.wallets.completeRedirect(args)
+  }
 
   public async signUp(options: SignupArgs) {
     return this.shared.modules.wallets.signUp(options)
@@ -268,5 +300,17 @@ export class Manager {
 
   public async registerMnemonicUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
+  }
+
+  public async registerOtpUI(onPromptOtp: (recipient: string) => Promise<{ otp: string; error: (e: string) => void }>) {
+    return this.otpHandler.registerUI(onPromptOtp)
+  }
+
+  public async setRedirectPrefix(prefix: string) {
+    this.shared.handlers.forEach((handler) => {
+      if (handler instanceof AuthCodePkceHandler) {
+        handler.setRedirectUri(prefix + '/' + handler.signupKind)
+      }
+    })
   }
 }
