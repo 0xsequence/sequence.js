@@ -31,13 +31,13 @@ export class Wdk {
     recipient: string,
     callback: (respondToChallenge: (code: string) => Promise<void>) => void,
   ) {
-    const challenge = new OtpChallenge(identityType, recipient)
-    const [verifier, codeChallenge] = await this.initiateAuth(challenge)
+    const challenge = OtpChallenge.fromRecipient(identityType, recipient)
+    const { challenge: codeChallenge } = await this.initiateAuth(challenge)
 
     return new Promise<IdentitySigner>((resolve, reject) => {
       const respondToChallenge = async (code: string) => {
         try {
-          const signer = await this.completeAuth(challenge.withAnswer(verifier, codeChallenge, code))
+          const signer = await this.completeAuth(challenge.withAnswer(codeChallenge, code))
           resolve(signer)
         } catch (error) {
           reject(error)
@@ -60,9 +60,9 @@ export class Wdk {
     }
 
     const challenge = new AuthCodePkceChallenge(params.issuer, params.audience, params.redirectUri)
-    const [verifier, codeChallenge] = await this.initiateAuth(challenge)
+    const { verifier, loginHint, challenge: codeChallenge } = await this.initiateAuth(challenge)
     const state = params.state || Hex.random(32)
-    const stateJson = JSON.stringify({ verifier, params })
+    const stateJson = JSON.stringify({ verifier, loginHint, params })
 
     sessionStorage.setItem(state, stateJson)
 
@@ -101,29 +101,25 @@ export class Wdk {
     return new IdentitySigner(this.ecosystemId, this.nitro, authKey)
   }
 
-  private async initiateAuth(challenge: Challenge): Promise<[string, string]> {
+  public async initiateAuth(challenge: Challenge) {
     const authKey = await this.getAuthKey()
-    const challengeParams = challenge.getParams()
     const params = {
+      ...challenge.getCommitParams(),
       ecosystem: this.ecosystemId,
       authKey: authKey.toProto(),
-      ...challengeParams,
-      answer: undefined,
     }
-    const res = await this.nitro.initiateAuth({ params })
-    return [res.verifier, res.challenge]
+    const res = await this.nitro.commitVerifier({ params })
+    return res
   }
 
-  private async completeAuth(challenge: Challenge) {
+  public async completeAuth(challenge: Challenge) {
     const authKey = await this.getAuthKey()
-    const challengeParams = challenge.getParams()
     const params = {
-      answer: '',
-      ...challengeParams,
+      ...challenge.getCompleteParams(),
       ecosystem: this.ecosystemId,
       authKey: authKey.toProto(),
     }
-    const res = await this.nitro.registerAuth({ params })
+    const res = await this.nitro.completeAuth({ params })
     await authKey.setIdentitySigner(res.signer as `0x${string}`)
     return new IdentitySigner(this.ecosystemId, this.nitro, authKey)
   }

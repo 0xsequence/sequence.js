@@ -4,7 +4,16 @@ import { Config, Payload } from '@0xsequence/sequence-primitives'
 import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Shared } from './manager'
 import { MnemonicHandler } from './handlers/mnemonic'
+import { OtpHandler } from './handlers/otp'
 import { Wallet } from './types'
+import { AuthCodePkceHandler } from './handlers/authcode-pkce'
+import { AuthCommitment } from '../dbs/auth-commitments'
+
+export type StartSignUpWithRedirectArgs = {
+  kind: 'google-pkce' | 'apple-pkce'
+  target: string
+  metadata: { [key: string]: string }
+}
 
 export type CommonSignupArgs = {
   noGuard?: boolean
@@ -20,7 +29,23 @@ export type MnemonicSignupArgs = CommonSignupArgs & {
   mnemonic: string
 }
 
-export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs
+export type EmailOtpSignupArgs = CommonSignupArgs & {
+  kind: 'email-otp'
+  email: string
+}
+
+export type CompleteRedirectArgs = CommonSignupArgs & {
+  state: string
+  code: string
+}
+
+export type AuthCodePkceSignupArgs = CommonSignupArgs & {
+  kind: 'google-pkce' | 'apple-pkce'
+  commitment: AuthCommitment
+  code: string
+}
+
+export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodePkceSignupArgs
 
 export type LoginToWalletArgs = {
   wallet: Address.Address
@@ -229,7 +254,74 @@ export class Wallets {
             signerKind: Kinds.LoginMnemonic,
           },
         }
+
+      case 'email-otp': {
+        const handler = this.shared.handlers.get(Kinds.LoginEmailOtp) as OtpHandler
+        if (!handler) {
+          throw new Error('email-otp-handler-not-registered')
+        }
+
+        const signer = await handler.getSigner(args.email)
+        this.shared.modules.logger.log('Created new email otp signer:', signer.address)
+
+        return {
+          signer,
+          extra: {
+            signerKind: Kinds.LoginEmailOtp,
+          },
+        }
+      }
+
+      case 'google-pkce':
+      case 'apple-pkce': {
+        const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodePkceHandler
+        if (!handler) {
+          throw new Error('handler-not-registered')
+        }
+
+        const [signer, metadata] = await handler.completeAuth(args.commitment, args.code)
+        this.shared.modules.logger.log('Created new auth code pkce signer:', signer.address)
+
+        return {
+          signer,
+          extra: {
+            signerKind: 'login-' + args.kind,
+          },
+        }
+      }
     }
+  }
+
+  async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
+    const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodePkceHandler
+    if (!handler) {
+      throw new Error('handler-not-registered')
+    }
+    return handler.commitAuth(args.target, true)
+  }
+
+  async completeRedirect(args: CompleteRedirectArgs) {
+    const commitment = await this.shared.databases.authCommitments.get(args.state)
+    if (!commitment) {
+      throw new Error('invalid-state')
+    }
+
+    if (commitment.isSignUp) {
+      await this.signUp({
+        kind: commitment.kind,
+        commitment,
+        code: args.code,
+        noGuard: args.noGuard,
+      })
+    } else {
+      const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodePkceHandler
+      if (!handler) {
+        throw new Error('handler-not-registered')
+      }
+
+      await handler.completeAuth(commitment, args.code)
+    }
+    return commitment.target
   }
 
   async signUp(args: SignupArgs) {

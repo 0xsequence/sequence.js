@@ -60,10 +60,11 @@ export class AuthKeyP256K1 extends AuthKey {
     storage: SecureStoreBackend,
     _crypto?: SubtleCryptoBackend,
   ): Promise<AuthKeyP256K1 | null> {
-    const [signer, privateKey] = await storage.get(idbName, idbStoreName, 'p256k1')
-    if (!privateKey) {
+    const result = await storage.get(idbName, idbStoreName, 'p256k1')
+    if (!result) {
       return null
     }
+    const [signer, privateKey] = result
     if (!privateKey.startsWith('0x')) {
       return null
     }

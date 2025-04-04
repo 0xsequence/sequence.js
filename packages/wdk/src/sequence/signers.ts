@@ -6,6 +6,9 @@ export const Kinds = {
   LocalDevice: 'local-device',
   LoginPasskey: 'login-passkey',
   LoginMnemonic: 'login-mnemonic',
+  LoginEmailOtp: 'login-email-otp',
+  LoginGooglePkce: 'login-google-pkce',
+  LoginApplePkce: 'login-apple-pkce',
   Unknown: 'unknown',
 } as const
 
