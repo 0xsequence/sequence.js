@@ -264,7 +264,9 @@ export function encodeTopology(topology: Topology): Bytes.Bytes {
   }
 
   if (isNodeLeaf(topology)) {
-    return Bytes.fromHex(topology)
+    const flag = Bytes.fromNumber(FLAG_NODE)
+    const nodeHash = Bytes.fromHex(topology, { size: 32 })
+    return Bytes.concat(flag, nodeHash)
   }
 
   if (isRecoveryLeaf(topology)) {
