@@ -9,6 +9,7 @@ import * as sessionImplicit from './sessionImplicit'
 import * as signatureUtils from './signature'
 import * as address from './address'
 import * as recovery from './recovery'
+import * as passkeys from './passkeys'
 
 // Basic JSON-RPC types
 interface JsonRpcRequest {
@@ -219,6 +220,25 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   async recovery_hashEncoded(params) {
     const { encoded } = params
     const result = await recovery.doHashEncoded(encoded)
+    return result
+  },
+
+  // PASSKEYS
+  async passkeys_encodeSignature(params) {
+    const result = await passkeys.doEncodeSignature(params)
+    return result
+  },
+  async passkeys_decodeSignature(params) {
+    const { encodedSignature } = params
+    const resultString = await passkeys.doDecodeSignature(encodedSignature)
+    return JSON.parse(resultString)
+  },
+  async passkeys_computeRoot(params) {
+    const result = await passkeys.doComputeRoot(params)
+    return result
+  },
+  async passkeys_validateSignature(params) {
+    const result = await passkeys.doValidateSignature(params)
     return result
   },
 }
