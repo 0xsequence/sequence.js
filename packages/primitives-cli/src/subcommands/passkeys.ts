@@ -15,7 +15,7 @@ export async function doEncodeSignature(options: {
   r: string
   s: string
   authenticatorData: string
-  clientDataJson: string
+  clientDataJson: string | object
   embedMetadata: boolean
 }): Promise<string> {
   if (options.credentialId && options.metadataHash) {
@@ -41,7 +41,8 @@ export async function doEncodeSignature(options: {
     r: Bytes.fromHex(options.r as Hex.Hex),
     s: Bytes.fromHex(options.s as Hex.Hex),
     authenticatorData: Bytes.fromHex(options.authenticatorData as Hex.Hex),
-    clientDataJSON: options.clientDataJson,
+    clientDataJSON:
+      typeof options.clientDataJson === 'string' ? options.clientDataJson : JSON.stringify(options.clientDataJson),
     embedMetadata: options.embedMetadata,
   }
 
