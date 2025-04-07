@@ -37,6 +37,7 @@ export type EmailOtpSignupArgs = CommonSignupArgs & {
 export type CompleteRedirectArgs = CommonSignupArgs & {
   state: string
   code: string
+  onExistingWalletsWithTarget?: (wallets: Address.Address[], target: string) => Promise<boolean>
 }
 
 export type AuthCodePkceSignupArgs = CommonSignupArgs & {
@@ -312,6 +313,9 @@ export class Wallets {
         commitment,
         code: args.code,
         noGuard: args.noGuard,
+        onExistingWallets: args.onExistingWalletsWithTarget
+          ? (wallets) => args.onExistingWalletsWithTarget!(wallets, commitment.target)
+          : args.onExistingWallets,
       })
     } else {
       const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodePkceHandler
