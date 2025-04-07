@@ -7,6 +7,6 @@ pre-commit:
 pre-push:
   commands:
     build:
-      run: pnpm build
+      run: pnpm build:packages
     test:
       run: pnpm test
