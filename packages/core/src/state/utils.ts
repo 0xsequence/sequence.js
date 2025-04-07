@@ -15,12 +15,15 @@ export async function getWalletsFor<S extends Signer | SapientSigner>(
   signer: S,
 ): Promise<Array<WalletWithWitness<S>>> {
   const wallets = await retrieveWallets(stateReader, signer)
-  return Object.entries(wallets).map(([wallet, { chainId, payload, signature }]) => ({
-    wallet: Hex.fromString(wallet),
-    chainId,
-    payload,
-    signature,
-  }))
+  return Object.entries(wallets).map(([wallet, { chainId, payload, signature }]) => {
+    Hex.assert(wallet)
+    return {
+      wallet,
+      chainId,
+      payload,
+      signature,
+    }
+  })
 }
 
 async function retrieveWallets<S extends Signer | SapientSigner>(
