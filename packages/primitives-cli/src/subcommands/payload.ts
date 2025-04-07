@@ -124,7 +124,7 @@ export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payl
   throw new Error('Not implemented')
 }
 
-export async function doConvertToPacked(payload: string): Promise<string> {
+export async function doConvertToPacked(payload: string, wallet?: string): Promise<string> {
   const decodedPayload = solidityEncodedToParentedPayload(
     AbiParameters.decode(
       [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
@@ -133,7 +133,7 @@ export async function doConvertToPacked(payload: string): Promise<string> {
   )
 
   if (Payload.isCalls(decodedPayload)) {
-    const packed = Payload.encode(decodedPayload)
+    const packed = Payload.encode(decodedPayload, wallet ? (wallet as `0x${string}`) : undefined)
     return Hex.from(packed)
   }
 
@@ -180,17 +180,23 @@ const payloadCommand: CommandModule = {
         },
       )
       .command(
-        'to-packed [payload]',
+        'to-packed [payload] [wallet]',
         'Convert payload to packed format',
         (yargs) => {
-          return yargs.positional('payload', {
-            type: 'string',
-            description: 'Input payload to convert',
-          })
+          return yargs
+            .positional('payload', {
+              type: 'string',
+              description: 'Input payload to convert',
+            })
+            .positional('wallet', {
+              type: 'string',
+              description: 'Wallet of the wallet to hash the payload',
+              demandOption: false,
+            })
         },
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
-          const result = await doConvertToPacked(payload)
+          const result = await doConvertToPacked(payload, argv.wallet)
           console.log(result)
         },
       )

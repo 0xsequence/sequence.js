@@ -183,7 +183,7 @@ export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
     */
     let flags = 0
 
-    if (self && call.to === self) {
+    if (self && Address.isEqual(call.to, self)) {
       flags |= 0x01
     }
 

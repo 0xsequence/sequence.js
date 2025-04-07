@@ -108,8 +108,8 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     return result
   },
   async payload_toPacked(params) {
-    const { payload: inputPayload } = params
-    const result = await payload.doConvertToPacked(inputPayload)
+    const { payload: inputPayload, wallet } = params
+    const result = await payload.doConvertToPacked(inputPayload, wallet)
     return result
   },
   async payload_toJson(params) {
