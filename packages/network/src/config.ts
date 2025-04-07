@@ -143,5 +143,6 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.ETHERLINK_TESTNET),
   createNetworkConfig(ChainId.SOMNIA_TESTNET),
   createNetworkConfig(ChainId.MONAD_TESTNET),
+  createNetworkConfig(ChainId.FREQUENCY_TESTNET),
   ...hardhatNetworks
 ])

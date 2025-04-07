@@ -1,5 +1,72 @@
 # @0xsequence/react-native
 
+## 2.3.7
+
+### Patch Changes
+
+- Metadata updates
+- Updated dependencies
+  - @0xsequence/waas@2.3.7
+
+## 2.3.6
+
+### Patch Changes
+
+- New chains
+- Updated dependencies
+  - @0xsequence/waas@2.3.6
+
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+- Updated dependencies
+  - @0xsequence/waas@2.3.5
+
+## 2.3.4
+
+### Patch Changes
+
+- metadata: exclude deprecated methods on rpc client
+- Updated dependencies
+  - @0xsequence/waas@2.3.4
+
+## 2.3.3
+
+### Patch Changes
+
+- metadata: client update
+- Updated dependencies
+  - @0xsequence/waas@2.3.3
+
+## 2.3.2
+
+### Patch Changes
+
+- metadata: update rpc client
+- Updated dependencies
+  - @0xsequence/waas@2.3.2
+
+## 2.3.1
+
+### Patch Changes
+
+- indexer: update rpc client
+- Updated dependencies
+  - @0xsequence/waas@2.3.1
+
+## 2.3.0
+
+### Minor Changes
+
+- update metadata rpc client
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/waas@2.3.0
+
 ## 2.2.15
 
 ### Patch Changes

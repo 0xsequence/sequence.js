@@ -142,7 +142,10 @@ export enum ChainId {
   MONAD_TESTNET = 10143,
 
   //SOMNIA_TESTNET
-  SOMNIA_TESTNET = 50312
+  SOMNIA_TESTNET = 50312,
+
+  //FREQUENCY_TESTNET
+  FREQUENCY_TESTNET = 53716
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1086,11 +1089,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.ETHERLINK,
     type: NetworkType.MAINNET,
     name: 'etherlink',
-    title: 'ETHERLINK',
+    title: 'Etherlink',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK}.webp`,
     testnet: false,
     blockExplorer: {
-      name: 'ETHERLINK Explorer',
+      name: 'Etherlink Explorer',
       rootUrl: 'https://explorer.etherlink.com/'
     },
     nativeToken: {
@@ -1103,11 +1106,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.ETHERLINK_TESTNET,
     type: NetworkType.TESTNET,
     name: 'etherlink-testnet',
-    title: 'ETHERLINK Testnet',
+    title: 'Etherlink Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'ETHERLINK Testnet Explorer',
+      name: 'Etherlink Testnet Explorer',
       rootUrl: 'https://testnet.explorer.etherlink.com/'
     },
     nativeToken: {
@@ -1120,11 +1123,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.MONAD_TESTNET,
     type: NetworkType.TESTNET,
     name: 'monad-testnet',
-    title: 'MONAD Testnet',
+    title: 'Monad Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'MONAD Testnet Explorer',
+      name: 'Monad Testnet Explorer',
       rootUrl: 'https://testnet.monadexplorer.com/'
     },
     nativeToken: {
@@ -1138,16 +1141,34 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.SOMNIA_TESTNET,
     type: NetworkType.TESTNET,
     name: 'somnia-testnet',
-    title: 'SOMNIA Testnet',
+    title: 'Somnia Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SOMNIA_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'SOMNIA Testnet Explorer',
+      name: 'Somnia Testnet Explorer',
       rootUrl: 'https://somnia-testnet.socialscan.io/'
     },
     nativeToken: {
       symbol: 'STT',
       name: 'STT',
+      decimals: 18
+    }
+  },
+
+  [ChainId.FREQUENCY_TESTNET]: {
+    chainId: ChainId.FREQUENCY_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'frequency-testnet',
+    title: 'Frequency Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.FREQUENCY_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Frequency Testnet Explorer',
+      rootUrl: 'https://explorer.frequency.zeeve.net/'
+    },
+    nativeToken: {
+      symbol: 'BERA',
+      name: 'BERA',
       decimals: 18
     }
   }

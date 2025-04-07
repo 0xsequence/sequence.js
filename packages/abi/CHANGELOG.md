@@ -1,5 +1,53 @@
 # @0xsequence/abi
 
+## 2.3.7
+
+### Patch Changes
+
+- Metadata updates
+
+## 2.3.6
+
+### Patch Changes
+
+- New chains
+
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+
+## 2.3.4
+
+### Patch Changes
+
+- metadata: exclude deprecated methods on rpc client
+
+## 2.3.3
+
+### Patch Changes
+
+- metadata: client update
+
+## 2.3.2
+
+### Patch Changes
+
+- metadata: update rpc client
+
+## 2.3.1
+
+### Patch Changes
+
+- indexer: update rpc client
+
+## 2.3.0
+
+### Minor Changes
+
+- update metadata rpc client
+
 ## 2.2.15
 
 ### Patch Changes

@@ -1,5 +1,128 @@
 # @0xsequence/account
 
+## 2.3.7
+
+### Patch Changes
+
+- Metadata updates
+- Updated dependencies
+  - @0xsequence/abi@2.3.7
+  - @0xsequence/core@2.3.7
+  - @0xsequence/migration@2.3.7
+  - @0xsequence/network@2.3.7
+  - @0xsequence/relayer@2.3.7
+  - @0xsequence/sessions@2.3.7
+  - @0xsequence/utils@2.3.7
+  - @0xsequence/wallet@2.3.7
+
+## 2.3.6
+
+### Patch Changes
+
+- New chains
+- Updated dependencies
+  - @0xsequence/abi@2.3.6
+  - @0xsequence/core@2.3.6
+  - @0xsequence/migration@2.3.6
+  - @0xsequence/network@2.3.6
+  - @0xsequence/relayer@2.3.6
+  - @0xsequence/sessions@2.3.6
+  - @0xsequence/utils@2.3.6
+  - @0xsequence/wallet@2.3.6
+
+## 2.3.5
+
+### Patch Changes
+
+- Add Frequency Testnet
+- Updated dependencies
+  - @0xsequence/abi@2.3.5
+  - @0xsequence/core@2.3.5
+  - @0xsequence/migration@2.3.5
+  - @0xsequence/network@2.3.5
+  - @0xsequence/relayer@2.3.5
+  - @0xsequence/sessions@2.3.5
+  - @0xsequence/utils@2.3.5
+  - @0xsequence/wallet@2.3.5
+
+## 2.3.4
+
+### Patch Changes
+
+- metadata: exclude deprecated methods on rpc client
+- Updated dependencies
+  - @0xsequence/abi@2.3.4
+  - @0xsequence/core@2.3.4
+  - @0xsequence/migration@2.3.4
+  - @0xsequence/network@2.3.4
+  - @0xsequence/relayer@2.3.4
+  - @0xsequence/sessions@2.3.4
+  - @0xsequence/utils@2.3.4
+  - @0xsequence/wallet@2.3.4
+
+## 2.3.3
+
+### Patch Changes
+
+- metadata: client update
+- Updated dependencies
+  - @0xsequence/abi@2.3.3
+  - @0xsequence/core@2.3.3
+  - @0xsequence/migration@2.3.3
+  - @0xsequence/network@2.3.3
+  - @0xsequence/relayer@2.3.3
+  - @0xsequence/sessions@2.3.3
+  - @0xsequence/utils@2.3.3
+  - @0xsequence/wallet@2.3.3
+
+## 2.3.2
+
+### Patch Changes
+
+- metadata: update rpc client
+- Updated dependencies
+  - @0xsequence/abi@2.3.2
+  - @0xsequence/core@2.3.2
+  - @0xsequence/migration@2.3.2
+  - @0xsequence/network@2.3.2
+  - @0xsequence/relayer@2.3.2
+  - @0xsequence/sessions@2.3.2
+  - @0xsequence/utils@2.3.2
+  - @0xsequence/wallet@2.3.2
+
+## 2.3.1
+
+### Patch Changes
+
+- indexer: update rpc client
+- Updated dependencies
+  - @0xsequence/abi@2.3.1
+  - @0xsequence/core@2.3.1
+  - @0xsequence/migration@2.3.1
+  - @0xsequence/network@2.3.1
+  - @0xsequence/relayer@2.3.1
+  - @0xsequence/sessions@2.3.1
+  - @0xsequence/utils@2.3.1
+  - @0xsequence/wallet@2.3.1
+
+## 2.3.0
+
+### Minor Changes
+
+- update metadata rpc client
+
+### Patch Changes
+
+- Updated dependencies
+  - @0xsequence/abi@2.3.0
+  - @0xsequence/core@2.3.0
+  - @0xsequence/migration@2.3.0
+  - @0xsequence/network@2.3.0
+  - @0xsequence/relayer@2.3.0
+  - @0xsequence/sessions@2.3.0
+  - @0xsequence/utils@2.3.0
+  - @0xsequence/wallet@2.3.0
+
 ## 2.2.15
 
 ### Patch Changes
