@@ -72,8 +72,7 @@ export class OtpHandler implements Handler {
       return {
         address,
         handler: this,
-        status: 'actionable',
-        message: 'request-otp',
+        status: 'ready',
         handle: async () => {
           const signature = await signer.sign(
             request.envelope.wallet,
@@ -92,7 +91,8 @@ export class OtpHandler implements Handler {
     return {
       address,
       handler: this,
-      status: 'ready',
+      status: 'actionable',
+      message: 'request-otp',
       handle: async () => {
         const challenge = Identity.OtpChallenge.fromSigner(Identity.IdentityType.Email, address)
         const { loginHint, challenge: codeChallenge } = await wdk.initiateAuth(challenge)
