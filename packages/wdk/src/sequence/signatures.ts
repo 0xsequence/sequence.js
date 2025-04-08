@@ -109,7 +109,7 @@ export class Signatures {
         .catch((error) => onError?.(error))
     })
 
-    const undoHandlerListeners = Object.values(this.shared.handlers).map((handler) =>
+    const undoHandlerListeners = Array.from(this.shared.handlers.values()).map((handler) =>
       handler.onStatusChange(() => {
         this.get(requestId)
           .then((request) => cb(request))
