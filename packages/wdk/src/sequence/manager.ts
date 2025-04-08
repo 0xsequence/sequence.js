@@ -298,7 +298,7 @@ export class Manager {
     return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
   }
 
-  public async registerMnemonicUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
+  public async registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
 

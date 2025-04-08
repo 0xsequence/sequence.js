@@ -6,14 +6,16 @@ import { Signatures } from '../signatures'
 import { Kinds } from '../signers'
 import { SignerReady, SignerUnavailable } from '../types'
 
+type RespondFn = (mnemonic: string) => Promise<void>
+
 export class MnemonicHandler implements Handler {
   kind = Kinds.LoginMnemonic
 
-  private onPromptMnemonic: undefined | (() => Promise<{ mnemonic: string; error: (e: string) => void }>)
+  private onPromptMnemonic: undefined | ((respond: RespondFn) => Promise<void>)
 
   constructor(private readonly signatures: Signatures) {}
 
-  public registerUI(onPromptMnemonic: () => Promise<{ mnemonic: string; error: (e: string) => void }>) {
+  public registerUI(onPromptMnemonic: (respond: RespondFn) => Promise<void>) {
     this.onPromptMnemonic = onPromptMnemonic
     return () => {
       this.onPromptMnemonic = undefined
@@ -56,26 +58,31 @@ export class MnemonicHandler implements Handler {
       address,
       handler: this,
       status: 'ready',
-      handle: async () => {
-        const { mnemonic, error } = await onPromptMnemonic()
-        const signer = MnemonicHandler.toSigner(mnemonic)
-        if (!signer) {
-          error('invalid-mnemonic')
-          return false
-        }
+      handle: () =>
+        new Promise(async (resolve, reject) => {
+          const respond = async (mnemonic: string) => {
+            const signer = MnemonicHandler.toSigner(mnemonic)
+            if (!signer) {
+              return reject('invalid-mnemonic')
+            }
 
-        if (signer.address !== address) {
-          error('wrong-mnemonic')
-          return false
-        }
+            if (signer.address !== address) {
+              return reject('wrong-mnemonic')
+            }
 
-        const signature = await signer.sign(request.envelope.wallet, request.envelope.chainId, request.envelope.payload)
-        await this.signatures.addSignature(request.id, {
-          address,
-          signature,
-        })
-        return true
-      },
+            const signature = await signer.sign(
+              request.envelope.wallet,
+              request.envelope.chainId,
+              request.envelope.payload,
+            )
+            await this.signatures.addSignature(request.id, {
+              address,
+              signature,
+            })
+            resolve(true)
+          }
+          await onPromptMnemonic(respond)
+        }),
     }
   }
 }
