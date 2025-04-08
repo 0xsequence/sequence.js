@@ -4,7 +4,7 @@ export const DEFAULT_CREATION_CODE: Hex.Hex =
   '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3'
 
 export const DefaultGuest: Address.Address = '0xbe6E447E83Ff66Dbfc7843992191f42F6140912C'
-export const DefaultSessionManager: Address.Address = '0x20115Aa0988e2d4EC7e41bA599Fd64A3Eb667bB5'
+export const DefaultSessionManager: Address.Address = '0xDfB66323C6485eE10d81A0fa60BaEbbbA732Ba0a'
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([
