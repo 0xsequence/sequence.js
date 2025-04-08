@@ -302,7 +302,9 @@ export class Manager {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
 
-  public async registerOtpUI(onPromptOtp: (recipient: string) => Promise<{ otp: string; error: (e: string) => void }>) {
+  public async registerOtpUI(
+    onPromptOtp: (recipient: string, respond: (otp: string) => Promise<void>) => Promise<void>,
+  ) {
     return this.otpHandler.registerUI(onPromptOtp)
   }
 
