@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.8
+
+### Patch Changes
+
+- indexer: update clients
+
 ## 2.3.7
 
 ### Patch Changes

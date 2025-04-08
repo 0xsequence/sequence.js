@@ -1,5 +1,15 @@
 # @0xsequence/waas
 
+## 2.3.8
+
+### Patch Changes
+
+- indexer: update clients
+- Updated dependencies
+  - @0xsequence/core@2.3.8
+  - @0xsequence/network@2.3.8
+  - @0xsequence/utils@2.3.8
+
 ## 2.3.7
 
 ### Patch Changes
