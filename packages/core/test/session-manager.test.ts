@@ -38,7 +38,7 @@ describe('SessionManager', () => {
   const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Address) => {
     const code = await provider.request({ method: 'eth_getCode', params: [contract, 'latest'] })
     if (code === '0x') {
-      throw new Error('Contract not deployed')
+      throw new Error(`Contract ${contract} not deployed`)
     }
   }
 
@@ -143,7 +143,7 @@ describe('SessionManager', () => {
       payload: Attestation.hash(attestation),
       privateKey: identityPrivateKey,
     })
-    // -- Back in core --
+    // -- Back in dapp --
     const implicitSigner = new Signers.Session.Implicit(
       implicitPrivateKey,
       attestation,
@@ -366,7 +366,7 @@ describe('SessionManager', () => {
         payload: Attestation.hash(attestation),
         privateKey: identityPrivateKey,
       })
-      // -- Back in core --
+      // -- Back in dapp --
       const implicitSigner = new Signers.Session.Implicit(
         implicitPrivateKey,
         attestation,
