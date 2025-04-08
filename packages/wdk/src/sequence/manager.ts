@@ -298,13 +298,11 @@ export class Manager {
     return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
   }
 
-  public async registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {
+  public registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
 
-  public async registerOtpUI(
-    onPromptOtp: (recipient: string, respond: (otp: string) => Promise<void>) => Promise<void>,
-  ) {
+  public registerOtpUI(onPromptOtp: (recipient: string, respond: (otp: string) => Promise<void>) => Promise<void>) {
     return this.otpHandler.registerUI(onPromptOtp)
   }
 
