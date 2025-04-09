@@ -37,16 +37,33 @@ export async function allSafe<T>(promises: Promise<T>[], fallback: T): Promise<T
 }
 
 export class MultipleTracker implements migrator.PresignedMigrationTracker, ConfigTracker {
-  constructor(private trackers: (migrator.PresignedMigrationTracker & ConfigTracker)[]) {}
+  constructor(
+    private trackers: (migrator.PresignedMigrationTracker & ConfigTracker)[],
+    private isSerial: boolean = false
+  ) {}
 
   async configOfImageHash(args: { imageHash: string }): Promise<commons.config.Config | undefined> {
     const requests = this.trackers.map(async (t, i) => ({ res: await t.configOfImageHash(args), i }))
 
-    // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
-    const result1 = await raceUntil(requests, undefined, val => {
-      if (val?.res === undefined) return false
-      return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
-    })
+    let result1: { res: commons.config.Config | undefined; i: number } | undefined
+
+    if (this.isSerial) {
+      for (const [i, tracker] of this.trackers.entries()) {
+        const result = await tracker.configOfImageHash(args)
+        if (result) {
+          if (universal.genericCoderFor(result.version).config.isComplete(result)) {
+            result1 = { res: result, i }
+            break
+          }
+        }
+      }
+    } else {
+      // We try to find a complete configuration, we race so that we don't wait for all trackers to respond
+      result1 = await raceUntil(requests, undefined, val => {
+        if (val?.res === undefined) return false
+        return universal.genericCoderFor(val.res.version).config.isComplete(val.res)
+      })
+    }
 
     if (result1?.res) {
       // Skip saving the config to the tracker that returned the result
@@ -82,11 +99,20 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
   async imageHashOfCounterfactualWallet(args: {
     wallet: string
   }): Promise<{ imageHash: string; context: commons.context.WalletContext } | undefined> {
-    const imageHash = await raceUntil(
-      this.trackers.map(t => t.imageHashOfCounterfactualWallet(args)),
-      undefined,
-      result => Boolean(result)
-    )
+    let imageHash: { imageHash: string; context: commons.context.WalletContext } | undefined
+
+    if (this.isSerial) {
+      for (const tracker of this.trackers) {
+        const result = await tracker.imageHashOfCounterfactualWallet(args)
+        if (result) {
+          imageHash = { imageHash: result.imageHash, context: result.context }
+          break
+        }
+      }
+    } else {
+      const requests = this.trackers.map(t => t.imageHashOfCounterfactualWallet(args))
+      imageHash = await raceUntil(requests, undefined, result => Boolean(result))
+    }
 
     if (imageHash) {
       this.configOfImageHash({ imageHash: imageHash.imageHash }).then(config => {
