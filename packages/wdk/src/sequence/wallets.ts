@@ -1,5 +1,5 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/sequence-core'
-import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/sequence-primitives'
+import { Config, GenericTree, Payload, SessionConfig, Permission } from '@0xsequence/sequence-primitives'
 import { Address, Hex } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce'
@@ -377,16 +377,16 @@ export class Wallets {
     }
     if (!args.noSessionManager) {
       //  Calculate image hash with the identity signer
-      const sessionManagerTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
+      const sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
       // Store this tree in the state provider
-      const sessionConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionManagerTopology)
-      this.shared.sequence.stateProvider.saveTree(sessionConfigTree)
+      const sessionsConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionsTopology)
+      this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
       // Prepare the configuration leaf
-      const sessionImageHash = GenericTree.hash(sessionConfigTree)
+      const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
       modules = [
         {
-          ...this.shared.sequence.defaultSessionTopology,
-          imageHash: sessionImageHash,
+          ...this.shared.sequence.defaultSessionsTopology,
+          imageHash: sessionsImageHash,
         },
         modules,
       ]

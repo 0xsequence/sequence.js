@@ -69,7 +69,7 @@ export const ManagerOptionsDefaults = {
     weight: 1n,
   } as Config.SignerLeaf,
 
-  defaultSessionTopology: {
+  defaultSessionsTopology: {
     // TODO: Move this somewhere else
     type: 'sapient-signer',
     address: Constants.DefaultSessionManager,
@@ -104,7 +104,7 @@ export type Sequence = {
   readonly relayers: Relayer.Relayer[]
 
   readonly defaultGuardTopology: Config.Topology
-  readonly defaultSessionTopology: Omit<Config.SapientSignerLeaf, 'imageHash'>
+  readonly defaultSessionsTopology: Omit<Config.SapientSignerLeaf, 'imageHash'>
 }
 
 export type Modules = {
@@ -152,7 +152,7 @@ export class Manager {
         relayers: ops.relayers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
-        defaultSessionTopology: ops.defaultSessionTopology,
+        defaultSessionsTopology: ops.defaultSessionsTopology,
       },
 
       databases: {
