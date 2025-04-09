@@ -24,7 +24,7 @@ export type SessionPermissions = {
   signer: Address.Address
   valueLimit: bigint
   deadline: bigint
-  permissions: Permission[]
+  permissions: [Permission, ...Permission[]]
 }
 
 export const MAX_PERMISSIONS_COUNT = 2 ** 7 - 1
@@ -89,11 +89,14 @@ export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions
     permissions.push(permission)
     pointer += consumed
   }
+  if (permissions.length === 0) {
+    throw new Error('No permissions')
+  }
   return {
     signer,
     valueLimit,
     deadline,
-    permissions,
+    permissions: permissions as [Permission, ...Permission[]],
   }
 }
 
