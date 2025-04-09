@@ -376,7 +376,7 @@ export class Wallets {
       weight: 0n,
     }
     if (!args.noSessionManager) {
-      // FIXME: Calculate image hash with the identity signer
+      //  Calculate image hash with the identity signer
       const sessionManagerTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
       // Store this tree in the state provider
       const sessionConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionManagerTopology)
