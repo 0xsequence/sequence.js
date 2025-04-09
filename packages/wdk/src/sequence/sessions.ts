@@ -47,23 +47,16 @@ export class Sessions {
   }
 
   async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
-    console.log('Getting session topology for:', walletAddress)
     const controller = await this.getControllerForWallet(walletAddress)
-    console.log('Session topology:', controller.topology)
     return controller.topology
   }
 
-  async addImplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
-    const controller = await this.getControllerForWallet(walletAddress)
-    // Create attestation params
-    //FIXME This is a login request?
-    // const attestationParams: Attestation.Attestation = {
-    //   approvedSigner: sessionAddress,
-    // }
-    // const envelope = await controller.addImplicitSession(sessionAddress)
-    // return this.shared.modules.signatures.request(envelope, 'config-update', {
-    //   origin: 'session-manager',
-    // })
+  async addImplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    origin?: string,
+  ): Promise<string> {
+    //FIXME This is a login request. Not required here?
     throw new Error('Not implemented')
   }
 
