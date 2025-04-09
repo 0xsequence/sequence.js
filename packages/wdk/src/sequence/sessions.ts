@@ -64,35 +64,50 @@ export class Sessions {
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
     permissions: CoreSigners.Session.ExplicitParams,
+    origin?: string,
   ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.addExplicitSession(sessionAddress, permissions)
-    return this.prepareSessionUpdate(envelope)
+    return this.prepareSessionUpdate(envelope, origin)
   }
 
-  async removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
+  async removeExplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    origin?: string,
+  ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.removeExplicitSession(sessionAddress)
-    return this.prepareSessionUpdate(envelope)
+    return this.prepareSessionUpdate(envelope, origin)
   }
 
-  async addBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
+  async addBlacklistAddress(
+    walletAddress: Address.Address,
+    address: Address.Address,
+    origin?: string,
+  ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.addBlacklistAddress(address)
-    return this.prepareSessionUpdate(envelope)
+    return this.prepareSessionUpdate(envelope, origin)
   }
 
-  async removeBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
+  async removeBlacklistAddress(
+    walletAddress: Address.Address,
+    address: Address.Address,
+    origin?: string,
+  ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.removeBlacklistAddress(address)
-    return this.prepareSessionUpdate(envelope)
+    return this.prepareSessionUpdate(envelope, origin)
   }
 
-  private async prepareSessionUpdate(envelope: Envelope.Envelope<Payload.ConfigUpdate>): Promise<string> {
-    const requestId = await this.shared.modules.signatures.request(envelope, 'session-update', {
-      origin: 'wallet-webapp',
+  private async prepareSessionUpdate(
+    envelope: Envelope.Envelope<Payload.ConfigUpdate>,
+    origin: string = 'wallet-webapp',
+  ): Promise<string> {
+    return await this.shared.modules.signatures.request(envelope, 'session-update', {
+      origin,
     })
-    return requestId
   }
 
   async completeSessionUpdate(walletAddress: Address.Address, requestId: string) {
