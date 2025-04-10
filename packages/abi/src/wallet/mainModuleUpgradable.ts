@@ -25,4 +25,4 @@ export const abi = [
     payable: false,
     stateMutability: 'view'
   }
-]
+] as const

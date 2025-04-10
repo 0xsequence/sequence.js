@@ -155,4 +155,4 @@ export const abi = [
     payable: false,
     stateMutability: 'nonpayable'
   }
-]
+] as const

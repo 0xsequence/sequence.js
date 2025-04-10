@@ -19,7 +19,7 @@ export const abi = [
     payable: false,
     stateMutability: 'view'
   }
-]
+] as const
 
 export const returns = {
   isValidSignatureBytes32: '0x1626ba7e'
