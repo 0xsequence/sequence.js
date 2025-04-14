@@ -1,7 +1,8 @@
 packages:
-  - apps/*
+  - extras/*
   - packages/*
   - packages/services/*
   - packages/utils/*
+  - packages/wallet/*
   - repo/*
   - test/*

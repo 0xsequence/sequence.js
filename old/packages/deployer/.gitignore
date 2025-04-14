@@ -1,4 +1,0 @@
-config/PROD.env
-cache
-artifacts/build-info
-artifacts/**/*.dbg.json
