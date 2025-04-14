@@ -27,8 +27,8 @@ importers:
   extras/demo-wallet:
     dependencies:
       '@0xsequence/wallet-wdk':
-        specifier: workspace:../../packages/wdk
-        version: link:../../packages/wdk
+        specifier: workspace:../../packages/wallet/wdk
+        version: link:../../packages/wallet/wdk
       '@repo/ui':
         specifier: workspace:*
         version: link:../../repo/ui

@@ -11,7 +11,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@0xsequence/wallet-wdk": "workspace:../../packages/wdk",
+    "@0xsequence/wallet-wdk": "workspace:../../packages/wallet/wdk",
     "@repo/ui": "workspace:*",
     "next": "^15.1.0",
     "ox": "^0.6.7",
