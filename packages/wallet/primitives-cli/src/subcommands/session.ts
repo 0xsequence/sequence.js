@@ -3,7 +3,7 @@ import { CommandModule } from 'yargs'
 import sessionExplicitCommand from './sessionExplicit'
 import sessionImplicitCommand from './sessionImplicit'
 
-import { GenericTree, SessionConfig, SessionSignature, Config } from '@0xsequence/sequence-primitives'
+import { GenericTree, SessionConfig, SessionSignature, Config } from '@0xsequence/wallet-primitives'
 
 export async function doEmptyTopology(identitySigner: `0x${string}`): Promise<string> {
   const topology = SessionConfig.emptySessionsTopology(identitySigner)

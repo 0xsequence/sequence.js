@@ -1,5 +1,5 @@
 import { Address, Bytes, Hex } from 'ox'
-import { Payload } from '@0xsequence/sequence-primitives'
+import { Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager'
 
 export const Kinds = {

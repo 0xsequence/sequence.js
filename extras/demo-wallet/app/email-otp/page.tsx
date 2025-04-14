@@ -2,7 +2,7 @@
 
 import OtpHandler from '../handlers/otp'
 import { ClientParams } from '../lib/client-params'
-import { Identity } from '@0xsequence/sequence-wdk'
+import { Identity } from '@0xsequence/wallet-wdk'
 
 type EmailParams = ClientParams & {
   email: string

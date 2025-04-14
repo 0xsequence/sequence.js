@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Identity } from '@0xsequence/sequence-wdk'
+import { Identity } from '@0xsequence/wallet-wdk'
 import { redirect } from 'next/navigation'
 import { ClientParams } from '../lib/client-params'
 import { storeClientParams, getClientParams } from '../lib/session-storage'

@@ -1,4 +1,4 @@
-import { Network } from '@0xsequence/sequence-primitives'
+import { Network } from '@0xsequence/wallet-primitives'
 
 export * from './manager'
 export * from './sessions'

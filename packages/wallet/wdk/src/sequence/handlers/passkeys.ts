@@ -1,9 +1,9 @@
-import { Signers, State } from '@0xsequence/sequence-core'
+import { Signers, State } from '@0xsequence/wallet-core'
 import * as Db from '../../dbs'
 import { Address, Bytes, Hex } from 'ox'
 import { Kinds } from '../signers'
 import { Signatures } from '../signatures'
-import { Extensions } from '@0xsequence/sequence-primitives'
+import { Extensions } from '@0xsequence/wallet-primitives'
 import { Handler } from '.'
 import { SignerActionable, SignerUnavailable } from '../types'
 

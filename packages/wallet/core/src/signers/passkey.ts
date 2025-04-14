@@ -1,6 +1,6 @@
 import { Hex, Bytes, Address, P256 } from 'ox'
-import { Payload, Extensions } from '@0xsequence/sequence-primitives'
-import type { Signature as SignatureTypes } from '@0xsequence/sequence-primitives'
+import { Payload, Extensions } from '@0xsequence/wallet-primitives'
+import type { Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { WebAuthnP256 } from 'ox'
 import { State } from '..'
 import { SapientSigner, Witnessable } from '.'

@@ -1,4 +1,4 @@
-import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/sequence-primitives'
+import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
 import { SignerInterface } from './session'
 

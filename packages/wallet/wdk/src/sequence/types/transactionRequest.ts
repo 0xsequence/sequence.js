@@ -1,5 +1,5 @@
-import { Envelope, Relayer } from '@0xsequence/sequence-core'
-import { Payload } from '@0xsequence/sequence-primitives'
+import { Envelope, Relayer } from '@0xsequence/wallet-core'
+import { Payload } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 
 export type TransactionRequest = {

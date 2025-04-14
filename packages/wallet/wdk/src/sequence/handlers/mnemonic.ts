@@ -1,4 +1,4 @@
-import { Signers } from '@0xsequence/sequence-core'
+import { Signers } from '@0xsequence/wallet-core'
 import { Address, Hex, Mnemonic } from 'ox'
 import { Handler } from '.'
 import * as Db from '../../dbs'

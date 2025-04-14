@@ -1,8 +1,8 @@
 import { Address, Signature, Hex, Bytes } from 'ox'
-import { Signers, State } from '@0xsequence/sequence-core'
+import { Signers, State } from '@0xsequence/wallet-core'
 import { AuthKey } from './authkey'
 import { IdentityInstrument } from './nitro'
-import { Payload, Signature as SequenceSignature } from '@0xsequence/sequence-primitives'
+import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 
 export class IdentitySigner implements Signers.Signer {
   constructor(

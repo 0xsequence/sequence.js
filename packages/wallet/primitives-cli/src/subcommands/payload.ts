@@ -1,6 +1,6 @@
 import { AbiParameters, Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
-import { Payload } from '@0xsequence/sequence-primitives'
+import { Payload } from '@0xsequence/wallet-primitives'
 import { fromPosOrStdin, readStdin } from '../utils'
 
 export const KIND_TRANSACTIONS = 0x00

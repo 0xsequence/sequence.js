@@ -5,9 +5,9 @@ const config: Config = {
   testEnvironment: 'node',
   testMatch: ['**/test/**/*.test.ts'],
   moduleNameMapper: {
-    '^@0xsequence/sequence-wdk$': '<rootDir>/src',
-    '^@0xsequence/sequence-core$': '<rootDir>/../core/src',
-    '^@0xsequence/sequence-primitives$': '<rootDir>/../primitives/src',
+    '^@0xsequence/wallet-wdk$': '<rootDir>/src',
+    '^@0xsequence/wallet-core$': '<rootDir>/../core/src',
+    '^@0xsequence/wallet-primitives$': '<rootDir>/../primitives/src',
   },
 }
 

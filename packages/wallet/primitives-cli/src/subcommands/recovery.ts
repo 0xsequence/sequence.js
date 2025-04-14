@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs'
 import { readStdin } from '../utils'
 import { Address, Bytes, Hex } from 'ox'
-import { Extensions } from '@0xsequence/sequence-primitives'
+import { Extensions } from '@0xsequence/wallet-primitives'
 
 async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.Recovery.RecoveryLeaf[]> {
   if (typeof leavesInput === 'string') {

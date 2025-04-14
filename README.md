@@ -2,9 +2,9 @@
 
 ## Packages
 
-- `@0xsequence/sequence-primitives`: stateless low-level utilities specifically for interacting directly with sequence wallet's smart contracts
-- `@0xsequence/sequence-core`: higher level utilities for creating and using sequence wallets
-- `@0xsequence/sequence-wdk`: all-in-one wallet development kit for building a sequence wallet product
+- `@0xsequence/wallet-primitives`: stateless low-level utilities specifically for interacting directly with sequence wallet's smart contracts
+- `@0xsequence/wallet-core`: higher level utilities for creating and using sequence wallets
+- `@0xsequence/wallet-wdk`: all-in-one wallet development kit for building a sequence wallet product
 
 ## Development
 

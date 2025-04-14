@@ -1,6 +1,6 @@
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer'
-import { Constants, Payload } from '@0xsequence/sequence-primitives'
+import { Constants, Payload } from '@0xsequence/wallet-primitives'
 
 export interface GenericProvider {
   sendTransaction(args: { to: string; data: string }): Promise<string>

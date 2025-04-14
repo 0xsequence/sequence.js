@@ -9,10 +9,10 @@ import { fromPosOrStdin } from '../utils'
 //   isSapientSignerLeaf,
 //   isSignerLeaf,
 //   rawSignatureToJson,
-// } from '@0xsequence/sequence-primitives'
+// } from '@0xsequence/wallet-primitives'
 import { PossibleElements } from './config'
 import { Bytes, Hex, Signature as OxSignature } from 'ox'
-import { Signature, Config } from '@0xsequence/sequence-primitives'
+import { Signature, Config } from '@0xsequence/wallet-primitives'
 
 const SignatureElements = [
   {

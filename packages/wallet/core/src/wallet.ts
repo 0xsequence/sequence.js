@@ -8,7 +8,7 @@ import {
   Erc6492,
   Payload,
   Signature as SequenceSignature,
-} from '@0xsequence/sequence-primitives'
+} from '@0xsequence/wallet-primitives'
 import * as Envelope from './envelope'
 
 export type WalletOptions = {

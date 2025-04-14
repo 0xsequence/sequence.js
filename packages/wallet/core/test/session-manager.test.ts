@@ -1,12 +1,5 @@
-import { Envelope, Signers, State, Wallet } from '@0xsequence/sequence-core'
-import {
-  Attestation,
-  Constants,
-  GenericTree,
-  Payload,
-  Permission,
-  SessionConfig,
-} from '@0xsequence/sequence-primitives'
+import { Envelope, Signers, State, Wallet } from '@0xsequence/wallet-core'
+import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
 import { CAN_RUN_LIVE, ERC20_IMPLICIT_MINT_CONTRACT, ERC20_MINT_ONCE, PRIVATE_KEY, RPC_URL } from './constants'
 

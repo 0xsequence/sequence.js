@@ -1,4 +1,4 @@
-import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/sequence-primitives'
+import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { Store } from './index'
 

@@ -1,13 +1,5 @@
-import { Signers as CoreSigners, Relayer, State } from '@0xsequence/sequence-core'
-import {
-  Config,
-  Constants,
-  Context,
-  Extensions,
-  Network,
-  Payload,
-  SessionConfig,
-} from '@0xsequence/sequence-primitives'
+import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
+import { Config, Constants, Context, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 import * as Db from '../dbs'
 import * as Identity from '../identity'

@@ -1,5 +1,5 @@
-import { Signers as CoreSigners, Envelope, Wallet } from '@0xsequence/sequence-core'
-import { Config, Constants, Payload, SessionConfig } from '@0xsequence/sequence-primitives'
+import { Signers as CoreSigners, Envelope, Wallet } from '@0xsequence/wallet-core'
+import { Config, Constants, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Provider, RpcTransport } from 'ox'
 import { SessionController } from '../session'
 import { Shared } from './manager'

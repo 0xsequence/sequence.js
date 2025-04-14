@@ -1,5 +1,5 @@
 {
-  "name": "@0xsequence/sequence-primitives",
+  "name": "@0xsequence/wallet-primitives",
   "version": "0.0.0",
   "license": "Apache-2.0",
   "scripts": {

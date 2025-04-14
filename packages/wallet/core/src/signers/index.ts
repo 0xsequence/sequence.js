@@ -1,4 +1,4 @@
-import { Config, Payload, Signature } from '@0xsequence/sequence-primitives'
+import { Config, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { State } from '..'
 

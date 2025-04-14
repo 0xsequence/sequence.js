@@ -1,6 +1,6 @@
 import { Address } from 'ox'
-import { Payload } from '@0xsequence/sequence-primitives'
-import { Envelope } from '@0xsequence/sequence-core'
+import { Payload } from '@0xsequence/wallet-primitives'
+import { Envelope } from '@0xsequence/wallet-core'
 import { Generic } from './generic'
 
 export type ActionToPayload = {

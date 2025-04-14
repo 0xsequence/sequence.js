@@ -1,5 +1,5 @@
-import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/sequence-core'
-import { Config, GenericTree, Payload, SessionConfig, Permission } from '@0xsequence/sequence-primitives'
+import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
+import { Config, GenericTree, Payload, SessionConfig, Permission } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce'

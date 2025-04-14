@@ -1,4 +1,4 @@
-import { Permission, SessionConfig, Config } from '@0xsequence/sequence-primitives'
+import { Permission, SessionConfig, Config } from '@0xsequence/wallet-primitives'
 import crypto from 'crypto'
 import { Bytes } from 'ox'
 import type { CommandModule } from 'yargs'

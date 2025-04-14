@@ -5,7 +5,7 @@ import {
   SessionConfig,
   SessionSignature,
   Signature as SignatureTypes,
-} from '@0xsequence/sequence-primitives'
+} from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
 import { SapientSigner } from '.'
 import { Explicit, Implicit } from './session'

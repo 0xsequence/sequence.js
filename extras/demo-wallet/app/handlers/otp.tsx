@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { redirect } from 'next/navigation'
-import { Identity } from '@0xsequence/sequence-wdk'
+import { Identity } from '@0xsequence/wallet-wdk'
 import type { ClientParams } from '../lib/client-params'
 import { Attestation } from '../lib/attestation'
 

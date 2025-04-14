@@ -1,5 +1,5 @@
 {
-  "name": "@0xsequence/sequence-wdk",
+  "name": "@0xsequence/wallet-wdk",
   "version": "0.0.0",
   "license": "Apache-2.0",
   "scripts": {
@@ -23,8 +23,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@0xsequence/sequence-core": "workspace:^",
-    "@0xsequence/sequence-primitives": "workspace:^",
+    "@0xsequence/wallet-core": "workspace:^",
+    "@0xsequence/wallet-primitives": "workspace:^",
     "idb": "^7.1.1",
     "jwt-decode": "^4.0.0",
     "ox": "^0.6.7",

@@ -1,4 +1,4 @@
-import { Envelope, Signers, State, Wallet } from '@0xsequence/sequence-core'
+import { Envelope, Signers, State, Wallet } from '@0xsequence/wallet-core'
 import {
   Attestation,
   Config,
@@ -6,7 +6,7 @@ import {
   Payload,
   Signature as SequenceSignature,
   SessionConfig,
-} from '@0xsequence/sequence-primitives'
+} from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider } from 'ox'
 import { IdentitySigner } from '../identity'
 

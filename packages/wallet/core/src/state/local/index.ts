@@ -6,7 +6,7 @@ import {
   Address as SequenceAddress,
   Extensions,
   GenericTree,
-} from '@0xsequence/sequence-primitives'
+} from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '..'
 import { MemoryStore } from './memory'

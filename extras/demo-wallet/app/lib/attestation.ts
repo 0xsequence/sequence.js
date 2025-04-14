@@ -1,5 +1,5 @@
 import { Hex, Bytes, Signature, PersonalMessage } from 'ox'
-import { Identity } from '@0xsequence/sequence-wdk'
+import { Identity } from '@0xsequence/wallet-wdk'
 
 export interface AttestationParams {
   sessionAddress: string

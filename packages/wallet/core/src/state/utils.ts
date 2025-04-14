@@ -1,4 +1,4 @@
-import { Payload, Signature } from '@0xsequence/sequence-primitives'
+import { Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { Reader } from '.'
 import { isSapientSigner, SapientSigner, Signer } from '../signers'
