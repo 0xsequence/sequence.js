@@ -151,6 +151,11 @@ export class SessionController {
 
     // Update the configuration to use the new session manager image hash
     managerLeaf.imageHash = newImageHash
+
+    // Increment the checkpoint
+    configuration.checkpoint += 1n
+
+    // Update the wallet configuration
     return await this._wallet.prepareUpdate(configuration)
   }
 
