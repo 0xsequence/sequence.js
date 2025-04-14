@@ -22,6 +22,8 @@
       "inputs": [
         "packages/**/*.tsx",
         "packages/**/*.ts",
+        "repo/**/*.ts",
+        "repo/**/*.tsx",
         "test/**/*.ts",
         "test/**/*.tsx"
       ],

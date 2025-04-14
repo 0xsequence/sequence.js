@@ -1,0 +1,31 @@
+{
+  "name": "@0xsequence/relayer",
+  "version": "3.0.0",
+  "description": "relayer sub-package for Sequence",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/relayer",
+  "author": "Sequence Platforms Inc.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "pnpm test:concurrently 'pnpm test:run'",
+    "test:run": "pnpm test:file tests/**/*.spec.ts",
+    "test:file": "NODE_OPTIONS='--import tsx' mocha --timeout 60000",
+    "test:concurrently": "concurrently -k --success first 'pnpm start:hardhat > /dev/null' ",
+    "start:hardhat": "pnpm hardhat node --port 9547",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:^",
+    "@types/node": "^22.13.9",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {}
+}

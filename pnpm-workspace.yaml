@@ -1,5 +1,7 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-  - "repo/*"
-  - "test/*"
+  - apps/*
+  - packages/*
+  - packages/services/*
+  - packages/utils/*
+  - repo/*
+  - test/*
