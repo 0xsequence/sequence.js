@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.9
+
+### Patch Changes
+
+- update indexer rpc client
+
 ## 2.3.8
 
 ### Patch Changes

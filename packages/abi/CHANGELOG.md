@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.9
+
+### Patch Changes
+
+- update indexer rpc client
+
 ## 2.3.8
 
 ### Patch Changes

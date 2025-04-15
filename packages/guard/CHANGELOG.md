@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.3.9
+
+### Patch Changes
+
+- update indexer rpc client
+- Updated dependencies
+  - @0xsequence/account@2.3.9
+  - @0xsequence/core@2.3.9
+  - @0xsequence/signhub@2.3.9
+  - @0xsequence/utils@2.3.9
+
 ## 2.3.8
 
 ### Patch Changes

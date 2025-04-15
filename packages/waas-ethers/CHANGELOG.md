@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.9
+
+### Patch Changes
+
+- update indexer rpc client
+- Updated dependencies
+  - @0xsequence/waas@2.3.9
+
 ## 2.3.8
 
 ### Patch Changes

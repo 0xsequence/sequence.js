@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.3.9
+
+### Patch Changes
+
+- update indexer rpc client
+- Updated dependencies
+  - @0xsequence/abi@2.3.9
+  - @0xsequence/core@2.3.9
+  - @0xsequence/migration@2.3.9
+  - @0xsequence/network@2.3.9
+  - @0xsequence/relayer@2.3.9
+  - @0xsequence/sessions@2.3.9
+  - @0xsequence/utils@2.3.9
+  - @0xsequence/wallet@2.3.9
+
 ## 2.3.8
 
 ### Patch Changes
