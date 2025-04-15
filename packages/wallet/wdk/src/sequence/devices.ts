@@ -1,6 +1,6 @@
 import { Signers } from '@0xsequence/wallet-core'
 import { Address } from 'ox'
-import { Kinds, WitnessExtraSignerKind } from './signers'
+import { Kinds, WitnessExtraSignerKind } from './types/signer'
 import { Shared } from './manager'
 
 export class Devices {

@@ -11,11 +11,12 @@ import { OtpHandler } from './handlers/otp'
 import { Logger } from './logger'
 import { Sessions } from './sessions'
 import { Signatures } from './signatures'
-import { Kinds, Signers } from './signers'
+import { Signers } from './signers'
 import { Transactions } from './transactions'
 import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
 import { Transaction, TransactionRequest } from './types/transactionRequest'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
+import { Kinds } from './types/signer'
 
 export type ManagerOptions = {
   verbose?: boolean

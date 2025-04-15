@@ -6,8 +6,8 @@ import { AuthCodePkceHandler } from './handlers/authcode-pkce'
 import { MnemonicHandler } from './handlers/mnemonic'
 import { OtpHandler } from './handlers/otp'
 import { Shared } from './manager'
-import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Wallet } from './types'
+import { Kinds, WitnessExtraSignerKind } from './types/signer'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple-pkce'

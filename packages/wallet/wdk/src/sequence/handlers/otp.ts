@@ -4,7 +4,7 @@ import { Signers } from '@0xsequence/wallet-core'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
 import { SignerUnavailable, SignerReady, SignerActionable } from '../types'
-import { Kinds } from '../signers'
+import { Kinds } from '../types/signer'
 import * as Identity from '../../identity'
 
 type RespondFn = (otp: string) => Promise<void>
