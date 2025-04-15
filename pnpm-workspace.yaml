@@ -6,3 +6,6 @@ packages:
   - packages/wallet/*
   - repo/*
   - test/*
+
+publicHoistPattern:
+- "eslint"
