@@ -584,12 +584,8 @@ describe('Account', () => {
       it('Should sign a message, already prefixed with EIP-191', async () => {
         const msg = ethers.toUtf8Bytes('Hello World')
 
-        const prefixedMessage = concat([
-          toUtf8Bytes(MessagePrefix),
-          toUtf8Bytes(String(msg.length)),
-          msg
-        ])
-        
+        const prefixedMessage = concat([toUtf8Bytes(MessagePrefix), toUtf8Bytes(String(msg.length)), msg])
+
         const sig = await account.signMessage(prefixedMessage, networks[0].chainId)
 
         const canOnchainValidate = await account.status(networks[0].chainId).then(s => s.canOnchainValidate)

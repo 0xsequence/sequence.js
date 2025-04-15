@@ -790,11 +790,11 @@ export class Account {
 
   /**
    * Signs a message.
-   * 
+   *
    * This method will sign the message using the account associated with this signer
-   * and the specified chain ID. If the message is already prefixed with the EIP-191 
+   * and the specified chain ID. If the message is already prefixed with the EIP-191
    * prefix, it will be hashed directly. Otherwise, it will be prefixed before hashing.
-   * 
+   *
    * @param message - The message to sign. Can be a string or BytesLike.
    * @param chainId - The chain ID to use for signing
    * @param cantValidateBehavior - Behavior when the wallet cannot validate on-chain
@@ -805,20 +805,20 @@ export class Account {
     chainId: ethers.BigNumberish,
     cantValidateBehavior: 'ignore' | 'eip6492' | 'throw' = 'ignore'
   ): Promise<string> {
-    const messageHex = ethers.hexlify(message);
-    const prefixHex = ethers.hexlify(ethers.toUtf8Bytes(MessagePrefix));
-    
-    let digest: string;
-    
+    const messageHex = ethers.hexlify(message)
+    const prefixHex = ethers.hexlify(ethers.toUtf8Bytes(MessagePrefix))
+
+    let digest: string
+
     // We check if the message is already prefixed with EIP-191
     // This will avoid breaking changes for codebases where the message is already prefixed
     if (messageHex.substring(2).startsWith(prefixHex.substring(2))) {
-      digest = ethers.keccak256(message);
+      digest = ethers.keccak256(message)
     } else {
-      digest = ethers.hashMessage(message);
+      digest = ethers.hashMessage(message)
     }
-    
-    return this.signDigest(digest, chainId, true, cantValidateBehavior);
+
+    return this.signDigest(digest, chainId, true, cantValidateBehavior)
   }
 
   async signTransactions(

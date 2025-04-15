@@ -79,17 +79,17 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
 
   /**
    * Signs a message.
-   * 
+   *
    * This method will sign the message using the account associated with this signer
    * and the specified chain ID. The message is already being prefixed with the EIP-191 prefix.
-   * 
+   *
    * @param message - The message to sign. Can be a string or BytesLike.
    * @returns A Promise that resolves to the signature as a hexadecimal string
-   * 
+   *
    * @example
    * ```typescript
    * const signer = account.getSigner(chainId)
-   * 
+   *
    * const message = "Hello, Sequence!";
    * const signature = await signer.signMessage(message);
    * console.log(signature);
