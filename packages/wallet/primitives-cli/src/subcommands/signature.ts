@@ -1,46 +1,36 @@
-import { boolean, type CommandModule } from 'yargs'
-import { fromPosOrStdin } from '../utils'
-// import {
-//   configFromJson,
-//   configToJson,
-//   decodeSignature,
-//   encodeSignature,
-//   fillLeaves,
-//   isSapientSignerLeaf,
-//   isSignerLeaf,
-//   rawSignatureToJson,
-// } from '@0xsequence/wallet-primitives'
-import { PossibleElements } from './config'
+import { Config, Signature } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex, Signature as OxSignature } from 'ox'
-import { Signature, Config } from '@0xsequence/wallet-primitives'
+import { type CommandModule } from 'yargs'
+import { fromPosOrStdin } from '../utils'
+import { PossibleElements } from './config'
 
-const SignatureElements = [
-  {
-    type: 'eth_sign',
-    format: '<address>:eth_sign:<r>:<s>:<v>',
-    description: 'An eth_sign signature',
-  },
-  {
-    type: 'hash',
-    format: '<address>:hash:<r>:<s>:<v>',
-    description: 'A hash signature',
-  },
-  {
-    type: 'erc1271',
-    format: '<address>:erc1271:<data>',
-    description: 'An erc1271 signature',
-  },
-  {
-    type: 'sapient',
-    format: '<address>:sapient:<data>',
-    description: 'A sapient signature',
-  },
-  {
-    type: 'sapient_compact',
-    format: '<address>:sapient_compact:<data>',
-    description: 'A sapient compact signature',
-  },
-]
+// const SignatureElements = [
+//   {
+//     type: 'eth_sign',
+//     format: '<address>:eth_sign:<r>:<s>:<v>',
+//     description: 'An eth_sign signature',
+//   },
+//   {
+//     type: 'hash',
+//     format: '<address>:hash:<r>:<s>:<v>',
+//     description: 'A hash signature',
+//   },
+//   {
+//     type: 'erc1271',
+//     format: '<address>:erc1271:<data>',
+//     description: 'An erc1271 signature',
+//   },
+//   {
+//     type: 'sapient',
+//     format: '<address>:sapient:<data>',
+//     description: 'A sapient signature',
+//   },
+//   {
+//     type: 'sapient_compact',
+//     format: '<address>:sapient_compact:<data>',
+//     description: 'A sapient compact signature',
+//   },
+// ]
 
 export async function doEncode(
   input: string,

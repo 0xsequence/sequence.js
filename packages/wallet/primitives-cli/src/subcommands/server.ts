@@ -15,13 +15,13 @@ import * as passkeys from './passkeys'
 interface JsonRpcRequest {
   jsonrpc: string
   method: string
-  params?: any
+  params?: any // eslint-disable-line @typescript-eslint/no-explicit-any
   id?: number | string
 }
 
 interface JsonRpcSuccessResponse {
   jsonrpc: '2.0'
-  result: any
+  result: any // eslint-disable-line @typescript-eslint/no-explicit-any
   id?: number | string
 }
 
@@ -30,11 +30,12 @@ interface JsonRpcErrorResponse {
   error: {
     code: number
     message: string
-    data?: any
+    data?: any // eslint-disable-line @typescript-eslint/no-explicit-any
   }
   id?: number | string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function successResponse(id: number | string | undefined, result: any): JsonRpcSuccessResponse {
   return {
     jsonrpc: '2.0',
@@ -47,7 +48,7 @@ function errorResponse(
   id: number | string | undefined,
   code: number,
   message: string,
-  data?: any,
+  data?: any, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): JsonRpcErrorResponse {
   return {
     jsonrpc: '2.0',
@@ -61,6 +62,7 @@ function errorResponse(
 }
 
 // We collect all of the CLI methods into a single map that can be invoked by name.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rpcMethods: Record<string, (params: any) => Promise<any>> = {
   // CONFIG
   async config_new(params) {
@@ -284,8 +286,8 @@ async function handleSingleRequest(
       console.log('Response details:', JSON.stringify(response, null, 2))
     }
     return response
-  } catch (err: any) {
-    const error = errorResponse(id, -32000, err?.message ?? 'Unknown error')
+  } catch (err: unknown) {
+    const error = errorResponse(id, -32000, err instanceof Error ? err.message : 'Unknown error')
     if (!silent)
       console.log(
         `[${new Date().toISOString()}] Error response:`,

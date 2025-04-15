@@ -1,5 +1,4 @@
 import { Arguments } from 'yargs'
-import { Bytes } from 'ox'
 
 export async function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {

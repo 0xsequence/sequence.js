@@ -1,7 +1,7 @@
 import { AbiParameters, Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { fromPosOrStdin, readStdin } from '../utils'
+import { fromPosOrStdin } from '../utils'
 
 export const KIND_TRANSACTIONS = 0x00
 const KIND_MESSAGE = 0x01
@@ -73,7 +73,7 @@ function behaviorOnError(behavior: number): 'ignore' | 'revert' | 'abort' {
   }
 }
 
-export async function doConvertToAbi(payload: string): Promise<string> {
+export async function doConvertToAbi(_payload: string): Promise<string> {
   // Not implemented yet, but following the pattern
   throw new Error('Not implemented')
 }

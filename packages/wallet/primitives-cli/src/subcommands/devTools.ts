@@ -84,7 +84,8 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Config.
       case 3: // NodeLeaf
         return randomBytes(32, options)
 
-      case 4: // NestedLeaf
+      case 4: {
+        // NestedLeaf
         const minThreshold = BigInt(options?.minThresholdOnNested ?? 0)
         return {
           type: 'nested',
@@ -92,6 +93,7 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Config.
           weight: randomBigInt(256n, options),
           threshold: minThreshold + randomBigInt(65535n - minThreshold, options),
         }
+      }
     }
   }
 
