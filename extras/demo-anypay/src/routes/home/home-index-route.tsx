@@ -370,7 +370,12 @@ export const HomeIndexRoute = () => {
                 ) : (
                   <>
                     <NetworkImage chainId={8453} size="sm" className="w-5 h-5" />
-                    <span>Pay Action (0.03 USDC to Vitalik)</span>
+                    <span>
+                      Pay Action{' '}
+                      <Text variant="small" color="secondary">
+                        (0.03 USDC to Vitalik)
+                      </Text>
+                    </span>
                   </>
                 )}
               </Button>
