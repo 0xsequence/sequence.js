@@ -223,6 +223,7 @@ export const HomeIndexRoute = () => {
 
   const handleActionClick = (action: IntentAction) => {
     setIntentQuote(null)
+    setShowCustomCallForm(false)
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
     } else {
@@ -413,7 +414,7 @@ export const HomeIndexRoute = () => {
                 )}
               </Button>
               <Button
-                variant="danger"
+                variant="raised"
                 onClick={() => handleActionClick('mock_interaction')}
                 disabled={!selectedToken || createIntentMutation.isPending}
                 className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
