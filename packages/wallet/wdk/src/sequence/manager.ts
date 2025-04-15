@@ -364,4 +364,8 @@ export class Manager {
     console.log('Completing session update:', requestId)
     return this.shared.modules.sessions.completeSessionUpdate(sigRequest.wallet, requestId)
   }
+
+  public async getConfiguration(wallet: Address.Address) {
+    return this.shared.modules.wallets.getConfiguration({ wallet })
+  }
 }
