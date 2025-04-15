@@ -631,5 +631,6 @@ export class Wallets {
 
     await this.shared.modules.signatures.complete(requestId)
     await this.shared.databases.manager.del(request.wallet)
+    await this.shared.modules.devices.remove(walletEntry.device)
   }
 }
