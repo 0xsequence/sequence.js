@@ -17,8 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
-      # - run: pnpm typecheck
-      # - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm lint
       - run: pnpm build
 
   tests:
