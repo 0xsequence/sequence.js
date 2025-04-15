@@ -592,10 +592,12 @@ export class Wallets {
 
     const nextDevicesTopology = buildCappedTree([
       ...Config.getSigners(devicesTopology)
-        .signers.filter((x) => x !== '0x0000000000000000000000000000000000000000')
+        .signers.filter((x) => x !== '0x0000000000000000000000000000000000000000' && x !== device.address)
         .map((x) => ({ address: x })),
       ...Config.getSigners(devicesTopology).sapientSigners,
     ])
+
+    console.log('nextDevicesTopology', nextDevicesTopology)
 
     const envelope = await walletObj.prepareUpdate(
       toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
