@@ -359,11 +359,27 @@ export const HomeIndexRoute = () => {
                         : `${tokenBalance?.chainId}-${tokenBalance?.contractAddress}-${tokenBalance?.tokenID ?? '0'}`
                     }
                     onClick={() => {
-                      if (isNative || !tokenBalance) return // Don't allow selecting native tokens
-                      setSelectedToken(tokenBalance)
+                      if (isNative) {
+                        setSelectedToken({
+                          ...token,
+                          contractAddress: zeroAddress,
+                          contractType: 'ERC20',
+                          contractInfo: {
+                            name: chainInfo?.nativeCurrency.name || 'Native Token',
+                            symbol: chainInfo?.nativeCurrency.symbol || 'ETH',
+                            decimals: 18,
+                          },
+                          blockHash: '',
+                          blockNumber: 0,
+                          uniqueCollectibles: [],
+                          isSummary: true,
+                        } as unknown as TokenBalance)
+                      } else {
+                        setSelectedToken(token)
+                      }
                       setIntentQuote(null)
                     }}
-                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${!isNative && tokenBalance && selectedToken?.contractAddress === tokenBalance.contractAddress && selectedToken?.chainId === tokenBalance.chainId ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
+                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${selectedToken?.chainId === token.chainId && (isNative ? selectedToken?.contractAddress === zeroAddress : selectedToken?.contractAddress === token.contractAddress) ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
                   >
                     <div className="flex items-center">
                       <div className="relative">
