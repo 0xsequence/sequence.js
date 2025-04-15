@@ -1,26 +1,41 @@
-# See https://help.github.com/ignore-files/ for more about ignoring files.
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-node_modules/
-cache/
-build/
-dist/
+# Dependencies
+node_modules
+.pnp
+.pnp.js
 
-test_chain/
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-*.js.map
-PROD.env
-
-.DS_Store
-.vscode
-.idea
-*.iml
-.cache
-package-lock.json
+# Testing
 coverage
-.rts2_cache*
 
+# Turbo
+.turbo
+
+# Vercel
+.vercel
+
+# Build Outputs
+.next/
+out/
+build
+dist
+
+
+# Debug
+npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
-.nyc_output/
+# Misc
+.DS_Store
+*.pem
+
+# Husky
+.husky/

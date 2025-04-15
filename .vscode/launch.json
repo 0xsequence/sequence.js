@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch primitives-cli server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/packages/wallet/primitives-cli/dist/index.js",
+      "args": ["server"],
+      "runtimeArgs": ["--enable-source-maps"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/wallet/primitives-cli/dist/**/*.js",
+        "${workspaceFolder}/packages/wallet/core/dist/**/*.js",
+        "${workspaceFolder}/packages/wallet/primitives/dist/**/*.js",
+        "${workspaceFolder}/packages/wallet/wdk/dist/**/*.js"
+      ],
+      "sourceMapPathOverrides": {
+        "../packages/wallet/primitives-cli/src/*": "${workspaceFolder}/packages/wallet/primitives-cli/src/*",
+        "../packages/wallet/core/src/*": "${workspaceFolder}/packages/wallet/core/src/*",
+        "../packages/wallet/primitives/src/*": "${workspaceFolder}/packages/wallet/primitives/src/*",
+        "../packages/wallet/wdk/src/*": "${workspaceFolder}/packages/wallet/wdk/src/*"
+      }
+    }
+  ]
+}

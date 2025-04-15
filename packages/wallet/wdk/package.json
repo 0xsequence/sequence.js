@@ -1,0 +1,33 @@
+{
+  "name": "@0xsequence/wallet-wdk",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest --passWithNoTests"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:^",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.9",
+    "dotenv": "^16.4.7",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.6",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@0xsequence/wallet-core": "workspace:^",
+    "@0xsequence/wallet-primitives": "workspace:^",
+    "idb": "^7.1.1",
+    "jwt-decode": "^4.0.0",
+    "ox": "^0.6.7",
+    "uuid": "^11.1.0"
+  }
+}
