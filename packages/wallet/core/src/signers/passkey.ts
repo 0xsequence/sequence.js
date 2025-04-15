@@ -1,4 +1,4 @@
-import { Hex, Bytes, Address, P256 } from 'ox'
+import { Hex, Bytes, Address, P256, Hash } from 'ox'
 import { Payload, Extensions } from '@0xsequence/wallet-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { WebAuthnP256 } from 'ox'
@@ -107,8 +107,6 @@ export class Passkey implements SapientSigner, Witnessable {
 
     const metadata = {
       credentialId: credential.id,
-      name,
-      createdAt: Date.now(),
     }
 
     const passkey = new Passkey({
@@ -135,19 +133,17 @@ export class Passkey implements SapientSigner, Witnessable {
     stateReader: State.Reader,
     extensions: Pick<Extensions.Extensions, 'passkeys'>,
   ): Promise<Passkey | undefined> {
-    const challenge = Hex.random(32)
-    const response = await WebAuthnP256.sign({
-      challenge,
-    })
+    const response = await WebAuthnP256.sign({ challenge: Hex.random(32) })
+    if (!response.raw) throw new Error('No credential returned')
 
-    const credential = response.raw
-    if (!credential) {
-      throw new Error('No credential returned')
-    }
+    const authenticatorDataBytes = Bytes.fromHex(response.metadata.authenticatorData)
+    const clientDataHash = Hash.sha256(Bytes.fromString(response.metadata.clientDataJSON), { as: 'Bytes' })
+    const messageSignedByAuthenticator = Bytes.concat(authenticatorDataBytes, clientDataHash)
 
-    // Recover the public key from the credential
-    const publicKey = P256.recoverPublicKey({
-      payload: challenge,
+    const messageHash = Hash.sha256(messageSignedByAuthenticator, { as: 'Bytes' }) // Use Bytes output
+
+    const publicKey1 = P256.recoverPublicKey({
+      payload: messageHash,
       signature: {
         r: BigInt(response.signature.r),
         s: BigInt(response.signature.s),
@@ -155,25 +151,44 @@ export class Passkey implements SapientSigner, Witnessable {
       },
     })
 
+    const publicKey2 = P256.recoverPublicKey({
+      payload: messageHash,
+      signature: {
+        r: BigInt(response.signature.r),
+        s: BigInt(response.signature.s),
+        yParity: 1,
+      },
+    })
+
     // Compute the imageHash for all public key combinations
     // - requireUserVerification: true / false
     // - embedMetadata: true / false
 
-    const base = {
-      x: Hex.fromNumber(publicKey.x),
-      y: Hex.fromNumber(publicKey.y),
+    const base1 = {
+      x: Hex.fromNumber(publicKey1.x),
+      y: Hex.fromNumber(publicKey1.y),
+    }
+
+    const base2 = {
+      x: Hex.fromNumber(publicKey2.x),
+      y: Hex.fromNumber(publicKey2.y),
     }
 
     const metadata = {
-      credentialId: credential.id,
+      credentialId: response.raw.id,
     }
 
     const imageHashes = [
-      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: true }),
-      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: true }),
-      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: false, metadata }),
-      Extensions.Passkeys.rootFor({ ...base, requireUserVerification: false, metadata }),
+      Extensions.Passkeys.rootFor({ ...base1, requireUserVerification: true }),
+      Extensions.Passkeys.rootFor({ ...base1, requireUserVerification: false }),
+      Extensions.Passkeys.rootFor({ ...base1, requireUserVerification: true, metadata }),
+      Extensions.Passkeys.rootFor({ ...base1, requireUserVerification: false, metadata }),
+      Extensions.Passkeys.rootFor({ ...base2, requireUserVerification: true }),
+      Extensions.Passkeys.rootFor({ ...base2, requireUserVerification: false }),
+      Extensions.Passkeys.rootFor({ ...base2, requireUserVerification: true, metadata }),
+      Extensions.Passkeys.rootFor({ ...base2, requireUserVerification: false, metadata }),
     ]
+
     // Find wallets for all possible image hashes
     const signers = await Promise.all(
       imageHashes.map(async (imageHash) => {
