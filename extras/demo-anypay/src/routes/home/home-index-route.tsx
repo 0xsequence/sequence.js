@@ -102,7 +102,6 @@ export const HomeIndexRoute = () => {
     queryFn: async () => {
       if (!account.address) {
         console.warn('No account address or indexer client')
-
         return { balances: [], nativeBalances: [], page: defaultPage } as GetTokenBalancesSummaryReturn
       }
       try {
@@ -246,7 +245,12 @@ export const HomeIndexRoute = () => {
     const tokenBalances = tokenBalancesData.balances.flatMap((b) => b.results)
     const balances = [...nativeBalances, ...tokenBalances]
 
-    return [...balances]
+    // Filter out tokens on testnets
+    const filteredBalances = balances.filter((token) => {
+      return getChainInfo(token.chainId)?.testnet === false || getChainInfo(token.chainId)?.testnet === undefined
+    })
+
+    return [...filteredBalances]
       .filter((token) => {
         try {
           return BigInt(token.balance) > 0n
