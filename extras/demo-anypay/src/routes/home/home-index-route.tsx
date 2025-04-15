@@ -17,7 +17,7 @@ function isNativeToken(token: TokenBalance): boolean {
 }
 
 // Types for intent actions
-type IntentAction = 'pay' | 'mock_interaction'
+type IntentAction = 'pay' | 'mock_interaction' | 'custom_call'
 
 // Helper to format balance
 const formatBalance = (balance: TokenBalance) => {
@@ -48,6 +48,15 @@ export const HomeIndexRoute = () => {
   const { connectors, connect, status: connectStatus, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null)
+  const [showCustomCallForm, setShowCustomCallForm] = useState(false)
+  const [customCallData, setCustomCallData] = useState({
+    to: '',
+    data: '',
+    value: '0',
+    chainId: '8453',
+    tokenAmount: '0',
+    tokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // Default to USDC
+  })
   const indexerClient = useIndexerClient((account.chainId as ChainId) || ChainId.MAINNET)
   const effectiveIndexerClient = account.chainId ? indexerClient : null
   const apiClient = useAPIClient()
@@ -122,6 +131,14 @@ export const HomeIndexRoute = () => {
           transactionData,
           transactionValue: '0',
         }
+      } else if (action === 'custom_call') {
+        // Handle custom call
+        destinationCall = {
+          chainId: parseInt(customCallData.chainId),
+          to: customCallData.to,
+          transactionData: customCallData.data.startsWith('0x') ? customCallData.data : `0x${customCallData.data}`,
+          transactionValue: customCallData.value,
+        }
       } else {
         // Ensure mock data is prefixed with 0x
         const transactionData = MOCK_TRANSFER_DATA.startsWith('0x') ? MOCK_TRANSFER_DATA : `0x${MOCK_TRANSFER_DATA}`
@@ -138,12 +155,18 @@ export const HomeIndexRoute = () => {
         userAddress: account.address,
         originChainId: selectedToken.chainId || 8453,
         originTokenAddress: isOriginNative ? zeroAddress : selectedToken.contractAddress,
-        destinationChainId: destinationChainId,
-        destinationToAddress: destinationCall.to,
-        destinationTokenAddress: USDC_ADDRESS,
-        destinationTokenAmount: action === 'pay' ? AMOUNT.toString() : '0',
-        destinationCallData: destinationCall.transactionData,
-        destinationCallValue: destinationCall.transactionValue,
+        destinationChainId: action === 'custom_call' ? parseInt(customCallData.chainId) : destinationCall.chainId,
+        destinationToAddress: action === 'custom_call' ? customCallData.to : destinationCall.to,
+        destinationTokenAddress: action === 'custom_call' ? customCallData.tokenAddress : USDC_ADDRESS,
+        destinationTokenAmount:
+          action === 'custom_call' ? customCallData.tokenAmount : action === 'pay' ? AMOUNT.toString() : '0',
+        destinationCallData:
+          action === 'custom_call'
+            ? customCallData.data.startsWith('0x')
+              ? customCallData.data
+              : `0x${customCallData.data}`
+            : destinationCall.transactionData,
+        destinationCallValue: action === 'custom_call' ? customCallData.value : destinationCall.transactionValue,
       }
 
       console.log('Calling createIntentConfig with args:', args)
@@ -200,7 +223,17 @@ export const HomeIndexRoute = () => {
 
   const handleActionClick = (action: IntentAction) => {
     setIntentQuote(null)
-    createIntentMutation.mutate(action)
+    if (action === 'custom_call') {
+      setShowCustomCallForm(true)
+    } else {
+      createIntentMutation.mutate(action)
+    }
+  }
+
+  const handleCustomCallSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    createIntentMutation.mutate('custom_call')
+    setShowCustomCallForm(false)
   }
 
   return (
@@ -394,7 +427,122 @@ export const HomeIndexRoute = () => {
                   </>
                 )}
               </Button>
+              <Button
+                variant="tertiary"
+                onClick={() => handleActionClick('custom_call')}
+                disabled={!selectedToken || createIntentMutation.isPending}
+                className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
+              >
+                {createIntentMutation.isPending && createIntentMutation.variables === 'custom_call' ? (
+                  'Processing...'
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    <span>Custom Call</span>
+                  </>
+                )}
+              </Button>
             </div>
+
+            {showCustomCallForm && (
+              <div className="mt-4 bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
+                <form onSubmit={handleCustomCallSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">To Address</label>
+                    <input
+                      type="text"
+                      value={customCallData.to}
+                      onChange={(e) => setCustomCallData({ ...customCallData, to: e.target.value })}
+                      placeholder="0x..."
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Call Data</label>
+                    <input
+                      type="text"
+                      value={customCallData.data}
+                      onChange={(e) => setCustomCallData({ ...customCallData, data: e.target.value })}
+                      placeholder="0x..."
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Value (in wei)</label>
+                    <input
+                      type="text"
+                      value={customCallData.value}
+                      onChange={(e) => setCustomCallData({ ...customCallData, value: e.target.value })}
+                      placeholder="0"
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Destination Chain ID</label>
+                    <input
+                      type="text"
+                      value={customCallData.chainId}
+                      onChange={(e) => setCustomCallData({ ...customCallData, chainId: e.target.value })}
+                      placeholder="8453"
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Token Amount (in wei)</label>
+                    <input
+                      type="text"
+                      value={customCallData.tokenAmount}
+                      onChange={(e) => setCustomCallData({ ...customCallData, tokenAmount: e.target.value })}
+                      placeholder="0"
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Token Address</label>
+                    <input
+                      type="text"
+                      value={customCallData.tokenAddress}
+                      onChange={(e) => setCustomCallData({ ...customCallData, tokenAddress: e.target.value })}
+                      placeholder="0x..."
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => setShowCustomCallForm(false)}
+                      className="px-4 py-2"
+                    >
+                      Cancel
+                    </Button>
+                    <Button variant="primary" size="small" type="submit" className="px-4 py-2">
+                      Submit
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {!selectedToken && (
               <Text
                 variant="small"
@@ -497,7 +645,10 @@ export const HomeIndexRoute = () => {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Origin Call (Send Funds Here):
+                  Origin Call
+                  <Text variant="small" color="secondary" className="ml-1">
+                    (Send Funds Here):
+                  </Text>
                 </Text>
                 <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                   <Text variant="small" color="secondary">
@@ -548,7 +699,10 @@ export const HomeIndexRoute = () => {
                           d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
                         />
                       </svg>
-                      Preconditions (Actions after funds arrive):
+                      Preconditions
+                      <Text variant="small" color="secondary" className="ml-1">
+                        (Actions after funds arrive on origin chain):
+                      </Text>
                     </Text>
                     <ul className="space-y-2 pl-2">
                       {intentQuote.preconditions.map((cond, index) => (
