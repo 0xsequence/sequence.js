@@ -1,10 +1,9 @@
-import { Address, Bytes, Hex } from 'ox'
-import * as Db from '../dbs'
-import { Config, Payload } from '@0xsequence/wallet-primitives'
 import { Envelope } from '@0xsequence/wallet-core'
+import { Config } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
+import * as Db from '../dbs'
 import { Shared } from './manager'
-import { Handler } from './handlers'
 import { BaseSignatureRequest, SignatureRequest, SignerBase, SignerSigned, SignerUnavailable } from './types'
 
 export class Signatures {
@@ -142,7 +141,21 @@ export class Signatures {
   }
 
   async complete(requestId: string) {
-    await this.shared.databases.signatures.del(requestId)
+    const request = await this.shared.databases.signatures.get(requestId)
+    if (request?.envelope.payload.type === 'config-update') {
+      // Clear pending config updates for the same wallet with a checkpoint equal or lower than the completed update
+      const pendingRequests = await this.shared.databases.signatures.list()
+      const pendingConfigUpdatesToClear = pendingRequests.filter(
+        (sig) =>
+          sig.wallet === request.wallet &&
+          sig.envelope.payload.type === 'config-update' &&
+          sig.envelope.configuration.checkpoint <= request.envelope.configuration.checkpoint,
+      )
+      // This also deletes the requested id
+      await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.delete(sig.id)))
+    } else {
+      await this.shared.databases.signatures.del(requestId)
+    }
   }
 
   async request<A extends Db.Action>(
