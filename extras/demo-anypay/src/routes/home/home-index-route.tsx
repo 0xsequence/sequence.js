@@ -727,6 +727,9 @@ export const HomeIndexRoute = () => {
                     </span>
                   </Text>
                   <NetworkImage chainId={intentQuote.originCall.chainId} size="sm" className="w-4 h-4 ml-1" />
+                  <Text variant="small" color="secondary" className="ml-1">
+                    {getChainInfo(intentQuote.originCall.chainId)?.name || 'Unknown Chain'}
+                  </Text>
                 </div>
 
                 {intentQuote.preconditions && intentQuote.preconditions.length > 0 && (
