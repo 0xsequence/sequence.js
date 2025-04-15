@@ -10,6 +10,9 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAPIClient } from '../../hooks/useAPIClient'
 import { Button, Text, NetworkImage } from '@0xsequence/design-system'
 import { AbiFunction } from 'ox'
+import { arbitrum } from 'viem/chains'
+import { ContractType } from '@0xsequence/indexer'
+import { ResourceStatus } from '@0xsequence/indexer'
 
 // Type guard for native token balance
 function isNativeToken(token: TokenBalance): boolean {
@@ -84,12 +87,54 @@ export const HomeIndexRoute = () => {
         const summary = await effectiveIndexerClient.getTokenBalancesSummary({
           filter: {
             accountAddresses: [account.address],
-            omitNativeBalances: true,
+            omitNativeBalances: false,
           },
         })
 
+        // Convert native balances to TokenBalance format
+        const nativeBalancesAsTokenBalances =
+          summary.nativeBalances?.map((native) => ({
+            contractType: ContractType.NATIVE,
+            contractAddress: zeroAddress,
+            accountAddress: native.accountAddress,
+            balance: native.balance,
+            chainId: native.chainId,
+            blockHash: '0x0',
+            blockNumber: 0,
+            uniqueCollectibles: '0',
+            isSummary: true,
+            contractInfo: {
+              chainId: native.chainId,
+              address: zeroAddress,
+              source: 'native',
+              name: 'Native Token',
+              type: 'native',
+              symbol: 'ETH',
+              decimals: 18,
+              logoURI: '',
+              deployed: true,
+              bytecodeHash: '',
+              extensions: {
+                link: '',
+                description: '',
+                categories: [],
+                ogImage: '',
+                ogName: '',
+                originChainId: native.chainId,
+                originAddress: zeroAddress,
+                blacklist: false,
+                verified: true,
+                verifiedBy: 'native',
+                featured: false,
+                featureIndex: 0,
+              },
+              updatedAt: new Date().toISOString(),
+              status: ResourceStatus.AVAILABLE,
+            },
+          })) || []
+
         return {
-          balances: summary.balances || [],
+          balances: [...(summary.balances || []), ...nativeBalancesAsTokenBalances],
           page: defaultPage,
         }
       } catch (error) {
@@ -352,7 +397,7 @@ export const HomeIndexRoute = () => {
                       {isNativeToken(token) && (
                         <Text
                           variant="small"
-                          color="accent"
+                          color="secondary"
                           className="ml-1 text-xs bg-blue-900/50 px-2 py-0.5 rounded-full"
                         >
                           Native
@@ -423,7 +468,7 @@ export const HomeIndexRoute = () => {
                   'Processing...'
                 ) : (
                   <>
-                    <NetworkImage chainId={selectedToken?.chainId || 8453} size="sm" className="w-5 h-5" />
+                    <NetworkImage chainId={arbitrum.id} size="sm" className="w-5 h-5" />
                     <span>Mock Interaction</span>
                   </>
                 )}
