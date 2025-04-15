@@ -1,50 +1,66 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Connector } from 'wagmi'
-import { useIndexerClient } from '@0xsequence/hooks'
-import { ChainId } from '@0xsequence/network'
-import { TokenBalance, GetTokenBalancesReturn } from '@0xsequence/indexer'
+import { useIndexerGatewayClient } from '@0xsequence/hooks'
+import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
+import { GetTokenBalancesSummaryReturn } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
 import { CreateIntentConfigReturn } from '@0xsequence/api'
 import { formatUnits, Hex, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAPIClient } from '../../hooks/useAPIClient'
 import { Button, Text, NetworkImage } from '@0xsequence/design-system'
 import { AbiFunction } from 'ox'
-import { arbitrum } from 'viem/chains'
-import { ContractType } from '@0xsequence/indexer'
-import { ResourceStatus } from '@0xsequence/indexer'
+import * as chains from 'viem/chains'
 
 // Type guard for native token balance
-function isNativeToken(token: TokenBalance): boolean {
-  return !token.contractAddress || token.contractAddress === zeroAddress || token.contractInfo?.type === 'native'
+function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
+  if ('contractAddress' in token) {
+    return false // If it has contractAddress, it's an ERC20 token
+  }
+  return true // NativeTokenBalance is always a native token
 }
 
 // Types for intent actions
 type IntentAction = 'pay' | 'mock_interaction' | 'custom_call'
 
 // Helper to format balance
-const formatBalance = (balance: TokenBalance) => {
-  if (!balance.contractInfo?.decimals) return balance.balance
+const formatBalance = (balance: TokenBalance | NativeTokenBalance) => {
   try {
-    // Format with sufficient precision, then potentially trim trailing zeros if needed later
-    const formatted = formatUnits(BigInt(balance.balance), balance.contractInfo.decimals)
-    // Avoid unnecessary trailing zeros from toFixed if the number is whole or has few decimals
-    const num = parseFloat(formatted)
-    if (num === 0) return '0'
-    // Use intelligent formatting based on magnitude
-    if (num < 0.0001) return num.toExponential(2)
-    if (num < 1) return num.toFixed(6) // More precision for small fractions
-    if (num < 1000) return num.toFixed(4)
-    return num.toLocaleString(undefined, { maximumFractionDigits: 2 }) // Compact for large numbers
+    if ('contractAddress' in balance) {
+      // ERC20 token
+      if (!balance.contractInfo?.decimals) return balance.balance
+      const formatted = formatUnits(BigInt(balance.balance), balance.contractInfo.decimals)
+      const num = parseFloat(formatted)
+      if (num === 0) return '0'
+      if (num < 0.0001) return num.toExponential(2)
+      if (num < 1) return num.toFixed(6)
+      if (num < 1000) return num.toFixed(4)
+      return num.toLocaleString(undefined, { maximumFractionDigits: 2 })
+    } else {
+      // Native token
+      const formatted = formatUnits(BigInt(balance.balance), 18)
+      const num = parseFloat(formatted)
+      if (num === 0) return '0'
+      if (num < 0.0001) return num.toExponential(2)
+      if (num < 1) return num.toFixed(6)
+      if (num < 1000) return num.toFixed(4)
+      return num.toLocaleString(undefined, { maximumFractionDigits: 2 })
+    }
   } catch (e) {
     console.error('Error formatting balance:', e)
-    return balance.balance // Fallback
+    return balance.balance
   }
 }
 
 // Mock Data
-const MOCK_CONTRACT_ADDRESS = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
+// const MOCK_CONTRACT_ADDRESS = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 const MOCK_TRANSFER_DATA: Hex = `0xa9059cbb000000000000000000000000deadbeefdeadbeefdeadbeefdeadbeefdeadbeef00000000000000000000000000000000000000000000000000000000000f4240` // transfer(address,uint256) for 1 * 10^6
+
+// Helper to get chain info
+const getChainInfo = (chainId: number) => {
+  // Find the chain by ID in all available chains
+  return Object.values(chains).find((chain) => chain.id === chainId) || null
+}
 
 export const HomeIndexRoute = () => {
   const account = useAccount()
@@ -60,8 +76,7 @@ export const HomeIndexRoute = () => {
     tokenAmount: '0',
     tokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // Default to USDC
   })
-  const indexerClient = useIndexerClient((account.chainId as ChainId) || ChainId.MAINNET)
-  const effectiveIndexerClient = account.chainId ? indexerClient : null
+  const indexerClient = useIndexerGatewayClient()
   const apiClient = useAPIClient()
 
   // State for intent results
@@ -75,74 +90,30 @@ export const HomeIndexRoute = () => {
     data: tokenBalancesData,
     isLoading: isLoadingBalances,
     error: balanceError,
-  } = useQuery<GetTokenBalancesReturn>({
+  } = useQuery<GetTokenBalancesSummaryReturn>({
     queryKey: ['tokenBalances', account.address],
     queryFn: async () => {
-      if (!account.address || !effectiveIndexerClient) {
+      if (!account.address) {
         console.warn('No account address or indexer client')
 
-        return { balances: [], page: defaultPage }
+        return { balances: [], nativeBalances: [], page: defaultPage } as GetTokenBalancesSummaryReturn
       }
       try {
-        const summary = await effectiveIndexerClient.getTokenBalancesSummary({
+        const summary = await indexerClient.getTokenBalancesSummary({
           filter: {
             accountAddresses: [account.address],
             omitNativeBalances: false,
           },
+          testnets: false,
         })
 
-        // Convert native balances to TokenBalance format
-        const nativeBalancesAsTokenBalances =
-          summary.nativeBalances?.map((native) => ({
-            contractType: ContractType.NATIVE,
-            contractAddress: zeroAddress,
-            accountAddress: native.accountAddress,
-            balance: native.balance,
-            chainId: native.chainId,
-            blockHash: '0x0',
-            blockNumber: 0,
-            uniqueCollectibles: '0',
-            isSummary: true,
-            contractInfo: {
-              chainId: native.chainId,
-              address: zeroAddress,
-              source: 'native',
-              name: 'Native Token',
-              type: 'native',
-              symbol: 'ETH',
-              decimals: 18,
-              logoURI: '',
-              deployed: true,
-              bytecodeHash: '',
-              extensions: {
-                link: '',
-                description: '',
-                categories: [],
-                ogImage: '',
-                ogName: '',
-                originChainId: native.chainId,
-                originAddress: zeroAddress,
-                blacklist: false,
-                verified: true,
-                verifiedBy: 'native',
-                featured: false,
-                featureIndex: 0,
-              },
-              updatedAt: new Date().toISOString(),
-              status: ResourceStatus.AVAILABLE,
-            },
-          })) || []
-
-        return {
-          balances: [...(summary.balances || []), ...nativeBalancesAsTokenBalances],
-          page: defaultPage,
-        }
+        return summary
       } catch (error) {
         console.error('Failed to fetch token balances:', error)
-        return { balances: [], page: defaultPage }
+        return { balances: [], nativeBalances: [], page: defaultPage } as GetTokenBalancesSummaryReturn
       }
     },
-    enabled: !!account.address && !!effectiveIndexerClient,
+    enabled: !!account.address,
     staleTime: 30000,
     retry: 1,
   })
@@ -236,7 +207,11 @@ export const HomeIndexRoute = () => {
     if (!tokenBalancesData?.balances) {
       return []
     }
-    const balances: TokenBalance[] = tokenBalancesData.balances || []
+
+    // Flatten both native and token balances
+    const nativeBalances = tokenBalancesData.nativeBalances.flatMap((b) => b.results)
+    const tokenBalances = tokenBalancesData.balances.flatMap((b) => b.results)
+    const balances = [...nativeBalances, ...tokenBalances]
 
     return [...balances]
       .filter((token) => {
@@ -370,46 +345,60 @@ export const HomeIndexRoute = () => {
               </Text>
             )}
             <div className="max-h-60 overflow-y-auto border border-gray-700/50 rounded-lg p-3 space-y-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-              {sortedTokens.map((token: TokenBalance) => (
-                <div
-                  key={`${token.chainId}-${token.contractAddress}-${token.tokenID ?? '0'}`}
-                  onClick={() => {
-                    setSelectedToken(token)
-                    setIntentQuote(null)
-                  }}
-                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${selectedToken?.contractAddress === token.contractAddress && selectedToken?.chainId === token.chainId ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
-                >
-                  <div className="flex items-center">
-                    <div className="relative">
-                      <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center mr-2 shadow-sm">
+              {sortedTokens.map((token) => {
+                const isNative = !('contractAddress' in token)
+                const tokenBalance = isNative ? undefined : (token as TokenBalance)
+                const chainInfo = getChainInfo(token.chainId)
+                const nativeSymbol = chainInfo?.nativeCurrency.symbol || 'ETH' // Default to ETH if chain not found
+
+                return (
+                  <div
+                    key={
+                      isNative
+                        ? `${token.chainId}-native`
+                        : `${tokenBalance?.chainId}-${tokenBalance?.contractAddress}-${tokenBalance?.tokenID ?? '0'}`
+                    }
+                    onClick={() => {
+                      if (isNative || !tokenBalance) return // Don't allow selecting native tokens
+                      setSelectedToken(tokenBalance)
+                      setIntentQuote(null)
+                    }}
+                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${!isNative && tokenBalance && selectedToken?.contractAddress === tokenBalance.contractAddress && selectedToken?.chainId === tokenBalance.chainId ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
+                  >
+                    <div className="flex items-center">
+                      <div className="relative">
+                        <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center mr-2 shadow-sm">
+                          <Text variant="medium" color="primary" className="font-semibold">
+                            {isNative ? nativeSymbol[0] : tokenBalance?.contractInfo?.symbol?.[0] || 'T'}
+                          </Text>
+                        </div>
+                        <div className="absolute -bottom-1 right-0.5 w-5 h-5 rounded-full bg-gray-800 border-2 border-gray-700 shadow-sm">
+                          <NetworkImage chainId={token.chainId} size="sm" className="w-full h-full" />
+                        </div>
+                      </div>
+                      <div>
                         <Text variant="medium" color="primary" className="font-semibold">
-                          {token.contractInfo?.symbol?.[0] || 'T'}
+                          {isNative
+                            ? `${nativeSymbol} (${chainInfo?.name || 'Unknown Chain'})`
+                            : tokenBalance?.contractInfo?.symbol || tokenBalance?.contractInfo?.name || 'Token'}
                         </Text>
-                      </div>
-                      <div className="absolute -bottom-1 right-0.5 w-5 h-5 rounded-full bg-gray-800 border-2 border-gray-700 shadow-sm">
-                        <NetworkImage chainId={token.chainId} size="sm" className="w-full h-full" />
+                        {isNative && (
+                          <Text
+                            variant="small"
+                            color="secondary"
+                            className="ml-1 text-xs bg-blue-900/50 px-2 py-0.5 rounded-full"
+                          >
+                            Native
+                          </Text>
+                        )}
                       </div>
                     </div>
-                    <div>
-                      <Text variant="medium" color="primary" className="font-semibold">
-                        {token.contractInfo?.symbol || token.contractInfo?.name || 'Native Token'}
-                      </Text>
-                      {isNativeToken(token) && (
-                        <Text
-                          variant="small"
-                          color="secondary"
-                          className="ml-1 text-xs bg-blue-900/50 px-2 py-0.5 rounded-full"
-                        >
-                          Native
-                        </Text>
-                      )}
-                    </div>
+                    <Text variant="small" color="secondary" className="font-mono bg-gray-800/50 px-3 py-1 rounded-full">
+                      {formatBalance(token)}
+                    </Text>
                   </div>
-                  <Text variant="small" color="secondary" className="font-mono bg-gray-800/50 px-3 py-1 rounded-full">
-                    {formatBalance(token)}
-                  </Text>
-                </div>
-              ))}
+                )
+              })}
             </div>
             {selectedToken && (
               <div className="mt-3 bg-green-900/20 border border-green-700/30 rounded-lg p-2 animate-fadeIn">
@@ -468,7 +457,7 @@ export const HomeIndexRoute = () => {
                   'Processing...'
                 ) : (
                   <>
-                    <NetworkImage chainId={arbitrum.id} size="sm" className="w-5 h-5" />
+                    <NetworkImage chainId={chains.arbitrum.id} size="sm" className="w-5 h-5" />
                     <span>Mock Interaction</span>
                   </>
                 )}
