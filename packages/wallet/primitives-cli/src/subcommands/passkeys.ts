@@ -1,4 +1,4 @@
-// ./packages/primitives-cli/src/subcommands/passkeys.ts
+// ./packages/wallet/primitives-cli/src/subcommands/passkeys.ts
 
 import type { CommandModule } from 'yargs'
 import { Bytes, Hex } from 'ox'

@@ -11,10 +11,11 @@
     "lint": "turbo lint",
     "format": "prettier --list-different --write \"**/*.{ts,tsx,md}\"",
     "postinstall": "lefthook install",
-    "dev:server": "node packages/primitives-cli/dist/index.js server"
+    "dev:server": "node packages/wallet/primitives-cli/dist/index.js server"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.0",
+    "@types/jest": "^29.5.14",
     "lefthook": "^1.11.10",
     "prettier": "^3.5.3",
     "turbo": "^2.5.0",
