@@ -53,8 +53,15 @@ const formatBalance = (balance: TokenBalance | NativeTokenBalance) => {
 }
 
 // Mock Data
-// const MOCK_CONTRACT_ADDRESS = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
-const MOCK_TRANSFER_DATA: Hex = `0xa9059cbb000000000000000000000000deadbeefdeadbeefdeadbeefdeadbeefdeadbeef00000000000000000000000000000000000000000000000000000000000f4240` // transfer(address,uint256) for 1 * 10^6
+const MOCK_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'
+// Mock Calldata for interaction
+const MOCK_TRANSFER_DATA: Hex = `0xabcdef`
+// Mock Chain ID for interaction
+const MOCK_CHAIN_ID = chains.arbitrum.id
+// Mock Token Address for interaction on destination chain
+const MOCK_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
+// Mock Token Amount for interaction on destination chain
+const MOCK_TOKEN_AMOUNT = '300'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
@@ -171,18 +178,44 @@ export const HomeIndexRoute = () => {
         userAddress: account.address,
         originChainId: selectedToken.chainId || 8453,
         originTokenAddress: isOriginNative ? zeroAddress : selectedToken.contractAddress,
-        destinationChainId: action === 'custom_call' ? parseInt(customCallData.chainId) : destinationCall.chainId,
-        destinationToAddress: action === 'custom_call' ? customCallData.to : destinationCall.to,
-        destinationTokenAddress: action === 'custom_call' ? customCallData.tokenAddress : USDC_ADDRESS,
+        destinationChainId:
+          action === 'custom_call'
+            ? parseInt(customCallData.chainId)
+            : action === 'mock_interaction'
+              ? MOCK_CHAIN_ID
+              : destinationCall.chainId,
+        destinationToAddress:
+          action === 'custom_call'
+            ? customCallData.to
+            : action === 'mock_interaction'
+              ? MOCK_CONTRACT_ADDRESS
+              : destinationCall.to,
+        destinationTokenAddress:
+          action === 'custom_call'
+            ? customCallData.tokenAddress
+            : action === 'mock_interaction'
+              ? MOCK_TOKEN_ADDRESS
+              : USDC_ADDRESS,
         destinationTokenAmount:
-          action === 'custom_call' ? customCallData.tokenAmount : action === 'pay' ? AMOUNT.toString() : '0',
+          action === 'custom_call'
+            ? customCallData.tokenAmount
+            : action === 'mock_interaction'
+              ? MOCK_TOKEN_AMOUNT
+              : AMOUNT.toString(),
         destinationCallData:
           action === 'custom_call'
             ? customCallData.data.startsWith('0x')
               ? customCallData.data
               : `0x${customCallData.data}`
-            : destinationCall.transactionData,
-        destinationCallValue: action === 'custom_call' ? customCallData.value : destinationCall.transactionValue,
+            : action === 'mock_interaction'
+              ? MOCK_TRANSFER_DATA
+              : destinationCall.transactionData,
+        destinationCallValue:
+          action === 'custom_call'
+            ? customCallData.value
+            : action === 'mock_interaction'
+              ? MOCK_TOKEN_AMOUNT
+              : destinationCall.transactionValue,
       }
 
       console.log('Calling createIntentConfig with args:', args)
