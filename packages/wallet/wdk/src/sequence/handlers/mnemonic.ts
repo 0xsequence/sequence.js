@@ -3,7 +3,7 @@ import { Address, Hex, Mnemonic } from 'ox'
 import { Handler } from '.'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
-import { Kinds } from '../signers'
+import { Kinds } from '../types/signer'
 import { SignerReady, SignerUnavailable } from '../types'
 
 type RespondFn = (mnemonic: string) => Promise<void>

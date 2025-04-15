@@ -6,8 +6,8 @@ import { AuthCodePkceHandler } from './handlers/authcode-pkce'
 import { MnemonicHandler } from './handlers/mnemonic'
 import { OtpHandler } from './handlers/otp'
 import { Shared } from './manager'
-import { Kinds, WitnessExtraSignerKind } from './signers'
 import { Wallet } from './types'
+import { Kinds, WitnessExtraSignerKind } from './types/signer'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple-pkce'
@@ -632,5 +632,30 @@ export class Wallets {
     await this.shared.modules.signatures.complete(requestId)
     await this.shared.databases.manager.del(request.wallet)
     await this.shared.modules.devices.remove(walletEntry.device)
+  }
+
+  async getConfiguration(args: { wallet: Address.Address }) {
+    const wallet = new CoreWallet(args.wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const status = await wallet.getStatus()
+    const { devicesTopology, loginTopology } = fromConfig(status.configuration)
+
+    const deviceSigners = Config.getSigners(devicesTopology)
+    const loginSigners = Config.getSigners(loginTopology)
+
+    return {
+      devices: await this.shared.modules.signers.resolveKinds(wallet.address, [
+        ...deviceSigners.signers,
+        ...deviceSigners.sapientSigners,
+      ]),
+      login: await this.shared.modules.signers.resolveKinds(wallet.address, [
+        ...loginSigners.signers,
+        ...loginSigners.sapientSigners,
+      ]),
+    }
   }
 }

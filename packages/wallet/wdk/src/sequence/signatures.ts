@@ -1,6 +1,5 @@
 import { Envelope } from '@0xsequence/wallet-core'
 import { Config } from '@0xsequence/wallet-primitives'
-import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import * as Db from '../dbs'
 import { Shared } from './manager'
@@ -20,27 +19,9 @@ export class Signatures {
     }
 
     const signers = Config.getSigners(request.envelope.configuration.topology)
-    const signersAndKinds = await Promise.all([
-      ...signers.signers.map(async (signer) => {
-        const kind = await this.shared.modules.signers.kindOf(request.wallet, signer)
-        return {
-          address: signer,
-          imageHash: undefined,
-          kind,
-        }
-      }),
-      ...signers.sapientSigners.map(async (signer) => {
-        const kind = await this.shared.modules.signers.kindOf(
-          request.wallet,
-          signer.address,
-          Hex.from(signer.imageHash),
-        )
-        return {
-          address: signer.address,
-          imageHash: signer.imageHash,
-          kind,
-        }
-      }),
+    const signersAndKinds = await this.shared.modules.signers.resolveKinds(request.wallet, [
+      ...signers.signers,
+      ...signers.sapientSigners.map((s) => ({ address: s.address, imageHash: s.imageHash })),
     ])
 
     const statuses = await Promise.all(
