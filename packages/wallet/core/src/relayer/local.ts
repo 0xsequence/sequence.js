@@ -88,15 +88,79 @@ export class LocalRelayer implements Relayer {
     return Payload.decode(Bytes.fromHex(packedPayload))
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
-    const hash = Payload.hash(to, chainId, this.decodeCalls(data))
+  async relay(
+    to: Address.Address,
+    data: Hex.Hex,
+    chainId: bigint,
+    quote?: FeeQuote,
+    preconditions?: IntentPrecondition[],
+    checkInterval: number = 5000,
+  ): Promise<{ opHash: Hex.Hex }> {
+    // Helper function to check all preconditions
+    const checkAllPreconditions = async (): Promise<boolean> => {
+      if (!preconditions || preconditions.length === 0) {
+        return true
+      }
 
-    await this.provider.sendTransaction({
-      to,
-      data,
+      for (const precondition of preconditions) {
+        const isValid = await this.checkPrecondition(precondition)
+        if (!isValid) {
+          return false
+        }
+      }
+      return true
+    }
+
+    // Check preconditions immediately
+    if (await checkAllPreconditions()) {
+      // If all preconditions are met, relay the transaction
+      const hash = Payload.hash(to, chainId, this.decodeCalls(data))
+      await this.provider.sendTransaction({
+        to,
+        data,
+      })
+      return { opHash: Hex.fromBytes(hash) }
+    }
+
+    // If not all preconditions are met, set up event listeners and polling
+    return new Promise((resolve, reject) => {
+      let timeoutId: NodeJS.Timeout
+      let isResolved = false
+
+      // Function to check and relay
+      const checkAndRelay = async () => {
+        try {
+          if (isResolved) return
+
+          if (await checkAllPreconditions()) {
+            isResolved = true
+            clearTimeout(timeoutId)
+            const hash = Payload.hash(to, chainId, this.decodeCalls(data))
+            await this.provider.sendTransaction({
+              to,
+              data,
+            })
+            resolve({ opHash: Hex.fromBytes(hash) })
+          } else {
+            // Schedule next check
+            timeoutId = setTimeout(checkAndRelay, checkInterval)
+          }
+        } catch (error) {
+          isResolved = true
+          clearTimeout(timeoutId)
+          reject(error)
+        }
+      }
+
+      // Start checking
+      timeoutId = setTimeout(checkAndRelay, checkInterval)
+
+      // Cleanup function
+      return () => {
+        isResolved = true
+        clearTimeout(timeoutId)
+      }
     })
-
-    return { opHash: Hex.fromBytes(hash) }
   }
 
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
