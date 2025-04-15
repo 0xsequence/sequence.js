@@ -95,40 +95,48 @@ export const HomeIndexRoute = () => {
 
   const createIntentMutation = useMutation<CreateIntentConfigReturn, Error, IntentAction>({
     mutationFn: async (action: IntentAction) => {
-      if (!apiClient || !selectedToken || !account.chainId || !account.address) {
-        throw new Error('Missing API client, selected token, chain ID, or account address')
+      if (!apiClient || !selectedToken || !account.address) {
+        throw new Error('Missing API client, selected token, or account address')
       }
 
       const USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
       const RECIPIENT_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
       const AMOUNT = 30000000n // 30 USDC (6 decimals)
 
-      const destinationChainId = selectedToken.chainId
+      // Ensure we have a valid chain ID, defaulting to Base (8453) if none provided
+      const destinationChainId = selectedToken.chainId || 8453
       const isOriginNative = isNativeToken(selectedToken)
 
       let destinationCall
       if (action === 'pay') {
         // ERC20 ABI functions
         const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
+        const encodedData = AbiFunction.encodeData(erc20Transfer, [RECIPIENT_ADDRESS, AMOUNT]) as Hex
+
+        // Ensure calldata is prefixed with 0x
+        const transactionData = encodedData.startsWith('0x') ? encodedData : `0x${encodedData}`
 
         destinationCall = {
           chainId: 8453,
           to: USDC_ADDRESS,
-          transactionData: AbiFunction.encodeData(erc20Transfer, [RECIPIENT_ADDRESS, AMOUNT]) as Hex,
+          transactionData,
           transactionValue: '0',
         }
       } else {
+        // Ensure mock data is prefixed with 0x
+        const transactionData = MOCK_TRANSFER_DATA.startsWith('0x') ? MOCK_TRANSFER_DATA : `0x${MOCK_TRANSFER_DATA}`
+
         destinationCall = {
           chainId: destinationChainId,
           to: USDC_ADDRESS,
-          transactionData: MOCK_TRANSFER_DATA,
+          transactionData,
           transactionValue: '0',
         }
       }
 
       const args = {
         userAddress: account.address,
-        originChainId: selectedToken.chainId,
+        originChainId: selectedToken.chainId || 8453,
         originTokenAddress: isOriginNative ? zeroAddress : selectedToken.contractAddress,
         destinationChainId: destinationChainId,
         destinationToAddress: destinationCall.to,
@@ -488,29 +496,30 @@ export const HomeIndexRoute = () => {
                 </Text>
                 <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                   <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">To (One-Time Wallet):</strong>{' '}
+                    <strong className="text-blue-300">To (One-Time Wallet): </strong>{' '}
                     <span className="text-yellow-300 break-all font-mono">{intentQuote.originCall.to}</span>
                   </Text>
                 </div>
                 <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                   <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">Value:</strong>
+                    <strong className="text-blue-300">Value: </strong>
                     <span className="font-mono">{intentQuote.originCall.transactionValue}</span>
                   </Text>
                 </div>
                 <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                   <Text variant="small" color="secondary" className="break-all">
-                    <strong className="text-blue-300">Data:</strong>
+                    <strong className="text-blue-300">Data: </strong>
                     <span className="font-mono text-green-300">{intentQuote.originCall.transactionData}</span>
                   </Text>
                 </div>
-                <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                <div className="bg-gray-800/70 p-2 rounded-md mb-1 flex items-center">
                   <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">Chain ID:</strong>
+                    <strong className="text-blue-300">Chain ID: </strong>
                     <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">
                       {intentQuote.originCall.chainId}
                     </span>
                   </Text>
+                  <NetworkImage chainId={intentQuote.originCall.chainId} size="sm" className="w-4 h-4 ml-1" />
                 </div>
 
                 {intentQuote.preconditions && intentQuote.preconditions.length > 0 && (
