@@ -413,7 +413,7 @@ export const HomeIndexRoute = () => {
                 )}
               </Button>
               <Button
-                variant="secondary"
+                variant="danger"
                 onClick={() => handleActionClick('mock_interaction')}
                 disabled={!selectedToken || createIntentMutation.isPending}
                 className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
@@ -428,7 +428,7 @@ export const HomeIndexRoute = () => {
                 )}
               </Button>
               <Button
-                variant="tertiary"
+                variant="feature"
                 onClick={() => handleActionClick('custom_call')}
                 disabled={!selectedToken || createIntentMutation.isPending}
                 className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
@@ -436,7 +436,7 @@ export const HomeIndexRoute = () => {
                 {createIntentMutation.isPending && createIntentMutation.variables === 'custom_call' ? (
                   'Processing...'
                 ) : (
-                  <>
+                  <div className="flex items-center gap-2">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5"
@@ -452,7 +452,7 @@ export const HomeIndexRoute = () => {
                       />
                     </svg>
                     <span>Custom Call</span>
-                  </>
+                  </div>
                 )}
               </Button>
             </div>
