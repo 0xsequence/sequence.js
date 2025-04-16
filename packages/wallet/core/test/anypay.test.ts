@@ -1,5 +1,5 @@
-import { Address, Bytes, Provider, RpcTransport, Secp256k1 } from 'ox'
-import { Context } from '@0xsequence/wallet-primitives'
+import { Address, Bytes, Provider, RpcTransport, Secp256k1, AbiFunction } from 'ox'
+import { Context, Payload } from '@0xsequence/wallet-primitives'
 import { LocalRelayer } from '../src/relayer/local'
 import {
   NativeBalancePrecondition,
@@ -103,7 +103,7 @@ describe('AnyPay Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the balanceOf call
-      ;(provider as any).request.mockResolvedValue('0x1e8480') // 1.5 tokens in hex
+      ;(provider as any).call.mockResolvedValue('0x1e8480') // 1.5 tokens in hex
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
@@ -135,7 +135,7 @@ describe('AnyPay Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the allowance call
-      ;(provider as any).request.mockResolvedValue('0x1e8480') // 1.5 tokens in hex
+      ;(provider as any).call.mockResolvedValue('0x1e8480') // 1.5 tokens in hex
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
@@ -166,7 +166,9 @@ describe('AnyPay Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the ownerOf call
-      ;(provider as any).request.mockResolvedValue(testWalletAddress.toString().toLowerCase())
+      ;(provider as any).call.mockResolvedValue(
+        '0x000000000000000000000000' + testWalletAddress.toString().slice(2).toLowerCase(),
+      )
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
@@ -198,7 +200,9 @@ describe('AnyPay Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the getApproved call
-      ;(provider as any).request.mockResolvedValue(operator.toString().toLowerCase())
+      ;(provider as any).call.mockResolvedValue(
+        '0x000000000000000000000000' + operator.toString().slice(2).toLowerCase(),
+      )
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
@@ -231,7 +235,7 @@ describe('AnyPay Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the balanceOf call
-      ;(provider as any).request.mockResolvedValue('0x1e8480') // 1.5 tokens in hex
+      ;(provider as any).call.mockResolvedValue('0x1e8480') // 1.5 tokens in hex
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
@@ -265,11 +269,141 @@ describe('AnyPay Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the isApprovedForAll call
-      ;(provider as any).request.mockResolvedValue('0x1') // true
+      ;(provider as any).call.mockResolvedValue('0x1') // true
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
     expect(isValid).toBe(true)
+  })
+
+  it('should wait for preconditions to be met before relaying transaction', async () => {
+    const { provider, chainId } = await getProvider()
+    const relayer = new LocalRelayer(provider as any)
+    await requireContractDeployed(provider, ERC20_IMPLICIT_MINT_CONTRACT)
+
+    // Create a precondition that initially fails
+    const precondition = new Erc20BalancePrecondition(
+      testWalletAddress,
+      ERC20_IMPLICIT_MINT_CONTRACT,
+      1000000n, // 1 token min
+    )
+
+    const intentPrecondition = {
+      type: precondition.type(),
+      data: JSON.stringify({
+        address: precondition.address.toString(),
+        token: precondition.token.toString(),
+        min: precondition.min?.toString(),
+      }),
+    }
+
+    // Mock initial balance check to fail
+    let currentBalance = 0n
+    if (!CAN_RUN_LIVE) {
+      ;(provider as any).call.mockImplementation(() => {
+        return Bytes.toHex(Bytes.fromNumber(currentBalance))
+      })
+    }
+
+    // Create a test operation
+    const operation: IntentOperation = {
+      chainId,
+      calls: [
+        {
+          to: ERC20_IMPLICIT_MINT_CONTRACT,
+          value: 0n,
+          data: Bytes.fromHex('0x'),
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 0n, // 0 = ignore, 1 = revert, 2 = abort
+        },
+      ],
+    }
+
+    // Create context
+    const context: Context.Context = {
+      factory: randomAddress(),
+      creationCode: '0x' as `0x${string}`,
+      stage1: '0x' as `0x${string}`,
+    }
+
+    // Calculate intent configuration address
+    const configAddress = calculateIntentConfigurationAddress([operation], testIdentityAddress, context)
+
+    // Start the relay operation with a short check interval
+    const relayPromise = relayer.relay(
+      configAddress,
+      Bytes.toHex(
+        Payload.encode(
+          Payload.fromCall(0n, 0n, [
+            {
+              to: ERC20_IMPLICIT_MINT_CONTRACT,
+              value: 0n,
+              data: Bytes.fromHex('0x'),
+              gasLimit: 0n,
+              delegateCall: false,
+              onlyFallback: false,
+              behaviorOnError: 'ignore',
+            },
+          ]),
+        ),
+      ),
+      chainId,
+      undefined,
+      [intentPrecondition],
+      100, // Short check interval for testing
+    )
+
+    // Simulate ERC20 transfer by updating the mock balance
+    if (!CAN_RUN_LIVE) {
+      currentBalance = 1500000n // Transfer 1.5 tokens
+    } else {
+      // In live mode, we would need to actually transfer tokens here
+      const transferAmount = 1500000n
+      const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
+      const transferData = AbiFunction.encodeData(erc20Transfer, [
+        testWalletAddress.toString() as `0x${string}`,
+        transferAmount,
+      ]) as `0x${string}`
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            to: ERC20_IMPLICIT_MINT_CONTRACT,
+            data: transferData,
+          },
+        ],
+      })
+    }
+
+    // Wait for the relay to complete
+    const { opHash } = await relayPromise
+
+    expect(opHash).toBeDefined()
+    expect(opHash).not.toBe('0x')
+
+    // Verify the transaction was sent
+    if (!CAN_RUN_LIVE) {
+      expect((provider as any).sendTransaction).toHaveBeenCalledWith({
+        to: configAddress,
+        data: Bytes.toHex(
+          Payload.encode(
+            Payload.fromCall(0n, 0n, [
+              {
+                to: ERC20_IMPLICIT_MINT_CONTRACT,
+                value: 0n,
+                data: Bytes.fromHex('0x'),
+                gasLimit: 0n,
+                delegateCall: false,
+                onlyFallback: false,
+                behaviorOnError: 'ignore',
+              },
+            ]),
+          ),
+        ),
+      })
+    }
   })
 
   if (CAN_RUN_LIVE) {
