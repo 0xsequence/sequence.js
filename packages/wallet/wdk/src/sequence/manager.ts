@@ -74,7 +74,7 @@ export const CreateWalletOptionsDefaults = {
   useGuard: false,
 }
 
-export function applyDefaults(options?: ManagerOptions) {
+export function applyManagerOptionsDefaults(options?: ManagerOptions) {
   return { ...ManagerOptionsDefaults, ...options }
 }
 
@@ -130,7 +130,7 @@ export class Manager {
   private readonly otpHandler: OtpHandler
 
   constructor(options?: ManagerOptions) {
-    const ops = applyDefaults(options)
+    const ops = applyManagerOptionsDefaults(options)
 
     const shared: Shared = {
       verbose: ops.verbose,
