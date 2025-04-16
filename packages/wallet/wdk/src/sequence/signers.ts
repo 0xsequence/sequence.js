@@ -1,22 +1,7 @@
 import { Address, Bytes, Hex } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager'
-
-export const Kinds = {
-  LocalDevice: 'local-device',
-  LoginPasskey: 'login-passkey',
-  LoginMnemonic: 'login-mnemonic',
-  LoginEmailOtp: 'login-email-otp',
-  LoginGooglePkce: 'login-google-pkce',
-  LoginApplePkce: 'login-apple-pkce',
-  Unknown: 'unknown',
-} as const
-
-export type Kind = (typeof Kinds)[keyof typeof Kinds]
-
-export type WitnessExtraSignerKind = {
-  signerKind: string
-}
+import { Kind, Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer'
 
 export function isWitnessExtraSignerKind(extra: any): extra is WitnessExtraSignerKind {
   return typeof extra === 'object' && extra !== null && 'signerKind' in extra
@@ -69,5 +54,29 @@ export class Signers {
     } catch {}
 
     return undefined
+  }
+
+  async resolveKinds(
+    wallet: Address.Address,
+    signers: (Address.Address | { address: Address.Address; imageHash: Hex.Hex })[],
+  ): Promise<SignerWithKind[]> {
+    return Promise.all(
+      signers.map(async (signer) => {
+        if (typeof signer === 'string') {
+          const kind = await this.kindOf(wallet, signer)
+          return {
+            address: signer,
+            kind,
+          }
+        } else {
+          const kind = await this.kindOf(wallet, signer.address, signer.imageHash)
+          return {
+            address: signer.address,
+            imageHash: signer.imageHash,
+            kind,
+          }
+        }
+      }),
+    )
   }
 }

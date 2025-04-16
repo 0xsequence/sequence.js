@@ -1,5 +1,5 @@
 import * as Db from '../../dbs'
-import { Kinds } from '../signers'
+import { Kinds } from '../types/signer'
 import { Signatures } from '../signatures'
 import { Address, Hex } from 'ox'
 import { Devices } from '../devices'
