@@ -1,5 +1,5 @@
 import { Envelope } from '@0xsequence/wallet-core'
-import { Config } from '@0xsequence/wallet-primitives'
+import { Config, Payload } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import * as Db from '../dbs'
@@ -165,6 +165,24 @@ export class Signatures {
       origin?: string
     },
   ): Promise<string> {
+    // If the action is a config update, we need to remove all signature requests
+    // for the same wallet that also involve configuration updates
+    // as it may cause race conditions
+    // TODO: Eventually we should define a "delta configuration" signature request
+    if (Payload.isConfigUpdate(envelope.payload)) {
+      const pendingRequests = await this.shared.databases.signatures.list()
+      const pendingConfigUpdatesToClear = pendingRequests.filter(
+        (sig) => sig.wallet === envelope.wallet && Payload.isConfigUpdate(sig.envelope.payload),
+      )
+
+      console.warn(
+        'Deleting conflicting configuration updates for wallet',
+        envelope.wallet,
+        pendingConfigUpdatesToClear.map((pc) => pc.id),
+      )
+      await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.delete(sig.id)))
+    }
+
     const id = uuidv7()
 
     await this.shared.databases.signatures.set({
