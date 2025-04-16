@@ -1,6 +1,6 @@
 import { http, createConfig } from 'wagmi'
 import { mainnet, sepolia, polygon, arbitrum, optimism, base } from 'wagmi/chains'
-import { injected, metaMask, safe } from 'wagmi/connectors'
+import { injected, metaMask } from 'wagmi/connectors'
 import { sequenceWallet } from '@0xsequence/wagmi-connector'
 
 const projectAccessKey = import.meta.env.VITE_PROJECT_ACCESS_KEY
@@ -21,7 +21,6 @@ export const config = createConfig({
     }),
     injected(),
     metaMask(),
-    safe(),
   ],
   transports: {
     [mainnet.id]: http(),

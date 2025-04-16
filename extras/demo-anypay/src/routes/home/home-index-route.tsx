@@ -4,7 +4,7 @@ import { Connector } from 'wagmi'
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import { GetTokenBalancesSummaryReturn } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
-import { CreateIntentConfigReturn } from '@0xsequence/api'
+import { GetIntentOperationsReturn } from '@0xsequence/api'
 import { formatUnits, Hex, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAPIClient } from '../../hooks/useAPIClient'
@@ -87,7 +87,10 @@ export const HomeIndexRoute = () => {
   const apiClient = useAPIClient()
 
   // State for intent results
-  const [intentQuote, setIntentQuote] = useState<CreateIntentConfigReturn['quote'] | null>(null)
+  const [intentOperations, setIntentOperations] = useState<GetIntentOperationsReturn['operations'] | null>(null)
+  const [intentPreconditions, setIntentPreconditions] = useState<GetIntentOperationsReturn['preconditions'] | null>(
+    null,
+  )
 
   // Default empty page info for query fallback
   const defaultPage = { page: 1, pageSize: 10, totalRecords: 0, more: false }
@@ -124,7 +127,7 @@ export const HomeIndexRoute = () => {
     retry: 1,
   })
 
-  const createIntentMutation = useMutation<CreateIntentConfigReturn, Error, IntentAction>({
+  const createIntentMutation = useMutation<GetIntentOperationsReturn, Error, IntentAction>({
     mutationFn: async (action: IntentAction) => {
       if (!apiClient || !selectedToken || !account.address) {
         throw new Error('Missing API client, selected token, or account address')
@@ -218,20 +221,22 @@ export const HomeIndexRoute = () => {
       }
 
       console.log('Calling createIntentConfig with args:', args)
-      return await apiClient.createIntentConfig(args)
+      return await apiClient.getIntentOperations(args)
     },
     onSuccess: (data) => {
       console.log('Intent Config Success:', data)
-      if (data.quote) {
-        setIntentQuote(data.quote)
+      if (data) {
+        setIntentOperations(data.operations)
+        setIntentPreconditions(data.preconditions)
       } else {
         console.warn('API returned success but no quote found.')
-        setIntentQuote(null)
+        setIntentOperations(null)
       }
     },
     onError: (error) => {
       console.error('Intent Config Error:', error)
-      setIntentQuote(null)
+      setIntentOperations(null)
+      setIntentPreconditions(null)
     },
   })
 
@@ -275,11 +280,13 @@ export const HomeIndexRoute = () => {
 
   useEffect(() => {
     setSelectedToken(null)
-    setIntentQuote(null)
+    setIntentOperations(null)
+    setIntentPreconditions(null)
   }, [account.address, account.chainId])
 
   const handleActionClick = (action: IntentAction) => {
-    setIntentQuote(null)
+    setIntentOperations(null)
+    setIntentPreconditions(null)
     setShowCustomCallForm(false)
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
@@ -414,7 +421,8 @@ export const HomeIndexRoute = () => {
                       } else {
                         setSelectedToken(token)
                       }
-                      setIntentQuote(null)
+                      setIntentOperations(null)
+                      setIntentPreconditions(null)
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${selectedToken?.chainId === token.chainId && (isNative ? selectedToken?.contractAddress === zeroAddress : selectedToken?.contractAddress === token.contractAddress) ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
                   >
@@ -714,7 +722,7 @@ export const HomeIndexRoute = () => {
                 </Text>
               </div>
             )}
-            {intentQuote && (
+            {intentOperations && (
               <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                 <div className="absolute right-3 top-3 text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
                   Intent Quote
@@ -738,38 +746,55 @@ export const HomeIndexRoute = () => {
                     (Send Funds Here):
                   </Text>
                 </Text>
-                <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                  <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">To (One-Time Wallet): </strong>{' '}
-                    <span className="text-yellow-300 break-all font-mono">{intentQuote.originCall.to}</span>
-                  </Text>
-                </div>
-                <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                  <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">Value: </strong>
-                    <span className="font-mono">{intentQuote.originCall.transactionValue}</span>
-                  </Text>
-                </div>
-                <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                  <Text variant="small" color="secondary" className="break-all">
-                    <strong className="text-blue-300">Data: </strong>
-                    <span className="font-mono text-green-300">{intentQuote.originCall.transactionData}</span>
-                  </Text>
-                </div>
-                <div className="bg-gray-800/70 p-2 rounded-md mb-1 flex items-center">
-                  <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">Chain ID: </strong>
-                    <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">
-                      {intentQuote.originCall.chainId}
-                    </span>
-                  </Text>
-                  <NetworkImage chainId={intentQuote.originCall.chainId} size="sm" className="w-4 h-4 ml-1" />
-                  <Text variant="small" color="secondary" className="ml-1">
-                    {getChainInfo(intentQuote.originCall.chainId)?.name || 'Unknown Chain'}
-                  </Text>
-                </div>
+                {intentOperations &&
+                intentOperations.length > 0 &&
+                intentOperations[0].calls &&
+                intentOperations[0].calls.length > 0 ? (
+                  <>
+                    <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                      <Text variant="small" color="secondary">
+                        <strong className="text-blue-300">To (One-Time Wallet): </strong>{' '}
+                        <span className="text-yellow-300 break-all font-mono">{intentOperations[0].calls[0].to}</span>
+                      </Text>
+                    </div>
+                    <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                      <Text variant="small" color="secondary">
+                        <strong className="text-blue-300">Value: </strong>
+                        <span className="font-mono">{intentOperations[0].calls[0].value || '0'}</span>
+                      </Text>
+                    </div>
+                    <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                      <Text variant="small" color="secondary" className="break-all">
+                        <strong className="text-blue-300">Data: </strong>
+                        <span className="font-mono text-green-300">{intentOperations[0].calls[0].data || '0x'}</span>
+                      </Text>
+                    </div>
+                    <div className="bg-gray-800/70 p-2 rounded-md mb-1 flex items-center">
+                      <Text variant="small" color="secondary">
+                        <strong className="text-blue-300">Chain ID: </strong>
+                        <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">
+                          {intentOperations[0].chainId}
+                        </span>
+                      </Text>
+                      <NetworkImage
+                        chainId={parseInt(intentOperations[0].chainId)}
+                        size="sm"
+                        className="w-4 h-4 ml-1"
+                      />
+                      <Text variant="small" color="secondary" className="ml-1">
+                        {getChainInfo(parseInt(intentOperations[0].chainId))?.name || 'Unknown Chain'}
+                      </Text>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-gray-800/70 p-3 rounded-md border border-gray-700/50">
+                    <Text variant="small" color="secondary">
+                      No origin call details available.
+                    </Text>
+                  </div>
+                )}
 
-                {intentQuote.preconditions && intentQuote.preconditions.length > 0 && (
+                {intentPreconditions && intentPreconditions.length > 0 && (
                   <>
                     <Text
                       variant="medium"
@@ -796,7 +821,7 @@ export const HomeIndexRoute = () => {
                       </Text>
                     </Text>
                     <ul className="space-y-2 pl-2">
-                      {intentQuote.preconditions.map((cond, index) => (
+                      {intentPreconditions.map((cond: any, index: number) => (
                         <li
                           key={index}
                           className="break-all bg-gray-800/70 p-2 rounded-md border-l-2 border-purple-500"
@@ -809,7 +834,7 @@ export const HomeIndexRoute = () => {
                     </ul>
                   </>
                 )}
-                {!intentQuote.preconditions?.length && (
+                {!intentPreconditions?.length && (
                   <div className="bg-gray-800/70 p-3 rounded-md border border-gray-700/50 mt-3">
                     <Text variant="small" color="secondary" className="flex items-center text-center">
                       <svg
@@ -833,7 +858,7 @@ export const HomeIndexRoute = () => {
               </div>
             )}
 
-            {!createIntentMutation.isPending && !createIntentMutation.isError && !intentQuote && (
+            {!createIntentMutation.isPending && !createIntentMutation.isError && !intentOperations && (
               <div className="bg-gray-800/50 border border-gray-700/30 rounded-lg p-4 flex items-center justify-center">
                 <Text variant="small" color="secondary" className="flex flex-col items-center text-center">
                   <svg
