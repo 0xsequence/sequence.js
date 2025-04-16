@@ -311,7 +311,7 @@ export class Manager {
     return this.shared.modules.signatures.list()
   }
 
-  public async getSignatureRequest(requestId: string): Promise<BaseSignatureRequest> {
+  public async getSignatureRequest(requestId: string): Promise<SignatureRequest> {
     return this.shared.modules.signatures.get(requestId)
   }
 
