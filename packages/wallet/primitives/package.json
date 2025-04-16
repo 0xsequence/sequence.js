@@ -17,6 +17,6 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "ox": "^0.6.7"
+    "ox": "^0.7.0"
   }
 }

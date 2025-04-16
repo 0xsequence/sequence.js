@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@0xsequence/wallet-primitives": "workspace:^",
-    "ox": "^0.6.7",
+    "ox": "^0.7.0",
     "yargs": "^17.7.2"
   }
 }

@@ -200,8 +200,8 @@ importers:
         specifier: workspace:^
         version: link:../primitives
       ox:
-        specifier: ^0.6.7
-        version: 0.6.7(typescript@5.8.3)
+        specifier: ^0.7.0
+        version: 0.7.0(typescript@5.8.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -228,8 +228,8 @@ importers:
   packages/wallet/primitives:
     dependencies:
       ox:
-        specifier: ^0.6.7
-        version: 0.6.7(typescript@5.8.3)
+        specifier: ^0.7.0
+        version: 0.7.0(typescript@5.8.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -244,8 +244,8 @@ importers:
         specifier: workspace:^
         version: link:../primitives
       ox:
-        specifier: ^0.6.7
-        version: 0.6.7(typescript@5.8.3)
+        specifier: ^0.7.0
+        version: 0.7.0(typescript@5.8.3)
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -290,8 +290,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       ox:
-        specifier: ^0.6.7
-        version: 0.6.7(typescript@5.8.3)
+        specifier: ^0.7.0
+        version: 0.7.0(typescript@5.8.3)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -2913,8 +2913,8 @@ packages:
   outdent@0.5.0:
     resolution: {integrity: sha512-/jHxFIzoMXdqPzTaCpFzAAWhpkSjZPF4Vsn6jAfNpmbH/ymsmd7Qc6VE9BGn0L6YMj6uwpQLxCECpus4ukKS9Q==}
 
-  ox@0.6.7:
-    resolution: {integrity: sha512-17Gk/eFsFRAZ80p5eKqv89a57uXjd3NgIf1CaXojATPBuujVc/fQSVhBeAU9JCRB+k7J50WQAyWTxK19T9GgbA==}
+  ox@0.7.0:
+    resolution: {integrity: sha512-mgRXlQdaNukQcsvGsPENGbyFvr7glob8UmOusDfWTw7A6LcjI+9OCelQ6NoAiSk6iM77R667qyUzn+n2Cr4SJw==}
     peerDependencies:
       typescript: '>=5.4.0'
     peerDependenciesMeta:
@@ -6817,7 +6817,7 @@ snapshots:
 
   outdent@0.5.0: {}
 
-  ox@0.6.7(typescript@5.8.3):
+  ox@0.7.0(typescript@5.8.3):
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
       '@noble/curves': 1.8.1
