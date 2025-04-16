@@ -5,12 +5,14 @@ import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import { GetTokenBalancesSummaryReturn } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
 import { GetIntentOperationsReturn } from '@0xsequence/api'
-import { formatUnits, Hex, zeroAddress } from 'viem'
+import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAPIClient } from '../../hooks/useAPIClient'
 import { Button, Text, NetworkImage } from '@0xsequence/design-system'
-import { AbiFunction } from 'ox'
+import { AbiFunction, Address, Bytes } from 'ox'
 import * as chains from 'viem/chains'
+import { AnyPay } from '@0xsequence/wallet-core'
+import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 
 // Type guard for native token balance
 function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
@@ -225,12 +227,68 @@ export const HomeIndexRoute = () => {
     },
     onSuccess: (data) => {
       console.log('Intent Config Success:', data)
-      if (data) {
+      if (data && data.operations && data.operations.length > 0) {
         setIntentOperations(data.operations)
         setIntentPreconditions(data.preconditions)
+
+        try {
+          if (!account.address) {
+            console.warn('Verification skipped: account.address is missing.')
+            return
+          }
+          const mainSigner = Address.from(account.address)
+          const context: ContextLike.Context = {
+            factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447',
+            stage1: '0x656e2d390E76f3Fba9f0770Dd0EcF4707eee3dF1',
+            creationCode: '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3',
+          }
+
+          const coreOperations: AnyPay.IntentOperation[] = data.operations.map((op) => ({
+            chainId: BigInt(op.chainId),
+            space: op.space ? BigInt(op.space) : undefined,
+            nonce: op.nonce ? BigInt(op.nonce) : undefined,
+            calls: op.calls.map((call) => ({
+              to: Address.from(call.to),
+              value: BigInt(call.value || '0'),
+              data: Bytes.from((call.data as Hex) || '0x'),
+              gasLimit: BigInt(call.gasLimit || '0'),
+              delegateCall: !!call.delegateCall,
+              onlyFallback: !!call.onlyFallback,
+              behaviorOnError: call.behaviorOnError !== undefined ? BigInt(call.behaviorOnError) : 0n,
+            })),
+          }))
+
+          console.log('--- Core Operations ---')
+          console.log('Core Operations:', coreOperations)
+          console.log('Main Signer:', mainSigner)
+          console.log('Context:', context)
+          console.log('------------------------------------')
+
+          const calculatedAddress = AnyPay.calculateIntentConfigurationAddress(coreOperations, mainSigner, context)
+
+          const receivedAddress = data.operations[0]?.calls[0]?.to
+
+          console.log('--- Anypay Address Verification ---')
+          console.log('Received Address (from API):', receivedAddress)
+          console.log('Calculated Address (client-side):', calculatedAddress)
+          if (receivedAddress && isAddressEqual(Address.from(receivedAddress), calculatedAddress)) {
+            console.log('Verification Successful: Addresses match!')
+          } else {
+            console.error('Verification Failed: Addresses do NOT match!')
+            console.log('API Operations:', data.operations)
+            console.log('Core Operations Used:', coreOperations)
+            console.log('Main Signer:', mainSigner)
+            console.log('Context:', context)
+          }
+          console.log('------------------------------------')
+        } catch (error) {
+          console.error('Error during client-side address verification:', error)
+          alert(`Error during client-side address verification: ${JSON.stringify(error)}`)
+        }
       } else {
-        console.warn('API returned success but no quote found.')
+        console.warn('API returned success but no operations found.')
         setIntentOperations(null)
+        setIntentPreconditions(null)
       }
     },
     onError: (error) => {
