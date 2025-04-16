@@ -417,7 +417,7 @@ export class Wallets {
       status: 'ready',
       loginDate: new Date().toISOString(),
       device: device.address,
-      loginType: 'passkey',
+      loginType: loginSigner.extra.signerKind,
       useGuard: !args.noGuard,
     })
 
@@ -474,7 +474,7 @@ export class Wallets {
         status: 'logging-in',
         loginDate: new Date().toISOString(),
         device: device.address,
-        loginType: 'passkey',
+        loginType: 'wallet',
         useGuard: guardTopology !== undefined,
       })
 
