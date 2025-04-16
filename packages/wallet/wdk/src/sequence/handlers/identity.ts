@@ -89,7 +89,7 @@ export class IdentityHandler {
       authKey = {
         address: Hex.fromBytes(new Uint8Array(publicKey)),
         identitySigner: '',
-        expiresAt: new Date(Date.now() + 1000 * 60 * 1), // 1 minute
+        expiresAt: new Date(Date.now() + 1000 * 60 * 3), // 3 minutes
         privateKey: keyPair.privateKey,
       }
       await this.authKeys.set(authKey)
