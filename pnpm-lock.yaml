@@ -30,46 +30,6 @@ importers:
         specifier: 5.8.3
         version: 5.8.3
 
-  extras/demo-wallet:
-    dependencies:
-      '@0xsequence/wallet-wdk':
-        specifier: workspace:../../packages/wallet/wdk
-        version: link:../../packages/wallet/wdk
-      '@repo/ui':
-        specifier: workspace:*
-        version: link:../../repo/ui
-      next:
-        specifier: ^15.1.0
-        version: 15.1.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      ox:
-        specifier: ^0.6.7
-        version: 0.6.7(typescript@5.5.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.0.0
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.0.0(react@19.0.0)
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../repo/eslint-config
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../repo/typescript-config
-      '@types/node':
-        specifier: ^20
-        version: 20.17.6
-      '@types/react':
-        specifier: 18.3.1
-        version: 18.3.1
-      '@types/react-dom':
-        specifier: 18.3.0
-        version: 18.3.0
-      typescript:
-        specifier: 5.5.4
-        version: 5.5.4
-
   extras/docs:
     dependencies:
       '@repo/ui':
@@ -4840,10 +4800,6 @@ snapshots:
       '@typescript-eslint/types': 8.15.0
       eslint-visitor-keys: 4.2.0
 
-  abitype@1.0.8(typescript@5.5.4):
-    optionalDependencies:
-      typescript: 5.5.4
-
   abitype@1.0.8(typescript@5.8.3):
     optionalDependencies:
       typescript: 5.8.3
@@ -6860,20 +6816,6 @@ snapshots:
   os-tmpdir@1.0.2: {}
 
   outdent@0.5.0: {}
-
-  ox@0.6.7(typescript@5.5.4):
-    dependencies:
-      '@adraffy/ens-normalize': 1.11.0
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
-      '@scure/bip32': 1.6.2
-      '@scure/bip39': 1.5.4
-      abitype: 1.0.8(typescript@5.5.4)
-      eventemitter3: 5.0.1
-    optionalDependencies:
-      typescript: 5.5.4
-    transitivePeerDependencies:
-      - zod
 
   ox@0.6.7(typescript@5.8.3):
     dependencies:
