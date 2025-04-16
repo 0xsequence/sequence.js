@@ -250,12 +250,7 @@ export const HomeIndexRoute = () => {
     const tokenBalances = tokenBalancesData.balances.flatMap((b) => b.results)
     const balances = [...nativeBalances, ...tokenBalances]
 
-    // Filter out tokens on testnets
-    const filteredBalances = balances.filter((token) => {
-      return getChainInfo(token.chainId)?.testnet === false || getChainInfo(token.chainId)?.testnet === undefined
-    })
-
-    return [...filteredBalances]
+    return [...balances]
       .filter((token) => {
         try {
           return BigInt(token.balance) > 0n
