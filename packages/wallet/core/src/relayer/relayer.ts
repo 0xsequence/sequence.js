@@ -1,5 +1,5 @@
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex } from 'ox'
+import { Address, Hex } from 'ox'
 
 export interface FeeOption {
   token: Address.Address
