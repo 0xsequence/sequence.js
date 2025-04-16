@@ -375,9 +375,7 @@ export class Manager {
   }
 
   public registerOtpUI(onPromptOtp: (recipient: string, respond: (otp: string) => Promise<void>) => Promise<void>) {
-    if (this.otpHandler) {
-      this.otpHandler.registerUI(onPromptOtp)
-    }
+    return this.otpHandler?.registerUI(onPromptOtp) || (() => {})
   }
 
   public async setRedirectPrefix(prefix: string) {
