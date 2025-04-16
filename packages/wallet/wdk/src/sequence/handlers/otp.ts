@@ -6,19 +6,18 @@ import { Signatures } from '../signatures'
 import { SignerUnavailable, SignerReady, SignerActionable } from '../types'
 import { Kinds } from '../types/signer'
 import * as Identity from '../../identity'
+import { IdentityHandler } from './identity'
 
 type RespondFn = (otp: string) => Promise<void>
 
-export class OtpHandler implements Handler {
+export class OtpHandler extends IdentityHandler implements Handler {
   kind = Kinds.LoginEmailOtp
 
   private onPromptOtp: undefined | ((recipient: string, respond: RespondFn) => Promise<void>)
-  private statusChangeListeners: (() => void)[] = []
 
-  constructor(
-    private readonly nitro: Identity.IdentityInstrument,
-    private readonly signatures: Signatures,
-  ) {}
+  constructor(nitro: Identity.IdentityInstrument, signatures: Signatures, authKeys: Db.AuthKeys) {
+    super(nitro, authKeys, signatures)
+  }
 
   public registerUI(onPromptOtp: (recipient: string, respond: RespondFn) => Promise<void>) {
     this.onPromptOtp = onPromptOtp
@@ -31,27 +30,19 @@ export class OtpHandler implements Handler {
     this.onPromptOtp = undefined
   }
 
-  public onStatusChange(cb: () => void): () => void {
-    this.statusChangeListeners.push(cb)
-    return () => {
-      this.statusChangeListeners = this.statusChangeListeners.filter((l) => l !== cb)
-    }
-  }
-
   public async getSigner(email: string): Promise<Signers.Signer & Signers.Witnessable> {
     const onPromptOtp = this.onPromptOtp
     if (!onPromptOtp) {
       throw new Error('otp-handler-ui-not-registered')
     }
 
-    const wdk = new Identity.Wdk('694', this.nitro)
     const challenge = Identity.OtpChallenge.fromRecipient(Identity.IdentityType.Email, email)
-    const { loginHint, challenge: codeChallenge } = await wdk.initiateAuth(challenge)
+    const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
 
     return new Promise(async (resolve, reject) => {
       const respond = async (otp: string) => {
         try {
-          const signer = await wdk.completeAuth(challenge.withAnswer(codeChallenge, otp))
+          const signer = await this.nitroCompleteAuth(challenge.withAnswer(codeChallenge, otp))
           resolve(signer)
         } catch (e) {
           reject(e)
@@ -76,23 +67,14 @@ export class OtpHandler implements Handler {
       }
     }
 
-    const wdk = new Identity.Wdk('694', this.nitro)
-    const signer = await wdk.getSigner() // TODO: specify which signer
-    if (signer && signer.address === address) {
+    const signer = await this.getAuthKeySigner(address)
+    if (signer) {
       return {
         address,
         handler: this,
         status: 'ready',
         handle: async () => {
-          const signature = await signer.sign(
-            request.envelope.wallet,
-            request.envelope.chainId,
-            request.envelope.payload,
-          )
-          await this.signatures.addSignature(request.id, {
-            address,
-            signature,
-          })
+          await this.sign(signer, request)
           return true
         },
       }
@@ -106,12 +88,11 @@ export class OtpHandler implements Handler {
       handle: () =>
         new Promise(async (resolve, reject) => {
           const challenge = Identity.OtpChallenge.fromSigner(Identity.IdentityType.Email, address)
-          const { loginHint, challenge: codeChallenge } = await wdk.initiateAuth(challenge)
+          const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
 
           const respond = async (otp: string) => {
             try {
-              await wdk.completeAuth(challenge.withAnswer(codeChallenge, otp))
-              this.notifyStatusChange()
+              await this.nitroCompleteAuth(challenge.withAnswer(codeChallenge, otp))
               resolve(true)
             } catch (e) {
               resolve(false)
@@ -122,9 +103,5 @@ export class OtpHandler implements Handler {
           await onPromptOtp(loginHint, respond)
         }),
     }
-  }
-
-  private notifyStatusChange() {
-    this.statusChangeListeners.forEach((l) => l())
   }
 }

@@ -1,9 +1,5 @@
-import { IdentityInstrument, IdentityType } from './nitro'
-export { IdentityInstrument, IdentityType }
+import { IdentityInstrument, IdentityType, KeyType } from './nitro'
+export { IdentityInstrument, IdentityType, KeyType }
 
-export * from './wdk'
-export * from './authkey'
 export * from './challenge'
 export * from './signer'
-export * from './subtle-crypto'
-export * from './secure-store'

@@ -4,19 +4,24 @@ import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
 import * as Identity from '../../identity'
 import { SignerUnavailable, SignerReady, SignerActionable } from '../types'
-import { AuthCommitment } from '../../dbs'
+import { AuthCommitment, AuthKey } from '../../dbs'
+import { IdentitySigner } from '../../identity/signer'
+import { IdentityHandler } from './identity'
 
-export class AuthCodePkceHandler implements Handler {
+export class AuthCodePkceHandler extends IdentityHandler implements Handler {
   private redirectUri: string = ''
 
   constructor(
     public readonly signupKind: 'google-pkce' | 'apple-pkce',
     private readonly issuer: string,
     private readonly audience: string,
-    private readonly nitro: Identity.IdentityInstrument,
-    private readonly signatures: Signatures,
+    nitro: Identity.IdentityInstrument,
+    signatures: Signatures,
     private readonly commitments: Db.AuthCommitments,
-  ) {}
+    authKeys: Db.AuthKeys,
+  ) {
+    super(nitro, authKeys, signatures)
+  }
 
   public get kind() {
     return 'login-' + this.signupKind
@@ -26,18 +31,12 @@ export class AuthCodePkceHandler implements Handler {
     this.redirectUri = redirectUri
   }
 
-  public onStatusChange(cb: () => void): () => void {
-    // TODO: keep track of signer validity and call cb when it changes
-    return () => {}
-  }
-
   public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
-    const wdk = new Identity.Wdk('694', this.nitro)
     let challenge = new Identity.AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
     if (signer) {
       challenge = challenge.withSigner(signer)
     }
-    const { verifier, loginHint, challenge: codeChallenge } = await wdk.initiateAuth(challenge)
+    const { verifier, loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
     if (!state) {
       state = Hex.fromBytes(Bytes.random(32))
     }
@@ -70,11 +69,12 @@ export class AuthCodePkceHandler implements Handler {
   public async completeAuth(
     commitment: AuthCommitment,
     code: string,
-  ): Promise<[Identity.IdentitySigner, { [key: string]: string }]> {
-    const wdk = new Identity.Wdk('694', this.nitro)
+  ): Promise<[IdentitySigner, { [key: string]: string }]> {
     const challenge = new Identity.AuthCodePkceChallenge('', '', '')
-    const signer = await wdk.completeAuth(challenge.withAnswer(commitment.verifier, code))
+    const signer = await this.nitroCompleteAuth(challenge.withAnswer(commitment.verifier, code))
+
     await this.commitments.del(commitment.id)
+
     return [signer, commitment.metadata]
   }
 
@@ -83,23 +83,14 @@ export class AuthCodePkceHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: Db.SignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    const wdk = new Identity.Wdk('694', this.nitro)
-    const signer = await wdk.getSigner() // TODO: specify which signer
-    if (signer && signer.address === address) {
+    const signer = await this.getAuthKeySigner(address)
+    if (signer) {
       return {
         address,
         handler: this,
         status: 'ready',
         handle: async () => {
-          const signature = await signer.sign(
-            request.envelope.wallet,
-            request.envelope.chainId,
-            request.envelope.payload,
-          )
-          await this.signatures.addSignature(request.id, {
-            address,
-            signature,
-          })
+          await this.sign(signer, request)
           return true
         },
       }

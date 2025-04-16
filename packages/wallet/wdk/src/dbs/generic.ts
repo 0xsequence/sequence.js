@@ -79,7 +79,7 @@ export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
 
       request.onsuccess = () => {
         this._db = request.result
-        resolve(this._db)
+        this.handleOpenDB().then(() => resolve(this._db!))
       }
 
       request.onerror = () => reject(request.error)
@@ -87,7 +87,9 @@ export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
     })
   }
 
-  private async getStore(mode: IDBTransactionMode): Promise<IDBObjectStore> {
+  protected async handleOpenDB(): Promise<void> {}
+
+  protected async getStore(mode: IDBTransactionMode): Promise<IDBObjectStore> {
     const db = await this.openDB()
     const tx = db.transaction(this.storeName, mode)
     return tx.objectStore(this.storeName)

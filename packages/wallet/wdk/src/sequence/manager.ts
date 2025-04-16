@@ -30,12 +30,29 @@ export type ManagerOptions = {
   transactionsDb?: Db.Transactions
   signaturesDb?: Db.Signatures
   authCommitmentsDb?: Db.AuthCommitments
+  authKeysDb?: Db.AuthKeys
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[]
 
   defaultGuardTopology?: Config.Topology
+
+  identity?: {
+    url?: string
+    fetch?: typeof window.fetch
+    email?: {
+      enabled: boolean
+    }
+    google?: {
+      enabled: boolean
+      clientId: string
+    }
+    apple?: {
+      enabled: boolean
+      clientId: string
+    }
+  }
 }
 
 export const ManagerOptionsDefaults = {
@@ -50,6 +67,7 @@ export const ManagerOptionsDefaults = {
   signaturesDb: new Db.Signatures(),
   transactionsDb: new Db.Transactions(),
   authCommitmentsDb: new Db.AuthCommitments(),
+  authKeysDb: new Db.AuthKeys(),
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
@@ -68,6 +86,23 @@ export const ManagerOptionsDefaults = {
     address: Constants.DefaultSessionManager,
     weight: 1n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
+
+  identity: {
+    // TODO: change to prod url once deployed
+    url: 'https://dev-identity.sequence-dev.app',
+    fetch: window.fetch,
+    email: {
+      enabled: false,
+    },
+    google: {
+      enabled: false,
+      clientId: '',
+    },
+    apple: {
+      enabled: false,
+      clientId: '',
+    },
+  },
 }
 
 export const CreateWalletOptionsDefaults = {
@@ -75,7 +110,11 @@ export const CreateWalletOptionsDefaults = {
 }
 
 export function applyDefaults(options?: ManagerOptions) {
-  return { ...ManagerOptionsDefaults, ...options }
+  return {
+    ...ManagerOptionsDefaults,
+    ...options,
+    identity: { ...ManagerOptionsDefaults.identity, ...options?.identity },
+  }
 }
 
 export type Databases = {
@@ -84,6 +123,7 @@ export type Databases = {
   readonly signatures: Db.Signatures
   readonly transactions: Db.Transactions
   readonly authCommitments: Db.AuthCommitments
+  readonly authKeys: Db.AuthKeys
 }
 
 export type Sequence = {
@@ -127,7 +167,7 @@ export class Manager {
   private readonly mnemonicHandler: MnemonicHandler
   private readonly devicesHandler: DevicesHandler
   private readonly passkeysHandler: PasskeysHandler
-  private readonly otpHandler: OtpHandler
+  private readonly otpHandler?: OtpHandler
 
   constructor(options?: ManagerOptions) {
     const ops = applyDefaults(options)
@@ -154,6 +194,7 @@ export class Manager {
         signatures: ops.signaturesDb,
         transactions: ops.transactionsDb,
         authCommitments: ops.authCommitmentsDb,
+        authKeys: ops.authKeysDb,
       },
 
       modules: {} as any,
@@ -184,20 +225,39 @@ export class Manager {
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
 
     // TODO: configurable nitro rpc
-    const nitro = new Identity.IdentityInstrument('https://dev-identity.sequence-dev.app', window.fetch)
-    this.otpHandler = new OtpHandler(nitro, modules.signatures)
-    shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
-    shared.handlers.set(
-      Kinds.LoginGooglePkce,
-      new AuthCodePkceHandler(
-        'google-pkce',
-        'https://accounts.google.com',
-        '970987756660-1evc76k7g9sd51qn9lodiu7e97ls0mmm.apps.googleusercontent.com',
-        nitro,
-        modules.signatures,
-        shared.databases.authCommitments,
-      ),
-    )
+    const nitro = new Identity.IdentityInstrument(ops.identity.url, ops.identity.fetch)
+    if (ops.identity.email?.enabled) {
+      this.otpHandler = new OtpHandler(nitro, modules.signatures, shared.databases.authKeys)
+      shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
+    }
+    if (ops.identity.google?.enabled) {
+      shared.handlers.set(
+        Kinds.LoginGooglePkce,
+        new AuthCodePkceHandler(
+          'google-pkce',
+          'https://accounts.google.com',
+          ops.identity.google.clientId,
+          nitro,
+          modules.signatures,
+          shared.databases.authCommitments,
+          shared.databases.authKeys,
+        ),
+      )
+    }
+    if (ops.identity.apple?.enabled) {
+      shared.handlers.set(
+        Kinds.LoginApplePkce,
+        new AuthCodePkceHandler(
+          'apple-pkce',
+          'https://appleid.apple.com',
+          ops.identity.apple.clientId,
+          nitro,
+          modules.signatures,
+          shared.databases.authCommitments,
+          shared.databases.authKeys,
+        ),
+      )
+    }
 
     shared.modules = modules
     this.shared = shared
@@ -315,7 +375,9 @@ export class Manager {
   }
 
   public registerOtpUI(onPromptOtp: (recipient: string, respond: (otp: string) => Promise<void>) => Promise<void>) {
-    return this.otpHandler.registerUI(onPromptOtp)
+    if (this.otpHandler) {
+      this.otpHandler.registerUI(onPromptOtp)
+    }
   }
 
   public async setRedirectPrefix(prefix: string) {
