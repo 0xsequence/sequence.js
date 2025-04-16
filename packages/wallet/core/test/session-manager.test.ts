@@ -1,7 +1,7 @@
 import { Envelope, Signers, State, Wallet } from '@0xsequence/wallet-core'
 import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
-import { CAN_RUN_LIVE, ERC20_IMPLICIT_MINT_CONTRACT, ERC20_MINT_ONCE, PRIVATE_KEY, RPC_URL } from './constants'
+import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
 function randomAddress(): Address.Address {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
@@ -116,7 +116,7 @@ describe('SessionManager', () => {
 
   it('should create and sign with an implicit session', async () => {
     const { provider, chainId } = await getProvider()
-    await requireContractDeployed(provider, ERC20_IMPLICIT_MINT_CONTRACT)
+    await requireContractDeployed(provider, EMITTER_ADDRESS)
 
     // Create implicit signer
     const implicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -158,9 +158,9 @@ describe('SessionManager', () => {
 
     // Create a test transaction
     const call: Payload.Call = {
-      to: ERC20_IMPLICIT_MINT_CONTRACT,
+      to: EMITTER_ADDRESS,
       value: 0n,
-      data: Bytes.fromHex(AbiFunction.encodeData(ERC20_MINT_ONCE, [testWalletAddress, 1000000000000000000n])),
+      data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[1])), // Implicit emit
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
@@ -192,7 +192,7 @@ describe('SessionManager', () => {
 
   it('should create and sign with an explicit session', async () => {
     const { provider, chainId } = await getProvider()
-    await requireContractDeployed(provider, ERC20_IMPLICIT_MINT_CONTRACT)
+    await requireContractDeployed(provider, EMITTER_ADDRESS)
 
     // Create explicit signer
     const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -201,7 +201,7 @@ describe('SessionManager', () => {
       deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
       permissions: [
         {
-          target: ERC20_IMPLICIT_MINT_CONTRACT,
+          target: EMITTER_ADDRESS,
           rules: [],
         },
       ],
@@ -212,9 +212,9 @@ describe('SessionManager', () => {
 
     // Create a test transaction within permissions
     const call: Payload.Call = {
-      to: ERC20_IMPLICIT_MINT_CONTRACT,
+      to: EMITTER_ADDRESS,
       value: 0n,
-      data: Bytes.fromHex(AbiFunction.encodeData(ERC20_MINT_ONCE, [testWalletAddress, 1000000000000000000n])),
+      data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[0])), // Explicit emit
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
@@ -338,7 +338,7 @@ describe('SessionManager', () => {
     it('Submits a real transaction with a wallet that has a SessionManager using implicit session', async () => {
       // Check the contracts have been deployed
       const { provider, chainId } = await getProvider()
-      await requireContractDeployed(provider, ERC20_IMPLICIT_MINT_CONTRACT)
+      await requireContractDeployed(provider, EMITTER_ADDRESS)
       await requireContractDeployed(provider, Constants.DefaultGuest)
 
       // Create an implicit signer
@@ -386,9 +386,9 @@ describe('SessionManager', () => {
       })
 
       const call: Payload.Call = {
-        to: ERC20_IMPLICIT_MINT_CONTRACT,
+        to: EMITTER_ADDRESS,
         value: 0n,
-        data: Bytes.fromHex(AbiFunction.encodeData(ERC20_MINT_ONCE, [wallet.address, 1000000000000000000n])),
+        data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[1])), // Implicit emit
         gasLimit: 0n,
         delegateCall: false,
         onlyFallback: false,
@@ -403,7 +403,7 @@ describe('SessionManager', () => {
     it('Submits a real transaction with a wallet that has a SessionManager using explicit session', async () => {
       const { provider, chainId } = await getProvider()
       // Check the contracts have been deployed
-      await requireContractDeployed(provider, ERC20_IMPLICIT_MINT_CONTRACT)
+      await requireContractDeployed(provider, EMITTER_ADDRESS)
       await requireContractDeployed(provider, Constants.DefaultGuest)
 
       // Create explicit signer
@@ -411,7 +411,7 @@ describe('SessionManager', () => {
       const sessionPermission: Signers.Session.ExplicitParams = {
         valueLimit: 1000000000000000000n, // 1 ETH
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
-        permissions: [{ target: ERC20_IMPLICIT_MINT_CONTRACT, rules: [] }],
+        permissions: [{ target: EMITTER_ADDRESS, rules: [] }],
       }
       const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, sessionPermission)
       // Test manually building the session topology
@@ -446,9 +446,9 @@ describe('SessionManager', () => {
       })
 
       const call: Payload.Call = {
-        to: ERC20_IMPLICIT_MINT_CONTRACT,
+        to: EMITTER_ADDRESS,
         value: 0n,
-        data: Bytes.fromHex(AbiFunction.encodeData(ERC20_MINT_ONCE, [wallet.address, 1000000000000000000n])),
+        data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[0])), // Explicit emit
         gasLimit: 0n,
         delegateCall: false,
         onlyFallback: false,
