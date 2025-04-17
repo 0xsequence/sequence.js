@@ -4,7 +4,7 @@ import { Connector } from 'wagmi'
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import { GetTokenBalancesSummaryReturn } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
-import { GetIntentOperationsReturn } from '@0xsequence/api'
+import { GetIntentOperationsReturn, IntentOperation, IntentPrecondition } from '@0xsequence/api'
 import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAPIClient } from '../../hooks/useAPIClient'
@@ -115,7 +115,6 @@ export const HomeIndexRoute = () => {
             accountAddresses: [account.address],
             omitNativeBalances: false,
           },
-          testnets: false,
         })
 
         return summary
@@ -127,6 +126,75 @@ export const HomeIndexRoute = () => {
     enabled: !!account.address,
     staleTime: 30000,
     retry: 1,
+  })
+
+  const [verificationStatus, setVerificationStatus] = useState<{
+    success: boolean
+    receivedAddress?: string
+    calculatedAddress?: string
+  } | null>(null)
+
+  const commitIntentConfigMutation = useMutation({
+    mutationFn: async (args: {
+      walletAddress: string
+      mainSigner: string
+      operations: IntentOperation[]
+      preconditions: IntentPrecondition[]
+    }) => {
+      if (!apiClient) throw new Error('API client not available')
+
+      try {
+        if (!account.address) {
+          throw new Error('Account address not available')
+        }
+        const mainSigner = Address.from(account.address)
+        const context: ContextLike.Context = {
+          factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447',
+          stage1: '0x656e2d390E76f3Fba9f0770Dd0EcF4707eee3dF1',
+          creationCode: '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3',
+        }
+
+        const coreOperations: AnyPay.IntentOperation[] = args.operations.map((op) => ({
+          chainId: BigInt(op.chainId),
+          space: op.space ? BigInt(op.space) : undefined,
+          nonce: op.nonce ? BigInt(op.nonce) : undefined,
+          calls: op.calls.map((call) => ({
+            to: Address.from(call.to),
+            value: BigInt(call.value || '0'),
+            data: Bytes.from((call.data as Hex) || '0x'),
+            gasLimit: BigInt(call.gasLimit || '0'),
+            delegateCall: !!call.delegateCall,
+            onlyFallback: !!call.onlyFallback,
+            behaviorOnError: call.behaviorOnError !== undefined ? BigInt(call.behaviorOnError) : 0n,
+          })),
+        }))
+
+        const calculatedAddress = AnyPay.calculateIntentConfigurationAddress(coreOperations, mainSigner, context)
+        const receivedAddress = args.operations[0]?.calls[0]?.to
+
+        const verificationResult = {
+          success: Boolean(receivedAddress && isAddressEqual(Address.from(receivedAddress), calculatedAddress)),
+          receivedAddress: receivedAddress || '',
+          calculatedAddress: calculatedAddress.toString(),
+        }
+        setVerificationStatus(verificationResult)
+
+        if (!verificationResult.success) {
+          throw new Error('Address verification failed')
+        }
+
+        return await apiClient.commitIntentConfig(args)
+      } catch (error) {
+        console.error('Error during verification:', error)
+        throw error
+      }
+    },
+    onSuccess: (data) => {
+      console.log('Intent config committed successfully:', data)
+    },
+    onError: (error) => {
+      console.error('Failed to commit intent config:', error)
+    },
   })
 
   const createIntentMutation = useMutation<GetIntentOperationsReturn, Error, IntentAction>({
@@ -230,61 +298,6 @@ export const HomeIndexRoute = () => {
       if (data && data.operations && data.operations.length > 0) {
         setIntentOperations(data.operations)
         setIntentPreconditions(data.preconditions)
-
-        try {
-          if (!account.address) {
-            console.warn('Verification skipped: account.address is missing.')
-            return
-          }
-          const mainSigner = Address.from(account.address)
-          const context: ContextLike.Context = {
-            factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447',
-            stage1: '0x656e2d390E76f3Fba9f0770Dd0EcF4707eee3dF1',
-            creationCode: '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3',
-          }
-
-          const coreOperations: AnyPay.IntentOperation[] = data.operations.map((op) => ({
-            chainId: BigInt(op.chainId),
-            space: op.space ? BigInt(op.space) : undefined,
-            nonce: op.nonce ? BigInt(op.nonce) : undefined,
-            calls: op.calls.map((call) => ({
-              to: Address.from(call.to),
-              value: BigInt(call.value || '0'),
-              data: Bytes.from((call.data as Hex) || '0x'),
-              gasLimit: BigInt(call.gasLimit || '0'),
-              delegateCall: !!call.delegateCall,
-              onlyFallback: !!call.onlyFallback,
-              behaviorOnError: call.behaviorOnError !== undefined ? BigInt(call.behaviorOnError) : 0n,
-            })),
-          }))
-
-          console.log('--- Core Operations ---')
-          console.log('Core Operations:', coreOperations)
-          console.log('Main Signer:', mainSigner)
-          console.log('Context:', context)
-          console.log('------------------------------------')
-
-          const calculatedAddress = AnyPay.calculateIntentConfigurationAddress(coreOperations, mainSigner, context)
-
-          const receivedAddress = data.operations[0]?.calls[0]?.to
-
-          console.log('--- Anypay Address Verification ---')
-          console.log('Received Address (from API):', receivedAddress)
-          console.log('Calculated Address (client-side):', calculatedAddress)
-          if (receivedAddress && isAddressEqual(Address.from(receivedAddress), calculatedAddress)) {
-            console.log('Verification Successful: Addresses match!')
-          } else {
-            console.error('Verification Failed: Addresses do NOT match!')
-            console.log('API Operations:', data.operations)
-            console.log('Core Operations Used:', coreOperations)
-            console.log('Main Signer:', mainSigner)
-            console.log('Context:', context)
-          }
-          console.log('------------------------------------')
-        } catch (error) {
-          console.error('Error during client-side address verification:', error)
-          alert(`Error during client-side address verification: ${JSON.stringify(error)}`)
-        }
       } else {
         console.warn('API returned success but no operations found.')
         setIntentOperations(null)
@@ -933,6 +946,152 @@ export const HomeIndexRoute = () => {
               </div>
             )}
           </div>
+
+          {/* 4. Commit Intent */}
+          {intentOperations && intentPreconditions && (
+            <div>
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                  <span>4</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white">Commit Intent</h3>
+              </div>
+              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Text
+                      variant="medium"
+                      color="primary"
+                      className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                      Commit Intent
+                      <Text variant="small" color="secondary" className="ml-1">
+                        (Verify and Send Transaction)
+                      </Text>
+                    </Text>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        if (!account.address || !intentOperations || !intentPreconditions) return
+                        commitIntentConfigMutation.mutate({
+                          walletAddress: account.address,
+                          mainSigner: account.address,
+                          operations: intentOperations,
+                          preconditions: intentPreconditions,
+                        })
+                      }}
+                      disabled={commitIntentConfigMutation.isPending}
+                      className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+                    >
+                      {commitIntentConfigMutation.isPending ? (
+                        <div className="flex items-center">
+                          <svg
+                            className="animate-spin h-4 w-4 mr-2"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Committing...
+                        </div>
+                      ) : (
+                        'Commit Intent'
+                      )}
+                    </Button>
+                  </div>
+                  {commitIntentConfigMutation.isError && (
+                    <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
+                      <Text variant="small" color="white">
+                        Error: {commitIntentConfigMutation.error.message}
+                      </Text>
+                    </div>
+                  )}
+                  {commitIntentConfigMutation.isSuccess && (
+                    <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3">
+                      <Text variant="small" color="success">
+                        Intent configuration committed successfully!
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Verification Banner */}
+          {verificationStatus && (
+            <div
+              className={`mt-4 p-4 rounded-lg border ${
+                verificationStatus.success ? 'bg-green-900/20 border-green-700/30' : 'bg-red-900/20 border-red-700/30'
+              }`}
+            >
+              <div className="flex items-center">
+                {verificationStatus.success ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-green-400 mr-2"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-red-400 mr-2"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+                <div>
+                  <Text variant="small" color={verificationStatus.success ? 'success' : 'white'}>
+                    {verificationStatus.success ? 'Verification Successful' : 'Verification Failed'}
+                  </Text>
+                  <div className="mt-1 text-xs text-gray-400">
+                    <div>Received: {verificationStatus.receivedAddress}</div>
+                    <div>Calculated: {verificationStatus.calculatedAddress}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
