@@ -18,16 +18,28 @@ export const Actions = {
 } as const
 
 export type Action = (typeof Actions)[keyof typeof Actions]
+export type BaseSignatureRequest<A extends Action = Action> =
+  | {
+      id: string
+      wallet: Address.Address
+      origin: string
+      createdAt: string
 
-export type BaseSignatureRequest<A extends Action = Action> = {
-  id: string
-  wallet: Address.Address
-  origin: string
-  createdAt: string
+      action: A
+      envelope: Envelope.Signed<ActionToPayload[A]>
+      status: 'pending'
+    }
+  | {
+      id: string
+      wallet: Address.Address
+      origin: string
+      createdAt: string
 
-  action: A
-  envelope: Envelope.Signed<ActionToPayload[A]>
-}
+      action: A
+      envelope: Envelope.Signed<ActionToPayload[A]>
+      status: 'cancelled' | 'completed'
+      scheduledPruning: number
+    }
 
 export type SignerBase = {
   address: Address.Address

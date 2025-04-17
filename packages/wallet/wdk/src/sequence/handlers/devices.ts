@@ -1,10 +1,9 @@
-import * as Db from '../../dbs'
 import { Kinds } from '../types/signer'
 import { Signatures } from '../signatures'
 import { Address, Hex } from 'ox'
 import { Devices } from '../devices'
 import { Handler } from '.'
-import { SignerReady, SignerUnavailable } from '../types'
+import { SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types'
 
 export class DevicesHandler implements Handler {
   kind = Kinds.LocalDevice
@@ -21,7 +20,7 @@ export class DevicesHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady> {
     const signer = await this.devices.get(address)
     if (!signer) {

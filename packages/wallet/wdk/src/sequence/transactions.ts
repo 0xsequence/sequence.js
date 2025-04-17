@@ -237,7 +237,7 @@ export class Transactions {
       opHash,
     } as TransactionRelayed)
 
-    await this.shared.modules.signatures.delete(signature.id)
+    await this.shared.modules.signatures.complete(signature.id)
 
     return opHash
   }
