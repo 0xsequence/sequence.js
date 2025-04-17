@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useSendTransaction } from 'wagmi'
 import { Connector } from 'wagmi'
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
@@ -75,6 +75,7 @@ export const HomeIndexRoute = () => {
   const account = useAccount()
   const { connectors, connect, status: connectStatus, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
+  const { sendTransaction, isPending: isSendingTransaction } = useSendTransaction()
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null)
   const [showCustomCallForm, setShowCustomCallForm] = useState(false)
   const [customCallData, setCustomCallData] = useState({
@@ -365,6 +366,18 @@ export const HomeIndexRoute = () => {
     e.preventDefault()
     createIntentMutation.mutate('custom_call')
     setShowCustomCallForm(false)
+  }
+
+  const handleSendOriginCall = async () => {
+    if (!intentOperations?.[0]?.calls?.[0] || !verificationStatus?.success) return
+
+    const call = intentOperations[0].calls[0]
+    await sendTransaction({
+      to: call.to as `0x${string}`,
+      data: call.data as `0x${string}`,
+      value: BigInt(call.value || '0'),
+      chainId: parseInt(intentOperations[0].chainId),
+    })
   }
 
   return (
@@ -1045,6 +1058,54 @@ export const HomeIndexRoute = () => {
             </div>
           )}
 
+          {/* Verification Banner */}
+          {verificationStatus && (
+            <div
+              className={`mt-4 p-4 rounded-lg border ${
+                verificationStatus.success ? 'bg-green-900/20 border-green-700/30' : 'bg-red-900/20 border-red-700/30'
+              }`}
+            >
+              <div className="flex items-center">
+                {verificationStatus.success ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-green-400 mr-2"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-red-400 mr-2"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+                <div>
+                  <Text variant="small" color={verificationStatus.success ? 'success' : 'white'}>
+                    {verificationStatus.success ? 'Verification Successful' : 'Verification Failed'}
+                  </Text>
+                  <div className="mt-1 text-xs text-gray-400">
+                    <div>Received: {verificationStatus.receivedAddress}</div>
+                    <div>Calculated: {verificationStatus.calculatedAddress}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 5. Origin Call */}
           {intentOperations && intentPreconditions && (
             <div>
@@ -1054,7 +1115,7 @@ export const HomeIndexRoute = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-white">Origin Call</h3>
               </div>
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
+              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                 <Text
                   variant="medium"
                   color="primary"
@@ -1111,53 +1172,41 @@ export const HomeIndexRoute = () => {
                       {getChainInfo(parseInt(intentOperations[0].chainId))?.name || 'Unknown Chain'}
                     </Text>
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Verification Banner */}
-          {verificationStatus && (
-            <div
-              className={`mt-4 p-4 rounded-lg border ${
-                verificationStatus.success ? 'bg-green-900/20 border-green-700/30' : 'bg-red-900/20 border-red-700/30'
-              }`}
-            >
-              <div className="flex items-center">
-                {verificationStatus.success ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-green-400 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-red-400 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-                <div>
-                  <Text variant="small" color={verificationStatus.success ? 'success' : 'white'}>
-                    {verificationStatus.success ? 'Verification Successful' : 'Verification Failed'}
-                  </Text>
-                  <div className="mt-1 text-xs text-gray-400">
-                    <div>Received: {verificationStatus.receivedAddress}</div>
-                    <div>Calculated: {verificationStatus.calculatedAddress}</div>
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      variant="primary"
+                      onClick={handleSendOriginCall}
+                      disabled={!verificationStatus?.success || isSendingTransaction}
+                      className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+                    >
+                      {isSendingTransaction ? (
+                        <div className="flex items-center">
+                          <svg
+                            className="animate-spin h-4 w-4 mr-2"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Sending...
+                        </div>
+                      ) : (
+                        'Send Transaction'
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
