@@ -30,7 +30,7 @@ export class Signatures {
   async get(requestId: string): Promise<SignatureRequest> {
     const request = await this.getBase(requestId)
 
-    if (request.status !== 'pending' && request.scheduledpruning < Date.now()) {
+    if (request.status !== 'pending' && request.scheduledPruning < Date.now()) {
       await this.shared.databases.signatures.del(requestId)
       throw new Error(`Request not found for ${requestId}`)
     }
@@ -175,7 +175,7 @@ export class Signatures {
     await this.shared.databases.signatures.set({
       ...request,
       status: 'completed',
-      scheduledpruning: Date.now() + this.shared.databases.pruningInterval,
+      scheduledPruning: Date.now() + this.shared.databases.pruningInterval,
     })
   }
 
@@ -233,14 +233,14 @@ export class Signatures {
     await this.shared.databases.signatures.set({
       ...request,
       status: 'cancelled',
-      scheduledpruning: Date.now() + this.shared.databases.pruningInterval,
+      scheduledPruning: Date.now() + this.shared.databases.pruningInterval,
     })
   }
 
   async prune() {
     const now = Date.now()
     const requests = await this.shared.databases.signatures.list()
-    const toPrune = requests.filter((req) => req.status !== 'pending' && req.scheduledpruning < now)
+    const toPrune = requests.filter((req) => req.status !== 'pending' && req.scheduledPruning < now)
     await Promise.all(toPrune.map((req) => this.shared.databases.signatures.del(req.id)))
     return toPrune.length
   }

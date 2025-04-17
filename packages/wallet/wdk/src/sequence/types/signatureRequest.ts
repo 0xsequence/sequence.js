@@ -38,7 +38,7 @@ export type BaseSignatureRequest<A extends Action = Action> =
       action: A
       envelope: Envelope.Signed<ActionToPayload[A]>
       status: 'cancelled' | 'completed'
-      scheduledpruning: number
+      scheduledPruning: number
     }
 
 export type SignerBase = {
