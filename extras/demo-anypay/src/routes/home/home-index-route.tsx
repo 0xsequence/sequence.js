@@ -807,9 +807,9 @@ export const HomeIndexRoute = () => {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Origin Call
+                  Intent Operations
                   <Text variant="small" color="secondary" className="ml-1">
-                    (Send Funds Here):
+                    (List of operations that are pre-authorized to be executed):
                   </Text>
                 </Text>
                 {intentOperations &&
@@ -819,7 +819,7 @@ export const HomeIndexRoute = () => {
                   <>
                     <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                       <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">To (One-Time Wallet): </strong>{' '}
+                        <strong className="text-blue-300">To: </strong>{' '}
                         <span className="text-yellow-300 break-all font-mono">{intentOperations[0].calls[0].to}</span>
                       </Text>
                     </div>
@@ -1040,6 +1040,77 @@ export const HomeIndexRoute = () => {
                       </Text>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 5. Origin Call */}
+          {intentOperations && intentPreconditions && (
+            <div>
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                  <span>5</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white">Origin Call</h3>
+              </div>
+              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
+                <Text
+                  variant="medium"
+                  color="primary"
+                  className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Transaction Details
+                  <Text variant="small" color="secondary" className="ml-1">
+                    (Send this transaction to execute the intent):
+                  </Text>
+                </Text>
+                <div className="space-y-2">
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">From: </strong>
+                      <span className="text-yellow-300 break-all font-mono">{account.address}</span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">To: </strong>
+                      <span className="text-yellow-300 break-all font-mono">{intentOperations[0].calls[0].to}</span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Value: </strong>
+                      <span className="font-mono">{intentOperations[0].calls[0].value || '0'}</span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary" className="break-all">
+                      <strong className="text-blue-300">Data: </strong>
+                      <span className="font-mono text-green-300">{intentOperations[0].calls[0].data || '0x'}</span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md flex items-center">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Chain ID: </strong>
+                      <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">
+                        {intentOperations[0].chainId}
+                      </span>
+                    </Text>
+                    <NetworkImage chainId={parseInt(intentOperations[0].chainId)} size="sm" className="w-4 h-4 ml-1" />
+                    <Text variant="small" color="secondary" className="ml-1">
+                      {getChainInfo(parseInt(intentOperations[0].chainId))?.name || 'Unknown Chain'}
+                    </Text>
+                  </div>
                 </div>
               </div>
             </div>
