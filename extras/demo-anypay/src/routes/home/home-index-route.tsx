@@ -13,6 +13,7 @@ import { AbiFunction, Address, Bytes } from 'ox'
 import * as chains from 'viem/chains'
 import { AnyPay } from '@0xsequence/wallet-core'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
+// import { PublicClient } from 'viem'
 
 // Type guard for native token balance
 function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
@@ -134,6 +135,55 @@ export const HomeIndexRoute = () => {
     receivedAddress?: string
     calculatedAddress?: string
   } | null>(null)
+
+  // Add new state for relayer status
+  const [metaTxnStatus, setMetaTxnStatus] = useState<{
+    txnHash?: string
+    status?: string
+    revertReason?: string
+    gasUsed?: number
+    effectiveGasPrice?: string
+  } | null>(null)
+
+  const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
+
+  console.log('setMetaTxnStatus', setMetaTxnStatus)
+  console.log('setPreconditionStatuses', setPreconditionStatuses)
+
+  // Add function to check meta transaction status
+  // const checkMetaTxnStatus = async (txnHash: string) => {
+  //   try {
+  //     const receipt = await publicClient.getTransactionReceipt({ hash: txnHash as `0x${string}` })
+  //     setMetaTxnStatus({
+  //       txnHash,
+  //       status: receipt.status === 'success' ? 'Success' : 'Failed',
+  //       revertReason: receipt.status === 'reverted' ? 'Transaction reverted' : undefined,
+  //       gasUsed: Number(receipt.gasUsed),
+  //       effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+  //     })
+  //   } catch (error) {
+  //     console.error('Error checking meta transaction status:', error)
+  //   }
+  // }
+
+  // // Add function to check precondition statuses
+  // const checkPreconditionStatuses = async () => {
+  //   if (!intentPreconditions) return
+
+  //   const relayer = new LocalRelayer(publicClient)
+  //   const statuses = await Promise.all(
+  //     intentPreconditions.map(async (precondition) => {
+  //       try {
+  //         return await relayer.checkPrecondition(precondition)
+  //       } catch (error) {
+  //         console.error('Error checking precondition:', error)
+  //         return false
+  //       }
+  //     })
+  //   )
+
+  //   setPreconditionStatuses(statuses)
+  // }
 
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
@@ -368,17 +418,38 @@ export const HomeIndexRoute = () => {
     setShowCustomCallForm(false)
   }
 
-  const handleSendOriginCall = async () => {
-    if (!intentOperations?.[0]?.calls?.[0] || !verificationStatus?.success) return
+  // Update handleSendOriginCall to track status
+  // const handleSendOriginCall = async () => {
+  //   if (!intentOperations?.[0]?.calls?.[0] || !verificationStatus?.success) return
 
-    const call = intentOperations[0].calls[0]
-    await sendTransaction({
-      to: call.to as `0x${string}`,
-      data: call.data as `0x${string}`,
-      value: BigInt(call.value || '0'),
-      chainId: parseInt(intentOperations[0].chainId),
-    })
-  }
+  //   const call = intentOperations[0].calls[0]
+  //   const { hash } = await sendTransaction({
+  //     to: call.to as `0x${string}`,
+  //     data: call.data as `0x${string}`,
+  //     value: BigInt(call.value || '0'),
+  //     chainId: parseInt(intentOperations[0].chainId),
+  //   })
+
+  //   if (hash) {
+  //     setMetaTxnStatus({ txnHash: hash })
+  //     // Start polling for status
+  //     const interval = setInterval(() => {
+  //       checkMetaTxnStatus(hash)
+  //     }, 5000)
+
+  //     // Cleanup interval after 5 minutes
+  //     setTimeout(() => {
+  //       clearInterval(interval)
+  //     }, 300000)
+  //   }
+  // }
+
+  // Add useEffect to check precondition statuses when intentPreconditions changes
+  // useEffect(() => {
+  //   if (intentPreconditions) {
+  //     checkPreconditionStatuses()
+  //   }
+  // }, [intentPreconditions])
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -1175,7 +1246,7 @@ export const HomeIndexRoute = () => {
                   <div className="flex justify-end mt-4">
                     <Button
                       variant="primary"
-                      onClick={handleSendOriginCall}
+                      // onClick={handleSendOriginCall}
                       disabled={!verificationStatus?.success || isSendingTransaction}
                       className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
@@ -1207,6 +1278,154 @@ export const HomeIndexRoute = () => {
                         'Send Transaction'
                       )}
                     </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 6. Relayer Status */}
+          {intentOperations && intentPreconditions && (
+            <div>
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                  <span>6</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white">Relayer Status</h3>
+              </div>
+              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
+                <Text
+                  variant="medium"
+                  color="primary"
+                  className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Meta Transaction Status
+                  <Text variant="small" color="secondary" className="ml-1">
+                    (Track the status of your meta transaction)
+                  </Text>
+                </Text>
+                <div className="space-y-2">
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Transaction Hash: </strong>
+                      <span className="text-yellow-300 break-all font-mono">
+                        {metaTxnStatus?.txnHash || 'Not sent yet'}
+                      </span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Status: </strong>
+                      <span className="font-mono">{metaTxnStatus?.status || 'Pending'}</span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary" className="break-all">
+                      <strong className="text-blue-300">Revert Reason: </strong>
+                      <span className="font-mono text-red-300">{metaTxnStatus?.revertReason || 'None'}</span>
+                    </Text>
+                  </div>
+                </div>
+
+                <Text
+                  variant="medium"
+                  color="primary"
+                  className="mt-4 mb-2 pb-1 border-b border-gray-700/50 flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  Preconditions Status
+                  <Text variant="small" color="secondary" className="ml-1">
+                    (Check if all preconditions are met)
+                  </Text>
+                </Text>
+                <div className="space-y-2">
+                  {intentPreconditions.map((precondition, index) => (
+                    <div key={index} className="bg-gray-800/70 p-2 rounded-md">
+                      <Text variant="small" color="secondary">
+                        <strong className="text-blue-300">
+                          Precondition {index + 1} ({precondition.type}):{' '}
+                        </strong>
+                        <span className="font-mono">
+                          {preconditionStatuses[index] ? (
+                            <span className="text-green-400">Met</span>
+                          ) : (
+                            <span className="text-red-400">Not Met</span>
+                          )}
+                        </span>
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+
+                <Text
+                  variant="medium"
+                  color="primary"
+                  className="mt-4 mb-2 pb-1 border-b border-gray-700/50 flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Final Intent Status
+                  <Text variant="small" color="secondary" className="ml-1">
+                    (Overall status of the intent execution)
+                  </Text>
+                </Text>
+                <div className="space-y-2">
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Status: </strong>
+                      <span className="font-mono">{metaTxnStatus?.status || 'Pending'}</span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Gas Used: </strong>
+                      <span className="font-mono">{metaTxnStatus?.gasUsed || '0'}</span>
+                    </Text>
+                  </div>
+                  <div className="bg-gray-800/70 p-2 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Effective Gas Price: </strong>
+                      <span className="font-mono">{metaTxnStatus?.effectiveGasPrice || '0'}</span>
+                    </Text>
                   </div>
                 </div>
               </div>
