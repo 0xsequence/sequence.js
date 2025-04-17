@@ -1,6 +1,6 @@
 import { Signers } from '@0xsequence/wallet-core'
 import { Address, Hex, Mnemonic } from 'ox'
-import { Handler } from '.'
+import { Handler } from './handler'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
 import { Kinds } from '../types/signer'

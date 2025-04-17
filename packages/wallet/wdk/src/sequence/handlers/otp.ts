@@ -1,5 +1,5 @@
 import { Hex, Address } from 'ox'
-import { Handler } from '.'
+import { Handler } from './handler'
 import { Signers } from '@0xsequence/wallet-core'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
