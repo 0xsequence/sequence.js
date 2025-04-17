@@ -3,7 +3,7 @@ import { Kinds } from '../types/signer'
 import { Signatures } from '../signatures'
 import { Address, Hex } from 'ox'
 import { Devices } from '../devices'
-import { Handler } from '.'
+import { Handler } from './handler'
 import { SignerReady, SignerUnavailable } from '../types'
 
 export class DevicesHandler implements Handler {
