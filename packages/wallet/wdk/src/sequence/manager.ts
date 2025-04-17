@@ -14,7 +14,7 @@ import { Signatures } from './signatures'
 import { Signers } from './signers'
 import { Transactions } from './transactions'
 import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
-import { Transaction, TransactionRequest } from './types/transactionRequest'
+import { Transaction, TransactionRequest } from './types/transaction-request'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
 import { Kinds } from './types/signer'
 
