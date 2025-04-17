@@ -5,7 +5,7 @@ import { Kinds } from '../types/signer'
 import { Signatures } from '../signatures'
 import { Extensions } from '@0xsequence/wallet-primitives'
 import { Handler } from '.'
-import { SignerActionable, SignerUnavailable } from '../types'
+import { SignerActionable, SignerUnavailable, BaseSignatureRequest } from '../types'
 
 export class PasskeysHandler implements Handler {
   kind = Kinds.LoginPasskey
@@ -32,7 +32,7 @@ export class PasskeysHandler implements Handler {
   async status(
     address: Address.Address,
     imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerActionable | SignerUnavailable> {
     const base = { address, imageHash, handler: this }
     if (address !== this.extensions.passkeys) {

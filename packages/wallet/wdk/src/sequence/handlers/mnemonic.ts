@@ -4,7 +4,7 @@ import { Handler } from '.'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
 import { Kinds } from '../types/signer'
-import { SignerReady, SignerUnavailable } from '../types'
+import { BaseSignatureRequest, SignerReady, SignerUnavailable } from '../types'
 
 type RespondFn = (mnemonic: string) => Promise<void>
 
@@ -42,7 +42,7 @@ export class MnemonicHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady> {
     const onPromptMnemonic = this.onPromptMnemonic
     if (!onPromptMnemonic) {

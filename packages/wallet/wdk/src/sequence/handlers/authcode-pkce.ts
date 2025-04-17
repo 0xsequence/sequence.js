@@ -3,8 +3,8 @@ import { Handler } from '.'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
 import * as Identity from '../../identity'
-import { SignerUnavailable, SignerReady, SignerActionable } from '../types'
-import { AuthCommitment, AuthKey } from '../../dbs'
+import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types'
+import { AuthCommitment } from '../../dbs'
 import { IdentitySigner } from '../../identity/signer'
 import { IdentityHandler } from './identity'
 
@@ -81,7 +81,7 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
     const signer = await this.getAuthKeySigner(address)
     if (signer) {

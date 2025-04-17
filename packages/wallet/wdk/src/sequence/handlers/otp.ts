@@ -3,7 +3,7 @@ import { Handler } from '.'
 import { Signers } from '@0xsequence/wallet-core'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
-import { SignerUnavailable, SignerReady, SignerActionable } from '../types'
+import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types'
 import { Kinds } from '../types/signer'
 import * as Identity from '../../identity'
 import { IdentityHandler } from './identity'
@@ -55,7 +55,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
     const onPromptOtp = this.onPromptOtp
     if (!onPromptOtp) {

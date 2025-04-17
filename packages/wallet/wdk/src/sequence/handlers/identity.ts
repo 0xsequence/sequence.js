@@ -2,6 +2,7 @@ import { Hex } from 'ox'
 import * as Db from '../../dbs'
 import * as Identity from '../../identity'
 import { Signatures } from '../signatures'
+import { BaseSignatureRequest } from '../types'
 
 export class IdentityHandler {
   constructor(
@@ -57,7 +58,7 @@ export class IdentityHandler {
     return signer
   }
 
-  protected async sign(signer: Identity.IdentitySigner, request: Db.SignatureRequest) {
+  protected async sign(signer: Identity.IdentitySigner, request: BaseSignatureRequest) {
     const signature = await signer.sign(request.envelope.wallet, request.envelope.chainId, request.envelope.payload)
     await this.signatures.addSignature(request.id, {
       address: signer.address,
