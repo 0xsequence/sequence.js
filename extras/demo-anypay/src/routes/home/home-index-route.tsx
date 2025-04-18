@@ -13,7 +13,8 @@ import { AbiFunction, Address, Bytes } from 'ox'
 import * as chains from 'viem/chains'
 import { AnyPay } from '@0xsequence/wallet-core'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
-// import { PublicClient } from 'viem'
+import { useWaitForTransactionReceipt } from 'wagmi'
+import { Relayer } from '@0xsequence/wallet-core'
 
 // Type guard for native token balance
 function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
@@ -89,12 +90,16 @@ export const HomeIndexRoute = () => {
   })
   const indexerClient = useIndexerGatewayClient()
   const apiClient = useAPIClient()
+  const relayer = useMemo(() => {
+    return new Relayer.Rpc.RpcRelayer('https://relayer.sequence.app')
+  }, [])
 
   // State for intent results
   const [intentOperations, setIntentOperations] = useState<GetIntentOperationsReturn['operations'] | null>(null)
   const [intentPreconditions, setIntentPreconditions] = useState<GetIntentOperationsReturn['preconditions'] | null>(
     null,
   )
+  const [txnHash, setTxnHash] = useState<Hex | undefined>()
 
   // Default empty page info for query fallback
   const defaultPage = { page: 1, pageSize: 10, totalRecords: 0, more: false }
@@ -150,40 +155,45 @@ export const HomeIndexRoute = () => {
   console.log('setMetaTxnStatus', setMetaTxnStatus)
   console.log('setPreconditionStatuses', setPreconditionStatuses)
 
-  // Add function to check meta transaction status
-  // const checkMetaTxnStatus = async (txnHash: string) => {
-  //   try {
-  //     const receipt = await publicClient.getTransactionReceipt({ hash: txnHash as `0x${string}` })
-  //     setMetaTxnStatus({
-  //       txnHash,
-  //       status: receipt.status === 'success' ? 'Success' : 'Failed',
-  //       revertReason: receipt.status === 'reverted' ? 'Transaction reverted' : undefined,
-  //       gasUsed: Number(receipt.gasUsed),
-  //       effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
-  //     })
-  //   } catch (error) {
-  //     console.error('Error checking meta transaction status:', error)
-  //   }
-  // }
+  const updateMetaTxnStatus = (
+    hash: Hex | undefined,
+    status: 'success' | 'reverted' | 'pending' | 'sending',
+    gasUsed?: bigint,
+    effectiveGasPrice?: bigint,
+    revertReason?: string | null,
+  ) => {
+    setMetaTxnStatus({
+      txnHash: hash,
+      status:
+        status === 'success'
+          ? 'Success'
+          : status === 'reverted'
+            ? 'Failed'
+            : status === 'sending'
+              ? 'Sending...'
+              : 'Pending',
+      revertReason: status === 'reverted' ? revertReason || 'Transaction reverted' : undefined,
+      gasUsed: gasUsed ? Number(gasUsed) : undefined,
+      effectiveGasPrice: effectiveGasPrice?.toString(),
+    })
+  }
 
-  // // Add function to check precondition statuses
-  // const checkPreconditionStatuses = async () => {
-  //   if (!intentPreconditions) return
+  const checkPreconditionStatuses = async () => {
+    if (!intentPreconditions || !relayer) return // Use instantiated relayer
 
-  //   const relayer = new LocalRelayer(publicClient)
-  //   const statuses = await Promise.all(
-  //     intentPreconditions.map(async (precondition) => {
-  //       try {
-  //         return await relayer.checkPrecondition(precondition)
-  //       } catch (error) {
-  //         console.error('Error checking precondition:', error)
-  //         return false
-  //       }
-  //     })
-  //   )
+    const statuses = await Promise.all(
+      intentPreconditions.map(async (precondition) => {
+        try {
+          return await relayer.checkPrecondition(precondition)
+        } catch (error) {
+          console.error('Error checking precondition:', error)
+          return false
+        }
+      }),
+    )
 
-  //   setPreconditionStatuses(statuses)
-  // }
+    setPreconditionStatuses(statuses)
+  }
 
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
@@ -419,37 +429,75 @@ export const HomeIndexRoute = () => {
   }
 
   // Update handleSendOriginCall to track status
-  // const handleSendOriginCall = async () => {
-  //   if (!intentOperations?.[0]?.calls?.[0] || !verificationStatus?.success) return
+  const handleSendOriginCall = async () => {
+    if (!intentOperations?.[0]?.calls?.[0] || !verificationStatus?.success) return
 
-  //   const call = intentOperations[0].calls[0]
-  //   const { hash } = await sendTransaction({
-  //     to: call.to as `0x${string}`,
-  //     data: call.data as `0x${string}`,
-  //     value: BigInt(call.value || '0'),
-  //     chainId: parseInt(intentOperations[0].chainId),
-  //   })
+    setTxnHash(undefined) // Reset hash before sending
+    updateMetaTxnStatus(undefined, 'sending') // Update UI immediately
 
-  //   if (hash) {
-  //     setMetaTxnStatus({ txnHash: hash })
-  //     // Start polling for status
-  //     const interval = setInterval(() => {
-  //       checkMetaTxnStatus(hash)
-  //     }, 5000)
+    sendTransaction(
+      {
+        to: intentOperations[0].calls[0].to as `0x${string}`,
+        data: intentOperations[0].calls[0].data as `0x${string}`,
+        value: BigInt(intentOperations[0].calls[0].value || '0'),
+        chainId: parseInt(intentOperations[0].chainId),
+      },
+      {
+        onSuccess: (hash) => {
+          console.log('Transaction sent, hash:', hash)
+          setTxnHash(hash) // Set hash to trigger useWaitForTransactionReceipt
+          // Status will be updated by the useEffect hook watching the receipt
+        },
+        onError: (error) => {
+          console.error('Transaction failed:', error)
+          updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+        },
+      },
+    )
+  }
 
-  //     // Cleanup interval after 5 minutes
-  //     setTimeout(() => {
-  //       clearInterval(interval)
-  //     }, 300000)
-  //   }
-  // }
+  // Hook to wait for transaction receipt
+  const {
+    data: receipt,
+    isLoading: isWaitingForReceipt,
+    isSuccess,
+    isError,
+    error: receiptError,
+  } = useWaitForTransactionReceipt({
+    hash: txnHash,
+    confirmations: 1,
+    query: {
+      enabled: !!txnHash,
+    },
+  })
+
+  // Effect to update status based on receipt
+  useEffect(() => {
+    if (!txnHash) {
+      // No transaction sent yet or reset
+      setMetaTxnStatus(null) // Clear status
+      return
+    }
+    if (isWaitingForReceipt) {
+      updateMetaTxnStatus(txnHash, 'pending')
+      return
+    }
+    if (isSuccess && receipt) {
+      updateMetaTxnStatus(receipt.transactionHash, receipt.status, receipt.gasUsed, receipt.effectiveGasPrice)
+      // Optionally, trigger relayer status check here if needed after confirmation
+      // e.g., checkPreconditionStatuses()
+    } else if (isError) {
+      console.error('Error waiting for receipt:', receiptError)
+      updateMetaTxnStatus(txnHash, 'reverted', undefined, undefined, receiptError?.message || 'Failed to get receipt')
+    }
+  }, [isWaitingForReceipt, isSuccess, isError, receipt, txnHash, receiptError])
 
   // Add useEffect to check precondition statuses when intentPreconditions changes
-  // useEffect(() => {
-  //   if (intentPreconditions) {
-  //     checkPreconditionStatuses()
-  //   }
-  // }, [intentPreconditions])
+  useEffect(() => {
+    if (intentPreconditions) {
+      checkPreconditionStatuses()
+    }
+  }, [intentPreconditions, checkPreconditionStatuses])
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -962,7 +1010,7 @@ export const HomeIndexRoute = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2"
                         />
                       </svg>
                       Preconditions
@@ -1246,7 +1294,7 @@ export const HomeIndexRoute = () => {
                   <div className="flex justify-end mt-4">
                     <Button
                       variant="primary"
-                      // onClick={handleSendOriginCall}
+                      onClick={handleSendOriginCall}
                       disabled={!verificationStatus?.success || isSendingTransaction}
                       className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
@@ -1330,7 +1378,22 @@ export const HomeIndexRoute = () => {
                   <div className="bg-gray-800/70 p-2 rounded-md">
                     <Text variant="small" color="secondary">
                       <strong className="text-blue-300">Status: </strong>
-                      <span className="font-mono">{metaTxnStatus?.status || 'Pending'}</span>
+                      <span
+                        className={`font-mono ${
+                          metaTxnStatus?.status === 'Success'
+                            ? 'text-green-400'
+                            : metaTxnStatus?.status === 'Failed'
+                              ? 'text-red-400'
+                              : metaTxnStatus?.status === 'Pending' || metaTxnStatus?.status === 'Sending...'
+                                ? 'text-yellow-400'
+                                : 'text-gray-400' // Idle or default
+                        }`}
+                      >
+                        {metaTxnStatus?.status || 'Idle'}
+                      </span>
+                      {isWaitingForReceipt && (
+                        <span className="text-yellow-400 ml-1">(Waiting for confirmation...)</span>
+                      )}
                     </Text>
                   </div>
                   <div className="bg-gray-800/70 p-2 rounded-md">
