@@ -86,6 +86,9 @@ importers:
       jotai:
         specifier: ^2.12.2
         version: 2.12.3(@types/react@19.1.2)(react@19.0.0)
+      lucide-react:
+        specifier: ^0.493.0
+        version: 0.493.0(react@19.0.0)
       motion:
         specifier: ^12.6.2
         version: 12.7.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -4499,6 +4502,11 @@ packages:
   lru-cache@7.18.3:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
     engines: {node: '>=12'}
+
+  lucide-react@0.493.0:
+    resolution: {integrity: sha512-seXg+XrQKArnZO3KvNsS6GcolPNekYHvf10e+Gn5vPsle+C+Jqq7dHJh2t4kwvofyAaKe8zTdVgKrGL0H3ecVg==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   make-dir@4.0.0:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
@@ -11368,6 +11376,10 @@ snapshots:
       yallist: 3.1.1
 
   lru-cache@7.18.3: {}
+
+  lucide-react@0.493.0(react@19.0.0):
+    dependencies:
+      react: 19.0.0
 
   make-dir@4.0.0:
     dependencies:

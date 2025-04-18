@@ -15,6 +15,20 @@ import { AnyPay } from '@0xsequence/wallet-core'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Relayer } from '@0xsequence/wallet-core'
+import {
+  Pencil,
+  AlertTriangle,
+  Loader2,
+  AlertCircle,
+  Zap,
+  Lock,
+  Info,
+  ShieldCheck,
+  CheckCircle2,
+  XCircle,
+  CheckCircle,
+  ClipboardList,
+} from 'lucide-react'
 
 // Add type for calculated origin call parameters
 type OriginCallParams = {
@@ -827,20 +841,7 @@ export const HomeIndexRoute = () => {
                   'Processing...'
                 ) : (
                   <div className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
+                    <Pencil className="h-5 w-5" />
                     <span>Custom Call</span>
                   </div>
                 )}
@@ -939,20 +940,7 @@ export const HomeIndexRoute = () => {
                 color="warning"
                 className="mt-2 bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 flex items-center"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <AlertTriangle className="h-4 w-4 mr-1" />
                 Please select a token first.
               </Text>
             )}
@@ -969,26 +957,7 @@ export const HomeIndexRoute = () => {
             {createIntentMutation.isPending && (
               <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3 animate-pulse">
                 <div className="flex items-center text-center">
-                  <svg
-                    className="animate-spin h-4 w-4 mr-2 text-yellow-500"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                  <Loader2 className="animate-spin h-4 w-4 mr-2 text-yellow-500" />
                   <Text variant="small" color="warning">
                     Generating intent quote...
                   </Text>
@@ -998,20 +967,7 @@ export const HomeIndexRoute = () => {
             {createIntentMutation.isError && (
               <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
                 <Text variant="small" color="negative" className="break-words flex items-center text-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-1 flex-shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
                   <span>Error: {createIntentMutation.error.message}</span>
                 </Text>
               </div>
@@ -1026,15 +982,7 @@ export const HomeIndexRoute = () => {
                   color="primary"
                   className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <Zap className="h-4 w-4 mr-1" />
                   Intent Operations
                   <Text variant="small" color="secondary" className="ml-1">
                     (List of operations that are pre-authorized to be executed):
@@ -1110,20 +1058,7 @@ export const HomeIndexRoute = () => {
                       color="primary"
                       className="mt-4 mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2"
-                        />
-                      </svg>
+                      <Lock className="h-4 w-4 mr-1" />
                       Preconditions
                       <Text variant="small" color="secondary" className="ml-1">
                         (Conditions that are to be met for the intent to be executed):
@@ -1146,20 +1081,7 @@ export const HomeIndexRoute = () => {
                 {!intentPreconditions?.length && (
                   <div className="bg-gray-800/70 p-3 rounded-md border border-gray-700/50 mt-3">
                     <Text variant="small" color="secondary" className="flex items-center text-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
+                      <Info className="h-4 w-4 mr-1 text-gray-500" />
                       No specific preconditions returned for this intent.
                     </Text>
                   </div>
@@ -1170,20 +1092,7 @@ export const HomeIndexRoute = () => {
             {!createIntentMutation.isPending && !createIntentMutation.isError && !intentOperations && (
               <div className="bg-gray-800/50 border border-gray-700/30 rounded-lg p-4 flex items-center justify-center">
                 <Text variant="small" color="secondary" className="flex flex-col items-center text-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-10 w-10 text-gray-600 mb-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    />
-                  </svg>
+                  <ShieldCheck className="h-10 w-10 text-gray-600 mb-2" strokeWidth={1} />
                   Select a token and click an action above to generate the intent quote.
                 </Text>
               </div>
@@ -1207,20 +1116,7 @@ export const HomeIndexRoute = () => {
                       color="primary"
                       className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                      </svg>
+                      <Zap className="h-4 w-4 mr-1" />
                       Commit Intent
                       <Text variant="small" color="secondary" className="ml-1">
                         (Verify and Send Transaction)
@@ -1242,26 +1138,7 @@ export const HomeIndexRoute = () => {
                     >
                       {commitIntentConfigMutation.isPending ? (
                         <div className="flex items-center">
-                          <svg
-                            className="animate-spin h-4 w-4 mr-2"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
                           Committing...
                         </div>
                       ) : (
@@ -1295,31 +1172,9 @@ export const HomeIndexRoute = () => {
                     >
                       <div className="flex items-center">
                         {verificationStatus.success ? (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-green-400 mr-2"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <CheckCircle2 className="h-5 w-5 text-green-400 mr-2" />
                         ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-red-400 mr-2"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <XCircle className="h-5 w-5 text-red-400 mr-2" />
                         )}
                         <div className="flex flex-col w-full">
                           <Text variant="small" color={verificationStatus.success ? 'success' : 'white'}>
@@ -1379,15 +1234,7 @@ export const HomeIndexRoute = () => {
                   color="primary"
                   className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <Zap className="h-4 w-4 mr-1" />
                   Transaction Details
                   <Text variant="small" color="secondary" className="ml-1">
                     (Send this transaction to execute the intent):
@@ -1462,26 +1309,7 @@ export const HomeIndexRoute = () => {
                     >
                       {isSendingTransaction ? (
                         <div className="flex items-center">
-                          <svg
-                            className="animate-spin h-4 w-4 mr-2"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
                           Sending...
                         </div>
                       ) : (
@@ -1509,20 +1337,7 @@ export const HomeIndexRoute = () => {
                   color="primary"
                   className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <CheckCircle className="h-4 w-4 mr-1" />
                   Meta Transaction Status
                   <Text variant="small" color="secondary" className="ml-1">
                     (Track the status of your meta transaction)
@@ -1571,20 +1386,7 @@ export const HomeIndexRoute = () => {
                   color="primary"
                   className="mt-4 mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
+                  <ClipboardList className="h-4 w-4 mr-1" />
                   Preconditions Status
                   <Text variant="small" color="secondary" className="ml-1">
                     (Check if all preconditions are met)
@@ -1614,20 +1416,7 @@ export const HomeIndexRoute = () => {
                   color="primary"
                   className="mt-4 mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <CheckCircle className="h-4 w-4 mr-1" />
                   Final Intent Status
                   <Text variant="small" color="secondary" className="ml-1">
                     (Overall status of the intent execution)
