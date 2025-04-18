@@ -270,7 +270,6 @@ export const HomeIndexRoute = () => {
 
       // Ensure we have a valid chain ID, defaulting to Base (8453) if none provided
       const destinationChainId = selectedToken.chainId || 8453
-      const isOriginNative = isNativeToken(selectedToken)
 
       let destinationCall
       if (action === 'pay') {
