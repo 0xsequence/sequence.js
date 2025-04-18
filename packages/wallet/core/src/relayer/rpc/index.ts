@@ -153,13 +153,16 @@ export class RpcRelayer implements Relayer {
       case 'native-balance': {
         const native = decoded as any
         const balance = await this.provider.getBalance({ address: native.address.toString() as `0x${string}` })
-        if (native.min !== undefined && balance < native.min) {
-          return false
+        if (native.min !== undefined && native.max !== undefined) {
+          return balance >= native.min && balance <= native.max
         }
-        if (native.max !== undefined && balance > native.max) {
-          return false
+        if (native.min !== undefined) {
+          return balance >= native.min
         }
-        return true
+        if (native.max !== undefined) {
+          return balance <= native.max
+        }
+        return false
       }
 
       case 'erc20-balance': {
@@ -170,13 +173,16 @@ export class RpcRelayer implements Relayer {
           data: data as `0x${string}`,
         })
         const balance = BigInt(result.toString())
-        if (erc20.min !== undefined && balance < erc20.min) {
-          return false
+        if (erc20.min !== undefined && erc20.max !== undefined) {
+          return balance >= erc20.min && balance <= erc20.max
         }
-        if (erc20.max !== undefined && balance > erc20.max) {
-          return false
+        if (erc20.min !== undefined) {
+          return balance >= erc20.min
         }
-        return true
+        if (erc20.max !== undefined) {
+          return balance <= erc20.max
+        }
+        return false
       }
 
       case 'erc20-approval': {
@@ -187,7 +193,10 @@ export class RpcRelayer implements Relayer {
           data: data as `0x${string}`,
         })
         const allowance = BigInt(result.toString())
-        return allowance >= erc20.min
+        if (allowance >= erc20.min) {
+          return true
+        }
+        return false
       }
 
       case 'erc721-ownership': {
@@ -200,7 +209,10 @@ export class RpcRelayer implements Relayer {
         const resultHex = result.toString() as `0x${string}`
         const owner = resultHex.slice(-40)
         const isOwner = owner.toLowerCase() === erc721.address.toString().slice(2).toLowerCase()
-        return erc721.owned === undefined ? isOwner : erc721.owned === isOwner
+        if (erc721.owned !== undefined && isOwner) {
+          return true
+        }
+        return false
       }
 
       case 'erc721-approval': {
@@ -212,7 +224,10 @@ export class RpcRelayer implements Relayer {
         })
         const resultHex = result.toString() as `0x${string}`
         const approved = resultHex.slice(-40)
-        return approved.toLowerCase() === erc721.operator.toString().slice(2).toLowerCase()
+        if (approved.toLowerCase() !== erc721.operator.toString().slice(2).toLowerCase()) {
+          return true
+        }
+        return false
       }
 
       case 'erc1155-balance': {
@@ -223,13 +238,16 @@ export class RpcRelayer implements Relayer {
           data: data as `0x${string}`,
         })
         const balance = BigInt(result.toString())
-        if (erc1155.min !== undefined && balance < erc1155.min) {
-          return false
+        if (erc1155.min !== undefined && erc1155.max !== undefined) {
+          return balance >= erc1155.min && balance <= erc1155.max
         }
-        if (erc1155.max !== undefined && balance > erc1155.max) {
-          return false
+        if (erc1155.min !== undefined) {
+          return balance >= erc1155.min
         }
-        return true
+        if (erc1155.max !== undefined) {
+          return balance <= erc1155.max
+        }
+        return false
       }
 
       case 'erc1155-approval': {
@@ -242,7 +260,10 @@ export class RpcRelayer implements Relayer {
           to: erc1155.token.toString() as `0x${string}`,
           data: data as `0x${string}`,
         })
-        return BigInt(result.toString()) === 1n
+        if (BigInt(result.toString()) !== 1n) {
+          return true
+        }
+        return false
       }
 
       default:

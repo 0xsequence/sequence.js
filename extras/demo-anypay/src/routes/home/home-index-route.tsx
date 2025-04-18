@@ -164,7 +164,6 @@ export const HomeIndexRoute = () => {
     calculatedAddress?: string
   } | null>(null)
 
-  // Add new state for relayer status
   const [metaTxnStatus, setMetaTxnStatus] = useState<{
     txnHash?: string
     status?: string
@@ -232,7 +231,7 @@ export const HomeIndexRoute = () => {
   }
 
   const checkPreconditionStatuses = useCallback(async () => {
-    if (!intentPreconditions || !relayer) return // Use instantiated relayer
+    if (!intentPreconditions || !relayer) return
 
     const statuses = await Promise.all(
       intentPreconditions.map(async (precondition) => {
@@ -246,7 +245,7 @@ export const HomeIndexRoute = () => {
     )
 
     setPreconditionStatuses(statuses)
-  }, [intentPreconditions, relayer]) // Add dependencies
+  }, [intentPreconditions, relayer])
 
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
