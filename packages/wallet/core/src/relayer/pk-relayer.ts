@@ -1,4 +1,4 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
 import { LocalRelayer } from './local'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer'
@@ -66,6 +66,17 @@ export class PkRelayer implements Relayer {
         })
         return tx
       },
+      getBalance: async (address: string): Promise<bigint> => {
+        const balanceHex = await this.provider.request({
+          method: 'eth_getBalance',
+          params: [address as Address.Address, 'latest'],
+        })
+        return BigInt(balanceHex)
+      },
+      call: async (args: { to: string; data: string }): Promise<string> => {
+        const callArgs = { to: args.to as `0x${string}`, data: args.data as `0x${string}` }
+        return await this.provider.request({ method: 'eth_call', params: [callArgs, 'latest'] })
+      },
     })
   }
 
@@ -87,5 +98,10 @@ export class PkRelayer implements Relayer {
 
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
     return this.relayer.status(opHash, chainId)
+  }
+
+  async checkPrecondition(precondition: Precondition.Precondition): Promise<boolean> {
+    // TODO: Implement precondition check
+    return true
   }
 }
