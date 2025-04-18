@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useAccount, useConnect, useDisconnect, useSendTransaction } from 'wagmi'
 import { Connector } from 'wagmi'
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
@@ -16,12 +16,21 @@ import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Relayer } from '@0xsequence/wallet-core'
 
+// Add type for calculated origin call parameters
+type OriginCallParams = {
+  to: `0x${string}` | null
+  data: Hex | null
+  value: bigint | null
+  chainId: number | null
+  error?: string
+}
+
 // Type guard for native token balance
 function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
   if ('contractAddress' in token) {
-    return false // If it has contractAddress, it's an ERC20 token
+    return false
   }
-  return true // NativeTokenBalance is always a native token
+  return true
 }
 
 // Types for intent actions
@@ -152,8 +161,9 @@ export const HomeIndexRoute = () => {
 
   const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
 
-  // Add function to calculate intent configuration address
-  const calculateIntentAddress = (operations: IntentOperation[], mainSigner: string) => {
+  const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
+
+  const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
       const context: ContextLike.Context = {
         factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
@@ -182,10 +192,7 @@ export const HomeIndexRoute = () => {
       console.error('Error calculating intent address:', error)
       throw error
     }
-  }
-
-  console.log('setMetaTxnStatus', setMetaTxnStatus)
-  console.log('setPreconditionStatuses', setPreconditionStatuses)
+  }, [])
 
   const updateMetaTxnStatus = (
     hash: Hex | undefined,
@@ -210,7 +217,7 @@ export const HomeIndexRoute = () => {
     })
   }
 
-  const checkPreconditionStatuses = async () => {
+  const checkPreconditionStatuses = useCallback(async () => {
     if (!intentPreconditions || !relayer) return // Use instantiated relayer
 
     const statuses = await Promise.all(
@@ -225,7 +232,7 @@ export const HomeIndexRoute = () => {
     )
 
     setPreconditionStatuses(statuses)
-  }
+  }, [intentPreconditions, relayer]) // Add dependencies
 
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
@@ -438,25 +445,36 @@ export const HomeIndexRoute = () => {
     setShowCustomCallForm(false)
   }
 
-  // Update handleSendOriginCall to track status
+  // Update handleSendOriginCall to use calculated parameters from state
   const handleSendOriginCall = async () => {
-    if (!intentOperations?.[0]?.calls?.[0] || !verificationStatus?.success) return
+    // Use the calculated parameters from state
+    if (
+      !originCallParams ||
+      originCallParams.error ||
+      !originCallParams.to ||
+      !originCallParams.data ||
+      originCallParams.value === null ||
+      originCallParams.chainId === null
+    ) {
+      console.error('Origin call parameters not available or invalid:', originCallParams)
+      updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, 'Origin call parameters not ready')
+      return
+    }
 
-    setTxnHash(undefined) // Reset hash before sending
-    updateMetaTxnStatus(undefined, 'sending') // Update UI immediately
+    setTxnHash(undefined)
+    updateMetaTxnStatus(undefined, 'sending')
 
     sendTransaction(
       {
-        to: intentOperations[0].calls[0].to as `0x${string}`,
-        data: intentOperations[0].calls[0].data as `0x${string}`,
-        value: BigInt(intentOperations[0].calls[0].value || '0'),
-        chainId: parseInt(intentOperations[0].chainId),
+        to: originCallParams.to,
+        data: originCallParams.data,
+        value: originCallParams.value,
+        chainId: originCallParams.chainId,
       },
       {
         onSuccess: (hash) => {
           console.log('Transaction sent, hash:', hash)
           setTxnHash(hash) // Set hash to trigger useWaitForTransactionReceipt
-          // Status will be updated by the useEffect hook watching the receipt
         },
         onError: (error) => {
           console.error('Transaction failed:', error)
@@ -508,6 +526,72 @@ export const HomeIndexRoute = () => {
       checkPreconditionStatuses()
     }
   }, [intentPreconditions, checkPreconditionStatuses])
+
+  // Effect to calculate actual origin call parameters for UI display
+  useEffect(() => {
+    if (!intentOperations?.[0]?.chainId || !selectedToken || !intentPreconditions || !account.address) {
+      setOriginCallParams(null)
+      return
+    }
+
+    try {
+      // Calculate the intent address here as it's needed for params
+      const intentAddress = calculateIntentAddress(intentOperations, account.address)
+      const intentAddressString = intentAddress.toString() as Address.Address
+
+      let calcTo: Address.Address
+      let calcData: Hex = '0x'
+      let calcValue: bigint = 0n
+      const calcChainId: number = parseInt(intentOperations[0].chainId)
+
+      const recipientAddress = intentAddressString
+
+      const isNative = selectedToken.contractAddress === zeroAddress
+
+      if (isNative) {
+        const nativePrecondition = intentPreconditions.find(
+          (p) =>
+            (p.type === 'transfer-native' || p.type === 'native-balance') &&
+            // @ts-expect-error
+            p.chainId === calcChainId.toString(),
+        )
+        const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
+        if (nativeMinAmount === undefined) {
+          throw new Error('Could not find native precondition (transfer-native or native-balance) or min amount')
+        }
+        calcValue = BigInt(nativeMinAmount)
+        calcTo = recipientAddress
+      } else {
+        const erc20Precondition = intentPreconditions.find(
+          (p) =>
+            p.type === 'erc20-balance' &&
+            // @ts-expect-error
+            p.chainId === calcChainId.toString() &&
+            p.data?.token &&
+            isAddressEqual(Address.from(p.data.token), Address.from(selectedToken.contractAddress)),
+        )
+
+        const erc20MinAmount = erc20Precondition?.data?.min
+        if (erc20MinAmount === undefined) {
+          throw new Error('Could not find ERC20 balance precondition or min amount')
+        }
+        const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
+        calcData = AbiFunction.encodeData(erc20Transfer, [recipientAddress, BigInt(erc20MinAmount)]) as Hex
+        calcTo = selectedToken.contractAddress as Address.Address
+      }
+
+      setOriginCallParams({
+        to: calcTo,
+        data: calcData,
+        value: calcValue,
+        chainId: calcChainId,
+        error: undefined,
+      })
+    } catch (error: any) {
+      console.error('Failed to calculate origin call params for UI:', error)
+      setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
+    }
+  }, [intentOperations, selectedToken, intentPreconditions, account.address, calculateIntentAddress])
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -1302,44 +1386,67 @@ export const HomeIndexRoute = () => {
                   <div className="bg-gray-800/70 p-2 rounded-md">
                     <Text variant="small" color="secondary">
                       <strong className="text-blue-300">From: </strong>
-                      <span className="text-yellow-300 break-all font-mono">{account.address}</span>
+                      <span className="text-yellow-300 break-all font-mono">{account.address ?? '...'}</span>
                     </Text>
                   </div>
                   <div className="bg-gray-800/70 p-2 rounded-md">
                     <Text variant="small" color="secondary">
                       <strong className="text-blue-300">To: </strong>
-                      <span className="text-yellow-300 break-all font-mono">{intentOperations[0].calls[0].to}</span>
+                      <span className="text-yellow-300 break-all font-mono">
+                        {originCallParams?.to ?? (originCallParams?.error ? 'Error' : 'Calculating...')}
+                      </span>
                     </Text>
                   </div>
                   <div className="bg-gray-800/70 p-2 rounded-md">
                     <Text variant="small" color="secondary">
                       <strong className="text-blue-300">Value: </strong>
-                      <span className="font-mono">{intentOperations[0].calls[0].value || '0'}</span>
+                      <span className="font-mono">
+                        {originCallParams?.value?.toString() ?? (originCallParams?.error ? 'Error' : 'Calculating...')}
+                      </span>
                     </Text>
                   </div>
                   <div className="bg-gray-800/70 p-2 rounded-md">
                     <Text variant="small" color="secondary" className="break-all">
                       <strong className="text-blue-300">Data: </strong>
-                      <span className="font-mono text-green-300">{intentOperations[0].calls[0].data || '0x'}</span>
+                      <span className="font-mono text-green-300">
+                        {originCallParams?.data ?? (originCallParams?.error ? 'Error' : 'Calculating...')}
+                      </span>
                     </Text>
                   </div>
                   <div className="bg-gray-800/70 p-2 rounded-md flex items-center">
                     <Text variant="small" color="secondary">
                       <strong className="text-blue-300">Chain ID: </strong>
                       <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">
-                        {intentOperations[0].chainId}
+                        {originCallParams?.chainId?.toString() ??
+                          (originCallParams?.error ? 'Error' : 'Calculating...')}
                       </span>
                     </Text>
-                    <NetworkImage chainId={parseInt(intentOperations[0].chainId)} size="sm" className="w-4 h-4 ml-1" />
-                    <Text variant="small" color="secondary" className="ml-1">
-                      {getChainInfo(parseInt(intentOperations[0].chainId))?.name || 'Unknown Chain'}
-                    </Text>
+                    {originCallParams?.chainId && (
+                      <>
+                        <NetworkImage chainId={originCallParams.chainId} size="sm" className="w-4 h-4 ml-1" />
+                        <Text variant="small" color="secondary" className="ml-1">
+                          {getChainInfo(originCallParams.chainId)?.name || 'Unknown Chain'}
+                        </Text>
+                      </>
+                    )}
                   </div>
+                  {originCallParams?.error && (
+                    <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-2 mt-2">
+                      <Text variant="small" color="negative">
+                        Error calculating params: {originCallParams.error}
+                      </Text>
+                    </div>
+                  )}
                   <div className="flex justify-end mt-4">
                     <Button
                       variant="primary"
                       onClick={handleSendOriginCall}
-                      disabled={!verificationStatus?.success || isSendingTransaction}
+                      disabled={
+                        !verificationStatus?.success ||
+                        isSendingTransaction ||
+                        !originCallParams ||
+                        !!originCallParams.error
+                      }
                       className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
                       {isSendingTransaction ? (
