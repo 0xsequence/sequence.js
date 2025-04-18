@@ -944,7 +944,7 @@ export const HomeIndexRoute = () => {
                   </Text>
                 </Text>
                 {intentOperations && intentOperations.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="space-y-2">
                     {intentOperations.map((operation, index) => (
                       <div
                         key={`operation-${index}`}
