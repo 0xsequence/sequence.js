@@ -943,46 +943,61 @@ export const HomeIndexRoute = () => {
                     (List of operations that are pre-authorized to be executed):
                   </Text>
                 </Text>
-                {intentOperations &&
-                intentOperations.length > 0 &&
-                intentOperations[0].calls &&
-                intentOperations[0].calls.length > 0 ? (
-                  <>
-                    <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">To: </strong>{' '}
-                        <span className="text-yellow-300 break-all font-mono">{intentOperations[0].calls[0].to}</span>
-                      </Text>
-                    </div>
-                    <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">Value: </strong>
-                        <span className="font-mono">{intentOperations[0].calls[0].value || '0'}</span>
-                      </Text>
-                    </div>
-                    <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                      <Text variant="small" color="secondary" className="break-all">
-                        <strong className="text-blue-300">Data: </strong>
-                        <span className="font-mono text-green-300">{intentOperations[0].calls[0].data || '0x'}</span>
-                      </Text>
-                    </div>
-                    <div className="bg-gray-800/70 p-2 rounded-md mb-1 flex items-center">
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">Chain ID: </strong>
-                        <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">
-                          {intentOperations[0].chainId}
-                        </span>
-                      </Text>
-                      <NetworkImage
-                        chainId={parseInt(intentOperations[0].chainId)}
-                        size="sm"
-                        className="w-4 h-4 ml-1"
-                      />
-                      <Text variant="small" color="secondary" className="ml-1">
-                        {getChainInfo(parseInt(intentOperations[0].chainId))?.name || 'Unknown Chain'}
-                      </Text>
-                    </div>
-                  </>
+                {intentOperations && intentOperations.length > 0 ? (
+                  <div className="space-y-6">
+                    {intentOperations.map((operation, index) => (
+                      <div
+                        key={`operation-${index}`}
+                        className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
+                      >
+                        <div className="pb-2">
+                          <Text variant="small" color="primary" className="font-semibold">
+                            Operation #{index + 1}
+                          </Text>
+                        </div>
+                        {operation.calls &&
+                          operation.calls.length > 0 &&
+                          operation.calls.map((call, callIndex) => (
+                            <div key={`call-${index}-${callIndex}`} className="space-y-2">
+                              <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                                <Text variant="small" color="secondary">
+                                  <strong className="text-blue-300">To: </strong>{' '}
+                                  <span className="text-yellow-300 break-all font-mono">{call.to}</span>
+                                </Text>
+                              </div>
+                              <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                                <Text variant="small" color="secondary">
+                                  <strong className="text-blue-300">Value: </strong>
+                                  <span className="font-mono">{call.value || '0'}</span>
+                                </Text>
+                              </div>
+                              <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                                <Text variant="small" color="secondary" className="break-all">
+                                  <strong className="text-blue-300">Data: </strong>
+                                  <span className="font-mono text-green-300">{call.data || '0x'}</span>
+                                </Text>
+                              </div>
+                              <div className="bg-gray-800/70 p-2 rounded-md mb-1 flex items-center">
+                                <Text variant="small" color="secondary">
+                                  <strong className="text-blue-300">Chain ID: </strong>
+                                  <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">
+                                    {operation.chainId}
+                                  </span>
+                                </Text>
+                                <NetworkImage
+                                  chainId={parseInt(operation.chainId)}
+                                  size="sm"
+                                  className="w-4 h-4 ml-1"
+                                />
+                                <Text variant="small" color="secondary" className="ml-1">
+                                  {getChainInfo(parseInt(operation.chainId))?.name || 'Unknown Chain'}
+                                </Text>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="bg-gray-800/70 p-3 rounded-md border border-gray-700/50">
                     <Text variant="small" color="secondary">
