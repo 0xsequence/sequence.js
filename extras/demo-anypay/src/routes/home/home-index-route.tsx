@@ -618,11 +618,19 @@ export const HomeIndexRoute = () => {
 
       {/* Account Info & Connect/Disconnect */}
       <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6">
-        <div className="flex items-center mb-4">
-          <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
-            <span>1</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+              <span>1</span>
+            </div>
+            <h3 className="text-xl font-semibold text-white">Account</h3>
           </div>
-          <h3 className="text-xl font-semibold text-white">Account</h3>
+          <div className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center">
+            <span
+              className={`w-2 h-2 rounded-full ${account.status === 'connected' ? 'bg-green-400' : 'bg-yellow-400'} mr-2 animate-pulse`}
+            ></span>
+            {account.status === 'connected' ? 'Connected' : 'Disconnected'}
+          </div>
         </div>
         {account.status === 'connected' ? (
           <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/30 space-y-2">
@@ -693,11 +701,23 @@ export const HomeIndexRoute = () => {
         <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm space-y-6 transition-all duration-300 hover:shadow-blue-900/20 mb-6">
           {/* 1. Select Token */}
           <div>
-            <div className="flex items-center mb-4">
-              <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
-                <span>2</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                  <span>2</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white">Select Origin Token</h3>
               </div>
-              <h3 className="text-xl font-semibold text-white">Select Origin Token</h3>
+              <div className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center">
+                <span
+                  className={`w-2 h-2 rounded-full ${isLoadingBalances ? 'bg-yellow-400' : sortedTokens.length > 0 ? 'bg-green-400' : 'bg-red-400'} mr-2 animate-pulse`}
+                ></span>
+                {isLoadingBalances
+                  ? 'Loading...'
+                  : sortedTokens.length > 0
+                    ? `${sortedTokens.length} Tokens`
+                    : 'No Tokens'}
+              </div>
             </div>
             {isLoadingBalances && (
               <Text variant="small" color="secondary">
@@ -816,6 +836,7 @@ export const HomeIndexRoute = () => {
             <div className="flex flex-wrap gap-3">
               <Button
                 variant="primary"
+                size="sm"
                 onClick={() => handleActionClick('pay')}
                 disabled={!selectedToken || createIntentMutation.isPending}
                 className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
@@ -828,7 +849,7 @@ export const HomeIndexRoute = () => {
                     <span>
                       Pay Action{' '}
                       <Text variant="small" color="secondary">
-                        (0.03 USDC to Vitalik)
+                        (USDC to Vitalik)
                       </Text>
                     </span>
                   </>
@@ -836,6 +857,7 @@ export const HomeIndexRoute = () => {
               </Button>
               <Button
                 variant="raised"
+                size="sm"
                 onClick={() => handleActionClick('mock_interaction')}
                 disabled={!selectedToken || createIntentMutation.isPending}
                 className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
@@ -851,6 +873,7 @@ export const HomeIndexRoute = () => {
               </Button>
               <Button
                 variant="feature"
+                size="sm"
                 onClick={() => handleActionClick('custom_call')}
                 disabled={!selectedToken || createIntentMutation.isPending}
                 className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
@@ -992,9 +1015,6 @@ export const HomeIndexRoute = () => {
             )}
             {intentOperations && (
               <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
-                <div className="absolute right-3 top-3 text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
-                  Intent Quote
-                </div>
                 <Text
                   variant="medium"
                   color="primary"
@@ -1388,8 +1408,10 @@ export const HomeIndexRoute = () => {
               <h3 className="text-xl font-semibold text-white">Relayer Status</h3>
             </div>
             <div className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center">
-              <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse"></span>
-              Live Status
+              <span
+                className={`w-2 h-2 rounded-full ${metaTxnStatus?.status === 'Success' ? 'bg-green-400' : metaTxnStatus?.status === 'Failed' ? 'bg-red-400' : metaTxnStatus?.status === 'Pending' || metaTxnStatus?.status === 'Sending...' ? 'bg-yellow-400' : 'bg-gray-400'} mr-2 animate-pulse`}
+              ></span>
+              {metaTxnStatus?.status || 'Ready'}
             </div>
           </div>
 
