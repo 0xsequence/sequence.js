@@ -25,3 +25,4 @@ export type { Kind, WitnessExtraSignerKind, SignerWithKind } from './signer'
 
 export { Actions } from './signature-request'
 export { Kinds } from './signer'
+export * from './wallet'

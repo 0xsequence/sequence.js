@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+@import '@0xsequence/design-system/preset';
+
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  @apply bg-gray-950;
+  margin: 0;
+  padding: 0;
+  height: auto;
+  min-height: 100%;
+}
+
+body {
+  @apply bg-gradient-to-b from-gray-900 to-gray-950;
+  background-attachment: fixed;
+  height: auto;
+  min-height: 100%;
+}
+
+#root {
+  height: auto;
+  min-height: 100%;
+}
