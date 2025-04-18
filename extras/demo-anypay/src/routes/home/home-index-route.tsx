@@ -94,6 +94,19 @@ const getChainInfo = (chainId: number) => {
   return Object.values(chains).find((chain) => chain.id === chainId) || null
 }
 
+const findPreconditionAddress = (preconditions: IntentPrecondition[]) => {
+  const preconditionTypes = ['erc20-balance', 'native-balance'] as const
+
+  for (const type of preconditionTypes) {
+    const precondition = preconditions.find((p) => p.type === type && p.data?.address)
+    if (precondition) {
+      return precondition.data.address
+    }
+  }
+
+  return `N/A (No ${preconditionTypes.join(' or ')} precondition with address found)`
+}
+
 export const HomeIndexRoute = () => {
   const account = useAccount()
   const { connectors, connect, status: connectStatus, error: connectError } = useConnect()
@@ -266,16 +279,9 @@ export const HomeIndexRoute = () => {
         }
 
         const calculatedAddress = calculateIntentAddress(args.operations, args.mainSigner)
-        const receivedAddress = args.operations[0]?.calls[0]?.to
+        const receivedAddress = findPreconditionAddress(args.preconditions)
 
-        const verificationResult = {
-          success: Boolean(receivedAddress && isAddressEqual(Address.from(receivedAddress), calculatedAddress)),
-          receivedAddress: receivedAddress || '',
-          calculatedAddress: calculatedAddress.toString(),
-        }
-        setVerificationStatus(verificationResult)
-
-        if (!verificationResult.success) {
+        if (!isAddressEqual(Address.from(receivedAddress), calculatedAddress)) {
           throw new Error('Address verification failed')
         }
 
@@ -1172,7 +1178,7 @@ export const HomeIndexRoute = () => {
                       onClick={() => {
                         if (!account.address || !intentOperations || !intentPreconditions) return
                         commitIntentConfigMutation.mutate({
-                          walletAddress: account.address,
+                          walletAddress: calculateIntentAddress(intentOperations, account.address).toString(),
                           mainSigner: account.address,
                           operations: intentOperations,
                           preconditions: intentPreconditions,
@@ -1214,30 +1220,12 @@ export const HomeIndexRoute = () => {
                   <div className="bg-gray-900/50 p-3 rounded-lg border border-purple-700/30">
                     <Text variant="small" color="secondary" className="flex flex-col space-y-2">
                       <span className="text-purple-300 font-semibold">
-                        Returned Intent Address (from first `erc20-balance` or `native-balance` precondition):
+                        Returned Intent Address (from first operation call):
                       </span>
                       <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded">
-                        {(() => {
-                          if (!intentPreconditions || intentPreconditions.length === 0) {
-                            return 'N/A (No preconditions)'
-                          }
-                          // Find the first erc20-balance precondition with an address
-                          const erc20Precondition = intentPreconditions.find(
-                            (p: any) => p.type === 'erc20-balance' && p.data?.address,
-                          )
-                          if (erc20Precondition) {
-                            return erc20Precondition.data.address
-                          }
-                          // If no ERC20 found, find the first native-balance precondition with an address
-                          const nativePrecondition = intentPreconditions.find(
-                            (p: any) => p.type === 'native-balance' && p.data?.address,
-                          )
-                          if (nativePrecondition) {
-                            return nativePrecondition.data.address
-                          }
-                          // If neither found, return N/A
-                          return 'N/A (No ERC20 or Native balance precondition with address found)'
-                        })()}
+                        {!intentOperations || intentOperations.length === 0
+                          ? 'N/A (No operations)'
+                          : findPreconditionAddress(intentPreconditions)}
                       </span>
                     </Text>
                   </div>
