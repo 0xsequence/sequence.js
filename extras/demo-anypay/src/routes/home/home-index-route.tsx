@@ -27,7 +27,6 @@ import {
   PenSquare,
   ShieldCheck,
 } from 'lucide-react'
-import { jsx } from 'react/jsx-runtime'
 
 // Add type for calculated origin call parameters
 type OriginCallParams = {
@@ -113,9 +112,9 @@ export const HomeIndexRoute = () => {
   const indexerClient = useIndexerGatewayClient()
   const apiClient = useAPIClient()
   const relayer = useMemo(() => {
-    return new Relayer.Rpc.RpcRelayer('https://relayer.sequence.app')
+    return new Relayer.Rpc.RpcRelayer('https://relayer.sequence.app', 8453, 'https://node.sequence.app')
   }, [])
-  jsx
+
   // State for intent results
   const [intentOperations, setIntentOperations] = useState<GetIntentOperationsReturn['operations'] | null>(null)
   const [intentPreconditions, setIntentPreconditions] = useState<GetIntentOperationsReturn['preconditions'] | null>(

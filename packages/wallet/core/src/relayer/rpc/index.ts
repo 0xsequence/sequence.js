@@ -42,7 +42,7 @@ export class RpcRelayer implements Relayer {
   private fetch: Fetch
   private provider: PublicClient
 
-  constructor(hostname: string, fetchImpl?: Fetch) {
+  constructor(hostname: string, chainId: number, rpcUrl: string, fetchImpl?: Fetch) {
     this.id = `rpc:${hostname}`
     const effectiveFetch = fetchImpl || (typeof window !== 'undefined' ? window.fetch.bind(window) : undefined)
     if (!effectiveFetch) {
@@ -50,9 +50,6 @@ export class RpcRelayer implements Relayer {
     }
     this.fetch = effectiveFetch
     this.client = new GenRelayer(hostname, this.fetch)
-
-    const chainId = 8453
-    const rpcUrl = 'https://node.sequence.app'
 
     // Get the chain from the chainId
     const chain = getChain(chainId)
