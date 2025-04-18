@@ -152,6 +152,38 @@ export const HomeIndexRoute = () => {
 
   const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
 
+  // Add function to calculate intent configuration address
+  const calculateIntentAddress = (operations: IntentOperation[], mainSigner: string) => {
+    try {
+      const context: ContextLike.Context = {
+        factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
+        stage1: '0x656e2d390E76f3Fba9f0770Dd0EcF4707eee3dF1' as `0x${string}`,
+        creationCode:
+          '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
+      }
+
+      const coreOperations = operations.map((op) => ({
+        chainId: BigInt(op.chainId),
+        space: op.space ? BigInt(op.space) : undefined,
+        nonce: op.nonce ? BigInt(op.nonce) : undefined,
+        calls: op.calls.map((call) => ({
+          to: Address.from(call.to),
+          value: BigInt(call.value || '0'),
+          data: Bytes.from((call.data as Hex) || '0x'),
+          gasLimit: BigInt(call.gasLimit || '0'),
+          delegateCall: !!call.delegateCall,
+          onlyFallback: !!call.onlyFallback,
+          behaviorOnError: call.behaviorOnError !== undefined ? BigInt(call.behaviorOnError) : 0n,
+        })),
+      }))
+
+      return AnyPay.calculateIntentConfigurationAddress(coreOperations, Address.from(mainSigner), context)
+    } catch (error) {
+      console.error('Error calculating intent address:', error)
+      throw error
+    }
+  }
+
   console.log('setMetaTxnStatus', setMetaTxnStatus)
   console.log('setPreconditionStatuses', setPreconditionStatuses)
 
@@ -208,29 +240,8 @@ export const HomeIndexRoute = () => {
         if (!account.address) {
           throw new Error('Account address not available')
         }
-        const mainSigner = Address.from(account.address)
-        const context: ContextLike.Context = {
-          factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447',
-          stage1: '0x656e2d390E76f3Fba9f0770Dd0EcF4707eee3dF1',
-          creationCode: '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3',
-        }
 
-        const coreOperations: AnyPay.IntentOperation[] = args.operations.map((op) => ({
-          chainId: BigInt(op.chainId),
-          space: op.space ? BigInt(op.space) : undefined,
-          nonce: op.nonce ? BigInt(op.nonce) : undefined,
-          calls: op.calls.map((call) => ({
-            to: Address.from(call.to),
-            value: BigInt(call.value || '0'),
-            data: Bytes.from((call.data as Hex) || '0x'),
-            gasLimit: BigInt(call.gasLimit || '0'),
-            delegateCall: !!call.delegateCall,
-            onlyFallback: !!call.onlyFallback,
-            behaviorOnError: call.behaviorOnError !== undefined ? BigInt(call.behaviorOnError) : 0n,
-          })),
-        }))
-
-        const calculatedAddress = AnyPay.calculateIntentConfigurationAddress(coreOperations, mainSigner, context)
+        const calculatedAddress = calculateIntentAddress(args.operations, args.mainSigner)
         const receivedAddress = args.operations[0]?.calls[0]?.to
 
         const verificationResult = {
@@ -1172,6 +1183,25 @@ export const HomeIndexRoute = () => {
                       )}
                     </Button>
                   </div>
+
+                  {/* Preview calculated address */}
+                  {account.address && intentOperations && (
+                    <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
+                      <Text variant="small" color="secondary" className="flex flex-col space-y-2">
+                        <span className="text-blue-300 font-semibold">Calculated Address:</span>
+                        <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded">
+                          {(() => {
+                            try {
+                              return calculateIntentAddress(intentOperations, account.address).toString()
+                            } catch (error) {
+                              return 'Error calculating address: ' + (error as Error).message
+                            }
+                          })()}
+                        </span>
+                      </Text>
+                    </div>
+                  )}
+
                   {commitIntentConfigMutation.isError && (
                     <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
                       <Text variant="small" color="white">
