@@ -639,7 +639,7 @@ export const HomeIndexRoute = () => {
                 <span className="text-blue-300 font-semibold mr-2">Address:</span>
                 <span className="font-mono bg-gray-800/70 px-3 py-1 rounded-full">{account.address}</span>
               </Text>
-              <Button variant="danger" size="small" onClick={() => disconnect()} className="px-5 py-2">
+              <Button variant="danger" size="sm" onClick={() => disconnect()} className="px-5 py-2">
                 Disconnect
               </Button>
             </div>
@@ -669,7 +669,7 @@ export const HomeIndexRoute = () => {
                 <Button
                   key={connector.uid}
                   variant="primary"
-                  size="small"
+                  size="sm"
                   onClick={() => connect({ connector })}
                   className="px-5 py-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg shadow-md"
                 >
@@ -839,7 +839,7 @@ export const HomeIndexRoute = () => {
                 size="sm"
                 onClick={() => handleActionClick('pay')}
                 disabled={!selectedToken || createIntentMutation.isPending}
-                className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
+                className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
               >
                 {createIntentMutation.isPending && createIntentMutation.variables === 'pay' ? (
                   'Processing...'
@@ -849,7 +849,7 @@ export const HomeIndexRoute = () => {
                     <span>
                       Pay Action{' '}
                       <Text variant="small" color="secondary">
-                        (USDC to Vitalik)
+                        (0.03 $USDC to Vitalik)
                       </Text>
                     </span>
                   </>
@@ -860,7 +860,7 @@ export const HomeIndexRoute = () => {
                 size="sm"
                 onClick={() => handleActionClick('mock_interaction')}
                 disabled={!selectedToken || createIntentMutation.isPending}
-                className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
+                className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
               >
                 {createIntentMutation.isPending && createIntentMutation.variables === 'mock_interaction' ? (
                   'Processing...'
@@ -876,7 +876,7 @@ export const HomeIndexRoute = () => {
                 size="sm"
                 onClick={() => handleActionClick('custom_call')}
                 disabled={!selectedToken || createIntentMutation.isPending}
-                className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
+                className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
               >
                 {createIntentMutation.isPending && createIntentMutation.variables === 'custom_call' ? (
                   'Processing...'
@@ -961,13 +961,13 @@ export const HomeIndexRoute = () => {
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="secondary"
-                      size="small"
+                      size="sm"
                       onClick={() => setShowCustomCallForm(false)}
                       className="px-4 py-2"
                     >
                       Cancel
                     </Button>
-                    <Button variant="primary" size="small" type="submit" className="px-4 py-2">
+                    <Button variant="primary" size="sm" type="submit" className="px-4 py-2">
                       Submit
                     </Button>
                   </div>
@@ -1176,7 +1176,7 @@ export const HomeIndexRoute = () => {
                         })
                       }}
                       disabled={commitIntentConfigMutation.isPending}
-                      className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+                      className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
                       {commitIntentConfigMutation.isPending ? (
                         <div className="flex items-center">
@@ -1378,7 +1378,7 @@ export const HomeIndexRoute = () => {
                         !originCallParams ||
                         !!originCallParams.error
                       }
-                      className="px-5 py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+                      className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
                       {isSendingTransaction ? (
                         <div className="flex items-center">

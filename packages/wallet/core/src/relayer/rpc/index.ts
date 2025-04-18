@@ -3,9 +3,10 @@ import {
   SendMetaTxnReturn as RpcSendMetaTxnReturn,
   MetaTxn as RpcMetaTxn,
   FeeTokenType,
+  IntentPrecondition,
 } from './relayer.gen'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer'
-import { Address, Hex, Bytes } from 'ox'
+import { Address, Hex, Bytes, AbiFunction } from 'ox'
 import { Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
 import {
   IntentPrecondition as RpcIntentPrecondition,
@@ -13,15 +14,35 @@ import {
   FeeOption as RpcFeeOption,
   FeeToken as RpcFeeToken,
 } from './relayer.gen'
+import { decodePrecondition } from '../../preconditions'
+import {
+  erc20BalanceOf,
+  erc20Allowance,
+  erc721OwnerOf,
+  erc721GetApproved,
+  erc1155BalanceOf,
+  erc1155IsApprovedForAll,
+} from '../abi'
+import { PublicClient, createPublicClient, http, Chain } from 'viem'
+import * as chains from 'viem/chains'
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
+
+export const getChain = (chainId: number): Chain => {
+  const chain = Object.values(chains).find((c) => c.id === chainId)
+  if (!chain) {
+    throw new Error(`Chain with id ${chainId} not found`)
+  }
+  return chain
+}
 
 export class RpcRelayer implements Relayer {
   public readonly id: string
   private client: GenRelayer
   private fetch: Fetch
+  private provider: PublicClient
 
-  constructor(hostname: string, fetchImpl?: Fetch) {
+  constructor(chainId: number, hostname: string, rpcUrl: string, fetchImpl?: Fetch) {
     this.id = `rpc:${hostname}`
     const effectiveFetch = fetchImpl || (typeof window !== 'undefined' ? window.fetch.bind(window) : undefined)
     if (!effectiveFetch) {
@@ -29,6 +50,15 @@ export class RpcRelayer implements Relayer {
     }
     this.fetch = effectiveFetch
     this.client = new GenRelayer(hostname, this.fetch)
+
+    // Get the chain from the chainId
+    const chain = getChain(chainId)
+
+    // Create viem PublicClient with the provided RPC URL
+    this.provider = createPublicClient({
+      chain,
+      transport: http(rpcUrl),
+    })
   }
 
   async feeOptions(
@@ -112,9 +142,112 @@ export class RpcRelayer implements Relayer {
     }
   }
 
-  async checkPrecondition(precondition: PrimitivePrecondition.Precondition): Promise<boolean> {
-    console.warn('RpcRelayer.checkPrecondition is not implemented and returns true by default.')
-    return true
+  async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+    const decoded = decodePrecondition(precondition)
+
+    if (!decoded) {
+      return false
+    }
+
+    switch (decoded.type()) {
+      case 'native-balance': {
+        const native = decoded as any
+        const balance = await this.provider.getBalance({ address: native.address.toString() as `0x${string}` })
+        if (native.min !== undefined && balance < native.min) {
+          return false
+        }
+        if (native.max !== undefined && balance > native.max) {
+          return false
+        }
+        return true
+      }
+
+      case 'erc20-balance': {
+        const erc20 = decoded as any
+        const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address.toString()])
+        const result = await this.provider.call({
+          to: erc20.token.toString() as `0x${string}`,
+          data: data as `0x${string}`,
+        })
+        const balance = BigInt(result.toString())
+        if (erc20.min !== undefined && balance < erc20.min) {
+          return false
+        }
+        if (erc20.max !== undefined && balance > erc20.max) {
+          return false
+        }
+        return true
+      }
+
+      case 'erc20-approval': {
+        const erc20 = decoded as any
+        const data = AbiFunction.encodeData(erc20Allowance, [erc20.address.toString(), erc20.operator.toString()])
+        const result = await this.provider.call({
+          to: erc20.token.toString() as `0x${string}`,
+          data: data as `0x${string}`,
+        })
+        const allowance = BigInt(result.toString())
+        return allowance >= erc20.min
+      }
+
+      case 'erc721-ownership': {
+        const erc721 = decoded as any
+        const data = AbiFunction.encodeData(erc721OwnerOf, [erc721.tokenId])
+        const result = await this.provider.call({
+          to: erc721.token.toString() as `0x${string}`,
+          data: data as `0x${string}`,
+        })
+        const resultHex = result.toString() as `0x${string}`
+        const owner = resultHex.slice(-40)
+        const isOwner = owner.toLowerCase() === erc721.address.toString().slice(2).toLowerCase()
+        return erc721.owned === undefined ? isOwner : erc721.owned === isOwner
+      }
+
+      case 'erc721-approval': {
+        const erc721 = decoded as any
+        const data = AbiFunction.encodeData(erc721GetApproved, [erc721.tokenId])
+        const result = await this.provider.call({
+          to: erc721.token.toString() as `0x${string}`,
+          data: data as `0x${string}`,
+        })
+        const resultHex = result.toString() as `0x${string}`
+        const approved = resultHex.slice(-40)
+        return approved.toLowerCase() === erc721.operator.toString().slice(2).toLowerCase()
+      }
+
+      case 'erc1155-balance': {
+        const erc1155 = decoded as any
+        const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address.toString(), erc1155.tokenId])
+        const result = await this.provider.call({
+          to: erc1155.token.toString() as `0x${string}`,
+          data: data as `0x${string}`,
+        })
+        const balance = BigInt(result.toString())
+        if (erc1155.min !== undefined && balance < erc1155.min) {
+          return false
+        }
+        if (erc1155.max !== undefined && balance > erc1155.max) {
+          return false
+        }
+        return true
+      }
+
+      case 'erc1155-approval': {
+        const erc1155 = decoded as any
+        const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [
+          erc1155.address.toString(),
+          erc1155.operator.toString(),
+        ])
+        const result = await this.provider.call({
+          to: erc1155.token.toString() as `0x${string}`,
+          data: data as `0x${string}`,
+        })
+        return BigInt(result.toString()) === 1n
+      }
+
+      default:
+        return false
+    }
   }
 
   private mapRpcFeeOptionToFeeOption(rpcOption: RpcFeeOption): FeeOption {
