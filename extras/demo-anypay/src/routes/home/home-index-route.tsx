@@ -1069,9 +1069,13 @@ export const HomeIndexRoute = () => {
                                 </Text>
                               </div>
                               <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                                <Text variant="small" color="secondary" className="break-all">
-                                  <strong className="text-blue-300">Data: </strong>
-                                  <span className="font-mono text-green-300">{call.data || '0x'}</span>
+                                <Text variant="small" color="secondary">
+                                  <div className="break-all">
+                                    <strong className="text-blue-300">Data: </strong>
+                                    <div className="max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                                      <span className="font-mono text-green-300">{call.data || '0x'}</span>
+                                    </div>
+                                  </div>
                                 </Text>
                               </div>
                               <div className="bg-gray-800/70 p-2 rounded-md mb-1 flex items-center">
@@ -1364,20 +1368,29 @@ export const HomeIndexRoute = () => {
                   <div className="bg-gray-900/50 p-3 rounded-lg border border-purple-700/30">
                     <Text variant="small" color="secondary" className="flex flex-col space-y-2">
                       <span className="text-purple-300 font-semibold">
-                        Returned Intent Address (from first ERC20 precondition):
+                        Returned Intent Address (from first `erc20-balance` or `native-balance` precondition):
                       </span>
                       <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded">
                         {(() => {
                           if (!intentPreconditions || intentPreconditions.length === 0) {
                             return 'N/A (No preconditions)'
                           }
+                          // Find the first erc20-balance precondition with an address
                           const erc20Precondition = intentPreconditions.find(
                             (p: any) => p.type === 'erc20-balance' && p.data?.address,
                           )
                           if (erc20Precondition) {
                             return erc20Precondition.data.address
                           }
-                          return 'N/A (No ERC20 balance precondition with address found)'
+                          // If no ERC20 found, find the first native-balance precondition with an address
+                          const nativePrecondition = intentPreconditions.find(
+                            (p: any) => p.type === 'native-balance' && p.data?.address,
+                          )
+                          if (nativePrecondition) {
+                            return nativePrecondition.data.address
+                          }
+                          // If neither found, return N/A
+                          return 'N/A (No ERC20 or Native balance precondition with address found)'
                         })()}
                       </span>
                     </Text>
@@ -1440,11 +1453,15 @@ export const HomeIndexRoute = () => {
                     </Text>
                   </div>
                   <div className="bg-gray-800/70 p-2 rounded-md">
-                    <Text variant="small" color="secondary" className="break-all">
-                      <strong className="text-blue-300">Data: </strong>
-                      <span className="font-mono text-green-300">
-                        {originCallParams?.data ?? (originCallParams?.error ? 'Error' : 'Calculating...')}
-                      </span>
+                    <Text variant="small" color="secondary">
+                      <div className="break-all">
+                        <strong className="text-blue-300">Data: </strong>
+                        <div className="max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                          <span className="font-mono text-green-300">
+                            {originCallParams?.data ?? (originCallParams?.error ? 'Error' : 'Calculating...')}
+                          </span>
+                        </div>
+                      </div>
                     </Text>
                   </div>
                   <div className="bg-gray-800/70 p-2 rounded-md flex items-center">
