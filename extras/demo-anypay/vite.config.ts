@@ -7,11 +7,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   optimizeDeps: {
     // TODO: This shouldn't be needed, fix sdk build
-    include: [
-      '@0xsequence/wallet-core',
-      '@0xsequence/sequence-primitives',
-      '@0xsequence/sequence-wdk',
-      '@0xsequence/api',
-    ],
+    include: ['@0xsequence/api', '@0xsequence/wallet-core', '@0xsequence/wallet-primitives', '@0xsequence/wallet-wdk'],
   },
 })

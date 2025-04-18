@@ -23,7 +23,6 @@
     "@0xsequence/hooks": "^5.1.0",
     "@0xsequence/indexer": "^2.3.9",
     "@0xsequence/network": "^2.3.9",
-    "@0xsequence/relayer": "workspace:*",
     "@0xsequence/wagmi-connector": "^4.0.1",
     "@0xsequence/wallet-core": "workspace:*",
     "@0xsequence/wallet-primitives": "workspace:*",

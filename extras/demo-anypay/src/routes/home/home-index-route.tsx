@@ -236,7 +236,11 @@ export const HomeIndexRoute = () => {
     const statuses = await Promise.all(
       intentPreconditions.map(async (precondition) => {
         try {
-          return await relayer.checkPrecondition(precondition)
+          const formattedPrecondition = {
+            ...precondition,
+            data: typeof precondition.data === 'string' ? precondition.data : JSON.stringify(precondition.data),
+          }
+          return await relayer.checkPrecondition(formattedPrecondition)
         } catch (error) {
           console.error('Error checking precondition:', error)
           return false

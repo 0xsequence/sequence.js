@@ -152,118 +152,156 @@ export class RpcRelayer implements Relayer {
     switch (decoded.type()) {
       case 'native-balance': {
         const native = decoded as any
-        const balance = await this.provider.getBalance({ address: native.address.toString() as `0x${string}` })
-        if (native.min !== undefined && native.max !== undefined) {
-          return balance >= native.min && balance <= native.max
+        try {
+          const balance = await this.provider.getBalance({ address: native.address.toString() as `0x${string}` })
+          const minWei = native.min !== undefined ? BigInt(native.min) : undefined
+          const maxWei = native.max !== undefined ? BigInt(native.max) : undefined
+
+          if (minWei !== undefined && maxWei !== undefined) {
+            return balance >= minWei && balance <= maxWei
+          }
+          if (minWei !== undefined) {
+            return balance >= minWei
+          }
+          if (maxWei !== undefined) {
+            return balance <= maxWei
+          }
+          // If no min or max specified, this is an invalid precondition
+          console.warn('Native balance precondition has neither min nor max specified')
+          return false
+        } catch (error) {
+          console.error('Error checking native balance:', error)
+          return false
         }
-        if (native.min !== undefined) {
-          return balance >= native.min
-        }
-        if (native.max !== undefined) {
-          return balance <= native.max
-        }
-        return false
       }
 
       case 'erc20-balance': {
         const erc20 = decoded as any
-        const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address.toString()])
-        const result = await this.provider.call({
-          to: erc20.token.toString() as `0x${string}`,
-          data: data as `0x${string}`,
-        })
-        const balance = BigInt(result.toString())
-        if (erc20.min !== undefined && erc20.max !== undefined) {
-          return balance >= erc20.min && balance <= erc20.max
+        try {
+          const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address.toString()])
+          const result = await this.provider.call({
+            to: erc20.token.toString() as `0x${string}`,
+            data: data as `0x${string}`,
+          })
+          const balance = BigInt(result.toString())
+          const minWei = erc20.min !== undefined ? BigInt(erc20.min) : undefined
+          const maxWei = erc20.max !== undefined ? BigInt(erc20.max) : undefined
+
+          if (minWei !== undefined && maxWei !== undefined) {
+            return balance >= minWei && balance <= maxWei
+          }
+          if (minWei !== undefined) {
+            return balance >= minWei
+          }
+          if (maxWei !== undefined) {
+            return balance <= maxWei
+          }
+          console.warn('ERC20 balance precondition has neither min nor max specified')
+          return false
+        } catch (error) {
+          console.error('Error checking ERC20 balance:', error)
+          return false
         }
-        if (erc20.min !== undefined) {
-          return balance >= erc20.min
-        }
-        if (erc20.max !== undefined) {
-          return balance <= erc20.max
-        }
-        return false
       }
 
       case 'erc20-approval': {
         const erc20 = decoded as any
-        const data = AbiFunction.encodeData(erc20Allowance, [erc20.address.toString(), erc20.operator.toString()])
-        const result = await this.provider.call({
-          to: erc20.token.toString() as `0x${string}`,
-          data: data as `0x${string}`,
-        })
-        const allowance = BigInt(result.toString())
-        if (allowance >= erc20.min) {
-          return true
+        try {
+          const data = AbiFunction.encodeData(erc20Allowance, [erc20.address.toString(), erc20.operator.toString()])
+          const result = await this.provider.call({
+            to: erc20.token.toString() as `0x${string}`,
+            data: data as `0x${string}`,
+          })
+          const allowance = BigInt(result.toString())
+          const minAllowance = BigInt(erc20.min)
+          return allowance >= minAllowance
+        } catch (error) {
+          console.error('Error checking ERC20 approval:', error)
+          return false
         }
-        return false
       }
 
       case 'erc721-ownership': {
         const erc721 = decoded as any
-        const data = AbiFunction.encodeData(erc721OwnerOf, [erc721.tokenId])
-        const result = await this.provider.call({
-          to: erc721.token.toString() as `0x${string}`,
-          data: data as `0x${string}`,
-        })
-        const resultHex = result.toString() as `0x${string}`
-        const owner = resultHex.slice(-40)
-        const isOwner = owner.toLowerCase() === erc721.address.toString().slice(2).toLowerCase()
-        if (erc721.owned !== undefined && isOwner) {
-          return true
+        try {
+          const data = AbiFunction.encodeData(erc721OwnerOf, [erc721.tokenId])
+          const result = await this.provider.call({
+            to: erc721.token.toString() as `0x${string}`,
+            data: data as `0x${string}`,
+          })
+          const resultHex = result.toString() as `0x${string}`
+          const owner = resultHex.slice(-40)
+          const isOwner = owner.toLowerCase() === erc721.address.toString().slice(2).toLowerCase()
+          const expectedOwnership = erc721.owned !== undefined ? erc721.owned : true
+          return isOwner === expectedOwnership
+        } catch (error) {
+          console.error('Error checking ERC721 ownership:', error)
+          return false
         }
-        return false
       }
 
       case 'erc721-approval': {
         const erc721 = decoded as any
-        const data = AbiFunction.encodeData(erc721GetApproved, [erc721.tokenId])
-        const result = await this.provider.call({
-          to: erc721.token.toString() as `0x${string}`,
-          data: data as `0x${string}`,
-        })
-        const resultHex = result.toString() as `0x${string}`
-        const approved = resultHex.slice(-40)
-        if (approved.toLowerCase() !== erc721.operator.toString().slice(2).toLowerCase()) {
-          return true
+        try {
+          const data = AbiFunction.encodeData(erc721GetApproved, [erc721.tokenId])
+          const result = await this.provider.call({
+            to: erc721.token.toString() as `0x${string}`,
+            data: data as `0x${string}`,
+          })
+          const resultHex = result.toString() as `0x${string}`
+          const approved = resultHex.slice(-40)
+          return approved.toLowerCase() === erc721.operator.toString().slice(2).toLowerCase()
+        } catch (error) {
+          console.error('Error checking ERC721 approval:', error)
+          return false
         }
-        return false
       }
 
       case 'erc1155-balance': {
         const erc1155 = decoded as any
-        const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address.toString(), erc1155.tokenId])
-        const result = await this.provider.call({
-          to: erc1155.token.toString() as `0x${string}`,
-          data: data as `0x${string}`,
-        })
-        const balance = BigInt(result.toString())
-        if (erc1155.min !== undefined && erc1155.max !== undefined) {
-          return balance >= erc1155.min && balance <= erc1155.max
+        try {
+          const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address.toString(), erc1155.tokenId])
+          const result = await this.provider.call({
+            to: erc1155.token.toString() as `0x${string}`,
+            data: data as `0x${string}`,
+          })
+          const balance = BigInt(result.toString())
+          const minWei = erc1155.min !== undefined ? BigInt(erc1155.min) : undefined
+          const maxWei = erc1155.max !== undefined ? BigInt(erc1155.max) : undefined
+
+          if (minWei !== undefined && maxWei !== undefined) {
+            return balance >= minWei && balance <= maxWei
+          }
+          if (minWei !== undefined) {
+            return balance >= minWei
+          }
+          if (maxWei !== undefined) {
+            return balance <= maxWei
+          }
+          console.warn('ERC1155 balance precondition has neither min nor max specified')
+          return false
+        } catch (error) {
+          console.error('Error checking ERC1155 balance:', error)
+          return false
         }
-        if (erc1155.min !== undefined) {
-          return balance >= erc1155.min
-        }
-        if (erc1155.max !== undefined) {
-          return balance <= erc1155.max
-        }
-        return false
       }
 
       case 'erc1155-approval': {
         const erc1155 = decoded as any
-        const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [
-          erc1155.address.toString(),
-          erc1155.operator.toString(),
-        ])
-        const result = await this.provider.call({
-          to: erc1155.token.toString() as `0x${string}`,
-          data: data as `0x${string}`,
-        })
-        if (BigInt(result.toString()) !== 1n) {
-          return true
+        try {
+          const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [
+            erc1155.address.toString(),
+            erc1155.operator.toString(),
+          ])
+          const result = await this.provider.call({
+            to: erc1155.token.toString() as `0x${string}`,
+            data: data as `0x${string}`,
+          })
+          return BigInt(result.toString()) === 1n
+        } catch (error) {
+          console.error('Error checking ERC1155 approval:', error)
+          return false
         }
-        return false
       }
 
       default:
