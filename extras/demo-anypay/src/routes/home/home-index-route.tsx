@@ -1288,68 +1288,77 @@ export const HomeIndexRoute = () => {
                     </div>
                   )}
 
-                  {commitIntentConfigMutation.isError && (
-                    <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
-                      <Text variant="small" color="white">
-                        Error: {commitIntentConfigMutation.error.message}
-                      </Text>
+                  {/* Verification Banner */}
+                  {verificationStatus && (
+                    <div
+                      className={`bg-gray-900/50 p-3 rounded-lg border border-blue-700/30 ${verificationStatus.success ? 'border-green-700/30' : 'border-red-700/30'}`}
+                    >
+                      <div className="flex items-center">
+                        {verificationStatus.success ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-green-400 mr-2"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-red-400 mr-2"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                        <div className="flex flex-col w-full">
+                          <Text variant="small" color={verificationStatus.success ? 'success' : 'white'}>
+                            {verificationStatus.success ? 'Verification Successful' : 'Verification Failed'}
+                          </Text>
+                          <div className="mt-1 text-xs text-gray-400 flex flex-col space-y-1 w-full">
+                            <div>
+                              Received:{' '}
+                              <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded block mt-1">
+                                {verificationStatus.receivedAddress}
+                              </span>
+                            </div>
+                            <div>
+                              Calculated:{' '}
+                              <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded block mt-1">
+                                {verificationStatus.calculatedAddress}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {commitIntentConfigMutation.isError &&
+                    !verificationStatus && ( // Only show generic error if verification banner isn't shown
+                      <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mt-2">
+                        <Text variant="small" color="white">
+                          Error: {commitIntentConfigMutation.error.message}
+                        </Text>
+                      </div>
+                    )}
                   {commitIntentConfigMutation.isSuccess && (
-                    <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3">
+                    <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3 mt-2">
                       <Text variant="small" color="success">
                         Intent configuration committed successfully!
                       </Text>
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Verification Banner */}
-          {verificationStatus && (
-            <div
-              className={`mt-4 p-4 rounded-lg border ${
-                verificationStatus.success ? 'bg-green-900/20 border-green-700/30' : 'bg-red-900/20 border-red-700/30'
-              }`}
-            >
-              <div className="flex items-center">
-                {verificationStatus.success ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-green-400 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-red-400 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-                <div>
-                  <Text variant="small" color={verificationStatus.success ? 'success' : 'white'}>
-                    {verificationStatus.success ? 'Verification Successful' : 'Verification Failed'}
-                  </Text>
-                  <div className="mt-1 text-xs text-gray-400">
-                    <div>Received: {verificationStatus.receivedAddress}</div>
-                    <div>Calculated: {verificationStatus.calculatedAddress}</div>
-                  </div>
                 </div>
               </div>
             </div>
