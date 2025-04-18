@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useAccount, useConnect, useDisconnect, useSendTransaction } from 'wagmi'
 import { Connector } from 'wagmi'
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
-import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
+import { NativeTokenBalance, TokenBalance, ContractVerificationStatus } from '@0xsequence/indexer'
 import { GetTokenBalancesSummaryReturn } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
 import { GetIntentOperationsReturn, IntentOperation, IntentPrecondition } from '@0xsequence/api'
 import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
@@ -129,6 +129,8 @@ export const HomeIndexRoute = () => {
         const summary = await indexerClient.getTokenBalancesSummary({
           filter: {
             accountAddresses: [account.address],
+            contractStatus: ContractVerificationStatus.VERIFIED,
+            contractTypes: ['ERC20'],
             omitNativeBalances: false,
           },
         })
