@@ -617,7 +617,7 @@ export const HomeIndexRoute = () => {
       </div>
 
       {/* Account Info & Connect/Disconnect */}
-      <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20">
+      <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6">
         <div className="flex items-center mb-4">
           <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
             <span>1</span>
@@ -688,9 +688,9 @@ export const HomeIndexRoute = () => {
         )}
       </div>
 
-      {/* Token selection, Actions, and Intent Display */}
+      {/* Main Workflow Card */}
       {account.status === 'connected' && (
-        <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm space-y-6 transition-all duration-300 hover:shadow-blue-900/20">
+        <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm space-y-6 transition-all duration-300 hover:shadow-blue-900/20 mb-6">
           {/* 1. Select Token */}
           <div>
             <div className="flex items-center mb-4">
@@ -1374,130 +1374,135 @@ export const HomeIndexRoute = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
 
-          {/* 6. Relayer Status */}
-          {intentOperations && intentPreconditions && (
-            <div>
-              <div className="flex items-center mb-4">
-                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
-                  <span>7</span>
-                </div>
-                <h3 className="text-xl font-semibold text-white">Relayer Status</h3>
+      {/* Separate Relayer Status Card */}
+      {account.status === 'connected' && intentOperations && intentPreconditions && (
+        <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                <span>7</span>
               </div>
-              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
-                <Text
-                  variant="medium"
-                  color="primary"
-                  className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
-                >
-                  <Layers className="h-4 w-4 mr-1" />
-                  Meta Transaction Status
-                  <Text variant="small" color="secondary" className="ml-1">
-                    (Track the status of your meta transaction)
-                  </Text>
-                </Text>
-                <div className="space-y-2">
-                  <div className="bg-gray-800/70 p-2 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">Transaction Hash: </strong>
-                      <span className="text-yellow-300 break-all font-mono">
-                        {metaTxnStatus?.txnHash || 'Not sent yet'}
-                      </span>
-                    </Text>
-                  </div>
-                  <div className="bg-gray-800/70 p-2 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">Status: </strong>
-                      <span
-                        className={`font-mono ${
-                          metaTxnStatus?.status === 'Success'
-                            ? 'text-green-400'
-                            : metaTxnStatus?.status === 'Failed'
-                              ? 'text-red-400'
-                              : metaTxnStatus?.status === 'Pending' || metaTxnStatus?.status === 'Sending...'
-                                ? 'text-yellow-400'
-                                : 'text-gray-400' // Idle or default
-                        }`}
-                      >
-                        {metaTxnStatus?.status || 'Idle'}
-                      </span>
-                      {isWaitingForReceipt && (
-                        <span className="text-yellow-400 ml-1">(Waiting for confirmation...)</span>
-                      )}
-                    </Text>
-                  </div>
-                  <div className="bg-gray-800/70 p-2 rounded-md">
-                    <Text variant="small" color="secondary" className="break-all">
-                      <strong className="text-blue-300">Revert Reason: </strong>
-                      <span className="font-mono text-red-300">{metaTxnStatus?.revertReason || 'None'}</span>
-                    </Text>
-                  </div>
-                </div>
+              <h3 className="text-xl font-semibold text-white">Relayer Status</h3>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center">
+              <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse"></span>
+              Live Status
+            </div>
+          </div>
 
-                <Text
-                  variant="medium"
-                  color="primary"
-                  className="mt-4 mb-2 pb-1 border-b border-gray-700/50 flex items-center"
-                >
-                  <Clipboard className="h-4 w-4 mr-1" />
-                  Preconditions Status
-                  <Text variant="small" color="secondary" className="ml-1">
-                    (Check if all preconditions are met)
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Meta Transaction Status */}
+            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
+              <Text
+                variant="medium"
+                color="primary"
+                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
+              >
+                <Layers className="h-4 w-4 mr-2" />
+                Meta Transaction Status
+              </Text>
+              <div className="space-y-3">
+                <div className="bg-gray-800/70 p-3 rounded-md">
+                  <Text variant="small" color="secondary">
+                    <strong className="text-blue-300">Transaction Hash: </strong>
+                    <span className="text-yellow-300 break-all font-mono">
+                      {metaTxnStatus?.txnHash || 'Not sent yet'}
+                    </span>
                   </Text>
-                </Text>
-                <div className="space-y-2">
-                  {intentPreconditions.map((precondition, index) => (
-                    <div key={index} className="bg-gray-800/70 p-2 rounded-md">
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">
-                          Precondition {index + 1} ({precondition.type}):{' '}
-                        </strong>
-                        <span className="font-mono">
-                          {preconditionStatuses[index] ? (
-                            <span className="text-green-400">Met</span>
-                          ) : (
-                            <span className="text-red-400">Not Met</span>
-                          )}
-                        </span>
-                      </Text>
-                    </div>
-                  ))}
                 </div>
-
-                <Text
-                  variant="medium"
-                  color="primary"
-                  className="mt-4 mb-2 pb-1 border-b border-gray-700/50 flex items-center"
-                >
-                  <Layers className="h-4 w-4 mr-1" />
-                  Final Intent Status
-                  <Text variant="small" color="secondary" className="ml-1">
-                    (Overall status of the intent execution)
+                <div className="bg-gray-800/70 p-3 rounded-md">
+                  <Text variant="small" color="secondary">
+                    <strong className="text-blue-300">Status: </strong>
+                    <span
+                      className={`font-mono ${
+                        metaTxnStatus?.status === 'Success'
+                          ? 'text-green-400'
+                          : metaTxnStatus?.status === 'Failed'
+                            ? 'text-red-400'
+                            : metaTxnStatus?.status === 'Pending' || metaTxnStatus?.status === 'Sending...'
+                              ? 'text-yellow-400'
+                              : 'text-gray-400'
+                      }`}
+                    >
+                      {metaTxnStatus?.status || 'Idle'}
+                    </span>
+                    {isWaitingForReceipt && <span className="text-yellow-400 ml-1">(Waiting for confirmation...)</span>}
                   </Text>
-                </Text>
-                <div className="space-y-2">
-                  <div className="bg-gray-800/70 p-2 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">Status: </strong>
-                      <span className="font-mono">{metaTxnStatus?.status || 'Pending'}</span>
-                    </Text>
-                  </div>
-                  <div className="bg-gray-800/70 p-2 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">Gas Used: </strong>
-                      <span className="font-mono">{metaTxnStatus?.gasUsed || '0'}</span>
-                    </Text>
-                  </div>
-                  <div className="bg-gray-800/70 p-2 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">Effective Gas Price: </strong>
-                      <span className="font-mono">{metaTxnStatus?.effectiveGasPrice || '0'}</span>
-                    </Text>
-                  </div>
+                </div>
+                <div className="bg-gray-800/70 p-3 rounded-md">
+                  <Text variant="small" color="secondary" className="break-all">
+                    <strong className="text-blue-300">Revert Reason: </strong>
+                    <span className="font-mono text-red-300">{metaTxnStatus?.revertReason || 'None'}</span>
+                  </Text>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Preconditions Status */}
+            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
+              <Text
+                variant="medium"
+                color="primary"
+                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
+              >
+                <Clipboard className="h-4 w-4 mr-2" />
+                Preconditions Status
+              </Text>
+              <div className="space-y-3">
+                {intentPreconditions.map((precondition, index) => (
+                  <div key={index} className="bg-gray-800/70 p-3 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">
+                        Precondition {index + 1} ({precondition.type}):{' '}
+                      </strong>
+                      <span className="font-mono">
+                        {preconditionStatuses[index] ? (
+                          <span className="text-green-400">Met</span>
+                        ) : (
+                          <span className="text-red-400">Not Met</span>
+                        )}
+                      </span>
+                    </Text>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Final Intent Status */}
+            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner lg:col-span-2">
+              <Text
+                variant="medium"
+                color="primary"
+                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
+              >
+                <Layers className="h-4 w-4 mr-2" />
+                Final Intent Status
+              </Text>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-800/70 p-3 rounded-md">
+                  <Text variant="small" color="secondary">
+                    <strong className="text-blue-300">Status: </strong>
+                    <span className="font-mono">{metaTxnStatus?.status || 'Pending'}</span>
+                  </Text>
+                </div>
+                <div className="bg-gray-800/70 p-3 rounded-md">
+                  <Text variant="small" color="secondary">
+                    <strong className="text-blue-300">Gas Used: </strong>
+                    <span className="font-mono">{metaTxnStatus?.gasUsed || '0'}</span>
+                  </Text>
+                </div>
+                <div className="bg-gray-800/70 p-3 rounded-md">
+                  <Text variant="small" color="secondary">
+                    <strong className="text-blue-300">Effective Gas Price: </strong>
+                    <span className="font-mono">{metaTxnStatus?.effectiveGasPrice || '0'}</span>
+                  </Text>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
