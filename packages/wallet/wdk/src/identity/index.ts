@@ -1,9 +1,4 @@
-import { IdentityInstrument, IdentityType } from './nitro'
-export { IdentityInstrument, IdentityType }
-
-export * from './wdk'
-export * from './authkey'
-export * from './challenge'
-export * from './signer'
-export * from './subtle-crypto'
-export * from './secure-store'
+export { IdentityInstrument, IdentityType, KeyType } from './nitro'
+export type { CommitChallengeParams, CompleteChallengeParams, Challenge } from './challenge'
+export { IdTokenChallenge, AuthCodePkceChallenge, OtpChallenge } from './challenge'
+export { IdentitySigner } from './signer'

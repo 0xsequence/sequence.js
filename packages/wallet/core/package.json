@@ -9,7 +9,7 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@0xsequence/wallet-primitives": "workspace:^",
-    "ox": "^0.6.7",
+    "ox": "^0.7.0",
     "viem": "^2.27.2"
   }
 }

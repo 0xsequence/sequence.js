@@ -1,4 +1,4 @@
-import { Transaction } from '../sequence/types/transactionRequest'
+import { Transaction } from '../sequence/types/transaction-request'
 import { Generic } from './generic'
 
 const TABLE_NAME = 'transactions'

@@ -1,6 +1,6 @@
+import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer'
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { decodePrecondition, IntentPrecondition } from '../preconditions/codec'
 import {
   erc20BalanceOf,

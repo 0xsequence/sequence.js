@@ -9,7 +9,7 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
@@ -27,7 +27,7 @@
     "@0xsequence/wallet-primitives": "workspace:^",
     "idb": "^7.1.1",
     "jwt-decode": "^4.0.0",
-    "ox": "^0.6.7",
+    "ox": "^0.7.0",
     "uuid": "^11.1.0"
   }
 }

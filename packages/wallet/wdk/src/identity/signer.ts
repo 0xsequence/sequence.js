@@ -1,21 +1,20 @@
-import { Address, Signature, Hex, Bytes } from 'ox'
+import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
 import { Signers, State } from '@0xsequence/wallet-core'
-import { AuthKey } from './authkey'
-import { IdentityInstrument } from './nitro'
+import { AuthKey } from '../dbs'
+import { IdentityInstrument, KeyType } from './nitro'
 import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 
 export class IdentitySigner implements Signers.Signer {
   constructor(
-    readonly ecosystemId: string,
     readonly nitro: IdentityInstrument,
     readonly authKey: AuthKey,
   ) {}
 
   get address(): `0x${string}` {
-    if (!this.authKey.identitySigner) {
+    if (!Address.validate(this.authKey.identitySigner)) {
       throw new Error('No signer address found')
     }
-    return this.authKey.identitySigner
+    return this.authKey.identitySigner as `0x${string}`
   }
 
   async sign(
@@ -28,14 +27,22 @@ export class IdentitySigner implements Signers.Signer {
   }
 
   async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeafHash> {
-    const digestHex = Hex.fromBytes(digest)
-    const authKeySignature = await this.authKey.signMessage(digestHex)
+    const authKeySignature = await window.crypto.subtle.sign(
+      {
+        name: 'ECDSA',
+        hash: 'SHA-256',
+      },
+      this.authKey.privateKey,
+      digest,
+    )
     const params = {
-      ecosystem: this.ecosystemId,
       signer: this.address,
-      digest: digestHex,
-      authKey: this.authKey.toProto(),
-      signature: authKeySignature,
+      digest: Hex.fromBytes(digest),
+      authKey: {
+        publicKey: this.authKey.address,
+        keyType: KeyType.P256R1,
+      },
+      signature: Hex.fromBytes(new Uint8Array(authKeySignature)),
     }
     const res = await this.nitro.sign({ params })
     Hex.assert(res.signature)

@@ -4,7 +4,7 @@ import { Address, Bytes, Hex } from 'ox'
 import { Kinds } from '../types/signer'
 import { Signatures } from '../signatures'
 import { Extensions } from '@0xsequence/wallet-primitives'
-import { Handler } from '.'
+import { Handler } from './handler'
 import { SignerActionable, SignerUnavailable } from '../types'
 
 export class PasskeysHandler implements Handler {
