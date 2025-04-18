@@ -310,7 +310,7 @@ export const HomeIndexRoute = () => {
       const args = {
         userAddress: account.address,
         originChainId: selectedToken.chainId || 8453,
-        originTokenAddress: isOriginNative ? zeroAddress : selectedToken.contractAddress,
+        originTokenAddress: selectedToken.contractAddress,
         destinationChainId:
           action === 'custom_call'
             ? parseInt(customCallData.chainId)
@@ -1015,7 +1015,7 @@ export const HomeIndexRoute = () => {
                       </svg>
                       Preconditions
                       <Text variant="small" color="secondary" className="ml-1">
-                        (Actions after funds arrive on origin chain):
+                        (Conditions that are to be met for the intent to be executed):
                       </Text>
                     </Text>
                     <ul className="space-y-2 pl-2">
