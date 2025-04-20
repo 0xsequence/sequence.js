@@ -4,7 +4,7 @@ import { Connector } from 'wagmi'
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import { NativeTokenBalance, TokenBalance, ContractVerificationStatus } from '@0xsequence/indexer'
 import { GetTokenBalancesSummaryReturn } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
-import { GetIntentOperationsReturn, IntentOperation, IntentPrecondition } from '@0xsequence/api'
+import { GetIntentOperationsReturn, IntentOperation, IntentPrecondition, GetIntentConfigReturn } from '@0xsequence/api'
 import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAPIClient } from '../../hooks/useAPIClient'
@@ -134,6 +134,7 @@ export const HomeIndexRoute = () => {
     null,
   )
   const [txnHash, setTxnHash] = useState<Hex | undefined>()
+  const [committedIntentAddress, setCommittedIntentAddress] = useState<string | null>(null)
 
   // Default empty page info for query fallback
   const defaultPage = { page: 1, pageSize: 10, totalRecords: 0, more: false }
@@ -272,31 +273,78 @@ export const HomeIndexRoute = () => {
       preconditions: IntentPrecondition[]
     }) => {
       if (!apiClient) throw new Error('API client not available')
+      if (!account.address) throw new Error('Account address not available')
 
       try {
-        if (!account.address) {
-          throw new Error('Account address not available')
-        }
-
         const calculatedAddress = calculateIntentAddress(args.operations, args.mainSigner)
         const receivedAddress = findPreconditionAddress(args.preconditions)
 
-        if (!isAddressEqual(Address.from(receivedAddress), calculatedAddress)) {
-          throw new Error('Address verification failed')
+        const isVerified = isAddressEqual(Address.from(receivedAddress), calculatedAddress)
+        setVerificationStatus({
+          success: isVerified,
+          receivedAddress: receivedAddress,
+          calculatedAddress: calculatedAddress.toString(),
+        })
+
+        if (!isVerified) {
+          throw new Error('Address verification failed: Calculated address does not match received address.')
         }
 
-        return await apiClient.commitIntentConfig(args)
+        // Commit the intent config
+        const response = await apiClient.commitIntentConfig({
+          walletAddress: calculatedAddress.toString(),
+          mainSigner: args.mainSigner,
+          operations: args.operations,
+          preconditions: args.preconditions,
+        })
+        console.log('API Commit Response:', response)
+        return { calculatedAddress: calculatedAddress.toString(), response }
       } catch (error) {
-        console.error('Error during verification:', error)
+        console.error('Error during commit intent mutation:', error)
+        if (!verificationStatus?.success && !verificationStatus?.receivedAddress) {
+          try {
+            const calculatedAddress = calculateIntentAddress(args.operations, args.mainSigner)
+            const receivedAddress = findPreconditionAddress(args.preconditions)
+            setVerificationStatus({
+              success: false,
+              receivedAddress: receivedAddress,
+              calculatedAddress: calculatedAddress.toString(),
+            })
+          } catch (calcError) {
+            console.error('Error calculating addresses for verification status on failure:', calcError)
+            setVerificationStatus({ success: false })
+          }
+        }
         throw error
       }
     },
     onSuccess: (data) => {
-      console.log('Intent config committed successfully:', data)
+      console.log('Intent config committed successfully, Wallet Address:', data.calculatedAddress)
+      setCommittedIntentAddress(data.calculatedAddress)
     },
     onError: (error) => {
       console.error('Failed to commit intent config:', error)
+      setCommittedIntentAddress(null)
     },
+  })
+
+  // New Query to fetch committed intent config
+  const {
+    data: committedIntentConfig,
+    isLoading: isLoadingCommittedConfig,
+    error: committedConfigError,
+  } = useQuery<GetIntentConfigReturn, Error>({
+    queryKey: ['getIntentConfig', committedIntentAddress],
+    queryFn: async () => {
+      if (!apiClient || !committedIntentAddress) {
+        throw new Error('API client or committed intent address not available')
+      }
+      console.log('Fetching intent config for address:', committedIntentAddress)
+      return await apiClient.getIntentConfig({ walletAddress: committedIntentAddress })
+    },
+    enabled: !!committedIntentAddress && !!apiClient && commitIntentConfigMutation.isSuccess,
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
   })
 
   const createIntentMutation = useMutation<GetIntentOperationsReturn, Error, IntentAction>({
@@ -304,6 +352,9 @@ export const HomeIndexRoute = () => {
       if (!apiClient || !selectedToken || !account.address) {
         throw new Error('Missing API client, selected token, or account address')
       }
+      // Reset commit state when generating a new intent
+      setCommittedIntentAddress(null)
+      setVerificationStatus(null)
 
       const USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
       const RECIPIENT_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
@@ -392,7 +443,12 @@ export const HomeIndexRoute = () => {
       }
 
       console.log('Calling createIntentConfig with args:', args)
-      return await apiClient.getIntentOperations(args)
+      const data = await apiClient.getIntentOperations(args)
+      setIntentOperations(data.operations)
+      setIntentPreconditions(data.preconditions)
+      setCommittedIntentAddress(null)
+      setVerificationStatus(null)
+      return data
     },
     onSuccess: (data) => {
       console.log('Intent Config Success:', data)
@@ -449,12 +505,16 @@ export const HomeIndexRoute = () => {
     setSelectedToken(null)
     setIntentOperations(null)
     setIntentPreconditions(null)
+    setCommittedIntentAddress(null)
+    setVerificationStatus(null)
   }, [account.address, account.chainId])
 
   const handleActionClick = (action: IntentAction) => {
     setIntentOperations(null)
     setIntentPreconditions(null)
     setShowCustomCallForm(false)
+    setCommittedIntentAddress(null)
+    setVerificationStatus(null)
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
     } else {
@@ -778,6 +838,8 @@ export const HomeIndexRoute = () => {
                       }
                       setIntentOperations(null)
                       setIntentPreconditions(null)
+                      setCommittedIntentAddress(null)
+                      setVerificationStatus(null)
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${selectedToken?.chainId === token.chainId && (isNative ? selectedToken?.contractAddress === zeroAddress : selectedToken?.contractAddress === token.contractAddress) ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
                   >
@@ -1198,59 +1260,33 @@ export const HomeIndexRoute = () => {
                     </Button>
                   </div>
 
-                  {/* Preview calculated address */}
-                  {account.address && intentOperations && (
-                    <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
-                      <Text variant="small" color="secondary" className="flex flex-col space-y-2">
-                        <span className="text-blue-300 font-semibold">Calculated Address:</span>
-                        <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded">
-                          {(() => {
-                            try {
-                              return calculateIntentAddress(intentOperations, account.address).toString()
-                            } catch (error) {
-                              return 'Error calculating address: ' + (error as Error).message
-                            }
-                          })()}
-                        </span>
-                      </Text>
-                    </div>
-                  )}
-
-                  {/* Returned Intent Address */}
-                  <div className="bg-gray-900/50 p-3 rounded-lg border border-purple-700/30">
-                    <Text variant="small" color="secondary" className="flex flex-col space-y-2">
-                      <span className="text-purple-300 font-semibold">
-                        Returned Intent Address (from first operation call):
-                      </span>
-                      <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded">
-                        {!intentOperations || intentOperations.length === 0
-                          ? 'N/A (No operations)'
-                          : findPreconditionAddress(intentPreconditions)}
-                      </span>
-                    </Text>
-                  </div>
-
                   {/* Verification Banner */}
                   {verificationStatus && (
                     <div
-                      className={`bg-gray-900/50 p-3 rounded-lg border border-blue-700/30 ${verificationStatus.success ? 'border-green-700/30' : 'border-red-700/30'}`}
+                      className={`bg-gray-900/50 p-3 rounded-lg border ${verificationStatus.success ? 'border-green-700/30' : 'border-red-700/30'}`}
                     >
                       <div className="flex items-center">
                         <div className="flex flex-col w-full">
-                          <Text variant="small" color={verificationStatus.success ? 'success' : 'white'}>
-                            {verificationStatus.success ? 'Verification Successful' : 'Verification Failed'}
+                          <Text
+                            variant="small"
+                            color={verificationStatus.success ? 'info' : 'negative'}
+                            className="font-semibold"
+                          >
+                            {verificationStatus.success
+                              ? 'Address Verification Successful'
+                              : 'Address Verification Failed'}
                           </Text>
-                          <div className="mt-1 text-xs text-gray-400 flex flex-col space-y-1 w-full">
+                          <div className="mt-2 text-xs text-gray-400 flex flex-col space-y-1 w-full">
                             <div>
                               Calculated:{' '}
-                              <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded block mt-1">
-                                {verificationStatus.calculatedAddress}
+                              <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
+                                {verificationStatus.calculatedAddress || 'N/A'}
                               </span>
                             </div>
                             <div>
-                              Received:{' '}
-                              <span className="font-mono text-xs break-all bg-gray-800/70 p-2 rounded block mt-1">
-                                {verificationStatus.receivedAddress}
+                              Expected (from precondition):{' '}
+                              <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
+                                {verificationStatus.receivedAddress || 'N/A'}
                               </span>
                             </div>
                           </div>
@@ -1259,19 +1295,51 @@ export const HomeIndexRoute = () => {
                     </div>
                   )}
 
-                  {commitIntentConfigMutation.isError &&
-                    !verificationStatus && ( // Only show generic error if verification banner isn't shown
-                      <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mt-2">
-                        <Text variant="small" color="white">
-                          Error: {commitIntentConfigMutation.error.message}
-                        </Text>
-                      </div>
-                    )}
+                  {/* Commit Status Messages */}
+                  {commitIntentConfigMutation.isError && (
+                    <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mt-2">
+                      <Text variant="small" color="negative">
+                        Commit Error: {commitIntentConfigMutation.error.message}
+                      </Text>
+                    </div>
+                  )}
                   {commitIntentConfigMutation.isSuccess && (
                     <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3 mt-2">
                       <Text variant="small" color="white">
-                        Intent configuration committed successfully!
+                        Intent configuration committed successfully! Fetching details...
                       </Text>
+                    </div>
+                  )}
+
+                  {/* Display Fetched Committed Config */}
+                  {committedIntentAddress && commitIntentConfigMutation.isSuccess && (
+                    <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                      <div className="flex items-center justify-between">
+                        <Text variant="medium" color="primary" className="border-b border-gray-700/50">
+                          Committed Configuration Details on Database
+                        </Text>
+                      </div>
+                      {isLoadingCommittedConfig && (
+                        <div className="flex items-center text-center">
+                          <Loader2 className="animate-spin h-4 w-4 mr-2 text-yellow-500" />
+                          <Text variant="small" color="secondary">
+                            Loading committed config...
+                          </Text>
+                        </div>
+                      )}
+                      {committedConfigError && (
+                        <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
+                          <Text variant="small" color="negative" className="break-words flex items-center text-center">
+                            <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                            <span>Error fetching config: {committedConfigError.message}</span>
+                          </Text>
+                        </div>
+                      )}
+                      {committedIntentConfig && !isLoadingCommittedConfig && !committedConfigError && (
+                        <pre className="font-mono text-xs overflow-x-auto whitespace-pre-wrap bg-gray-800/70 p-3 text-gray-300 rounded-md max-h-60 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                          {JSON.stringify(committedIntentConfig, null, 2)}
+                        </pre>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1366,15 +1434,16 @@ export const HomeIndexRoute = () => {
                       disabled={
                         !verificationStatus?.success ||
                         isSendingTransaction ||
+                        isWaitingForReceipt ||
                         !originCallParams ||
                         !!originCallParams.error
                       }
                       className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
-                      {isSendingTransaction ? (
+                      {isSendingTransaction || isWaitingForReceipt ? (
                         <div className="flex items-center">
                           <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                          Sending...
+                          {isWaitingForReceipt ? 'Waiting...' : 'Sending...'}
                         </div>
                       ) : (
                         'Send Transaction'
@@ -1383,6 +1452,18 @@ export const HomeIndexRoute = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Preview calculated address */}
+          {account.address && intentOperations && (
+            <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
+              <Text variant="small" color="secondary">
+                <strong className="text-blue-300">Calculated Address: </strong>
+                <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
+                  {originCallParams?.to?.toString() || 'N/A'}
+                </span>
+              </Text>
             </div>
           )}
         </div>
