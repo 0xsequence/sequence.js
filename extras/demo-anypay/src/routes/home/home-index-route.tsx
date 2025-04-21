@@ -532,9 +532,7 @@ export const HomeIndexRoute = () => {
     setShowCustomCallForm(false)
   }
 
-  // Update handleSendOriginCall to handle chain switching without resetting state
   const handleSendOriginCall = async () => {
-    // Use the calculated parameters from state
     if (
       !originCallParams ||
       originCallParams.error ||
@@ -563,26 +561,12 @@ export const HomeIndexRoute = () => {
         console.log('Switching to chain:', originCallParams.chainId)
         await switchChain({ chainId: originCallParams.chainId })
 
-        // Wait for the chain switch to be reflected in the account
-        const startTime = Date.now()
-        const timeout = 10000 // 10 seconds timeout
-
-        while (Date.now() - startTime < timeout) {
-          if (account.chainId === originCallParams.chainId) {
-            console.log('Chain switch successful')
-            break
-          }
-          await new Promise((resolve) => setTimeout(resolve, 500)) // Wait 500ms before checking again
-        }
-
         if (account.chainId !== originCallParams.chainId) {
           throw new Error('Chain switch timed out')
         }
 
-        // Don't reset state, just proceed with the transaction
         setIsChainSwitchRequired(false)
 
-        // Immediately send the transaction after successful chain switch
         return sendTransaction(
           {
             to: originCallParams.to,
@@ -615,7 +599,6 @@ export const HomeIndexRoute = () => {
       }
     }
 
-    // If already on correct chain, just send the transaction
     setTxnHash(undefined)
     updateMetaTxnStatus(undefined, 'sending')
 
@@ -676,11 +659,9 @@ export const HomeIndexRoute = () => {
     },
   })
 
-  // Effect to update status based on receipt
   useEffect(() => {
     if (!txnHash) {
-      // No transaction sent yet or reset
-      setMetaTxnStatus(null) // Clear status
+      setMetaTxnStatus(null)
       return
     }
     if (isWaitingForReceipt) {
@@ -689,22 +670,19 @@ export const HomeIndexRoute = () => {
     }
     if (isSuccess && receipt) {
       updateMetaTxnStatus(receipt.transactionHash, receipt.status, receipt.gasUsed, receipt.effectiveGasPrice)
-      // Optionally, trigger relayer status check here if needed after confirmation
-      // e.g., checkPreconditionStatuses()
+      checkPreconditionStatuses()
     } else if (isError) {
       console.error('Error waiting for receipt:', receiptError)
       updateMetaTxnStatus(txnHash, 'reverted', undefined, undefined, receiptError?.message || 'Failed to get receipt')
     }
   }, [isWaitingForReceipt, isSuccess, isError, receipt, txnHash, receiptError])
 
-  // Add useEffect to check precondition statuses when intentPreconditions changes
   useEffect(() => {
     if (intentPreconditions) {
       checkPreconditionStatuses()
     }
   }, [intentPreconditions, checkPreconditionStatuses])
 
-  // Effect to calculate actual origin call parameters for UI display
   useEffect(() => {
     if (!intentOperations?.[0]?.chainId || !selectedToken || !intentPreconditions || !account.address) {
       setOriginCallParams(null)
@@ -712,7 +690,6 @@ export const HomeIndexRoute = () => {
     }
 
     try {
-      // Calculate the intent address here as it's needed for params
       const intentAddress = calculateIntentAddress(intentOperations, account.address)
       const intentAddressString = intentAddress.toString() as Address.Address
 
