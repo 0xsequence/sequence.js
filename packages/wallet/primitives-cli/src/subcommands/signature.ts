@@ -61,7 +61,7 @@ export async function doEncode(
       if (candidate.type === 'erc1271') {
         return {
           address: candidate.address as `0x${string}`,
-          data: Bytes.fromHex(candidate.values[0] as `0x${string}`),
+          data: candidate.values[0] as `0x${string}`,
           type: 'erc1271',
         }
       }
@@ -100,7 +100,7 @@ export async function doEncode(
       if (candidate.type === 'sapient' || candidate.type === 'sapient_compact') {
         return {
           address: candidate.address as `0x${string}`,
-          data: Bytes.fromHex(candidate.values[0] as `0x${string}`),
+          data: candidate.values[0] as `0x${string}`,
           type: candidate.type,
         }
       }

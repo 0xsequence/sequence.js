@@ -52,7 +52,7 @@ export type SignatureOfSignerLeafHash = {
 export type SignatureOfSignerLeafErc1271 = {
   type: 'erc1271'
   address: `0x${string}`
-  data: Bytes.Bytes
+  data: Hex.Hex
 }
 
 export type SignatureOfSignerLeaf =
@@ -62,7 +62,7 @@ export type SignatureOfSignerLeaf =
 
 export type SignatureOfSapientSignerLeaf = {
   address: `0x${string}`
-  data: Bytes.Bytes
+  data: Hex.Hex
   type: 'sapient' | 'sapient_compact'
 }
 
@@ -377,7 +377,7 @@ export function parseBranch(signature: Bytes.Bytes): {
         signature: {
           type: 'erc1271',
           address: signer,
-          data: subSignature,
+          data: Bytes.toHex(subSignature),
         },
       } as RawSignerLeaf)
       continue
@@ -428,7 +428,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       index += 32
       nodes.push({
         type: 'subdigest',
-        digest: hardcoded,
+        digest: Bytes.toHex(hardcoded),
       } as SubdigestLeaf)
       continue
     }
@@ -518,7 +518,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       index += 32
       nodes.push({
         type: 'any-address-subdigest',
-        digest: anyAddressSubdigest,
+        digest: Bytes.toHex(anyAddressSubdigest),
       } as AnyAddressSubdigestLeaf)
       continue
     }
@@ -556,7 +556,7 @@ export function parseBranch(signature: Bytes.Bytes): {
         weight: BigInt(addrWeight),
         signature: {
           address,
-          data: subSignature,
+          data: Bytes.toHex(subSignature),
           type: flag === FLAG_SIGNATURE_SAPIENT ? 'sapient' : 'sapient_compact',
         },
       } as RawSignerLeaf)
@@ -818,7 +818,7 @@ export function encodeTopology(
         weightBytes,
         Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
         Bytes.padLeft(Bytes.fromNumber(topology.signature.data.length), bytesForSignatureSize),
-        topology.signature.data,
+        Bytes.fromHex(topology.signature.data),
       )
     } else if (topology.signature.type === 'sapient' || topology.signature.type === 'sapient_compact') {
       let flag = (topology.signature.type === 'sapient' ? FLAG_SIGNATURE_SAPIENT : FLAG_SIGNATURE_SAPIENT_COMPACT) << 4
@@ -844,7 +844,7 @@ export function encodeTopology(
         weightBytes,
         Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
         Bytes.padLeft(Bytes.fromNumber(topology.signature.data.length), bytesForSignatureSize),
-        topology.signature.data,
+        Bytes.fromHex(topology.signature.data),
       )
     } else {
       throw new Error(`Invalid signature type: ${topology.signature.type}`)
@@ -872,11 +872,11 @@ export function encodeTopology(
   }
 
   if (isSubdigestLeaf(topology)) {
-    return Bytes.concat(Bytes.fromNumber(FLAG_SUBDIGEST << 4), topology.digest)
+    return Bytes.concat(Bytes.fromNumber(FLAG_SUBDIGEST << 4), Bytes.fromHex(topology.digest))
   }
 
   if (isAnyAddressSubdigestLeaf(topology)) {
-    return Bytes.concat(Bytes.fromNumber(FLAG_SIGNATURE_ANY_ADDRESS_SUBDIGEST << 4), topology.digest)
+    return Bytes.concat(Bytes.fromNumber(FLAG_SIGNATURE_ANY_ADDRESS_SUBDIGEST << 4), Bytes.fromHex(topology.digest))
   }
 
   throw new Error('Invalid topology')
@@ -939,12 +939,12 @@ function rawTopologyToJson(top: RawTopology): any {
         case 'subdigest':
           return {
             type: 'subdigest',
-            digest: Bytes.toHex(top.digest),
+            digest: top.digest,
           }
         case 'any-address-subdigest':
           return {
             type: 'any-address-subdigest',
-            digest: Bytes.toHex(top.digest),
+            digest: top.digest,
           }
         case 'nested':
           return {
@@ -986,14 +986,14 @@ function rawSignatureOfLeafToJson(sig: SignatureOfSignerLeaf | SignatureOfSapien
     return {
       type: sig.type,
       address: sig.address,
-      data: Bytes.toHex(sig.data),
+      data: sig.data,
     }
   }
   if (sig.type === 'sapient' || sig.type === 'sapient_compact') {
     return {
       type: sig.type,
       address: sig.address,
-      data: Bytes.toHex(sig.data),
+      data: sig.data,
     }
   }
   throw new Error('Unknown signature type in raw signature')
@@ -1044,12 +1044,12 @@ function rawTopologyFromJson(obj: any): RawTopology {
         case 'subdigest':
           return {
             type: 'subdigest',
-            digest: Bytes.fromHex(obj.digest),
+            digest: obj.digest,
           }
         case 'any-address-subdigest':
           return {
             type: 'any-address-subdigest',
-            digest: Bytes.fromHex(obj.digest),
+            digest: obj.digest,
           }
         case 'nested':
           return {
@@ -1089,14 +1089,14 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
       return {
         type: 'erc1271',
         address: obj.address,
-        data: Bytes.fromHex(obj.data),
+        data: obj.data,
       }
     case 'sapient':
     case 'sapient_compact':
       return {
         type: obj.type,
         address: obj.address,
-        data: Bytes.fromHex(obj.data),
+        data: obj.data,
       }
     default:
       throw new Error('Invalid signature type in raw signature')
@@ -1224,10 +1224,7 @@ async function recoverTopology(
 
             const call = {
               to: topology.signature.address,
-              data: AbiFunction.encodeData(IS_VALID_SIGNATURE, [
-                Bytes.toHex(digest),
-                Bytes.toHex(topology.signature.data),
-              ]),
+              data: AbiFunction.encodeData(IS_VALID_SIGNATURE, [Bytes.toHex(digest), topology.signature.data]),
             }
 
             const response = await provider.request({
@@ -1276,11 +1273,11 @@ async function recoverTopology(
                 topology.signature.type === 'sapient'
                   ? AbiFunction.encodeData(RECOVER_SAPIENT_SIGNATURE, [
                       encode(chainId, payload),
-                      Bytes.toHex(topology.signature.data),
+                      topology.signature.data,
                     ])
                   : AbiFunction.encodeData(RECOVER_SAPIENT_SIGNATURE_COMPACT, [
                       Bytes.toHex(digest),
-                      Bytes.toHex(topology.signature.data),
+                      topology.signature.data,
                     ]),
             }
 
@@ -1312,7 +1309,7 @@ async function recoverTopology(
   } else if (isSubdigestLeaf(topology)) {
     return {
       topology,
-      weight: Bytes.isEqual(topology.digest, digest)
+      weight: Bytes.isEqual(Bytes.fromHex(topology.digest), digest)
         ? 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
         : 0n,
     }
@@ -1320,7 +1317,7 @@ async function recoverTopology(
     const anyAddressOpHash = hash('0x0000000000000000000000000000000000000000', chainId, payload)
     return {
       topology,
-      weight: Bytes.isEqual(topology.digest, anyAddressOpHash)
+      weight: Bytes.isEqual(Bytes.fromHex(topology.digest), anyAddressOpHash)
         ? 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
         : 0n,
     }
@@ -1345,7 +1342,7 @@ function encode(
         noChainId: !chainId,
         calls: payload.calls.map((call) => ({
           ...call,
-          data: Bytes.toHex(call.data),
+          data: call.data,
           behaviorOnError: call.behaviorOnError === 'ignore' ? 0n : call.behaviorOnError === 'revert' ? 1n : 2n,
         })),
         space: payload.space,
@@ -1363,7 +1360,7 @@ function encode(
         calls: [],
         space: 0n,
         nonce: 0n,
-        message: Bytes.toHex(payload.message),
+        message: payload.message,
         imageHash: '0x',
         digest: '0x',
         parentWallets: payload.parentWallets ?? [],

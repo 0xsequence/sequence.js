@@ -49,7 +49,7 @@ export class Transactions {
       (tx): Payload.Call => ({
         to: tx.to,
         value: tx.value ?? 0n,
-        data: tx.data ?? new Uint8Array(0),
+        data: tx.data ?? '0x',
         gasLimit: tx.gasLimit ?? 0n, // TODO: Add gas estimation
         delegateCall: false,
         onlyFallback: false,

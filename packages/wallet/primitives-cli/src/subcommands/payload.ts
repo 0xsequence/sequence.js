@@ -87,7 +87,7 @@ export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payl
       calls: decoded.calls.map((call) => ({
         to: Address.from(call.to),
         value: call.value,
-        data: Bytes.from(call.data as Hex.Hex),
+        data: call.data as `0x${string}`,
         gasLimit: call.gasLimit,
         delegateCall: call.delegateCall,
         onlyFallback: call.onlyFallback,
@@ -100,7 +100,7 @@ export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payl
   if (decoded.kind === KIND_MESSAGE) {
     return {
       type: 'message',
-      message: Bytes.fromHex(decoded.message as `0x${string}`),
+      message: decoded.message as `0x${string}`,
       parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
     }
   }

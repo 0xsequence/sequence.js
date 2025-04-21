@@ -262,7 +262,7 @@ export class Wallet {
               {
                 to: deploy.to,
                 value: 0n,
-                data: Hex.toBytes(deploy.data),
+                data: deploy.data,
                 gasLimit: 0n,
                 delegateCall: false,
                 onlyFallback: false,
@@ -271,12 +271,10 @@ export class Wallet {
               {
                 to: this.address,
                 value: 0n,
-                data: Hex.toBytes(
-                  AbiFunction.encodeData(Constants.EXECUTE, [
-                    Bytes.toHex(Payload.encode(envelope.payload)),
-                    Bytes.toHex(SequenceSignature.encodeSignature(signature)),
-                  ]),
-                ),
+                data: AbiFunction.encodeData(Constants.EXECUTE, [
+                  Bytes.toHex(Payload.encode(envelope.payload)),
+                  Bytes.toHex(SequenceSignature.encodeSignature(signature)),
+                ]),
                 gasLimit: 0n,
                 delegateCall: false,
                 onlyFallback: false,

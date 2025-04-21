@@ -6,7 +6,7 @@ import { getSignPayload } from 'ox/TypedData'
 export type Call = {
   to: Address.Address
   value: bigint
-  data: Bytes.Bytes
+  data: Hex.Hex
   gasLimit: bigint
   delegateCall: boolean
   onlyFallback: boolean
@@ -22,7 +22,7 @@ export type Calls = {
 
 export type Message = {
   type: 'message'
-  message: Bytes.Bytes
+  message: Hex.Hex
 }
 
 export type ConfigUpdate = {
@@ -55,7 +55,7 @@ export type TypedDataToSign = {
   message: Record<string, unknown>
 }
 
-export function fromMessage(message: Bytes.Bytes): Message {
+export function fromMessage(message: Hex.Hex): Message {
   return {
     type: 'message',
     message,
@@ -234,7 +234,7 @@ export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
       }
       // 3 bytes => up to 16,777,215
       const dataLenBytes = Bytes.fromNumber(dataLen, { size: 3 })
-      out = Bytes.concat(out, dataLenBytes, call.data)
+      out = Bytes.concat(out, dataLenBytes, Bytes.fromHex(call.data))
     }
 
     // If hasGasLimit, store 32 bytes of gasLimit
@@ -268,7 +268,7 @@ export function encodeSapient(
       encoded.kind = 0
       encoded.calls = payload.calls.map((call) => ({
         ...call,
-        data: Bytes.toHex(call.data),
+        data: call.data,
         behaviorOnError: BigInt(encodeBehaviorOnError(call.behaviorOnError)),
       }))
       encoded.space = payload.space
@@ -277,7 +277,7 @@ export function encodeSapient(
 
     case 'message':
       encoded.kind = 1
-      encoded.message = Bytes.toHex(payload.message)
+      encoded.message = payload.message
       break
 
     case 'config-update':
@@ -333,7 +333,7 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
         calls: payload.calls.map((call) => ({
           to: call.to,
           value: call.value.toString(),
-          data: Bytes.toHex(call.data),
+          data: call.data,
           gasLimit: call.gasLimit.toString(),
           delegateCall: call.delegateCall,
           onlyFallback: call.onlyFallback,
@@ -361,7 +361,7 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
       }
 
       const message = {
-        message: Bytes.toHex(payload.message),
+        message: payload.message,
         wallets: payload.parentWallets ?? [],
       }
 
@@ -559,7 +559,7 @@ export function decode(packed: Bytes.Bytes, self?: Address.Address): Calls {
     calls.push({
       to,
       value,
-      data,
+      data: Bytes.toHex(data),
       gasLimit,
       delegateCall,
       onlyFallback,

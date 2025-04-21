@@ -55,7 +55,7 @@ export class IdentitySigner implements Signers.Signer {
 
   async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
-      Bytes.fromString(
+      Hex.fromString(
         JSON.stringify({
           action: 'consent-to-be-part-of-wallet',
           wallet,

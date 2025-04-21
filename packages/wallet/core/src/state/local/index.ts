@@ -366,7 +366,7 @@ export class Provider implements ProviderInterface {
       if (Signature.isSignatureOfSapientSignerLeaf(topology.signature)) {
         switch (topology.signature.address.toLowerCase()) {
           case this.extensions.passkeys.toLowerCase():
-            const decoded = Extensions.Passkeys.decode(topology.signature.data)
+            const decoded = Extensions.Passkeys.decode(Bytes.fromHex(topology.signature.data))
 
             if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
               throw new Error('Invalid passkey signature')

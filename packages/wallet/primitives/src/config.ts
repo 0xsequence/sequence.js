@@ -30,12 +30,12 @@ export type SapientSignerLeaf = {
 
 export type SubdigestLeaf = {
   type: 'subdigest'
-  digest: Bytes.Bytes
+  digest: Hex.Hex
 }
 
 export type AnyAddressSubdigestLeaf = {
   type: 'any-address-subdigest'
-  digest: Bytes.Bytes
+  digest: Hex.Hex
 }
 
 export type NestedLeaf = {
@@ -230,11 +230,13 @@ export function hashConfiguration(topology: Topology | Config): Bytes.Bytes {
   }
 
   if (isSubdigestLeaf(topology)) {
-    return Hash.keccak256(Bytes.concat(Bytes.fromString('Sequence static digest:\n'), topology.digest))
+    return Hash.keccak256(Bytes.concat(Bytes.fromString('Sequence static digest:\n'), Bytes.fromHex(topology.digest)))
   }
 
   if (isAnyAddressSubdigestLeaf(topology)) {
-    return Hash.keccak256(Bytes.concat(Bytes.fromString('Sequence any address subdigest:\n'), topology.digest))
+    return Hash.keccak256(
+      Bytes.concat(Bytes.fromString('Sequence any address subdigest:\n'), Bytes.fromHex(topology.digest)),
+    )
   }
 
   if (isNodeLeaf(topology)) {
@@ -316,15 +318,15 @@ function encodeTopology(top: Topology): any {
   } else if (isSubdigestLeaf(top)) {
     return {
       type: 'subdigest',
-      digest: Bytes.toHex(top.digest),
+      digest: top.digest,
     }
   } else if (isAnyAddressSubdigestLeaf(top)) {
     return {
       type: 'any-address-subdigest',
-      digest: Bytes.toHex(top.digest),
+      digest: top.digest,
     }
   } else if (isNodeLeaf(top)) {
-    return Bytes.toHex(top)
+    return top
   } else if (isNestedLeaf(top)) {
     return {
       type: 'nested',
@@ -366,12 +368,12 @@ function decodeTopology(obj: any): Topology {
     case 'subdigest':
       return {
         type: 'subdigest',
-        digest: Bytes.fromHex(obj.digest),
+        digest: obj.digest,
       }
     case 'any-address-subdigest':
       return {
         type: 'any-address-subdigest',
-        digest: Bytes.fromHex(obj.digest),
+        digest: obj.digest,
       }
     case 'nested':
       return {
@@ -489,14 +491,14 @@ function mergeLeaf(a: Leaf, b: Leaf): Leaf {
   }
 
   if (isSubdigestLeaf(a) && isSubdigestLeaf(b)) {
-    if (!Bytes.isEqual(a.digest, b.digest)) {
+    if (!Bytes.isEqual(Bytes.fromHex(a.digest), Bytes.fromHex(b.digest))) {
       throw new Error('Topology mismatch: subdigest fields differ')
     }
     return a
   }
 
   if (isAnyAddressSubdigestLeaf(a) && isAnyAddressSubdigestLeaf(b)) {
-    if (!Bytes.isEqual(a.digest, b.digest)) {
+    if (!Bytes.isEqual(Bytes.fromHex(a.digest), Bytes.fromHex(b.digest))) {
       throw new Error('Topology mismatch: any-address-subdigest fields differ')
     }
     return a
