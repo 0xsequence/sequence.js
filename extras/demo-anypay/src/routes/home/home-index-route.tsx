@@ -582,12 +582,18 @@ export const HomeIndexRoute = () => {
             },
             onError: (error) => {
               console.error('Transaction failed:', error)
+              if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
+                setIsAutoExecuteEnabled(false)
+              }
               updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
             },
           },
         )
       } catch (error: any) {
         console.error('Failed to switch chain:', error)
+        if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
+          setIsAutoExecuteEnabled(false)
+        }
         updateMetaTxnStatus(
           undefined,
           'reverted',
@@ -617,6 +623,9 @@ export const HomeIndexRoute = () => {
         },
         onError: (error) => {
           console.error('Transaction failed:', error)
+          if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
+            setIsAutoExecuteEnabled(false)
+          }
           updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
         },
       },
