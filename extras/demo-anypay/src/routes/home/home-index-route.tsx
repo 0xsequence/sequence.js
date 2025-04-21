@@ -15,6 +15,7 @@ import { AnyPay } from '@0xsequence/wallet-core'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Relayer } from '@0xsequence/wallet-core'
+import { useMetaTxnMonitor } from '../../hooks/useMetaTxnMonitor'
 import {
   AlertTriangle,
   Loader2,
@@ -124,17 +125,40 @@ export const HomeIndexRoute = () => {
   })
   const indexerClient = useIndexerGatewayClient()
   const apiClient = useAPIClient()
-  const relayer = useMemo(() => {
-    return new Relayer.Rpc.RpcRelayer('https://relayer.sequence.app', 8453, 'https://node.sequence.app')
-  }, [])
 
-  // State for intent results
+  // State declarations
   const [intentOperations, setIntentOperations] = useState<GetIntentOperationsReturn['operations'] | null>(null)
   const [intentPreconditions, setIntentPreconditions] = useState<GetIntentOperationsReturn['preconditions'] | null>(
     null,
   )
   const [txnHash, setTxnHash] = useState<Hex | undefined>()
   const [committedIntentAddress, setCommittedIntentAddress] = useState<string | null>(null)
+  const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
+  const [verificationStatus, setVerificationStatus] = useState<{
+    success: boolean
+    receivedAddress?: string
+    calculatedAddress?: string
+  } | null>(null)
+  const [metaTxnStatus, setMetaTxnStatus] = useState<{
+    txnHash?: string
+    status?: string
+    revertReason?: string
+    gasUsed?: number
+    effectiveGasPrice?: string
+  } | null>(null)
+  const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
+  const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
+  const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
+  const [operationStatuses, setOperationStatuses] = useState<{
+    [key: string]: {
+      status: 'pending' | 'success' | 'failed'
+      txHash?: string
+      error?: string
+      preconditionsMet?: boolean
+      lastPreconditionCheck?: string
+    }
+  }>({})
+  const [operationHashes, setOperationHashes] = useState<{ [key: string]: Hex }>({})
 
   // Default empty page info for query fallback
   const defaultPage = { page: 1, pageSize: 10, totalRecords: 0, more: false }
@@ -172,33 +196,42 @@ export const HomeIndexRoute = () => {
     retry: 1,
   })
 
-  const [verificationStatus, setVerificationStatus] = useState<{
-    success: boolean
-    receivedAddress?: string
-    calculatedAddress?: string
-  } | null>(null)
+  // Relayers setup
+  const relayers = useMemo(() => {
+    const relayerMap = new Map<number, Relayer.Rpc.RpcRelayer>()
 
-  const [metaTxnStatus, setMetaTxnStatus] = useState<{
-    txnHash?: string
-    status?: string
-    revertReason?: string
-    gasUsed?: number
-    effectiveGasPrice?: string
-  } | null>(null)
+    // Initialize relayers for each unique chain in intent operations
+    if (intentOperations) {
+      const uniqueChainIds = new Set(intentOperations.map((op) => parseInt(op.chainId)))
+      uniqueChainIds.forEach((chainId) => {
+        // Get chain-specific RPC URL
+        let rpcUrl = 'https://node.sequence.app'
+        const chain = getChainInfo(chainId)
+        if (chain) {
+          if (chainId === 42161) rpcUrl = 'https://arbitrum-mainnet.sequence.app'
+          else if (chainId === 10) rpcUrl = 'https://optimism-mainnet.sequence.app'
+          else if (chainId === 8453) rpcUrl = 'https://base-mainnet.sequence.app'
+          else rpcUrl = 'https://node.sequence.app'
+        }
 
-  const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
-  const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
-  const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
-  const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
-
-  // Add new state for operation statuses
-  const [operationStatuses, setOperationStatuses] = useState<{
-    [key: string]: {
-      status: 'pending' | 'success' | 'failed'
-      txHash?: string
-      error?: string
+        relayerMap.set(chainId, new Relayer.Rpc.RpcRelayer('https://relayer.sequence.app', chainId, rpcUrl))
+      })
     }
-  }>({})
+
+    return relayerMap
+  }, [intentOperations])
+
+  // Function to get relayer for a specific chain
+  const getRelayer = useCallback(
+    (chainId: number) => {
+      const chainRelayer = relayers.get(chainId)
+      if (!chainRelayer) {
+        throw new Error(`No relayer found for chain ID ${chainId}`)
+      }
+      return chainRelayer
+    },
+    [relayers],
+  )
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
@@ -255,16 +288,18 @@ export const HomeIndexRoute = () => {
   }
 
   const checkPreconditionStatuses = useCallback(async () => {
-    if (!intentPreconditions || !relayer) return
+    if (!intentPreconditions) return
 
     const statuses = await Promise.all(
       intentPreconditions.map(async (precondition) => {
         try {
+          const chainId = parseInt(precondition.chainID || '0')
+          const chainRelayer = getRelayer(chainId)
           const formattedPrecondition = {
             ...precondition,
             data: typeof precondition.data === 'string' ? precondition.data : JSON.stringify(precondition.data),
           }
-          return await relayer.checkPrecondition(formattedPrecondition)
+          return await chainRelayer.checkPrecondition(formattedPrecondition)
         } catch (error) {
           console.error('Error checking precondition:', error)
           return false
@@ -273,7 +308,7 @@ export const HomeIndexRoute = () => {
     )
 
     setPreconditionStatuses(statuses)
-  }, [intentPreconditions, relayer])
+  }, [intentPreconditions, getRelayer])
 
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
@@ -718,11 +753,75 @@ export const HomeIndexRoute = () => {
     if (isSuccess && receipt) {
       updateMetaTxnStatus(receipt.transactionHash, receipt.status, receipt.gasUsed, receipt.effectiveGasPrice)
       checkPreconditionStatuses()
+
+      // After origin call is confirmed, send the meta-transaction
+      const sendMetaTxn = async () => {
+        if (!intentOperations || !intentPreconditions || !account.address) {
+          console.error('Missing required data for meta-transaction')
+          return
+        }
+
+        try {
+          // Calculate the intent address
+          const intentAddress = calculateIntentAddress(intentOperations, account.address)
+
+          // For each operation, send the meta-transaction using the appropriate relayer
+          for (const operation of intentOperations) {
+            try {
+              const chainId = parseInt(operation.chainId)
+              const chainRelayer = getRelayer(chainId)
+
+              // Encode the operation data
+              const encodedData = (operation.calls[0].data as `0x${string}`) || ('0x' as `0x${string}`)
+
+              // Send the meta-transaction through the chain-specific relayer
+              const { opHash } = await chainRelayer.relay(
+                intentAddress,
+                encodedData,
+                BigInt(operation.chainId),
+                undefined,
+                intentPreconditions.filter((p) => p.chainID && parseInt(p.chainID) === chainId),
+              )
+
+              // Store the opHash in state for monitoring
+              setOperationHashes((prev) => ({
+                ...prev,
+                [`${operation.chainId}-${intentOperations.indexOf(operation)}`]: opHash,
+              }))
+            } catch (error: any) {
+              console.error('Error sending meta-transaction:', error)
+              setOperationStatuses((prev) => ({
+                ...prev,
+                [`${operation.chainId}-${intentOperations.indexOf(operation)}`]: {
+                  status: 'failed',
+                  error: error.message,
+                },
+              }))
+            }
+          }
+        } catch (error: any) {
+          console.error('Error in meta-transaction process:', error)
+        }
+      }
+
+      // Execute the meta-transaction sending process
+      sendMetaTxn()
     } else if (isError) {
       console.error('Error waiting for receipt:', receiptError)
       updateMetaTxnStatus(txnHash, 'reverted', undefined, undefined, receiptError?.message || 'Failed to get receipt')
     }
-  }, [isWaitingForReceipt, isSuccess, isError, receipt, txnHash, receiptError])
+  }, [
+    isWaitingForReceipt,
+    isSuccess,
+    isError,
+    receipt,
+    txnHash,
+    receiptError,
+    intentOperations,
+    intentPreconditions,
+    account.address,
+    getRelayer,
+  ])
 
   useEffect(() => {
     if (intentPreconditions) {
@@ -954,6 +1053,46 @@ export const HomeIndexRoute = () => {
       setOperationStatuses({})
     }
   }, [account.isConnected])
+
+  // Replace the monitoring effect with individual hook calls for each operation
+  const operation0Status = useMetaTxnMonitor(
+    operationHashes[`${intentOperations?.[0]?.chainId}-0`],
+    intentOperations?.[0]?.chainId || '',
+    intentOperations?.[0] ? getRelayer(parseInt(intentOperations[0].chainId)) : undefined,
+  )
+
+  const operation1Status = useMetaTxnMonitor(
+    operationHashes[`${intentOperations?.[1]?.chainId}-1`],
+    intentOperations?.[1]?.chainId || '',
+    intentOperations?.[1] ? getRelayer(parseInt(intentOperations[1].chainId)) : undefined,
+  )
+
+  // Update operation statuses when individual operation statuses change
+  useEffect(() => {
+    if (!intentOperations) return
+
+    const newStatuses: {
+      [key: string]: {
+        status: 'pending' | 'success' | 'failed'
+        txHash?: string
+        error?: string
+        preconditionsMet?: boolean
+        lastPreconditionCheck?: string
+      }
+    } = {}
+
+    if (intentOperations[0]) {
+      newStatuses[`${intentOperations[0].chainId}-0`] = operation0Status
+    }
+    if (intentOperations[1]) {
+      newStatuses[`${intentOperations[1].chainId}-1`] = operation1Status
+    }
+
+    setOperationStatuses((prev) => ({
+      ...prev,
+      ...newStatuses,
+    }))
+  }, [intentOperations, operation0Status, operation1Status])
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
