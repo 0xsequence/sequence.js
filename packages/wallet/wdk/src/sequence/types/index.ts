@@ -1,4 +1,4 @@
-export type { Wallet } from './wallet'
+export type { Wallet } from './wallet.js'
 export type {
   TransactionRequest,
   RelayerOption,
@@ -8,7 +8,7 @@ export type {
   TransactionFormed,
   TransactionRelayed,
   Transaction,
-} from './transaction-request'
+} from './transaction-request.js'
 export type {
   ActionToPayload,
   Action,
@@ -20,8 +20,8 @@ export type {
   SignerActionable,
   Signer,
   SignatureRequest,
-} from './signature-request'
-export type { Kind, WitnessExtraSignerKind, SignerWithKind } from './signer'
+} from './signature-request.js'
+export type { Kind, WitnessExtraSignerKind, SignerWithKind } from './signer.js'
 
-export { Actions } from './signature-request'
-export { Kinds } from './signer'
+export { Actions } from './signature-request.js'
+export { Kinds } from './signer.js'

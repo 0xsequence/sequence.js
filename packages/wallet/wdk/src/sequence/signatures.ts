@@ -2,9 +2,15 @@ import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Payload } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
-import * as Db from '../dbs'
-import { Shared } from './manager'
-import { BaseSignatureRequest, SignatureRequest, SignerBase, SignerSigned, SignerUnavailable } from './types'
+import * as Db from '../dbs/index.js'
+import { Shared } from './manager.js'
+import {
+  BaseSignatureRequest,
+  SignatureRequest,
+  SignerBase,
+  SignerSigned,
+  SignerUnavailable,
+} from './types/signature-request.js'
 
 export class Signatures {
   constructor(private readonly shared: Shared) {}

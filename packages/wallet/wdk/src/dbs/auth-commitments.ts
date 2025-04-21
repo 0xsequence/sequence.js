@@ -1,4 +1,4 @@
-import { Generic } from './generic'
+import { Generic } from './generic.js'
 
 const TABLE_NAME = 'auth-commitments'
 

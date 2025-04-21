@@ -1,8 +1,8 @@
 import { Signers as CoreSigners, Envelope, Wallet } from '@0xsequence/wallet-core'
 import { Config, Constants, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Provider, RpcTransport } from 'ox'
-import { SessionController } from '../session'
-import { Shared } from './manager'
+import { SessionController } from '../session/index.js'
+import { Shared } from './manager.js'
 
 export class Sessions {
   private readonly _sessionControllers: Map<Address.Address, SessionController> = new Map()

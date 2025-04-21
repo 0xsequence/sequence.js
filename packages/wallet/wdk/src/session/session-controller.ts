@@ -8,7 +8,7 @@ import {
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider } from 'ox'
-import { IdentitySigner } from '../identity'
+import { IdentitySigner } from '../identity/signer.js'
 
 type SessionControllerConfiguration = {
   wallet: Wallet
