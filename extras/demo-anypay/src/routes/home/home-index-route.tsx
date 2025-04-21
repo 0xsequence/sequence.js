@@ -1121,45 +1121,44 @@ export const HomeIndexRoute = () => {
             )}
           </div>
 
-          {/* Auto-Execute Toggle */}
-          <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Text variant="medium" color="primary" className="flex items-center">
-                  <Zap className="h-4 w-4 mr-2" />
-                  Auto-Execute
-                </Text>
-                <Text variant="small" color="secondary" className="text-gray-400">
-                  (Automatically commits and executes transactions when ready)
-                </Text>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Text variant="small" color="secondary">
-                  {isAutoExecuteEnabled ? 'Enabled' : 'Disabled'}
-                </Text>
-                <div
-                  onClick={() => setIsAutoExecuteEnabled(!isAutoExecuteEnabled)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    isAutoExecuteEnabled ? 'bg-blue-600' : 'bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isAutoExecuteEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* 2. Choose Action */}
-          <div>
-            <div className="flex items-center mb-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center">
               <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
                 <span>3</span>
               </div>
               <h3 className="text-xl font-semibold text-white">Choose Action</h3>
+            </div>
+            {/* Auto-Execute Toggle */}
+            <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Text variant="medium" color="primary" className="flex items-center">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Auto-Execute
+                  </Text>
+                  <Text variant="small" color="secondary" className="text-gray-400">
+                    (Automatically commits and executes transactions when ready)
+                  </Text>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Text variant="small" color="secondary">
+                    {isAutoExecuteEnabled ? 'Enabled' : 'Disabled'}
+                  </Text>
+                  <div
+                    onClick={() => setIsAutoExecuteEnabled(!isAutoExecuteEnabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                      isAutoExecuteEnabled ? 'bg-blue-600' : 'bg-gray-700'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        isAutoExecuteEnabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button
