@@ -1,5 +1,5 @@
 import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
-import * as State from './state'
+import * as State from './state/index.js'
 import {
   Constants,
   Context,
@@ -9,7 +9,7 @@ import {
   Payload,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import * as Envelope from './envelope'
+import * as Envelope from './envelope.js'
 
 export type WalletOptions = {
   context: Context.Context

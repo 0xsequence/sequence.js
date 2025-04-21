@@ -2,8 +2,8 @@ import { Hex, Bytes, Address, P256, Hash } from 'ox'
 import { Payload, Extensions } from '@0xsequence/wallet-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { WebAuthnP256 } from 'ox'
-import { State } from '..'
-import { SapientSigner, Witnessable } from '.'
+import { State } from '../index.js'
+import { SapientSigner, Witnessable } from './index.js'
 
 export type PasskeyOptions = {
   extensions: Pick<Extensions.Extensions, 'passkeys'>
