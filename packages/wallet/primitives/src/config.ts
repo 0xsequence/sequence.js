@@ -9,7 +9,7 @@ import {
   RawTopology,
   SignatureOfSapientSignerLeaf,
   SignatureOfSignerLeaf,
-} from './signature'
+} from './signature.js'
 
 export type SignerLeaf = {
   type: 'signer'

@@ -1,13 +1,13 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
-import * as GenericTree from './generic-tree'
+import * as GenericTree from './generic-tree.js'
 import {
   decodeSessionPermissions,
   encodeSessionPermissions,
   encodeSessionPermissionsForJson,
   SessionPermissions,
   sessionPermissionsFromParsed,
-} from './permission'
-import { minBytesFor } from './utils'
+} from './permission.js'
+import { minBytesFor } from './utils.js'
 
 //FIXME Reorder by expected usage
 export const SESSIONS_FLAG_PERMISSIONS = 0
