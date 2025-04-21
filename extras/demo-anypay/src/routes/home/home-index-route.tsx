@@ -187,9 +187,7 @@ export const HomeIndexRoute = () => {
   } | null>(null)
 
   const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
-
   const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
-
   const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
   const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
 
@@ -736,7 +734,7 @@ export const HomeIndexRoute = () => {
       let calcTo: Address.Address
       let calcData: Hex = '0x'
       let calcValue: bigint = 0n
-      const calcChainId: number = parseInt(intentOperations[0].chainId)
+      const originChainId: number = selectedToken.chainId
 
       const recipientAddress = intentAddressString
 
@@ -747,7 +745,7 @@ export const HomeIndexRoute = () => {
           (p) =>
             (p.type === 'transfer-native' || p.type === 'native-balance') &&
             // @ts-expect-error
-            p.chainId === calcChainId.toString(),
+            p.chainId === originChainId.toString(),
         )
         const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
         if (nativeMinAmount === undefined) {
@@ -760,7 +758,7 @@ export const HomeIndexRoute = () => {
           (p) =>
             p.type === 'erc20-balance' &&
             // @ts-expect-error
-            p.chainId === calcChainId.toString() &&
+            p.chainId === originChainId.toString() &&
             p.data?.token &&
             isAddressEqual(Address.from(p.data.token), Address.from(selectedToken.contractAddress)),
         )
@@ -778,7 +776,7 @@ export const HomeIndexRoute = () => {
         to: calcTo,
         data: calcData,
         value: calcValue,
-        chainId: calcChainId,
+        chainId: originChainId,
         error: undefined,
       })
     } catch (error: any) {
