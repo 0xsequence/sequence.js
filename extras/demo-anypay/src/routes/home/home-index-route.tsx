@@ -191,6 +191,7 @@ export const HomeIndexRoute = () => {
   const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
 
   const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
+  const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
@@ -637,6 +638,36 @@ export const HomeIndexRoute = () => {
     }
   }, [switchChainError])
 
+  // Effect to handle auto-execution after chain switch
+  useEffect(() => {
+    if (isAutoExecuteEnabled && originCallParams?.chainId && account.chainId === originCallParams.chainId) {
+      // Chain has been switched successfully, now send the transaction
+      if (!originCallParams.to || !originCallParams.data || originCallParams.value === null) {
+        console.error('Invalid origin call parameters for auto-execution')
+        return
+      }
+
+      sendTransaction(
+        {
+          to: originCallParams.to,
+          data: originCallParams.data,
+          value: originCallParams.value,
+          chainId: originCallParams.chainId,
+        },
+        {
+          onSuccess: (hash) => {
+            console.log('Auto-executed transaction sent, hash:', hash)
+            setTxnHash(hash)
+          },
+          onError: (error) => {
+            console.error('Auto-executed transaction failed:', error)
+            updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+          },
+        },
+      )
+    }
+  }, [isAutoExecuteEnabled, originCallParams?.chainId, account.chainId])
+
   // Only update chain switch required state when needed
   useEffect(() => {
     if (originCallParams?.chainId && account.chainId === originCallParams.chainId) {
@@ -746,6 +777,120 @@ export const HomeIndexRoute = () => {
       setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
     }
   }, [intentOperations, selectedToken, intentPreconditions, account.address, calculateIntentAddress])
+
+  useEffect(() => {
+    // Auto-execute effect for handling chain switch and transaction
+    if (
+      isAutoExecuteEnabled &&
+      originCallParams &&
+      !originCallParams.error &&
+      account.chainId !== originCallParams.chainId
+    ) {
+      handleSendOriginCall()
+    }
+  }, [isAutoExecuteEnabled, originCallParams, account.chainId])
+
+  // Effect to auto-commit when intent operations are ready
+  useEffect(() => {
+    if (
+      isAutoExecuteEnabled &&
+      intentOperations &&
+      intentPreconditions &&
+      account.address &&
+      !commitIntentConfigMutation.isPending &&
+      !commitIntentConfigMutation.isSuccess
+    ) {
+      console.log('Auto-committing intent configuration...')
+      commitIntentConfigMutation.mutate({
+        walletAddress: calculateIntentAddress(intentOperations, account.address).toString(),
+        mainSigner: account.address,
+        operations: intentOperations,
+        preconditions: intentPreconditions,
+      })
+    }
+  }, [
+    isAutoExecuteEnabled,
+    intentOperations,
+    intentPreconditions,
+    account.address,
+    commitIntentConfigMutation.isPending,
+    commitIntentConfigMutation.isSuccess,
+  ])
+
+  // Effect to auto-send transaction after successful commit
+  useEffect(() => {
+    if (
+      isAutoExecuteEnabled &&
+      commitIntentConfigMutation.isSuccess &&
+      originCallParams &&
+      !originCallParams.error &&
+      !isSendingTransaction &&
+      !isWaitingForReceipt &&
+      !txnHash
+    ) {
+      console.log('Auto-sending transaction after successful commit...')
+      handleSendOriginCall()
+    }
+  }, [
+    isAutoExecuteEnabled,
+    commitIntentConfigMutation.isSuccess,
+    originCallParams,
+    isSendingTransaction,
+    isWaitingForReceipt,
+    txnHash,
+  ])
+
+  // Existing auto-execute effect for chain switching
+  useEffect(() => {
+    if (
+      isAutoExecuteEnabled &&
+      originCallParams &&
+      !originCallParams.error &&
+      account.chainId !== originCallParams.chainId
+    ) {
+      handleSendOriginCall()
+    }
+  }, [isAutoExecuteEnabled, originCallParams, account.chainId])
+
+  // Update button text and disabled state for commit button
+  const commitButtonText = commitIntentConfigMutation.isPending ? (
+    <div className="flex items-center">
+      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+      Committing...
+    </div>
+  ) : (
+    'Commit Intent'
+  )
+
+  const isCommitButtonDisabled = Boolean(
+    commitIntentConfigMutation.isPending || (isAutoExecuteEnabled && intentOperations && !!intentPreconditions?.length),
+  )
+
+  // Update button text and disabled state for send transaction button
+  const sendButtonText = isSwitchingChain ? (
+    <div className="flex items-center">
+      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+      Switching Chain...
+    </div>
+  ) : isSendingTransaction || isWaitingForReceipt ? (
+    <div className="flex items-center">
+      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+      {isWaitingForReceipt ? 'Waiting...' : 'Sending...'}
+    </div>
+  ) : isChainSwitchRequired ? (
+    'Switch Chain'
+  ) : (
+    'Send Transaction'
+  )
+
+  const isSendButtonDisabled =
+    !verificationStatus?.success ||
+    isSendingTransaction ||
+    isWaitingForReceipt ||
+    !originCallParams ||
+    !!originCallParams.error ||
+    isSwitchingChain ||
+    (isAutoExecuteEnabled && commitIntentConfigMutation.isSuccess) // Disable if auto-execute is on and commit was successful
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -1317,17 +1462,10 @@ export const HomeIndexRoute = () => {
                           preconditions: intentPreconditions,
                         })
                       }}
-                      disabled={commitIntentConfigMutation.isPending}
+                      disabled={isCommitButtonDisabled}
                       className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
-                      {commitIntentConfigMutation.isPending ? (
-                        <div className="flex items-center">
-                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                          Committing...
-                        </div>
-                      ) : (
-                        'Commit Intent'
-                      )}
+                      {commitButtonText}
                     </Button>
                   </div>
 
@@ -1428,17 +1566,32 @@ export const HomeIndexRoute = () => {
                 <h3 className="text-xl font-semibold text-white">Origin Call</h3>
               </div>
               <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
-                <Text
-                  variant="medium"
-                  color="primary"
-                  className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
-                >
-                  <Zap className="h-4 w-4 mr-1" />
-                  Transaction Details
-                  <Text variant="small" color="secondary" className="ml-1">
-                    (Send this transaction to execute the intent):
+                <div className="flex items-center justify-between mb-4">
+                  <Text variant="medium" color="primary" className="pb-1 border-b border-gray-700/50 flex items-center">
+                    <Zap className="h-4 w-4 mr-1" />
+                    Transaction Details
+                    <Text variant="small" color="secondary" className="ml-1">
+                      (Send this transaction to execute the intent):
+                    </Text>
                   </Text>
-                </Text>
+                  <div className="flex items-center space-x-2">
+                    <Text variant="small" color="secondary">
+                      Auto-Execute
+                    </Text>
+                    <div
+                      onClick={() => setIsAutoExecuteEnabled(!isAutoExecuteEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                        isAutoExecuteEnabled ? 'bg-blue-600' : 'bg-gray-700'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          isAutoExecuteEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <div className="bg-gray-800/70 p-2 rounded-md">
                     <Text variant="small" color="secondary">
@@ -1502,31 +1655,10 @@ export const HomeIndexRoute = () => {
                     <Button
                       variant="primary"
                       onClick={handleSendOriginCall}
-                      disabled={
-                        !verificationStatus?.success ||
-                        isSendingTransaction ||
-                        isWaitingForReceipt ||
-                        !originCallParams ||
-                        !!originCallParams.error ||
-                        isSwitchingChain
-                      }
+                      disabled={isSendButtonDisabled}
                       className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
-                      {isSwitchingChain ? (
-                        <div className="flex items-center">
-                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                          Switching Chain...
-                        </div>
-                      ) : isSendingTransaction || isWaitingForReceipt ? (
-                        <div className="flex items-center">
-                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                          {isWaitingForReceipt ? 'Waiting...' : 'Sending...'}
-                        </div>
-                      ) : isChainSwitchRequired ? (
-                        'Switch Chain'
-                      ) : (
-                        'Send Transaction'
-                      )}
+                      {sendButtonText}
                     </Button>
                   </div>
                 </div>
