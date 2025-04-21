@@ -21,6 +21,4 @@ export type WalletSelectionOptions = {
   context: WalletSelectionContext
 }
 
-export type WalletSelectionResult = 'create' | 'cancel'
-
-export type WalletSelectionUiHandler = (options: WalletSelectionOptions) => Promise<WalletSelectionResult>
+export type WalletSelectionUiHandler = (options: WalletSelectionOptions) => Promise<Address.Address | undefined>
