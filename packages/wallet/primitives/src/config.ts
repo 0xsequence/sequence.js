@@ -45,7 +45,7 @@ export type NestedLeaf = {
   threshold: bigint
 }
 
-export type NodeLeaf = Bytes.Bytes
+export type NodeLeaf = Hex.Hex
 
 export type Node = [Topology, Topology]
 
@@ -77,7 +77,7 @@ export function isAnyAddressSubdigestLeaf(cand: any): cand is AnyAddressSubdiges
 }
 
 export function isNodeLeaf(cand: any): cand is NodeLeaf {
-  return cand instanceof Uint8Array && cand.length === 32
+  return typeof cand === 'string' && cand.length === 66
 }
 
 export function isNestedLeaf(cand: any): cand is NestedLeaf {
@@ -240,7 +240,7 @@ export function hashConfiguration(topology: Topology | Config): Bytes.Bytes {
   }
 
   if (isNodeLeaf(topology)) {
-    return topology
+    return Bytes.fromHex(topology)
   }
 
   if (isNestedLeaf(topology)) {
@@ -348,7 +348,7 @@ function decodeTopology(obj: any): Topology {
   }
 
   if (typeof obj === 'string') {
-    return Bytes.padLeft(Bytes.fromHex(obj as `0x${string}`), 32)
+    return obj as Hex.Hex
   }
 
   switch (obj.type) {
@@ -448,7 +448,7 @@ export function mergeTopology(a: Topology, b: Topology): Topology {
 
 function mergeLeaf(a: Leaf, b: Leaf): Leaf {
   if (isNodeLeaf(a) && isNodeLeaf(b)) {
-    if (!Bytes.isEqual(a, b)) {
+    if (!Hex.isEqual(a, b)) {
       throw new Error('Topology mismatch: different node leaves')
     }
     return a
@@ -456,7 +456,7 @@ function mergeLeaf(a: Leaf, b: Leaf): Leaf {
 
   if (isNodeLeaf(a) && !isNodeLeaf(b)) {
     const hb = hashConfiguration(b)
-    if (!Bytes.isEqual(hb, a)) {
+    if (!Bytes.isEqual(hb, Bytes.fromHex(a))) {
       throw new Error('Topology mismatch: node leaf hash does not match')
     }
     return b
@@ -464,7 +464,7 @@ function mergeLeaf(a: Leaf, b: Leaf): Leaf {
 
   if (!isNodeLeaf(a) && isNodeLeaf(b)) {
     const ha = hashConfiguration(a)
-    if (!Bytes.isEqual(ha, b)) {
+    if (!Bytes.isEqual(ha, Bytes.fromHex(b))) {
       throw new Error('Topology mismatch: node leaf hash does not match')
     }
     return a

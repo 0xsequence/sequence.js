@@ -228,7 +228,7 @@ export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
 
     // If hasData, store 3 bytes of data length + data
     if ((flags & 0x04) !== 0) {
-      const dataLen = call.data.length
+      const dataLen = Bytes.fromHex(call.data).length
       if (dataLen > 0xffffff) {
         throw new Error('Data too large')
       }

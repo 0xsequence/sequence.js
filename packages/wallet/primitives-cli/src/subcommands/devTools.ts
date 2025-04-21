@@ -82,7 +82,7 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Config.
         }
 
       case 3: // NodeLeaf
-        return randomBytes(32, options)
+        return randomHex(32, options)
 
       case 4: {
         // NestedLeaf

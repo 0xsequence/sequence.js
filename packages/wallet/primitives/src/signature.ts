@@ -391,7 +391,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       const node = signature.slice(index, index + 32)
       index += 32
 
-      nodes.push(node)
+      nodes.push(Bytes.toHex(node))
       continue
     }
 
@@ -777,7 +777,7 @@ export function encodeTopology(
   }
 
   if (isNodeLeaf(topology)) {
-    return Bytes.concat(Bytes.fromNumber(FLAG_NODE << 4), topology)
+    return Bytes.concat(Bytes.fromNumber(FLAG_NODE << 4), Bytes.fromHex(topology))
   }
 
   if (isSignedSignerLeaf(topology) || isRawSignerLeaf(topology)) {
@@ -817,7 +817,7 @@ export function encodeTopology(
         Bytes.fromNumber(flag),
         weightBytes,
         Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
-        Bytes.padLeft(Bytes.fromNumber(topology.signature.data.length), bytesForSignatureSize),
+        Bytes.padLeft(Bytes.fromNumber(Bytes.fromHex(topology.signature.data).length), bytesForSignatureSize),
         Bytes.fromHex(topology.signature.data),
       )
     } else if (topology.signature.type === 'sapient' || topology.signature.type === 'sapient_compact') {
@@ -964,9 +964,6 @@ function rawTopologyToJson(top: RawTopology): any {
       }
     }
   }
-  if (top instanceof Uint8Array) {
-    return Bytes.toHex(top)
-  }
   if (typeof top === 'string') {
     return top
   }
@@ -1070,7 +1067,7 @@ function rawTopologyFromJson(obj: any): RawTopology {
     }
   }
   if (typeof obj === 'string') {
-    return Bytes.fromHex(obj as `0x${string}`)
+    return obj as Hex.Hex
   }
   throw new Error('Invalid raw topology format')
 }

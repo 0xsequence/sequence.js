@@ -97,7 +97,7 @@ function parseElements(elements: string): Config.Leaf[] {
       remainingElements = remainingElements.slice(endSubElements + 1).trim()
     } else if (firstElementType === 'node') {
       const [_, hash] = firstElement!.split(':')
-      leaves.push(Bytes.fromHex(hash as `0x${string}`))
+      leaves.push(hash as Hex.Hex)
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else {
       throw new Error(`Invalid element: ${firstElement}`)
