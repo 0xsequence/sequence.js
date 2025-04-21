@@ -1,15 +1,15 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
-import { Attestation, encode, encodeForJson, fromParsed } from './attestation'
-import { MAX_PERMISSIONS_COUNT } from './permission'
+import { Attestation, encode, encodeForJson, fromParsed } from './attestation.js'
+import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {
   encodeSessionsTopology,
   isCompleteSessionsTopology,
   minimiseSessionsTopology,
   SessionsTopology,
-} from './session-config'
-import { RSY } from './signature'
-import { minBytesFor, packRSY } from './utils'
-import { Payload } from '.'
+} from './session-config.js'
+import { RSY } from './signature.js'
+import { minBytesFor, packRSY } from './utils.js'
+import { Payload } from './index.js'
 
 export type ImplicitSessionCallSignature = {
   attestation: Attestation

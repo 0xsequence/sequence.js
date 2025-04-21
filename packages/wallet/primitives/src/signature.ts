@@ -17,11 +17,11 @@ import {
   isSubdigestLeaf,
   isAnyAddressSubdigestLeaf,
   isTopology,
-} from './config'
-import { RECOVER_SAPIENT_SIGNATURE, RECOVER_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants'
-import { wrap, decode } from './erc-6492'
-import { fromConfigUpdate, hash, Parented } from './payload'
-import { minBytesFor, packRSY, unpackRSY } from './utils'
+} from './config.js'
+import { RECOVER_SAPIENT_SIGNATURE, RECOVER_SAPIENT_SIGNATURE_COMPACT, IS_VALID_SIGNATURE } from './constants.js'
+import { wrap, decode } from './erc-6492.js'
+import { fromConfigUpdate, hash, Parented } from './payload.js'
+import { minBytesFor, packRSY, unpackRSY } from './utils.js'
 
 export const FLAG_SIGNATURE_HASH = 0
 export const FLAG_ADDRESS = 1

@@ -1,7 +1,7 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hex } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
-import { DEPLOY } from './constants'
-import { Context } from './context'
+import { DEPLOY } from './constants.js'
+import { Context } from './context.js'
 
 export function deploy<T extends Bytes.Bytes | Hex.Hex>(
   deployHash: T,

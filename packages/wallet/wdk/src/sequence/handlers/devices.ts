@@ -1,10 +1,10 @@
-import * as Db from '../../dbs'
-import { Kinds } from '../types/signer'
-import { Signatures } from '../signatures'
+import * as Db from '../../dbs/index.js'
+import { Kinds } from '../types/signer.js'
+import { Signatures } from '../signatures.js'
 import { Address, Hex } from 'ox'
-import { Devices } from '../devices'
-import { Handler } from './handler'
-import { SignerReady, SignerUnavailable } from '../types'
+import { Devices } from '../devices.js'
+import { Handler } from './handler.js'
+import { SignerReady, SignerUnavailable } from '../types/index.js'
 
 export class DevicesHandler implements Handler {
   kind = Kinds.LocalDevice

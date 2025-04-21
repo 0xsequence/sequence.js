@@ -1,5 +1,5 @@
 import { Address, Hex } from 'ox'
-import { DEFAULT_CREATION_CODE } from './constants'
+import { DEFAULT_CREATION_CODE } from './constants.js'
 
 export type Context = {
   factory: Address.Address

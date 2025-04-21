@@ -1,11 +1,11 @@
 import { Config, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { State } from '..'
+import * as State from '../state/index.js'
 
-export * as Pk from './pk/index'
-export * as Passkey from './passkey'
-export * as Session from './session'
-export * from './session-manager'
+export * as Pk from './pk/index.js'
+export * as Passkey from './passkey.js'
+export * as Session from './session/index.js'
+export * from './session-manager.js'
 
 export interface Signer {
   readonly address: MaybePromise<Address.Address>

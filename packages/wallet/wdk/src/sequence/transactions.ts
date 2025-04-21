@@ -2,14 +2,14 @@ import { Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Wallet } from '@0xsequence/wallet-core'
 import { Address, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
-import { Shared } from './manager'
+import { Shared } from './manager.js'
 import {
   RelayerOption,
   Transaction,
   TransactionFormed,
   TransactionRelayed,
   TransactionRequest,
-} from './types/transaction-request'
+} from './types/transaction-request.js'
 
 export class Transactions {
   constructor(private readonly shared: Shared) {}

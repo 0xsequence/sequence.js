@@ -1,6 +1,6 @@
 import { Attestation, Payload, SessionSignature, Signature } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
-import { SignerInterface } from './session'
+import { SignerInterface } from './session.js'
 
 export type AttestationParams = Omit<Attestation.Attestation, 'approvedSigner'>
 
