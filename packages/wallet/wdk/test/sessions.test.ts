@@ -31,7 +31,15 @@ describe('Sessions (via Manager)', () => {
     if (!rpcUrl) {
       rpcUrl = 'https://sepolia-rollup.arbitrum.io/rpc'
     }
-    provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
+    provider = Provider.from(
+      RpcTransport.fromHttp(rpcUrl, {
+        fetchOptions: {
+          headers: {
+            'x-requested-with': 'XMLHttpRequest',
+          },
+        },
+      }),
+    )
     chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
 
     // Create state provider
@@ -190,6 +198,7 @@ describe('Sessions (via Manager)', () => {
 
     // Send the transaction
     if (PRIVATE_KEY) {
+      console.log('PRIVATE_KEY', PRIVATE_KEY)
       // Build the transaction
       const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
       console.log('tx', transaction)
