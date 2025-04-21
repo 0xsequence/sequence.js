@@ -360,7 +360,7 @@ export const HomeIndexRoute = () => {
 
       const USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
       const RECIPIENT_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
-      const AMOUNT = 30000000n // 30 USDC (6 decimals)
+      const AMOUNT = 30000n // 0.03 USDC (6 decimals)
 
       // Ensure we have a valid chain ID, defaulting to Base (8453) if none provided
       const destinationChainId = selectedToken.chainId || 8453
