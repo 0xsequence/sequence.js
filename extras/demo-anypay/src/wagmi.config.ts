@@ -1,5 +1,5 @@
 import { http, createConfig } from 'wagmi'
-import { mainnet, sepolia, polygon, arbitrum, optimism, base } from 'wagmi/chains'
+import * as chains from 'viem/chains'
 import { injected, metaMask } from 'wagmi/connectors'
 import { sequenceWallet } from '@0xsequence/wagmi-connector'
 
@@ -10,24 +10,24 @@ if (!projectAccessKey) {
 }
 
 export const config = createConfig({
-  chains: [mainnet, sepolia, polygon, arbitrum, optimism, base],
+  // @ts-expect-error
+  chains: Object.values(chains),
   connectors: [
     sequenceWallet({
       connectOptions: {
         app: 'Demo Anypay',
         projectAccessKey: projectAccessKey,
       },
-      defaultNetwork: mainnet.id,
+      defaultNetwork: chains.mainnet.id,
     }),
     injected(),
     metaMask(),
   ],
-  transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
-    [polygon.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-    [base.id]: http(),
-  },
+  transports: Object.values(chains).reduce(
+    (acc, chain) => ({
+      ...acc,
+      [chain.id]: http(),
+    }),
+    {},
+  ) as Record<number, ReturnType<typeof http>>,
 })

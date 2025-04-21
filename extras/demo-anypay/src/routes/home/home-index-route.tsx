@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect, useSendTransaction } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useSendTransaction, useSwitchChain } from 'wagmi'
 import { Connector } from 'wagmi'
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import { NativeTokenBalance, TokenBalance, ContractVerificationStatus } from '@0xsequence/indexer'
@@ -27,6 +27,22 @@ import {
   PenSquare,
   ShieldCheck,
 } from 'lucide-react'
+
+// Helper to get chain info
+const getChainInfo = (chainId: number) => {
+  return Object.values(chains).find((chain) => chain.id === chainId) || null
+}
+
+// Mock Data
+const MOCK_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'
+// Mock Calldata for interaction
+const MOCK_TRANSFER_DATA: Hex = `0xabcdef`
+// Mock Chain ID for interaction
+const MOCK_CHAIN_ID = chains.arbitrum.id
+// Mock Token Address for interaction on destination chain
+const MOCK_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
+// Mock Token Amount for interaction on destination chain
+const MOCK_TOKEN_AMOUNT = '300'
 
 // Add type for calculated origin call parameters
 type OriginCallParams = {
@@ -77,23 +93,6 @@ const formatBalance = (balance: TokenBalance | NativeTokenBalance) => {
   }
 }
 
-// Mock Data
-const MOCK_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'
-// Mock Calldata for interaction
-const MOCK_TRANSFER_DATA: Hex = `0xabcdef`
-// Mock Chain ID for interaction
-const MOCK_CHAIN_ID = chains.arbitrum.id
-// Mock Token Address for interaction on destination chain
-const MOCK_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
-// Mock Token Amount for interaction on destination chain
-const MOCK_TOKEN_AMOUNT = '300'
-
-// Helper to get chain info
-const getChainInfo = (chainId: number) => {
-  // Find the chain by ID in all available chains
-  return Object.values(chains).find((chain) => chain.id === chainId) || null
-}
-
 const findPreconditionAddress = (preconditions: IntentPrecondition[]) => {
   const preconditionTypes = ['erc20-balance', 'native-balance'] as const
 
@@ -112,6 +111,7 @@ export const HomeIndexRoute = () => {
   const { connectors, connect, status: connectStatus, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
   const { sendTransaction, isPending: isSendingTransaction } = useSendTransaction()
+  const { switchChain, isPending: isSwitchingChain, error: switchChainError } = useSwitchChain()
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null)
   const [showCustomCallForm, setShowCustomCallForm] = useState(false)
   const [customCallData, setCustomCallData] = useState({
@@ -189,6 +189,8 @@ export const HomeIndexRoute = () => {
   const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
 
   const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
+
+  const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
@@ -502,12 +504,14 @@ export const HomeIndexRoute = () => {
   }, [tokenBalancesData])
 
   useEffect(() => {
-    setSelectedToken(null)
-    setIntentOperations(null)
-    setIntentPreconditions(null)
-    setCommittedIntentAddress(null)
-    setVerificationStatus(null)
-  }, [account.address, account.chainId])
+    if (!account.isConnected) {
+      setSelectedToken(null)
+      setIntentOperations(null)
+      setIntentPreconditions(null)
+      setCommittedIntentAddress(null)
+      setVerificationStatus(null)
+    }
+  }, [account.isConnected])
 
   const handleActionClick = (action: IntentAction) => {
     setIntentOperations(null)
@@ -528,7 +532,7 @@ export const HomeIndexRoute = () => {
     setShowCustomCallForm(false)
   }
 
-  // Update handleSendOriginCall to use calculated parameters from state
+  // Update handleSendOriginCall to handle chain switching without resetting state
   const handleSendOriginCall = async () => {
     // Use the calculated parameters from state
     if (
@@ -544,10 +548,78 @@ export const HomeIndexRoute = () => {
       return
     }
 
+    // Check if we need to switch chains
+    if (account.chainId !== originCallParams.chainId) {
+      setIsChainSwitchRequired(true)
+      updateMetaTxnStatus(
+        undefined,
+        'pending',
+        undefined,
+        undefined,
+        `Switching to chain ${originCallParams.chainId}...`,
+      )
+
+      try {
+        console.log('Switching to chain:', originCallParams.chainId)
+        await switchChain({ chainId: originCallParams.chainId })
+
+        // Wait for the chain switch to be reflected in the account
+        const startTime = Date.now()
+        const timeout = 10000 // 10 seconds timeout
+
+        while (Date.now() - startTime < timeout) {
+          if (account.chainId === originCallParams.chainId) {
+            console.log('Chain switch successful')
+            break
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500)) // Wait 500ms before checking again
+        }
+
+        if (account.chainId !== originCallParams.chainId) {
+          throw new Error('Chain switch timed out')
+        }
+
+        // Don't reset state, just proceed with the transaction
+        setIsChainSwitchRequired(false)
+
+        // Immediately send the transaction after successful chain switch
+        return sendTransaction(
+          {
+            to: originCallParams.to,
+            data: originCallParams.data,
+            value: originCallParams.value,
+            chainId: originCallParams.chainId,
+          },
+          {
+            onSuccess: (hash) => {
+              console.log('Transaction sent, hash:', hash)
+              setTxnHash(hash)
+            },
+            onError: (error) => {
+              console.error('Transaction failed:', error)
+              updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+            },
+          },
+        )
+      } catch (error: any) {
+        console.error('Failed to switch chain:', error)
+        updateMetaTxnStatus(
+          undefined,
+          'reverted',
+          undefined,
+          undefined,
+          `Failed to switch chain: ${error.message || 'Unknown error'}`,
+        )
+        setIsChainSwitchRequired(false)
+        return
+      }
+    }
+
+    // If already on correct chain, just send the transaction
     setTxnHash(undefined)
     updateMetaTxnStatus(undefined, 'sending')
 
-    sendTransaction(
+    return sendTransaction(
       {
         to: originCallParams.to,
         data: originCallParams.data,
@@ -557,7 +629,7 @@ export const HomeIndexRoute = () => {
       {
         onSuccess: (hash) => {
           console.log('Transaction sent, hash:', hash)
-          setTxnHash(hash) // Set hash to trigger useWaitForTransactionReceipt
+          setTxnHash(hash)
         },
         onError: (error) => {
           console.error('Transaction failed:', error)
@@ -566,6 +638,28 @@ export const HomeIndexRoute = () => {
       },
     )
   }
+
+  // Remove the chain change effect that might be resetting state
+  useEffect(() => {
+    if (switchChainError) {
+      console.error('Chain switch error:', switchChainError)
+      updateMetaTxnStatus(
+        undefined,
+        'reverted',
+        undefined,
+        undefined,
+        `Chain switch failed: ${switchChainError.message || 'Unknown error'}`,
+      )
+      setIsChainSwitchRequired(false)
+    }
+  }, [switchChainError])
+
+  // Only update chain switch required state when needed
+  useEffect(() => {
+    if (originCallParams?.chainId && account.chainId === originCallParams.chainId) {
+      setIsChainSwitchRequired(false)
+    }
+  }, [account.chainId, originCallParams?.chainId])
 
   // Hook to wait for transaction receipt
   const {
@@ -1436,15 +1530,23 @@ export const HomeIndexRoute = () => {
                         isSendingTransaction ||
                         isWaitingForReceipt ||
                         !originCallParams ||
-                        !!originCallParams.error
+                        !!originCallParams.error ||
+                        isSwitchingChain
                       }
                       className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
                     >
-                      {isSendingTransaction || isWaitingForReceipt ? (
+                      {isSwitchingChain ? (
+                        <div className="flex items-center">
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                          Switching Chain...
+                        </div>
+                      ) : isSendingTransaction || isWaitingForReceipt ? (
                         <div className="flex items-center">
                           <Loader2 className="animate-spin h-4 w-4 mr-2" />
                           {isWaitingForReceipt ? 'Waiting...' : 'Sending...'}
                         </div>
+                      ) : isChainSwitchRequired ? (
+                        'Switch Chain'
                       ) : (
                         'Send Transaction'
                       )}
