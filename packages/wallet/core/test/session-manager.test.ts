@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, it, expect } from 'vitest'
 import { Envelope, Signers, State, Wallet } from '@0xsequence/wallet-core'
 import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
@@ -15,10 +16,10 @@ describe('SessionManager', () => {
       provider = Provider.from(RpcTransport.fromHttp(RPC_URL!!))
       chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
     } else {
-      provider = jest.mocked<Provider.Provider>({
-        request: jest.fn(),
-        on: jest.fn(),
-        removeListener: jest.fn(),
+      provider = vi.mocked<Provider.Provider>({
+        request: vi.fn(),
+        on: vi.fn(),
+        removeListener: vi.fn(),
       })
     }
     return { provider: provider!, chainId }
@@ -36,7 +37,7 @@ describe('SessionManager', () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('should create an empty session manager', async () => {
