@@ -1,7 +1,9 @@
 import { vi, beforeEach, describe, it, expect } from 'vitest'
-import { Envelope, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
+
+import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'
+import { Envelope, Signers, State, Wallet } from '../src/index.js'
+
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
 function randomAddress(): Address.Address {
