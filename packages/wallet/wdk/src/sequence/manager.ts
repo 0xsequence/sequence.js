@@ -14,6 +14,7 @@ import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
 import { Transaction, TransactionRequest } from './types/transaction-request'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
 import { Kinds } from './types/signer'
+import { WalletSelectionUiHandler } from './types/wallet'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -300,6 +301,14 @@ export class Manager {
 
   public onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean) {
     return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
+  }
+
+  public registerWalletSelector(handler: WalletSelectionUiHandler) {
+    return this.shared.modules.wallets.registerWalletSelector(handler)
+  }
+
+  public unregisterWalletSelector(handler?: WalletSelectionUiHandler) {
+    return this.shared.modules.wallets.unregisterWalletSelector(handler)
   }
 
   // Signatures
