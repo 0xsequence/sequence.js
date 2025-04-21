@@ -191,6 +191,15 @@ export const HomeIndexRoute = () => {
   const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
   const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
 
+  // Add new state for operation statuses
+  const [operationStatuses, setOperationStatuses] = useState<{
+    [key: string]: {
+      status: 'pending' | 'success' | 'failed'
+      txHash?: string
+      error?: string
+    }
+  }>({})
+
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
       const context: ContextLike.Context = {
@@ -898,6 +907,53 @@ export const HomeIndexRoute = () => {
     !!originCallParams.error ||
     isSwitchingChain ||
     (isAutoExecuteEnabled && commitIntentConfigMutation.isSuccess) // Disable if auto-execute is on and commit was successful
+
+  // Add this after createIntentMutation's onSuccess handler
+  useEffect(() => {
+    if (intentOperations) {
+      // Initialize operation statuses
+      const initialStatuses: {
+        [key: string]: { status: 'pending' | 'success' | 'failed'; txHash?: string; error?: string }
+      } = {}
+      intentOperations.forEach((operation, index) => {
+        initialStatuses[`${operation.chainId}-${index}`] = { status: 'pending' }
+      })
+      setOperationStatuses(initialStatuses)
+    }
+  }, [intentOperations])
+
+  // Add this after the receipt effect
+  useEffect(() => {
+    if (receipt && intentOperations) {
+      // Update operation statuses based on receipt
+      setOperationStatuses((prev) => {
+        const newStatuses = { ...prev }
+        intentOperations.forEach((operation, index) => {
+          const key = `${operation.chainId}-${index}`
+          if (receipt.status === 'success') {
+            newStatuses[key] = {
+              status: 'success',
+              txHash: receipt.transactionHash,
+            }
+          } else {
+            newStatuses[key] = {
+              status: 'failed',
+              txHash: receipt.transactionHash,
+              error: 'Transaction failed',
+            }
+          }
+        })
+        return newStatuses
+      })
+    }
+  }, [receipt, intentOperations])
+
+  // Add this to reset operation statuses when account disconnects
+  useEffect(() => {
+    if (!account.isConnected) {
+      setOperationStatuses({})
+    }
+  }, [account.isConnected])
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -1709,16 +1765,10 @@ export const HomeIndexRoute = () => {
               </div>
               <h3 className="text-xl font-semibold text-white">Relayer Status</h3>
             </div>
-            <div className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center">
-              <span
-                className={`w-2 h-2 rounded-full ${metaTxnStatus?.status === 'Success' ? 'bg-green-400' : metaTxnStatus?.status === 'Failed' ? 'bg-red-400' : metaTxnStatus?.status === 'Pending' || metaTxnStatus?.status === 'Sending...' ? 'bg-yellow-400' : 'bg-gray-400'} mr-2 animate-pulse`}
-              ></span>
-              {metaTxnStatus?.status || 'Ready'}
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Meta Transaction Status */}
+          <div className="space-y-6">
+            {/* Origin Call Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
                 variant="medium"
@@ -1726,7 +1776,7 @@ export const HomeIndexRoute = () => {
                 className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
               >
                 <Layers className="h-4 w-4 mr-2" />
-                Meta Transaction Status
+                Origin Call Status
               </Text>
               <div className="space-y-3">
                 <div className="bg-gray-800/70 p-3 rounded-md">
@@ -1756,12 +1806,84 @@ export const HomeIndexRoute = () => {
                     {isWaitingForReceipt && <span className="text-yellow-400 ml-1">(Waiting for confirmation...)</span>}
                   </Text>
                 </div>
+                {metaTxnStatus?.revertReason && (
+                  <div className="bg-gray-800/70 p-3 rounded-md">
+                    <Text variant="small" color="secondary" className="break-all">
+                      <strong className="text-blue-300">Revert Reason: </strong>
+                      <span className="font-mono text-red-300">{metaTxnStatus.revertReason}</span>
+                    </Text>
+                  </div>
+                )}
                 <div className="bg-gray-800/70 p-3 rounded-md">
-                  <Text variant="small" color="secondary" className="break-all">
-                    <strong className="text-blue-300">Revert Reason: </strong>
-                    <span className="font-mono text-red-300">{metaTxnStatus?.revertReason || 'None'}</span>
+                  <Text variant="small" color="secondary">
+                    <strong className="text-blue-300">Gas Used: </strong>
+                    <span className="font-mono">{metaTxnStatus?.gasUsed || '0'}</span>
                   </Text>
                 </div>
+                <div className="bg-gray-800/70 p-3 rounded-md">
+                  <Text variant="small" color="secondary">
+                    <strong className="text-blue-300">Effective Gas Price: </strong>
+                    <span className="font-mono">{metaTxnStatus?.effectiveGasPrice || '0'}</span>
+                  </Text>
+                </div>
+              </div>
+            </div>
+
+            {/* Intent Operations Status */}
+            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
+              <Text
+                variant="medium"
+                color="primary"
+                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
+              >
+                <Box className="h-4 w-4 mr-2" />
+                Intent Operations Status
+              </Text>
+              <div className="space-y-4">
+                {intentOperations.map((operation, index) => (
+                  <div key={`operation-${index}`} className="bg-gray-800/70 p-3 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <Text variant="small" color="primary" className="font-semibold flex items-center">
+                        <NetworkImage chainId={parseInt(operation.chainId)} size="sm" className="w-4 h-4 mr-2" />
+                        Operation #{index + 1} - Chain {operation.chainId}
+                        <span className="text-gray-400 text-xs ml-2">
+                          ({getChainInfo(parseInt(operation.chainId))?.name || 'Unknown Chain'})
+                        </span>
+                      </Text>
+                      <div
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          operationStatuses[`${operation.chainId}-${index}`]?.status === 'success'
+                            ? 'bg-green-900/30 text-green-400 border border-green-700/30'
+                            : operationStatuses[`${operation.chainId}-${index}`]?.status === 'failed'
+                              ? 'bg-red-900/30 text-red-400 border border-red-700/30'
+                              : 'bg-yellow-900/30 text-yellow-400 border border-yellow-700/30'
+                        }`}
+                      >
+                        {operationStatuses[`${operation.chainId}-${index}`]?.status === 'success'
+                          ? 'Success'
+                          : operationStatuses[`${operation.chainId}-${index}`]?.status === 'failed'
+                            ? 'Failed'
+                            : 'Pending'}
+                      </div>
+                    </div>
+                    {operationStatuses[`${operation.chainId}-${index}`]?.txHash && (
+                      <Text variant="small" color="secondary" className="mt-2">
+                        <strong className="text-blue-300">Tx Hash: </strong>
+                        <span className="font-mono text-yellow-300 break-all">
+                          {operationStatuses[`${operation.chainId}-${index}`].txHash}
+                        </span>
+                      </Text>
+                    )}
+                    {operationStatuses[`${operation.chainId}-${index}`]?.error && (
+                      <Text variant="small" color="negative" className="mt-2">
+                        <strong className="text-red-300">Error: </strong>
+                        <span className="font-mono break-all">
+                          {operationStatuses[`${operation.chainId}-${index}`].error}
+                        </span>
+                      </Text>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1792,38 +1914,6 @@ export const HomeIndexRoute = () => {
                     </Text>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Final Intent Status */}
-            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner lg:col-span-2">
-              <Text
-                variant="medium"
-                color="primary"
-                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
-              >
-                <Layers className="h-4 w-4 mr-2" />
-                Final Intent Status
-              </Text>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-800/70 p-3 rounded-md">
-                  <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">Status: </strong>
-                    <span className="font-mono">{metaTxnStatus?.status || 'Pending'}</span>
-                  </Text>
-                </div>
-                <div className="bg-gray-800/70 p-3 rounded-md">
-                  <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">Gas Used: </strong>
-                    <span className="font-mono">{metaTxnStatus?.gasUsed || '0'}</span>
-                  </Text>
-                </div>
-                <div className="bg-gray-800/70 p-3 rounded-md">
-                  <Text variant="small" color="secondary">
-                    <strong className="text-blue-300">Effective Gas Price: </strong>
-                    <span className="font-mono">{metaTxnStatus?.effectiveGasPrice || '0'}</span>
-                  </Text>
-                </div>
               </div>
             </div>
           </div>
