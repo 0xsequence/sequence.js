@@ -69,7 +69,7 @@ describe('Sessions (via Manager)', () => {
 
     // Use a mnemonic to create the wallet
     const identitySignerMnemonic = Mnemonic.random(Mnemonic.english)
-    const identitySignerPk = Mnemonic.toPrivateKey(identitySignerMnemonic)
+    const identitySignerPk = Mnemonic.toPrivateKey(identitySignerMnemonic, { as: 'Hex' })
     const walletAddress = await manager.signUp({
       kind: 'mnemonic',
       mnemonic: identitySignerMnemonic,
@@ -80,7 +80,7 @@ describe('Sessions (via Manager)', () => {
 
     // Initialize the wdk components
     wdk = {
-      identitySigner: new CoreSigners.Pk.Pk(Hex.fromBytes(identitySignerPk)),
+      identitySigner: new CoreSigners.Pk.Pk(identitySignerPk),
       manager,
     }
 
@@ -198,7 +198,6 @@ describe('Sessions (via Manager)', () => {
 
     // Send the transaction
     if (PRIVATE_KEY) {
-      console.log('PRIVATE_KEY', PRIVATE_KEY)
       // Build the transaction
       const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
       console.log('tx', transaction)
