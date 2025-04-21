@@ -1112,6 +1112,38 @@ export const HomeIndexRoute = () => {
             )}
           </div>
 
+          {/* Auto-Execute Toggle */}
+          <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Text variant="medium" color="primary" className="flex items-center">
+                  <Zap className="h-4 w-4 mr-2" />
+                  Auto-Execute
+                </Text>
+                <Text variant="small" color="secondary" className="text-gray-400">
+                  (Automatically commits and executes transactions when ready)
+                </Text>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Text variant="small" color="secondary">
+                  {isAutoExecuteEnabled ? 'Enabled' : 'Disabled'}
+                </Text>
+                <div
+                  onClick={() => setIsAutoExecuteEnabled(!isAutoExecuteEnabled)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                    isAutoExecuteEnabled ? 'bg-blue-600' : 'bg-gray-700'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isAutoExecuteEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* 2. Choose Action */}
           <div>
             <div className="flex items-center mb-4">
@@ -1566,32 +1598,13 @@ export const HomeIndexRoute = () => {
                 <h3 className="text-xl font-semibold text-white">Origin Call</h3>
               </div>
               <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
-                <div className="flex items-center justify-between mb-4">
-                  <Text variant="medium" color="primary" className="pb-1 border-b border-gray-700/50 flex items-center">
-                    <Zap className="h-4 w-4 mr-1" />
-                    Transaction Details
-                    <Text variant="small" color="secondary" className="ml-1">
-                      (Send this transaction to execute the intent):
-                    </Text>
+                <Text variant="medium" color="primary" className="pb-1 border-b border-gray-700/50 flex items-center">
+                  <Zap className="h-4 w-4 mr-1" />
+                  Transaction Details
+                  <Text variant="small" color="secondary" className="ml-1">
+                    (Send this transaction to execute the intent):
                   </Text>
-                  <div className="flex items-center space-x-2">
-                    <Text variant="small" color="secondary">
-                      Auto-Execute
-                    </Text>
-                    <div
-                      onClick={() => setIsAutoExecuteEnabled(!isAutoExecuteEnabled)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                        isAutoExecuteEnabled ? 'bg-blue-600' : 'bg-gray-700'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          isAutoExecuteEnabled ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </div>
+                </Text>
                 <div className="space-y-2">
                   <div className="bg-gray-800/70 p-2 rounded-md">
                     <Text variant="small" color="secondary">
