@@ -376,11 +376,9 @@ export class Wallets {
               },
         })
 
-        switch (result) {
-          case 'create':
-            break
-          case 'cancel':
-            throw new Error('wallet-selection-cancelled')
+        if (result) {
+          // A wallet was selected, we can exit early
+          return
         }
       }
     } else {
