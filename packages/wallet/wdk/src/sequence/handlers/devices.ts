@@ -2,8 +2,8 @@ import { Kinds } from '../types/signer'
 import { Signatures } from '../signatures'
 import { Address, Hex } from 'ox'
 import { Devices } from '../devices'
-import { Handler } from '.'
-import { SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types'
+import { Handler } from './handler'
+import { BaseSignatureRequest, SignerReady, SignerUnavailable } from '../types'
 
 export class DevicesHandler implements Handler {
   kind = Kinds.LocalDevice

@@ -9,7 +9,7 @@ import {
   TransactionFormed,
   TransactionRelayed,
   TransactionRequest,
-} from './types/transactionRequest'
+} from './types/transaction-request'
 
 export class Transactions {
   constructor(private readonly shared: Shared) {}

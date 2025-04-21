@@ -1,5 +1,5 @@
 import { Hex, Address, Bytes } from 'ox'
-import { Handler } from '.'
+import { Handler } from './handler'
 import * as Db from '../../dbs'
 import { Signatures } from '../signatures'
 import * as Identity from '../../identity'
