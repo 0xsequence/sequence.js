@@ -1,5 +1,5 @@
 import type { CommandModule } from 'yargs'
-import { fromPosOrStdin } from '../utils'
+import { fromPosOrStdin } from '../utils.js'
 import { Permission, SessionConfig } from '@0xsequence/wallet-primitives'
 
 export async function doAddSession(sessionInput: string, topologyInput: string): Promise<string> {
