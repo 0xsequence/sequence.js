@@ -118,6 +118,7 @@ export const HomeIndexRoute = () => {
   const apiClient = useAPIClient()
 
   // State declarations
+  const [metaTxns, setMetaTxns] = useState<GetIntentOperationsReturn['calls'] | null>(null)
   const [intentOperations, setIntentOperations] = useState<GetIntentOperationsReturn['operations'] | null>(null)
   const [intentPreconditions, setIntentPreconditions] = useState<GetIntentOperationsReturn['preconditions'] | null>(
     null,
@@ -426,6 +427,7 @@ export const HomeIndexRoute = () => {
 
       console.log('Calling createIntentConfig with args:', args)
       const data = await apiClient.getIntentOperations(args)
+      setMetaTxns(data.calls)
       setIntentOperations(data.operations)
       setIntentPreconditions(data.preconditions)
       setCommittedIntentAddress(null)
@@ -644,7 +646,7 @@ export const HomeIndexRoute = () => {
 
       // After origin call is confirmed, send the meta-transaction
       const sendMetaTxn = async () => {
-        if (!intentOperations || !intentPreconditions || !account.address) {
+        if (!intentOperations || !intentPreconditions || !metaTxns || !account.address) {
           console.error('Missing required data for meta-transaction')
           return
         }
@@ -666,8 +668,13 @@ export const HomeIndexRoute = () => {
                 throw new Error(`No relayer found for chainId: ${chainId}`)
               }
 
-              // TODO: Call Factory Deploy here for the encodedData
-              const encodedData = (operation.calls[0].data as `0x${string}`) || ('0x' as `0x${string}`)
+              // Get the matching meta-transaction from metaTxns
+              const metaTxn = metaTxns.find((m) => parseInt(m.chainId) === chainId)
+              if (!metaTxn) {
+                throw new Error(`No meta-transaction found for chainId: ${chainId}`)
+              }
+
+              // Get the relevant preconditions for the operation
               const relevantPreconditions = intentPreconditions.filter(
                 (p) => p.chainID && parseInt(p.chainID) === chainId,
               )
@@ -678,15 +685,15 @@ export const HomeIndexRoute = () => {
               )
               console.log(`Relay data:`, {
                 intentAddress,
-                encodedData,
-                chainId: BigInt(chainId),
+                metaTxns,
+                chainId,
                 relevantPreconditions,
               })
 
               // Send the meta-transaction through the chain-specific relayer
               const { opHash } = await chainRelayer.relay(
-                intentAddress,
-                encodedData,
+                metaTxn?.contract as Address.Address,
+                metaTxn?.input as Hex,
                 BigInt(operation.chainId),
                 undefined,
                 relevantPreconditions,
