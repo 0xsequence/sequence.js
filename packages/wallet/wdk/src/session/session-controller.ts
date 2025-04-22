@@ -12,7 +12,6 @@ import { IdentitySigner } from '../identity/signer.js'
 
 type SessionControllerConfiguration = {
   wallet: Wallet
-  topology: SessionConfig.SessionsTopology
   provider?: Provider.Provider
   identitySigner?: IdentitySigner
   stateProvider?: State.Provider
@@ -25,8 +24,7 @@ export class SessionController {
   private readonly _stateProvider: State.Provider | null
 
   constructor(configuration: SessionControllerConfiguration) {
-    this._manager = new Signers.SessionManager({
-      topology: configuration.topology,
+    this._manager = new Signers.SessionManager(configuration.wallet, {
       provider: configuration.provider,
     })
     this._wallet = configuration.wallet
@@ -34,40 +32,17 @@ export class SessionController {
     this._stateProvider = configuration.stateProvider ?? null
   }
 
-  static createEmpty(
-    identitySignerAddress: Address.Address,
-    configuration: Omit<SessionControllerConfiguration, 'topology'>,
-  ): SessionController {
-    return new SessionController({
-      ...configuration,
-      topology: SessionConfig.emptySessionsTopology(identitySignerAddress),
-    })
-  }
-
-  static async createFromStorage(
-    imageHash: Hex.Hex,
-    configuration: Omit<SessionControllerConfiguration, 'topology'>,
-  ): Promise<SessionController> {
-    if (!configuration.stateProvider) {
-      throw new Error('State provider not provided')
-    }
-    const configurationTree = await configuration.stateProvider.getTree(imageHash)
-    if (!configurationTree) {
-      throw new Error('Configuration not found')
-    }
-    return new SessionController({
-      ...configuration,
-      topology: SessionConfig.configurationTreeToSessionsTopology(configurationTree),
-    })
-  }
-
-  get topology(): SessionConfig.SessionsTopology {
+  async getTopology(): Promise<SessionConfig.SessionsTopology> {
     return this._manager.topology
   }
 
-  get imageHash(): Hex.Hex {
-    const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(this._manager.topology)
-    return GenericTree.hash(configurationTree)
+  async getImageHash(): Promise<Hex.Hex> {
+    return this._manager.imageHash.then((imageHash) => {
+      if (!imageHash) {
+        throw new Error('Image hash not found')
+      }
+      return imageHash
+    })
   }
 
   withProvider(provider: Provider.Provider): SessionController {
@@ -95,29 +70,33 @@ export class SessionController {
     signerAddress: Address.Address,
     permissions: Signers.Session.ExplicitParams,
   ): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
-    const topology = SessionConfig.addExplicitSession(this.topology, {
+    const topology = await this.getTopology()
+    const newTopology = SessionConfig.addExplicitSession(topology, {
       ...permissions,
       signer: signerAddress,
     })
-    return await this.prepareUpdateConfiguration(topology)
+    return await this.prepareUpdateConfiguration(newTopology)
   }
 
   async removeExplicitSession(signerAddress: Address.Address): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
-    const topology = SessionConfig.removeExplicitSession(this.topology, signerAddress)
-    if (!topology) {
+    const topology = await this.getTopology()
+    const newTopology = SessionConfig.removeExplicitSession(topology, signerAddress)
+    if (!newTopology) {
       throw new Error('Session not found')
     }
-    return await this.prepareUpdateConfiguration(topology)
+    return await this.prepareUpdateConfiguration(newTopology)
   }
 
   async addBlacklistAddress(address: Address.Address): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
-    const topology = SessionConfig.addToImplicitBlacklist(this.topology, address)
-    return await this.prepareUpdateConfiguration(topology)
+    const topology = await this.getTopology()
+    const newTopology = SessionConfig.addToImplicitBlacklist(topology, address)
+    return await this.prepareUpdateConfiguration(newTopology)
   }
 
   async removeBlacklistAddress(address: Address.Address): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
-    const topology = SessionConfig.removeFromImplicitBlacklist(this.topology, address)
-    return await this.prepareUpdateConfiguration(topology)
+    const topology = await this.getTopology()
+    const newTopology = SessionConfig.removeFromImplicitBlacklist(topology, address)
+    return await this.prepareUpdateConfiguration(newTopology)
   }
 
   // Prepare the configuration update to use the new topology
@@ -178,8 +157,7 @@ export class SessionController {
     const topology = SessionConfig.configurationTreeToSessionsTopology(sessionTree)
     console.log('completeUpdateConfiguration Topology:', topology)
 
-    // Update the manager and wallet with the new topology and submit the update
-    this._manager = this._manager.withTopology(topology)
+    // Submit the update with the new topology
     console.log('Submitting update:', envelope.payload.imageHash)
     await this._wallet.submitUpdate(envelope)
   }

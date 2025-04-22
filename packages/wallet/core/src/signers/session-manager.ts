@@ -1,147 +1,110 @@
 import {
+  Config,
   Constants,
-  GenericTree,
   Payload,
   SessionConfig,
   SessionSignature,
   Signature as SignatureTypes,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { AbiFunction, Address, Hex, Provider } from 'ox'
+import * as State from '../state/index.js'
+import { Wallet } from '../wallet.js'
 import { SapientSigner } from './index.js'
 import { Explicit, Implicit } from './session/index.js'
-import { State } from '../index.js'
 
-type SessionManagerConfiguration = {
-  topology: SessionConfig.SessionsTopology
+export type SessionManagerOptions = {
+  sessionManagerAddress: Address.Address
+  stateProvider?: State.Provider
+  implicitSigners: Implicit[]
+  explicitSigners: Explicit[]
   provider?: Provider.Provider
-  implicitSigners?: Implicit[]
-  explicitSigners?: Explicit[]
-  address?: Address.Address
+}
+
+export const DefaultSessionManagerOptions: SessionManagerOptions = {
+  sessionManagerAddress: Constants.DefaultSessionManager,
+  implicitSigners: [],
+  explicitSigners: [],
 }
 
 export class SessionManager implements SapientSigner {
-  private readonly _address: Address.Address
-  private readonly _topology: SessionConfig.SessionsTopology
-  private readonly _provider: Provider.Provider | undefined
+  public readonly stateProvider: State.Provider
+  public readonly address: Address.Address
+
   private readonly _implicitSigners: Implicit[]
   private readonly _explicitSigners: Explicit[]
+  private readonly _provider?: Provider.Provider
 
-  constructor(configuration: SessionManagerConfiguration) {
-    this._address = configuration.address ?? Constants.DefaultSessionManager
-    this._topology = configuration.topology
-    this._provider = configuration.provider
-    // FIXME: Validate that the implicit signers attestations are signed by the identity signer?
-    this._implicitSigners = configuration.implicitSigners ?? []
-    // FIXME: Validate that the configuration contains the explicit signers?
-    this._explicitSigners = configuration.explicitSigners ?? []
+  constructor(
+    readonly wallet: Wallet,
+    options?: Partial<SessionManagerOptions>,
+  ) {
+    const combinedOptions = { ...DefaultSessionManagerOptions, ...options }
+    this.stateProvider = combinedOptions.stateProvider ?? wallet.stateProvider
+    this.address = combinedOptions.sessionManagerAddress
+    this._implicitSigners = combinedOptions.implicitSigners
+    this._explicitSigners = combinedOptions.explicitSigners
+    this._provider = combinedOptions.provider
   }
 
-  static createEmpty(
-    identitySignerAddress: Address.Address,
-    configuration: Omit<SessionManagerConfiguration, 'topology'>,
-  ): SessionManager {
-    return new SessionManager({
-      ...configuration,
-      topology: SessionConfig.emptySessionsTopology(identitySignerAddress),
-    })
+  get imageHash(): Promise<Hex.Hex | undefined> {
+    return this.getImageHash()
   }
 
-  static createFromConfigurationTree(
-    configurationTree: GenericTree.Tree,
-    configuration: Omit<SessionManagerConfiguration, 'topology'>,
-  ): SessionManager {
-    return new SessionManager({
-      ...configuration,
-      topology: SessionConfig.configurationTreeToSessionsTopology(configurationTree),
-    })
-  }
-
-  static async createFromStorage(
-    imageHash: Hex.Hex,
-    stateProvider: State.Provider,
-    configuration: Omit<SessionManagerConfiguration, 'topology'>,
-  ): Promise<SessionManager> {
-    const configurationTree = await stateProvider.getTree(imageHash)
-    if (!configurationTree) {
-      throw new Error('Configuration not found')
+  async getImageHash(): Promise<Hex.Hex | undefined> {
+    const { configuration } = await this.wallet.getStatus()
+    const sessionConfigLeaf = Config.findSignerLeaf(configuration, this.address)
+    if (!sessionConfigLeaf || !Config.isSapientSignerLeaf(sessionConfigLeaf)) {
+      return undefined
     }
-    return SessionManager.createFromConfigurationTree(configurationTree, configuration)
+    return sessionConfigLeaf.imageHash
   }
 
-  get address(): Address.Address {
-    return this._address
+  get topology(): Promise<SessionConfig.SessionsTopology> {
+    return this.getTopology()
   }
 
-  get topology(): SessionConfig.SessionsTopology {
-    return this._topology
-  }
-
-  get imageHash(): Hex.Hex {
-    const configurationTree = SessionConfig.sessionsTopologyToConfigurationTree(this._topology)
-    return GenericTree.hash(configurationTree)
+  async getTopology(): Promise<SessionConfig.SessionsTopology> {
+    const imageHash = await this.imageHash
+    if (!imageHash) {
+      throw new Error(`Session configuration not found for image hash ${imageHash}`)
+    }
+    const tree = await this.stateProvider.getTree(imageHash)
+    if (!tree) {
+      throw new Error(`Session configuration not found for image hash ${imageHash}`)
+    }
+    return SessionConfig.configurationTreeToSessionsTopology(tree)
   }
 
   withProvider(provider: Provider.Provider): SessionManager {
-    return new SessionManager({
-      topology: this.topology,
-      address: this.address,
+    return new SessionManager(this.wallet, {
+      sessionManagerAddress: this.address,
+      stateProvider: this.stateProvider,
+      implicitSigners: this._implicitSigners,
+      explicitSigners: this._explicitSigners,
       provider,
-    })
-  }
-
-  withTopology(topology: SessionConfig.SessionsTopology): SessionManager {
-    return new SessionManager({
-      topology,
-      address: this.address,
-      provider: this._provider,
     })
   }
 
   withImplicitSigner(signer: Implicit): SessionManager {
     const implicitSigners = [...this._implicitSigners, signer]
-    return new SessionManager({
-      topology: this.topology,
-      address: this.address,
-      provider: this._provider,
+    return new SessionManager(this.wallet, {
+      sessionManagerAddress: this.address,
+      stateProvider: this.stateProvider,
       implicitSigners,
       explicitSigners: this._explicitSigners,
+      provider: this._provider,
     })
   }
 
   withExplicitSigner(signer: Explicit): SessionManager {
     const explicitSigners = [...this._explicitSigners, signer]
 
-    // Update the topology
-    const topology = SessionConfig.addExplicitSession(this.topology, signer.sessionPermissions)
-
-    return new SessionManager({
-      topology,
-      address: this.address,
-      provider: this._provider,
+    return new SessionManager(this.wallet, {
+      sessionManagerAddress: this.address,
+      stateProvider: this.stateProvider,
       implicitSigners: this._implicitSigners,
       explicitSigners,
-    })
-  }
-
-  withBlacklistAddress(address: Address.Address): SessionManager {
-    const topology = SessionConfig.addToImplicitBlacklist(this.topology, address)
-    return new SessionManager({
-      topology,
-      address: this.address,
       provider: this._provider,
-      implicitSigners: this._implicitSigners,
-      explicitSigners: this._explicitSigners,
-    })
-  }
-
-  withoutBlacklistAddress(address: Address.Address): SessionManager {
-    const topology = SessionConfig.removeFromImplicitBlacklist(this.topology, address)
-    return new SessionManager({
-      topology,
-      address: this.address,
-      provider: this._provider,
-      implicitSigners: this._implicitSigners,
-      explicitSigners: this._explicitSigners,
     })
   }
 
@@ -151,30 +114,64 @@ export class SessionManager implements SapientSigner {
     payload: Payload.Parented,
     imageHash: Hex.Hex,
   ): Promise<SignatureTypes.SignatureOfSapientSignerLeaf> {
-    if (this.imageHash !== imageHash) {
+    if (wallet !== this.wallet.address) {
+      throw new Error('Wallet address mismatch')
+    }
+    if ((await this.imageHash) !== imageHash) {
       throw new Error('Unexpected image hash')
     }
-
+    //FIXME Test chain id
+    // if (this._provider) {
+    //   const providerChainId = await this._provider.request({
+    //     method: 'eth_chainId',
+    //   })
+    //   if (providerChainId !== Hex.fromNumber(chainId)) {
+    //     throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
+    //   }
+    // }
     if (!Payload.isCalls(payload)) {
       throw new Error('Only calls are supported')
     }
 
-    if (!this._provider) {
-      throw new Error('Provider not set')
+    // Only use signers that match the topology
+    const topology = await this.topology
+    const identitySigner = SessionConfig.getIdentitySigner(topology)
+    if (!identitySigner) {
+      throw new Error('Identity signer not found')
     }
+    const blacklist = SessionConfig.getImplicitBlacklist(topology)
+    const validImplicitSigners = this._implicitSigners.filter(
+      (signer) =>
+        Address.isEqual(signer.identitySigner, identitySigner) &&
+        // Blacklist must exist for implicit signers to be used
+        blacklist &&
+        !blacklist.some((b) => Address.isEqual(b, signer.address)),
+    )
+    const topologyExplicitSigners = SessionConfig.getExplicitSigners(topology)
+    const validExplicitSigners = this._explicitSigners.filter((signer) =>
+      topologyExplicitSigners.some((s) => Address.isEqual(s, signer.address)),
+    )
 
     // Try to sign with each signer, prioritizing implicit signers
-    const signers = [...this._implicitSigners, ...this._explicitSigners]
+    const signers = [...validImplicitSigners, ...validExplicitSigners]
+    if (signers.length === 0) {
+      throw new Error('No signers match the topology')
+    }
+
     const signatures = await Promise.all(
       //FIXME Run sync to support cumulative rules within a payload
       payload.calls.map(async (call) => {
         for (const signer of signers) {
-          if (this._provider && (await signer.supportedCall(wallet, chainId, call, this._provider))) {
-            const signature = await signer.signCall(wallet, chainId, call, payload, this._provider)
-            return {
-              ...signature,
-              signer: signer.address,
+          try {
+            if (await signer.supportedCall(wallet, chainId, call, this._provider)) {
+              const signature = await signer.signCall(wallet, chainId, call, payload, this._provider)
+              return {
+                ...signature,
+                signer: signer.address,
+              }
             }
+          } catch (error) {
+            console.error('signSapient error', error)
           }
         }
         throw new Error('No signer supported')
@@ -192,8 +189,8 @@ export class SessionManager implements SapientSigner {
     return {
       type: 'sapient',
       address: this.address,
-      data: Bytes.toHex(
-        SessionSignature.encodeSessionCallSignatures(signatures, this.topology, explicitSigners, implicitSigners),
+      data: Hex.from(
+        SessionSignature.encodeSessionCallSignatures(signatures, topology, explicitSigners, implicitSigners),
       ),
     }
   }
@@ -212,6 +209,15 @@ export class SessionManager implements SapientSigner {
     if (!this._provider) {
       throw new Error('Provider not set')
     }
+    //FIXME Test chain id
+    // const providerChainId = await this._provider.request({
+    //   method: 'eth_chainId',
+    // })
+    // if (providerChainId !== Hex.fromNumber(chainId)) {
+    //   throw new Error(
+    //     `Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`,
+    //   )
+    // }
 
     const encodedPayload = Payload.encodeSapient(chainId, payload)
     const encodedCallData = AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE, [
@@ -226,7 +232,7 @@ export class SessionManager implements SapientSigner {
       const resultImageHash = Hex.from(
         AbiFunction.decodeResult(Constants.RECOVER_SAPIENT_SIGNATURE, recoverSapientSignatureResult),
       )
-      return resultImageHash === Hex.from(this.imageHash)
+      return resultImageHash === (await this.imageHash)
     } catch (error) {
       console.error('recoverSapientSignature error', error)
       return false

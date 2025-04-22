@@ -183,7 +183,6 @@ export class Wallet {
 
     // Get the current configuration
     const configuration = await this.stateProvider.getConfiguration(imageHash)
-    console.log('configuration', imageHash, configuration)
     if (!configuration) {
       throw new Error(`cannot find configuration details for ${this.address}`)
     }

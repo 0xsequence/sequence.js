@@ -23,7 +23,7 @@ export class Explicit implements SignerInterface {
     wallet: Address.Address,
     _chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<Permission.Permission | undefined> {
     // Wallet and signer are encoded as a prefix for the usage hash
     const limitHashPrefix = Hash.keccak256(
@@ -70,7 +70,7 @@ export class Explicit implements SignerInterface {
     wallet: Address.Address,
     chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<boolean> {
     //FIXME Should this be stateful to support cumulative rules within a payload?
     const permission = await this.findSupportedPermission(wallet, chainId, call, provider)
@@ -88,7 +88,7 @@ export class Explicit implements SignerInterface {
       space: bigint
       nonce: bigint
     },
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
     // Find the valid permission for this call
     const permission = await this.findSupportedPermission(wallet, chainId, call, provider)

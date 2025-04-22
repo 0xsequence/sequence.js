@@ -27,9 +27,10 @@ describe('SessionManager', () => {
     return { provider: provider!, chainId }
   }
 
-  const testWalletAddress = randomAddress()
   const identityPrivateKey = Secp256k1.randomPrivateKey()
-  const testIdentityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+  const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+
+  const stateProvider = new State.Local.Provider()
 
   const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Address) => {
     const code = await provider.request({ method: 'eth_getCode', params: [contract, 'latest'] })
@@ -42,23 +43,10 @@ describe('SessionManager', () => {
     vi.clearAllMocks()
   })
 
-  it('should create an empty session manager', async () => {
-    const { provider } = await getProvider()
-    const sessionManager = Signers.SessionManager.createEmpty(testIdentityAddress, {
-      provider,
-    })
-
-    expect(sessionManager.address).toBeDefined()
-    expect(SessionConfig.isCompleteSessionsTopology(sessionManager.topology)).toBe(true)
-    expect(SessionConfig.getIdentitySigner(sessionManager.topology)).toBe(testIdentityAddress)
-    expect(SessionConfig.getImplicitBlacklist(sessionManager.topology)).toStrictEqual([])
-  })
-
   it('should load from state', async () => {
     const { provider } = await getProvider()
-    const stateProvider = new State.Local.Provider()
 
-    let topology = SessionConfig.emptySessionsTopology(testIdentityAddress)
+    let topology = SessionConfig.emptySessionsTopology(identityAddress)
     // Add random signer to the topology
     const sessionPermission: Signers.Session.ExplicitParams = {
       valueLimit: 1000000000000000000n,
@@ -99,17 +87,31 @@ describe('SessionManager', () => {
     // Save the topology to storage
     await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
 
+    // Create a wallet with the session manager topology as a leaf
+    const wallet = await Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+      },
+      {
+        stateProvider,
+      },
+    )
+
     // Create the session manager using the storage
-    const sessionManager = await Signers.SessionManager.createFromStorage(imageHash, stateProvider, {
+    const sessionManager = new Signers.SessionManager(wallet, {
       provider,
     })
 
     // Check config is correct
-    expect(sessionManager.imageHash).toBe(imageHash)
-    expect(SessionConfig.isCompleteSessionsTopology(sessionManager.topology)).toBe(true)
-    expect(SessionConfig.getIdentitySigner(sessionManager.topology)).toBe(testIdentityAddress)
-    expect(SessionConfig.getImplicitBlacklist(sessionManager.topology)).toStrictEqual([randomBlacklistAddress])
-    const actualPermissions = SessionConfig.getSessionPermissions(sessionManager.topology, randomSigner)
+    const actualTopology = await sessionManager.topology
+    const actualImageHash = await sessionManager.imageHash
+    expect(actualImageHash).toBe(imageHash)
+    expect(SessionConfig.isCompleteSessionsTopology(actualTopology)).toBe(true)
+    expect(SessionConfig.getIdentitySigner(actualTopology)).toBe(identityAddress)
+    expect(SessionConfig.getImplicitBlacklist(actualTopology)).toStrictEqual([randomBlacklistAddress])
+    const actualPermissions = SessionConfig.getSessionPermissions(actualTopology, randomSigner)
     expect(actualPermissions).toStrictEqual({
       ...sessionPermission,
       type: 'session-permissions',
@@ -139,6 +141,9 @@ describe('SessionManager', () => {
       payload: Attestation.hash(attestation),
       privateKey: identityPrivateKey,
     })
+    const topology = SessionConfig.emptySessionsTopology(identityAddress)
+    await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+    const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
     // -- Back in dapp --
     const implicitSigner = new Signers.Session.Implicit(
       implicitPrivateKey,
@@ -146,16 +151,23 @@ describe('SessionManager', () => {
       identitySignature,
       implicitAddress,
     )
-    const sessionManager = Signers.SessionManager.createEmpty(testIdentityAddress, {
+    const wallet = await Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+      },
+      {
+        stateProvider,
+      },
+    )
+    const sessionManager = new Signers.SessionManager(wallet, {
       provider,
     }).withImplicitSigner(implicitSigner)
 
     if (!CAN_RUN_LIVE) {
       // Configure the provider mock
-      const generateImplicitRequestMagicResult = Attestation.generateImplicitRequestMagic(
-        attestation,
-        testWalletAddress,
-      )
+      const generateImplicitRequestMagicResult = Attestation.generateImplicitRequestMagic(attestation, wallet.address)
       ;(provider as any).request.mockResolvedValue(generateImplicitRequestMagicResult)
     }
 
@@ -169,15 +181,16 @@ describe('SessionManager', () => {
       onlyFallback: false,
       behaviorOnError: 'revert',
     }
-    const payload: Payload.Calls = {
+    const payload: Payload.Parented = {
       type: 'call',
       nonce: 0n,
       space: 0n,
       calls: [call],
+      parentWallets: [wallet.address],
     }
 
     // Sign the transaction
-    const signature = await sessionManager.signSapient(testWalletAddress, chainId, payload, sessionManager.imageHash)
+    const signature = await sessionManager.signSapient(wallet.address, chainId, payload, imageHash)
 
     expect(signature.type).toBe('sapient')
     expect(signature.address).toBe(sessionManager.address)
@@ -189,7 +202,7 @@ describe('SessionManager', () => {
     }
 
     // Check if the signature is valid
-    const isValid = await sessionManager.isValidSapientSignature(testWalletAddress, chainId, payload, signature)
+    const isValid = await sessionManager.isValidSapientSignature(wallet.address, chainId, payload, signature)
     expect(isValid).toBe(true)
   })
 
@@ -199,7 +212,7 @@ describe('SessionManager', () => {
 
     // Create explicit signer
     const explicitPrivateKey = Secp256k1.randomPrivateKey()
-    const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, {
+    const explicitPermissions: Signers.Session.ExplicitParams = {
       valueLimit: 1000000000000000000n, // 1 ETH
       deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
       permissions: [
@@ -208,8 +221,27 @@ describe('SessionManager', () => {
           rules: [],
         },
       ],
+    }
+    const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, explicitPermissions)
+    // Create the topology and wallet
+    const topology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+      ...explicitPermissions,
+      signer: explicitSigner.address,
     })
-    const sessionManager = Signers.SessionManager.createEmpty(testIdentityAddress, {
+    await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+    const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+    const wallet = await Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+      },
+      {
+        stateProvider,
+      },
+    )
+    // Create the session manager
+    const sessionManager = new Signers.SessionManager(wallet, {
       provider,
     }).withExplicitSigner(explicitSigner)
 
@@ -231,7 +263,7 @@ describe('SessionManager', () => {
     }
 
     // Sign the transaction
-    const signature = await sessionManager.signSapient(testWalletAddress, chainId, payload, sessionManager.imageHash)
+    const signature = await sessionManager.signSapient(wallet.address, chainId, payload, imageHash)
 
     expect(signature.type).toBe('sapient')
     expect(signature.address).toBe(sessionManager.address)
@@ -243,7 +275,7 @@ describe('SessionManager', () => {
     }
 
     // Check if the signature is valid
-    const isValid = await sessionManager.isValidSapientSignature(testWalletAddress, chainId, payload, signature)
+    const isValid = await sessionManager.isValidSapientSignature(wallet.address, chainId, payload, signature)
     expect(isValid).toBe(true)
   })
 
@@ -265,14 +297,13 @@ describe('SessionManager', () => {
         ...envelope.payload,
         parentWallets: [wallet.address],
       }
-      const signature = await sessionManager.signSapient(
-        wallet.address,
-        chainId,
-        parentedEnvelope,
-        sessionManager.imageHash,
-      )
+      const imageHash = await sessionManager.imageHash
+      if (!imageHash) {
+        throw new Error('Image hash is undefined')
+      }
+      const signature = await sessionManager.signSapient(wallet.address, chainId, parentedEnvelope, imageHash)
       const sapientSignature: Envelope.SapientSignature = {
-        imageHash: sessionManager.imageHash,
+        imageHash,
         signature,
       }
       // Sign the envelope
@@ -362,6 +393,9 @@ describe('SessionManager', () => {
         payload: Attestation.hash(attestation),
         privateKey: identityPrivateKey,
       })
+      const topology = SessionConfig.emptySessionsTopology(identityAddress)
+      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
       // -- Back in dapp --
       const implicitSigner = new Signers.Session.Implicit(
         implicitPrivateKey,
@@ -369,23 +403,23 @@ describe('SessionManager', () => {
         identitySignature,
         implicitAddress,
       )
-      const sessionManager = Signers.SessionManager.createEmpty(testIdentityAddress, {
+      const wallet = await Wallet.fromConfiguration(
+        {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: [
+            { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+            // Include a random node leaf (bytes32) to prevent image hash collision
+            Hex.random(32),
+          ],
+        },
+        {
+          stateProvider,
+        },
+      )
+      const sessionManager = new Signers.SessionManager(wallet, {
         provider,
         implicitSigners: [implicitSigner],
-      })
-      const wallet = await Wallet.fromConfiguration({
-        threshold: 1n,
-        checkpoint: 0n,
-        topology: [
-          {
-            type: 'sapient-signer',
-            address: sessionManager.address,
-            weight: 1n,
-            imageHash: sessionManager.imageHash,
-          },
-          // Include a random node leaf (bytes32) to prevent image hash collision
-          Hex.random(32),
-        ],
       })
 
       const call: Payload.Call = {
@@ -418,34 +452,38 @@ describe('SessionManager', () => {
       }
       const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, sessionPermission)
       // Test manually building the session topology
-      const sessionTopology = SessionConfig.addExplicitSession(
-        SessionConfig.emptySessionsTopology(testIdentityAddress),
-        {
-          ...sessionPermission,
-          signer: explicitSigner.address,
-        },
-      )
-      const sessionManager = new Signers.SessionManager({
-        topology: sessionTopology,
-        explicitSigners: [explicitSigner],
-        provider,
+      const sessionTopology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+        ...sessionPermission,
+        signer: explicitSigner.address,
       })
+      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
 
       // Create the wallet
-      const wallet = await Wallet.fromConfiguration({
-        threshold: 1n,
-        checkpoint: 0n,
-        topology: [
-          // Random explicit signer will randomise the image hash
-          {
-            type: 'sapient-signer',
-            address: sessionManager.address,
-            weight: 1n,
-            imageHash: sessionManager.imageHash,
-          },
-          // Include a random node leaf (bytes32) to prevent image hash collision
-          Hex.random(32),
-        ],
+      const wallet = await Wallet.fromConfiguration(
+        {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: [
+            // Random explicit signer will randomise the image hash
+            {
+              type: 'sapient-signer',
+              address: Constants.DefaultSessionManager,
+              weight: 1n,
+              imageHash,
+            },
+            // Include a random node leaf (bytes32) to prevent image hash collision
+            Hex.random(32),
+          ],
+        },
+        {
+          stateProvider,
+        },
+      )
+      // Create the session manager
+      const sessionManager = new Signers.SessionManager(wallet, {
+        provider,
+        explicitSigners: [explicitSigner],
       })
 
       const call: Payload.Call = {

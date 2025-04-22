@@ -1,5 +1,5 @@
 import { Signers as CoreSigners, Envelope, Wallet } from '@0xsequence/wallet-core'
-import { Config, Constants, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Provider, RpcTransport } from 'ox'
 import { SessionController } from '../session/index.js'
 import { Shared } from './manager.js'
@@ -14,18 +14,12 @@ export class Sessions {
       return this._sessionControllers.get(walletAddress)!
     }
 
-    //FIXME How do we check the wallet is available? Is it necessary?
-    // Find the session configuration for the wallet
+    // Construct the wallet
     const wallet = new Wallet(walletAddress, {
       context: this.shared.sequence.context,
-      stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
+      stateProvider: this.shared.sequence.stateProvider,
     })
-    const { configuration } = await wallet.getStatus()
-    const sessionConfigLeaf = Config.findSignerLeaf(configuration, Constants.DefaultSessionManager)
-    if (!sessionConfigLeaf || !Config.isSapientSignerLeaf(sessionConfigLeaf)) {
-      throw new Error(`Session module not found for wallet ${walletAddress}`)
-    }
 
     // Get the provider if available
     let provider: Provider.Provider | undefined
@@ -37,7 +31,7 @@ export class Sessions {
     }
 
     // Create the controller
-    const controller = await SessionController.createFromStorage(sessionConfigLeaf.imageHash, {
+    const controller = new SessionController({
       wallet,
       provider,
       stateProvider: this.shared.sequence.stateProvider,
@@ -48,7 +42,7 @@ export class Sessions {
 
   async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
     const controller = await this.getControllerForWallet(walletAddress)
-    return controller.topology
+    return controller.getTopology()
   }
 
   async addImplicitSession(
