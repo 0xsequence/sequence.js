@@ -1,5 +1,4 @@
-sequence.js v3 core libraries and SDK
----
+## sequence.js v3 core libraries and SDK
 
 **NOTE: please see [v2](https://github.com/0xsequence/sequence.js/tree/v2) branch for sequence.js 2.x.x**
 

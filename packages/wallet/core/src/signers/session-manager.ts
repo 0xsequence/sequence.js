@@ -192,7 +192,9 @@ export class SessionManager implements SapientSigner {
     return {
       type: 'sapient',
       address: this.address,
-      data: SessionSignature.encodeSessionCallSignatures(signatures, this.topology, explicitSigners, implicitSigners),
+      data: Bytes.toHex(
+        SessionSignature.encodeSessionCallSignatures(signatures, this.topology, explicitSigners, implicitSigners),
+      ),
     }
   }
 
@@ -214,7 +216,7 @@ export class SessionManager implements SapientSigner {
     const encodedPayload = Payload.encodeSapient(chainId, payload)
     const encodedCallData = AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE, [
       encodedPayload,
-      Bytes.toHex(signature.data),
+      signature.data,
     ])
     try {
       const recoverSapientSignatureResult = await this._provider.request({

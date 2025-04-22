@@ -366,7 +366,7 @@ export class Provider implements ProviderInterface {
       if (Signature.isSignatureOfSapientSignerLeaf(topology.signature)) {
         switch (topology.signature.address.toLowerCase()) {
           case this.extensions.passkeys.toLowerCase():
-            const decoded = Extensions.Passkeys.decode(topology.signature.data)
+            const decoded = Extensions.Passkeys.decode(Bytes.fromHex(topology.signature.data))
 
             if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
               throw new Error('Invalid passkey signature')
@@ -391,6 +391,18 @@ export class Provider implements ProviderInterface {
 
   saveTree(tree: GenericTree.Tree): void | Promise<void> {
     return this.store.saveTree(GenericTree.hash(tree), tree)
+  }
+
+  saveConfiguration(config: Config.Config): Promise<void> {
+    return this.store.saveConfig(Bytes.toHex(Config.hashConfiguration(config)), config)
+  }
+
+  saveDeploy(imageHash: Hex.Hex, context: Context.Context): Promise<void> {
+    return this.store.saveCounterfactualWallet(
+      SequenceAddress.from(Bytes.fromHex(imageHash), context),
+      imageHash,
+      context,
+    )
   }
 }
 

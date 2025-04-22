@@ -163,7 +163,7 @@ describe('SessionManager', () => {
     const call: Payload.Call = {
       to: EMITTER_ADDRESS,
       value: 0n,
-      data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[1])), // Implicit emit
+      data: AbiFunction.encodeData(EMITTER_ABI[1]), // Implicit emit
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
@@ -217,7 +217,7 @@ describe('SessionManager', () => {
     const call: Payload.Call = {
       to: EMITTER_ADDRESS,
       value: 0n,
-      data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[0])), // Explicit emit
+      data: AbiFunction.encodeData(EMITTER_ABI[0]), // Explicit emit
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
@@ -384,14 +384,14 @@ describe('SessionManager', () => {
             imageHash: sessionManager.imageHash,
           },
           // Include a random node leaf (bytes32) to prevent image hash collision
-          Bytes.random(32),
+          Hex.random(32),
         ],
       })
 
       const call: Payload.Call = {
         to: EMITTER_ADDRESS,
         value: 0n,
-        data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[1])), // Implicit emit
+        data: AbiFunction.encodeData(EMITTER_ABI[1]), // Implicit emit
         gasLimit: 0n,
         delegateCall: false,
         onlyFallback: false,
@@ -444,14 +444,14 @@ describe('SessionManager', () => {
             imageHash: sessionManager.imageHash,
           },
           // Include a random node leaf (bytes32) to prevent image hash collision
-          Bytes.random(32),
+          Hex.random(32),
         ],
       })
 
       const call: Payload.Call = {
         to: EMITTER_ADDRESS,
         value: 0n,
-        data: Bytes.fromHex(AbiFunction.encodeData(EMITTER_ABI[0])), // Explicit emit
+        data: AbiFunction.encodeData(EMITTER_ABI[0]), // Explicit emit
         gasLimit: 0n,
         delegateCall: false,
         onlyFallback: false,

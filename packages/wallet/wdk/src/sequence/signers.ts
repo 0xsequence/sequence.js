@@ -47,7 +47,7 @@ export class Signers {
     }
 
     try {
-      const message = JSON.parse(Bytes.toString(witness.payload.message))
+      const message = JSON.parse(Hex.toString(witness.payload.message))
       if (isWitnessExtraSignerKind(message)) {
         return toKnownKind(message.signerKind)
       }

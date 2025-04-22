@@ -40,7 +40,7 @@ export class Implicit implements SignerInterface {
         {
           to: call.to,
           value: call.value,
-          data: Bytes.toHex(call.data),
+          data: call.data,
           gasLimit: call.gasLimit,
           delegateCall: call.delegateCall,
           onlyFallback: call.onlyFallback,

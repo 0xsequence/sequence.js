@@ -123,7 +123,7 @@ async function validatePermission(
 
   for (const rule of permission.rules) {
     // Extract value from calldata at offset
-    const callValue = call.data.slice(Number(rule.offset), Number(rule.offset) + 32)
+    const callValue = Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32)
     // Apply mask
     let value: Bytes.Bytes = callValue.map((b, i) => b & rule.mask[i]!)
 
