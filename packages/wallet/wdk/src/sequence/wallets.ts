@@ -348,7 +348,7 @@ export class Wallets {
     }
 
     if (commitment.isSignUp) {
-      await this.signUp({
+      const result = await this.signUp({
         kind: commitment.kind,
         commitment,
         code: args.code,
@@ -387,7 +387,7 @@ export class Wallets {
               },
         })
 
-        if (selectedWallet) {
+        if (selectedWallet && existingWallets.some((wallet) => wallet.wallet === selectedWallet)) {
           // If a wallet was selected, we login to it
           const requestId = await this.login({
             wallet: selectedWallet,
