@@ -666,7 +666,7 @@ export const HomeIndexRoute = () => {
                 throw new Error(`No relayer found for chainId: ${chainId}`)
               }
 
-              // Encode the operation data
+              // TODO: Call Factory Deploy here for the encodedData
               const encodedData = (operation.calls[0].data as `0x${string}`) || ('0x' as `0x${string}`)
               const relevantPreconditions = intentPreconditions.filter(
                 (p) => p.chainID && parseInt(p.chainID) === chainId,
