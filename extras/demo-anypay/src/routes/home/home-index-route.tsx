@@ -215,15 +215,30 @@ export const HomeIndexRoute = () => {
     const statuses = await Promise.all(
       intentPreconditions.map(async (precondition) => {
         try {
-          const chainId = parseInt(precondition.chainID || '0')
+          const chainIdString = precondition.chainID
+          if (!chainIdString) {
+            console.warn('Precondition missing chainID:', precondition)
+            return false
+          }
+          const chainId = parseInt(chainIdString)
+          if (isNaN(chainId) || chainId <= 0) {
+            console.warn('Precondition has invalid chainID:', chainIdString, precondition)
+            return false
+          }
+
           const chainRelayer = getRelayer(chainId)
+          if (!chainRelayer) {
+            console.error(`No relayer found for chainId: ${chainId}`)
+            return false
+          }
+
           const formattedPrecondition = {
             ...precondition,
             data: typeof precondition.data === 'string' ? precondition.data : JSON.stringify(precondition.data),
           }
           return await chainRelayer.checkPrecondition(formattedPrecondition)
         } catch (error) {
-          console.error('Error checking precondition:', error)
+          console.error('Error checking precondition:', error, 'Precondition:', precondition)
           return false
         }
       }),
@@ -640,12 +655,33 @@ export const HomeIndexRoute = () => {
 
           // For each operation, send the meta-transaction using the appropriate relayer
           for (const operation of intentOperations) {
+            const operationKey = `${operation.chainId}-${intentOperations.indexOf(operation)}`
             try {
               const chainId = parseInt(operation.chainId)
+              if (isNaN(chainId) || chainId <= 0) {
+                throw new Error(`Invalid chainId for operation: ${operation.chainId}`)
+              }
               const chainRelayer = getRelayer(chainId)
+              if (!chainRelayer) {
+                throw new Error(`No relayer found for chainId: ${chainId}`)
+              }
 
               // Encode the operation data
               const encodedData = (operation.calls[0].data as `0x${string}`) || ('0x' as `0x${string}`)
+              const relevantPreconditions = intentPreconditions.filter(
+                (p) => p.chainID && parseInt(p.chainID) === chainId,
+              )
+
+              console.log(
+                `Relaying operation ${operationKey} to intent ${intentAddress} on chain ${chainId} via relayer:`,
+                chainRelayer,
+              )
+              console.log(`Relay data:`, {
+                intentAddress,
+                encodedData,
+                chainId: BigInt(chainId),
+                relevantPreconditions,
+              })
 
               // Send the meta-transaction through the chain-specific relayer
               const { opHash } = await chainRelayer.relay(
@@ -653,21 +689,35 @@ export const HomeIndexRoute = () => {
                 encodedData,
                 BigInt(operation.chainId),
                 undefined,
-                intentPreconditions.filter((p) => p.chainID && parseInt(p.chainID) === chainId),
+                relevantPreconditions,
               )
 
               // Store the opHash in state for monitoring
               setOperationHashes((prev) => ({
                 ...prev,
-                [`${operation.chainId}-${intentOperations.indexOf(operation)}`]: opHash,
+                [operationKey]: opHash,
               }))
-            } catch (error: any) {
-              console.error('Error sending meta-transaction:', error)
+              // Update status to pending after successful relay initiation (monitoring will update further)
               setOperationStatuses((prev) => ({
                 ...prev,
-                [`${operation.chainId}-${intentOperations.indexOf(operation)}`]: {
+                [operationKey]: { ...prev[operationKey], status: 'pending', error: undefined },
+              }))
+            } catch (error: any) {
+              console.error(`Error sending meta-transaction for operation ${operationKey}:`, error)
+              // Log additional details if available
+              if (error.cause) {
+                console.error(`Caused by:`, error.cause)
+              }
+              if (error.message.includes('fetch')) {
+                console.error(
+                  `Fetch error details: Might be network issue, CORS, or invalid relayer URL for chain ${operation.chainId}`,
+                )
+              }
+              setOperationStatuses((prev) => ({
+                ...prev,
+                [operationKey]: {
                   status: 'failed',
-                  error: error.message,
+                  error: `Relay failed: ${error.message}`,
                 },
               }))
             }
