@@ -74,3 +74,4 @@ type MaybePromise<T> = T | Promise<T>
 
 export * as Local from './local'
 export * from './utils'
+export * as Remote from './remote'
