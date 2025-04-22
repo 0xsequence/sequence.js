@@ -823,7 +823,8 @@ export function encodeTopology(
     } else if (topology.signature.type === 'sapient' || topology.signature.type === 'sapient_compact') {
       let flag = (topology.signature.type === 'sapient' ? FLAG_SIGNATURE_SAPIENT : FLAG_SIGNATURE_SAPIENT_COMPACT) << 4
 
-      let bytesForSignatureSize = minBytesFor(BigInt(topology.signature.data.length))
+      const signatureBytes = Bytes.fromHex(topology.signature.data)
+      let bytesForSignatureSize = minBytesFor(BigInt(signatureBytes.length))
       if (bytesForSignatureSize > 3) {
         throw new Error('Signature too large')
       }
@@ -843,8 +844,8 @@ export function encodeTopology(
         Bytes.fromNumber(flag),
         weightBytes,
         Bytes.padLeft(Bytes.fromHex(topology.signature.address), 20),
-        Bytes.padLeft(Bytes.fromNumber(topology.signature.data.length), bytesForSignatureSize),
-        Bytes.fromHex(topology.signature.data),
+        Bytes.padLeft(Bytes.fromNumber(signatureBytes.length), bytesForSignatureSize),
+        signatureBytes,
       )
     } else {
       throw new Error(`Invalid signature type: ${topology.signature.type}`)
