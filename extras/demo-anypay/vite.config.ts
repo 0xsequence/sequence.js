@@ -9,4 +9,9 @@ export default defineConfig({
     // TODO: This shouldn't be needed, fix sdk build
     include: ['@0xsequence/api', '@0xsequence/wallet-core', '@0xsequence/wallet-primitives', '@0xsequence/wallet-wdk'],
   },
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
 })

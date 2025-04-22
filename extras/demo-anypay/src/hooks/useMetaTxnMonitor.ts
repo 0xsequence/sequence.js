@@ -16,9 +16,14 @@ export const useMetaTxnMonitor = (
   const [status, setStatus] = useState<OperationStatus>({ status: 'pending' })
 
   useEffect(() => {
-    if (!opHash || !relayer) return
+    // Reset status when opHash or relayer changes
+    if (!opHash || !relayer) {
+      setStatus({ status: 'pending' })
+      return
+    }
 
     let isSubscribed = true
+    let timeoutId: NodeJS.Timeout | undefined
 
     const monitorStatus = async () => {
       try {
@@ -37,7 +42,7 @@ export const useMetaTxnMonitor = (
 
         // Continue monitoring if still pending
         if (currentStatus.status === 'pending' && isSubscribed) {
-          setTimeout(monitorStatus, 5000)
+          timeoutId = setTimeout(monitorStatus, 5000)
         }
       } catch (error: any) {
         if (!isSubscribed) return
@@ -52,6 +57,9 @@ export const useMetaTxnMonitor = (
 
     return () => {
       isSubscribed = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
     }
   }, [opHash, chainId, relayer])
 

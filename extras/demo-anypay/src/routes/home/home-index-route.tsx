@@ -1,21 +1,19 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAccount, useConnect, useDisconnect, useSendTransaction, useSwitchChain } from 'wagmi'
 import { Connector } from 'wagmi'
-import { useIndexerGatewayClient } from '@0xsequence/hooks'
-import { NativeTokenBalance, TokenBalance, ContractVerificationStatus } from '@0xsequence/indexer'
-import { GetTokenBalancesSummaryReturn } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
+import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import { GetIntentOperationsReturn, IntentOperation, IntentPrecondition, GetIntentConfigReturn } from '@0xsequence/api'
 import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { useAPIClient } from '../../hooks/useAPIClient'
+import { useAPIClient } from '@/hooks/useAPIClient'
 import { Button, Text, NetworkImage } from '@0xsequence/design-system'
 import { AbiFunction, Address, Bytes } from 'ox'
 import * as chains from 'viem/chains'
 import { AnyPay } from '@0xsequence/wallet-core'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
-import { Relayer } from '@0xsequence/wallet-core'
-import { useMetaTxnMonitor } from '../../hooks/useMetaTxnMonitor'
+import { useMetaTxnMonitor } from '@/hooks/useMetaTxnMonitor'
+import { useRelayers } from '@/hooks/useRelayers'
 import {
   AlertTriangle,
   Loader2,
@@ -28,6 +26,7 @@ import {
   PenSquare,
   ShieldCheck,
 } from 'lucide-react'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
@@ -52,14 +51,6 @@ type OriginCallParams = {
   value: bigint | null
   chainId: number | null
   error?: string
-}
-
-// Type guard for native token balance
-function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
-  if ('contractAddress' in token) {
-    return false
-  }
-  return true
 }
 
 // Types for intent actions
@@ -123,7 +114,7 @@ export const HomeIndexRoute = () => {
     tokenAmount: '0',
     tokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // Default to USDC
   })
-  const indexerClient = useIndexerGatewayClient()
+
   const apiClient = useAPIClient()
 
   // State declarations
@@ -159,79 +150,10 @@ export const HomeIndexRoute = () => {
     }
   }>({})
   const [operationHashes, setOperationHashes] = useState<{ [key: string]: Hex }>({})
+  const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
+  const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)
 
-  // Default empty page info for query fallback
-  const defaultPage = { page: 1, pageSize: 10, totalRecords: 0, more: false }
-
-  // Fetch token balances
-  const {
-    data: tokenBalancesData,
-    isLoading: isLoadingBalances,
-    error: balanceError,
-  } = useQuery<GetTokenBalancesSummaryReturn>({
-    queryKey: ['tokenBalances', account.address],
-    queryFn: async () => {
-      if (!account.address) {
-        console.warn('No account address or indexer client')
-        return { balances: [], nativeBalances: [], page: defaultPage } as GetTokenBalancesSummaryReturn
-      }
-      try {
-        const summary = await indexerClient.getTokenBalancesSummary({
-          filter: {
-            accountAddresses: [account.address],
-            contractStatus: ContractVerificationStatus.VERIFIED,
-            contractTypes: ['ERC20'],
-            omitNativeBalances: false,
-          },
-        })
-
-        return summary
-      } catch (error) {
-        console.error('Failed to fetch token balances:', error)
-        return { balances: [], nativeBalances: [], page: defaultPage } as GetTokenBalancesSummaryReturn
-      }
-    },
-    enabled: !!account.address,
-    staleTime: 30000,
-    retry: 1,
-  })
-
-  // Relayers setup
-  const relayers = useMemo(() => {
-    const relayerMap = new Map<number, Relayer.Rpc.RpcRelayer>()
-
-    // Initialize relayers for each unique chain in intent operations
-    if (intentOperations) {
-      const uniqueChainIds = new Set(intentOperations.map((op) => parseInt(op.chainId)))
-      uniqueChainIds.forEach((chainId) => {
-        // Get chain-specific RPC URL
-        let rpcUrl = 'https://node.sequence.app'
-        const chain = getChainInfo(chainId)
-        if (chain) {
-          if (chainId === 42161) rpcUrl = 'https://arbitrum-mainnet.sequence.app'
-          else if (chainId === 10) rpcUrl = 'https://optimism-mainnet.sequence.app'
-          else if (chainId === 8453) rpcUrl = 'https://base-mainnet.sequence.app'
-          else rpcUrl = 'https://node.sequence.app'
-        }
-
-        relayerMap.set(chainId, new Relayer.Rpc.RpcRelayer('https://relayer.sequence.app', chainId, rpcUrl))
-      })
-    }
-
-    return relayerMap
-  }, [intentOperations])
-
-  // Function to get relayer for a specific chain
-  const getRelayer = useCallback(
-    (chainId: number) => {
-      const chainRelayer = relayers.get(chainId)
-      if (!chainRelayer) {
-        throw new Error(`No relayer found for chain ID ${chainId}`)
-      }
-      return chainRelayer
-    },
-    [relayers],
-  )
+  const { getRelayer } = useRelayers()
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
@@ -513,39 +435,6 @@ export const HomeIndexRoute = () => {
     },
   })
 
-  const sortedTokens = useMemo(() => {
-    if (!tokenBalancesData?.balances) {
-      return []
-    }
-
-    // Flatten both native and token balances
-    const nativeBalances = tokenBalancesData.nativeBalances.flatMap((b) => b.results)
-    const tokenBalances = tokenBalancesData.balances.flatMap((b) => b.results)
-    const balances = [...nativeBalances, ...tokenBalances]
-
-    return [...balances]
-      .filter((token) => {
-        try {
-          return BigInt(token.balance) > 0n
-        } catch {
-          return false
-        }
-      })
-      .sort((a, b) => {
-        if (isNativeToken(a)) return -1
-        if (isNativeToken(b)) return 1
-        try {
-          const balanceA = BigInt(a.balance)
-          const balanceB = BigInt(b.balance)
-          if (balanceA > balanceB) return -1
-          if (balanceA < balanceB) return 1
-          return 0
-        } catch {
-          return 0
-        }
-      })
-  }, [tokenBalancesData])
-
   useEffect(() => {
     if (!account.isConnected) {
       setSelectedToken(null)
@@ -562,6 +451,8 @@ export const HomeIndexRoute = () => {
     setShowCustomCallForm(false)
     setCommittedIntentAddress(null)
     setVerificationStatus(null)
+    setOperationStatuses({})
+    setOperationHashes({})
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
     } else {
@@ -577,10 +468,11 @@ export const HomeIndexRoute = () => {
 
   const handleSendOriginCall = async () => {
     if (
+      isTransactionInProgress || // Prevent duplicate transactions
       !originCallParams ||
       originCallParams.error ||
       !originCallParams.to ||
-      !originCallParams.data ||
+      originCallParams.data === null ||
       originCallParams.value === null ||
       originCallParams.chainId === null
     ) {
@@ -602,35 +494,8 @@ export const HomeIndexRoute = () => {
 
       try {
         console.log('Switching to chain:', originCallParams.chainId)
+
         await switchChain({ chainId: originCallParams.chainId })
-
-        if (account.chainId !== originCallParams.chainId) {
-          throw new Error('Chain switch timed out')
-        }
-
-        setIsChainSwitchRequired(false)
-
-        return sendTransaction(
-          {
-            to: originCallParams.to,
-            data: originCallParams.data,
-            value: originCallParams.value,
-            chainId: originCallParams.chainId,
-          },
-          {
-            onSuccess: (hash) => {
-              console.log('Transaction sent, hash:', hash)
-              setTxnHash(hash)
-            },
-            onError: (error) => {
-              console.error('Transaction failed:', error)
-              if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
-                setIsAutoExecuteEnabled(false)
-              }
-              updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
-            },
-          },
-        )
       } catch (error: any) {
         console.error('Failed to switch chain:', error)
         if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
@@ -644,34 +509,42 @@ export const HomeIndexRoute = () => {
           `Failed to switch chain: ${error.message || 'Unknown error'}`,
         )
         setIsChainSwitchRequired(false)
-        return
       }
+      return // Stop execution here whether switch succeeded or failed.
     }
 
-    setTxnHash(undefined)
-    updateMetaTxnStatus(undefined, 'sending')
+    // Ensure only one transaction is sent at a time
+    if (!isTransactionInProgress) {
+      setIsTransactionInProgress(true) // Mark transaction as in progress
+      setTxnHash(undefined)
+      updateMetaTxnStatus(undefined, 'sending')
 
-    return sendTransaction(
-      {
-        to: originCallParams.to,
-        data: originCallParams.data,
-        value: originCallParams.value,
-        chainId: originCallParams.chainId,
-      },
-      {
-        onSuccess: (hash) => {
-          console.log('Transaction sent, hash:', hash)
-          setTxnHash(hash)
+      sendTransaction(
+        {
+          to: originCallParams.to,
+          data: originCallParams.data,
+          value: originCallParams.value,
+          chainId: originCallParams.chainId,
         },
-        onError: (error) => {
-          console.error('Transaction failed:', error)
-          if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
-            setIsAutoExecuteEnabled(false)
-          }
-          updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+        {
+          onSuccess: (hash) => {
+            console.log('Transaction sent, hash:', hash)
+            setTxnHash(hash)
+            setIsTransactionInProgress(false) // Reset transaction state
+          },
+          onError: (error) => {
+            console.error('Transaction failed:', error)
+            if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
+              setIsAutoExecuteEnabled(false)
+            }
+            updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+            setIsTransactionInProgress(false)
+          },
         },
-      },
-    )
+      )
+    } else {
+      console.warn('Transaction already in progress. Skipping duplicate request.')
+    }
   }
 
   // Remove the chain change effect that might be resetting state
@@ -932,30 +805,6 @@ export const HomeIndexRoute = () => {
     commitIntentConfigMutation.isSuccess,
   ])
 
-  // Effect to auto-send transaction after successful commit
-  useEffect(() => {
-    if (
-      isAutoExecuteEnabled &&
-      commitIntentConfigMutation.isSuccess &&
-      originCallParams &&
-      !originCallParams.error &&
-      !isSendingTransaction &&
-      !isWaitingForReceipt &&
-      !txnHash
-    ) {
-      console.log('Auto-sending transaction after successful commit...')
-      handleSendOriginCall()
-    }
-  }, [
-    isAutoExecuteEnabled,
-    commitIntentConfigMutation.isSuccess,
-    originCallParams,
-    isSendingTransaction,
-    isWaitingForReceipt,
-    txnHash,
-  ])
-
-  // Existing auto-execute effect for chain switching
   useEffect(() => {
     if (
       isAutoExecuteEnabled &&
@@ -966,6 +815,60 @@ export const HomeIndexRoute = () => {
       handleSendOriginCall()
     }
   }, [isAutoExecuteEnabled, originCallParams, account.chainId])
+
+  useEffect(() => {
+    const shouldAutoSend =
+      isAutoExecuteEnabled &&
+      commitIntentConfigMutation.isSuccess &&
+      originCallParams?.chainId &&
+      account.chainId === originCallParams.chainId &&
+      !originCallParams.error &&
+      originCallParams.to &&
+      originCallParams.data !== null &&
+      originCallParams.value !== null &&
+      !isSendingTransaction &&
+      !isWaitingForReceipt &&
+      !txnHash &&
+      !isChainSwitchRequired
+
+    if (shouldAutoSend) {
+      console.log('Auto-executing transaction: All conditions met.')
+      updateMetaTxnStatus(undefined, 'sending')
+
+      sendTransaction(
+        {
+          to: originCallParams.to!,
+          data: originCallParams.data!,
+          value: originCallParams.value!,
+          chainId: originCallParams.chainId!,
+        },
+        {
+          onSuccess: (hash) => {
+            console.log('Auto-executed transaction sent, hash:', hash)
+            setTxnHash(hash)
+          },
+          onError: (error) => {
+            console.error('Auto-executed transaction failed:', error)
+            if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
+              setIsAutoExecuteEnabled(false)
+            }
+            updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+          },
+        },
+      )
+    }
+    // Update dependencies to include commit success status
+  }, [
+    isAutoExecuteEnabled,
+    commitIntentConfigMutation.isSuccess,
+    originCallParams,
+    account.chainId,
+    isSendingTransaction,
+    isWaitingForReceipt,
+    txnHash,
+    isChainSwitchRequired,
+    sendTransaction,
+  ])
 
   // Update button text and disabled state for commit button
   const commitButtonText = commitIntentConfigMutation.isPending ? (
@@ -1093,6 +996,26 @@ export const HomeIndexRoute = () => {
       ...newStatuses,
     }))
   }, [intentOperations, operation0Status, operation1Status])
+
+  // Effect to cleanup operation statuses and hashes when intent operations are reset
+  useEffect(() => {
+    if (!intentOperations) {
+      setOperationStatuses({})
+      setOperationHashes({})
+    }
+  }, [intentOperations])
+
+  // Effect to cleanup operation statuses and hashes when account disconnects
+  useEffect(() => {
+    if (!account.isConnected) {
+      setOperationStatuses({})
+      setOperationHashes({})
+      setIntentOperations(null)
+      setIntentPreconditions(null)
+      setCommittedIntentAddress(null)
+      setVerificationStatus(null)
+    }
+  }, [account.isConnected])
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
