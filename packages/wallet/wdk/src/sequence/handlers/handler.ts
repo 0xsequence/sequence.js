@@ -1,6 +1,6 @@
-import * as Db from '../../dbs'
+import * as Db from '../../dbs/index.js'
 import { Address, Hex } from 'ox'
-import { SignerActionable, SignerReady, SignerUnavailable } from '../types'
+import { SignerActionable, SignerReady, SignerUnavailable } from '../types/index.js'
 
 export interface Handler {
   kind: string

@@ -1,6 +1,6 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, TypedData } from 'ox'
-import { RECOVER_SAPIENT_SIGNATURE } from './constants'
-import { minBytesFor } from './utils'
+import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
+import { minBytesFor } from './utils.js'
 import { getSignPayload } from 'ox/TypedData'
 
 export type Call = {

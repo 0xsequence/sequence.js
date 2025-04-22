@@ -7,9 +7,9 @@ import {
   Signature as SignatureTypes,
 } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
-import { SapientSigner } from '.'
-import { Explicit, Implicit } from './session'
-import { State } from '..'
+import { SapientSigner } from './index.js'
+import { Explicit, Implicit } from './session/index.js'
+import { State } from '../index.js'
 
 type SessionManagerConfiguration = {
   topology: SessionConfig.SessionsTopology

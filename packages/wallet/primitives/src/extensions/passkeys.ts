@@ -1,5 +1,5 @@
 import { Bytes, Hex, WebAuthnP256 } from 'ox'
-import { GenericTree } from '..'
+import * as GenericTree from '../generic-tree.js'
 
 export type PasskeyMetadata = {
   credentialId: string

@@ -2,7 +2,7 @@
 
 import type { CommandModule } from 'yargs'
 import { Bytes, Hex } from 'ox'
-import { fromPosOrStdin } from '../utils'
+import { fromPosOrStdin } from '../utils.js'
 import { Extensions } from '@0xsequence/wallet-primitives'
 
 // Reusable function for encoding a signature

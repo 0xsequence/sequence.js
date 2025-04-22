@@ -1,6 +1,6 @@
 import { Address, Hex } from 'ox'
 import { Config, Context, GenericTree, Payload, Signature, Utils } from '@0xsequence/wallet-primitives'
-import { Provider } from '../index' // Adjust path if needed
+import { Provider } from '../index.js'
 
 export class DevHttpProvider implements Provider {
   private readonly baseUrl: string

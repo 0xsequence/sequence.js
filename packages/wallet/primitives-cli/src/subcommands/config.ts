@@ -1,6 +1,6 @@
 import type { CommandModule } from 'yargs'
 import { Address, Bytes, Hex } from 'ox'
-import { fromPosOrStdin } from '../utils'
+import { fromPosOrStdin } from '../utils.js'
 import { Signature, Config } from '@0xsequence/wallet-primitives'
 
 export const PossibleElements = [

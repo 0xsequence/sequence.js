@@ -1,12 +1,11 @@
 import { Hex, Address, Bytes } from 'ox'
-import { Handler } from './handler'
-import * as Db from '../../dbs'
-import { Signatures } from '../signatures'
-import * as Identity from '../../identity'
-import { SignerUnavailable, SignerReady, SignerActionable } from '../types'
-import { AuthCommitment, AuthKey } from '../../dbs'
-import { IdentitySigner } from '../../identity/signer'
-import { IdentityHandler } from './identity'
+import { Handler } from './handler.js'
+import * as Db from '../../dbs/index.js'
+import { Signatures } from '../signatures.js'
+import * as Identity from '../../identity/index.js'
+import { SignerUnavailable, SignerReady, SignerActionable } from '../types/signature-request.js'
+import { IdentitySigner } from '../../identity/signer.js'
+import { IdentityHandler } from './identity.js'
 
 export class AuthCodePkceHandler extends IdentityHandler implements Handler {
   private redirectUri: string = ''
@@ -67,7 +66,7 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
   }
 
   public async completeAuth(
-    commitment: AuthCommitment,
+    commitment: Db.AuthCommitment,
     code: string,
   ): Promise<[IdentitySigner, { [key: string]: string }]> {
     const challenge = new Identity.AuthCodePkceChallenge('', '', '')

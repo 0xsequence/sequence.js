@@ -2,6 +2,7 @@
   "name": "@0xsequence/wallet-primitives",
   "version": "0.0.0",
   "license": "Apache-2.0",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"

@@ -8,8 +8,8 @@ import {
   GenericTree,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
-import { Provider as ProviderInterface } from '..'
-import { MemoryStore } from './memory'
+import { Provider as ProviderInterface } from '../index.js'
+import { MemoryStore } from './memory.js'
 
 export interface Store {
   // top level configurations store
@@ -406,5 +406,5 @@ export class Provider implements ProviderInterface {
   }
 }
 
-export * from './memory'
-export * from './indexed-db'
+export * from './memory.js'
+export * from './indexed-db.js'

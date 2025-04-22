@@ -75,7 +75,7 @@ export interface Writer {
 
 export type MaybePromise<T> = T | Promise<T>
 
-export * as Local from './local'
-export * from './utils'
-export * as Remote from './remote'
-export * from './cached'
+export * as Local from './local/index.js'
+export * from './utils.js'
+export * as Remote from './remote/index.js'
+export * from './cached.js'

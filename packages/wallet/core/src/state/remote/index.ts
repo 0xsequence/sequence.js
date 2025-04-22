@@ -1,1 +1,1 @@
-export * from './dev-http'
+export * from './dev-http.js'

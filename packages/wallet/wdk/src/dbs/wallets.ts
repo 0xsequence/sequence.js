@@ -1,5 +1,5 @@
-import { Generic } from './generic'
-import { Wallet } from '../sequence/types'
+import { Generic } from './generic.js'
+import { Wallet } from '../sequence/types/wallet.js'
 
 const TABLE_NAME = 'wallets'
 

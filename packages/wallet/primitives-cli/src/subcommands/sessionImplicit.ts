@@ -1,7 +1,7 @@
 import { SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 import type { CommandModule } from 'yargs'
-import { fromPosOrStdin, requireString } from '../utils'
+import { fromPosOrStdin, requireString } from '../utils.js'
 
 export async function doAddBlacklistAddress(blacklistAddress: string, sessionTopologyInput: string): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)

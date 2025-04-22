@@ -1,8 +1,8 @@
 import type { Payload as PayloadTypes, Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hex, PublicKey, Secp256k1 } from 'ox'
-import { Signer as SignerInterface, Witnessable } from '..'
-import { State } from '../..'
+import { Signer as SignerInterface, Witnessable } from '../index.js'
+import { State } from '../../index.js'
 
 export interface PkStore {
   address(): Address.Address
@@ -74,4 +74,4 @@ export class Pk implements SignerInterface, Witnessable {
   }
 }
 
-export * as Encrypted from './encrypted'
+export * as Encrypted from './encrypted.js'
