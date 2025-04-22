@@ -220,4 +220,12 @@ export class DevHttpProvider implements Provider {
   async saveTree(tree: GenericTree.Tree): Promise<void> {
     await this.request<void>('POST', '/tree', { tree })
   }
+
+  saveConfiguration(config: Config.Config): Promise<void> {
+    return this.request<void>('POST', '/configuration', { config })
+  }
+
+  saveDeploy(imageHash: Hex.Hex, context: Context.Context): Promise<void> {
+    return this.request<void>('POST', '/deploy', { imageHash, context })
+  }
 }

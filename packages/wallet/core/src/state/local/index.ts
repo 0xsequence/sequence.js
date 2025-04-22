@@ -392,6 +392,18 @@ export class Provider implements ProviderInterface {
   saveTree(tree: GenericTree.Tree): void | Promise<void> {
     return this.store.saveTree(GenericTree.hash(tree), tree)
   }
+
+  saveConfiguration(config: Config.Config): Promise<void> {
+    return this.store.saveConfig(Bytes.toHex(Config.hashConfiguration(config)), config)
+  }
+
+  saveDeploy(imageHash: Hex.Hex, context: Context.Context): Promise<void> {
+    return this.store.saveCounterfactualWallet(
+      SequenceAddress.from(Bytes.fromHex(imageHash), context),
+      imageHash,
+      context,
+    )
+  }
 }
 
 export * from './memory'
