@@ -77,7 +77,7 @@ export function isAnyAddressSubdigestLeaf(cand: any): cand is AnyAddressSubdiges
 }
 
 export function isNodeLeaf(cand: any): cand is NodeLeaf {
-  return typeof cand === 'string' && cand.length === 66
+  return Hex.validate(cand) && cand.length === 66
 }
 
 export function isNestedLeaf(cand: any): cand is NestedLeaf {
