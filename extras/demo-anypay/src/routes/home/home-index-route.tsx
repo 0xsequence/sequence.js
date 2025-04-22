@@ -118,7 +118,7 @@ export const HomeIndexRoute = () => {
   const apiClient = useAPIClient()
 
   // State declarations
-  const [metaTxns, setMetaTxns] = useState<GetIntentOperationsReturn['calls'] | null>(null)
+  const [metaTxns, setMetaTxns] = useState<GetIntentOperationsReturn['metaTxns'] | null>(null)
   const [intentOperations, setIntentOperations] = useState<GetIntentOperationsReturn['operations'] | null>(null)
   const [intentPreconditions, setIntentPreconditions] = useState<GetIntentOperationsReturn['preconditions'] | null>(
     null,
@@ -427,7 +427,7 @@ export const HomeIndexRoute = () => {
 
       console.log('Calling createIntentConfig with args:', args)
       const data = await apiClient.getIntentOperations(args)
-      setMetaTxns(data.calls)
+      setMetaTxns(data.metaTxns)
       setIntentOperations(data.operations)
       setIntentPreconditions(data.preconditions)
       setCommittedIntentAddress(null)
@@ -436,19 +436,30 @@ export const HomeIndexRoute = () => {
     },
     onSuccess: (data) => {
       console.log('Intent Config Success:', data)
-      if (data && data.operations && data.operations.length > 0) {
+      if (
+        data &&
+        data.operations &&
+        data.operations.length > 0 &&
+        data.preconditions &&
+        data.preconditions.length > 0 &&
+        data.metaTxns &&
+        data.metaTxns.length > 0
+      ) {
         setIntentOperations(data.operations)
         setIntentPreconditions(data.preconditions)
+        setMetaTxns(data.metaTxns)
       } else {
         console.warn('API returned success but no operations found.')
         setIntentOperations(null)
         setIntentPreconditions(null)
+        setMetaTxns(null)
       }
     },
     onError: (error) => {
       console.error('Intent Config Error:', error)
       setIntentOperations(null)
       setIntentPreconditions(null)
+      setMetaTxns(null)
     },
   })
 
@@ -457,6 +468,7 @@ export const HomeIndexRoute = () => {
       setSelectedToken(null)
       setIntentOperations(null)
       setIntentPreconditions(null)
+      setMetaTxns(null)
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
     }
@@ -465,6 +477,7 @@ export const HomeIndexRoute = () => {
   const handleActionClick = (action: IntentAction) => {
     setIntentOperations(null)
     setIntentPreconditions(null)
+    setMetaTxns(null)
     setShowCustomCallForm(false)
     setCommittedIntentAddress(null)
     setVerificationStatus(null)
@@ -1069,6 +1082,7 @@ export const HomeIndexRoute = () => {
       setOperationHashes({})
       setIntentOperations(null)
       setIntentPreconditions(null)
+      setMetaTxns(null)
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
     }
@@ -1236,6 +1250,7 @@ export const HomeIndexRoute = () => {
                       }
                       setIntentOperations(null)
                       setIntentPreconditions(null)
+                      setMetaTxns(null)
                       setCommittedIntentAddress(null)
                       setVerificationStatus(null)
                     }}
@@ -1526,6 +1541,65 @@ export const HomeIndexRoute = () => {
                     (List of operations that are pre-authorized to be executed):
                   </Text>
                 </Text>
+
+                {/* Add Meta-transactions Section */}
+                {metaTxns && metaTxns.length > 0 && (
+                  <div className="mb-4">
+                    <Text
+                      variant="medium"
+                      color="primary"
+                      className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
+                    >
+                      <Layers className="h-4 w-4 mr-1" />
+                      Meta-transactions
+                      <Text variant="small" color="secondary" className="ml-1">
+                        (Transactions that will be relayed):
+                      </Text>
+                    </Text>
+                    <div className="space-y-2">
+                      {metaTxns.map((tx, index) => (
+                        <div
+                          key={`metatx-${index}`}
+                          className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
+                        >
+                          <div className="space-y-2">
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                              <Text variant="small" color="secondary">
+                                <strong className="text-blue-300">Contract: </strong>
+                                <span className="text-yellow-300 break-all font-mono">{tx.contract}</span>
+                              </Text>
+                            </div>
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                              <Text variant="small" color="secondary">
+                                <strong className="text-blue-300">Chain ID: </strong>
+                                <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">{tx.chainId}</span>
+                                <NetworkImage
+                                  chainId={parseInt(tx.chainId)}
+                                  size="sm"
+                                  className="w-4 h-4 ml-1 inline-block"
+                                />
+                                <span className="ml-1">
+                                  {getChainInfo(parseInt(tx.chainId))?.name || 'Unknown Chain'}
+                                </span>
+                              </Text>
+                            </div>
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                              <Text variant="small" color="secondary">
+                                <div className="break-all">
+                                  <strong className="text-blue-300">Input Data: </strong>
+                                  <div className="max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                                    <span className="font-mono text-green-300">{tx.input || '0x'}</span>
+                                  </div>
+                                </div>
+                              </Text>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {intentOperations && intentOperations.length > 0 ? (
                   <div className="space-y-2">
                     {intentOperations.map((operation, index) => (
