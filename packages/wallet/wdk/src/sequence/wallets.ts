@@ -286,6 +286,37 @@ export class Wallets {
     return undo
   }
 
+  private async updateRecoveryModule(
+    modules: Config.SapientSignerLeaf[],
+    transformer: (leaves: Extensions.Recovery.RecoveryLeaf[]) => Extensions.Recovery.RecoveryLeaf[],
+  ) {
+    const ext = this.shared.sequence.extensions.recovery
+    const idx = modules.findIndex((m) => m.address === ext)
+    if (idx === -1) {
+      return
+    }
+
+    const genericTree = await this.shared.sequence.stateProvider.getTree(ext)
+    if (!genericTree) {
+      throw new Error('recovery-module-tree-not-found')
+    }
+
+    const tree = Extensions.Recovery.fromGenericTree(genericTree)
+    const { leaves, isComplete } = Extensions.Recovery.getRecoveryLeaves(tree)
+    if (!isComplete) {
+      throw new Error('recovery-module-tree-incomplete')
+    }
+
+    const nextTree = Extensions.Recovery.fromRecoveryLeaves(transformer(leaves))
+    const nextGeneric = Extensions.Recovery.toGenericTree(nextTree)
+    await this.shared.sequence.stateProvider.saveTree(nextGeneric)
+    if (!modules[idx]) {
+      throw new Error('recovery-module-not-found-(unreachable)')
+    }
+
+    modules[idx].imageHash = GenericTree.hash(nextGeneric)
+  }
+
   private async prepareSignUp(args: SignupArgs): Promise<{
     signer: (Signers.Signer | Signers.SapientSigner) & Signers.Witnessable
     extra: WitnessExtraSignerKind
@@ -549,45 +580,15 @@ export class Wallets {
         { address: device.address },
       ])
 
-      // Add device to recovery module, if it exists
-      if (modules.length > 0 && modules[0]!.address === this.shared.sequence.extensions.recovery) {
-        const recoveryGenericTree = await this.shared.sequence.stateProvider.getTree(
-          this.shared.sequence.extensions.recovery,
-        )
-        if (!recoveryGenericTree) {
-          throw new Error('recovery-module-tree-not-found')
-        }
-
-        const recoveryTree = Extensions.Recovery.fromGenericTree(recoveryGenericTree)
-        const recoveryLeaves = Extensions.Recovery.getRecoveryLeaves(recoveryTree)
-        if (!recoveryLeaves.isComplete) {
-          throw new Error('recovery-module-tree-incomplete')
-        }
-
-        const nextRecoveryLeaves = [
-          ...recoveryLeaves.leaves,
-          {
-            type: 'leaf' as const,
-            signer: device.address,
-            requiredDeltaTime: this.shared.sequence.defaultRecoverySettings.requiredDeltaTime,
-            minTimestamp: this.shared.sequence.defaultRecoverySettings.minTimestamp,
-          },
-        ]
-
-        const nextRecoveryTree = Extensions.Recovery.fromRecoveryLeaves(nextRecoveryLeaves)
-        const nextRecoveryGenericTree = Extensions.Recovery.toGenericTree(nextRecoveryTree)
-        await this.shared.sequence.stateProvider.saveTree(nextRecoveryGenericTree)
-
-        const nextRecoveryImageHash = GenericTree.hash(nextRecoveryGenericTree)
-
-        // Replace the recovery module imageHash
-        const recoveryModuleEntry = modules.findIndex((x) => x.address === this.shared.sequence.extensions.recovery)
-        if (recoveryModuleEntry === -1) {
-          throw new Error('recovery-module-not-found-(unreachable)')
-        }
-
-        modules[recoveryModuleEntry]!.imageHash = nextRecoveryImageHash
-      }
+      await this.updateRecoveryModule(modules, (leaves) => [
+        ...leaves,
+        {
+          type: 'leaf',
+          signer: device.address,
+          requiredDeltaTime: this.shared.sequence.defaultRecoverySettings.requiredDeltaTime,
+          minTimestamp: this.shared.sequence.defaultRecoverySettings.minTimestamp,
+        },
+      ])
 
       const envelope = await wallet.prepareUpdate(
         toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
@@ -734,6 +735,9 @@ export class Wallets {
         .map((x) => ({ address: x })),
       ...Config.getSigners(devicesTopology).sapientSigners,
     ])
+
+    // Remove device from the recovery topology, if it exists
+    await this.updateRecoveryModule(modules, (leaves) => leaves.filter((l) => l.signer !== device.address))
 
     console.log('nextDevicesTopology', nextDevicesTopology)
 
