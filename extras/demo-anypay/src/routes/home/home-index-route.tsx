@@ -150,6 +150,13 @@ export const HomeIndexRoute = () => {
       lastPreconditionCheck?: string
     }
   }>({})
+  const [metaTxnStatuses, setMetaTxnStatuses] = useState<{
+    [key: string]: {
+      status: 'pending' | 'success' | 'failed'
+      txHash?: string
+      error?: string
+    }
+  }>({})
   const [operationHashes, setOperationHashes] = useState<{ [key: string]: Hex }>({})
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
   const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)
@@ -673,94 +680,63 @@ export const HomeIndexRoute = () => {
         }
 
         try {
-          // Calculate the intent address
           const intentAddress = calculateIntentAddress(intentOperations, account.address)
 
-          // For each operation, send the meta-transaction using the appropriate relayer
-          for (const operation of intentOperations) {
-            const operationKey = `${operation.chainId}-${intentOperations.indexOf(operation)}`
+          for (const metaTxn of metaTxns) {
+            const operationKey = `${metaTxn.chainId}-${metaTxns.indexOf(metaTxn)}`
             const lastSentTime = sentMetaTxns[operationKey]
             const now = Date.now()
 
-            // Skip if this meta transaction has been sent within the retry window
             if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
               const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
-              console.log(
-                `Meta transaction for operation ${operationKey} was sent recently. Wait ${timeLeft}s before retry`,
-              )
+              console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
               continue
             }
 
             try {
-              const chainId = parseInt(operation.chainId)
+              const chainId = parseInt(metaTxn.chainId)
               if (isNaN(chainId) || chainId <= 0) {
-                throw new Error(`Invalid chainId for operation: ${operation.chainId}`)
+                throw new Error(`Invalid chainId for meta transaction: ${metaTxn.chainId}`)
               }
               const chainRelayer = getRelayer(chainId)
               if (!chainRelayer) {
                 throw new Error(`No relayer found for chainId: ${chainId}`)
               }
 
-              // Get the matching meta-transaction from metaTxns
-              const metaTxn = metaTxns.find((m) => parseInt(m.chainId) === chainId)
-              if (!metaTxn) {
-                throw new Error(`No meta-transaction found for chainId: ${chainId}`)
-              }
-
-              // Get the relevant preconditions for the operation
               const relevantPreconditions = intentPreconditions.filter(
                 (p) => p.chainId && parseInt(p.chainId) === chainId,
               )
 
               console.log(
-                `Relaying operation ${operationKey} to intent ${intentAddress} on chain ${chainId} via relayer:`,
+                `Relaying meta transaction ${operationKey} to intent ${intentAddress} via relayer:`,
                 chainRelayer,
               )
-              console.log(`Relay data:`, {
-                intentAddress,
-                metaTxns,
-                chainId,
-                relevantPreconditions,
-              })
 
-              // Send the meta-transaction through the chain-specific relayer
               const { opHash } = await chainRelayer.relay(
-                metaTxn?.contract as Address.Address,
-                metaTxn?.input as Hex,
-                BigInt(operation.chainId),
+                metaTxn.contract as Address.Address,
+                metaTxn.input as Hex,
+                BigInt(metaTxn.chainId),
                 undefined,
                 relevantPreconditions,
               )
 
-              // Record the timestamp when this meta transaction was sent
               setSentMetaTxns((prev) => ({
                 ...prev,
                 [operationKey]: Date.now(),
               }))
 
-              // Store the opHash in state for monitoring
               setOperationHashes((prev) => ({
                 ...prev,
                 [operationKey]: opHash,
               }))
-              // Update status to pending after successful relay initiation (monitoring will update further)
-              setOperationStatuses((prev) => ({
+
+              setMetaTxnStatuses((prev) => ({
                 ...prev,
-                [operationKey]: { ...prev[operationKey], status: 'pending', error: undefined },
+                [operationKey]: { status: 'pending', error: undefined },
               }))
             } catch (error: any) {
-              console.error(`Error sending meta-transaction for operation ${operationKey}:`, error)
-              // Log additional details if available
-              if (error.cause) {
-                console.error(`Caused by:`, error.cause)
-              }
-              if (error.message.includes('fetch')) {
-                console.error(
-                  `Fetch error details: Might be network issue, CORS, or invalid relayer URL for chain ${operation.chainId}`,
-                )
-              }
-              // Don't update the timestamp on error - this allows immediate retry on error
-              setOperationStatuses((prev) => ({
+              console.error(`Error sending meta-transaction ${operationKey}:`, error)
+              setMetaTxnStatuses((prev) => ({
                 ...prev,
                 [operationKey]: {
                   status: 'failed',
@@ -1107,6 +1083,133 @@ export const HomeIndexRoute = () => {
       setVerificationStatus(null)
     }
   }, [account.isConnected])
+
+  // Effect to initialize metaTxnStatuses when metaTxns change
+  useEffect(() => {
+    if (metaTxns) {
+      const initialStatuses: {
+        [key: string]: { status: 'pending' | 'success' | 'failed'; txHash?: string; error?: string }
+      } = {}
+      metaTxns.forEach((metaTxn, index) => {
+        initialStatuses[`${metaTxn.chainId}-${index}`] = { status: 'pending' }
+      })
+      setMetaTxnStatuses(initialStatuses)
+    }
+  }, [metaTxns])
+
+  // Update the status setting in the relay process
+  const sendMetaTxn = async () => {
+    if (!intentOperations || !intentPreconditions || !metaTxns || !account.address) {
+      console.error('Missing required data for meta-transaction')
+      return
+    }
+
+    try {
+      const intentAddress = calculateIntentAddress(intentOperations, account.address)
+
+      for (const metaTxn of metaTxns) {
+        const operationKey = `${metaTxn.chainId}-${metaTxns.indexOf(metaTxn)}`
+        const lastSentTime = sentMetaTxns[operationKey]
+        const now = Date.now()
+
+        if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
+          const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
+          console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
+          continue
+        }
+
+        try {
+          const chainId = parseInt(metaTxn.chainId)
+          if (isNaN(chainId) || chainId <= 0) {
+            throw new Error(`Invalid chainId for meta transaction: ${metaTxn.chainId}`)
+          }
+          const chainRelayer = getRelayer(chainId)
+          if (!chainRelayer) {
+            throw new Error(`No relayer found for chainId: ${chainId}`)
+          }
+
+          const relevantPreconditions = intentPreconditions.filter((p) => p.chainId && parseInt(p.chainId) === chainId)
+
+          console.log(`Relaying meta transaction ${operationKey} to intent ${intentAddress} via relayer:`, chainRelayer)
+
+          const { opHash } = await chainRelayer.relay(
+            metaTxn.contract as Address.Address,
+            metaTxn.input as Hex,
+            BigInt(metaTxn.chainId),
+            undefined,
+            relevantPreconditions,
+          )
+
+          setSentMetaTxns((prev) => ({
+            ...prev,
+            [operationKey]: Date.now(),
+          }))
+
+          setOperationHashes((prev) => ({
+            ...prev,
+            [operationKey]: opHash,
+          }))
+
+          setMetaTxnStatuses((prev) => ({
+            ...prev,
+            [operationKey]: { status: 'pending', error: undefined },
+          }))
+        } catch (error: any) {
+          console.error(`Error sending meta-transaction ${operationKey}:`, error)
+          setMetaTxnStatuses((prev) => ({
+            ...prev,
+            [operationKey]: {
+              status: 'failed',
+              error: `Relay failed: ${error.message}`,
+            },
+          }))
+        }
+      }
+    } catch (error: any) {
+      console.error('Error in meta-transaction process:', error)
+    }
+  }
+
+  // Update the monitoring effect
+  useEffect(() => {
+    if (!metaTxns) return
+
+    const newStatuses: {
+      [key: string]: {
+        status: 'pending' | 'success' | 'failed'
+        txHash?: string
+        error?: string
+      }
+    } = {}
+
+    if (operation0Status) {
+      const metaTxn = metaTxns[0]
+      if (metaTxn) {
+        newStatuses[`${metaTxn.chainId}-0`] = operation0Status
+      }
+    }
+    if (operation1Status) {
+      const metaTxn = metaTxns[1]
+      if (metaTxn) {
+        newStatuses[`${metaTxn.chainId}-1`] = operation1Status
+      }
+    }
+
+    setMetaTxnStatuses((prev) => ({
+      ...prev,
+      ...newStatuses,
+    }))
+  }, [metaTxns, operation0Status, operation1Status])
+
+  // Update cleanup effect
+  useEffect(() => {
+    if (!metaTxns) {
+      setMetaTxnStatuses({})
+      setOperationHashes({})
+    }
+  }, [metaTxns])
+
+  const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -1958,14 +2061,60 @@ export const HomeIndexRoute = () => {
 
           {/* Preview calculated address */}
           {account.address && intentOperations && (
-            <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
-              <Text variant="small" color="secondary">
-                <strong className="text-blue-300">Calculated Address: </strong>
-                <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
-                  {originCallParams?.to?.toString() || 'N/A'}
-                </span>
-              </Text>
-            </div>
+            <>
+              <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
+                <Text variant="small" color="secondary">
+                  <strong className="text-blue-300">Calculated Address: </strong>
+                  <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
+                    {originCallParams?.to?.toString() || 'N/A'}
+                  </span>
+                </Text>
+              </div>
+
+              {/* Manual Meta Transaction Controls */}
+              <div className="mt-4 bg-gray-900/50 p-4 rounded-lg border border-purple-700/30">
+                <div className="flex items-center justify-between mb-4">
+                  <Text variant="medium" color="primary" className="flex items-center">
+                    <Layers className="h-4 w-4 mr-2" />
+                    Manual Meta Transaction Controls
+                  </Text>
+                  <div className="flex items-center space-x-2">
+                    <Text variant="small" color="secondary">
+                      {isManualMetaTxnEnabled ? 'Enabled' : 'Disabled'}
+                    </Text>
+                    <div
+                      onClick={() => setIsManualMetaTxnEnabled(!isManualMetaTxnEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                        isManualMetaTxnEnabled ? 'bg-purple-600' : 'bg-gray-700'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          isManualMetaTxnEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {isManualMetaTxnEnabled && (
+                  <div className="mt-2">
+                    <Button
+                      variant="feature"
+                      onClick={sendMetaTxn}
+                      disabled={!metaTxns || metaTxns.length === 0 || !account.address}
+                      className="w-full px-4 py-2 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Layers className="h-4 w-4 mr-2" />
+                      Send Meta Transactions Manually
+                    </Button>
+                    <Text variant="small" color="secondary" className="mt-2 text-center">
+                      <Info className="h-4 w-4 inline mr-1" />
+                      This will manually trigger the meta transaction relay process
+                    </Text>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -2041,6 +2190,77 @@ export const HomeIndexRoute = () => {
                     <span className="font-mono">{metaTxnStatus?.effectiveGasPrice || '0'}</span>
                   </Text>
                 </div>
+              </div>
+            </div>
+
+            {/* Meta Transactions Status */}
+            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
+              <Text
+                variant="medium"
+                color="primary"
+                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
+              >
+                <Box className="h-4 w-4 mr-2" />
+                Meta Transactions Status
+              </Text>
+              <div className="space-y-4">
+                {metaTxns?.map((metaTxn, index) => (
+                  <div key={`metatx-${index}`} className="bg-gray-800/70 p-3 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <Text variant="small" color="primary" className="font-semibold flex items-center">
+                        <NetworkImage chainId={parseInt(metaTxn.chainId)} size="sm" className="w-4 h-4 mr-2" />
+                        Meta Transaction #{index + 1} - Chain {metaTxn.chainId}
+                        <span className="text-gray-400 text-xs ml-2">
+                          ({getChainInfo(parseInt(metaTxn.chainId))?.name || 'Unknown Chain'})
+                        </span>
+                      </Text>
+                      <div
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'success'
+                            ? 'bg-green-900/30 text-green-400 border border-green-700/30'
+                            : metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'failed'
+                              ? 'bg-red-900/30 text-red-400 border border-red-700/30'
+                              : 'bg-yellow-900/30 text-yellow-400 border border-yellow-700/30'
+                        }`}
+                      >
+                        {metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'success'
+                          ? 'Success'
+                          : metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'failed'
+                            ? 'Failed'
+                            : 'Pending'}
+                      </div>
+                    </div>
+                    <div className="mt-2 space-y-2">
+                      <Text variant="small" color="secondary">
+                        <strong className="text-blue-300">Contract: </strong>
+                        <span className="font-mono text-yellow-300 break-all">{metaTxn.contract}</span>
+                      </Text>
+                      {metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.txHash && (
+                        <Text variant="small" color="secondary">
+                          <strong className="text-blue-300">Tx Hash: </strong>
+                          <span className="font-mono text-yellow-300 break-all">
+                            {metaTxnStatuses[`${metaTxn.chainId}-${index}`].txHash}
+                          </span>
+                        </Text>
+                      )}
+                      {metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.error && (
+                        <Text variant="small" color="negative">
+                          <strong className="text-red-300">Error: </strong>
+                          <span className="font-mono break-all">
+                            {metaTxnStatuses[`${metaTxn.chainId}-${index}`].error}
+                          </span>
+                        </Text>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {!metaTxns?.length && (
+                  <div className="bg-gray-800/70 p-3 rounded-md">
+                    <Text variant="small" color="secondary" className="text-center">
+                      No meta transactions available
+                    </Text>
+                  </div>
+                )}
               </div>
             </div>
 
