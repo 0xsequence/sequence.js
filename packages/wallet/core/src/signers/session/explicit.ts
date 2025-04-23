@@ -1,18 +1,19 @@
 import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
 import { SignerInterface } from './session.js'
+import { MemoryPkStore, PkStore } from '../pk/index.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
 export class Explicit implements SignerInterface {
-  readonly address: Address.Address
-  readonly sessionPermissions: Permission.SessionPermissions
+  private readonly _privateKey: PkStore
 
-  constructor(
-    private readonly _privateKey: `0x${string}`,
-    sessionPermissions: ExplicitParams,
-  ) {
-    this.address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: this._privateKey }))
+  public readonly address: Address.Address
+  public readonly sessionPermissions: Permission.SessionPermissions
+
+  constructor(privateKey: Hex.Hex | PkStore, sessionPermissions: ExplicitParams) {
+    this._privateKey = typeof privateKey === 'string' ? new MemoryPkStore(privateKey) : privateKey
+    this.address = this._privateKey.address()
     this.sessionPermissions = {
       ...sessionPermissions,
       signer: this.address,
@@ -103,7 +104,7 @@ export class Explicit implements SignerInterface {
     }
     // Sign it
     const callHash = SessionSignature.hashCallWithReplayProtection(call, chainId, nonce.space, nonce.nonce)
-    const sessionSignature = Secp256k1.sign({ payload: callHash, privateKey: this._privateKey })
+    const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       permissionIndex: BigInt(permissionIndex),
       sessionSignature,
