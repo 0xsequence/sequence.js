@@ -134,7 +134,11 @@ export class Wallet {
             method: 'eth_call',
             params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }],
           })
-          .then((res) => `0x${res.slice(26)}` as Address.Address)
+          .then((res) => {
+            const address = `0x${res.slice(-40)}`
+            Address.assert(address, { strict: false })
+            return address
+          })
           .catch(() => undefined),
       ])
 
@@ -144,9 +148,9 @@ export class Wallet {
 
       // Determine stage based on implementation address
       if (implementation) {
-        if (implementation.toLowerCase() === this.context.stage1.toLowerCase()) {
+        if (Address.isEqual(implementation, this.context.stage1)) {
           stage = 'stage1'
-        } else {
+        } else if (Address.isEqual(implementation, this.context.stage2)) {
           stage = 'stage2'
         }
       }
