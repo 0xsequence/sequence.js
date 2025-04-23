@@ -2,9 +2,10 @@ import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Payload } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
-import * as Db from '../dbs/index.js'
 import { Shared } from './manager.js'
 import {
+  Action,
+  ActionToPayload,
   BaseSignatureRequest,
   SignatureRequest,
   SignerBase,
@@ -15,13 +16,23 @@ import {
 export class Signatures {
   constructor(private readonly shared: Shared) {}
 
+  private async getBase(requestId: string): Promise<BaseSignatureRequest> {
+    const request = await this.shared.databases.signatures.get(requestId)
+    if (!request) {
+      throw new Error(`Request not found for ${requestId}`)
+    }
+    return request
+  }
+
   async list(): Promise<SignatureRequest[]> {
     return this.shared.databases.signatures.list() as any as SignatureRequest[]
   }
 
   async get(requestId: string): Promise<SignatureRequest> {
-    const request = await this.shared.databases.signatures.get(requestId)
-    if (!request) {
+    const request = await this.getBase(requestId)
+
+    if (request.status !== 'pending' && request.scheduledPruning < Date.now()) {
+      await this.shared.databases.signatures.del(requestId)
       throw new Error(`Request not found for ${requestId}`)
     }
 
@@ -147,7 +158,8 @@ export class Signatures {
   }
 
   async complete(requestId: string) {
-    const request = await this.shared.databases.signatures.get(requestId)
+    const request = await this.getBase(requestId)
+
     if (request?.envelope.payload.type === 'config-update') {
       // Clear pending config updates for the same wallet with a checkpoint equal or lower than the completed update
       const pendingRequests = await this.shared.databases.signatures.list()
@@ -158,14 +170,18 @@ export class Signatures {
           sig.envelope.configuration.checkpoint <= request.envelope.configuration.checkpoint,
       )
       // This also deletes the requested id
-      await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.delete(sig.id)))
-    } else {
-      await this.shared.databases.signatures.del(requestId)
+      await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.cancel(sig.id)))
     }
+
+    await this.shared.databases.signatures.set({
+      ...request,
+      status: 'completed',
+      scheduledPruning: Date.now() + this.shared.databases.pruningInterval,
+    })
   }
 
-  async request<A extends Db.Action>(
-    envelope: Envelope.Envelope<Db.ActionToPayload[A]>,
+  async request<A extends Action>(
+    envelope: Envelope.Envelope<ActionToPayload[A]>,
     action: A,
     options: {
       origin?: string
@@ -186,7 +202,7 @@ export class Signatures {
         envelope.wallet,
         pendingConfigUpdatesToClear.map((pc) => pc.id),
       )
-      await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.delete(sig.id)))
+      await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.cancel(sig.id)))
     }
 
     const id = uuidv7()
@@ -198,23 +214,35 @@ export class Signatures {
       origin: options.origin ?? 'unknown',
       action,
       createdAt: new Date().toISOString(),
+      status: 'pending',
     })
 
     return id
   }
 
   async addSignature(requestId: string, signature: Envelope.SapientSignature | Envelope.Signature) {
-    const request = await this.shared.databases.signatures.get(requestId)
-    if (!request) {
-      throw new Error(`Request not found for ${requestId}`)
-    }
+    const request = await this.getBase(requestId)
 
     Envelope.addSignature(request.envelope, signature)
 
     await this.shared.databases.signatures.set(request)
   }
 
-  async delete(requestId: string) {
-    await this.shared.databases.signatures.del(requestId)
+  async cancel(requestId: string) {
+    const request = await this.getBase(requestId)
+
+    await this.shared.databases.signatures.set({
+      ...request,
+      status: 'cancelled',
+      scheduledPruning: Date.now() + this.shared.databases.pruningInterval,
+    })
+  }
+
+  async prune() {
+    const now = Date.now()
+    const requests = await this.shared.databases.signatures.list()
+    const toPrune = requests.filter((req) => req.status !== 'pending' && req.scheduledPruning < now)
+    await Promise.all(toPrune.map((req) => this.shared.databases.signatures.del(req.id)))
+    return toPrune.length
   }
 }

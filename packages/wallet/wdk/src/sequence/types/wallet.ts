@@ -2,7 +2,7 @@ import { Address } from 'ox'
 
 export interface Wallet {
   address: Address.Address
-  status: 'ready' | 'logging-in'
+  status: 'ready' | 'logging-in' | 'logging-out'
   loginDate: string
   device: Address.Address
   loginType: string

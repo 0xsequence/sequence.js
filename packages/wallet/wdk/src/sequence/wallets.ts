@@ -606,6 +606,14 @@ export class Wallets {
       throw new Error('wallet-not-found')
     }
 
+    // Prevent starting logout if already logging out or not ready
+    if (walletEntry.status !== 'ready') {
+      console.warn(`Logout called on wallet ${wallet} with status ${walletEntry.status}. Aborting.`)
+      throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
+    }
+
+    await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
+
     if (options?.skipRemoveDevice) {
       await Promise.all([
         this.shared.databases.manager.del(wallet),
@@ -657,6 +665,13 @@ export class Wallets {
     const walletEntry = await this.shared.databases.manager.get(request.wallet)
     if (!walletEntry) {
       throw new Error('wallet-not-found')
+    }
+
+    // Wallet entry should ideally be 'logging-out' here, but we proceed regardless
+    if (walletEntry.status !== 'logging-out') {
+      this.shared.modules.logger.log(
+        `Warning: Wallet ${request.wallet} status was ${walletEntry.status} during completeLogout.`,
+      )
     }
 
     const wallet = new CoreWallet(request.wallet, {

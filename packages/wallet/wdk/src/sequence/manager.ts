@@ -22,6 +22,7 @@ import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 import { Kinds } from './types/signer.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
+import { Janitor } from './janitor.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -36,6 +37,8 @@ export type ManagerOptions = {
   signaturesDb?: Db.Signatures
   authCommitmentsDb?: Db.AuthCommitments
   authKeysDb?: Db.AuthKeys
+
+  dbPruningInterval?: number
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
@@ -73,6 +76,8 @@ export const ManagerOptionsDefaults = {
   transactionsDb: new Db.Transactions(),
   authCommitmentsDb: new Db.AuthCommitments(),
   authKeysDb: new Db.AuthKeys(),
+
+  dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
@@ -129,6 +134,8 @@ export type Databases = {
   readonly transactions: Db.Transactions
   readonly authCommitments: Db.AuthCommitments
   readonly authKeys: Db.AuthKeys
+
+  readonly pruningInterval: number
 }
 
 export type Sequence = {
@@ -153,6 +160,7 @@ export type Modules = {
   readonly signers: Signers
   readonly signatures: Signatures
   readonly transactions: Transactions
+  readonly janitor: Janitor
 }
 
 export type Shared = {
@@ -200,6 +208,8 @@ export class Manager {
         transactions: ops.transactionsDb,
         authCommitments: ops.authCommitmentsDb,
         authKeys: ops.authKeysDb,
+
+        pruningInterval: ops.dbPruningInterval,
       },
 
       modules: {} as any,
@@ -214,6 +224,7 @@ export class Manager {
       signers: new Signers(shared),
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
+      janitor: new Janitor(shared),
     }
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
@@ -341,8 +352,8 @@ export class Manager {
     return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
 
-  public async deleteSignatureRequest(requestId: string) {
-    return this.shared.modules.signatures.delete(requestId)
+  public async cancelSignatureRequest(requestId: string) {
+    return this.shared.modules.signatures.cancel(requestId)
   }
 
   // Transactions
