@@ -244,6 +244,12 @@ export const HomeIndexRoute = () => {
     setPreconditionStatuses(statuses)
   }, [intentPreconditions, getRelayer])
 
+  useEffect(() => {
+    if (intentPreconditions && intentPreconditions.length > 0) {
+      checkPreconditionStatuses()
+    }
+  }, [intentPreconditions, checkPreconditionStatuses])
+
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
       walletAddress: string
@@ -662,7 +668,6 @@ export const HomeIndexRoute = () => {
     }
     if (isSuccess && receipt) {
       updateMetaTxnStatus(receipt.transactionHash, receipt.status, receipt.gasUsed, receipt.effectiveGasPrice)
-      checkPreconditionStatuses()
 
       // After origin call is confirmed, send the meta-transaction
       const sendMetaTxn = async () => {
