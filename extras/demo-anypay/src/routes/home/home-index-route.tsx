@@ -158,6 +158,7 @@ export const HomeIndexRoute = () => {
   const [sentMetaTxns, setSentMetaTxns] = useState<{ [key: string]: number }>({})
 
   const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
+  const [selectedMetaTxnId, setSelectedMetaTxnId] = useState<string | null>(null)
 
   const RETRY_WINDOW_MS = 10_000
 
@@ -1097,8 +1098,8 @@ export const HomeIndexRoute = () => {
     }
   }, [metaTxns])
 
-  // Update the status setting in the relay process
-  const sendMetaTxn = async () => {
+  // Update the sendMetaTxn function to handle specific IDs
+  const sendMetaTxn = async (selectedId?: string) => {
     if (!intentOperations || !intentPreconditions || !metaTxns || !account.address) {
       console.error('Missing required data for meta-transaction')
       return
@@ -1107,7 +1108,10 @@ export const HomeIndexRoute = () => {
     try {
       const intentAddress = calculateIntentAddress(intentOperations, account.address)
 
-      for (const metaTxn of metaTxns) {
+      // Filter metaTxns based on selectedId if provided
+      const txnsToProcess = selectedId ? metaTxns.filter((tx) => tx.id === selectedId) : metaTxns
+
+      for (const metaTxn of txnsToProcess) {
         const operationKey = `${metaTxn.chainId}-${metaTxns.indexOf(metaTxn)}`
         const lastSentTime = sentMetaTxns[operationKey]
         const now = Date.now()
@@ -2062,19 +2066,57 @@ export const HomeIndexRoute = () => {
                   </div>
                 </div>
                 {isManualMetaTxnEnabled && (
-                  <div className="mt-2">
-                    <Button
-                      variant="feature"
-                      onClick={sendMetaTxn}
-                      disabled={!metaTxns || metaTxns.length === 0 || !account.address}
-                      className="w-full px-4 py-2 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center bg-purple-600 hover:bg-purple-700"
-                    >
-                      <Layers className="h-4 w-4 mr-2" />
-                      Send Meta Transactions Manually
-                    </Button>
-                    <Text variant="small" color="secondary" className="mt-2 text-center">
+                  <div className="mt-2 space-y-4">
+                    {/* Meta Transaction Selection */}
+                    <div className="bg-gray-800/70 p-3 rounded-md">
+                      <Text variant="small" color="secondary" className="mb-2">
+                        Select Meta Transaction:
+                      </Text>
+                      <div className="space-y-2">
+                        {metaTxns?.map((tx, index) => (
+                          <div
+                            key={tx.id}
+                            onClick={() => setSelectedMetaTxnId(tx.id)}
+                            className={`p-2 rounded-md cursor-pointer transition-all duration-200 ${
+                              selectedMetaTxnId === tx.id
+                                ? 'bg-purple-900/50 border border-purple-500'
+                                : 'bg-gray-700/50 border border-gray-600 hover:bg-gray-600/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <NetworkImage chainId={parseInt(tx.chainId)} size="sm" className="w-4 h-4" />
+                                <Text variant="small" color="secondary">
+                                  #{index + 1} - Chain {tx.chainId}
+                                </Text>
+                              </div>
+                              <Text variant="small" color="secondary" className="font-mono text-xs">
+                                ID: {tx.id}
+                              </Text>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="feature"
+                        onClick={() => sendMetaTxn(selectedMetaTxnId || undefined)}
+                        disabled={!metaTxns || metaTxns.length === 0 || !account.address}
+                        className="flex-1 px-4 py-2 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center bg-purple-600 hover:bg-purple-700"
+                      >
+                        <Layers className="h-4 w-4 mr-2" />
+                        {selectedMetaTxnId ? 'Send Selected Meta Transaction' : 'Send All Meta Transactions'}
+                      </Button>
+                    </div>
+
+                    <Text variant="small" color="secondary" className="text-center">
                       <Info className="h-4 w-4 inline mr-1" />
-                      This will manually trigger the meta transaction relay process
+                      {selectedMetaTxnId
+                        ? 'This will send only the selected meta transaction'
+                        : 'This will send all meta transactions in sequence'}
                     </Text>
                   </div>
                 )}
