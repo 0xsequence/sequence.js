@@ -22,3 +22,5 @@ export type {
 export { isLoginToWalletArgs, isLoginToMnemonicArgs, isLoginToPasskeyArgs, Wallets } from './wallets.js'
 
 export * from './types/index.js'
+import * as Handlers from './handlers/index.js'
+export { Handlers }

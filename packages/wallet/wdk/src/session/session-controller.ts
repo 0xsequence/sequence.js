@@ -110,9 +110,6 @@ export class SessionController {
       throw new Error('State provider not provided')
     }
     const tree = SessionConfig.sessionsTopologyToConfigurationTree(topology)
-    console.log('prepareUpdateConfiguration Tree:', tree)
-    const newImageHash = GenericTree.hash(tree)
-    console.log('New image hash:', newImageHash)
     await this._stateProvider.saveTree(tree)
 
     // Get the old wallet configuration
@@ -125,11 +122,10 @@ export class SessionController {
       throw new Error('Session manager not found in configuration')
     }
 
-    console.log('prepareUpdateConfiguration Manager Leaf:', managerLeaf)
-    console.log('New image hash:', newImageHash)
-
     // Update the configuration to use the new session manager image hash
+    const newImageHash = GenericTree.hash(tree)
     managerLeaf.imageHash = newImageHash
+    console.log('New session manager image hash:', newImageHash)
 
     // Increment the checkpoint
     configuration.checkpoint += 1n
