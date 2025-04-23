@@ -433,25 +433,14 @@ export const HomeIndexRoute = () => {
               : destinationCall.transactionValue,
       }
 
-      console.log('Calling createIntentConfig with args:', args)
       const data = await apiClient.getIntentOperations(args)
-      console.log('Intent Operations:', data)
-
-      // Normalize preconditions to use chainId
-      const normalizedPreconditions = data.preconditions?.map((precondition) => ({
-        ...precondition,
-        chainId: precondition.chainId || precondition.chainId, // Use existing chainId or convert chainId
-      }))
 
       setMetaTxns(data.metaTxns)
       setIntentOperations(data.operations)
-      setIntentPreconditions(normalizedPreconditions)
+      setIntentPreconditions(data.preconditions)
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
-      return {
-        ...data,
-        preconditions: normalizedPreconditions,
-      }
+      return data
     },
     onSuccess: (data) => {
       console.log('Intent Config Success:', data)
