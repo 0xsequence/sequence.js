@@ -51,9 +51,9 @@ export class Explicit implements SignerInterface {
             rules: permission.rules.map((rule) => ({
               cumulative: rule.cumulative,
               operation: rule.operation,
-              value: Bytes.toHex(rule.value),
+              value: Bytes.toHex(Bytes.padRight(rule.value, 32)),
               offset: rule.offset,
-              mask: Bytes.toHex(rule.mask),
+              mask: Bytes.toHex(Bytes.padRight(rule.mask, 32)),
             })),
           },
           BigInt(permissionIndex),
@@ -124,9 +124,12 @@ async function validatePermission(
 
   for (const rule of permission.rules) {
     // Extract value from calldata at offset
-    const callValue = Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32)
+    const callDataValue = Bytes.padRight(
+      Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
+      32,
+    )
     // Apply mask
-    let value: Bytes.Bytes = callValue.map((b, i) => b & rule.mask[i]!)
+    let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
 
     if (rule.cumulative) {
       if (provider && usageHash) {
@@ -137,7 +140,7 @@ async function validatePermission(
           params: [permission.target, storageSlot, 'latest'],
         })
         // Increment the value
-        value = Bytes.fromNumber(Hex.toBigInt(storageValue) + Bytes.toBigInt(value))
+        value = Bytes.padLeft(Bytes.fromNumber(Hex.toBigInt(storageValue) + Bytes.toBigInt(value)), 32)
       } else {
         throw new Error('Cumulative rules require a provider and usage hash')
       }
@@ -149,19 +152,16 @@ async function validatePermission(
         return false
       }
     }
-
     if (rule.operation === Permission.ParameterOperation.LESS_THAN_OR_EQUAL) {
       if (Bytes.toBigInt(value) > Bytes.toBigInt(rule.value)) {
         return false
       }
     }
-
     if (rule.operation === Permission.ParameterOperation.NOT_EQUAL) {
       if (Bytes.isEqual(value, rule.value)) {
         return false
       }
     }
-
     if (rule.operation === Permission.ParameterOperation.GREATER_THAN_OR_EQUAL) {
       if (Bytes.toBigInt(value) < Bytes.toBigInt(rule.value)) {
         return false
