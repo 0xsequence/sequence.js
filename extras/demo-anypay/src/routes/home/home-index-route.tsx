@@ -2200,6 +2200,36 @@ export const HomeIndexRoute = () => {
               </div>
             </div>
 
+            {/* Preconditions Status */}
+            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
+              <Text
+                variant="medium"
+                color="primary"
+                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
+              >
+                <Clipboard className="h-4 w-4 mr-2" />
+                Preconditions Status
+              </Text>
+              <div className="space-y-3">
+                {intentPreconditions.map((precondition, index) => (
+                  <div key={index} className="bg-gray-800/70 p-3 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">
+                        Precondition {index + 1} ({precondition.type}):{' '}
+                      </strong>
+                      <span className="font-mono">
+                        {preconditionStatuses[index] ? (
+                          <span className="text-green-400">Met</span>
+                        ) : (
+                          <span className="text-red-400">Not Met</span>
+                        )}
+                      </span>
+                    </Text>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Meta Transactions Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
@@ -2276,36 +2306,6 @@ export const HomeIndexRoute = () => {
                     </Text>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Preconditions Status */}
-            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
-              <Text
-                variant="medium"
-                color="primary"
-                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
-              >
-                <Clipboard className="h-4 w-4 mr-2" />
-                Preconditions Status
-              </Text>
-              <div className="space-y-3">
-                {intentPreconditions.map((precondition, index) => (
-                  <div key={index} className="bg-gray-800/70 p-3 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">
-                        Precondition {index + 1} ({precondition.type}):{' '}
-                      </strong>
-                      <span className="font-mono">
-                        {preconditionStatuses[index] ? (
-                          <span className="text-green-400">Met</span>
-                        ) : (
-                          <span className="text-red-400">Not Met</span>
-                        )}
-                      </span>
-                    </Text>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
