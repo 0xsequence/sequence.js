@@ -91,10 +91,9 @@ export class RpcRelayer implements Relayer {
     data: Hex.Hex,
     chainId: bigint,
     quote?: FeeQuote,
-    preconditions?: PrimitivePrecondition.Precondition[],
+    preconditions?: IntentPrecondition[],
   ): Promise<{ opHash: Hex.Hex }> {
-    const rpcPreconditions = preconditions?.map((p) => this.mapPrimitivePreconditionToRpc(p, chainId))
-
+    console.log('relay', to, data, chainId, quote, preconditions)
     const rpcCall: RpcMetaTxn = {
       walletAddress: to,
       contract: to,
@@ -104,7 +103,7 @@ export class RpcRelayer implements Relayer {
     const result: RpcSendMetaTxnReturn = await this.client.sendMetaTxn({
       call: rpcCall,
       quote: quote ? JSON.stringify(quote._quote) : undefined,
-      preconditions: rpcPreconditions,
+      preconditions: preconditions,
     })
 
     if (!result.status) {
@@ -323,23 +322,5 @@ export class RpcRelayer implements Relayer {
       return Address.from(rpcToken.contractAddress)
     }
     return '0x0000000000000000000000000000000000000000'
-  }
-
-  private mapPrimitivePreconditionToRpc(
-    precondition: PrimitivePrecondition.Precondition,
-    chainId: bigint,
-  ): RpcIntentPrecondition {
-    const chainIdStr = chainId.toString()
-    const { type, ...data } = precondition
-
-    const mappedData = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [key, typeof value === 'bigint' ? value.toString() : value]),
-    )
-
-    return {
-      type: type,
-      chainId: chainIdStr,
-      data: mappedData,
-    }
   }
 }
