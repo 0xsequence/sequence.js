@@ -1,8 +1,8 @@
-import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State } from '../../core/src/index.js'
-import { Payload, Permission } from '../../primitives/src/index.js'
-import { Sequence } from '../src/index.js'
 import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
-import { beforeEach, describe, it } from 'vitest'
+import { beforeEach, describe, it, vi } from 'vitest'
+import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State } from '../../core/src/index.js'
+import { Constants, Payload, Permission } from '../../primitives/src/index.js'
+import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
 describe('Sessions (via Manager)', () => {
@@ -26,20 +26,25 @@ describe('Sessions (via Manager)', () => {
 
   beforeEach(async () => {
     // Create provider or use arbitrum sepolia
-    let rpcUrl = RPC_URL
-    if (!rpcUrl) {
-      rpcUrl = 'https://sepolia-rollup.arbitrum.io/rpc'
-    }
-    provider = Provider.from(
-      RpcTransport.fromHttp(rpcUrl, {
-        fetchOptions: {
-          headers: {
-            'x-requested-with': 'XMLHttpRequest',
+    if (RPC_URL) {
+      provider = Provider.from(
+        RpcTransport.fromHttp(RPC_URL, {
+          fetchOptions: {
+            headers: {
+              'x-requested-with': 'XMLHttpRequest',
+            },
           },
-        },
-      }),
-    )
-    chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+        }),
+      )
+      chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+    } else {
+      provider = vi.mocked<Provider.Provider>({
+        request: vi.fn(),
+        on: vi.fn(),
+        removeListener: vi.fn(),
+      })
+      chainId = 1n
+    }
 
     // Create state provider
     stateProvider = new State.Local.Provider()
@@ -51,7 +56,7 @@ describe('Sessions (via Manager)', () => {
       networks: [
         {
           chainId,
-          rpc: rpcUrl,
+          rpc: RPC_URL ?? 'XXX',
           name: 'XXX',
           explorer: 'XXX',
           nativeCurrency: {
@@ -167,6 +172,24 @@ describe('Sessions (via Manager)', () => {
         onlyFallback: false,
         behaviorOnError: 'revert',
       }
+
+      if (!RPC_URL) {
+        // Configure mock provider
+        ;(provider as any).request.mockImplementation(({ method, params }) => {
+          if (method === 'eth_chainId') {
+            return Promise.resolve(chainId.toString())
+          }
+          if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
+            // Undeployed wallet
+            return Promise.resolve('0x')
+          }
+          if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
+            // Undeployed wallet
+            return Promise.resolve('0x00')
+          }
+        })
+      }
+
       const envelope = await dapp.wallet.prepareTransaction(provider, [call])
       const parentedEnvelope: Payload.Parented = {
         ...envelope.payload,
@@ -190,15 +213,13 @@ describe('Sessions (via Manager)', () => {
       }
       const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
-      // Send the transaction
-      if (PRIVATE_KEY) {
-        // Build the transaction
-        const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
-        console.log('tx', transaction)
+      // Build the transaction
+      const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
+      console.log('tx', transaction)
 
-        //FIXME Replace everything below with some relayer call that runs silently.
-        // Currently the WDK needs multiple calls and approval on front end.
-        // This isn't the correct why to use sessions.
+      // Send the transaction
+      if (CAN_RUN_LIVE && PRIVATE_KEY) {
+        //FIXME Replace everything below with the sequence relayer call.
 
         // Load the sender
         const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
@@ -208,6 +229,6 @@ describe('Sessions (via Manager)', () => {
         await provider.request({ method: 'eth_getTransactionReceipt', params: [tx.opHash] })
       }
     },
-    CAN_RUN_LIVE ? { timeout: 60000 } : undefined,
+    PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
   )
 })
