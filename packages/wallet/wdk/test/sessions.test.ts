@@ -4,7 +4,6 @@ import { Sequence } from '@0xsequence/wallet-wdk'
 import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { beforeEach, describe, it } from 'vitest'
 import { EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
-import { SessionPermissions } from '../../primitives/dist/permission'
 
 describe('Sessions (via Manager)', () => {
   // Shared components
