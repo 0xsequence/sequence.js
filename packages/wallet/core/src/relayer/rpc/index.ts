@@ -338,7 +338,7 @@ export class RpcRelayer implements Relayer {
 
     return {
       type: type,
-      chainID: chainIdStr,
+      chainId: chainIdStr,
       data: mappedData,
     }
   }

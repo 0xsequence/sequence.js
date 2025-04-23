@@ -216,14 +216,14 @@ export const HomeIndexRoute = () => {
     const statuses = await Promise.all(
       intentPreconditions.map(async (precondition) => {
         try {
-          const chainIdString = precondition.chainID
+          const chainIdString = precondition.chainId
           if (!chainIdString) {
-            console.warn('Precondition missing chainID:', precondition)
+            console.warn('Precondition missing chainId:', precondition)
             return false
           }
           const chainId = parseInt(chainIdString)
           if (isNaN(chainId) || chainId <= 0) {
-            console.warn('Precondition has invalid chainID:', chainIdString, precondition)
+            console.warn('Precondition has invalid chainId:', chainIdString, precondition)
             return false
           }
 
@@ -233,11 +233,11 @@ export const HomeIndexRoute = () => {
             return false
           }
 
-          const formattedPrecondition = {
+          const normalizedPrecondition = {
             ...precondition,
             data: typeof precondition.data === 'string' ? precondition.data : JSON.stringify(precondition.data),
           }
-          return await chainRelayer.checkPrecondition(formattedPrecondition)
+          return await chainRelayer.checkPrecondition(normalizedPrecondition)
         } catch (error) {
           console.error('Error checking precondition:', error, 'Precondition:', precondition)
           return false
@@ -427,12 +427,23 @@ export const HomeIndexRoute = () => {
 
       console.log('Calling createIntentConfig with args:', args)
       const data = await apiClient.getIntentOperations(args)
+      console.log('Intent Operations:', data)
+
+      // Normalize preconditions to use chainId
+      const normalizedPreconditions = data.preconditions?.map((precondition) => ({
+        ...precondition,
+        chainId: precondition.chainId || precondition.chainId, // Use existing chainId or convert chainId
+      }))
+
       setMetaTxns(data.metaTxns)
       setIntentOperations(data.operations)
-      setIntentPreconditions(data.preconditions)
+      setIntentPreconditions(normalizedPreconditions)
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
-      return data
+      return {
+        ...data,
+        preconditions: normalizedPreconditions,
+      }
     },
     onSuccess: (data) => {
       console.log('Intent Config Success:', data)
@@ -689,7 +700,7 @@ export const HomeIndexRoute = () => {
 
               // Get the relevant preconditions for the operation
               const relevantPreconditions = intentPreconditions.filter(
-                (p) => p.chainID && parseInt(p.chainID) === chainId,
+                (p) => p.chainId && parseInt(p.chainId) === chainId,
               )
 
               console.log(
@@ -794,9 +805,7 @@ export const HomeIndexRoute = () => {
       if (isNative) {
         const nativePrecondition = intentPreconditions.find(
           (p) =>
-            (p.type === 'transfer-native' || p.type === 'native-balance') &&
-            // @ts-expect-error
-            p.chainId === originChainId.toString(),
+            (p.type === 'transfer-native' || p.type === 'native-balance') && p.chainId === originChainId.toString(),
         )
         const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
         if (nativeMinAmount === undefined) {
@@ -808,7 +817,6 @@ export const HomeIndexRoute = () => {
         const erc20Precondition = intentPreconditions.find(
           (p) =>
             p.type === 'erc20-balance' &&
-            // @ts-expect-error
             p.chainId === originChainId.toString() &&
             p.data?.token &&
             isAddressEqual(Address.from(p.data.token), Address.from(selectedToken.contractAddress)),
