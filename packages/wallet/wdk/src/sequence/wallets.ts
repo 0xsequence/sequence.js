@@ -1,5 +1,5 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
-import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Config, Extensions, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
@@ -19,6 +19,7 @@ export type StartSignUpWithRedirectArgs = {
 export type CommonSignupArgs = {
   noGuard?: boolean
   noSessionManager?: boolean
+  noRecovery?: boolean
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
@@ -152,28 +153,61 @@ function toConfig(
   checkpoint: bigint,
   loginTopology: Config.Topology,
   devicesTopology: Config.Topology,
-  modules: Config.Topology,
+  modules: Config.SapientSignerLeaf[],
   guardTopology?: Config.Topology,
 ): Config.Config {
   if (!guardTopology) {
     return {
       checkpoint: checkpoint,
       threshold: 1n,
-      topology: [[loginTopology, devicesTopology], modules],
+      topology: [[loginTopology, devicesTopology], toModulesTopology(modules)],
     }
   } else {
     return {
       checkpoint: checkpoint,
       threshold: 2n,
-      topology: [[[loginTopology, devicesTopology], guardTopology], modules],
+      topology: [[[loginTopology, devicesTopology], guardTopology], toModulesTopology(modules)],
     }
   }
+}
+
+function toModulesTopology(modules: Config.SapientSignerLeaf[]): Config.Topology {
+  // We always include a modules topology, even if there are no modules
+  // in that case we just add a signer with address 0 and no weight
+  if (modules.length === 0) {
+    return {
+      type: 'signer',
+      address: '0x0000000000000000000000000000000000000000',
+      weight: 0n,
+    } as Config.SignerLeaf
+  }
+
+  return Config.flatLeavesToTopology(modules)
+}
+
+function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLeaf[] {
+  let modules: Config.SapientSignerLeaf[] = []
+
+  if (Config.isNode(topology)) {
+    modules = [...fromModulesTopology(topology[0]), ...fromModulesTopology(topology[1])]
+  } else if (Config.isSapientSignerLeaf(topology)) {
+    modules.push(topology)
+  } else if (Config.isSignerLeaf(topology)) {
+    // This signals that the wallet has no modules, so we just ignore it
+    if (topology.address !== '0x0000000000000000000000000000000000000000') {
+      throw new Error('signer-leaf-not-allowed-in-modules-topology')
+    }
+  } else {
+    throw new Error('unknown-modules-topology-format')
+  }
+
+  return modules
 }
 
 function fromConfig(config: Config.Config): {
   loginTopology: Config.Topology
   devicesTopology: Config.Topology
-  modules: Config.Topology
+  modules: Config.SapientSignerLeaf[]
   guardTopology?: Config.Topology
 } {
   if (config.threshold === 1n) {
@@ -181,7 +215,7 @@ function fromConfig(config: Config.Config): {
       return {
         loginTopology: config.topology[0][0],
         devicesTopology: config.topology[0][1],
-        modules: config.topology[1],
+        modules: fromModulesTopology(config.topology[1]),
       }
     } else {
       throw new Error('unknown-config-format')
@@ -192,7 +226,7 @@ function fromConfig(config: Config.Config): {
         loginTopology: config.topology[0][0][0],
         devicesTopology: config.topology[0][0][1],
         guardTopology: config.topology[0][1],
-        modules: config.topology[1],
+        modules: fromModulesTopology(config.topology[1]),
       }
     } else {
       throw new Error('unknown-config-format')
@@ -408,11 +442,8 @@ export class Wallets {
     // TODO: Add recovery module
     // TODO: Add smart sessions module
     // Placeholder
-    let modules: Config.Topology = {
-      type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
-      weight: 0n,
-    }
+    let modules: Config.SapientSignerLeaf[] = []
+
     if (!args.noSessionManager) {
       //  Calculate image hash with the identity signer
       const sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
@@ -421,13 +452,33 @@ export class Wallets {
       this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
       // Prepare the configuration leaf
       const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
-      modules = [
+      modules.push({
+        ...this.shared.sequence.defaultSessionsTopology,
+        imageHash: sessionsImageHash,
+      })
+    }
+
+    if (!args.noRecovery) {
+      const recoveryTree = Extensions.Recovery.fromRecoveryLeaves([
         {
-          ...this.shared.sequence.defaultSessionsTopology,
-          imageHash: sessionsImageHash,
+          type: 'leaf' as const,
+          signer: device.address,
+          requiredDeltaTime: this.shared.sequence.defaultRecoverySettings.requiredDeltaTime,
+          minTimestamp: this.shared.sequence.defaultRecoverySettings.minTimestamp,
         },
-        modules,
-      ]
+      ])
+
+      const recoveryGenericTree = Extensions.Recovery.toGenericTree(recoveryTree)
+      await this.shared.sequence.stateProvider.saveTree(recoveryGenericTree)
+
+      const recoveryImageHash = GenericTree.hash(recoveryGenericTree)
+
+      modules.push({
+        type: 'sapient-signer',
+        address: this.shared.sequence.extensions.recovery,
+        weight: 255n,
+        imageHash: recoveryImageHash,
+      } as Config.SapientSignerLeaf)
     }
 
     // Create initial configuration
@@ -497,6 +548,47 @@ export class Wallets {
         ...prevDevices.sapientSigners.map((x) => ({ address: x.address, imageHash: x.imageHash })),
         { address: device.address },
       ])
+
+      // Add device to recovery module, if it exists
+      if (modules.length > 0 && modules[0]!.address === this.shared.sequence.extensions.recovery) {
+        const recoveryGenericTree = await this.shared.sequence.stateProvider.getTree(
+          this.shared.sequence.extensions.recovery,
+        )
+        if (!recoveryGenericTree) {
+          throw new Error('recovery-module-tree-not-found')
+        }
+
+        const recoveryTree = Extensions.Recovery.fromGenericTree(recoveryGenericTree)
+        const recoveryLeaves = Extensions.Recovery.getRecoveryLeaves(recoveryTree)
+        if (!recoveryLeaves.isComplete) {
+          throw new Error('recovery-module-tree-incomplete')
+        }
+
+        const nextRecoveryLeaves = [
+          ...recoveryLeaves.leaves,
+          {
+            type: 'leaf' as const,
+            signer: device.address,
+            requiredDeltaTime: this.shared.sequence.defaultRecoverySettings.requiredDeltaTime,
+            minTimestamp: this.shared.sequence.defaultRecoverySettings.minTimestamp,
+          },
+        ]
+
+        const nextRecoveryTree = Extensions.Recovery.fromRecoveryLeaves(nextRecoveryLeaves)
+        const nextRecoveryGenericTree = Extensions.Recovery.toGenericTree(nextRecoveryTree)
+        await this.shared.sequence.stateProvider.saveTree(nextRecoveryGenericTree)
+
+        const nextRecoveryImageHash = GenericTree.hash(nextRecoveryGenericTree)
+
+        // Replace the recovery module imageHash
+        const recoveryModuleEntry = modules.findIndex((x) => x.address === this.shared.sequence.extensions.recovery)
+        if (recoveryModuleEntry === -1) {
+          throw new Error('recovery-module-not-found-(unreachable)')
+        }
+
+        modules[recoveryModuleEntry]!.imageHash = nextRecoveryImageHash
+      }
+
       const envelope = await wallet.prepareUpdate(
         toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
       )

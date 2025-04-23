@@ -97,6 +97,11 @@ export const ManagerOptionsDefaults = {
     weight: 1n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
 
+  defaultRecoverySettings: {
+    requiredDeltaTime: 2592000000n, // 30 days
+    minTimestamp: 0n,
+  },
+
   identity: {
     // TODO: change to prod url once deployed
     url: 'https://dev-identity.sequence-dev.app',
@@ -127,6 +132,11 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions) {
   }
 }
 
+export type RecoverySettings = {
+  requiredDeltaTime: bigint
+  minTimestamp: bigint
+}
+
 export type Databases = {
   readonly encryptedPks: CoreSigners.Pk.Encrypted.EncryptedPksDb
   readonly manager: Db.Wallets
@@ -150,6 +160,7 @@ export type Sequence = {
 
   readonly defaultGuardTopology: Config.Topology
   readonly defaultSessionsTopology: Omit<Config.SapientSignerLeaf, 'imageHash'>
+  readonly defaultRecoverySettings: RecoverySettings
 }
 
 export type Modules = {
@@ -199,6 +210,7 @@ export class Manager {
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultSessionsTopology: ops.defaultSessionsTopology,
+        defaultRecoverySettings: ops.defaultRecoverySettings,
       },
 
       databases: {
