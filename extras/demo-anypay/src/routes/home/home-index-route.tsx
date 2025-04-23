@@ -154,13 +154,18 @@ export const HomeIndexRoute = () => {
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
   const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)
 
+  // Track timestamps of when each meta-transaction was last sent
+  const [sentMetaTxns, setSentMetaTxns] = useState<{ [key: string]: number }>({})
+
+  const RETRY_WINDOW_MS = 10_000
+
   const { getRelayer } = useRelayers()
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
       const context: ContextLike.Context = {
-        factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
-        stage1: '0x656e2d390E76f3Fba9f0770Dd0EcF4707eee3dF1' as `0x${string}`,
+        factory: '0x4B755c6A321C86bD35bBbb5CD56321FE48b51d1e' as `0x${string}`,
+        stage1: '0x006FFf4932D4ad20aacD34E5Cc6CCf0644cbB099' as `0x${string}`,
         creationCode:
           '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
       }
@@ -661,6 +666,7 @@ export const HomeIndexRoute = () => {
   useEffect(() => {
     if (!txnHash) {
       setMetaTxnStatus(null)
+      setSentMetaTxns({})
       return
     }
     if (isWaitingForReceipt) {
@@ -684,6 +690,18 @@ export const HomeIndexRoute = () => {
           // For each operation, send the meta-transaction using the appropriate relayer
           for (const operation of intentOperations) {
             const operationKey = `${operation.chainId}-${intentOperations.indexOf(operation)}`
+            const lastSentTime = sentMetaTxns[operationKey]
+            const now = Date.now()
+
+            // Skip if this meta transaction has been sent within the retry window
+            if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
+              const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
+              console.log(
+                `Meta transaction for operation ${operationKey} was sent recently. Wait ${timeLeft}s before retry`,
+              )
+              continue
+            }
+
             try {
               const chainId = parseInt(operation.chainId)
               if (isNaN(chainId) || chainId <= 0) {
@@ -725,6 +743,12 @@ export const HomeIndexRoute = () => {
                 relevantPreconditions,
               )
 
+              // Record the timestamp when this meta transaction was sent
+              setSentMetaTxns((prev) => ({
+                ...prev,
+                [operationKey]: Date.now(),
+              }))
+
               // Store the opHash in state for monitoring
               setOperationHashes((prev) => ({
                 ...prev,
@@ -746,6 +770,7 @@ export const HomeIndexRoute = () => {
                   `Fetch error details: Might be network issue, CORS, or invalid relayer URL for chain ${operation.chainId}`,
                 )
               }
+              // Don't update the timestamp on error - this allows immediate retry on error
               setOperationStatuses((prev) => ({
                 ...prev,
                 [operationKey]: {
@@ -777,6 +802,8 @@ export const HomeIndexRoute = () => {
     intentPreconditions,
     account.address,
     getRelayer,
+    sentMetaTxns,
+    metaTxns,
   ])
 
   useEffect(() => {
