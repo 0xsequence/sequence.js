@@ -141,7 +141,7 @@ export const HomeIndexRoute = () => {
   const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
   const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
   const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
-  const [operationStatuses, setOperationStatuses] = useState<{
+  const [metaTxnStatuses, setMetaTxnStatuses] = useState<{
     [key: string]: {
       status: 'pending' | 'success' | 'failed'
       txHash?: string
@@ -150,19 +150,14 @@ export const HomeIndexRoute = () => {
       lastPreconditionCheck?: string
     }
   }>({})
-  const [metaTxnStatuses, setMetaTxnStatuses] = useState<{
-    [key: string]: {
-      status: 'pending' | 'success' | 'failed'
-      txHash?: string
-      error?: string
-    }
-  }>({})
   const [operationHashes, setOperationHashes] = useState<{ [key: string]: Hex }>({})
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
   const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)
 
   // Track timestamps of when each meta-transaction was last sent
   const [sentMetaTxns, setSentMetaTxns] = useState<{ [key: string]: number }>({})
+
+  const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
 
   const RETRY_WINDOW_MS = 10_000
 
@@ -496,7 +491,6 @@ export const HomeIndexRoute = () => {
     setShowCustomCallForm(false)
     setCommittedIntentAddress(null)
     setVerificationStatus(null)
-    setOperationStatuses({})
     setOperationHashes({})
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
@@ -976,7 +970,7 @@ export const HomeIndexRoute = () => {
     isSwitchingChain ||
     (isAutoExecuteEnabled && commitIntentConfigMutation.isSuccess) // Disable if auto-execute is on and commit was successful
 
-  // Add this after createIntentMutation's onSuccess handler
+  // Effect to initialize operation statuses
   useEffect(() => {
     if (intentOperations) {
       // Initialize operation statuses
@@ -986,7 +980,7 @@ export const HomeIndexRoute = () => {
       intentOperations.forEach((operation, index) => {
         initialStatuses[`${operation.chainId}-${index}`] = { status: 'pending' }
       })
-      setOperationStatuses(initialStatuses)
+      setMetaTxnStatuses(initialStatuses)
     }
   }, [intentOperations])
 
@@ -994,7 +988,7 @@ export const HomeIndexRoute = () => {
   useEffect(() => {
     if (receipt && intentOperations) {
       // Update operation statuses based on receipt
-      setOperationStatuses((prev) => {
+      setMetaTxnStatuses((prev) => {
         const newStatuses = { ...prev }
         intentOperations.forEach((operation, index) => {
           const key = `${operation.chainId}-${index}`
@@ -1019,7 +1013,7 @@ export const HomeIndexRoute = () => {
   // Add this to reset operation statuses when account disconnects
   useEffect(() => {
     if (!account.isConnected) {
-      setOperationStatuses({})
+      setMetaTxnStatuses({})
     }
   }, [account.isConnected])
 
@@ -1036,9 +1030,9 @@ export const HomeIndexRoute = () => {
     intentOperations?.[1] ? getRelayer(parseInt(intentOperations[1].chainId)) : undefined,
   )
 
-  // Update operation statuses when individual operation statuses change
+  // Update the monitoring effect
   useEffect(() => {
-    if (!intentOperations) return
+    if (!metaTxns) return
 
     const newStatuses: {
       [key: string]: {
@@ -1050,31 +1044,37 @@ export const HomeIndexRoute = () => {
       }
     } = {}
 
-    if (intentOperations[0]) {
-      newStatuses[`${intentOperations[0].chainId}-0`] = operation0Status
+    if (operation0Status) {
+      const metaTxn = metaTxns[0]
+      if (metaTxn) {
+        newStatuses[`${metaTxn.chainId}-0`] = operation0Status
+      }
     }
-    if (intentOperations[1]) {
-      newStatuses[`${intentOperations[1].chainId}-1`] = operation1Status
+    if (operation1Status) {
+      const metaTxn = metaTxns[1]
+      if (metaTxn) {
+        newStatuses[`${metaTxn.chainId}-1`] = operation1Status
+      }
     }
 
-    setOperationStatuses((prev) => ({
+    setMetaTxnStatuses((prev) => ({
       ...prev,
       ...newStatuses,
     }))
-  }, [intentOperations, operation0Status, operation1Status])
+  }, [metaTxns, operation0Status, operation1Status])
 
   // Effect to cleanup operation statuses and hashes when intent operations are reset
   useEffect(() => {
     if (!intentOperations) {
-      setOperationStatuses({})
+      setMetaTxnStatuses({})
       setOperationHashes({})
     }
   }, [intentOperations])
 
-  // Effect to cleanup operation statuses and hashes when account disconnects
+  // Effect to cleanup when account disconnects
   useEffect(() => {
     if (!account.isConnected) {
-      setOperationStatuses({})
+      setMetaTxnStatuses({})
       setOperationHashes({})
       setIntentOperations(null)
       setIntentPreconditions(null)
@@ -1169,47 +1169,6 @@ export const HomeIndexRoute = () => {
       console.error('Error in meta-transaction process:', error)
     }
   }
-
-  // Update the monitoring effect
-  useEffect(() => {
-    if (!metaTxns) return
-
-    const newStatuses: {
-      [key: string]: {
-        status: 'pending' | 'success' | 'failed'
-        txHash?: string
-        error?: string
-      }
-    } = {}
-
-    if (operation0Status) {
-      const metaTxn = metaTxns[0]
-      if (metaTxn) {
-        newStatuses[`${metaTxn.chainId}-0`] = operation0Status
-      }
-    }
-    if (operation1Status) {
-      const metaTxn = metaTxns[1]
-      if (metaTxn) {
-        newStatuses[`${metaTxn.chainId}-1`] = operation1Status
-      }
-    }
-
-    setMetaTxnStatuses((prev) => ({
-      ...prev,
-      ...newStatuses,
-    }))
-  }, [metaTxns, operation0Status, operation1Status])
-
-  // Update cleanup effect
-  useEffect(() => {
-    if (!metaTxns) {
-      setMetaTxnStatuses({})
-      setOperationHashes({})
-    }
-  }, [metaTxns])
-
-  const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -2275,64 +2234,6 @@ export const HomeIndexRoute = () => {
                     </Text>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Intent Operations Status */}
-            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
-              <Text
-                variant="medium"
-                color="primary"
-                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
-              >
-                <Box className="h-4 w-4 mr-2" />
-                Intent Operations Status
-              </Text>
-              <div className="space-y-4">
-                {intentOperations.map((operation, index) => (
-                  <div key={`operation-${index}`} className="bg-gray-800/70 p-3 rounded-md">
-                    <div className="flex items-center justify-between mb-2">
-                      <Text variant="small" color="primary" className="font-semibold flex items-center">
-                        <NetworkImage chainId={parseInt(operation.chainId)} size="sm" className="w-4 h-4 mr-2" />
-                        Operation #{index + 1} - Chain {operation.chainId}
-                        <span className="text-gray-400 text-xs ml-2">
-                          ({getChainInfo(parseInt(operation.chainId))?.name || 'Unknown Chain'})
-                        </span>
-                      </Text>
-                      <div
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          operationStatuses[`${operation.chainId}-${index}`]?.status === 'success'
-                            ? 'bg-green-900/30 text-green-400 border border-green-700/30'
-                            : operationStatuses[`${operation.chainId}-${index}`]?.status === 'failed'
-                              ? 'bg-red-900/30 text-red-400 border border-red-700/30'
-                              : 'bg-yellow-900/30 text-yellow-400 border border-yellow-700/30'
-                        }`}
-                      >
-                        {operationStatuses[`${operation.chainId}-${index}`]?.status === 'success'
-                          ? 'Success'
-                          : operationStatuses[`${operation.chainId}-${index}`]?.status === 'failed'
-                            ? 'Failed'
-                            : 'Pending'}
-                      </div>
-                    </div>
-                    {operationStatuses[`${operation.chainId}-${index}`]?.txHash && (
-                      <Text variant="small" color="secondary" className="mt-2">
-                        <strong className="text-blue-300">Tx Hash: </strong>
-                        <span className="font-mono text-yellow-300 break-all">
-                          {operationStatuses[`${operation.chainId}-${index}`].txHash}
-                        </span>
-                      </Text>
-                    )}
-                    {operationStatuses[`${operation.chainId}-${index}`]?.error && (
-                      <Text variant="small" color="negative" className="mt-2">
-                        <strong className="text-red-300">Error: </strong>
-                        <span className="font-mono break-all">
-                          {operationStatuses[`${operation.chainId}-${index}`].error}
-                        </span>
-                      </Text>
-                    )}
-                  </div>
-                ))}
               </div>
             </div>
 
