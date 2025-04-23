@@ -9,6 +9,7 @@ import {
 } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider } from 'ox'
 import { IdentitySigner } from '../identity/signer.js'
+import { ManagerOptionsDefaults } from '../sequence/manager.js'
 
 type SessionControllerConfiguration = {
   wallet: Wallet
@@ -111,27 +112,32 @@ export class SessionController {
     }
     const tree = SessionConfig.sessionsTopologyToConfigurationTree(topology)
     await this._stateProvider.saveTree(tree)
+    const newImageHash = GenericTree.hash(tree)
 
     // Get the old wallet configuration
     const { configuration } = await this._wallet.getStatus()
+    let newConfiguration = Config.configFromJson(Config.configToJson(configuration))
 
     // Find the session manager in the old configuration
-    const managerLeaf = Config.findSignerLeaf(configuration, this._manager.address)
+    const managerLeaf = Config.findSignerLeaf(newConfiguration, this._manager.address)
     if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
-      // FIXME: Just add it?
-      throw new Error('Session manager not found in configuration')
+      // Just add it
+      const newManagerLeaf: Config.SapientSignerLeaf = {
+        ...ManagerOptionsDefaults.defaultSessionsTopology,
+        address: this._manager.address,
+        imageHash: newImageHash,
+      }
+      newConfiguration.topology = Config.mergeTopology(newConfiguration.topology, newManagerLeaf)
+    } else {
+      // Update the configuration to use the new session manager image hash
+      managerLeaf.imageHash = newImageHash
     }
 
-    // Update the configuration to use the new session manager image hash
-    const newImageHash = GenericTree.hash(tree)
-    managerLeaf.imageHash = newImageHash
-    console.log('New session manager image hash:', newImageHash)
-
     // Increment the checkpoint
-    configuration.checkpoint += 1n
+    newConfiguration.checkpoint += 1n
 
     // Update the wallet configuration
-    return await this._wallet.prepareUpdate(configuration)
+    return await this._wallet.prepareUpdate(newConfiguration)
   }
 
   // Complete the configuration update
