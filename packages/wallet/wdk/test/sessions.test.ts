@@ -3,7 +3,7 @@ import { Payload, Permission } from '@0xsequence/wallet-primitives'
 import { Sequence } from '@0xsequence/wallet-wdk'
 import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { beforeEach, describe, it } from 'vitest'
-import { EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
+import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
 describe('Sessions (via Manager)', () => {
   // Shared components
@@ -109,101 +109,105 @@ describe('Sessions (via Manager)', () => {
     }
   })
 
-  it('should create and sign with an explicit session', async () => {
-    // Create the explicit session signer
-    const e = await dapp.pkStore.generateAndStore()
-    const s = await dapp.pkStore.getEncryptedPkStore(e.address)
-    if (!s) {
-      throw new Error('Failed to create pk store')
-    }
-    const permission: Permission.SessionPermissions = {
-      signer: e.address,
-      valueLimit: 0n,
-      deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
-      permissions: [
-        {
-          target: EMITTER_ADDRESS,
-          rules: [
-            {
-              // Require the explicitEmit selector
-              cumulative: false,
-              operation: Permission.ParameterOperation.EQUAL,
-              value: Bytes.padRight(Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0])), 32),
-              offset: 0n,
-              mask: Bytes.padRight(Bytes.fromHex('0xffffffff'), 32),
-            },
-          ],
-        },
-      ],
-    }
-    const explicitSigner = new CoreSigners.Session.Explicit(s, permission)
-    // Add to manager
-    dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
+  it(
+    'should create and sign with an explicit session',
+    async () => {
+      // Create the explicit session signer
+      const e = await dapp.pkStore.generateAndStore()
+      const s = await dapp.pkStore.getEncryptedPkStore(e.address)
+      if (!s) {
+        throw new Error('Failed to create pk store')
+      }
+      const permission: Permission.SessionPermissions = {
+        signer: e.address,
+        valueLimit: 0n,
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: EMITTER_ADDRESS,
+            rules: [
+              {
+                // Require the explicitEmit selector
+                cumulative: false,
+                operation: Permission.ParameterOperation.EQUAL,
+                value: Bytes.padRight(Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0])), 32),
+                offset: 0n,
+                mask: Bytes.padRight(Bytes.fromHex('0xffffffff'), 32),
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new CoreSigners.Session.Explicit(s, permission)
+      // Add to manager
+      dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-    // Request the session permissions from the WDK
-    const requestId = await wdk.manager.addExplicitSession(dapp.wallet.address, explicitSigner.address, permission)
+      // Request the session permissions from the WDK
+      const requestId = await wdk.manager.addExplicitSession(dapp.wallet.address, explicitSigner.address, permission)
 
-    // Sign and complete the request
-    const sigRequest = await wdk.manager.getSignatureRequest(requestId)
-    const identitySigner = sigRequest.signers.find((s) => s.address === wdk.identitySignerAddress)
-    if (!identitySigner || identitySigner.status !== 'ready') {
-      throw new Error(`Identity signer not found or not ready: ${identitySigner?.status}`)
-    }
-    const handled = await identitySigner.handle()
-    if (!handled) {
-      throw new Error('Failed to handle identity signer')
-    }
-    await wdk.manager.completeSessionUpdate(requestId)
+      // Sign and complete the request
+      const sigRequest = await wdk.manager.getSignatureRequest(requestId)
+      const identitySigner = sigRequest.signers.find((s) => s.address === wdk.identitySignerAddress)
+      if (!identitySigner || identitySigner.status !== 'ready') {
+        throw new Error(`Identity signer not found or not ready: ${identitySigner?.status}`)
+      }
+      const handled = await identitySigner.handle()
+      if (!handled) {
+        throw new Error('Failed to handle identity signer')
+      }
+      await wdk.manager.completeSessionUpdate(requestId)
 
-    // Create a call payload
-    const call: Payload.Call = {
-      to: EMITTER_ADDRESS,
-      value: 0n,
-      data: AbiFunction.encodeData(EMITTER_ABI[0]),
-      gasLimit: 0n,
-      delegateCall: false,
-      onlyFallback: false,
-      behaviorOnError: 'revert',
-    }
-    const envelope = await dapp.wallet.prepareTransaction(provider, [call])
-    const parentedEnvelope: Payload.Parented = {
-      ...envelope.payload,
-      parentWallets: [dapp.wallet.address],
-    }
+      // Create a call payload
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_ABI[0]),
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+      const envelope = await dapp.wallet.prepareTransaction(provider, [call])
+      const parentedEnvelope: Payload.Parented = {
+        ...envelope.payload,
+        parentWallets: [dapp.wallet.address],
+      }
 
-    // Sign the envelope
-    const sessionImageHash = await dapp.sessionManager.imageHash
-    if (!sessionImageHash) {
-      throw new Error('Session image hash not found')
-    }
-    const signature = await dapp.sessionManager.signSapient(
-      dapp.wallet.address,
-      chainId ?? 1n,
-      parentedEnvelope,
-      sessionImageHash,
-    )
-    const sapientSignature: Envelope.SapientSignature = {
-      imageHash: sessionImageHash,
-      signature,
-    }
-    const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
+      // Sign the envelope
+      const sessionImageHash = await dapp.sessionManager.imageHash
+      if (!sessionImageHash) {
+        throw new Error('Session image hash not found')
+      }
+      const signature = await dapp.sessionManager.signSapient(
+        dapp.wallet.address,
+        chainId ?? 1n,
+        parentedEnvelope,
+        sessionImageHash,
+      )
+      const sapientSignature: Envelope.SapientSignature = {
+        imageHash: sessionImageHash,
+        signature,
+      }
+      const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
-    // Send the transaction
-    if (PRIVATE_KEY) {
-      // Build the transaction
-      const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
-      console.log('tx', transaction)
+      // Send the transaction
+      if (PRIVATE_KEY) {
+        // Build the transaction
+        const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
+        console.log('tx', transaction)
 
-      //FIXME Replace everything below with some relayer call that runs silently.
-      // Currently the WDK needs multiple calls and approval on front end.
-      // This isn't the correct why to use sessions.
+        //FIXME Replace everything below with some relayer call that runs silently.
+        // Currently the WDK needs multiple calls and approval on front end.
+        // This isn't the correct why to use sessions.
 
-      // Load the sender
-      const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
-      const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)
-      const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
-      console.log('Transaction sent', tx)
-      await provider.request({ method: 'eth_getTransactionReceipt', params: [tx.opHash] })
-    }
-  })
+        // Load the sender
+        const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
+        const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)
+        const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
+        console.log('Transaction sent', tx)
+        await provider.request({ method: 'eth_getTransactionReceipt', params: [tx.opHash] })
+      }
+    },
+    CAN_RUN_LIVE ? { timeout: 60000 } : undefined,
+  )
 })
