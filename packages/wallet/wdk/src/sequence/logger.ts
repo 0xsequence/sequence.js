@@ -1,4 +1,4 @@
-import { Shared } from './manager'
+import { Shared } from './manager.js'
 
 export class Logger {
   constructor(private readonly shared: Shared) {}

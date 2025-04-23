@@ -1,20 +1,28 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 import { Config, Constants, Context, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
-import * as Db from '../dbs'
-import * as Identity from '../identity'
-import { Devices } from './devices'
-import { Handler, DevicesHandler, PasskeysHandler, AuthCodePkceHandler, MnemonicHandler, OtpHandler } from './handlers'
-import { Logger } from './logger'
-import { Sessions } from './sessions'
-import { Signatures } from './signatures'
-import { Signers } from './signers'
-import { Transactions } from './transactions'
-import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
-import { Transaction, TransactionRequest } from './types/transaction-request'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
-import { Kinds } from './types/signer'
-import { Janitor } from './janitor'
+import * as Db from '../dbs/index.js'
+import * as Identity from '../identity/index.js'
+import { Devices } from './devices.js'
+import {
+  Handler,
+  DevicesHandler,
+  PasskeysHandler,
+  AuthCodePkceHandler,
+  MnemonicHandler,
+  OtpHandler,
+} from './handlers/index.js'
+import { Logger } from './logger.js'
+import { Sessions } from './sessions.js'
+import { Signatures } from './signatures.js'
+import { Signers } from './signers.js'
+import { Transactions } from './transactions.js'
+import { BaseSignatureRequest, SignatureRequest, Wallet } from './types/index.js'
+import { Transaction, TransactionRequest } from './types/transaction-request.js'
+import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
+import { Kinds } from './types/signer.js'
+import { WalletSelectionUiHandler } from './types/wallet.js'
+import { Janitor } from './janitor.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -311,6 +319,14 @@ export class Manager {
 
   public onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean) {
     return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
+  }
+
+  public registerWalletSelector(handler: WalletSelectionUiHandler) {
+    return this.shared.modules.wallets.registerWalletSelector(handler)
+  }
+
+  public unregisterWalletSelector(handler?: WalletSelectionUiHandler) {
+    return this.shared.modules.wallets.unregisterWalletSelector(handler)
   }
 
   // Signatures

@@ -1,8 +1,8 @@
 import { Hex } from 'ox'
-import * as Db from '../../dbs'
-import * as Identity from '../../identity'
-import { Signatures } from '../signatures'
-import { BaseSignatureRequest } from '../types'
+import * as Db from '../../dbs/index.js'
+import * as Identity from '../../identity/index.js'
+import { Signatures } from '../signatures.js'
+import { BaseSignatureRequest } from '../types/signature-request.js'
 
 export class IdentityHandler {
   constructor(

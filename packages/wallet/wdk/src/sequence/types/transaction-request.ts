@@ -1,11 +1,11 @@
 import { Envelope, Relayer } from '@0xsequence/wallet-core'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
+import { Address, Hex } from 'ox'
 
 export type TransactionRequest = {
   to: Address.Address
   value?: bigint
-  data?: Uint8Array
+  data?: Hex.Hex
   gasLimit?: bigint
 }
 

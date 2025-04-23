@@ -1,5 +1,5 @@
 import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
-import * as State from './state'
+import * as State from './state/index.js'
 import {
   Constants,
   Context,
@@ -9,7 +9,7 @@ import {
   Payload,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import * as Envelope from './envelope'
+import * as Envelope from './envelope.js'
 
 export type WalletOptions = {
   context: Context.Context
@@ -183,7 +183,6 @@ export class Wallet {
 
     // Get the current configuration
     const configuration = await this.stateProvider.getConfiguration(imageHash)
-    console.log('configuration', imageHash, configuration)
     if (!configuration) {
       throw new Error(`cannot find configuration details for ${this.address}`)
     }
@@ -262,7 +261,7 @@ export class Wallet {
               {
                 to: deploy.to,
                 value: 0n,
-                data: Hex.toBytes(deploy.data),
+                data: deploy.data,
                 gasLimit: 0n,
                 delegateCall: false,
                 onlyFallback: false,
@@ -271,12 +270,10 @@ export class Wallet {
               {
                 to: this.address,
                 value: 0n,
-                data: Hex.toBytes(
-                  AbiFunction.encodeData(Constants.EXECUTE, [
-                    Bytes.toHex(Payload.encode(envelope.payload)),
-                    Bytes.toHex(SequenceSignature.encodeSignature(signature)),
-                  ]),
-                ),
+                data: AbiFunction.encodeData(Constants.EXECUTE, [
+                  Bytes.toHex(Payload.encode(envelope.payload)),
+                  Bytes.toHex(SequenceSignature.encodeSignature(signature)),
+                ]),
                 gasLimit: 0n,
                 delegateCall: false,
                 onlyFallback: false,

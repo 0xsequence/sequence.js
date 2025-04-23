@@ -1,5 +1,5 @@
 import { Address, Hex } from 'ox'
-import { BaseSignatureRequest, SignerActionable, SignerReady, SignerUnavailable } from '../types'
+import { SignerActionable, SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 
 export interface Handler {
   kind: string

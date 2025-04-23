@@ -78,11 +78,11 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Config.
       case 2: // SubdigestLeaf
         return {
           type: 'subdigest',
-          digest: randomBytes(32, options),
+          digest: randomHex(32, options),
         }
 
       case 3: // NodeLeaf
-        return randomBytes(32, options)
+        return randomHex(32, options)
 
       case 4: {
         // NestedLeaf

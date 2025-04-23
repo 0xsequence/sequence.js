@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs'
-import { readStdin } from '../utils'
+import { readStdin } from '../utils.js'
 import { Address, Bytes, Hex } from 'ox'
 import { Extensions } from '@0xsequence/wallet-primitives'
 

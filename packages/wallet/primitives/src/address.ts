@@ -1,6 +1,6 @@
 import { Address, Bytes, Hash } from 'ox'
-import { Context } from './context'
-import { Config, hashConfiguration } from './config'
+import { Context } from './context.js'
+import { Config, hashConfiguration } from './config.js'
 
 export function from(configuration: Bytes.Bytes | Config, context: Context): Address.Address {
   const imageHash = configuration instanceof Uint8Array ? configuration : hashConfiguration(configuration)

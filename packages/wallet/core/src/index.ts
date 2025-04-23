@@ -1,6 +1,6 @@
-export * from './wallet'
+export * from './wallet.js'
 
-export * as Signers from './signers'
-export * as State from './state'
-export * as Relayer from './relayer'
-export * as Envelope from './envelope'
+export * as Signers from './signers/index.js'
+export * as State from './state/index.js'
+export * as Relayer from './relayer/index.js'
+export * as Envelope from './envelope.js'

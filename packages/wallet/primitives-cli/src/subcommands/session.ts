@@ -1,7 +1,7 @@
 import { Hex } from 'ox'
 import { CommandModule } from 'yargs'
-import sessionExplicitCommand from './sessionExplicit'
-import sessionImplicitCommand from './sessionImplicit'
+import sessionExplicitCommand from './sessionExplicit.js'
+import sessionImplicitCommand from './sessionImplicit.js'
 
 import { GenericTree, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
 

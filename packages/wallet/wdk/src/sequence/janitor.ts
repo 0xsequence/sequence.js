@@ -1,4 +1,4 @@
-import { Shared } from '.'
+import { Shared } from './manager.js'
 
 // Performs cleanup functions and pruning operations
 export class Janitor {

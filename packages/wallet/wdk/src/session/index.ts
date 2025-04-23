@@ -1,1 +1,1 @@
-export { SessionController } from './session-controller'
+export { SessionController } from './session-controller.js'

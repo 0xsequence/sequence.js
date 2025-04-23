@@ -1,6 +1,6 @@
 import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
-import { SignerInterface } from './session'
+import { SignerInterface } from './session.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
@@ -23,7 +23,7 @@ export class Explicit implements SignerInterface {
     wallet: Address.Address,
     _chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<Permission.Permission | undefined> {
     // Wallet and signer are encoded as a prefix for the usage hash
     const limitHashPrefix = Hash.keccak256(
@@ -70,7 +70,7 @@ export class Explicit implements SignerInterface {
     wallet: Address.Address,
     chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<boolean> {
     //FIXME Should this be stateful to support cumulative rules within a payload?
     const permission = await this.findSupportedPermission(wallet, chainId, call, provider)
@@ -88,7 +88,7 @@ export class Explicit implements SignerInterface {
       space: bigint
       nonce: bigint
     },
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
     // Find the valid permission for this call
     const permission = await this.findSupportedPermission(wallet, chainId, call, provider)
@@ -123,7 +123,7 @@ async function validatePermission(
 
   for (const rule of permission.rules) {
     // Extract value from calldata at offset
-    const callValue = call.data.slice(Number(rule.offset), Number(rule.offset) + 32)
+    const callValue = Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32)
     // Apply mask
     let value: Bytes.Bytes = callValue.map((b, i) => b & rule.mask[i]!)
 

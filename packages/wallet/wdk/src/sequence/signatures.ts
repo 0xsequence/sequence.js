@@ -2,7 +2,7 @@ import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Payload } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
-import { Shared } from './manager'
+import { Shared } from './manager.js'
 import {
   Action,
   ActionToPayload,
@@ -11,7 +11,8 @@ import {
   SignerBase,
   SignerSigned,
   SignerUnavailable,
-} from './types'
+} from './types/signature-request.js'
+
 export class Signatures {
   constructor(private readonly shared: Shared) {}
 

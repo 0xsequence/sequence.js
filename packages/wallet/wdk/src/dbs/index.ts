@@ -1,12 +1,11 @@
-export type { AuthCommitment } from './auth-commitments'
-export { AuthCommitments } from './auth-commitments'
+export type { AuthCommitment } from './auth-commitments.js'
+export { AuthCommitments } from './auth-commitments.js'
 
-export type { AuthKey } from './auth-keys'
-export { AuthKeys } from './auth-keys'
+export type { AuthKey } from './auth-keys.js'
+export { AuthKeys } from './auth-keys.js'
 
-export type { DbUpdateType, DbUpdateListener, Migration } from './generic'
-
-export { Generic } from './generic'
-export { Signatures } from './signatures'
-export { Transactions } from './transactions'
-export { Wallets } from './wallets'
+export type { DbUpdateType, DbUpdateListener, Migration } from './generic.js'
+export { Generic } from './generic.js'
+export { Signatures } from './signatures.js'
+export { Transactions } from './transactions.js'
+export { Wallets } from './wallets.js'

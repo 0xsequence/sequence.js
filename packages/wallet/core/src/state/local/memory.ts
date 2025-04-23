@@ -1,6 +1,6 @@
 import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { Store } from './index'
+import { Store } from './index.js'
 
 export class MemoryStore implements Store {
   private configs = new Map<`0x${string}`, Config.Config>()

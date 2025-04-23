@@ -1,8 +1,8 @@
 import { Config, Signature } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex, Signature as OxSignature } from 'ox'
 import { type CommandModule } from 'yargs'
-import { fromPosOrStdin } from '../utils'
-import { PossibleElements } from './config'
+import { fromPosOrStdin } from '../utils.js'
+import { PossibleElements } from './config.js'
 
 // const SignatureElements = [
 //   {
@@ -61,7 +61,7 @@ export async function doEncode(
       if (candidate.type === 'erc1271') {
         return {
           address: candidate.address as `0x${string}`,
-          data: Bytes.fromHex(candidate.values[0] as `0x${string}`),
+          data: candidate.values[0] as `0x${string}`,
           type: 'erc1271',
         }
       }
@@ -100,7 +100,7 @@ export async function doEncode(
       if (candidate.type === 'sapient' || candidate.type === 'sapient_compact') {
         return {
           address: candidate.address as `0x${string}`,
-          data: Bytes.fromHex(candidate.values[0] as `0x${string}`),
+          data: candidate.values[0] as `0x${string}`,
           type: candidate.type,
         }
       }

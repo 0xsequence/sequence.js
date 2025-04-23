@@ -1,5 +1,6 @@
 {
   "name": "@0xsequence/wallet-primitives-cli",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "build:esbuild": "esbuild src/index.ts --bundle --platform=node --target=node16 --outfile=dist/index.js",

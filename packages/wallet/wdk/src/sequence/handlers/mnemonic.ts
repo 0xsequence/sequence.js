@@ -1,10 +1,9 @@
 import { Signers } from '@0xsequence/wallet-core'
 import { Address, Hex, Mnemonic } from 'ox'
-import { Handler } from './handler'
-import * as Db from '../../dbs'
-import { Signatures } from '../signatures'
-import { Kinds } from '../types/signer'
-import { BaseSignatureRequest, SignerReady, SignerUnavailable } from '../types'
+import { Handler } from './handler.js'
+import { Signatures } from '../signatures.js'
+import { Kinds } from '../types/signer.js'
+import { SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 
 type RespondFn = (mnemonic: string) => Promise<void>
 

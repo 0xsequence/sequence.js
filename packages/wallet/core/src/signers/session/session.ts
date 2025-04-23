@@ -7,7 +7,7 @@ export interface SignerInterface {
     wallet: Address.Address,
     chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ) => Promise<boolean>
   /// Sign the call. Will throw if the call is not supported.
   signCall: (
@@ -18,6 +18,6 @@ export interface SignerInterface {
       space: bigint
       nonce: bigint
     },
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ) => Promise<SessionSignature.SessionCallSignature>
 }

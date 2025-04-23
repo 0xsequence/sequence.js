@@ -2,8 +2,8 @@ import { Hex, Bytes, Address, P256, Hash } from 'ox'
 import { Payload, Extensions } from '@0xsequence/wallet-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { WebAuthnP256 } from 'ox'
-import { State } from '..'
-import { SapientSigner, Witnessable } from '.'
+import { State } from '../index.js'
+import { SapientSigner, Witnessable } from './index.js'
 
 export type PasskeyOptions = {
   extensions: Pick<Extensions.Extensions, 'passkeys'>
@@ -72,7 +72,7 @@ export class Passkey implements SapientSigner, Witnessable {
       throw new Error('Witness payload is not a message')
     }
 
-    const message = JSON.parse(Bytes.toString(payload.message))
+    const message = JSON.parse(Hex.toString(payload.message))
     if (!isWitnessMessage(message)) {
       throw new Error('Witness payload is not a witness message')
     }
@@ -82,7 +82,7 @@ export class Passkey implements SapientSigner, Witnessable {
       throw new Error('Metadata does not contain credential id')
     }
 
-    const decodedSignature = Extensions.Passkeys.decode(witness.signature.data)
+    const decodedSignature = Extensions.Passkeys.decode(Bytes.fromHex(witness.signature.data))
 
     return new Passkey({
       credentialId: metadata.credentialId,
@@ -253,14 +253,14 @@ export class Passkey implements SapientSigner, Witnessable {
 
     return {
       address: this.address,
-      data: signature,
+      data: Bytes.toHex(signature),
       type: 'sapient_compact',
     }
   }
 
   async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
-      Bytes.fromString(
+      Hex.fromString(
         JSON.stringify({
           action: 'consent-to-be-part-of-wallet',
           wallet,

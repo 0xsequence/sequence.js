@@ -1,6 +1,6 @@
 import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { Store } from './index'
+import { Store } from './index.js'
 
 const DB_VERSION = 1
 const STORE_CONFIGS = 'configs'

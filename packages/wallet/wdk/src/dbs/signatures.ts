@@ -1,5 +1,5 @@
-import { BaseSignatureRequest } from '../sequence'
-import { Generic } from './generic'
+import { BaseSignatureRequest } from '../sequence/index.js'
+import { Generic } from './generic.js'
 
 const TABLE_NAME = 'envelopes'
 export class Signatures extends Generic<BaseSignatureRequest, 'id'> {
