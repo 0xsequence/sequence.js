@@ -233,11 +233,7 @@ export const HomeIndexRoute = () => {
             return false
           }
 
-          const normalizedPrecondition = {
-            ...precondition,
-            data: typeof precondition.data === 'string' ? precondition.data : JSON.stringify(precondition.data),
-          }
-          return await chainRelayer.checkPrecondition(normalizedPrecondition)
+          return await chainRelayer.checkPrecondition(precondition)
         } catch (error) {
           console.error('Error checking precondition:', error, 'Precondition:', precondition)
           return false
