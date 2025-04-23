@@ -1,15 +1,15 @@
-import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
-import * as State from './state/index.js'
 import {
+  Config,
   Constants,
   Context,
-  Config,
-  Address as SequenceAddress,
   Erc6492,
   Payload,
+  Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
+import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
 import * as Envelope from './envelope.js'
+import * as State from './state/index.js'
 
 export type WalletOptions = {
   context: Context.Context
@@ -248,7 +248,12 @@ export class Wallet {
         to: this.address,
         data: AbiFunction.encodeData(Constants.EXECUTE, [
           Bytes.toHex(Payload.encode(envelope.payload)),
-          Bytes.toHex(SequenceSignature.encodeSignature(signature)),
+          Bytes.toHex(
+            SequenceSignature.encodeSignature({
+              ...signature,
+              suffix: status.pendingUpdates.map(({ signature }) => signature),
+            }),
+          ),
         ]),
       }
     } else {
@@ -276,7 +281,12 @@ export class Wallet {
                 value: 0n,
                 data: AbiFunction.encodeData(Constants.EXECUTE, [
                   Bytes.toHex(Payload.encode(envelope.payload)),
-                  Bytes.toHex(SequenceSignature.encodeSignature(signature)),
+                  Bytes.toHex(
+                    SequenceSignature.encodeSignature({
+                      ...signature,
+                      suffix: status.pendingUpdates.map(({ signature }) => signature),
+                    }),
+                  ),
                 ]),
                 gasLimit: 0n,
                 delegateCall: false,
