@@ -21,3 +21,10 @@ export type SignerWithKind = {
   kind?: Kind
   imageHash?: Hex.Hex
 }
+
+export type RecoverySigner = {
+  kind: 'recovery'
+  address: Address.Address
+  minTimestamp: bigint
+  requiredDeltaTime: bigint
+}

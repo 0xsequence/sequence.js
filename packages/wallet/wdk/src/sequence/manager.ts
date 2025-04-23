@@ -20,9 +20,10 @@ import { Transactions } from './transactions.js'
 import { BaseSignatureRequest, SignatureRequest, Wallet } from './types/index.js'
 import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
-import { Kinds } from './types/signer.js'
+import { Kinds, RecoverySigner } from './types/signer.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
 import { Janitor } from './janitor.js'
+import { Recovery } from './recovery.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -171,6 +172,7 @@ export type Modules = {
   readonly signers: Signers
   readonly signatures: Signatures
   readonly transactions: Transactions
+  readonly recovery: Recovery
   readonly janitor: Janitor
 }
 
@@ -236,6 +238,7 @@ export class Manager {
       signers: new Signers(shared),
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
+      recovery: new Recovery(shared),
       janitor: new Janitor(shared),
     }
 
@@ -463,5 +466,9 @@ export class Manager {
 
   public async getConfiguration(wallet: Address.Address) {
     return this.shared.modules.wallets.getConfiguration({ wallet })
+  }
+
+  public async getRecoverySigners(wallet: Address.Address): Promise<RecoverySigner[] | undefined> {
+    return this.shared.modules.recovery.getRecoverySigners(wallet)
   }
 }

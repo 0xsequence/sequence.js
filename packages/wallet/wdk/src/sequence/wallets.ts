@@ -7,7 +7,7 @@ import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { Shared } from './manager.js'
 import { Wallet } from './types/wallet.js'
-import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
+import { Kinds, RecoverySigner, WitnessExtraSignerKind } from './types/signer.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
 
 export type StartSignUpWithRedirectArgs = {
@@ -286,37 +286,6 @@ export class Wallets {
     return undo
   }
 
-  private async updateRecoveryModule(
-    modules: Config.SapientSignerLeaf[],
-    transformer: (leaves: Extensions.Recovery.RecoveryLeaf[]) => Extensions.Recovery.RecoveryLeaf[],
-  ) {
-    const ext = this.shared.sequence.extensions.recovery
-    const idx = modules.findIndex((m) => m.address === ext)
-    if (idx === -1) {
-      return
-    }
-
-    const genericTree = await this.shared.sequence.stateProvider.getTree(ext)
-    if (!genericTree) {
-      throw new Error('recovery-module-tree-not-found')
-    }
-
-    const tree = Extensions.Recovery.fromGenericTree(genericTree)
-    const { leaves, isComplete } = Extensions.Recovery.getRecoveryLeaves(tree)
-    if (!isComplete) {
-      throw new Error('recovery-module-tree-incomplete')
-    }
-
-    const nextTree = Extensions.Recovery.fromRecoveryLeaves(transformer(leaves))
-    const nextGeneric = Extensions.Recovery.toGenericTree(nextTree)
-    await this.shared.sequence.stateProvider.saveTree(nextGeneric)
-    if (!modules[idx]) {
-      throw new Error('recovery-module-not-found-(unreachable)')
-    }
-
-    modules[idx].imageHash = GenericTree.hash(nextGeneric)
-  }
-
   private async prepareSignUp(args: SignupArgs): Promise<{
     signer: (Signers.Signer | Signers.SapientSigner) & Signers.Witnessable
     extra: WitnessExtraSignerKind
@@ -490,26 +459,7 @@ export class Wallets {
     }
 
     if (!args.noRecovery) {
-      const recoveryTree = Extensions.Recovery.fromRecoveryLeaves([
-        {
-          type: 'leaf' as const,
-          signer: device.address,
-          requiredDeltaTime: this.shared.sequence.defaultRecoverySettings.requiredDeltaTime,
-          minTimestamp: this.shared.sequence.defaultRecoverySettings.minTimestamp,
-        },
-      ])
-
-      const recoveryGenericTree = Extensions.Recovery.toGenericTree(recoveryTree)
-      await this.shared.sequence.stateProvider.saveTree(recoveryGenericTree)
-
-      const recoveryImageHash = GenericTree.hash(recoveryGenericTree)
-
-      modules.push({
-        type: 'sapient-signer',
-        address: this.shared.sequence.extensions.recovery,
-        weight: 255n,
-        imageHash: recoveryImageHash,
-      } as Config.SapientSignerLeaf)
+      await this.shared.modules.recovery.initRecoveryModule(modules, loginSignerAddress)
     }
 
     // Create initial configuration
@@ -580,15 +530,9 @@ export class Wallets {
         { address: device.address },
       ])
 
-      await this.updateRecoveryModule(modules, (leaves) => [
-        ...leaves,
-        {
-          type: 'leaf',
-          signer: device.address,
-          requiredDeltaTime: this.shared.sequence.defaultRecoverySettings.requiredDeltaTime,
-          minTimestamp: this.shared.sequence.defaultRecoverySettings.minTimestamp,
-        },
-      ])
+      if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
+        await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
+      }
 
       const envelope = await wallet.prepareUpdate(
         toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
@@ -737,7 +681,9 @@ export class Wallets {
     ])
 
     // Remove device from the recovery topology, if it exists
-    await this.updateRecoveryModule(modules, (leaves) => leaves.filter((l) => l.signer !== device.address))
+    if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
+      await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, device.address)
+    }
 
     console.log('nextDevicesTopology', nextDevicesTopology)
 
@@ -793,10 +739,10 @@ export class Wallets {
     })
 
     const status = await wallet.getStatus()
-    const { devicesTopology, loginTopology } = fromConfig(status.configuration)
+    const raw = fromConfig(status.configuration)
 
-    const deviceSigners = Config.getSigners(devicesTopology)
-    const loginSigners = Config.getSigners(loginTopology)
+    const deviceSigners = Config.getSigners(raw.devicesTopology)
+    const loginSigners = Config.getSigners(raw.loginTopology)
 
     return {
       devices: await this.shared.modules.signers.resolveKinds(wallet.address, [
@@ -807,6 +753,7 @@ export class Wallets {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
+      raw,
     }
   }
 }
