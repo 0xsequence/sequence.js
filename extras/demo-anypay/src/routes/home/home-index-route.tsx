@@ -1756,6 +1756,12 @@ export const HomeIndexRoute = () => {
                           <div className="space-y-2">
                             <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                               <Text variant="small" color="secondary">
+                                <strong className="text-blue-300">ID: </strong>
+                                <span className="font-mono text-yellow-300 break-all">{tx.id || 'N/A'}</span>
+                              </Text>
+                            </div>
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                              <Text variant="small" color="secondary">
                                 <strong className="text-blue-300">Contract: </strong>
                                 <span className="text-yellow-300 break-all font-mono">{tx.contract}</span>
                               </Text>
@@ -2231,10 +2237,18 @@ export const HomeIndexRoute = () => {
                       </div>
                     </div>
                     <div className="mt-2 space-y-2">
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">Contract: </strong>
-                        <span className="font-mono text-yellow-300 break-all">{metaTxn.contract}</span>
-                      </Text>
+                      <div>
+                        <Text variant="small" color="secondary">
+                          <strong className="text-blue-300">Contract: </strong>
+                          <span className="font-mono text-yellow-300 break-all">{metaTxn.contract}</span>
+                        </Text>
+                      </div>
+                      <div>
+                        <Text variant="small" color="secondary">
+                          <strong className="text-blue-300">ID: </strong>
+                          <span className="font-mono text-yellow-300 break-all">{metaTxn.id || 'N/A'}</span>
+                        </Text>
+                      </div>
                       {metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.txHash && (
                         <Text variant="small" color="secondary">
                           <strong className="text-blue-300">Tx Hash: </strong>
