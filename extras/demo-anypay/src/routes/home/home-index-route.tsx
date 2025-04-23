@@ -245,7 +245,8 @@ export const HomeIndexRoute = () => {
   }, [intentPreconditions, getRelayer])
 
   useEffect(() => {
-    if (intentPreconditions && intentPreconditions.length > 0) {
+    // TODO: Remove this once we have a way to check precondition statuses
+    if (false) {
       checkPreconditionStatuses()
     }
   }, [intentPreconditions, checkPreconditionStatuses])
@@ -777,12 +778,6 @@ export const HomeIndexRoute = () => {
     account.address,
     getRelayer,
   ])
-
-  useEffect(() => {
-    if (intentPreconditions) {
-      checkPreconditionStatuses()
-    }
-  }, [intentPreconditions, checkPreconditionStatuses])
 
   useEffect(() => {
     if (!intentOperations?.[0]?.chainId || !selectedToken || !intentPreconditions || !account.address) {
@@ -1551,64 +1546,7 @@ export const HomeIndexRoute = () => {
                   </Text>
                 </Text>
 
-                {/* Add Meta-transactions Section */}
-                {metaTxns && metaTxns.length > 0 && (
-                  <div className="mb-4">
-                    <Text
-                      variant="medium"
-                      color="primary"
-                      className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
-                    >
-                      <Layers className="h-4 w-4 mr-1" />
-                      Meta-transactions
-                      <Text variant="small" color="secondary" className="ml-1">
-                        (Transactions that will be relayed):
-                      </Text>
-                    </Text>
-                    <div className="space-y-2">
-                      {metaTxns.map((tx, index) => (
-                        <div
-                          key={`metatx-${index}`}
-                          className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
-                        >
-                          <div className="space-y-2">
-                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                              <Text variant="small" color="secondary">
-                                <strong className="text-blue-300">Contract: </strong>
-                                <span className="text-yellow-300 break-all font-mono">{tx.contract}</span>
-                              </Text>
-                            </div>
-                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                              <Text variant="small" color="secondary">
-                                <strong className="text-blue-300">Chain ID: </strong>
-                                <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">{tx.chainId}</span>
-                                <NetworkImage
-                                  chainId={parseInt(tx.chainId)}
-                                  size="sm"
-                                  className="w-4 h-4 ml-1 inline-block"
-                                />
-                                <span className="ml-1">
-                                  {getChainInfo(parseInt(tx.chainId))?.name || 'Unknown Chain'}
-                                </span>
-                              </Text>
-                            </div>
-                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
-                              <Text variant="small" color="secondary">
-                                <div className="break-all">
-                                  <strong className="text-blue-300">Input Data: </strong>
-                                  <div className="max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                                    <span className="font-mono text-green-300">{tx.input || '0x'}</span>
-                                  </div>
-                                </div>
-                              </Text>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
+                {/* Intent Operations Section */}
                 {intentOperations && intentOperations.length > 0 ? (
                   <div className="space-y-2">
                     {intentOperations.map((operation, index) => (
@@ -1671,11 +1609,70 @@ export const HomeIndexRoute = () => {
                 ) : (
                   <div className="bg-gray-800/70 p-3 rounded-md border border-gray-700/50">
                     <Text variant="small" color="secondary">
-                      No origin call details available.
+                      No operations available.
                     </Text>
                   </div>
                 )}
 
+                {/* Meta-transactions Section */}
+                {metaTxns && metaTxns.length > 0 && (
+                  <div className="mt-4">
+                    <Text
+                      variant="medium"
+                      color="primary"
+                      className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
+                    >
+                      <Layers className="h-4 w-4 mr-1" />
+                      Meta-transactions
+                      <Text variant="small" color="secondary" className="ml-1">
+                        (Transactions that will be relayed):
+                      </Text>
+                    </Text>
+                    <div className="space-y-2">
+                      {metaTxns.map((tx, index) => (
+                        <div
+                          key={`metatx-${index}`}
+                          className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
+                        >
+                          <div className="space-y-2">
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                              <Text variant="small" color="secondary">
+                                <strong className="text-blue-300">Contract: </strong>
+                                <span className="text-yellow-300 break-all font-mono">{tx.contract}</span>
+                              </Text>
+                            </div>
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                              <Text variant="small" color="secondary">
+                                <strong className="text-blue-300">Chain ID: </strong>
+                                <span className="font-mono bg-blue-900/30 px-2 py-0.5 rounded-full">{tx.chainId}</span>
+                                <NetworkImage
+                                  chainId={parseInt(tx.chainId)}
+                                  size="sm"
+                                  className="w-4 h-4 ml-1 inline-block"
+                                />
+                                <span className="ml-1">
+                                  {getChainInfo(parseInt(tx.chainId))?.name || 'Unknown Chain'}
+                                </span>
+                              </Text>
+                            </div>
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                              <Text variant="small" color="secondary">
+                                <div className="break-all">
+                                  <strong className="text-blue-300">Input Data: </strong>
+                                  <div className="max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                                    <span className="font-mono text-green-300">{tx.input || '0x'}</span>
+                                  </div>
+                                </div>
+                              </Text>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preconditions Section */}
                 {intentPreconditions && intentPreconditions.length > 0 && (
                   <>
                     <Text
