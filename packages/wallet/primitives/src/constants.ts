@@ -3,8 +3,11 @@ import { Abi, Address, Hex } from 'ox'
 export const DEFAULT_CREATION_CODE: Hex.Hex =
   '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3'
 
+export const DefaultFactory: Address.Address = '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447'
+export const DefaultStage1: Address.Address = '0x2440595Ead70Ba5874572153910362DcA2dde417'
+export const DefaultStage2: Address.Address = '0xa3F27508a1Dac8A11C0791f7EBEA5fc95dC1e131'
 export const DefaultGuest: Address.Address = '0x9cbB2a4BD361248f5020465E1Cc1Db877F9387D8'
-export const DefaultSessionManager: Address.Address = '0x4b54fC479dca92F0d1b7dE3F873aEB64BB986798'
+export const DefaultSessionManager: Address.Address = '0xDfB66323C6485eE10d81A0fa60BaEbbbA732Ba0a'
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([
