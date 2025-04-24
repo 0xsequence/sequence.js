@@ -286,6 +286,9 @@ importers:
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
+      web-locks:
+        specifier: ^0.0.8
+        version: 0.0.8
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -3195,6 +3198,10 @@ packages:
 
   wcwidth@1.0.1:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
+
+  web-locks@0.0.8:
+    resolution: {integrity: sha512-4K1HUuu9EjougZiaX3RQcR862nTaHwxpD9yJ+6dHXosw3L5MnFD8a8CJaN+AoP9IqhKYShMMc7efJF23/KGF/g==}
+    engines: {node: '>=11.0.0'}
 
   which-boxed-primitive@1.0.2:
     resolution: {integrity: sha512-bwZdv0AKLpplFY2KZRX6TvyuN7ojjr7lwkg6ml0roIy9YeuSr7JS372qlNW18UQYzgYK9ziGcerWqZOmEn9VNg==}
@@ -6321,6 +6328,8 @@ snapshots:
   wcwidth@1.0.1:
     dependencies:
       defaults: 1.0.4
+
+  web-locks@0.0.8: {}
 
   which-boxed-primitive@1.0.2:
     dependencies:

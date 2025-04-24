@@ -12,9 +12,19 @@ import {
   SignerSigned,
   SignerUnavailable,
 } from './types/signature-request.js'
+import { Cron } from './cron.js'
 
 export class Signatures {
-  constructor(private readonly shared: Shared) {}
+  constructor(private readonly shared: Shared) {
+    // Register pruning job with cron
+    const cron = new Cron(shared)
+    cron.registerJob('prune-signatures', 10 * 60 * 1000, async () => {
+      const prunedSignatures = await this.prune()
+      if (prunedSignatures > 0) {
+        this.shared.modules.logger.log(`Pruned ${prunedSignatures} signatures`)
+      }
+    })
+  }
 
   private async getBase(requestId: string): Promise<BaseSignatureRequest> {
     const request = await this.shared.databases.signatures.get(requestId)

@@ -22,7 +22,7 @@ import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 import { Kinds, RecoverySigner } from './types/signer.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
-import { Janitor } from './janitor.js'
+import { Cron } from './cron.js'
 import { Recovery } from './recovery.js'
 
 export type ManagerOptions = {
@@ -173,7 +173,7 @@ export type Modules = {
   readonly signatures: Signatures
   readonly transactions: Transactions
   readonly recovery: Recovery
-  readonly janitor: Janitor
+  readonly cron: Cron
 }
 
 export type Shared = {
@@ -239,7 +239,7 @@ export class Manager {
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
       recovery: new Recovery(shared),
-      janitor: new Janitor(shared),
+      cron: new Cron(shared),
     }
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
