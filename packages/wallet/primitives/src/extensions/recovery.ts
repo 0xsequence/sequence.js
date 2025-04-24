@@ -490,7 +490,7 @@ export async function totalQueuedPayloads(
  * @param index - The index of the queued payload to get the hash for
  * @returns The hash of the queued payload at the specified index
  */
-export async function queuedPayloadHashes(
+export async function queuedPayloadHashOf(
   provider: Provider.Provider,
   extension: Address.Address,
   wallet: Address.Address,

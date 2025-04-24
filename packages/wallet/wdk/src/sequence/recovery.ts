@@ -1,11 +1,20 @@
 import { Config, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
-import { Address, Hex } from 'ox'
+import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { RecoverySigner } from './types/signer.js'
 import { Envelope } from '@0xsequence/wallet-core'
+import { QueuedRecoveryPayload } from './types/recovery.js'
 
 export class Recovery {
-  constructor(private readonly shared: Shared) {}
+  constructor(private readonly shared: Shared) {
+    this.shared.modules.cron.registerJob(
+      'update-queued-recovery-payloads',
+      5 * 60 * 1000, // 5 minutes
+      async () => {
+        await this.updateQueuedRecoveryPayloads()
+      },
+    )
+  }
 
   private async updateRecoveryModule(
     modules: Config.SapientSignerLeaf[],
@@ -211,6 +220,106 @@ export class Recovery {
     return {
       to: this.shared.sequence.extensions.recovery,
       data: calldata,
+    }
+  }
+
+  async onQueuedRecoveryPayloadsUpdate(
+    wallet: Address.Address,
+    cb: (payloads: QueuedRecoveryPayload[]) => void,
+    trigger?: boolean,
+  ) {
+    const getPayloads = async () => {
+      const all = await this.shared.databases.recovery.list()
+      return all.filter((p) => p.wallet === wallet)
+    }
+
+    if (trigger) {
+      cb(await getPayloads())
+    }
+
+    return this.shared.databases.recovery.addListener(async () => {
+      cb(await getPayloads())
+    })
+  }
+
+  async updateQueuedRecoveryPayloads(): Promise<void> {
+    const wallets = await this.shared.modules.wallets.list()
+    if (wallets.length === 0) {
+      return
+    }
+
+    // Create providers for each network
+    const providers = this.shared.sequence.networks.map((network) => ({
+      chainId: network.chainId,
+      provider: Provider.from(RpcTransport.fromHttp(network.rpc)),
+    }))
+
+    const seenInThisRun = new Set<string>()
+
+    for (const wallet of wallets) {
+      // See if they have any recover signers
+      const signers = await this.getRecoverySigners(wallet.address)
+      if (!signers || signers.length === 0) {
+        continue
+      }
+
+      // Now we need to fetch, for each signer and network, any queued recovery payloads
+      // TODO: This may benefit from multicall, but it is not urgent, as this happens in the background
+      for (const signer of signers) {
+        for (const { chainId, provider } of providers) {
+          const totalPayloads = await Extensions.Recovery.totalQueuedPayloads(
+            provider,
+            this.shared.sequence.extensions.recovery,
+            wallet.address,
+            signer.address,
+          )
+
+          for (let i = 0n; i < totalPayloads; i++) {
+            const payloadHash = await Extensions.Recovery.queuedPayloadHashOf(
+              provider,
+              this.shared.sequence.extensions.recovery,
+              wallet.address,
+              signer.address,
+              i,
+            )
+
+            const timestamp = await Extensions.Recovery.timestampForQueuedPayload(
+              provider,
+              this.shared.sequence.extensions.recovery,
+              wallet.address,
+              signer.address,
+              payloadHash,
+            )
+
+            // The id is the index + signer address + chainId + wallet address
+            const id = `${i}-${signer.address}-${chainId}-${wallet.address}`
+
+            // Create a new payload
+            const payloadEntry: QueuedRecoveryPayload = {
+              id,
+              index: i,
+              recoveryModule: this.shared.sequence.extensions.recovery,
+              wallet: wallet.address,
+              signer: signer.address,
+              chainId,
+              startTimestamp: timestamp,
+              endTimestamp: timestamp + signer.requiredDeltaTime,
+              payloadHash,
+            }
+
+            await this.shared.databases.recovery.set(payloadEntry)
+            seenInThisRun.add(payloadEntry.id)
+          }
+        }
+      }
+
+      // Delete any unseen queued payloads as they are no longer relevant
+      const allQueuedPayloads = await this.shared.databases.recovery.list()
+      for (const payload of allQueuedPayloads) {
+        if (!seenInThisRun.has(payload.id)) {
+          await this.shared.databases.recovery.del(payload.id)
+        }
+      }
     }
   }
 }

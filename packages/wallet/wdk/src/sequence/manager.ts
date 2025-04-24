@@ -38,6 +38,7 @@ export type ManagerOptions = {
   signaturesDb?: Db.Signatures
   authCommitmentsDb?: Db.AuthCommitments
   authKeysDb?: Db.AuthKeys
+  recoveryDb?: Db.Recovery
 
   dbPruningInterval?: number
 
@@ -76,6 +77,7 @@ export const ManagerOptionsDefaults = {
   signaturesDb: new Db.Signatures(),
   transactionsDb: new Db.Transactions(),
   authCommitmentsDb: new Db.AuthCommitments(),
+  recoveryDb: new Db.Recovery(),
   authKeysDb: new Db.AuthKeys(),
 
   dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
@@ -145,6 +147,7 @@ export type Databases = {
   readonly transactions: Db.Transactions
   readonly authCommitments: Db.AuthCommitments
   readonly authKeys: Db.AuthKeys
+  readonly recovery: Db.Recovery
 
   readonly pruningInterval: number
 }
@@ -222,6 +225,7 @@ export class Manager {
         transactions: ops.transactionsDb,
         authCommitments: ops.authCommitmentsDb,
         authKeys: ops.authKeysDb,
+        recovery: ops.recoveryDb,
 
         pruningInterval: ops.dbPruningInterval,
       },

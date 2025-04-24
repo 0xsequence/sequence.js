@@ -22,6 +22,6 @@ export type {
   SignatureRequest,
 } from './signature-request.js'
 export type { Kind, WitnessExtraSignerKind, SignerWithKind, RecoverySigner } from './signer.js'
-
+export type { QueuedRecoveryPayload } from './recovery.js'
 export { Actions } from './signature-request.js'
 export { Kinds } from './signer.js'
