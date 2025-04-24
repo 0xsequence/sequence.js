@@ -1,7 +1,8 @@
-import { Config, Extensions, GenericTree } from '@0xsequence/wallet-primitives'
+import { Config, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
-import { Address } from 'ox'
+import { Address, Hex } from 'ox'
 import { RecoverySigner } from './types/signer.js'
+import { Envelope } from '@0xsequence/wallet-core'
 
 export class Recovery {
   constructor(private readonly shared: Shared) {}
@@ -140,5 +141,76 @@ export class Recovery {
         minTimestamp: l.minTimestamp,
         requiredDeltaTime: l.requiredDeltaTime,
       }))
+  }
+
+  async queueRecoveryPayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls) {
+    const signers = await this.getRecoverySigners(wallet)
+    if (!signers) {
+      throw new Error('recovery-signers-not-found')
+    }
+
+    const recoveryPayload = Payload.toRecovery(payload)
+    const simulatedTopology = Config.flatLeavesToTopology(
+      signers.map((s) => ({
+        type: 'signer',
+        address: s.address,
+        weight: 1n,
+      })),
+    )
+
+    const requestId = await this.shared.modules.signatures.request(
+      {
+        wallet,
+        chainId,
+        configuration: {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: simulatedTopology,
+        },
+        payload: recoveryPayload,
+      },
+      'recovery',
+    )
+
+    return requestId
+  }
+
+  // TODO: Handle this transaction instead of just returning the to and data
+  async completeRecoveryPayload(requestId: string): Promise<{ to: Address.Address; data: Hex.Hex }> {
+    const signature = await this.shared.modules.signatures.get(requestId)
+    if (signature.action !== 'recovery' || !Payload.isRecovery(signature.envelope.payload)) {
+      throw new Error('invalid-recovery-payload')
+    }
+
+    if (!Envelope.isSigned(signature.envelope)) {
+      throw new Error('recovery-payload-not-signed')
+    }
+
+    const { weight, threshold } = Envelope.weightOf(signature.envelope)
+    if (weight < threshold) {
+      throw new Error('recovery-payload-insufficient-weight')
+    }
+
+    // Find any valid signature
+    const validSignature = signature.envelope.signatures[0]
+    if (Envelope.isSapientSignature(validSignature)) {
+      throw new Error('recovery-payload-sapient-signatures-not-supported')
+    }
+
+    if (!validSignature) {
+      throw new Error('recovery-payload-no-valid-signature')
+    }
+
+    const calldata = Extensions.Recovery.encodeCalldata(
+      signature.wallet,
+      signature.envelope.payload,
+      validSignature.address,
+      validSignature.signature,
+    )
+
+    return {
+      to: this.shared.sequence.extensions.recovery,
+      data: calldata,
+    }
   }
 }

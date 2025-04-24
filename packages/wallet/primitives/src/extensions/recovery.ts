@@ -1,13 +1,31 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Abi, AbiFunction, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import * as Payload from '../payload.js'
-import { getSignPayload } from 'ox/TypedData'
 import * as GenericTree from '../generic-tree.js'
+import { getSelector } from 'ox/AbiFunction'
+import { Signature } from '../index.js'
+import { packRSY } from '../utils.js'
 
 export const FLAG_RECOVERY_LEAF = 1
 export const FLAG_NODE = 3
 export const FLAG_BRANCH = 4
 
 const RECOVERY_LEAF_PREFIX = Bytes.fromString('Sequence recovery leaf:\n')
+
+export const QUEUE_PAYLOAD = Abi.from([
+  'function queuePayload(address _wallet, address _signer, (uint8 kind,bool noChainId,(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)[] calls,uint256 space,uint256 nonce,bytes message,bytes32 imageHash,bytes32 digest,address[] parentWallets) calldata _payload, bytes calldata _signature) external',
+])[0]
+
+export const TIMESTAMP_FOR_QUEUED_PAYLOAD = Abi.from([
+  'function timestampForQueuedPayload(address _wallet, address _signer, bytes32 _payloadHash) external view returns (uint256)',
+])[0]
+
+export const QUEUED_PAYLOAD_HASHES = Abi.from([
+  'function queuedPayloadHashes(address _wallet, address _signer, uint256 _index) external view returns (bytes32)',
+])[0]
+
+export const TOTAL_QUEUED_PAYLOADS = Abi.from([
+  'function totalQueuedPayloads(address _wallet, address _signer) external view returns (uint256)',
+])[0]
 
 /**
  * A leaf in the Recovery tree, storing:
@@ -312,33 +330,6 @@ export function fromRecoveryLeaves(leaves: RecoveryLeaf[]): Tree {
 }
 
 /**
- * Creates the EIP-712 domain separator for the "Sequence Wallet - Recovery Mode" domain
- *
- * @param wallet - The wallet address
- * @param chainId - The chain ID
- * @param noChainId - Whether to omit the chain ID from the domain separator
- * @returns The domain separator hash
- */
-export function domainSeparator(wallet: Address.Address, chainId: bigint, noChainId: boolean): Hex.Hex {
-  // keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
-  const EIP712_DOMAIN_TYPEHASH = Hash.keccak256(
-    Bytes.fromString('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-  )
-  const nameHash = Hash.keccak256(Bytes.fromString(DOMAIN_NAME))
-  const versionHash = Hash.keccak256(Bytes.fromString(DOMAIN_VERSION))
-
-  const chain = noChainId ? 0 : Number(chainId)
-  const encoded = Bytes.concat(
-    EIP712_DOMAIN_TYPEHASH,
-    nameHash,
-    versionHash,
-    Bytes.padLeft(Bytes.fromNumber(chain), 32),
-    Bytes.padLeft(Bytes.fromHex(wallet), 32),
-  )
-  return Hash.keccak256(encoded, { as: 'Hex' })
-}
-
-/**
  * Produces an EIP-712 typed data hash for a "recovery mode" payload,
  * matching the logic in Recovery.sol:
  *
@@ -360,9 +351,8 @@ export function hashRecoveryPayload(
   chainId: bigint,
   noChainId: boolean,
 ): Hex.Hex {
-  const ds = domainSeparator(wallet, chainId, noChainId)
-  const structHash = Bytes.fromHex(getSignPayload(Payload.toTyped(wallet, noChainId ? 0n : chainId, payload)))
-  return Hash.keccak256(Bytes.concat(Bytes.fromString('\x19\x01'), Hex.toBytes(ds), structHash), { as: 'Hex' })
+  const recoveryPayload = Payload.toRecovery(payload)
+  return Hex.fromBytes(Payload.hash(wallet, noChainId ? 0n : chainId, recoveryPayload))
 }
 
 /**
@@ -434,4 +424,118 @@ export function fromGenericTree(tree: GenericTree.Tree): Tree {
   } else {
     throw new Error('Invalid tree format')
   }
+}
+
+/**
+ * Encodes the calldata for queueing a recovery payload on the recovery extension
+ *
+ * @param wallet - The wallet address that owns the recovery configuration
+ * @param payload - The recovery payload to queue for execution
+ * @param signer - The recovery signer address that is queueing the payload
+ * @param signature - The signature from the recovery signer authorizing the payload
+ * @returns The encoded calldata for the queuePayload function on the recovery extension
+ */
+export function encodeCalldata(
+  wallet: Address.Address,
+  payload: Payload.Recovery<any>,
+  signer: Address.Address,
+  signature: Signature.SignatureOfSignerLeaf,
+) {
+  let signatureBytes: Hex.Hex
+
+  if (signature.type === 'erc1271') {
+    signatureBytes = signature.data
+  } else {
+    signatureBytes = Bytes.toHex(packRSY(signature))
+  }
+
+  return AbiFunction.encodeData(QUEUE_PAYLOAD, [wallet, signer, payload, signatureBytes])
+}
+
+/**
+ * Gets the total number of payloads queued by a recovery signer for a wallet
+ *
+ * @param provider - The provider to use for making the eth_call
+ * @param extension - The address of the recovery extension contract
+ * @param wallet - The wallet address to check queued payloads for
+ * @param signer - The recovery signer address to check queued payloads for
+ * @returns The total number of payloads queued by this signer for this wallet
+ */
+export async function totalQueuedPayloads(
+  provider: Provider.Provider,
+  extension: Address.Address,
+  wallet: Address.Address,
+  signer: Address.Address,
+): Promise<bigint> {
+  const total = await provider.request({
+    method: 'eth_call',
+    params: [
+      {
+        to: extension,
+        data: AbiFunction.encodeData(TOTAL_QUEUED_PAYLOADS, [wallet, signer]),
+      },
+    ],
+  })
+
+  return Hex.toBigInt(total)
+}
+
+/**
+ * Gets the hash of a queued payload at a specific index
+ *
+ * @param provider - The provider to use for making the eth_call
+ * @param extension - The address of the recovery extension contract
+ * @param wallet - The wallet address to get the queued payload for
+ * @param signer - The recovery signer address that queued the payload
+ * @param index - The index of the queued payload to get the hash for
+ * @returns The hash of the queued payload at the specified index
+ */
+export async function queuedPayloadHashes(
+  provider: Provider.Provider,
+  extension: Address.Address,
+  wallet: Address.Address,
+  signer: Address.Address,
+  index: bigint,
+): Promise<Hex.Hex> {
+  const hash = await provider.request({
+    method: 'eth_call',
+    params: [
+      {
+        to: extension,
+        data: AbiFunction.encodeData(QUEUED_PAYLOAD_HASHES, [wallet, signer, index]),
+      },
+    ],
+  })
+
+  return hash
+}
+
+/**
+ * Gets the timestamp when a specific payload was queued
+ *
+ * @param provider - The provider to use for making the eth_call
+ * @param extension - The address of the recovery extension contract
+ * @param wallet - The wallet address the payload was queued for
+ * @param signer - The recovery signer address that queued the payload
+ * @param payloadHash - The hash of the queued payload to get the timestamp for
+ * @returns The timestamp when the payload was queued, or 0 if not found
+ */
+export async function timestampForQueuedPayload(
+  provider: Provider.Provider,
+  extension: Address.Address,
+  wallet: Address.Address,
+  signer: Address.Address,
+  payloadHash: Hex.Hex,
+): Promise<bigint> {
+  const timestamp = await provider.request({
+    method: 'eth_call',
+    params: [
+      {
+        to: extension,
+        data: AbiFunction.encodeData(TIMESTAMP_FOR_QUEUED_PAYLOAD, [wallet, signer, payloadHash]),
+      },
+    ],
+  })
+
+  return Hex.toBigInt(timestamp)
 }

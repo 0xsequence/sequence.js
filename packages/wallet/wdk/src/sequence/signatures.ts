@@ -185,7 +185,7 @@ export class Signatures {
     action: A,
     options: {
       origin?: string
-    },
+    } = {},
   ): Promise<string> {
     // If the action is a config update, we need to remove all signature requests
     // for the same wallet that also involve configuration updates

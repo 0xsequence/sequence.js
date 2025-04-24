@@ -39,7 +39,11 @@ export type Parent = {
   parentWallets?: Address.Address[]
 }
 
-export type Payload = Calls | Message | ConfigUpdate | Digest
+export type Recovery<T extends Calls | Message | ConfigUpdate | Digest> = T & {
+  recovery: true
+}
+
+export type Payload = Calls | Message | ConfigUpdate | Digest | Recovery<Calls | Message | ConfigUpdate | Digest>
 
 export type Parented = Payload & Parent
 
@@ -95,6 +99,21 @@ export function isMessage(payload: Payload): payload is Message {
 
 export function isConfigUpdate(payload: Payload): payload is ConfigUpdate {
   return payload.type === 'config-update'
+}
+
+export function isRecovery(payload: Payload): payload is Recovery<Payload> {
+  return (payload as Recovery<Payload>).recovery === true
+}
+
+export function toRecovery<T extends Payload>(payload: T): Recovery<T> {
+  if (isRecovery(payload)) {
+    return payload
+  }
+
+  return {
+    ...payload,
+    recovery: true,
+  }
 }
 
 export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
@@ -299,13 +318,35 @@ export function hash(wallet: Address.Address, chainId: bigint, payload: Parented
   return Bytes.fromHex(getSignPayload(typedData))
 }
 
-export function toTyped(wallet: Address.Address, chainId: bigint, payload: Parented): TypedDataToSign {
-  const domain = {
+function domainFor(
+  payload: Payload,
+  wallet: Address.Address,
+  chainId: bigint,
+): {
+  name: string
+  version: string
+  chainId: number
+  verifyingContract: Address.Address
+} {
+  if (isRecovery(payload)) {
+    return {
+      name: 'Sequence Wallet - Recovery Mode',
+      version: '1',
+      chainId: Number(chainId),
+      verifyingContract: wallet,
+    }
+  }
+
+  return {
     name: 'Sequence Wallet',
     version: '3',
     chainId: Number(chainId),
     verifyingContract: wallet,
   }
+}
+
+export function toTyped(wallet: Address.Address, chainId: bigint, payload: Parented): TypedDataToSign {
+  const domain = domainFor(payload, wallet, chainId)
 
   switch (payload.type) {
     case 'call': {
