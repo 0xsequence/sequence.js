@@ -126,12 +126,12 @@ export class Recovery {
 
   async getRecoverySigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {
     const { raw } = await this.shared.modules.wallets.getConfiguration({ wallet: address })
-    const recovertLeaf = raw.modules.find((m) => m.address === this.shared.sequence.extensions.recovery)
-    if (!recovertLeaf) {
+    const recoveryLeaf = raw.modules.find((m) => m.address === this.shared.sequence.extensions.recovery)
+    if (!recoveryLeaf) {
       return undefined
     }
 
-    const recoveryGenericTree = await this.shared.sequence.stateProvider.getTree(recovertLeaf.address)
+    const recoveryGenericTree = await this.shared.sequence.stateProvider.getTree(recoveryLeaf.address)
     if (!recoveryGenericTree) {
       throw new Error('recovery-module-tree-not-found')
     }
