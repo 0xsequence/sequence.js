@@ -17,7 +17,7 @@ import { Sessions } from './sessions.js'
 import { Signatures } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions } from './transactions.js'
-import { BaseSignatureRequest, SignatureRequest, Wallet } from './types/index.js'
+import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet } from './types/index.js'
 import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 import { Kinds, RecoverySigner } from './types/signer.js'
@@ -472,7 +472,25 @@ export class Manager {
     return this.shared.modules.wallets.getConfiguration({ wallet })
   }
 
+  // Recovery
+
   public async getRecoverySigners(wallet: Address.Address): Promise<RecoverySigner[] | undefined> {
     return this.shared.modules.recovery.getRecoverySigners(wallet)
+  }
+
+  public async onQueuedRecoveryPayloadsUpdate(
+    wallet: Address.Address,
+    cb: (payloads: QueuedRecoveryPayload[]) => void,
+    trigger?: boolean,
+  ) {
+    return this.shared.modules.recovery.onQueuedRecoveryPayloadsUpdate(wallet, cb, trigger)
+  }
+
+  public async queueRecoveryPayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls) {
+    return this.shared.modules.recovery.queueRecoveryPayload(wallet, chainId, payload)
+  }
+
+  public async completeRecoveryPayload(requestId: string) {
+    return this.shared.modules.recovery.completeRecoveryPayload(requestId)
   }
 }
