@@ -15,15 +15,16 @@ import {
 import { Cron } from './cron.js'
 
 export class Signatures {
-  constructor(private readonly shared: Shared) {
-    // Register pruning job with cron
-    const cron = new Cron(shared)
-    cron.registerJob('prune-signatures', 10 * 60 * 1000, async () => {
+  constructor(private readonly shared: Shared) {}
+
+  initialize() {
+    this.shared.modules.cron.registerJob('prune-signatures', 10 * 60 * 1000, async () => {
       const prunedSignatures = await this.prune()
       if (prunedSignatures > 0) {
         this.shared.modules.logger.log(`Pruned ${prunedSignatures} signatures`)
       }
     })
+    this.shared.modules.logger.log('Signatures module initialized and job registered.')
   }
 
   private async getBase(requestId: string): Promise<BaseSignatureRequest> {

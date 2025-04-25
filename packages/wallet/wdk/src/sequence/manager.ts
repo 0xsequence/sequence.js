@@ -235,6 +235,7 @@ export class Manager {
     }
 
     const modules: Modules = {
+      cron: new Cron(shared),
       logger: new Logger(shared),
       devices: new Devices(shared),
       wallets: new Wallets(shared),
@@ -243,7 +244,6 @@ export class Manager {
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
       recovery: new Recovery(shared),
-      cron: new Cron(shared),
     }
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
@@ -296,6 +296,13 @@ export class Manager {
 
     shared.modules = modules
     this.shared = shared
+
+    // Initialize modules
+    for (const module of Object.values(modules)) {
+      if ('initialize' in module) {
+        module.initialize()
+      }
+    }
   }
 
   // Wallets
@@ -478,7 +485,7 @@ export class Manager {
     return this.shared.modules.recovery.getRecoverySigners(wallet)
   }
 
-  public async onQueuedRecoveryPayloadsUpdate(
+  public onQueuedRecoveryPayloadsUpdate(
     wallet: Address.Address,
     cb: (payloads: QueuedRecoveryPayload[]) => void,
     trigger?: boolean,

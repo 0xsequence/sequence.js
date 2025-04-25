@@ -6,14 +6,18 @@ import { Envelope } from '@0xsequence/wallet-core'
 import { QueuedRecoveryPayload } from './types/recovery.js'
 
 export class Recovery {
-  constructor(private readonly shared: Shared) {
+  constructor(private readonly shared: Shared) {}
+
+  initialize() {
     this.shared.modules.cron.registerJob(
       'update-queued-recovery-payloads',
       5 * 60 * 1000, // 5 minutes
       async () => {
+        this.shared.modules.logger.log('Running job: update-queued-recovery-payloads')
         await this.updateQueuedRecoveryPayloads()
       },
     )
+    this.shared.modules.logger.log('Recovery module initialized and job registered.')
   }
 
   private async updateRecoveryModule(
@@ -131,7 +135,7 @@ export class Recovery {
       return undefined
     }
 
-    const recoveryGenericTree = await this.shared.sequence.stateProvider.getTree(recoveryLeaf.address)
+    const recoveryGenericTree = await this.shared.sequence.stateProvider.getTree(recoveryLeaf.imageHash)
     if (!recoveryGenericTree) {
       throw new Error('recovery-module-tree-not-found')
     }
@@ -223,22 +227,21 @@ export class Recovery {
     }
   }
 
-  async onQueuedRecoveryPayloadsUpdate(
+  onQueuedRecoveryPayloadsUpdate(
     wallet: Address.Address,
     cb: (payloads: QueuedRecoveryPayload[]) => void,
     trigger?: boolean,
   ) {
-    const getPayloads = async () => {
-      const all = await this.shared.databases.recovery.list()
-      return all.filter((p) => p.wallet === wallet)
+    const getPayloads = () => {
+      return this.shared.databases.recovery.list().then((all) => all.filter((p) => p.wallet === wallet))
     }
 
     if (trigger) {
-      cb(await getPayloads())
+      getPayloads().then(cb)
     }
 
-    return this.shared.databases.recovery.addListener(async () => {
-      cb(await getPayloads())
+    return this.shared.databases.recovery.addListener(() => {
+      getPayloads().then(cb)
     })
   }
 
