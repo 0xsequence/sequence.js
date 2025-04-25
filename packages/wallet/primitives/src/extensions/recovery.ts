@@ -449,7 +449,8 @@ export function encodeCalldata(
     signatureBytes = Bytes.toHex(packRSY(signature))
   }
 
-  return AbiFunction.encodeData(QUEUE_PAYLOAD, [wallet, signer, payload, signatureBytes])
+  const abiPayload = Payload.toAbiFormat(payload)
+  return AbiFunction.encodeData(QUEUE_PAYLOAD, [wallet, signer, abiPayload, signatureBytes])
 }
 
 /**

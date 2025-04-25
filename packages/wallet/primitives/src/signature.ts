@@ -137,8 +137,8 @@ export function isRawSignature(signature: any): signature is RawSignature {
 
 export function isRawConfig(configuration: any): configuration is RawConfig {
   return (
-    typeof configuration === 'object' &&
     configuration &&
+    typeof configuration === 'object' &&
     typeof configuration.threshold === 'bigint' &&
     typeof configuration.checkpoint === 'bigint' &&
     isRawTopology(configuration.topology) &&
