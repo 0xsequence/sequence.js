@@ -1,5 +1,4 @@
 import { Shared } from './manager.js'
-import 'web-locks'
 
 interface CronJob {
   id: string
