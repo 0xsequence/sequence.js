@@ -459,7 +459,7 @@ export class Wallets {
     }
 
     if (!args.noRecovery) {
-      await this.shared.modules.recovery.initRecoveryModule(modules, loginSignerAddress)
+      await this.shared.modules.recovery.initRecoveryModule(modules, device.address)
     }
 
     // Create initial configuration
