@@ -649,8 +649,6 @@ export class Wallets {
       throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
     }
 
-    await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
-
     if (options?.skipRemoveDevice) {
       await Promise.all([
         this.shared.databases.manager.del(wallet),
@@ -694,6 +692,8 @@ export class Wallets {
     const requestId = await this.shared.modules.signatures.request(envelope, 'logout', {
       origin: 'wallet-webapp',
     })
+
+    await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
 
     return requestId as any
   }
