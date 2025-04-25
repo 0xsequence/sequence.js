@@ -59,9 +59,14 @@ export class Cron {
         const timeSinceLastRun = now - lastRun
 
         if (timeSinceLastRun >= job.interval) {
-          await job.handler()
-          job.lastRun = now
-          storage.set(id, { lastRun: now })
+          try {
+            await job.handler()
+            job.lastRun = now
+            storage.set(id, { lastRun: now })
+          } catch (error) {
+            console.error(`Cron job ${id} failed:`, error)
+            // Continue with other jobs even if this one failed
+          }
         }
       }
 
