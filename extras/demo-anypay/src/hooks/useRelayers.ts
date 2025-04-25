@@ -43,8 +43,12 @@ export const useRelayers = () => {
         } else if (chainId === 137) {
           // Polygon
           relayerUrl = 'http://0.0.0.0:9999'
+        } else if (chainId === 8453) {
+          // Base
+          relayerUrl = 'http://0.0.0.0:9996'
         } else {
-          relayerUrl = 'http://localhost:4422'
+          // Default fallback
+          relayerUrl = 'http://0.0.0.0:9999'
         }
       } else {
         // For cors-anywhere, dev, and production environments

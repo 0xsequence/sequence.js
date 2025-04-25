@@ -86,6 +86,35 @@ export class RpcRelayer implements Relayer {
     }
   }
 
+  async sendMetaTxn(
+    walletAddress: Address.Address,
+    to: Address.Address,
+    data: Hex.Hex,
+    chainId: bigint,
+    quote?: FeeQuote,
+    preconditions?: IntentPrecondition[],
+  ): Promise<{ opHash: Hex.Hex }> {
+    console.log('sendMetaTxn', walletAddress, to, data, chainId, quote, preconditions)
+    const rpcCall: RpcMetaTxn = {
+      walletAddress: walletAddress,
+      contract: to,
+      input: data,
+    }
+
+    const result: RpcSendMetaTxnReturn = await this.client.sendMetaTxn({
+      call: rpcCall,
+      quote: quote ? JSON.stringify(quote._quote) : undefined,
+      preconditions: preconditions,
+    })
+
+    if (!result.status) {
+      console.error('RpcRelayer.relay failed', result)
+      throw new Error(`Relay failed: TxnHash ${result.txnHash}`)
+    }
+
+    return { opHash: Hex.fromString(result.txnHash) }
+  }
+
   async relay(
     to: Address.Address,
     data: Hex.Hex,
