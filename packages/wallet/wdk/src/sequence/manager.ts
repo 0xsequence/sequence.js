@@ -101,7 +101,7 @@ export const ManagerOptionsDefaults = {
   } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
 
   defaultRecoverySettings: {
-    requiredDeltaTime: 2592000000n, // 30 days
+    requiredDeltaTime: 2592000n, // 30 days (in seconds)
     minTimestamp: 0n,
   },
 
