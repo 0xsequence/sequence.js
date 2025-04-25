@@ -1027,72 +1027,105 @@ export const HomeIndexRoute = () => {
     }
   }, [metaTxns])
 
-  // Update the sendMetaTxn function to handle specific IDs
-  const sendMetaTxn = async (selectedId: string | null) => {
-    if (!intentOperations || !intentPreconditions || !metaTxns || !account.address) {
-      console.error('Missing required data for meta-transaction')
-      return
-    }
-
-    try {
-      const intentAddress = calculateIntentAddress(intentOperations, account.address)
-
-      // If no specific ID is selected, send all meta transactions
-      const txnsToSend = selectedId ? [metaTxns.find((tx) => tx.id === selectedId)] : metaTxns
-
-      if (!txnsToSend || (selectedId && !txnsToSend[0])) {
-        console.error('Meta transaction not found')
-        return
+  // Update the sendMetaTxn mutation
+  const sendMetaTxnMutation = useMutation({
+    mutationFn: async ({ selectedId }: { selectedId: string | null }) => {
+      if (!intentOperations || !intentPreconditions || !metaTxns || !account.address) {
+        throw new Error('Missing required data for meta-transaction')
       }
 
-      for (const metaTxn of txnsToSend) {
-        if (!metaTxn) continue
+      try {
+        const intentAddress = calculateIntentAddress(intentOperations, account.address)
 
-        const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
-        const lastSentTime = sentMetaTxns[operationKey]
-        const now = Date.now()
+        // If no specific ID is selected, send all meta transactions
+        const txnsToSend = selectedId ? [metaTxns.find((tx) => tx.id === selectedId)] : metaTxns
 
-        if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
-          const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
-          console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
-          continue
+        if (!txnsToSend || (selectedId && !txnsToSend[0])) {
+          throw new Error('Meta transaction not found')
         }
 
-        try {
-          const chainId = parseInt(metaTxn.chainId)
-          if (isNaN(chainId) || chainId <= 0) {
-            throw new Error(`Invalid chainId for meta transaction: ${metaTxn.chainId}`)
+        const results = []
+
+        for (const metaTxn of txnsToSend) {
+          if (!metaTxn) continue
+
+          const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+          const lastSentTime = sentMetaTxns[operationKey]
+          const now = Date.now()
+
+          if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
+            const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
+            console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
+            continue
           }
-          const chainRelayer = getRelayer(chainId)
-          if (!chainRelayer) {
-            throw new Error(`No relayer found for chainId: ${chainId}`)
+
+          try {
+            const chainId = parseInt(metaTxn.chainId)
+            if (isNaN(chainId) || chainId <= 0) {
+              throw new Error(`Invalid chainId for meta transaction: ${chainId}`)
+            }
+            const chainRelayer = getRelayer(chainId)
+            if (!chainRelayer) {
+              throw new Error(`No relayer found for chainId: ${chainId}`)
+            }
+
+            const relevantPreconditions = intentPreconditions.filter(
+              (p) => p.chainId && parseInt(p.chainId) === chainId,
+            )
+
+            console.log(
+              `Relaying meta transaction ${operationKey} to intent ${intentAddress} via relayer:`,
+              chainRelayer,
+            )
+
+            const { opHash } = await chainRelayer.sendMetaTxn(
+              metaTxn.walletAddress as Address.Address,
+              metaTxn.contract as Address.Address,
+              metaTxn.input as Hex,
+              BigInt(metaTxn.chainId),
+              undefined,
+              relevantPreconditions,
+            )
+
+            results.push({
+              operationKey,
+              opHash,
+              success: true,
+            })
+          } catch (error: any) {
+            results.push({
+              operationKey,
+              error: error.message,
+              success: false,
+            })
           }
+        }
 
-          const relevantPreconditions = intentPreconditions.filter((p) => p.chainId && parseInt(p.chainId) === chainId)
+        return results
+      } catch (error: any) {
+        throw error
+      }
+    },
+    onMutate: (variables) => {
+      // Optimistically update UI
+      const { selectedId } = variables
+      const affectedTxns = selectedId ? [selectedId] : metaTxns?.map((tx) => tx.id) || []
 
-          console.log(`Relaying meta transaction ${operationKey} to intent ${intentAddress} via relayer:`, chainRelayer)
-          console.log(
-            'metaTxn',
-            metaTxn,
-            'operationKey',
-            operationKey,
-            'intentAddress',
-            intentAddress,
-            'chainId',
-            chainId,
-            'relevantPreconditions',
-            relevantPreconditions,
-          )
-
-          const { opHash } = await chainRelayer.sendMetaTxn(
-            metaTxn.walletAddress as Address.Address,
-            metaTxn.contract as Address.Address,
-            metaTxn.input as Hex,
-            BigInt(metaTxn.chainId),
-            undefined,
-            relevantPreconditions,
-          )
-
+      affectedTxns.forEach((txId) => {
+        const tx = metaTxns?.find((t) => t.id === txId)
+        if (tx) {
+          const operationKey = `${tx.chainId}-${txId}`
+          setMetaTxnStatuses((prev) => ({
+            ...prev,
+            [operationKey]: { status: 'pending', error: undefined },
+          }))
+        }
+      })
+    },
+    onSuccess: (results) => {
+      // Update states based on results
+      results.forEach(({ operationKey, opHash, success, error }) => {
+        if (success && opHash) {
           setSentMetaTxns((prev) => ({
             ...prev,
             [operationKey]: Date.now(),
@@ -1107,20 +1140,27 @@ export const HomeIndexRoute = () => {
             ...prev,
             [operationKey]: { status: 'pending', error: undefined },
           }))
-        } catch (error: any) {
-          console.error(`Error sending meta-transaction ${operationKey}:`, error)
+        } else if (error) {
           setMetaTxnStatuses((prev) => ({
             ...prev,
             [operationKey]: {
               status: 'failed',
-              error: `Relay failed: ${error.message}`,
+              error: `Relay failed: ${error}`,
             },
           }))
         }
-      }
-    } catch (error: any) {
+      })
+    },
+    onError: (error) => {
       console.error('Error in meta-transaction process:', error)
-    }
+    },
+    retry: 5, // Allow up to 2 retries
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000), // Exponential backoff
+  })
+
+  // Replace the sendMetaTxn function with a wrapper that uses the mutation
+  const sendMetaTxn = (selectedId: string | null) => {
+    sendMetaTxnMutation.mutate({ selectedId })
   }
 
   return (
@@ -2053,11 +2093,22 @@ export const HomeIndexRoute = () => {
                       <Button
                         variant="feature"
                         onClick={() => sendMetaTxn(selectedMetaTxnId)}
-                        disabled={!metaTxns || metaTxns.length === 0 || !account.address}
+                        disabled={
+                          !metaTxns || metaTxns.length === 0 || !account.address || sendMetaTxnMutation.isPending
+                        }
                         className="flex-1 px-4 py-2 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center bg-purple-600 hover:bg-purple-700"
                       >
-                        <Layers className="h-4 w-4 mr-2" />
-                        {selectedMetaTxnId ? 'Send Selected Meta Transaction' : 'Send All Meta Transactions'}
+                        {sendMetaTxnMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Layers className="h-4 w-4 mr-2" />
+                            {selectedMetaTxnId ? 'Send Selected Meta Transaction' : 'Send All Meta Transactions'}
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
