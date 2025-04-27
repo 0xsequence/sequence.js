@@ -4,7 +4,7 @@ import { Abi, Address } from 'ox'
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
 
-export const EMITTER_ADDRESS: Address.Address = '0xb9239d78e60F3491b36538C6e51916c7B552cCBb'
+export const EMITTER_ADDRESS: Address.Address = '0x7F6e420Ed3017A36bE6e1DA8e3AFE61569eb4840'
 export const EMITTER_ABI = Abi.from(['function explicitEmit()', 'function implicitEmit()'])
 
 // Environment variables
