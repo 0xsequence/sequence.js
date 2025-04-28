@@ -1,7 +1,7 @@
 import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { beforeEach, describe, it, vi } from 'vitest'
 import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State } from '../../core/src/index.js'
-import { Constants, Payload, Permission } from '../../primitives/src/index.js'
+import { Attestation, Constants, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
@@ -114,6 +114,49 @@ describe('Sessions (via Manager)', () => {
     }
   })
 
+  const signAndSend = async (call: Payload.Call) => {
+    const envelope = await dapp.wallet.prepareTransaction(provider, [call])
+    const parentedEnvelope: Payload.Parented = {
+      ...envelope.payload,
+      parentWallets: [dapp.wallet.address],
+    }
+
+    // Sign the envelope
+    const sessionImageHash = await dapp.sessionManager.imageHash
+    if (!sessionImageHash) {
+      throw new Error('Session image hash not found')
+    }
+    const signature = await dapp.sessionManager.signSapient(
+      dapp.wallet.address,
+      chainId ?? 1n,
+      parentedEnvelope,
+      sessionImageHash,
+    )
+    const sapientSignature: Envelope.SapientSignature = {
+      imageHash: sessionImageHash,
+      signature,
+    }
+    const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
+
+    // Build the transaction
+    const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
+    console.log('tx', transaction)
+
+    // Send the transaction
+    if (CAN_RUN_LIVE && PRIVATE_KEY) {
+      //FIXME Replace everything below with the sequence relayer call.
+
+      // Load the sender
+      const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
+      const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)
+      const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
+      console.log('Transaction sent', tx)
+      const receipt = await provider.request({ method: 'eth_getTransactionReceipt', params: [tx.opHash] })
+      console.log('Transaction receipt', receipt)
+      return tx.opHash
+    }
+  }
+
   it(
     'should create and sign with an explicit session',
     async () => {
@@ -184,50 +227,87 @@ describe('Sessions (via Manager)', () => {
             return Promise.resolve('0x')
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
-            // Undeployed wallet
+            // Nonce is 0
             return Promise.resolve('0x00')
           }
         })
       }
 
-      const envelope = await dapp.wallet.prepareTransaction(provider, [call])
-      const parentedEnvelope: Payload.Parented = {
-        ...envelope.payload,
-        parentWallets: [dapp.wallet.address],
+      // Sign and send the transaction
+      await signAndSend(call)
+    },
+    PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
+  )
+
+  it(
+    'should create and sign with an implicit session',
+    async () => {
+      // Create the implicit session signer
+      const e = await dapp.pkStore.generateAndStore()
+      const s = await dapp.pkStore.getEncryptedPkStore(e.address)
+      if (!s) {
+        throw new Error('Failed to create pk store')
       }
 
-      // Sign the envelope
-      const sessionImageHash = await dapp.sessionManager.imageHash
-      if (!sessionImageHash) {
-        throw new Error('Session image hash not found')
-      }
-      const signature = await dapp.sessionManager.signSapient(
+      // Request the session authorization from the WDK
+      const { attestation, signature: identitySignature } = await wdk.manager.authorizeImplicitSession(
         dapp.wallet.address,
-        chainId ?? 1n,
-        parentedEnvelope,
-        sessionImageHash,
+        e.address,
+        {
+          target: 'https://example.com',
+        },
       )
-      const sapientSignature: Envelope.SapientSignature = {
-        imageHash: sessionImageHash,
-        signature,
+
+      // Load the implicit signer
+      const implicitSigner = new CoreSigners.Session.Implicit(
+        s,
+        attestation,
+        identitySignature,
+        dapp.sessionManager.address,
+      )
+      dapp.sessionManager = dapp.sessionManager.withImplicitSigner(implicitSigner)
+
+      // Create a call payload
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_ABI[1]), // implicitEmit
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
       }
-      const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
-      // Build the transaction
-      const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
-      console.log('tx', transaction)
-
-      // Send the transaction
-      if (CAN_RUN_LIVE && PRIVATE_KEY) {
-        //FIXME Replace everything below with the sequence relayer call.
-
-        // Load the sender
-        const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
-        const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)
-        const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
-        console.log('Transaction sent', tx)
-        await provider.request({ method: 'eth_getTransactionReceipt', params: [tx.opHash] })
+      if (!RPC_URL) {
+        // Configure mock provider
+        ;(provider as any).request.mockImplementation(({ method, params }) => {
+          if (method === 'eth_chainId') {
+            return Promise.resolve(chainId.toString())
+          }
+          if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
+            // Undeployed wallet
+            return Promise.resolve('0x')
+          }
+          if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
+            // Nonce is 0
+            return Promise.resolve('0x00')
+          }
+          if (
+            method === 'eth_call' &&
+            Address.isEqual(params[0].from, dapp.sessionManager.address) &&
+            Address.isEqual(params[0].to, call.to)
+          ) {
+            // Implicit request simulation result
+            const expectedResult = Bytes.toHex(
+              Attestation.generateImplicitRequestMagic(attestation, dapp.wallet.address),
+            )
+            return Promise.resolve(expectedResult)
+          }
+        })
       }
+
+      // Sign and send the transaction
+      await signAndSend(call)
     },
     PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
   )

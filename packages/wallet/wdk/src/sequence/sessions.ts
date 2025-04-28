@@ -58,7 +58,6 @@ export class Sessions {
     return controller.getTopology()
   }
 
-  //FIXME This function has WAY too many responsibilities.
   async authorizeImplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
@@ -120,29 +119,19 @@ export class Sessions {
     const requestId = await this.shared.modules.signatures.request(envelope, 'sign-digest', {
       origin: args.target,
     })
-    const handlerStatus = await handler.status(identitySignerAddress, undefined, {
-      action: 'sign-digest',
-      envelope: Envelope.toSigned(envelope),
-      id: requestId,
-      origin: args.target,
-      createdAt: new Date().toISOString(),
-      status: 'pending',
-      wallet: walletAddress,
-    })
-    if (!(handlerStatus.status === 'ready' || handlerStatus.status === 'actionable')) {
-      throw new Error('Identity handler is not ready')
+    let signatureRequest = await this.shared.modules.signatures.get(requestId)
+    const identitySigner = signatureRequest.signers.find((s) => s.address === identitySignerAddress)
+    if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
+      throw new Error(`Identity signer not found or not ready: ${identitySigner?.status}`)
     }
-    const result = await handlerStatus.handle()
-    if (!result) {
+    const handled = await identitySigner.handle()
+    if (!handled) {
       throw new Error('Failed to handle identity handler')
     }
-    // Get the signature
-    const signatureRequest = await this.shared.modules.signatures.get(requestId)
-    if (!signatureRequest) {
-      throw new Error('No signature request found')
-    }
-    // Delete it, we don't need it anymore
+    // Get the updated signature request. Then delete it, we don't need it anymore
+    signatureRequest = await this.shared.modules.signatures.get(requestId)
     await this.shared.modules.signatures.cancel(requestId)
+    // Find the handler signature
     const signatures = signatureRequest.envelope.signatures.filter(
       (sig) => isSignature(sig) && sig.address === identitySignerAddress,
     )
@@ -154,8 +143,10 @@ export class Sessions {
       throw new Error('No signature found')
     }
     if (signature.signature.type !== 'hash') {
+      // Should never happen
       throw new Error('Unsupported signature type')
     }
+
     return {
       attestation,
       signature: signature.signature,
