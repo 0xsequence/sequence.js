@@ -168,7 +168,7 @@ export const HomeIndexRoute = () => {
     try {
       const context: ContextLike.Context = {
         factory: '0x4B755c6A321C86bD35bBbb5CD56321FE48b51d1e' as `0x${string}`,
-        stage1: '0x006FFf4932D4ad20aacD34E5Cc6CCf0644cbB099' as `0x${string}`,
+        stage1: '0x0aac68a66bd4442349b3966df34848d32e82f10c' as `0x${string}`,
         creationCode:
           '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
       }
@@ -654,45 +654,116 @@ export const HomeIndexRoute = () => {
     },
   })
 
+  // Modify the effect that watches for transaction status
   useEffect(() => {
     if (!txnHash) {
-      setMetaTxnStatus(null)
-      setSentMetaTxns({})
-      return
-    }
-    if (isWaitingForReceipt) {
-      updateMetaTxnStatus(txnHash, 'pending')
-      return
-    }
-    if (isSuccess && receipt) {
-      updateMetaTxnStatus(receipt.transactionHash, receipt.status, receipt.gasUsed, receipt.effectiveGasPrice)
-
-      if (!metaTxns) {
-        console.error('No meta transactions to send')
-        return
+      // Only reset these when txnHash is cleared
+      if (metaTxnStatus?.txnHash) {
+        setMetaTxnStatus(null)
       }
+      if (Object.keys(sentMetaTxns).length > 0) {
+        setSentMetaTxns({})
+      }
+      return
+    }
 
-      // Send all meta transactions
-      for (const metaTxn of metaTxns) {
-        sendMetaTxn(metaTxn.id)
+    // Don't update status if it's already set for this hash
+    if (metaTxnStatus?.txnHash === txnHash) {
+      return
+    }
+
+    if (isWaitingForReceipt) {
+      setMetaTxnStatus({
+        txnHash,
+        status: 'Pending',
+      })
+      return
+    }
+
+    if (isSuccess && receipt) {
+      setMetaTxnStatus({
+        txnHash: receipt.transactionHash,
+        status: receipt.status === 'success' ? 'Success' : 'Failed',
+        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
+        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+      })
+
+      // Only send meta transactions on successful receipt
+      if (receipt.status === 'success' && metaTxns && !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])) {
+        // Send all meta transactions that haven't been sent yet
+        for (const metaTxn of metaTxns) {
+          sendMetaTxn(metaTxn.id)
+        }
       }
     } else if (isError) {
-      console.error('Error waiting for receipt:', receiptError)
-      updateMetaTxnStatus(txnHash, 'reverted', undefined, undefined, receiptError?.message || 'Failed to get receipt')
+      setMetaTxnStatus({
+        txnHash,
+        status: 'Failed',
+        revertReason: receiptError?.message || 'Failed to get receipt',
+      })
+    }
+  }, [txnHash, isWaitingForReceipt, isSuccess, isError, receipt, receiptError, metaTxns, sentMetaTxns])
+
+  // Modify the auto-execute effect
+  useEffect(() => {
+    const shouldAutoSend =
+      isAutoExecuteEnabled &&
+      commitIntentConfigMutation.isSuccess &&
+      originCallParams?.chainId &&
+      account.chainId === originCallParams.chainId &&
+      !originCallParams.error &&
+      originCallParams.to &&
+      originCallParams.data !== null &&
+      originCallParams.value !== null &&
+      !isSendingTransaction &&
+      !isWaitingForReceipt &&
+      !txnHash &&
+      !isChainSwitchRequired &&
+      !metaTxnStatus
+
+    if (shouldAutoSend) {
+      console.log('Auto-executing transaction: All conditions met.')
+
+      // Set initial status
+      setMetaTxnStatus({
+        status: 'Sending...',
+      })
+
+      sendTransaction(
+        {
+          to: originCallParams.to!,
+          data: originCallParams.data!,
+          value: originCallParams.value!,
+          chainId: originCallParams.chainId!,
+        },
+        {
+          onSuccess: (hash) => {
+            console.log('Auto-executed transaction sent, hash:', hash)
+            setTxnHash(hash)
+          },
+          onError: (error) => {
+            console.error('Auto-executed transaction failed:', error)
+            if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
+              setIsAutoExecuteEnabled(false)
+            }
+            setMetaTxnStatus({
+              status: 'Failed',
+              revertReason: error.message,
+            })
+          },
+        },
+      )
     }
   }, [
+    isAutoExecuteEnabled,
+    commitIntentConfigMutation.isSuccess,
+    originCallParams,
+    account.chainId,
+    isSendingTransaction,
     isWaitingForReceipt,
-    isSuccess,
-    isError,
-    receipt,
     txnHash,
-    receiptError,
-    intentOperations,
-    intentPreconditions,
-    account.address,
-    getRelayer,
-    sentMetaTxns,
-    metaTxns,
+    isChainSwitchRequired,
+    metaTxnStatus,
   ])
 
   useEffect(() => {
@@ -805,60 +876,6 @@ export const HomeIndexRoute = () => {
       handleSendOriginCall()
     }
   }, [isAutoExecuteEnabled, originCallParams, account.chainId])
-
-  useEffect(() => {
-    const shouldAutoSend =
-      isAutoExecuteEnabled &&
-      commitIntentConfigMutation.isSuccess &&
-      originCallParams?.chainId &&
-      account.chainId === originCallParams.chainId &&
-      !originCallParams.error &&
-      originCallParams.to &&
-      originCallParams.data !== null &&
-      originCallParams.value !== null &&
-      !isSendingTransaction &&
-      !isWaitingForReceipt &&
-      !txnHash &&
-      !isChainSwitchRequired
-
-    if (shouldAutoSend) {
-      console.log('Auto-executing transaction: All conditions met.')
-      updateMetaTxnStatus(undefined, 'sending')
-
-      sendTransaction(
-        {
-          to: originCallParams.to!,
-          data: originCallParams.data!,
-          value: originCallParams.value!,
-          chainId: originCallParams.chainId!,
-        },
-        {
-          onSuccess: (hash) => {
-            console.log('Auto-executed transaction sent, hash:', hash)
-            setTxnHash(hash)
-          },
-          onError: (error) => {
-            console.error('Auto-executed transaction failed:', error)
-            if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
-              setIsAutoExecuteEnabled(false)
-            }
-            updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
-          },
-        },
-      )
-    }
-    // Update dependencies to include commit success status
-  }, [
-    isAutoExecuteEnabled,
-    commitIntentConfigMutation.isSuccess,
-    originCallParams,
-    account.chainId,
-    isSendingTransaction,
-    isWaitingForReceipt,
-    txnHash,
-    isChainSwitchRequired,
-    sendTransaction,
-  ])
 
   // Update button text and disabled state for commit button
   const commitButtonText = commitIntentConfigMutation.isPending ? (
