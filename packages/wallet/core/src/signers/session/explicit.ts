@@ -118,7 +118,7 @@ async function validatePermission(
   provider?: Provider.Provider,
   usageHash?: Hex.Hex,
 ): Promise<boolean> {
-  if (permission.target !== call.to) {
+  if (!Address.isEqual(permission.target, call.to)) {
     return false
   }
 
