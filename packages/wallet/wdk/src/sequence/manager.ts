@@ -91,7 +91,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
-  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter(r => r !== undefined),
+  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -243,7 +243,7 @@ export class Manager {
     this.passkeysHandler = new PasskeysHandler(
       modules.signatures,
       shared.sequence.extensions,
-      shared.sequence.stateProvider
+      shared.sequence.stateProvider,
     )
     shared.handlers.set(Kinds.LoginPasskey, this.passkeysHandler)
 
@@ -266,8 +266,8 @@ export class Manager {
           nitro,
           modules.signatures,
           shared.databases.authCommitments,
-          shared.databases.authKeys
-        )
+          shared.databases.authKeys,
+        ),
       )
     }
     if (ops.identity.apple?.enabled) {
@@ -280,8 +280,8 @@ export class Manager {
           nitro,
           modules.signatures,
           shared.databases.authCommitments,
-          shared.databases.authKeys
-        )
+          shared.databases.authKeys,
+        ),
       )
     }
 
@@ -339,6 +339,10 @@ export class Manager {
     return this.shared.modules.wallets.unregisterWalletSelector(handler)
   }
 
+  public async getConfiguration(wallet: Address.Address) {
+    return this.shared.modules.wallets.getConfiguration({ wallet })
+  }
+
   // Signatures
 
   public async listSignatureRequests(): Promise<SignatureRequest[]> {
@@ -357,7 +361,7 @@ export class Manager {
     requestId: string,
     cb: (requests: SignatureRequest) => void,
     onError?: (error: Error) => void,
-    trigger?: boolean
+    trigger?: boolean,
   ) {
     return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
@@ -372,14 +376,14 @@ export class Manager {
     from: Address.Address,
     chainId: bigint,
     txs: TransactionRequest[],
-    options?: { skipDefineGas?: boolean; source?: string }
+    options?: { skipDefineGas?: boolean; source?: string },
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
   }
 
   public async defineTransaction(
     transactionId: string,
-    changes?: { nonce?: bigint; space?: bigint; calls?: Pick<Payload.Call, 'gasLimit'>[] }
+    changes?: { nonce?: bigint; space?: bigint; calls?: Pick<Payload.Call, 'gasLimit'>[] },
   ) {
     return this.shared.modules.transactions.define(transactionId, changes)
   }
@@ -413,7 +417,7 @@ export class Manager {
   }
 
   public async setRedirectPrefix(prefix: string) {
-    this.shared.handlers.forEach(handler => {
+    this.shared.handlers.forEach((handler) => {
       if (handler instanceof AuthCodePkceHandler) {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
@@ -429,7 +433,7 @@ export class Manager {
   public async authorizeImplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    args: AuthorizeImplicitSessionArgs
+    args: AuthorizeImplicitSessionArgs,
   ): Promise<{
     attestation: Attestation.Attestation
     signature: SequenceSignature.RSY
@@ -440,7 +444,7 @@ export class Manager {
   public async addExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams
+    permissions: CoreSigners.Session.ExplicitParams,
   ): Promise<string> {
     return this.shared.modules.sessions.addExplicitSession(walletAddress, sessionAddress, permissions)
   }
@@ -464,9 +468,5 @@ export class Manager {
     }
     console.log('Completing session update:', requestId)
     return this.shared.modules.sessions.completeSessionUpdate(sigRequest.wallet, requestId)
-  }
-
-  public async getConfiguration(wallet: Address.Address) {
-    return this.shared.modules.wallets.getConfiguration({ wallet })
   }
 }
