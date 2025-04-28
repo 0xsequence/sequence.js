@@ -32,16 +32,44 @@ export function encode(attestation: Attestation): Bytes.Bytes {
 export function encodeAuthData(authData: AuthData): Bytes.Bytes {
   return Bytes.concat(
     Bytes.fromNumber(authData.redirectUrl.length, { size: 3 }),
-    Bytes.fromString(authData.redirectUrl),
+    Bytes.fromString(authData.redirectUrl)
   )
+}
+
+export function decode(bytes: Bytes.Bytes): Attestation {
+  const approvedSigner = Bytes.toHex(bytes.slice(0, 20))
+  const identityType = bytes.slice(20, 24)
+  const issuerHash = bytes.slice(24, 56)
+  const audienceHash = bytes.slice(56, 88)
+  const applicationDataLength = Bytes.toNumber(bytes.slice(88, 91))
+  const applicationData = bytes.slice(91, 91 + applicationDataLength)
+  const authData = decodeAuthData(bytes.slice(91 + applicationDataLength))
+
+  return {
+    approvedSigner,
+    identityType,
+    issuerHash,
+    audienceHash,
+    applicationData,
+    authData,
+  }
+}
+
+export function decodeAuthData(bytes: Bytes.Bytes): AuthData {
+  const redirectUrlLength = Bytes.toNumber(bytes.slice(0, 3))
+  const redirectUrl = Bytes.toString(bytes.slice(3, 3 + redirectUrlLength))
+
+  return {
+    redirectUrl,
+  }
 }
 
 export function hash(attestation: Attestation): Bytes.Bytes {
   return Hash.keccak256(encode(attestation))
 }
 
-export function toJson(attestation: Attestation): string {
-  return JSON.stringify(encodeForJson(attestation))
+export function toJson(attestation: Attestation, indent?: number): string {
+  return JSON.stringify(encodeForJson(attestation), null, indent)
 }
 
 export function encodeForJson(attestation: Attestation): any {
@@ -80,7 +108,7 @@ export function generateImplicitRequestMagic(attestation: Attestation, wallet: A
       ACCEPT_IMPLICIT_REQUEST_MAGIC_PREFIX,
       Bytes.fromHex(wallet, { size: 20 }),
       attestation.audienceHash,
-      attestation.issuerHash,
-    ),
+      attestation.issuerHash
+    )
   )
 }

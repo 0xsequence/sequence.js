@@ -1,28 +1,38 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
-import { Config, Constants, Context, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import {
+  Attestation,
+  Config,
+  Constants,
+  Context,
+  Extensions,
+  Network,
+  Payload,
+  SessionConfig,
+  Signature as SequenceSignature,
+} from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import * as Identity from '../identity/index.js'
 import { Devices } from './devices.js'
 import {
-  Handler,
-  DevicesHandler,
-  PasskeysHandler,
   AuthCodePkceHandler,
+  DevicesHandler,
+  Handler,
   MnemonicHandler,
   OtpHandler,
+  PasskeysHandler,
 } from './handlers/index.js'
+import { Janitor } from './janitor.js'
 import { Logger } from './logger.js'
-import { Sessions } from './sessions.js'
+import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
 import { Signatures } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions } from './transactions.js'
 import { BaseSignatureRequest, SignatureRequest, Wallet } from './types/index.js'
-import { Transaction, TransactionRequest } from './types/transaction-request.js'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 import { Kinds } from './types/signer.js'
+import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
-import { Janitor } from './janitor.js'
+import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -81,7 +91,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
-  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter(r => r !== undefined),
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -233,7 +243,7 @@ export class Manager {
     this.passkeysHandler = new PasskeysHandler(
       modules.signatures,
       shared.sequence.extensions,
-      shared.sequence.stateProvider,
+      shared.sequence.stateProvider
     )
     shared.handlers.set(Kinds.LoginPasskey, this.passkeysHandler)
 
@@ -256,8 +266,8 @@ export class Manager {
           nitro,
           modules.signatures,
           shared.databases.authCommitments,
-          shared.databases.authKeys,
-        ),
+          shared.databases.authKeys
+        )
       )
     }
     if (ops.identity.apple?.enabled) {
@@ -270,8 +280,8 @@ export class Manager {
           nitro,
           modules.signatures,
           shared.databases.authCommitments,
-          shared.databases.authKeys,
-        ),
+          shared.databases.authKeys
+        )
       )
     }
 
@@ -347,7 +357,7 @@ export class Manager {
     requestId: string,
     cb: (requests: SignatureRequest) => void,
     onError?: (error: Error) => void,
-    trigger?: boolean,
+    trigger?: boolean
   ) {
     return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
@@ -362,14 +372,14 @@ export class Manager {
     from: Address.Address,
     chainId: bigint,
     txs: TransactionRequest[],
-    options?: { skipDefineGas?: boolean; source?: string },
+    options?: { skipDefineGas?: boolean; source?: string }
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
   }
 
   public async defineTransaction(
     transactionId: string,
-    changes?: { nonce?: bigint; space?: bigint; calls?: Pick<Payload.Call, 'gasLimit'>[] },
+    changes?: { nonce?: bigint; space?: bigint; calls?: Pick<Payload.Call, 'gasLimit'>[] }
   ) {
     return this.shared.modules.transactions.define(transactionId, changes)
   }
@@ -403,7 +413,7 @@ export class Manager {
   }
 
   public async setRedirectPrefix(prefix: string) {
-    this.shared.handlers.forEach((handler) => {
+    this.shared.handlers.forEach(handler => {
       if (handler instanceof AuthCodePkceHandler) {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
@@ -416,14 +426,21 @@ export class Manager {
     return this.shared.modules.sessions.getSessionTopology(walletAddress)
   }
 
-  public async addImplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address) {
-    return this.shared.modules.sessions.addImplicitSession(walletAddress, sessionAddress)
+  public async authorizeImplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    args: AuthorizeImplicitSessionArgs
+  ): Promise<{
+    attestation: Attestation.Attestation
+    signature: SequenceSignature.RSY
+  }> {
+    return this.shared.modules.sessions.authorizeImplicitSession(walletAddress, sessionAddress, args)
   }
 
   public async addExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    permissions: CoreSigners.Session.ExplicitParams
   ): Promise<string> {
     return this.shared.modules.sessions.addExplicitSession(walletAddress, sessionAddress, permissions)
   }
