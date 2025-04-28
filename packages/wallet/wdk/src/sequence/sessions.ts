@@ -37,7 +37,7 @@ export class Sessions {
     // Get the provider if available
     let provider: Provider.Provider | undefined
     if (chainId) {
-      const network = this.shared.sequence.networks.find(network => network.chainId === chainId)
+      const network = this.shared.sequence.networks.find((network) => network.chainId === chainId)
       if (network) {
         provider = Provider.from(RpcTransport.fromHttp(network.rpc))
       }
@@ -62,13 +62,12 @@ export class Sessions {
   async authorizeImplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    args: AuthorizeImplicitSessionArgs
+    args: AuthorizeImplicitSessionArgs,
   ): Promise<{
     attestation: Attestation.Attestation
     signature: SequenceSignature.RSY
   }> {
-    const controller = await this.getControllerForWallet(walletAddress)
-    const topology = await controller.getTopology()
+    const topology = await this.getSessionTopology(walletAddress)
     const identitySignerAddress = SessionConfig.getIdentitySigner(topology)
     if (!identitySignerAddress) {
       throw new Error('No identity signer address found')
@@ -81,9 +80,8 @@ export class Sessions {
     if (!handler) {
       throw new Error('No identity handler found')
     }
-    const walletStatus = await this.getCoreWallet(walletAddress).getStatus()
 
-    // Create the envelope
+    // Create the digest to sign
     let identityType: IdentityType | undefined
     let issuerHash: Hex.Hex = '0x'
     let audienceHash: Hex.Hex = '0x'
@@ -107,6 +105,7 @@ export class Sessions {
       },
     }
     const attestationHash = Attestation.hash(attestation)
+    const walletStatus = await this.getCoreWallet(walletAddress).getStatus()
     const envelope: Envelope.Envelope<Payload.Digest> = {
       payload: {
         type: 'digest',
@@ -116,6 +115,8 @@ export class Sessions {
       chainId: 0n,
       configuration: walletStatus.configuration,
     }
+
+    // Request the signature from the identity handler
     const requestId = await this.shared.modules.signatures.request(envelope, 'sign-digest', {
       origin: args.target,
     })
@@ -140,8 +141,10 @@ export class Sessions {
     if (!signatureRequest) {
       throw new Error('No signature request found')
     }
+    // Delete it, we don't need it anymore
+    await this.shared.modules.signatures.cancel(requestId)
     const signatures = signatureRequest.envelope.signatures.filter(
-      sig => isSignature(sig) && sig.address === identitySignerAddress
+      (sig) => isSignature(sig) && sig.address === identitySignerAddress,
     )
     if (signatures.length === 0) {
       throw new Error('No signatures found')
@@ -163,7 +166,7 @@ export class Sessions {
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
     permissions: CoreSigners.Session.ExplicitParams,
-    origin?: string
+    origin?: string,
   ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.addExplicitSession(sessionAddress, permissions)
@@ -173,7 +176,7 @@ export class Sessions {
   async removeExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    origin?: string
+    origin?: string,
   ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.removeExplicitSession(sessionAddress)
@@ -183,7 +186,7 @@ export class Sessions {
   async addBlacklistAddress(
     walletAddress: Address.Address,
     address: Address.Address,
-    origin?: string
+    origin?: string,
   ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.addBlacklistAddress(address)
@@ -193,7 +196,7 @@ export class Sessions {
   async removeBlacklistAddress(
     walletAddress: Address.Address,
     address: Address.Address,
-    origin?: string
+    origin?: string,
   ): Promise<string> {
     const controller = await this.getControllerForWallet(walletAddress)
     const envelope = await controller.removeBlacklistAddress(address)
@@ -202,7 +205,7 @@ export class Sessions {
 
   private async prepareSessionUpdate(
     envelope: Envelope.Envelope<Payload.ConfigUpdate>,
-    origin: string = 'wallet-webapp'
+    origin: string = 'wallet-webapp',
   ): Promise<string> {
     return await this.shared.modules.signatures.request(envelope, 'session-update', {
       origin,
