@@ -97,7 +97,7 @@ export const ManagerOptionsDefaults = {
     // TODO: Move this somewhere else
     type: 'sapient-signer',
     address: Constants.DefaultSessionManager,
-    weight: 1n,
+    weight: 10n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
 
   defaultRecoverySettings: {
