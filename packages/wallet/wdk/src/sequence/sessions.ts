@@ -1,12 +1,17 @@
 import { Signers as CoreSigners, Envelope, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Payload, SessionConfig, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
+import {
+  Attestation,
+  Payload,
+  SessionConfig,
+  Signature as SequenceSignature,
+  Config,
+} from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
 import { SessionController } from '../session/index.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
 import { Shared } from './manager.js'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityType } from '../identity/index.js'
-import { isSignature } from '../../../core/dist/envelope.js'
 
 export type AuthorizeImplicitSessionArgs = {
   target: string
@@ -58,14 +63,11 @@ export class Sessions {
     return controller.getTopology()
   }
 
-  async authorizeImplicitSession(
+  async prepareAuthorizeImplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
     args: AuthorizeImplicitSessionArgs,
-  ): Promise<{
-    attestation: Attestation.Attestation
-    signature: SequenceSignature.RSY
-  }> {
+  ): Promise<string> {
     const topology = await this.getSessionTopology(walletAddress)
     const identitySignerAddress = SessionConfig.getIdentitySigner(topology)
     if (!identitySignerAddress) {
@@ -80,7 +82,7 @@ export class Sessions {
       throw new Error('No identity handler found')
     }
 
-    // Create the digest to sign
+    // Create the attestation to sign
     let identityType: IdentityType | undefined
     let issuerHash: Hex.Hex = '0x'
     let audienceHash: Hex.Hex = '0x'
@@ -103,44 +105,54 @@ export class Sessions {
         redirectUrl: args.target,
       },
     }
-    const attestationHash = Attestation.hash(attestation)
-    const walletStatus = await this.getCoreWallet(walletAddress).getStatus()
-    const envelope: Envelope.Envelope<Payload.Digest> = {
+    // Fake the configuration with the single required signer
+    const configuration: Config.Config = {
+      threshold: 1n,
+      checkpoint: 0n,
+      topology: {
+        type: 'signer',
+        address: identitySignerAddress,
+        weight: 1n,
+      },
+    }
+    const envelope: Envelope.Envelope<Payload.SessionImplicitAuthorize> = {
       payload: {
-        type: 'digest',
-        digest: Hex.fromBytes(attestationHash),
+        type: 'session-implicit-authorize',
+        sessionAddress,
+        attestation,
       },
       wallet: walletAddress,
       chainId: 0n,
-      configuration: walletStatus.configuration,
+      configuration,
     }
 
     // Request the signature from the identity handler
-    const requestId = await this.shared.modules.signatures.request(envelope, 'sign-digest', {
+    return this.shared.modules.signatures.request(envelope, 'session-implicit-authorize', {
       origin: args.target,
     })
-    let signatureRequest = await this.shared.modules.signatures.get(requestId)
-    const identitySigner = signatureRequest.signers.find((s) => s.address === identitySignerAddress)
-    if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
-      throw new Error(`Identity signer not found or not ready: ${identitySigner?.status}`)
+  }
+
+  async completeAuthorizeImplicitSession(requestId: string): Promise<{
+    attestation: Attestation.Attestation
+    signature: SequenceSignature.RSY
+  }> {
+    // Get the updated signature request
+    const signatureRequest = await this.shared.modules.signatures.get(requestId)
+    if (
+      signatureRequest.action !== 'session-implicit-authorize' ||
+      !Payload.isSessionImplicitAuthorize(signatureRequest.envelope.payload)
+    ) {
+      throw new Error('Invalid action')
     }
-    const handled = await identitySigner.handle()
-    if (!handled) {
-      throw new Error('Failed to handle identity handler')
+
+    if (!Envelope.isSigned(signatureRequest.envelope) || !Envelope.reachedThreshold(signatureRequest.envelope)) {
+      throw new Error('Envelope not signed or threshold not reached')
     }
-    // Get the updated signature request. Then delete it, we don't need it anymore
-    signatureRequest = await this.shared.modules.signatures.get(requestId)
-    await this.shared.modules.signatures.cancel(requestId)
-    // Find the handler signature
-    const signatures = signatureRequest.envelope.signatures.filter(
-      (sig) => isSignature(sig) && sig.address === identitySignerAddress,
-    )
-    if (signatures.length === 0) {
-      throw new Error('No signatures found')
-    }
-    const signature = signatures[0]
-    if (!signature) {
-      throw new Error('No signature found')
+
+    // Find any valid signature
+    const signature = signatureRequest.envelope.signatures[0]
+    if (!signature || !Envelope.isSignature(signature)) {
+      throw new Error('No valid signature found')
     }
     if (signature.signature.type !== 'hash') {
       // Should never happen
@@ -148,7 +160,7 @@ export class Sessions {
     }
 
     return {
-      attestation,
+      attestation: signatureRequest.envelope.payload.attestation,
       signature: signature.signature,
     }
   }

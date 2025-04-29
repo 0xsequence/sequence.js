@@ -430,15 +430,19 @@ export class Manager {
     return this.shared.modules.sessions.getSessionTopology(walletAddress)
   }
 
-  public async authorizeImplicitSession(
+  public async prepareAuthorizeImplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
     args: AuthorizeImplicitSessionArgs,
-  ): Promise<{
+  ): Promise<string> {
+    return this.shared.modules.sessions.prepareAuthorizeImplicitSession(walletAddress, sessionAddress, args)
+  }
+
+  public async completeAuthorizeImplicitSession(requestId: string): Promise<{
     attestation: Attestation.Attestation
     signature: SequenceSignature.RSY
   }> {
-    return this.shared.modules.sessions.authorizeImplicitSession(walletAddress, sessionAddress, args)
+    return this.shared.modules.sessions.completeAuthorizeImplicitSession(requestId)
   }
 
   public async addExplicitSession(

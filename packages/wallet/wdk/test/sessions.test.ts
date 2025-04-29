@@ -250,13 +250,24 @@ describe('Sessions (via Manager)', () => {
       }
 
       // Request the session authorization from the WDK
-      const { attestation, signature: identitySignature } = await wdk.manager.authorizeImplicitSession(
-        dapp.wallet.address,
-        e.address,
-        {
-          target: 'https://example.com',
-        },
-      )
+      const requestId = await wdk.manager.prepareAuthorizeImplicitSession(dapp.wallet.address, e.address, {
+        target: 'https://example.com',
+      })
+
+      // Sign the request (Wallet UI action)
+      const sigRequest = await wdk.manager.getSignatureRequest(requestId)
+      const identitySigner = sigRequest.signers[0]
+      if (!identitySigner || identitySigner.status !== 'ready') {
+        throw new Error(`Identity signer not found or not ready: ${identitySigner?.status}`)
+      }
+      const handled = await identitySigner.handle()
+      if (!handled) {
+        throw new Error('Failed to handle identity signer')
+      }
+
+      // Complete the request
+      const { attestation, signature: identitySignature } =
+        await wdk.manager.completeAuthorizeImplicitSession(requestId)
 
       // Load the implicit signer
       const implicitSigner = new CoreSigners.Session.Implicit(

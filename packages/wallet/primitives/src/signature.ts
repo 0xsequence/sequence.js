@@ -1389,5 +1389,8 @@ function encode(
         digest: payload.digest,
         parentWallets: payload.parentWallets ?? [],
       }
+
+    default:
+      throw new Error('Invalid payload type')
   }
 }

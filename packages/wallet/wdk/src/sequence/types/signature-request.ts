@@ -8,7 +8,7 @@ export type ActionToPayload = {
   [Actions.Login]: Payload.ConfigUpdate
   [Actions.SendTransaction]: Payload.Calls
   [Actions.SessionUpdate]: Payload.ConfigUpdate
-  [Actions.SignDigest]: Payload.Digest
+  [Actions.SessionImplicitAuthorize]: Payload.SessionImplicitAuthorize
 }
 
 export const Actions = {
@@ -16,7 +16,7 @@ export const Actions = {
   Login: 'login',
   SendTransaction: 'send-transaction',
   SessionUpdate: 'session-update',
-  SignDigest: 'sign-digest',
+  SessionImplicitAuthorize: 'session-implicit-authorize',
 } as const
 
 export type Action = (typeof Actions)[keyof typeof Actions]
