@@ -7,7 +7,7 @@ import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-prim
 export class IdentitySigner implements Signers.Signer {
   constructor(
     readonly nitro: IdentityInstrument,
-    readonly authKey: AuthKey
+    readonly authKey: AuthKey,
   ) {}
 
   get address(): `0x${string}` {
@@ -20,7 +20,7 @@ export class IdentitySigner implements Signers.Signer {
   async sign(
     wallet: Address.Address,
     chainId: bigint,
-    payload: Payload.Parented
+    payload: Payload.Parented,
   ): Promise<SequenceSignature.SignatureOfSignerLeaf> {
     const payloadHash = Payload.hash(wallet, chainId, payload)
     return this.signDigest(payloadHash)
@@ -33,7 +33,7 @@ export class IdentitySigner implements Signers.Signer {
         hash: 'SHA-256',
       },
       this.authKey.privateKey,
-      digest
+      digest,
     )
     const params = {
       signer: this.address,
@@ -62,8 +62,8 @@ export class IdentitySigner implements Signers.Signer {
           signer: this.address,
           timestamp: Date.now(),
           ...extra,
-        })
-      )
+        }),
+      ),
     )
 
     const signature = await this.sign(wallet, 0n, payload)

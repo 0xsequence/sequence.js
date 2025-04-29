@@ -24,7 +24,7 @@ export class IdentityHandler {
     private readonly nitro: Identity.IdentityInstrument,
     private readonly authKeys: Db.AuthKeys,
     private readonly signatures: Signatures,
-    public readonly identityType: Identity.IdentityType
+    public readonly identityType: Identity.IdentityType,
   ) {}
 
   public onStatusChange(cb: () => void): () => void {
@@ -100,7 +100,7 @@ export class IdentityHandler {
           namedCurve: 'P-256',
         },
         false,
-        ['sign', 'verify']
+        ['sign', 'verify'],
       )
       const publicKey = await window.crypto.subtle.exportKey('raw', keyPair.publicKey)
       authKey = {

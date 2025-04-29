@@ -17,7 +17,7 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
     nitro: Identity.IdentityInstrument,
     signatures: Signatures,
     private readonly commitments: Db.AuthCommitments,
-    authKeys: Db.AuthKeys
+    authKeys: Db.AuthKeys,
   ) {
     super(nitro, authKeys, signatures, Identity.IdentityType.OIDC)
   }
@@ -67,7 +67,7 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
 
   public async completeAuth(
     commitment: Db.AuthCommitment,
-    code: string
+    code: string,
   ): Promise<[IdentitySigner, { [key: string]: string }]> {
     const challenge = new Identity.AuthCodePkceChallenge('', '', '')
     const signer = await this.nitroCompleteAuth(challenge.withAnswer(commitment.verifier, code))
@@ -80,7 +80,7 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: BaseSignatureRequest
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
     const signer = await this.getAuthKeySigner(address)
     if (signer) {

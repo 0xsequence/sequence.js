@@ -32,7 +32,7 @@ export function encode(attestation: Attestation): Bytes.Bytes {
 export function encodeAuthData(authData: AuthData): Bytes.Bytes {
   return Bytes.concat(
     Bytes.fromNumber(authData.redirectUrl.length, { size: 3 }),
-    Bytes.fromString(authData.redirectUrl)
+    Bytes.fromString(authData.redirectUrl),
   )
 }
 
@@ -108,7 +108,7 @@ export function generateImplicitRequestMagic(attestation: Attestation, wallet: A
       ACCEPT_IMPLICIT_REQUEST_MAGIC_PREFIX,
       Bytes.fromHex(wallet, { size: 20 }),
       attestation.audienceHash,
-      attestation.issuerHash
-    )
+      attestation.issuerHash,
+    ),
   )
 }

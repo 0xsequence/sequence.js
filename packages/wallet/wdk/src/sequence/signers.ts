@@ -58,10 +58,10 @@ export class Signers {
 
   async resolveKinds(
     wallet: Address.Address,
-    signers: (Address.Address | { address: Address.Address; imageHash: Hex.Hex })[]
+    signers: (Address.Address | { address: Address.Address; imageHash: Hex.Hex })[],
   ): Promise<SignerWithKind[]> {
     return Promise.all(
-      signers.map(async signer => {
+      signers.map(async (signer) => {
         if (typeof signer === 'string') {
           const kind = await this.kindOf(wallet, signer)
           return {
@@ -76,7 +76,7 @@ export class Signers {
             kind,
           }
         }
-      })
+      }),
     )
   }
 }

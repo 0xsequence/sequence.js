@@ -253,7 +253,7 @@ export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
 
 export function encodeSapient(
   chainId: bigint,
-  payload: Parented
+  payload: Parented,
 ): Exclude<AbiFunction.encodeData.Args<typeof RECOVER_SAPIENT_SIGNATURE>[0], undefined>[0] {
   const encoded: ReturnType<typeof encodeSapient> = {
     kind: 0,
@@ -270,7 +270,7 @@ export function encodeSapient(
   switch (payload.type) {
     case 'call':
       encoded.kind = 0
-      encoded.calls = payload.calls.map(call => ({
+      encoded.calls = payload.calls.map((call) => ({
         ...call,
         data: call.data,
         behaviorOnError: BigInt(encodeBehaviorOnError(call.behaviorOnError)),
@@ -337,7 +337,7 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
 
       // We ensure 'behaviorOnError' is turned into a numeric value
       const message = {
-        calls: payload.calls.map(call => ({
+        calls: payload.calls.map((call) => ({
           to: call.to,
           value: call.value.toString(),
           data: call.data,
@@ -421,8 +421,8 @@ export function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']):
 export function hashCall(call: Call): Hex.Hex {
   const CALL_TYPEHASH = Hash.keccak256(
     Bytes.fromString(
-      'Call(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)'
-    )
+      'Call(address to,uint256 value,bytes data,uint256 gasLimit,bool delegateCall,bool onlyFallback,uint256 behaviorOnError)',
+    ),
   )
 
   return Hash.keccak256(
@@ -446,8 +446,8 @@ export function hashCall(call: Call): Hex.Hex {
         call.delegateCall,
         call.onlyFallback,
         BigInt(encodeBehaviorOnError(call.behaviorOnError)),
-      ]
-    )
+      ],
+    ),
   )
 }
 

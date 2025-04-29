@@ -55,7 +55,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: BaseSignatureRequest
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
     const onPromptOtp = this.onPromptOtp
     if (!onPromptOtp) {
