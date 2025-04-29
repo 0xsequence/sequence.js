@@ -1,6 +1,7 @@
-import { Address, Bytes, Provider, RpcTransport, Secp256k1, AbiFunction } from 'ox'
+import { Address, Bytes, Provider, Hex, RpcTransport, Secp256k1, AbiFunction } from 'ox'
 import { Context, Payload } from '@0xsequence/wallet-primitives'
 import { LocalRelayer } from '../src/relayer/local'
+import { describe, it, expect } from 'vitest'
 import {
   NativeBalancePrecondition,
   Erc20BalancePrecondition,
@@ -10,8 +11,10 @@ import {
   Erc1155BalancePrecondition,
   Erc1155ApprovalPrecondition,
 } from '../src/preconditions/types'
-import { CAN_RUN_LIVE, ERC20_IMPLICIT_MINT_CONTRACT, RPC_URL } from './constants'
+import { CAN_RUN_LIVE, RPC_URL } from './constants'
 import { calculateIntentConfigurationAddress, IntentOperation } from '../src/anypay/intents'
+
+const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
 function randomAddress(): Address.Address {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
@@ -24,15 +27,6 @@ describe('AnyPay Preconditions', () => {
     if (CAN_RUN_LIVE) {
       provider = Provider.from(RpcTransport.fromHttp(RPC_URL!!))
       chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
-    } else {
-      provider = {
-        request: jest.fn(),
-        on: jest.fn(),
-        removeListener: jest.fn(),
-        sendTransaction: jest.fn(),
-        getBalance: jest.fn(),
-        call: jest.fn(),
-      } as unknown as Provider.Provider
     }
     return { provider: provider!, chainId }
   }
@@ -47,10 +41,6 @@ describe('AnyPay Preconditions', () => {
     }
   }
 
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
   it('should create and check native balance precondition', async () => {
     const { provider, chainId } = await getProvider()
     const relayer = new LocalRelayer(provider as any)
@@ -63,6 +53,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         min: precondition.min?.toString(),
@@ -93,6 +84,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
@@ -125,6 +117,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
@@ -156,6 +149,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
@@ -190,6 +184,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
@@ -224,6 +219,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
@@ -258,6 +254,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
@@ -290,6 +287,7 @@ describe('AnyPay Preconditions', () => {
 
     const intentPrecondition = {
       type: precondition.type(),
+      chainId: chainId.toString(),
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
@@ -324,8 +322,9 @@ describe('AnyPay Preconditions', () => {
     // Create context
     const context: Context.Context = {
       factory: randomAddress(),
-      creationCode: '0x' as `0x${string}`,
-      stage1: '0x' as `0x${string}`,
+      creationCode: '0x' as Hex.Hex,
+      stage1: '0x' as Hex.Hex,
+      stage2: '0x' as Hex.Hex,
     }
 
     // Calculate intent configuration address
@@ -340,7 +339,7 @@ describe('AnyPay Preconditions', () => {
             {
               to: ERC20_IMPLICIT_MINT_CONTRACT,
               value: 0n,
-              data: Bytes.fromHex('0x'),
+              data: '0x' as Hex.Hex,
               gasLimit: 0n,
               delegateCall: false,
               onlyFallback: false,
@@ -363,9 +362,9 @@ describe('AnyPay Preconditions', () => {
       const transferAmount = 1500000n
       const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
       const transferData = AbiFunction.encodeData(erc20Transfer, [
-        testWalletAddress.toString() as `0x${string}`,
+        testWalletAddress.toString() as Hex.Hex,
         transferAmount,
-      ]) as `0x${string}`
+      ]) as Hex.Hex
       await provider.request({
         method: 'eth_sendTransaction',
         params: [
@@ -393,7 +392,7 @@ describe('AnyPay Preconditions', () => {
               {
                 to: ERC20_IMPLICIT_MINT_CONTRACT,
                 value: 0n,
-                data: Bytes.fromHex('0x'),
+                data: '0x' as Hex.Hex,
                 gasLimit: 0n,
                 delegateCall: false,
                 onlyFallback: false,
@@ -443,6 +442,7 @@ describe('AnyPay Preconditions', () => {
       const intentPreconditions = [
         {
           type: nativePrecondition.type(),
+          chainId: chainId.toString(),
           data: JSON.stringify({
             address: nativePrecondition.address.toString(),
             min: nativePrecondition.min?.toString(),
@@ -450,6 +450,7 @@ describe('AnyPay Preconditions', () => {
         },
         {
           type: erc20Precondition.type(),
+          chainId: chainId.toString(),
           data: JSON.stringify({
             address: erc20Precondition.address.toString(),
             token: erc20Precondition.token.toString(),
@@ -461,8 +462,9 @@ describe('AnyPay Preconditions', () => {
       // Create context
       const context: Context.Context = {
         factory: randomAddress(),
-        creationCode: Bytes.toHex(Bytes.fromHex('0x')) as `0x${string}`,
-        stage1: Bytes.toHex(Bytes.fromHex('0x')) as `0x${string}`,
+        creationCode: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
+        stage1: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
+        stage2: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
       }
 
       // Calculate intent configuration address
@@ -498,6 +500,7 @@ describe('AnyPay Preconditions', () => {
       const intentPreconditions = [
         {
           type: nativePrecondition.type(),
+          chainId: chainId.toString(),
           data: JSON.stringify({
             address: nativePrecondition.address.toString(),
             min: nativePrecondition.min?.toString(),
@@ -505,6 +508,7 @@ describe('AnyPay Preconditions', () => {
         },
         {
           type: erc20Precondition.type(),
+          chainId: chainId.toString(),
           data: JSON.stringify({
             address: erc20Precondition.address.toString(),
             token: erc20Precondition.token.toString(),
@@ -532,8 +536,9 @@ describe('AnyPay Preconditions', () => {
       // Create context
       const context: Context.Context = {
         factory: randomAddress(),
-        creationCode: Bytes.toHex(Bytes.fromHex('0x')) as `0x${string}`,
-        stage1: Bytes.toHex(Bytes.fromHex('0x')) as `0x${string}`,
+        creationCode: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
+        stage1: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
+        stage2: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
       }
 
       // Calculate intent configuration address
@@ -564,7 +569,7 @@ describe('AnyPay Preconditions', () => {
       if (!CAN_RUN_LIVE) {
         expect((provider as any).sendTransaction).toHaveBeenCalledWith({
           to: configAddress,
-          data: '0x',
+          data: '0x' as Hex.Hex,
         })
       }
     })
