@@ -1,7 +1,7 @@
 import { Address, Bytes, Provider, Hex, RpcTransport, Secp256k1, AbiFunction } from 'ox'
 import { Context, Payload } from '@0xsequence/wallet-primitives'
 import { LocalRelayer } from '../src/relayer/local'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   NativeBalancePrecondition,
   Erc20BalancePrecondition,
@@ -27,7 +27,17 @@ describe('AnyPay Preconditions', () => {
     if (CAN_RUN_LIVE) {
       provider = Provider.from(RpcTransport.fromHttp(RPC_URL!!))
       chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+    } else {
+      provider = {
+        request: vi.fn(),
+        on: vi.fn(),
+        removeListener: vi.fn(),
+        call: vi.fn(),
+        sendTransaction: vi.fn(),
+        getBalance: vi.fn(),
+      } as unknown as Provider.Provider
     }
+
     return { provider: provider!, chainId }
   }
 
