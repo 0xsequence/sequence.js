@@ -1,5 +1,14 @@
 # @0xsequence/tests
 
+## 2.3.10
+
+### Patch Changes
+
+- RPC API updates
+- Updated dependencies
+  - @0xsequence/utils@2.3.10
+  - @0xsequence/core@2.3.10
+
 ## 2.3.9
 
 ### Patch Changes

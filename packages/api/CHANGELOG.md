@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.3.10
+
+### Patch Changes
+
+- RPC API updates
+
 ## 2.3.9
 
 ### Patch Changes
