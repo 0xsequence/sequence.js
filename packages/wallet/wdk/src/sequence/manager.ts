@@ -1,19 +1,28 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 import { Config, Constants, Context, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
-import * as Db from '../dbs'
-import * as Identity from '../identity'
-import { Devices } from './devices'
-import { Handler, DevicesHandler, PasskeysHandler, AuthCodePkceHandler, MnemonicHandler, OtpHandler } from './handlers'
-import { Logger } from './logger'
-import { Sessions } from './sessions'
-import { Signatures } from './signatures'
-import { Signers } from './signers'
-import { Transactions } from './transactions'
-import { BaseSignatureRequest, SignatureRequest, Wallet } from './types'
-import { Transaction, TransactionRequest } from './types/transaction-request'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets'
-import { Kinds } from './types/signer'
+import * as Db from '../dbs/index.js'
+import * as Identity from '../identity/index.js'
+import { Devices } from './devices.js'
+import {
+  Handler,
+  DevicesHandler,
+  PasskeysHandler,
+  AuthCodePkceHandler,
+  MnemonicHandler,
+  OtpHandler,
+} from './handlers/index.js'
+import { Logger } from './logger.js'
+import { Sessions } from './sessions.js'
+import { Signatures } from './signatures.js'
+import { Signers } from './signers.js'
+import { Transactions } from './transactions.js'
+import { BaseSignatureRequest, SignatureRequest, Wallet } from './types/index.js'
+import { Transaction, TransactionRequest } from './types/transaction-request.js'
+import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
+import { Kinds } from './types/signer.js'
+import { WalletSelectionUiHandler } from './types/wallet.js'
+import { Janitor } from './janitor.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -28,6 +37,8 @@ export type ManagerOptions = {
   signaturesDb?: Db.Signatures
   authCommitmentsDb?: Db.AuthCommitments
   authKeysDb?: Db.AuthKeys
+
+  dbPruningInterval?: number
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
@@ -66,6 +77,8 @@ export const ManagerOptionsDefaults = {
   authCommitmentsDb: new Db.AuthCommitments(),
   authKeysDb: new Db.AuthKeys(),
 
+  dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
+
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
   relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
@@ -81,7 +94,7 @@ export const ManagerOptionsDefaults = {
     // TODO: Move this somewhere else
     type: 'sapient-signer',
     address: Constants.DefaultSessionManager,
-    weight: 1n,
+    weight: 10n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
 
   identity: {
@@ -121,6 +134,8 @@ export type Databases = {
   readonly transactions: Db.Transactions
   readonly authCommitments: Db.AuthCommitments
   readonly authKeys: Db.AuthKeys
+
+  readonly pruningInterval: number
 }
 
 export type Sequence = {
@@ -145,6 +160,7 @@ export type Modules = {
   readonly signers: Signers
   readonly signatures: Signatures
   readonly transactions: Transactions
+  readonly janitor: Janitor
 }
 
 export type Shared = {
@@ -192,6 +208,8 @@ export class Manager {
         transactions: ops.transactionsDb,
         authCommitments: ops.authCommitmentsDb,
         authKeys: ops.authKeysDb,
+
+        pruningInterval: ops.dbPruningInterval,
       },
 
       modules: {} as any,
@@ -206,6 +224,7 @@ export class Manager {
       signers: new Signers(shared),
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
+      janitor: new Janitor(shared),
     }
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
@@ -302,6 +321,14 @@ export class Manager {
     return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
   }
 
+  public registerWalletSelector(handler: WalletSelectionUiHandler) {
+    return this.shared.modules.wallets.registerWalletSelector(handler)
+  }
+
+  public unregisterWalletSelector(handler?: WalletSelectionUiHandler) {
+    return this.shared.modules.wallets.unregisterWalletSelector(handler)
+  }
+
   // Signatures
 
   public async listSignatureRequests(): Promise<SignatureRequest[]> {
@@ -325,8 +352,8 @@ export class Manager {
     return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
 
-  public async deleteSignatureRequest(requestId: string) {
-    return this.shared.modules.signatures.delete(requestId)
+  public async cancelSignatureRequest(requestId: string) {
+    return this.shared.modules.signatures.cancel(requestId)
   }
 
   // Transactions

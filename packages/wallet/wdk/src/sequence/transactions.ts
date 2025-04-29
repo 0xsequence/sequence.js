@@ -2,14 +2,14 @@ import { Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Wallet } from '@0xsequence/wallet-core'
 import { Address, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
-import { Shared } from './manager'
+import { Shared } from './manager.js'
 import {
   RelayerOption,
   Transaction,
   TransactionFormed,
   TransactionRelayed,
   TransactionRequest,
-} from './types/transaction-request'
+} from './types/transaction-request.js'
 
 export class Transactions {
   constructor(private readonly shared: Shared) {}
@@ -49,7 +49,7 @@ export class Transactions {
       (tx): Payload.Call => ({
         to: tx.to,
         value: tx.value ?? 0n,
-        data: tx.data ?? new Uint8Array(0),
+        data: tx.data ?? '0x',
         gasLimit: tx.gasLimit ?? 0n, // TODO: Add gas estimation
         delegateCall: false,
         onlyFallback: false,
@@ -237,7 +237,7 @@ export class Transactions {
       opHash,
     } as TransactionRelayed)
 
-    await this.shared.modules.signatures.delete(signature.id)
+    await this.shared.modules.signatures.complete(signature.id)
 
     return opHash
   }

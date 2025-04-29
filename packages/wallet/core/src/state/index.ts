@@ -68,9 +68,14 @@ export interface Writer {
   ): MaybePromise<void>
 
   saveTree(tree: GenericTree.Tree): MaybePromise<void>
+
+  saveConfiguration(config: Config.Config): MaybePromise<void>
+  saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void>
 }
 
-type MaybePromise<T> = T | Promise<T>
+export type MaybePromise<T> = T | Promise<T>
 
-export * as Local from './local'
-export * from './utils'
+export * as Local from './local/index.js'
+export * from './utils.js'
+export * as Remote from './remote/index.js'
+export * from './cached.js'

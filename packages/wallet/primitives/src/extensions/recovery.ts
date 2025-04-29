@@ -1,7 +1,7 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
-import * as Payload from '../payload'
+import * as Payload from '../payload.js'
 import { getSignPayload } from 'ox/TypedData'
-import * as GenericTree from '../generic-tree'
+import * as GenericTree from '../generic-tree.js'
 
 export const FLAG_RECOVERY_LEAF = 1
 export const FLAG_NODE = 3

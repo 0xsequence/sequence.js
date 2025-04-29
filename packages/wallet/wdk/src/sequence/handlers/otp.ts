@@ -1,12 +1,12 @@
 import { Hex, Address } from 'ox'
-import { Handler } from './handler'
+import { Handler } from './handler.js'
 import { Signers } from '@0xsequence/wallet-core'
-import * as Db from '../../dbs'
-import { Signatures } from '../signatures'
-import { SignerUnavailable, SignerReady, SignerActionable } from '../types'
-import { Kinds } from '../types/signer'
-import * as Identity from '../../identity'
-import { IdentityHandler } from './identity'
+import * as Db from '../../dbs/index.js'
+import { Signatures } from '../signatures.js'
+import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
+import { Kinds } from '../types/signer.js'
+import * as Identity from '../../identity/index.js'
+import { IdentityHandler } from './identity.js'
 
 type RespondFn = (otp: string) => Promise<void>
 
@@ -55,7 +55,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
     const onPromptOtp = this.onPromptOtp
     if (!onPromptOtp) {

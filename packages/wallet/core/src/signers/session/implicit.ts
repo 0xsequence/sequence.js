@@ -1,30 +1,43 @@
 import { Attestation, Payload, SessionSignature, Signature } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
-import { SignerInterface } from './session'
+import { SignerInterface } from './session.js'
+import { MemoryPkStore, PkStore } from '../pk/index.js'
 
 export type AttestationParams = Omit<Attestation.Attestation, 'approvedSigner'>
 
 export class Implicit implements SignerInterface {
-  readonly address: Address.Address
+  private readonly _privateKey: PkStore
+  public readonly address: Address.Address
 
   constructor(
-    private readonly _privateKey: `0x${string}`,
+    privateKey: Hex.Hex | PkStore,
     private readonly _attestation: Attestation.Attestation,
     private readonly _identitySignature: Signature.RSY,
     private readonly _sessionManager: Address.Address,
   ) {
-    this.address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: this._privateKey }))
+    this._privateKey = typeof privateKey === 'string' ? new MemoryPkStore(privateKey) : privateKey
+    this.address = this._privateKey.address()
     if (this._attestation.approvedSigner !== this.address) {
       throw new Error('Invalid attestation')
     }
+  }
+
+  get identitySigner(): Address.Address {
+    // Recover identity signer from attestions and identity signature
+    const attestationHash = Attestation.hash(this._attestation)
+    const identityPubKey = Secp256k1.recoverPublicKey({ payload: attestationHash, signature: this._identitySignature })
+    return Address.fromPublicKey(identityPubKey)
   }
 
   async supportedCall(
     wallet: Address.Address,
     _chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<boolean> {
+    if (!provider) {
+      throw new Error('Provider is required')
+    }
     try {
       // Call the acceptImplicitRequest function on the called contract
       const encodedCallData = AbiFunction.encodeData(acceptImplicitRequestFunctionAbi, [
@@ -40,7 +53,7 @@ export class Implicit implements SignerInterface {
         {
           to: call.to,
           value: call.value,
-          data: Bytes.toHex(call.data),
+          data: call.data,
           gasLimit: call.gasLimit,
           delegateCall: call.delegateCall,
           onlyFallback: call.onlyFallback,
@@ -70,14 +83,14 @@ export class Implicit implements SignerInterface {
       space: bigint
       nonce: bigint
     },
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
     const isSupported = await this.supportedCall(wallet, chainId, call, provider)
     if (!isSupported) {
       throw new Error('Unsupported call')
     }
     const callHash = SessionSignature.hashCallWithReplayProtection(call, chainId, nonce.space, nonce.nonce)
-    const sessionSignature = Secp256k1.sign({ payload: callHash, privateKey: this._privateKey })
+    const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       attestation: this._attestation,
       identitySignature: this._identitySignature,

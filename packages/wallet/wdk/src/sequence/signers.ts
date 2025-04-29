@@ -1,7 +1,7 @@
 import { Address, Bytes, Hex } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Shared } from './manager'
-import { Kind, Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer'
+import { Shared } from './manager.js'
+import { Kind, Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 
 export function isWitnessExtraSignerKind(extra: any): extra is WitnessExtraSignerKind {
   return typeof extra === 'object' && extra !== null && 'signerKind' in extra
@@ -47,7 +47,7 @@ export class Signers {
     }
 
     try {
-      const message = JSON.parse(Bytes.toString(witness.payload.message))
+      const message = JSON.parse(Hex.toString(witness.payload.message))
       if (isWitnessExtraSignerKind(message)) {
         return toKnownKind(message.signerKind)
       }

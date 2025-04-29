@@ -1,10 +1,10 @@
 import { Network } from '@0xsequence/wallet-primitives'
 export { Network as Networks }
 
-export type { ManagerOptions, Databases, Sequence, Modules, Shared } from './manager'
-export { ManagerOptionsDefaults, CreateWalletOptionsDefaults, applyManagerOptionsDefaults, Manager } from './manager'
-export { Sessions } from './sessions'
-export { Signatures } from './signatures'
+export type { ManagerOptions, Databases, Sequence, Modules, Shared } from './manager.js'
+export { ManagerOptionsDefaults, CreateWalletOptionsDefaults, applyManagerOptionsDefaults, Manager } from './manager.js'
+export { Sessions } from './sessions.js'
+export { Signatures } from './signatures.js'
 export type {
   StartSignUpWithRedirectArgs,
   CommonSignupArgs,
@@ -18,7 +18,9 @@ export type {
   LoginToMnemonicArgs,
   LoginToPasskeyArgs,
   LoginArgs,
-} from './wallets'
-export { isLoginToWalletArgs, isLoginToMnemonicArgs, isLoginToPasskeyArgs, Wallets } from './wallets'
+} from './wallets.js'
+export { isLoginToWalletArgs, isLoginToMnemonicArgs, isLoginToPasskeyArgs, Wallets } from './wallets.js'
 
-export * from './types'
+export * from './types/index.js'
+import * as Handlers from './handlers/index.js'
+export { Handlers }

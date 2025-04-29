@@ -1,18 +1,19 @@
 import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
-import { SignerInterface } from './session'
+import { SignerInterface } from './session.js'
+import { MemoryPkStore, PkStore } from '../pk/index.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
 export class Explicit implements SignerInterface {
-  readonly address: Address.Address
-  readonly sessionPermissions: Permission.SessionPermissions
+  private readonly _privateKey: PkStore
 
-  constructor(
-    private readonly _privateKey: `0x${string}`,
-    sessionPermissions: ExplicitParams,
-  ) {
-    this.address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: this._privateKey }))
+  public readonly address: Address.Address
+  public readonly sessionPermissions: Permission.SessionPermissions
+
+  constructor(privateKey: Hex.Hex | PkStore, sessionPermissions: ExplicitParams) {
+    this._privateKey = typeof privateKey === 'string' ? new MemoryPkStore(privateKey) : privateKey
+    this.address = this._privateKey.address()
     this.sessionPermissions = {
       ...sessionPermissions,
       signer: this.address,
@@ -23,7 +24,7 @@ export class Explicit implements SignerInterface {
     wallet: Address.Address,
     _chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<Permission.Permission | undefined> {
     // Wallet and signer are encoded as a prefix for the usage hash
     const limitHashPrefix = Hash.keccak256(
@@ -50,9 +51,9 @@ export class Explicit implements SignerInterface {
             rules: permission.rules.map((rule) => ({
               cumulative: rule.cumulative,
               operation: rule.operation,
-              value: Bytes.toHex(rule.value),
+              value: Bytes.toHex(Bytes.padRight(rule.value, 32)),
               offset: rule.offset,
-              mask: Bytes.toHex(rule.mask),
+              mask: Bytes.toHex(Bytes.padRight(rule.mask, 32)),
             })),
           },
           BigInt(permissionIndex),
@@ -70,7 +71,7 @@ export class Explicit implements SignerInterface {
     wallet: Address.Address,
     chainId: bigint,
     call: Payload.Call,
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<boolean> {
     //FIXME Should this be stateful to support cumulative rules within a payload?
     const permission = await this.findSupportedPermission(wallet, chainId, call, provider)
@@ -88,7 +89,7 @@ export class Explicit implements SignerInterface {
       space: bigint
       nonce: bigint
     },
-    provider: Provider.Provider,
+    provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
     // Find the valid permission for this call
     const permission = await this.findSupportedPermission(wallet, chainId, call, provider)
@@ -103,7 +104,7 @@ export class Explicit implements SignerInterface {
     }
     // Sign it
     const callHash = SessionSignature.hashCallWithReplayProtection(call, chainId, nonce.space, nonce.nonce)
-    const sessionSignature = Secp256k1.sign({ payload: callHash, privateKey: this._privateKey })
+    const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       permissionIndex: BigInt(permissionIndex),
       sessionSignature,
@@ -117,15 +118,18 @@ async function validatePermission(
   provider?: Provider.Provider,
   usageHash?: Hex.Hex,
 ): Promise<boolean> {
-  if (permission.target !== call.to) {
+  if (!Address.isEqual(permission.target, call.to)) {
     return false
   }
 
   for (const rule of permission.rules) {
     // Extract value from calldata at offset
-    const callValue = call.data.slice(Number(rule.offset), Number(rule.offset) + 32)
+    const callDataValue = Bytes.padRight(
+      Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
+      32,
+    )
     // Apply mask
-    let value: Bytes.Bytes = callValue.map((b, i) => b & rule.mask[i]!)
+    let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
 
     if (rule.cumulative) {
       if (provider && usageHash) {
@@ -136,7 +140,7 @@ async function validatePermission(
           params: [permission.target, storageSlot, 'latest'],
         })
         // Increment the value
-        value = Bytes.fromNumber(Hex.toBigInt(storageValue) + Bytes.toBigInt(value))
+        value = Bytes.padLeft(Bytes.fromNumber(Hex.toBigInt(storageValue) + Bytes.toBigInt(value)), 32)
       } else {
         throw new Error('Cumulative rules require a provider and usage hash')
       }
@@ -148,19 +152,16 @@ async function validatePermission(
         return false
       }
     }
-
     if (rule.operation === Permission.ParameterOperation.LESS_THAN_OR_EQUAL) {
       if (Bytes.toBigInt(value) > Bytes.toBigInt(rule.value)) {
         return false
       }
     }
-
     if (rule.operation === Permission.ParameterOperation.NOT_EQUAL) {
       if (Bytes.isEqual(value, rule.value)) {
         return false
       }
     }
-
     if (rule.operation === Permission.ParameterOperation.GREATER_THAN_OR_EQUAL) {
       if (Bytes.toBigInt(value) < Bytes.toBigInt(rule.value)) {
         return false

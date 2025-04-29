@@ -1,1 +1,1 @@
-export * from './identity-instrument.gen'
+export * from './identity-instrument.gen.js'

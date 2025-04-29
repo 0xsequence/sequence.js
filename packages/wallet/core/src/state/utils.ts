@@ -1,7 +1,7 @@
 import { Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { Reader } from '.'
-import { isSapientSigner, SapientSigner, Signer } from '../signers'
+import { Reader } from './index.js'
+import { isSapientSigner, SapientSigner, Signer } from '../signers/index.js'
 
 export type WalletWithWitness<S extends Signer | SapientSigner> = {
   wallet: Address.Address

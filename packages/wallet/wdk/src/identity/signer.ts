@@ -1,7 +1,7 @@
 import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
 import { Signers, State } from '@0xsequence/wallet-core'
-import { AuthKey } from '../dbs'
-import { IdentityInstrument, KeyType } from './nitro'
+import { AuthKey } from '../dbs/auth-keys.js'
+import { IdentityInstrument, KeyType } from './nitro/index.js'
 import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 
 export class IdentitySigner implements Signers.Signer {
@@ -55,7 +55,7 @@ export class IdentitySigner implements Signers.Signer {
 
   async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
-      Bytes.fromString(
+      Hex.fromString(
         JSON.stringify({
           action: 'consent-to-be-part-of-wallet',
           wallet,

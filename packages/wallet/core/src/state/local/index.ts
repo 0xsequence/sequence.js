@@ -8,8 +8,8 @@ import {
   GenericTree,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
-import { Provider as ProviderInterface } from '..'
-import { MemoryStore } from './memory'
+import { Provider as ProviderInterface } from '../index.js'
+import { MemoryStore } from './memory.js'
 
 export interface Store {
   // top level configurations store
@@ -366,7 +366,7 @@ export class Provider implements ProviderInterface {
       if (Signature.isSignatureOfSapientSignerLeaf(topology.signature)) {
         switch (topology.signature.address.toLowerCase()) {
           case this.extensions.passkeys.toLowerCase():
-            const decoded = Extensions.Passkeys.decode(topology.signature.data)
+            const decoded = Extensions.Passkeys.decode(Bytes.fromHex(topology.signature.data))
 
             if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
               throw new Error('Invalid passkey signature')
@@ -392,7 +392,19 @@ export class Provider implements ProviderInterface {
   saveTree(tree: GenericTree.Tree): void | Promise<void> {
     return this.store.saveTree(GenericTree.hash(tree), tree)
   }
+
+  saveConfiguration(config: Config.Config): Promise<void> {
+    return this.store.saveConfig(Bytes.toHex(Config.hashConfiguration(config)), config)
+  }
+
+  saveDeploy(imageHash: Hex.Hex, context: Context.Context): Promise<void> {
+    return this.store.saveCounterfactualWallet(
+      SequenceAddress.from(Bytes.fromHex(imageHash), context),
+      imageHash,
+      context,
+    )
+  }
 }
 
-export * from './memory'
-export * from './indexed-db'
+export * from './memory.js'
+export * from './indexed-db.js'

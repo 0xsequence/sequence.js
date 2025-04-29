@@ -1,13 +1,14 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
-import { Config, GenericTree, Payload, SessionConfig, Permission } from '@0xsequence/wallet-primitives'
+import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { AuthCommitment } from '../dbs/auth-commitments'
-import { AuthCodePkceHandler } from './handlers/authcode-pkce'
-import { MnemonicHandler } from './handlers/mnemonic'
-import { OtpHandler } from './handlers/otp'
-import { Shared } from './manager'
-import { Wallet } from './types'
-import { Kinds, WitnessExtraSignerKind } from './types/signer'
+import { AuthCommitment } from '../dbs/auth-commitments.js'
+import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
+import { MnemonicHandler } from './handlers/mnemonic.js'
+import { OtpHandler } from './handlers/otp.js'
+import { Shared } from './manager.js'
+import { Wallet } from './types/wallet.js'
+import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
+import { WalletSelectionUiHandler } from './types/wallet.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple-pkce'
@@ -18,7 +19,6 @@ export type StartSignUpWithRedirectArgs = {
 export type CommonSignupArgs = {
   noGuard?: boolean
   noSessionManager?: boolean
-  onExistingWallets?: (wallets: Address.Address[]) => Promise<boolean>
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
@@ -38,13 +38,14 @@ export type EmailOtpSignupArgs = CommonSignupArgs & {
 export type CompleteRedirectArgs = CommonSignupArgs & {
   state: string
   code: string
-  onExistingWalletsWithTarget?: (wallets: Address.Address[], target: string) => Promise<boolean>
 }
 
 export type AuthCodePkceSignupArgs = CommonSignupArgs & {
   kind: 'google-pkce' | 'apple-pkce'
   commitment: AuthCommitment
   code: string
+  target: string
+  isRedirect: boolean
 }
 
 export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodePkceSignupArgs
@@ -76,6 +77,10 @@ export function isLoginToMnemonicArgs(args: LoginArgs): args is LoginToMnemonicA
 
 export function isLoginToPasskeyArgs(args: LoginArgs): args is LoginToPasskeyArgs {
   return 'kind' in args && args.kind === 'passkey'
+}
+
+export function isAuthCodePkceArgs(args: SignupArgs): args is AuthCodePkceSignupArgs {
+  return 'kind' in args && (args.kind === 'google-pkce' || args.kind === 'apple-pkce')
 }
 
 function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
@@ -198,6 +203,8 @@ function fromConfig(config: Config.Config): {
 }
 
 export class Wallets {
+  private walletSelectionUiHandler: WalletSelectionUiHandler | null = null
+
   constructor(private readonly shared: Shared) {}
 
   public async exists(wallet: Address.Address): Promise<boolean> {
@@ -210,6 +217,23 @@ export class Wallets {
 
   public async list(): Promise<Wallet[]> {
     return this.shared.databases.manager.list()
+  }
+
+  public registerWalletSelector(handler: WalletSelectionUiHandler) {
+    if (this.walletSelectionUiHandler) {
+      throw new Error('wallet-selector-already-registered')
+    }
+    this.walletSelectionUiHandler = handler
+    return () => {
+      this.unregisterWalletSelector(handler)
+    }
+  }
+
+  public unregisterWalletSelector(handler?: WalletSelectionUiHandler) {
+    if (handler && this.walletSelectionUiHandler !== handler) {
+      throw new Error('wallet-selector-not-registered')
+    }
+    this.walletSelectionUiHandler = null
   }
 
   public onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean) {
@@ -318,9 +342,8 @@ export class Wallets {
         commitment,
         code: args.code,
         noGuard: args.noGuard,
-        onExistingWallets: args.onExistingWalletsWithTarget
-          ? (wallets) => args.onExistingWalletsWithTarget!(wallets, commitment.target)
-          : args.onExistingWallets,
+        target: commitment.target,
+        isRedirect: true,
       })
     } else {
       const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodePkceHandler
@@ -337,14 +360,29 @@ export class Wallets {
     const loginSigner = await this.prepareSignUp(args)
 
     // If there is an existing wallet callback, we check if any wallet already exist for this login signer
-    if (args.onExistingWallets) {
+    if (this.walletSelectionUiHandler) {
       const existingWallets = await State.getWalletsFor(this.shared.sequence.stateProvider, loginSigner.signer)
       if (existingWallets.length > 0) {
-        const result = await args.onExistingWallets(existingWallets.map((w) => w.wallet))
+        const result = await this.walletSelectionUiHandler({
+          existingWallets: existingWallets.map((w) => w.wallet),
+          signerAddress: await loginSigner.signer.address,
+          context: isAuthCodePkceArgs(args)
+            ? {
+                isRedirect: args.isRedirect,
+                target: args.target,
+              }
+            : {
+                isRedirect: false,
+              },
+        })
+
         if (result) {
+          // A wallet was selected, we can exit early
           return
         }
       }
+    } else {
+      console.warn('No wallet selector registered, creating a new wallet')
     }
 
     // Create the first session
@@ -568,6 +606,14 @@ export class Wallets {
       throw new Error('wallet-not-found')
     }
 
+    // Prevent starting logout if already logging out or not ready
+    if (walletEntry.status !== 'ready') {
+      console.warn(`Logout called on wallet ${wallet} with status ${walletEntry.status}. Aborting.`)
+      throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
+    }
+
+    await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
+
     if (options?.skipRemoveDevice) {
       await Promise.all([
         this.shared.databases.manager.del(wallet),
@@ -619,6 +665,13 @@ export class Wallets {
     const walletEntry = await this.shared.databases.manager.get(request.wallet)
     if (!walletEntry) {
       throw new Error('wallet-not-found')
+    }
+
+    // Wallet entry should ideally be 'logging-out' here, but we proceed regardless
+    if (walletEntry.status !== 'logging-out') {
+      this.shared.modules.logger.log(
+        `Warning: Wallet ${request.wallet} status was ${walletEntry.status} during completeLogout.`,
+      )
     }
 
     const wallet = new CoreWallet(request.wallet, {

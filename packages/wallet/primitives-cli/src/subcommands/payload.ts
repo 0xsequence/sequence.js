@@ -1,7 +1,7 @@
 import { AbiParameters, Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { fromPosOrStdin } from '../utils'
+import { fromPosOrStdin } from '../utils.js'
 
 export const KIND_TRANSACTIONS = 0x00
 const KIND_MESSAGE = 0x01
@@ -87,7 +87,7 @@ export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payl
       calls: decoded.calls.map((call) => ({
         to: Address.from(call.to),
         value: call.value,
-        data: Bytes.from(call.data as Hex.Hex),
+        data: call.data as `0x${string}`,
         gasLimit: call.gasLimit,
         delegateCall: call.delegateCall,
         onlyFallback: call.onlyFallback,
@@ -100,7 +100,7 @@ export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payl
   if (decoded.kind === KIND_MESSAGE) {
     return {
       type: 'message',
-      message: Bytes.fromHex(decoded.message as `0x${string}`),
+      message: decoded.message as `0x${string}`,
       parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
     }
   }
