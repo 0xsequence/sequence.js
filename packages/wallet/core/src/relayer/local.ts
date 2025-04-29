@@ -1,6 +1,16 @@
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
+import { IntentPrecondition } from './rpc/relayer.gen.js'
+import { decodePrecondition } from '../preconditions/index.js'
+import {
+  erc20BalanceOf,
+  erc20Allowance,
+  erc721OwnerOf,
+  erc721GetApproved,
+  erc1155BalanceOf,
+  erc1155IsApprovedForAll,
+} from './abi.js'
 
 export interface GenericProvider {
   sendTransaction(args: { to: string; data: string }): Promise<string>

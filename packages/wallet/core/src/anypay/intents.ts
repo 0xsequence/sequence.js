@@ -56,7 +56,7 @@ function createIntentConfiguration(operations: IntentOperation[], mainSigner: Ad
       calls: op.calls.map((call) => ({
         to: call.to,
         value: call.value,
-        data: call.data,
+        data: Bytes.toHex(call.data),
         gasLimit: call.gasLimit,
         delegateCall: call.delegateCall,
         onlyFallback: call.onlyFallback,
@@ -71,7 +71,7 @@ function createIntentConfiguration(operations: IntentOperation[], mainSigner: Ad
     // Create subdigest leaf
     return {
       type: 'any-address-subdigest',
-      digest,
+      digest: Bytes.toHex(digest),
     } as Config.AnyAddressSubdigestLeaf
   })
 

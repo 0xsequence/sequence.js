@@ -1,4 +1,4 @@
-import { Address, Bytes, Hex } from 'ox'
+import { Address } from 'ox'
 
 export interface Precondition {
   type(): string

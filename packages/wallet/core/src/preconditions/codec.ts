@@ -8,7 +8,7 @@ import {
   Erc721ApprovalPrecondition,
   Erc1155BalancePrecondition,
   Erc1155ApprovalPrecondition,
-} from './types'
+} from './types.js'
 
 export interface IntentPrecondition {
   type: string

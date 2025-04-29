@@ -4,8 +4,8 @@ import {
   MetaTxn as RpcMetaTxn,
   FeeTokenType,
   IntentPrecondition,
-} from './relayer.gen'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer'
+} from './relayer.gen.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
 import { Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
 import {
@@ -13,8 +13,8 @@ import {
   ETHTxnStatus,
   FeeOption as RpcFeeOption,
   FeeToken as RpcFeeToken,
-} from './relayer.gen'
-import { decodePrecondition } from '../../preconditions'
+} from './relayer.gen.js'
+import { decodePrecondition } from '../../preconditions/index.js'
 import {
   erc20BalanceOf,
   erc20Allowance,
@@ -22,18 +22,18 @@ import {
   erc721GetApproved,
   erc1155BalanceOf,
   erc1155IsApprovedForAll,
-} from '../abi'
+} from '../abi.js'
 import { PublicClient, createPublicClient, http, Chain } from 'viem'
 import * as chains from 'viem/chains'
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
 export const getChain = (chainId: number): Chain => {
-  const chain = Object.values(chains).find((c) => c.id === chainId)
+  const chain = Object.values(chains).find((c: any) => typeof c === 'object' && 'id' in c && c.id === chainId)
   if (!chain) {
     throw new Error(`Chain with id ${chainId} not found`)
   }
-  return chain
+  return chain as Chain
 }
 
 export class RpcRelayer implements Relayer {

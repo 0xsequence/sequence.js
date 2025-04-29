@@ -1,5 +1,5 @@
-import { Precondition, NativeBalancePrecondition, Erc20BalancePrecondition } from './types'
-import { IntentPrecondition, decodePreconditions } from './codec'
+import { Precondition, NativeBalancePrecondition, Erc20BalancePrecondition } from './types.js'
+import { IntentPrecondition, decodePreconditions } from './codec.js'
 
 export function extractChainID(precondition: IntentPrecondition): bigint | undefined {
   if (!precondition) {
