@@ -167,8 +167,8 @@ export const HomeIndexRoute = () => {
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
       const context: ContextLike.Context = {
-        factory: '0x4B755c6A321C86bD35bBbb5CD56321FE48b51d1e' as `0x${string}`,
-        stage1: '0x0aac68a66bd4442349b3966df34848d32e82f10c' as `0x${string}`,
+        factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
+        stage1: '0x2440595Ead70Ba5874572153910362DcA2dde417' as `0x${string}`,
         creationCode:
           '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
       }
