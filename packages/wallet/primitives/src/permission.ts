@@ -1,4 +1,5 @@
 import { AbiParameters, Address, Bytes } from 'ox'
+import { SESSIONS_FLAG_PERMISSIONS } from './session-config.js'
 
 export enum ParameterOperation {
   EQUAL = 0,
@@ -22,6 +23,7 @@ export type Permission = {
 
 export type SessionPermissions = {
   signer: Address.Address
+  allowMessages: boolean
   valueLimit: bigint
   deadline: bigint
   permissions: [Permission, ...Permission[]]
@@ -39,7 +41,10 @@ export function encodeSessionPermissions(sessionPermissions: SessionPermissions)
 
   const encodedPermissions = sessionPermissions.permissions.map(encodePermission)
 
+  const flag = (SESSIONS_FLAG_PERMISSIONS << 4) | (sessionPermissions.allowMessages ? 1 : 0)
+
   return Bytes.concat(
+    Bytes.fromNumber(flag, { size: 1 }),
     Bytes.padLeft(Bytes.fromHex(sessionPermissions.signer), 20),
     Bytes.padLeft(Bytes.fromNumber(sessionPermissions.valueLimit), 32),
     Bytes.padLeft(Bytes.fromNumber(sessionPermissions.deadline), 32),
@@ -77,12 +82,13 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 // Decoding
 
 export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions {
-  const signer = Bytes.toHex(bytes.slice(0, 20))
-  const valueLimit = Bytes.toBigInt(bytes.slice(20, 52))
-  const deadline = Bytes.toBigInt(bytes.slice(52, 84))
-  const permissionsLength = Number(bytes[84]!)
+  const allowMessages = (bytes[0]! & 0x01) === 1
+  const signer = Bytes.toHex(bytes.slice(1, 21))
+  const valueLimit = Bytes.toBigInt(bytes.slice(21, 53))
+  const deadline = Bytes.toBigInt(bytes.slice(53, 85))
+  const permissionsLength = Number(bytes[85]!)
   const permissions = []
-  let pointer = 85
+  let pointer = 86
   for (let i = 0; i < permissionsLength; i++) {
     // Pass the remaining bytes instead of a fixed slice length
     const { permission, consumed } = decodePermission(bytes.slice(pointer))
@@ -94,6 +100,7 @@ export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions
   }
   return {
     signer,
+    allowMessages,
     valueLimit,
     deadline,
     permissions: permissions as [Permission, ...Permission[]],
@@ -190,6 +197,7 @@ export function sessionPermissionsToJson(sessionPermissions: SessionPermissions)
 export function encodeSessionPermissionsForJson(sessionPermissions: SessionPermissions): any {
   return {
     signer: sessionPermissions.signer.toString(),
+    allowMessages: sessionPermissions.allowMessages,
     valueLimit: sessionPermissions.valueLimit.toString(),
     deadline: sessionPermissions.deadline.toString(),
     permissions: sessionPermissions.permissions.map(encodePermissionForJson),
@@ -228,6 +236,7 @@ export function sessionPermissionsFromJson(json: string): SessionPermissions {
 export function sessionPermissionsFromParsed(parsed: any): SessionPermissions {
   return {
     signer: Address.from(parsed.signer),
+    allowMessages: parsed.allowMessages,
     valueLimit: BigInt(parsed.valueLimit),
     deadline: BigInt(parsed.deadline),
     permissions: parsed.permissions.map(permissionFromParsed),

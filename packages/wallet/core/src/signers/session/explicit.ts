@@ -1,7 +1,7 @@
 import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/wallet-primitives'
-import { AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
-import { SignerInterface } from './session.js'
+import { AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
+import { SignerInterface } from './session.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 

@@ -49,6 +49,7 @@ describe('SessionManager', () => {
     let topology = SessionConfig.emptySessionsTopology(identityAddress)
     // Add random signer to the topology
     const sessionPermission: Signers.Session.ExplicitParams = {
+      allowMessages: true,
       valueLimit: 1000000000000000000n,
       deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
       permissions: [
@@ -213,6 +214,7 @@ describe('SessionManager', () => {
     // Create explicit signer
     const explicitPrivateKey = Secp256k1.randomPrivateKey()
     const explicitPermissions: Signers.Session.ExplicitParams = {
+      allowMessages: true,
       valueLimit: 1000000000000000000n, // 1 ETH
       deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
       permissions: [
@@ -446,6 +448,7 @@ describe('SessionManager', () => {
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
       const sessionPermission: Signers.Session.ExplicitParams = {
+        allowMessages: true,
         valueLimit: 1000000000000000000n, // 1 ETH
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [{ target: EMITTER_ADDRESS, rules: [] }],

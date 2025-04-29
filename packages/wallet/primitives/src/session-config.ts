@@ -211,14 +211,14 @@ export function encodeLeafToGeneric(leaf: SessionLeaf): GenericTree.Leaf {
   if (isSessionPermissions(leaf)) {
     return {
       type: 'leaf',
-      value: Bytes.concat(Bytes.fromNumber(SESSIONS_FLAG_PERMISSIONS), encodeSessionPermissions(leaf)),
+      value: encodeSessionPermissions(leaf),
     }
   }
   if (isImplicitBlacklist(leaf)) {
     return {
       type: 'leaf',
       value: Bytes.concat(
-        Bytes.fromNumber(SESSIONS_FLAG_BLACKLIST),
+        Bytes.fromNumber(SESSIONS_FLAG_BLACKLIST << 4),
         Bytes.concat(...leaf.blacklist.map((b) => Bytes.padLeft(Bytes.fromHex(b), 20))),
       ),
     }
@@ -227,7 +227,7 @@ export function encodeLeafToGeneric(leaf: SessionLeaf): GenericTree.Leaf {
     return {
       type: 'leaf',
       value: Bytes.concat(
-        Bytes.fromNumber(SESSIONS_FLAG_IDENTITY_SIGNER),
+        Bytes.fromNumber(SESSIONS_FLAG_IDENTITY_SIGNER << 4),
         Bytes.padLeft(Bytes.fromHex(leaf.identitySigner), 20),
       ),
     }
@@ -237,7 +237,7 @@ export function encodeLeafToGeneric(leaf: SessionLeaf): GenericTree.Leaf {
 }
 
 export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
-  const flag = bytes[0]!
+  const flag = (bytes[0]! & 0xf0) >> 4
   if (flag === SESSIONS_FLAG_BLACKLIST) {
     const blacklist: `0x${string}`[] = []
     for (let i = 1; i < bytes.length; i += 20) {
@@ -249,7 +249,7 @@ export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
     return { type: 'identity-signer', identitySigner: Bytes.toHex(bytes.slice(1, 21)) }
   }
   if (flag === SESSIONS_FLAG_PERMISSIONS) {
-    return { type: 'session-permissions', ...decodeSessionPermissions(bytes.slice(1)) }
+    return { type: 'session-permissions', ...decodeSessionPermissions(bytes) }
   }
   throw new Error('Invalid leaf')
 }
@@ -307,9 +307,9 @@ export function encodeSessionsTopology(topology: SessionsTopology): Bytes.Bytes 
   }
 
   if (isSessionPermissions(topology)) {
-    const flagByte = SESSIONS_FLAG_PERMISSIONS << 4
+    // Encoding includes the flag
     const encodedLeaf = encodeSessionPermissions(topology)
-    return Bytes.concat(Bytes.fromNumber(flagByte), encodedLeaf)
+    return Bytes.concat(encodedLeaf)
   }
 
   if (isSessionsNode(topology)) {
