@@ -591,3 +591,98 @@ describe('AnyPay Preconditions', () => {
     })
   }
 })
+
+describe('Intent Configuration Address', () => {
+  it('should calculate address for single operation', () => {
+    // Create context matching Go test
+    const context: Context.Context = {
+      factory: Address.from('0x0000000000000000000000000000000000000000'),
+      stage1: '0x0000000000000000000000000000000000000000' as Hex.Hex,
+      stage2: '0x0000000000000000000000000000000000000000' as Hex.Hex,
+      creationCode:
+        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex,
+    }
+
+    // Main signer matching Go test
+    const mainSigner = Address.from('0x1111111111111111111111111111111111111111')
+
+    // Create a single operation matching Go test
+    const operation: Payload.Calls = {
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [
+        {
+          to: Address.from('0x0000000000000000000000000000000000000000'),
+          value: 0n,
+          data: '0x1234' as Hex.Hex,
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        },
+      ],
+    }
+
+    // Calculate intent configuration address
+    const address = calculateIntentConfigurationAddress(mainSigner, [operation], 1n, context)
+
+    // Verify the address matches Go test
+    expect(address.toString()).toBe('0x8577dfb93fe58cc8ee90dea522555fdf01fd7429')
+  })
+
+  it('should calculate address for multiple operations', () => {
+    // Create context matching Go test
+    const context: Context.Context = {
+      factory: Address.from('0x0000000000000000000000000000000000000000'),
+      stage1: '0x0000000000000000000000000000000000000000' as Hex.Hex,
+      stage2: '0x0000000000000000000000000000000000000000' as Hex.Hex,
+      creationCode:
+        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex,
+    }
+
+    // Main signer matching Go test
+    const mainSigner = Address.from('0x1111111111111111111111111111111111111111')
+
+    // Create multiple operations matching Go test
+    const operation1: Payload.Calls = {
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [
+        {
+          to: Address.from('0x0000000000000000000000000000000000000000'),
+          value: 0n,
+          data: '0x1234' as Hex.Hex,
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        },
+      ],
+    }
+
+    const operation2: Payload.Calls = {
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [
+        {
+          to: Address.from('0x0000000000000000000000000000000000000000'),
+          value: 0n,
+          data: '0x5678' as Hex.Hex,
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        },
+      ],
+    }
+
+    // Calculate intent configuration address
+    const address = calculateIntentConfigurationAddress(mainSigner, [operation1, operation2], 1n, context)
+
+    // Verify the address matches Go test
+    expect(address.toString()).toBe('0xbd820ed5b1e969ed6509e8ede687dfc4c714438f')
+  })
+})
