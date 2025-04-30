@@ -1,28 +1,14 @@
 import { Address, Bytes, ContractAddress, Hash } from 'ox'
 import { Context, Config, Payload } from '@0xsequence/wallet-primitives'
 
-export type IntentOperation = {
-  chainId: bigint
-  space?: bigint
-  nonce?: bigint
-  calls: {
-    to: Address.Address
-    value: bigint
-    data: Bytes.Bytes
-    gasLimit: bigint
-    delegateCall: boolean
-    onlyFallback: boolean
-    behaviorOnError: bigint
-  }[]
-}
-
 export function calculateIntentConfigurationAddress(
-  operations: IntentOperation[],
   mainSigner: Address.Address,
+  calls: Payload.Calls[],
+  chainId: bigint,
   context: Context.Context,
 ): Address.Address {
   // Create the intent configuration
-  const config = createIntentConfiguration(operations, mainSigner)
+  const config = createIntentConfiguration(mainSigner, calls, chainId)
 
   // Calculate the image hash of the configuration
   const imageHash = Config.hashConfiguration(config)
@@ -38,7 +24,11 @@ export function calculateIntentConfigurationAddress(
   })
 }
 
-function createIntentConfiguration(operations: IntentOperation[], mainSigner: Address.Address): Config.Config {
+function createIntentConfiguration(
+  mainSigner: Address.Address,
+  calls: Payload.Calls[],
+  chainId: bigint,
+): Config.Config {
   // Create the main signer leaf
   const mainSignerLeaf: Config.SignerLeaf = {
     type: 'signer',
@@ -47,25 +37,9 @@ function createIntentConfiguration(operations: IntentOperation[], mainSigner: Ad
   }
 
   // Create subdigest leaves for each operation
-  const subdigestLeaves = operations.map((op) => {
-    // Create the calls payload
-    const payload: Payload.Calls = {
-      type: 'call',
-      space: op.space ?? 0n,
-      nonce: op.nonce ?? 0n,
-      calls: op.calls.map((call) => ({
-        to: call.to,
-        value: call.value,
-        data: Bytes.toHex(call.data),
-        gasLimit: call.gasLimit,
-        delegateCall: call.delegateCall,
-        onlyFallback: call.onlyFallback,
-        behaviorOnError: call.behaviorOnError === 0n ? 'ignore' : call.behaviorOnError === 1n ? 'revert' : 'abort',
-      })),
-    }
-
+  const subdigestLeaves = calls.map((call) => {
     // Get the digest hash using Payload.hash
-    const digest = Payload.hash(Address.from('0x0000000000000000000000000000000000000000'), op.chainId, payload)
+    const digest = Payload.hash(Address.from('0x0000000000000000000000000000000000000000'), chainId, call)
     console.log('digest:', Bytes.toHex(digest))
 
     // Create subdigest leaf

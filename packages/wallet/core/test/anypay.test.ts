@@ -12,7 +12,7 @@ import {
   Erc1155ApprovalPrecondition,
 } from '../src/preconditions/types'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
-import { calculateIntentConfigurationAddress, IntentOperation } from '../src/anypay/intents'
+import { calculateIntentConfigurationAddress } from '../src/anypay/intents'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
@@ -314,17 +314,19 @@ describe('AnyPay Preconditions', () => {
     }
 
     // Create a test operation
-    const operation: IntentOperation = {
-      chainId,
+    const operation: Payload.Calls = {
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
       calls: [
         {
           to: ERC20_IMPLICIT_MINT_CONTRACT,
           value: 0n,
-          data: Bytes.fromHex('0x'),
+          data: '0x' as Hex.Hex,
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 0n, // 0 = ignore, 1 = revert, 2 = abort
+          behaviorOnError: 'ignore',
         },
       ],
     }
@@ -338,7 +340,7 @@ describe('AnyPay Preconditions', () => {
     }
 
     // Calculate intent configuration address
-    const configAddress = calculateIntentConfigurationAddress([operation], testIdentityAddress, context)
+    const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [operation], chainId, context)
 
     // Start the relay operation with a short check interval
     const relayPromise = relayer.relay(
@@ -422,17 +424,19 @@ describe('AnyPay Preconditions', () => {
       await requireContractDeployed(provider, ERC20_IMPLICIT_MINT_CONTRACT)
 
       // Create a test operation
-      const operation: IntentOperation = {
-        chainId,
+      const operation: Payload.Calls = {
+        type: 'call',
+        space: 0n,
+        nonce: 0n,
         calls: [
           {
             to: ERC20_IMPLICIT_MINT_CONTRACT,
             value: 0n,
-            data: Bytes.fromHex('0x'),
+            data: '0x' as Hex.Hex,
             gasLimit: 0n,
             delegateCall: false,
             onlyFallback: false,
-            behaviorOnError: 0n,
+            behaviorOnError: 'ignore',
           },
         ],
       }
@@ -478,7 +482,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress([operation], testIdentityAddress, context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [operation], chainId, context)
 
       expect(configAddress).toBeDefined()
       expect(configAddress).not.toBe(testWalletAddress)
@@ -528,17 +532,19 @@ describe('AnyPay Preconditions', () => {
       ]
 
       // Create a test operation
-      const operation: IntentOperation = {
-        chainId,
+      const operation: Payload.Calls = {
+        type: 'call',
+        space: 0n,
+        nonce: 0n,
         calls: [
           {
             to: ERC20_IMPLICIT_MINT_CONTRACT,
             value: 0n,
-            data: Bytes.fromHex('0x'),
+            data: '0x' as Hex.Hex,
             gasLimit: 0n,
             delegateCall: false,
             onlyFallback: false,
-            behaviorOnError: 0n,
+            behaviorOnError: 'ignore',
           },
         ],
       }
@@ -552,7 +558,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress([operation], testIdentityAddress, context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [operation], chainId, context)
 
       // Mock the provider responses
       if (!CAN_RUN_LIVE) {
