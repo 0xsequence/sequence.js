@@ -49,6 +49,9 @@ export interface Reader {
   ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>>
 
   getTree(rootHash: Hex.Hex): MaybePromise<GenericTree.Tree | undefined>
+  getPayload(
+    opHash: Hex.Hex,
+  ): MaybePromise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined>
 }
 
 export interface Writer {
@@ -71,6 +74,7 @@ export interface Writer {
 
   saveConfiguration(config: Config.Config): MaybePromise<void>
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void>
+  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void>
 }
 
 export type MaybePromise<T> = T | Promise<T>
