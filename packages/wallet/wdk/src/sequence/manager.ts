@@ -1,28 +1,38 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
-import { Config, Constants, Context, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import {
+  Attestation,
+  Config,
+  Constants,
+  Context,
+  Extensions,
+  Network,
+  Payload,
+  SessionConfig,
+  Signature as SequenceSignature,
+} from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import * as Identity from '../identity/index.js'
 import { Devices } from './devices.js'
 import {
-  Handler,
-  DevicesHandler,
-  PasskeysHandler,
   AuthCodePkceHandler,
+  DevicesHandler,
+  Handler,
   MnemonicHandler,
   OtpHandler,
+  PasskeysHandler,
 } from './handlers/index.js'
+import { Janitor } from './janitor.js'
 import { Logger } from './logger.js'
-import { Sessions } from './sessions.js'
+import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
 import { Signatures } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions } from './transactions.js'
 import { BaseSignatureRequest, SignatureRequest, Wallet } from './types/index.js'
-import { Transaction, TransactionRequest } from './types/transaction-request.js'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 import { Kinds } from './types/signer.js'
+import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
-import { Janitor } from './janitor.js'
+import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -329,6 +339,10 @@ export class Manager {
     return this.shared.modules.wallets.unregisterWalletSelector(handler)
   }
 
+  public async getConfiguration(wallet: Address.Address) {
+    return this.shared.modules.wallets.getConfiguration({ wallet })
+  }
+
   // Signatures
 
   public async listSignatureRequests(): Promise<SignatureRequest[]> {
@@ -416,8 +430,19 @@ export class Manager {
     return this.shared.modules.sessions.getSessionTopology(walletAddress)
   }
 
-  public async addImplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address) {
-    return this.shared.modules.sessions.addImplicitSession(walletAddress, sessionAddress)
+  public async prepareAuthorizeImplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    args: AuthorizeImplicitSessionArgs,
+  ): Promise<string> {
+    return this.shared.modules.sessions.prepareAuthorizeImplicitSession(walletAddress, sessionAddress, args)
+  }
+
+  public async completeAuthorizeImplicitSession(requestId: string): Promise<{
+    attestation: Attestation.Attestation
+    signature: SequenceSignature.RSY
+  }> {
+    return this.shared.modules.sessions.completeAuthorizeImplicitSession(requestId)
   }
 
   public async addExplicitSession(
@@ -447,9 +472,5 @@ export class Manager {
     }
     console.log('Completing session update:', requestId)
     return this.shared.modules.sessions.completeSessionUpdate(sigRequest.wallet, requestId)
-  }
-
-  public async getConfiguration(wallet: Address.Address) {
-    return this.shared.modules.wallets.getConfiguration({ wallet })
   }
 }

@@ -12,14 +12,14 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
 
   constructor(
     public readonly signupKind: 'google-pkce' | 'apple-pkce',
-    private readonly issuer: string,
-    private readonly audience: string,
+    public readonly issuer: string,
+    public readonly audience: string,
     nitro: Identity.IdentityInstrument,
     signatures: Signatures,
     private readonly commitments: Db.AuthCommitments,
     authKeys: Db.AuthKeys,
   ) {
-    super(nitro, authKeys, signatures)
+    super(nitro, authKeys, signatures, Identity.IdentityType.OIDC)
   }
 
   public get kind() {

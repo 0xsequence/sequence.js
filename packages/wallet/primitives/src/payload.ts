@@ -1,7 +1,8 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, TypedData } from 'ox'
-import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
-import { minBytesFor } from './utils.js'
+import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex } from 'ox'
 import { getSignPayload } from 'ox/TypedData'
+import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
+import { Attestation } from './index.js'
+import { minBytesFor } from './utils.js'
 
 export type Call = {
   to: Address.Address
@@ -35,11 +36,17 @@ export type Digest = {
   digest: Hex.Hex
 }
 
+export type SessionImplicitAuthorize = {
+  type: 'session-implicit-authorize'
+  sessionAddress: Address.Address
+  attestation: Attestation.Attestation
+}
+
 export type Parent = {
   parentWallets?: Address.Address[]
 }
 
-export type Payload = Calls | Message | ConfigUpdate | Digest
+export type Payload = Calls | Message | ConfigUpdate | Digest | SessionImplicitAuthorize
 
 export type Parented = Payload & Parent
 
@@ -95,6 +102,14 @@ export function isMessage(payload: Payload): payload is Message {
 
 export function isConfigUpdate(payload: Payload): payload is ConfigUpdate {
   return payload.type === 'config-update'
+}
+
+export function isDigest(payload: Payload): payload is Digest {
+  return payload.type === 'digest'
+}
+
+export function isSessionImplicitAuthorize(payload: Payload): payload is SessionImplicitAuthorize {
+  return payload.type === 'session-implicit-authorize'
 }
 
 export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
@@ -295,6 +310,12 @@ export function encodeSapient(
 }
 
 export function hash(wallet: Address.Address, chainId: bigint, payload: Parented): Bytes.Bytes {
+  if (isDigest(payload)) {
+    return Bytes.fromHex(payload.digest)
+  }
+  if (isSessionImplicitAuthorize(payload)) {
+    return Attestation.hash(payload.attestation)
+  }
   const typedData = toTyped(wallet, chainId, payload)
   return Bytes.fromHex(getSignPayload(typedData))
 }
@@ -395,7 +416,11 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
     }
 
     case 'digest': {
-      throw new Error('Digest is not supported - Use message instead')
+      throw new Error('Digest does not support typed data - Use message instead')
+    }
+
+    case 'session-implicit-authorize': {
+      throw new Error('Payload does not support typed data')
     }
   }
 }
