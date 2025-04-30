@@ -4,6 +4,7 @@ import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { RecoverySigner } from './types/signer.js'
 import { Envelope } from '@0xsequence/wallet-core'
 import { QueuedRecoveryPayload } from './types/recovery.js'
+import { Actions } from './types/index.js'
 
 export class Recovery {
   constructor(private readonly shared: Shared) {}
@@ -126,6 +127,30 @@ export class Recovery {
 
       return next
     })
+  }
+
+  async addRecoverySigner(address: Address.Address) {
+    const { modules } = await this.shared.modules.wallets.getConfigurationParts(address)
+    await this.addRecoverySignerToModules(modules, address)
+    return this.shared.modules.wallets.requestConfigurationUpdate(
+      address,
+      {
+        modules,
+      },
+      Actions.AddRecoverySigner,
+      'wallet-webapp',
+    )
+  }
+
+  async removeRecoverySigner(address: Address.Address) {
+    const { modules } = await this.shared.modules.wallets.getConfigurationParts(address)
+    await this.removeRecoverySignerFromModules(modules, address)
+    return this.shared.modules.wallets.requestConfigurationUpdate(
+      address,
+      { modules },
+      Actions.RemoveRecoverySigner,
+      'wallet-webapp',
+    )
   }
 
   async getRecoverySigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {

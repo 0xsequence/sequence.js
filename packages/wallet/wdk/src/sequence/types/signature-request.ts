@@ -9,6 +9,8 @@ export type ActionToPayload = {
   [Actions.SendTransaction]: Payload.Calls
   [Actions.SessionUpdate]: Payload.ConfigUpdate
   [Actions.Recovery]: Payload.Recovery<Payload.Calls>
+  [Actions.AddRecoverySigner]: Payload.ConfigUpdate
+  [Actions.RemoveRecoverySigner]: Payload.ConfigUpdate
 }
 
 export const Actions = {
@@ -17,6 +19,8 @@ export const Actions = {
   SendTransaction: 'send-transaction',
   SessionUpdate: 'session-update',
   Recovery: 'recovery',
+  AddRecoverySigner: 'add-recovery-signer',
+  RemoveRecoverySigner: 'remove-recovery-signer',
 } as const
 
 export type Action = (typeof Actions)[keyof typeof Actions]
