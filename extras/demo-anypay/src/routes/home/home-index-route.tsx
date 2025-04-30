@@ -132,7 +132,7 @@ export const HomeIndexRoute = () => {
     receivedAddress?: string
     calculatedAddress?: string
   } | null>(null)
-  const [metaTxnStatus, setMetaTxnStatus] = useState<{
+  const [originCallStatus, setOriginCallStatus] = useState<{
     txnHash?: string
     status?: string
     revertReason?: string
@@ -142,15 +142,6 @@ export const HomeIndexRoute = () => {
   const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
   const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
   const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
-  const [metaTxnStatuses, setMetaTxnStatuses] = useState<{
-    [key: string]: {
-      status: 'pending' | 'success' | 'failed'
-      txHash?: string
-      error?: string
-      preconditionsMet?: boolean
-      lastPreconditionCheck?: string
-    }
-  }>({})
   const [operationHashes, setOperationHashes] = useState<{ [key: string]: Hex }>({})
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
   const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)
@@ -171,33 +162,6 @@ export const HomeIndexRoute = () => {
     operationHashes,
     getRelayer,
   )
-
-  // Update metaTxnStatuses based on monitor results
-  useEffect(() => {
-    if (!metaTxns) return
-
-    const newStatuses: {
-      [key: string]: {
-        status: 'pending' | 'success' | 'failed'
-        txHash?: string
-        error?: string
-      }
-    } = {}
-
-    metaTxns.forEach((metaTxn) => {
-      const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
-      const monitorStatus = metaTxnMonitorStatuses[operationKey]
-
-      newStatuses[operationKey] = {
-        status:
-          monitorStatus?.status === 'confirmed' ? 'success' : monitorStatus?.status === 'failed' ? 'failed' : 'pending',
-        txHash: monitorStatus && 'txHash' in monitorStatus ? String(monitorStatus.txHash) : undefined,
-        error: monitorStatus && 'reason' in monitorStatus ? String(monitorStatus.reason) : undefined,
-      }
-    })
-
-    setMetaTxnStatuses(newStatuses)
-  }, [metaTxns, metaTxnMonitorStatuses])
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
@@ -231,14 +195,14 @@ export const HomeIndexRoute = () => {
     }
   }, [])
 
-  const updateMetaTxnStatus = (
+  const updateOriginCallStatus = (
     hash: Hex | undefined,
     status: 'success' | 'reverted' | 'pending' | 'sending',
     gasUsed?: bigint,
     effectiveGasPrice?: bigint,
     revertReason?: string | null,
   ) => {
-    setMetaTxnStatus({
+    setOriginCallStatus({
       txnHash: hash,
       status:
         status === 'success'
@@ -553,14 +517,14 @@ export const HomeIndexRoute = () => {
       originCallParams.chainId === null
     ) {
       console.error('Origin call parameters not available or invalid:', originCallParams)
-      updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, 'Origin call parameters not ready')
+      updateOriginCallStatus(undefined, 'reverted', undefined, undefined, 'Origin call parameters not ready')
       return
     }
 
     // Check if we need to switch chains
     if (account.chainId !== originCallParams.chainId) {
       setIsChainSwitchRequired(true)
-      updateMetaTxnStatus(
+      updateOriginCallStatus(
         undefined,
         'pending',
         undefined,
@@ -577,7 +541,7 @@ export const HomeIndexRoute = () => {
         if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
           setIsAutoExecuteEnabled(false)
         }
-        updateMetaTxnStatus(
+        updateOriginCallStatus(
           undefined,
           'reverted',
           undefined,
@@ -593,7 +557,7 @@ export const HomeIndexRoute = () => {
     if (!isTransactionInProgress) {
       setIsTransactionInProgress(true) // Mark transaction as in progress
       setTxnHash(undefined)
-      updateMetaTxnStatus(undefined, 'sending')
+      updateOriginCallStatus(undefined, 'sending')
 
       sendTransaction(
         {
@@ -613,7 +577,7 @@ export const HomeIndexRoute = () => {
             if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
               setIsAutoExecuteEnabled(false)
             }
-            updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+            updateOriginCallStatus(undefined, 'reverted', undefined, undefined, error.message)
             setIsTransactionInProgress(false)
           },
         },
@@ -627,7 +591,7 @@ export const HomeIndexRoute = () => {
   useEffect(() => {
     if (switchChainError) {
       console.error('Chain switch error:', switchChainError)
-      updateMetaTxnStatus(
+      updateOriginCallStatus(
         undefined,
         'reverted',
         undefined,
@@ -661,7 +625,7 @@ export const HomeIndexRoute = () => {
           },
           onError: (error) => {
             console.error('Auto-executed transaction failed:', error)
-            updateMetaTxnStatus(undefined, 'reverted', undefined, undefined, error.message)
+            updateOriginCallStatus(undefined, 'reverted', undefined, undefined, error.message)
           },
         },
       )
@@ -694,8 +658,8 @@ export const HomeIndexRoute = () => {
   useEffect(() => {
     if (!txnHash) {
       // Only reset these when txnHash is cleared
-      if (metaTxnStatus?.txnHash) {
-        setMetaTxnStatus(null)
+      if (originCallStatus?.txnHash) {
+        setOriginCallStatus(null)
       }
       if (Object.keys(sentMetaTxns).length > 0) {
         setSentMetaTxns({})
@@ -704,12 +668,12 @@ export const HomeIndexRoute = () => {
     }
 
     // Don't update status if it's already set for this hash
-    if (metaTxnStatus?.txnHash === txnHash) {
+    if (originCallStatus?.txnHash === txnHash) {
       return
     }
 
     if (isWaitingForReceipt) {
-      setMetaTxnStatus({
+      setOriginCallStatus({
         txnHash,
         status: 'Pending',
       })
@@ -717,7 +681,7 @@ export const HomeIndexRoute = () => {
     }
 
     if (isSuccess && receipt) {
-      setMetaTxnStatus({
+      setOriginCallStatus({
         txnHash: receipt.transactionHash,
         status: receipt.status === 'success' ? 'Success' : 'Failed',
         gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
@@ -732,7 +696,7 @@ export const HomeIndexRoute = () => {
         }
       }
     } else if (isError) {
-      setMetaTxnStatus({
+      setOriginCallStatus({
         txnHash,
         status: 'Failed',
         revertReason: receiptError?.message || 'Failed to get receipt',
@@ -755,13 +719,13 @@ export const HomeIndexRoute = () => {
       !isWaitingForReceipt &&
       !txnHash &&
       !isChainSwitchRequired &&
-      !metaTxnStatus
+      !originCallStatus
 
     if (shouldAutoSend) {
       console.log('Auto-executing transaction: All conditions met.')
 
       // Set initial status
-      setMetaTxnStatus({
+      setOriginCallStatus({
         status: 'Sending...',
       })
 
@@ -782,7 +746,7 @@ export const HomeIndexRoute = () => {
             if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
               setIsAutoExecuteEnabled(false)
             }
-            setMetaTxnStatus({
+            setOriginCallStatus({
               status: 'Failed',
               revertReason: error.message,
             })
@@ -799,7 +763,7 @@ export const HomeIndexRoute = () => {
     isWaitingForReceipt,
     txnHash,
     isChainSwitchRequired,
-    metaTxnStatus,
+    originCallStatus,
   ])
 
   useEffect(() => {
@@ -953,57 +917,9 @@ export const HomeIndexRoute = () => {
     isSwitchingChain ||
     (isAutoExecuteEnabled && commitIntentConfigMutation.isSuccess) // Disable if auto-execute is on and commit was successful
 
-  // Effect to initialize operation statuses
-  useEffect(() => {
-    if (intentOperations) {
-      // Initialize operation statuses
-      const initialStatuses: {
-        [key: string]: { status: 'pending' | 'success' | 'failed'; txHash?: string; error?: string }
-      } = {}
-      intentOperations.forEach((operation, index) => {
-        initialStatuses[`${operation.chainId}-${index}`] = { status: 'pending' }
-      })
-      setMetaTxnStatuses(initialStatuses)
-    }
-  }, [intentOperations])
-
-  // Add this after the receipt effect
-  useEffect(() => {
-    if (receipt && intentOperations) {
-      // Update operation statuses based on receipt
-      setMetaTxnStatuses((prev) => {
-        const newStatuses = { ...prev }
-        intentOperations.forEach((operation, index) => {
-          const key = `${operation.chainId}-${index}`
-          if (receipt.status === 'success') {
-            newStatuses[key] = {
-              status: 'success',
-              txHash: receipt.transactionHash,
-            }
-          } else {
-            newStatuses[key] = {
-              status: 'failed',
-              txHash: receipt.transactionHash,
-              error: 'Transaction failed',
-            }
-          }
-        })
-        return newStatuses
-      })
-    }
-  }, [receipt, intentOperations])
-
-  // Add this to reset operation statuses when account disconnects
-  useEffect(() => {
-    if (!account.isConnected) {
-      setMetaTxnStatuses({})
-    }
-  }, [account.isConnected])
-
   // Effect to cleanup operation statuses and hashes when intent operations are reset
   useEffect(() => {
     if (!intentOperations) {
-      setMetaTxnStatuses({})
       setOperationHashes({})
     }
   }, [intentOperations])
@@ -1011,7 +927,6 @@ export const HomeIndexRoute = () => {
   // Effect to cleanup when account disconnects
   useEffect(() => {
     if (!account.isConnected) {
-      setMetaTxnStatuses({})
       setOperationHashes({})
       setIntentOperations(null)
       setIntentPreconditions(null)
@@ -1020,19 +935,6 @@ export const HomeIndexRoute = () => {
       setVerificationStatus(null)
     }
   }, [account.isConnected])
-
-  // Effect to initialize metaTxnStatuses when metaTxns change
-  useEffect(() => {
-    if (metaTxns) {
-      const initialStatuses: {
-        [key: string]: { status: 'pending' | 'success' | 'failed'; txHash?: string; error?: string }
-      } = {}
-      metaTxns.forEach((metaTxn, index) => {
-        initialStatuses[`${metaTxn.chainId}-${index}`] = { status: 'pending' }
-      })
-      setMetaTxnStatuses(initialStatuses)
-    }
-  }, [metaTxns])
 
   // Update the sendMetaTxn mutation
   const sendMetaTxnMutation = useMutation({
@@ -1117,17 +1019,6 @@ export const HomeIndexRoute = () => {
       // Optimistically update UI
       const { selectedId } = variables
       const affectedTxns = selectedId ? [selectedId] : metaTxns?.map((tx) => tx.id) || []
-
-      affectedTxns.forEach((txId) => {
-        const tx = metaTxns?.find((t) => t.id === txId)
-        if (tx) {
-          const operationKey = `${tx.chainId}-${txId}`
-          setMetaTxnStatuses((prev) => ({
-            ...prev,
-            [operationKey]: { status: 'pending', error: undefined },
-          }))
-        }
-      })
     },
     onSuccess: (results) => {
       // Update states based on results
@@ -1141,19 +1032,6 @@ export const HomeIndexRoute = () => {
           setOperationHashes((prev) => ({
             ...prev,
             [operationKey]: opHash,
-          }))
-
-          setMetaTxnStatuses((prev) => ({
-            ...prev,
-            [operationKey]: { status: 'pending', error: undefined },
-          }))
-        } else if (error) {
-          setMetaTxnStatuses((prev) => ({
-            ...prev,
-            [operationKey]: {
-              status: 'failed',
-              error: `Relay failed: ${error}`,
-            },
           }))
         }
       })
@@ -2162,7 +2040,7 @@ export const HomeIndexRoute = () => {
                   <Text variant="small" color="secondary">
                     <strong className="text-blue-300">Transaction Hash: </strong>
                     <span className="text-yellow-300 break-all font-mono">
-                      {metaTxnStatus?.txnHash || 'Not sent yet'}
+                      {originCallStatus?.txnHash || 'Not sent yet'}
                     </span>
                   </Text>
                 </div>
@@ -2171,38 +2049,38 @@ export const HomeIndexRoute = () => {
                     <strong className="text-blue-300">Status: </strong>
                     <span
                       className={`font-mono ${
-                        metaTxnStatus?.status === 'Success'
+                        originCallStatus?.status === 'Success'
                           ? 'text-green-400'
-                          : metaTxnStatus?.status === 'Failed'
+                          : originCallStatus?.status === 'Failed'
                             ? 'text-red-400'
-                            : metaTxnStatus?.status === 'Pending' || metaTxnStatus?.status === 'Sending...'
+                            : originCallStatus?.status === 'Pending' || originCallStatus?.status === 'Sending...'
                               ? 'text-yellow-400'
                               : 'text-gray-400'
                       }`}
                     >
-                      {metaTxnStatus?.status || 'Idle'}
+                      {originCallStatus?.status || 'Idle'}
                     </span>
                     {isWaitingForReceipt && <span className="text-yellow-400 ml-1">(Waiting for confirmation...)</span>}
                   </Text>
                 </div>
-                {metaTxnStatus?.revertReason && (
+                {originCallStatus?.revertReason && (
                   <div className="bg-gray-800/70 p-3 rounded-md">
                     <Text variant="small" color="secondary" className="break-all">
                       <strong className="text-blue-300">Revert Reason: </strong>
-                      <span className="font-mono text-red-300">{metaTxnStatus.revertReason}</span>
+                      <span className="font-mono text-red-300">{originCallStatus.revertReason}</span>
                     </Text>
                   </div>
                 )}
                 <div className="bg-gray-800/70 p-3 rounded-md">
                   <Text variant="small" color="secondary">
                     <strong className="text-blue-300">Gas Used: </strong>
-                    <span className="font-mono">{metaTxnStatus?.gasUsed || '0'}</span>
+                    <span className="font-mono">{originCallStatus?.gasUsed || '0'}</span>
                   </Text>
                 </div>
                 <div className="bg-gray-800/70 p-3 rounded-md">
                   <Text variant="small" color="secondary">
                     <strong className="text-blue-300">Effective Gas Price: </strong>
-                    <span className="font-mono">{metaTxnStatus?.effectiveGasPrice || '0'}</span>
+                    <span className="font-mono">{originCallStatus?.effectiveGasPrice || '0'}</span>
                   </Text>
                 </div>
               </div>
