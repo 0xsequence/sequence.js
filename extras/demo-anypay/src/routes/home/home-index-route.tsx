@@ -565,6 +565,7 @@ export const HomeIndexRoute = () => {
           data: originCallParams.data,
           value: originCallParams.value,
           chainId: originCallParams.chainId,
+          gas: 500000n, // Add a reasonable gas limit
         },
         {
           onSuccess: (hash) => {
@@ -617,6 +618,7 @@ export const HomeIndexRoute = () => {
           data: originCallParams.data,
           value: originCallParams.value,
           chainId: originCallParams.chainId,
+          gas: 500000n, // Add a reasonable gas limit
         },
         {
           onSuccess: (hash) => {
@@ -735,6 +737,7 @@ export const HomeIndexRoute = () => {
           data: originCallParams.data!,
           value: originCallParams.value!,
           chainId: originCallParams.chainId!,
+          gas: 500000n, // Add a reasonable gas limit
         },
         {
           onSuccess: (hash) => {
@@ -1015,14 +1018,9 @@ export const HomeIndexRoute = () => {
         throw error
       }
     },
-    onMutate: (variables) => {
-      // Optimistically update UI
-      const { selectedId } = variables
-      const affectedTxns = selectedId ? [selectedId] : metaTxns?.map((tx) => tx.id) || []
-    },
     onSuccess: (results) => {
       // Update states based on results
-      results.forEach(({ operationKey, opHash, success, error }) => {
+      results.forEach(({ operationKey, opHash, success }) => {
         if (success && opHash) {
           setSentMetaTxns((prev) => ({
             ...prev,
