@@ -1,10 +1,11 @@
 import { Config, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
-import { RecoverySigner } from './types/signer.js'
+import { Kinds, RecoverySigner } from './types/signer.js'
 import { Envelope } from '@0xsequence/wallet-core'
 import { QueuedRecoveryPayload } from './types/recovery.js'
 import { Actions } from './types/index.js'
+import { MnemonicHandler } from './handlers/mnemonic.js'
 
 export class Recovery {
   constructor(private readonly shared: Shared) {}
@@ -31,7 +32,12 @@ export class Recovery {
       return
     }
 
-    const genericTree = await this.shared.sequence.stateProvider.getTree(ext)
+    const sapientSigner = modules[idx]
+    if (!sapientSigner) {
+      throw new Error('recovery-module-not-found')
+    }
+
+    const genericTree = await this.shared.sequence.stateProvider.getTree(sapientSigner.imageHash)
     if (!genericTree) {
       throw new Error('recovery-module-tree-not-found')
     }
@@ -129,11 +135,25 @@ export class Recovery {
     })
   }
 
-  async addRecoverySigner(address: Address.Address) {
-    const { modules } = await this.shared.modules.wallets.getConfigurationParts(address)
+  async addRecoveryMnemonic(wallet: Address.Address, mnemonic: string) {
+    const signer = MnemonicHandler.toSigner(mnemonic)
+    if (!signer) {
+      throw new Error('invalid-mnemonic')
+    }
+
+    await signer.witness(this.shared.sequence.stateProvider, wallet, {
+      isForRecovery: true,
+      signerKind: Kinds.LoginMnemonic,
+    })
+
+    return this.addRecoverySigner(wallet, signer.address)
+  }
+
+  async addRecoverySigner(wallet: Address.Address, address: Address.Address) {
+    const { modules } = await this.shared.modules.wallets.getConfigurationParts(wallet)
     await this.addRecoverySignerToModules(modules, address)
     return this.shared.modules.wallets.requestConfigurationUpdate(
-      address,
+      wallet,
       {
         modules,
       },
@@ -142,15 +162,24 @@ export class Recovery {
     )
   }
 
-  async removeRecoverySigner(address: Address.Address) {
-    const { modules } = await this.shared.modules.wallets.getConfigurationParts(address)
+  async removeRecoverySigner(wallet: Address.Address, address: Address.Address) {
+    const { modules } = await this.shared.modules.wallets.getConfigurationParts(wallet)
     await this.removeRecoverySignerFromModules(modules, address)
     return this.shared.modules.wallets.requestConfigurationUpdate(
-      address,
+      wallet,
       { modules },
       Actions.RemoveRecoverySigner,
       'wallet-webapp',
     )
+  }
+
+  async completeRecoveryUpdate(requestId: string) {
+    const request = await this.shared.modules.signatures.get(requestId)
+    if (request.action !== 'add-recovery-signer' && request.action !== 'remove-recovery-signer') {
+      throw new Error('invalid-recovery-update-action')
+    }
+
+    return this.shared.modules.wallets.completeConfigurationUpdate(requestId)
   }
 
   async getRecoverySigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {
@@ -171,11 +200,17 @@ export class Recovery {
       throw new Error('recovery-module-tree-incomplete')
     }
 
+    const kos = await this.shared.modules.signers.resolveKinds(
+      address,
+      leaves.map((l) => l.signer),
+    )
+
     return leaves
       .filter((l) => l.signer !== '0x0000000000000000000000000000000000000000')
       .map((l) => ({
         address: l.signer,
-        kind: 'recovery',
+        kind: kos.find((s) => s.address === l.signer)?.kind || 'unknown',
+        isRecovery: true,
         minTimestamp: l.minTimestamp,
         requiredDeltaTime: l.requiredDeltaTime,
       }))

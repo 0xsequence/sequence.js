@@ -500,4 +500,20 @@ export class Manager {
   public async completeRecoveryPayload(requestId: string) {
     return this.shared.modules.recovery.completeRecoveryPayload(requestId)
   }
+
+  public async addRecoveryMnemonic(wallet: Address.Address, mnemonic: string) {
+    return this.shared.modules.recovery.addRecoveryMnemonic(wallet, mnemonic)
+  }
+
+  public async addRecoverySigner(wallet: Address.Address, address: Address.Address) {
+    return this.shared.modules.recovery.addRecoverySigner(wallet, address)
+  }
+
+  public async removeRecoverySigner(wallet: Address.Address, address: Address.Address) {
+    return this.shared.modules.recovery.removeRecoverySigner(wallet, address)
+  }
+
+  public async completeRecoveryUpdate(requestId: string) {
+    return this.shared.modules.recovery.completeRecoveryUpdate(requestId)
+  }
 }

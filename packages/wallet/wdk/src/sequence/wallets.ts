@@ -543,6 +543,26 @@ export class Wallets {
     return requestId
   }
 
+  public async completeConfigurationUpdate(requestId: string) {
+    const request = await this.shared.modules.signatures.get(requestId)
+    if (!Payload.isConfigUpdate(request.envelope.payload)) {
+      throw new Error('invalid-request-payload')
+    }
+
+    if (!Envelope.reachedThreshold(request.envelope)) {
+      throw new Error('insufficient-weight')
+    }
+
+    const wallet = new CoreWallet(request.wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>)
+    await this.shared.modules.signatures.complete(requestId)
+  }
+
   async login(args: LoginArgs): Promise<string | undefined> {
     if (isLoginToWalletArgs(args)) {
       const prevWallet = await this.exists(args.wallet)
@@ -642,28 +662,12 @@ export class Wallets {
   async completeLogin(requestId: string) {
     const request = await this.shared.modules.signatures.get(requestId)
 
-    const envelope = request.envelope
-    if (!Payload.isConfigUpdate(envelope.payload)) {
-      throw new Error('invalid-request-payload')
-    }
-
-    if (!Envelope.reachedThreshold(envelope)) {
-      throw new Error('insufficient-weight')
-    }
-
     const walletEntry = await this.shared.databases.manager.get(request.wallet)
     if (!walletEntry) {
       throw new Error('login-for-wallet-not-found')
     }
 
-    const wallet = new CoreWallet(request.wallet, {
-      context: this.shared.sequence.context,
-      stateProvider: this.shared.sequence.stateProvider,
-      guest: this.shared.sequence.guest,
-    })
-
-    await wallet.submitUpdate(envelope as Envelope.Signed<Payload.ConfigUpdate>)
-    await this.shared.modules.signatures.complete(requestId)
+    await this.completeConfigurationUpdate(requestId)
 
     // Save entry in the manager db
     await this.shared.databases.manager.set({
@@ -731,10 +735,6 @@ export class Wallets {
 
   async completeLogout(requestId: string, options?: { skipValidateSave?: boolean }) {
     const request = await this.shared.modules.signatures.get(requestId)
-    if (!Payload.isConfigUpdate(request.envelope.payload)) {
-      throw new Error('invalid-request-payload')
-    }
-
     const walletEntry = await this.shared.databases.manager.get(request.wallet)
     if (!walletEntry) {
       throw new Error('wallet-not-found')
@@ -747,17 +747,7 @@ export class Wallets {
       )
     }
 
-    const wallet = new CoreWallet(request.wallet, {
-      context: this.shared.sequence.context,
-      stateProvider: this.shared.sequence.stateProvider,
-      guest: this.shared.sequence.guest,
-    })
-
-    await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>, {
-      validateSave: !options?.skipValidateSave,
-    })
-
-    await this.shared.modules.signatures.complete(requestId)
+    await this.completeConfigurationUpdate(requestId)
     await this.shared.databases.manager.del(request.wallet)
     await this.shared.modules.devices.remove(walletEntry.device)
   }
