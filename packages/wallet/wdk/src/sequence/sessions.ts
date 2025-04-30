@@ -1,67 +1,47 @@
-import { Signers as CoreSigners, Envelope, Wallet } from '@0xsequence/wallet-core'
+import { Signers as CoreSigners, Envelope } from '@0xsequence/wallet-core'
 import {
   Attestation,
   Config,
+  Constants,
   GenericTree,
   Payload,
   Signature as SequenceSignature,
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
+import { Address, Bytes, Hex } from 'ox'
 import { IdentityType } from '../identity/index.js'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
+import { Actions } from './types/signature-request.js'
 
 export type AuthorizeImplicitSessionArgs = {
   target: string
   applicationData?: Hex.Hex
 }
 
+const DefaultSessionManagerAddresses = [Constants.DefaultSessionManager]
+
 export class Sessions {
-  private readonly _wallets: Map<Address.Address, Wallet> = new Map()
-  private readonly _managers: Map<Address.Address, CoreSigners.SessionManager> = new Map()
-
-  constructor(private readonly shared: Shared) {}
-
-  getCoreWallet(walletAddress: Address.Address): Wallet {
-    if (this._wallets.has(walletAddress)) {
-      return this._wallets.get(walletAddress)!
-    }
-    const wallet = new Wallet(walletAddress, {
-      context: this.shared.sequence.context,
-      guest: this.shared.sequence.guest,
-      stateProvider: this.shared.sequence.stateProvider,
-    })
-    this._wallets.set(walletAddress, wallet)
-    return wallet
-  }
-
-  async getManagerForWallet(walletAddress: Address.Address, chainId?: bigint): Promise<CoreSigners.SessionManager> {
-    if (this._managers.has(walletAddress)) {
-      return this._managers.get(walletAddress)!
-    }
-
-    // Get the provider if available
-    let provider: Provider.Provider | undefined
-    if (chainId) {
-      const network = this.shared.sequence.networks.find((network) => network.chainId === chainId)
-      if (network) {
-        provider = Provider.from(RpcTransport.fromHttp(network.rpc))
-      }
-    }
-
-    // Create the controller
-    const manager = new CoreSigners.SessionManager(this.getCoreWallet(walletAddress), {
-      provider,
-    })
-    this._managers.set(walletAddress, manager)
-    return manager
-  }
+  constructor(
+    private readonly shared: Shared,
+    private readonly sessionManagerAddresses: Address.Address[] = DefaultSessionManagerAddresses,
+  ) {}
 
   async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
-    const manager = await this.getManagerForWallet(walletAddress)
-    return manager.topology
+    const { modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
+    const managerLeaf = modules.find((leaf) =>
+      this.sessionManagerAddresses.some((addr) => Address.isEqual(addr, leaf.address)),
+    )
+    if (!managerLeaf) {
+      throw new Error('Session manager not found')
+    }
+    const imageHash = managerLeaf.imageHash
+    const tree = await this.shared.sequence.stateProvider.getTree(imageHash)
+    if (!tree) {
+      throw new Error('Session topology not found')
+    }
+    return SessionConfig.configurationTreeToSessionsTopology(tree)
   }
 
   async prepareAuthorizeImplicitSession(
@@ -223,66 +203,38 @@ export class Sessions {
     await this.shared.sequence.stateProvider.saveTree(tree)
     const newImageHash = GenericTree.hash(tree)
 
-    // Get the old wallet configuration
-    const wallet = this.getCoreWallet(walletAddress)
-    const { configuration } = await wallet.getStatus()
-    let newConfiguration = Config.configFromJson(Config.configToJson(configuration)) // Clone the configuration
-
     // Find the session manager in the old configuration
-    const { address: managerAddress } = await this.getManagerForWallet(walletAddress)
-    const managerLeaf = Config.findSignerLeaf(newConfiguration, managerAddress)
-    if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
-      // Just add it
-      const newManagerLeaf: Config.SapientSignerLeaf = {
+    const { modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
+    const managerLeaf = modules.find((leaf) =>
+      this.sessionManagerAddresses.some((addr) => Address.isEqual(addr, leaf.address)),
+    )
+    if (!managerLeaf) {
+      // Missing. Add it
+      modules.push({
         ...ManagerOptionsDefaults.defaultSessionsTopology,
-        address: managerAddress,
         imageHash: newImageHash,
-      }
-      newConfiguration.topology = Config.mergeTopology(newConfiguration.topology, newManagerLeaf)
+      })
     } else {
       // Update the configuration to use the new session manager image hash
       managerLeaf.imageHash = newImageHash
     }
 
-    // Increment the checkpoint
-    newConfiguration.checkpoint += 1n
-
-    // Update the wallet configuration
-    const envelope = await wallet.prepareUpdate(newConfiguration)
-    return await this.shared.modules.signatures.request(envelope, 'session-update', {
+    return this.shared.modules.wallets.requestConfigurationUpdate(
+      walletAddress,
+      {
+        modules,
+      },
+      Actions.SessionUpdate,
       origin,
-    })
+    )
   }
 
-  async completeSessionUpdate(walletAddress: Address.Address, requestId: string) {
-    console.log('Completing session update for wallet:', walletAddress, 'requestId:', requestId)
+  async completeSessionUpdate(requestId: string) {
     const sigRequest = await this.shared.modules.signatures.get(requestId)
     if (sigRequest.action !== 'session-update' || !Payload.isConfigUpdate(sigRequest.envelope.payload)) {
       throw new Error('Invalid action')
     }
-    const envelope = sigRequest.envelope as Envelope.Signed<Payload.ConfigUpdate>
 
-    const configuration = await this.shared.sequence.stateProvider.getConfiguration(envelope.payload.imageHash)
-    if (!configuration) {
-      throw new Error('Wallet configuration not found')
-    }
-
-    // Find the session manager in the new configuration
-    const { address: managerAddress } = await this.getManagerForWallet(walletAddress)
-    const managerLeaf = Config.findSignerLeaf(configuration, managerAddress)
-    if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
-      throw new Error('Session manager not found in configuration')
-    }
-    const sessionTree = await this.shared.sequence.stateProvider.getTree(managerLeaf.imageHash)
-    if (!sessionTree) {
-      throw new Error('Session tree not found')
-    }
-    const topology = SessionConfig.configurationTreeToSessionsTopology(sessionTree)
-    console.log('completeUpdateConfiguration Topology:', topology)
-
-    // Submit the update with the new topology
-    console.log('Submitting update:', envelope.payload.imageHash)
-    await this.getCoreWallet(walletAddress).submitUpdate(envelope)
-    return this.shared.modules.signatures.complete(requestId)
+    return this.shared.modules.wallets.completeConfigurationUpdate(requestId)
   }
 }
