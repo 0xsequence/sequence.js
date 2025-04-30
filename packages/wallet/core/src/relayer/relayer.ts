@@ -13,12 +13,20 @@ export interface FeeQuote {
   _quote: unknown
 }
 
-export type OperationUknownStatus = {
+export type OperationUnknownStatus = {
   status: 'unknown'
+}
+
+export type OperationQueuedStatus = {
+  status: 'queued'
 }
 
 export type OperationPendingStatus = {
   status: 'pending'
+}
+
+export type OperationPendingPreconditionStatus = {
+  status: 'pending-precondition'
 }
 
 export type OperationConfirmedStatus = {
@@ -32,8 +40,10 @@ export type OperationFailedStatus = {
 }
 
 export type OperationStatus =
-  | OperationUknownStatus
+  | OperationUnknownStatus
+  | OperationQueuedStatus
   | OperationPendingStatus
+  | OperationPendingPreconditionStatus
   | OperationConfirmedStatus
   | OperationFailedStatus
 

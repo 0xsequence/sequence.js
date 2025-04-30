@@ -12,7 +12,7 @@ import * as chains from 'viem/chains'
 import { AnyPay } from '@0xsequence/wallet-core'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
-import { useMetaTxnMonitor } from '@/hooks/useMetaTxnMonitor'
+import { useMetaTxnsMonitor, MetaTxn } from '@/hooks/useMetaTxnsMonitor'
 import { useRelayers } from '@/hooks/useRelayers'
 import {
   AlertTriangle,
@@ -27,6 +27,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
+import { Relayer } from '@0xsequence/wallet-core'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
@@ -163,6 +164,40 @@ export const HomeIndexRoute = () => {
   const RETRY_WINDOW_MS = 10_000
 
   const { getRelayer } = useRelayers()
+
+  // Add monitoring for each meta transaction
+  const metaTxnMonitorStatuses = useMetaTxnsMonitor(
+    metaTxns as unknown as MetaTxn[] | undefined,
+    operationHashes,
+    getRelayer,
+  )
+
+  // Update metaTxnStatuses based on monitor results
+  useEffect(() => {
+    if (!metaTxns) return
+
+    const newStatuses: {
+      [key: string]: {
+        status: 'pending' | 'success' | 'failed'
+        txHash?: string
+        error?: string
+      }
+    } = {}
+
+    metaTxns.forEach((metaTxn) => {
+      const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+      const monitorStatus = metaTxnMonitorStatuses[operationKey]
+
+      newStatuses[operationKey] = {
+        status:
+          monitorStatus?.status === 'confirmed' ? 'success' : monitorStatus?.status === 'failed' ? 'failed' : 'pending',
+        txHash: monitorStatus && 'txHash' in monitorStatus ? String(monitorStatus.txHash) : undefined,
+        error: monitorStatus && 'reason' in monitorStatus ? String(monitorStatus.reason) : undefined,
+      }
+    })
+
+    setMetaTxnStatuses(newStatuses)
+  }, [metaTxns, metaTxnMonitorStatuses])
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
     try {
@@ -965,52 +1000,6 @@ export const HomeIndexRoute = () => {
     }
   }, [account.isConnected])
 
-  // Replace the monitoring effect with individual hook calls for each operation
-  const operation0Status = useMetaTxnMonitor(
-    operationHashes[`${intentOperations?.[0]?.chainId}-0`],
-    intentOperations?.[0]?.chainId || '',
-    intentOperations?.[0] ? getRelayer(parseInt(intentOperations[0].chainId)) : undefined,
-  )
-
-  const operation1Status = useMetaTxnMonitor(
-    operationHashes[`${intentOperations?.[1]?.chainId}-1`],
-    intentOperations?.[1]?.chainId || '',
-    intentOperations?.[1] ? getRelayer(parseInt(intentOperations[1].chainId)) : undefined,
-  )
-
-  // Update the monitoring effect
-  useEffect(() => {
-    if (!metaTxns) return
-
-    const newStatuses: {
-      [key: string]: {
-        status: 'pending' | 'success' | 'failed'
-        txHash?: string
-        error?: string
-        preconditionsMet?: boolean
-        lastPreconditionCheck?: string
-      }
-    } = {}
-
-    if (operation0Status) {
-      const metaTxn = metaTxns[0]
-      if (metaTxn) {
-        newStatuses[`${metaTxn.chainId}-0`] = operation0Status
-      }
-    }
-    if (operation1Status) {
-      const metaTxn = metaTxns[1]
-      if (metaTxn) {
-        newStatuses[`${metaTxn.chainId}-1`] = operation1Status
-      }
-    }
-
-    setMetaTxnStatuses((prev) => ({
-      ...prev,
-      ...newStatuses,
-    }))
-  }, [metaTxns, operation0Status, operation1Status])
-
   // Effect to cleanup operation statuses and hashes when intent operations are reset
   useEffect(() => {
     if (!intentOperations) {
@@ -1730,10 +1719,10 @@ export const HomeIndexRoute = () => {
                                 <span className="font-mono text-yellow-300 break-all">{tx.id || 'N/A'}</span>
                               </Text>
                             </div>
-                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
+                            <div>
                               <Text variant="small" color="secondary">
                                 <strong className="text-blue-300">Contract: </strong>
-                                <span className="text-yellow-300 break-all font-mono">{tx.contract}</span>
+                                <span className="font-mono text-yellow-300 break-all">{String(tx.contract || '')}</span>
                               </Text>
                             </div>
                             <div className="bg-gray-800/70 p-2 rounded-md mb-1">
@@ -2260,64 +2249,109 @@ export const HomeIndexRoute = () => {
                 Meta Transactions Status
               </Text>
               <div className="space-y-4">
-                {metaTxns?.map((metaTxn, index) => (
-                  <div key={`metatx-${index}`} className="bg-gray-800/70 p-3 rounded-md">
-                    <div className="flex items-center justify-between mb-2">
-                      <Text variant="small" color="primary" className="font-semibold flex items-center">
-                        <NetworkImage chainId={parseInt(metaTxn.chainId)} size="sm" className="w-4 h-4 mr-2" />
-                        Meta Transaction #{index + 1} - Chain {metaTxn.chainId}
-                        <span className="text-gray-400 text-xs ml-2">
-                          ({getChainInfo(parseInt(metaTxn.chainId))?.name || 'Unknown Chain'})
-                        </span>
-                      </Text>
-                      <div
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'success'
-                            ? 'bg-green-900/30 text-green-400 border border-green-700/30'
-                            : metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'failed'
-                              ? 'bg-red-900/30 text-red-400 border border-red-700/30'
-                              : 'bg-yellow-900/30 text-yellow-400 border border-yellow-700/30'
-                        }`}
-                      >
-                        {metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'success'
-                          ? 'Success'
-                          : metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.status === 'failed'
-                            ? 'Failed'
-                            : 'Pending'}
-                      </div>
-                    </div>
-                    <div className="mt-2 space-y-2">
-                      <div>
-                        <Text variant="small" color="secondary">
-                          <strong className="text-blue-300">Contract: </strong>
-                          <span className="font-mono text-yellow-300 break-all">{metaTxn.contract}</span>
-                        </Text>
-                      </div>
-                      <div>
-                        <Text variant="small" color="secondary">
-                          <strong className="text-blue-300">ID: </strong>
-                          <span className="font-mono text-yellow-300 break-all">{metaTxn.id || 'N/A'}</span>
-                        </Text>
-                      </div>
-                      {metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.txHash && (
-                        <Text variant="small" color="secondary">
-                          <strong className="text-blue-300">Tx Hash: </strong>
-                          <span className="font-mono text-yellow-300 break-all">
-                            {metaTxnStatuses[`${metaTxn.chainId}-${index}`].txHash}
+                {metaTxns?.map((metaTxn, index) => {
+                  const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+                  const monitorStatus = metaTxnMonitorStatuses[operationKey]
+                  const typedMetaTxn = metaTxn as unknown as MetaTxn
+
+                  // Type guard for operation status with gas used
+                  type OperationStatusWithGas = {
+                    status: 'confirmed'
+                    gasUsed: bigint
+                    txHash: string
+                    transactionHash: `0x${string}`
+                  }
+
+                  const hasGasUsed = (
+                    status: Relayer.OperationStatus | undefined,
+                  ): status is OperationStatusWithGas => {
+                    return (
+                      !!status &&
+                      status.status === 'confirmed' &&
+                      'gasUsed' in status &&
+                      typeof status.gasUsed === 'bigint'
+                    )
+                  }
+
+                  const getStatusDisplay = () => {
+                    if (!monitorStatus) return 'Pending'
+                    switch (monitorStatus.status) {
+                      case 'confirmed':
+                        return 'Success'
+                      case 'failed':
+                        return 'Failed'
+                      case 'unknown':
+                        return 'Unknown'
+                      default:
+                        return 'Pending'
+                    }
+                  }
+
+                  const getStatusClass = () => {
+                    if (!monitorStatus) return 'bg-yellow-900/30 text-yellow-400 border border-yellow-700/30'
+                    switch (monitorStatus.status) {
+                      case 'confirmed':
+                        return 'bg-green-900/30 text-green-400 border border-green-700/30'
+                      case 'failed':
+                        return 'bg-red-900/30 text-red-400 border border-red-700/30'
+                      default:
+                        return 'bg-yellow-900/30 text-yellow-400 border border-yellow-700/30'
+                    }
+                  }
+
+                  return (
+                    <div key={`metatx-${index}`} className="bg-gray-800/70 p-3 rounded-md">
+                      <div className="flex items-center justify-between mb-2">
+                        <Text variant="small" color="primary" className="font-semibold flex items-center">
+                          <NetworkImage chainId={parseInt(typedMetaTxn.chainId)} size="sm" className="w-4 h-4 mr-2" />
+                          Meta Transaction #{index + 1} - Chain {typedMetaTxn.chainId}
+                          <span className="text-gray-400 text-xs ml-2">
+                            ({getChainInfo(parseInt(typedMetaTxn.chainId))?.name || 'Unknown Chain'})
                           </span>
                         </Text>
-                      )}
-                      {metaTxnStatuses[`${metaTxn.chainId}-${index}`]?.error && (
-                        <Text variant="small" color="negative">
-                          <strong className="text-red-300">Error: </strong>
-                          <span className="font-mono break-all">
-                            {metaTxnStatuses[`${metaTxn.chainId}-${index}`].error}
-                          </span>
-                        </Text>
-                      )}
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass()}`}>
+                          {getStatusDisplay()}
+                        </div>
+                      </div>
+                      <div className="mt-2 space-y-2">
+                        {typedMetaTxn.contract !== undefined && (
+                          <div>
+                            <Text variant="small" color="secondary">
+                              <strong className="text-blue-300">Contract: </strong>
+                              <span className="font-mono text-yellow-300 break-all">
+                                {typedMetaTxn.contract || 'N/A'}
+                              </span>
+                            </Text>
+                          </div>
+                        )}
+                        <div>
+                          <Text variant="small" color="secondary">
+                            <strong className="text-blue-300">ID: </strong>
+                            <span className="font-mono text-yellow-300 break-all">{typedMetaTxn.id || 'N/A'}</span>
+                          </Text>
+                        </div>
+                        {monitorStatus?.status === 'confirmed' && monitorStatus && 'txHash' in monitorStatus && (
+                          <Text variant="small" color="secondary">
+                            <strong className="text-blue-300">Tx Hash: </strong>
+                            <span className="font-mono text-yellow-300 break-all">{String(monitorStatus.txHash)}</span>
+                          </Text>
+                        )}
+                        {monitorStatus?.status === 'failed' && monitorStatus && 'reason' in monitorStatus && (
+                          <Text variant="small" color="negative">
+                            <strong className="text-red-300">Error: </strong>
+                            <span className="font-mono break-all">{String(monitorStatus.reason)}</span>
+                          </Text>
+                        )}
+                        {hasGasUsed(monitorStatus) && (
+                          <Text variant="small" color="secondary">
+                            <strong className="text-blue-300">Gas Used: </strong>
+                            <span className="font-mono">{monitorStatus.gasUsed.toString()}</span>
+                          </Text>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
                 {!metaTxns?.length && (
                   <div className="bg-gray-800/70 p-3 rounded-md">
                     <Text variant="small" color="secondary" className="text-center">
