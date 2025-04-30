@@ -172,8 +172,7 @@ export class Sessions {
     permissions: CoreSigners.Session.ExplicitParams,
     origin?: string,
   ): Promise<string> {
-    const manager = await this.getManagerForWallet(walletAddress)
-    const topology = await manager.topology
+    const topology = await this.getSessionTopology(walletAddress)
     const newTopology = SessionConfig.addExplicitSession(topology, {
       ...permissions,
       signer: sessionAddress,
@@ -186,8 +185,7 @@ export class Sessions {
     sessionAddress: Address.Address,
     origin?: string,
   ): Promise<string> {
-    const manager = await this.getManagerForWallet(walletAddress)
-    const topology = await manager.topology
+    const topology = await this.getSessionTopology(walletAddress)
     const newTopology = SessionConfig.removeExplicitSession(topology, sessionAddress)
     if (!newTopology) {
       throw new Error('Session not found')
@@ -200,8 +198,7 @@ export class Sessions {
     address: Address.Address,
     origin?: string,
   ): Promise<string> {
-    const manager = await this.getManagerForWallet(walletAddress)
-    const topology = await manager.topology
+    const topology = await this.getSessionTopology(walletAddress)
     const newTopology = SessionConfig.addToImplicitBlacklist(topology, address)
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
@@ -211,8 +208,7 @@ export class Sessions {
     address: Address.Address,
     origin?: string,
   ): Promise<string> {
-    const manager = await this.getManagerForWallet(walletAddress)
-    const topology = await manager.topology
+    const topology = await this.getSessionTopology(walletAddress)
     const newTopology = SessionConfig.removeFromImplicitBlacklist(topology, address)
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
