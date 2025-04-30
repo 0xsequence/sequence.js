@@ -9,6 +9,7 @@ import { Shared } from './manager.js'
 import { Wallet } from './types/wallet.js'
 import { Kinds, RecoverySigner, WitnessExtraSignerKind } from './types/signer.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
+import { Action } from './types/index.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple-pkce'
@@ -494,6 +495,54 @@ export class Wallets {
     return wallet.address
   }
 
+  public async getConfigurationParts(address: Address.Address) {
+    const wallet = new CoreWallet(address, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const status = await wallet.getStatus()
+    return fromConfig(status.configuration)
+  }
+
+  public async requestConfigurationUpdate(
+    address: Address.Address,
+    changes: Partial<ReturnType<typeof fromConfig>>,
+    action: Action,
+    origin?: string,
+  ) {
+    const wallet = new CoreWallet(address, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const status = await wallet.getStatus()
+    const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
+
+    const nextLoginTopology = changes.loginTopology ?? loginTopology
+    const nextDevicesTopology = changes.devicesTopology ?? devicesTopology
+    const nextModules = changes.modules ?? modules
+    const nextGuardTopology = changes.guardTopology ?? guardTopology
+
+    const envelope = await wallet.prepareUpdate(
+      toConfig(
+        status.configuration.checkpoint + 1n,
+        nextLoginTopology,
+        nextDevicesTopology,
+        nextModules,
+        nextGuardTopology,
+      ),
+    )
+
+    const requestId = await this.shared.modules.signatures.request(envelope, action, {
+      origin,
+    })
+
+    return requestId
+  }
+
   async login(args: LoginArgs): Promise<string | undefined> {
     if (isLoginToWalletArgs(args)) {
       const prevWallet = await this.exists(args.wallet)
@@ -501,16 +550,8 @@ export class Wallets {
         throw new Error('wallet-already-logged-in')
       }
 
-      const wallet = new CoreWallet(args.wallet, {
-        context: this.shared.sequence.context,
-        stateProvider: this.shared.sequence.stateProvider,
-        guest: this.shared.sequence.guest,
-      })
-
       const device = await this.shared.modules.devices.create()
-      const status = await wallet.getStatus()
-
-      const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
+      const { devicesTopology, modules, guardTopology } = await this.getConfigurationParts(args.wallet)
 
       // Add device to devices topology
       const prevDevices = Config.getSigners(devicesTopology)
@@ -534,18 +575,8 @@ export class Wallets {
         await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
       }
 
-      const envelope = await wallet.prepareUpdate(
-        toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
-      )
-
-      const requestId = await this.shared.modules.signatures.request(envelope, 'login', {
-        origin: 'wallet-webapp',
-      })
-
-      await this.shared.modules.devices.witness(device.address, wallet.address)
-
       await this.shared.databases.manager.set({
-        address: wallet.address,
+        address: args.wallet,
         status: 'logging-in',
         loginDate: new Date().toISOString(),
         device: device.address,
@@ -553,7 +584,15 @@ export class Wallets {
         useGuard: guardTopology !== undefined,
       })
 
-      return requestId
+      return this.requestConfigurationUpdate(
+        args.wallet,
+        {
+          devicesTopology: nextDevicesTopology,
+          modules,
+        },
+        'login',
+        'wallet-webapp',
+      )
     }
 
     if (isLoginToMnemonicArgs(args)) {
@@ -662,15 +701,7 @@ export class Wallets {
       throw new Error('device-not-found')
     }
 
-    const walletObj = new CoreWallet(wallet, {
-      context: this.shared.sequence.context,
-      stateProvider: this.shared.sequence.stateProvider,
-      guest: this.shared.sequence.guest,
-    })
-
-    const status = await walletObj.getStatus()
-    const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
-
+    const { devicesTopology, modules } = await this.getConfigurationParts(wallet)
     const nextDevicesTopology = buildCappedTree([
       ...Config.getSigners(devicesTopology)
         .signers.filter((x) => x !== '0x0000000000000000000000000000000000000000' && x !== device.address)
@@ -683,15 +714,15 @@ export class Wallets {
       await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, device.address)
     }
 
-    console.log('nextDevicesTopology', nextDevicesTopology)
-
-    const envelope = await walletObj.prepareUpdate(
-      toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
+    const requestId = await this.requestConfigurationUpdate(
+      wallet,
+      {
+        devicesTopology: nextDevicesTopology,
+        modules,
+      },
+      'logout',
+      'wallet-webapp',
     )
-
-    const requestId = await this.shared.modules.signatures.request(envelope, 'logout', {
-      origin: 'wallet-webapp',
-    })
 
     await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
 
