@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect, useSendTransaction, useSwitchChain } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useSendTransaction, useSwitchChain, useEstimateGas } from 'wagmi'
 import { Connector } from 'wagmi'
 import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import { GetIntentOperationsReturn, IntentOperation, IntentPrecondition, GetIntentConfigReturn } from '@0xsequence/api'
@@ -107,6 +107,7 @@ export const HomeIndexRoute = () => {
   const { switchChain, isPending: isSwitchingChain, error: switchChainError } = useSwitchChain()
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null)
   const [showCustomCallForm, setShowCustomCallForm] = useState(false)
+  const [isEstimatingGas, setIsEstimatingGas] = useState(false)
   const [customCallData, setCustomCallData] = useState({
     to: '',
     data: '',
@@ -161,6 +162,22 @@ export const HomeIndexRoute = () => {
     metaTxns as unknown as MetaTxn[] | undefined,
     operationHashes,
     getRelayer,
+  )
+
+  // Add gas estimation hook with proper types
+  const {
+    data: estimatedGas,
+    isError: isEstimateError,
+    error: estimateError,
+  } = useEstimateGas(
+    originCallParams?.to && originCallParams?.chainId && !originCallParams.error
+      ? {
+          to: originCallParams.to || undefined,
+          data: originCallParams.data || undefined,
+          value: originCallParams.value || undefined,
+          chainId: originCallParams.chainId || undefined,
+        }
+      : undefined,
   )
 
   const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
@@ -534,7 +551,6 @@ export const HomeIndexRoute = () => {
 
       try {
         console.log('Switching to chain:', originCallParams.chainId)
-
         await switchChain({ chainId: originCallParams.chainId })
       } catch (error: any) {
         console.error('Failed to switch chain:', error)
@@ -559,12 +575,34 @@ export const HomeIndexRoute = () => {
       setTxnHash(undefined)
       updateOriginCallStatus(undefined, 'sending')
 
+      if (!estimatedGas && !isEstimateError) {
+        setIsEstimatingGas(true)
+        return // Wait for gas estimation
+      }
+
+      if (isEstimateError) {
+        console.error('Gas estimation failed:', estimateError)
+        updateOriginCallStatus(
+          undefined,
+          'reverted',
+          undefined,
+          undefined,
+          `Gas estimation failed: ${estimateError?.message}`,
+        )
+        setIsTransactionInProgress(false)
+        return
+      }
+
+      // Add 20% buffer to estimated gas
+      const gasLimit = estimatedGas ? BigInt(Math.floor(Number(estimatedGas) * 1.2)) : undefined
+
       sendTransaction(
         {
           to: originCallParams.to,
           data: originCallParams.data,
           value: originCallParams.value,
           chainId: originCallParams.chainId,
+          gas: gasLimit,
         },
         {
           onSuccess: (hash) => {
@@ -611,12 +649,33 @@ export const HomeIndexRoute = () => {
         return
       }
 
+      if (!estimatedGas && !isEstimateError) {
+        setIsEstimatingGas(true)
+        return // Wait for gas estimation
+      }
+
+      if (isEstimateError) {
+        console.error('Gas estimation failed:', estimateError)
+        updateOriginCallStatus(
+          undefined,
+          'reverted',
+          undefined,
+          undefined,
+          `Gas estimation failed: ${estimateError?.message}`,
+        )
+        return
+      }
+
+      // Add 20% buffer to estimated gas
+      const gasLimit = estimatedGas ? BigInt(Math.floor(Number(estimatedGas) * 1.2)) : undefined
+
       sendTransaction(
         {
           to: originCallParams.to,
           data: originCallParams.data,
           value: originCallParams.value,
           chainId: originCallParams.chainId,
+          gas: gasLimit,
         },
         {
           onSuccess: (hash) => {
@@ -630,7 +689,12 @@ export const HomeIndexRoute = () => {
         },
       )
     }
-  }, [isAutoExecuteEnabled, originCallParams?.chainId, account.chainId])
+  }, [isAutoExecuteEnabled, originCallParams?.chainId, account.chainId, estimatedGas, isEstimateError])
+
+  // Reset gas estimation state when parameters change
+  useEffect(() => {
+    setIsEstimatingGas(false)
+  }, [originCallParams])
 
   // Only update chain switch required state when needed
   useEffect(() => {
@@ -901,6 +965,11 @@ export const HomeIndexRoute = () => {
     <div className="flex items-center">
       <Loader2 className="animate-spin h-4 w-4 mr-2" />
       {isWaitingForReceipt ? 'Waiting...' : 'Sending...'}
+    </div>
+  ) : isEstimatingGas ? (
+    <div className="flex items-center">
+      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+      Estimating Gas...
     </div>
   ) : isChainSwitchRequired ? (
     'Switch Chain'
