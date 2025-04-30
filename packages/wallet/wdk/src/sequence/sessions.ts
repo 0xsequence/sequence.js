@@ -1,17 +1,17 @@
 import { Signers as CoreSigners, Envelope, Wallet } from '@0xsequence/wallet-core'
 import {
   Attestation,
-  Payload,
-  SessionConfig,
-  Signature as SequenceSignature,
   Config,
+  GenericTree,
+  Payload,
+  Signature as SequenceSignature,
+  SessionConfig,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
-import { SessionController } from '../session/index.js'
-import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
-import { Shared } from './manager.js'
-import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityType } from '../identity/index.js'
+import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
+import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
+import { ManagerOptionsDefaults, Shared } from './manager.js'
 
 export type AuthorizeImplicitSessionArgs = {
   target: string
@@ -19,25 +19,28 @@ export type AuthorizeImplicitSessionArgs = {
 }
 
 export class Sessions {
-  private readonly _sessionControllers: Map<Address.Address, SessionController> = new Map()
+  private readonly _wallets: Map<Address.Address, Wallet> = new Map()
+  private readonly _managers: Map<Address.Address, CoreSigners.SessionManager> = new Map()
 
   constructor(private readonly shared: Shared) {}
 
   getCoreWallet(walletAddress: Address.Address): Wallet {
-    return new Wallet(walletAddress, {
+    if (this._wallets.has(walletAddress)) {
+      return this._wallets.get(walletAddress)!
+    }
+    const wallet = new Wallet(walletAddress, {
       context: this.shared.sequence.context,
       guest: this.shared.sequence.guest,
       stateProvider: this.shared.sequence.stateProvider,
     })
+    this._wallets.set(walletAddress, wallet)
+    return wallet
   }
 
-  async getControllerForWallet(walletAddress: Address.Address, chainId?: bigint): Promise<SessionController> {
-    if (this._sessionControllers.has(walletAddress)) {
-      return this._sessionControllers.get(walletAddress)!
+  async getManagerForWallet(walletAddress: Address.Address, chainId?: bigint): Promise<CoreSigners.SessionManager> {
+    if (this._managers.has(walletAddress)) {
+      return this._managers.get(walletAddress)!
     }
-
-    // Construct the wallet
-    const wallet = this.getCoreWallet(walletAddress)
 
     // Get the provider if available
     let provider: Provider.Provider | undefined
@@ -49,18 +52,16 @@ export class Sessions {
     }
 
     // Create the controller
-    const controller = new SessionController({
-      wallet,
+    const manager = new CoreSigners.SessionManager(this.getCoreWallet(walletAddress), {
       provider,
-      stateProvider: this.shared.sequence.stateProvider,
     })
-    this._sessionControllers.set(walletAddress, controller)
-    return controller
+    this._managers.set(walletAddress, manager)
+    return manager
   }
 
   async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
-    const controller = await this.getControllerForWallet(walletAddress)
-    return controller.getTopology()
+    const manager = await this.getManagerForWallet(walletAddress)
+    return manager.topology
   }
 
   async prepareAuthorizeImplicitSession(
@@ -171,9 +172,13 @@ export class Sessions {
     permissions: CoreSigners.Session.ExplicitParams,
     origin?: string,
   ): Promise<string> {
-    const controller = await this.getControllerForWallet(walletAddress)
-    const envelope = await controller.addExplicitSession(sessionAddress, permissions)
-    return this.prepareSessionUpdate(envelope, origin)
+    const manager = await this.getManagerForWallet(walletAddress)
+    const topology = await manager.topology
+    const newTopology = SessionConfig.addExplicitSession(topology, {
+      ...permissions,
+      signer: sessionAddress,
+    })
+    return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
 
   async removeExplicitSession(
@@ -181,9 +186,13 @@ export class Sessions {
     sessionAddress: Address.Address,
     origin?: string,
   ): Promise<string> {
-    const controller = await this.getControllerForWallet(walletAddress)
-    const envelope = await controller.removeExplicitSession(sessionAddress)
-    return this.prepareSessionUpdate(envelope, origin)
+    const manager = await this.getManagerForWallet(walletAddress)
+    const topology = await manager.topology
+    const newTopology = SessionConfig.removeExplicitSession(topology, sessionAddress)
+    if (!newTopology) {
+      throw new Error('Session not found')
+    }
+    return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
 
   async addBlacklistAddress(
@@ -191,9 +200,10 @@ export class Sessions {
     address: Address.Address,
     origin?: string,
   ): Promise<string> {
-    const controller = await this.getControllerForWallet(walletAddress)
-    const envelope = await controller.addBlacklistAddress(address)
-    return this.prepareSessionUpdate(envelope, origin)
+    const manager = await this.getManagerForWallet(walletAddress)
+    const topology = await manager.topology
+    const newTopology = SessionConfig.addToImplicitBlacklist(topology, address)
+    return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
 
   async removeBlacklistAddress(
@@ -201,29 +211,82 @@ export class Sessions {
     address: Address.Address,
     origin?: string,
   ): Promise<string> {
-    const controller = await this.getControllerForWallet(walletAddress)
-    const envelope = await controller.removeBlacklistAddress(address)
-    return this.prepareSessionUpdate(envelope, origin)
+    const manager = await this.getManagerForWallet(walletAddress)
+    const topology = await manager.topology
+    const newTopology = SessionConfig.removeFromImplicitBlacklist(topology, address)
+    return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
 
   private async prepareSessionUpdate(
-    envelope: Envelope.Envelope<Payload.ConfigUpdate>,
+    walletAddress: Address.Address,
+    topology: SessionConfig.SessionsTopology,
     origin: string = 'wallet-webapp',
   ): Promise<string> {
+    // Store the new configuration
+    const tree = SessionConfig.sessionsTopologyToConfigurationTree(topology)
+    await this.shared.sequence.stateProvider.saveTree(tree)
+    const newImageHash = GenericTree.hash(tree)
+
+    // Get the old wallet configuration
+    const wallet = this.getCoreWallet(walletAddress)
+    const { configuration } = await wallet.getStatus()
+    let newConfiguration = Config.configFromJson(Config.configToJson(configuration)) // Clone the configuration
+
+    // Find the session manager in the old configuration
+    const { address: managerAddress } = await this.getManagerForWallet(walletAddress)
+    const managerLeaf = Config.findSignerLeaf(newConfiguration, managerAddress)
+    if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
+      // Just add it
+      const newManagerLeaf: Config.SapientSignerLeaf = {
+        ...ManagerOptionsDefaults.defaultSessionsTopology,
+        address: managerAddress,
+        imageHash: newImageHash,
+      }
+      newConfiguration.topology = Config.mergeTopology(newConfiguration.topology, newManagerLeaf)
+    } else {
+      // Update the configuration to use the new session manager image hash
+      managerLeaf.imageHash = newImageHash
+    }
+
+    // Increment the checkpoint
+    newConfiguration.checkpoint += 1n
+
+    // Update the wallet configuration
+    const envelope = await wallet.prepareUpdate(newConfiguration)
     return await this.shared.modules.signatures.request(envelope, 'session-update', {
       origin,
     })
   }
 
   async completeSessionUpdate(walletAddress: Address.Address, requestId: string) {
-    const controller = await this.getControllerForWallet(walletAddress)
+    console.log('Completing session update for wallet:', walletAddress, 'requestId:', requestId)
     const sigRequest = await this.shared.modules.signatures.get(requestId)
-    const envelope = sigRequest.envelope
-    if (sigRequest.action !== 'session-update' || !Payload.isConfigUpdate(envelope.payload)) {
+    if (sigRequest.action !== 'session-update' || !Payload.isConfigUpdate(sigRequest.envelope.payload)) {
       throw new Error('Invalid action')
     }
-    console.log('Completing session update:', requestId)
-    await controller.completeUpdateConfiguration(envelope as Envelope.Signed<Payload.ConfigUpdate>)
+    const envelope = sigRequest.envelope as Envelope.Signed<Payload.ConfigUpdate>
+
+    const configuration = await this.shared.sequence.stateProvider.getConfiguration(envelope.payload.imageHash)
+    if (!configuration) {
+      throw new Error('Wallet configuration not found')
+    }
+
+    // Find the session manager in the new configuration
+    const { address: managerAddress } = await this.getManagerForWallet(walletAddress)
+    const managerLeaf = Config.findSignerLeaf(configuration, managerAddress)
+    if (!managerLeaf || !Config.isSapientSignerLeaf(managerLeaf)) {
+      throw new Error('Session manager not found in configuration')
+    }
+    const sessionTree = await this.shared.sequence.stateProvider.getTree(managerLeaf.imageHash)
+    if (!sessionTree) {
+      throw new Error('Session tree not found')
+    }
+    const topology = SessionConfig.configurationTreeToSessionsTopology(sessionTree)
+    console.log('completeUpdateConfiguration Topology:', topology)
+
+    // Submit the update with the new topology
+    console.log('Submitting update:', envelope.payload.imageHash)
+    await this.getCoreWallet(walletAddress).submitUpdate(envelope)
     return this.shared.modules.signatures.complete(requestId)
   }
 }
