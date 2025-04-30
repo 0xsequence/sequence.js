@@ -1015,14 +1015,9 @@ export const HomeIndexRoute = () => {
         throw error
       }
     },
-    onMutate: (variables) => {
-      // Optimistically update UI
-      const { selectedId } = variables
-      const affectedTxns = selectedId ? [selectedId] : metaTxns?.map((tx) => tx.id) || []
-    },
     onSuccess: (results) => {
       // Update states based on results
-      results.forEach(({ operationKey, opHash, success, error }) => {
+      results.forEach(({ operationKey, opHash, success }) => {
         if (success && opHash) {
           setSentMetaTxns((prev) => ({
             ...prev,
