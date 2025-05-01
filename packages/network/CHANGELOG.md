@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.11
+
+### Patch Changes
+
+- Deprecate XR1
+- Updated dependencies
+  - @0xsequence/indexer@2.3.11
+  - @0xsequence/relayer@2.3.11
+  - @0xsequence/utils@2.3.11
+  - @0xsequence/core@2.3.11
+
 ## 2.3.10
 
 ### Patch Changes

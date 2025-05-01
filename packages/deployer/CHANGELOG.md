@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.3.11
+
+### Patch Changes
+
+- Deprecate XR1
+- Updated dependencies
+  - @0xsequence/utils@2.3.11
+
 ## 2.3.10
 
 ### Patch Changes

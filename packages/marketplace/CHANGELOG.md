@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.11
+
+### Patch Changes
+
+- Deprecate XR1
+
 ## 2.3.10
 
 ### Patch Changes
