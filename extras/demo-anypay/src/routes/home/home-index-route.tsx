@@ -1664,6 +1664,18 @@ export const HomeIndexRoute = () => {
                       </Text>
                     </Text>
                     <div className="space-y-2">
+                      {/* Raw JSON View */}
+                      <div className="bg-gray-800/70 p-3 rounded-md mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <Text variant="small" color="primary" className="font-semibold flex items-center">
+                            <Clipboard className="h-4 w-4 mr-2" />
+                            Raw JSON Data
+                          </Text>
+                        </div>
+                        <pre className="text-xs overflow-x-auto whitespace-pre-wrap bg-gray-900/50 p-2 rounded border border-gray-700/50 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                          {JSON.stringify(metaTxns, null, 2)}
+                        </pre>
+                      </div>
                       {metaTxns.map((tx, index) => (
                         <div
                           key={`metatx-${index}`}
