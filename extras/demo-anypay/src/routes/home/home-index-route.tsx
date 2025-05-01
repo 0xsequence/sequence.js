@@ -297,8 +297,15 @@ export const HomeIndexRoute = () => {
       if (!account.address) throw new Error('Account address not available')
 
       try {
+        console.log('Calculating intent address...')
+        console.log('Main signer:', args.mainSigner)
+        console.log('Calls:', args.calls)
+
         const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls)
         const receivedAddress = findPreconditionAddress(args.preconditions)
+
+        console.log('Calculated address:', calculatedAddress.toString())
+        console.log('Received address:', receivedAddress)
 
         const isVerified = isAddressEqual(Address.from(receivedAddress), calculatedAddress)
         setVerificationStatus({
