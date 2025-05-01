@@ -1572,6 +1572,18 @@ export const HomeIndexRoute = () => {
                 {/* Intent call payloads Section */}
                 {intentCallsPayloads && intentCallsPayloads.length > 0 ? (
                   <div className="space-y-2">
+                    {/* Raw JSON View */}
+                    <div className="bg-gray-800/70 p-3 rounded-md mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <Text variant="small" color="primary" className="font-semibold flex items-center">
+                          <Clipboard className="h-4 w-4 mr-2" />
+                          Raw JSON Data
+                        </Text>
+                      </div>
+                      <pre className="text-xs overflow-x-auto whitespace-pre-wrap bg-gray-900/50 p-2 rounded border border-gray-700/50 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                        {JSON.stringify(intentCallsPayloads, null, 2)}
+                      </pre>
+                    </div>
                     {intentCallsPayloads.map((operation, index) => (
                       <div
                         key={`operation-${index}`}
@@ -1664,10 +1676,10 @@ export const HomeIndexRoute = () => {
                                 <span className="font-mono text-yellow-300 break-all">{tx.id || 'N/A'}</span>
                               </Text>
                             </div>
-                            <div>
+                            <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                               <Text variant="small" color="secondary">
                                 <strong className="text-blue-300">Contract: </strong>
-                                <span className="font-mono text-yellow-300 break-all">{String(tx.contract || '')}</span>
+                                <span className="font-mono text-yellow-300 break-all">{tx.contract || 'N/A'}</span>
                               </Text>
                             </div>
                             <div className="bg-gray-800/70 p-2 rounded-md mb-1">
