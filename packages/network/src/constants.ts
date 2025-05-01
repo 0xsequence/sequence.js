@@ -80,10 +80,6 @@ export enum ChainId {
   XAI = 660279,
   XAI_SEPOLIA = 37714555429,
 
-  // XR
-  XR1 = 273,
-  XR_SEPOLIA = 2730,
-
   // TELOS
   TELOS = 40,
   TELOS_TESTNET = 41,
@@ -657,40 +653,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'sXAI',
       name: 'Sepolia XAI',
-      decimals: 18
-    }
-  },
-  [ChainId.XR1]: {
-    chainId: ChainId.XR1,
-    type: NetworkType.MAINNET,
-    name: 'xr1',
-    title: 'XR1',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR1}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'XR1 Explorer',
-      rootUrl: 'https://xr1.calderaexplorer.xyz/'
-    },
-    nativeToken: {
-      symbol: 'XR1',
-      name: 'XR1',
-      decimals: 18
-    }
-  },
-  [ChainId.XR_SEPOLIA]: {
-    chainId: ChainId.XR_SEPOLIA,
-    type: NetworkType.TESTNET,
-    name: 'xr-sepolia',
-    title: 'XR Sepolia',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XR_SEPOLIA}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'XR Sepolia Explorer',
-      rootUrl: 'https://xr-sepolia-testnet.explorer.caldera.xyz/'
-    },
-    nativeToken: {
-      symbol: 'tXR',
-      name: 'Sepolia XR',
       decimals: 18
     }
   },
