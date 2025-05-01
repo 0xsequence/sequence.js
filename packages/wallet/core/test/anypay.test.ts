@@ -12,7 +12,7 @@ import {
   Erc1155ApprovalPrecondition,
 } from '../src/preconditions/types'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
-import { calculateIntentConfigurationAddress } from '../src/anypay/intents'
+import { calculateIntentConfigurationAddress, IntentCallsPayload } from '../src/anypay/intents'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
@@ -314,7 +314,8 @@ describe('AnyPay Preconditions', () => {
     }
 
     // Create a test operation
-    const operation: Payload.Calls = {
+    const payload: IntentCallsPayload = {
+      chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
@@ -340,7 +341,7 @@ describe('AnyPay Preconditions', () => {
     }
 
     // Calculate intent configuration address
-    const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [operation], chainId, context)
+    const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
     // Start the relay operation with a short check interval
     const relayPromise = relayer.relay(
@@ -424,7 +425,8 @@ describe('AnyPay Preconditions', () => {
       await requireContractDeployed(provider, ERC20_IMPLICIT_MINT_CONTRACT)
 
       // Create a test operation
-      const operation: Payload.Calls = {
+      const payload: IntentCallsPayload = {
+        chainId: 1n,
         type: 'call',
         space: 0n,
         nonce: 0n,
@@ -482,7 +484,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [operation], chainId, context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
       expect(configAddress).toBeDefined()
       expect(configAddress).not.toBe(testWalletAddress)
@@ -532,7 +534,8 @@ describe('AnyPay Preconditions', () => {
       ]
 
       // Create a test operation
-      const operation: Payload.Calls = {
+      const payload: IntentCallsPayload = {
+        chainId: 1n,
         type: 'call',
         space: 0n,
         nonce: 0n,
@@ -558,7 +561,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [operation], chainId, context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
       // Mock the provider responses
       if (!CAN_RUN_LIVE) {
@@ -607,7 +610,8 @@ describe('Intent Configuration Address', () => {
     const mainSigner = Address.from('0x1111111111111111111111111111111111111111')
 
     // Create a single operation matching Go test
-    const operation: Payload.Calls = {
+    const payload: IntentCallsPayload = {
+      chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
@@ -625,7 +629,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [operation], 1n, context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [payload], context)
 
     // Verify the address matches Go test
     expect(address.toString()).toBe('0x8577dfb93fe58cc8ee90dea522555fdf01fd7429')
@@ -645,7 +649,8 @@ describe('Intent Configuration Address', () => {
     const mainSigner = Address.from('0x1111111111111111111111111111111111111111')
 
     // Create multiple operations matching Go test
-    const operation1: Payload.Calls = {
+    const payload1: IntentCallsPayload = {
+      chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
@@ -662,7 +667,8 @@ describe('Intent Configuration Address', () => {
       ],
     }
 
-    const operation2: Payload.Calls = {
+    const payload2: IntentCallsPayload = {
+      chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
@@ -680,7 +686,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [operation1, operation2], 1n, context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [payload1, payload2], context)
 
     // Verify the address matches Go test
     expect(address.toString()).toBe('0xbd820ed5b1e969ed6509e8ede687dfc4c714438f')

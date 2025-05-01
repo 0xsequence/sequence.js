@@ -1,14 +1,17 @@
 import { Address, Bytes, ContractAddress, Hash } from 'ox'
 import { Context, Config, Payload } from '@0xsequence/wallet-primitives'
 
+export interface IntentCallsPayload extends Payload.Calls {
+  chainId: bigint
+}
+
 export function calculateIntentConfigurationAddress(
   mainSigner: Address.Address,
-  calls: Payload.Calls[],
-  chainId: bigint,
+  calls: IntentCallsPayload[],
   context: Context.Context,
 ): Address.Address {
   // Create the intent configuration
-  const config = createIntentConfiguration(mainSigner, calls, chainId)
+  const config = createIntentConfiguration(mainSigner, calls)
 
   // Calculate the image hash of the configuration
   const imageHash = Config.hashConfiguration(config)
@@ -24,11 +27,7 @@ export function calculateIntentConfigurationAddress(
   })
 }
 
-function createIntentConfiguration(
-  mainSigner: Address.Address,
-  calls: Payload.Calls[],
-  chainId: bigint,
-): Config.Config {
+function createIntentConfiguration(mainSigner: Address.Address, calls: IntentCallsPayload[]): Config.Config {
   // Create the main signer leaf
   const mainSignerLeaf: Config.SignerLeaf = {
     type: 'signer',
@@ -39,7 +38,7 @@ function createIntentConfiguration(
   // Create subdigest leaves for each operation
   const subdigestLeaves = calls.map((call) => {
     // Get the digest hash using Payload.hash
-    const digest = Payload.hash(Address.from('0x0000000000000000000000000000000000000000'), chainId, call)
+    const digest = Payload.hash(Address.from('0x0000000000000000000000000000000000000000'), call.chainId, call)
     console.log('digest:', Bytes.toHex(digest))
 
     // Create subdigest leaf

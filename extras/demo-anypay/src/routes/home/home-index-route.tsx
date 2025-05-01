@@ -2,7 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAccount, useConnect, useDisconnect, useSendTransaction, useSwitchChain, useEstimateGas } from 'wagmi'
 import { Connector } from 'wagmi'
 import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
-import { GetIntentOperationsReturn, IntentOperation, IntentPrecondition, GetIntentConfigReturn } from '@0xsequence/api'
+import {
+  GetIntentCallsPayloadsReturn,
+  IntentCallsPayload,
+  IntentPrecondition,
+  GetIntentConfigReturn,
+} from '@0xsequence/api'
 import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAPIClient } from '@/hooks/useAPIClient'
@@ -120,9 +125,9 @@ export const HomeIndexRoute = () => {
   const apiClient = useAPIClient()
 
   // State declarations
-  const [metaTxns, setMetaTxns] = useState<GetIntentOperationsReturn['metaTxns'] | null>(null)
-  const [intentOperations, setIntentOperations] = useState<GetIntentOperationsReturn['operations'] | null>(null)
-  const [intentPreconditions, setIntentPreconditions] = useState<GetIntentOperationsReturn['preconditions'] | null>(
+  const [metaTxns, setMetaTxns] = useState<GetIntentCallsPayloadsReturn['metaTxns'] | null>(null)
+  const [intentCallsPayloads, setIntentCallsPayloads] = useState<GetIntentCallsPayloadsReturn['calls'] | null>(null)
+  const [intentPreconditions, setIntentPreconditions] = useState<GetIntentCallsPayloadsReturn['preconditions'] | null>(
     null,
   )
   const [txnHash, setTxnHash] = useState<Hex | undefined>()
@@ -180,7 +185,7 @@ export const HomeIndexRoute = () => {
       : undefined,
   )
 
-  const calculateIntentAddress = useCallback((operations: IntentOperation[], mainSigner: string) => {
+  const calculateIntentAddress = useCallback((mainSigner: string, calls: IntentCallsPayload[]) => {
     try {
       const context: ContextLike.Context = {
         factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
@@ -190,22 +195,27 @@ export const HomeIndexRoute = () => {
           '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
       }
 
-      const coreOperations = operations.map((op) => ({
-        chainId: BigInt(op.chainId),
-        space: op.space ? BigInt(op.space) : undefined,
-        nonce: op.nonce ? BigInt(op.nonce) : undefined,
-        calls: op.calls.map((call) => ({
+      const coreCalls = calls.map((call) => ({
+        type: 'call' as const,
+        chainId: BigInt(call.chainId),
+        space: call.space ? BigInt(call.space) : 0n,
+        nonce: call.nonce ? BigInt(call.nonce) : 0n,
+        calls: call.calls.map((call) => ({
           to: Address.from(call.to),
           value: BigInt(call.value || '0'),
-          data: Bytes.from((call.data as Hex) || '0x'),
+          data: Bytes.toHex(Bytes.from((call.data as Hex) || '0x')),
           gasLimit: BigInt(call.gasLimit || '0'),
           delegateCall: !!call.delegateCall,
           onlyFallback: !!call.onlyFallback,
-          behaviorOnError: call.behaviorOnError !== undefined ? BigInt(call.behaviorOnError) : 0n,
+          behaviorOnError: (Number(call.behaviorOnError) === 0
+            ? 'ignore'
+            : Number(call.behaviorOnError) === 1
+              ? 'revert'
+              : 'abort') as 'ignore' | 'revert' | 'abort',
         })),
       }))
 
-      return AnyPay.calculateIntentConfigurationAddress(coreOperations, Address.from(mainSigner), context)
+      return AnyPay.calculateIntentConfigurationAddress(Address.from(mainSigner), coreCalls, context)
     } catch (error) {
       console.error('Error calculating intent address:', error)
       throw error
@@ -280,14 +290,14 @@ export const HomeIndexRoute = () => {
     mutationFn: async (args: {
       walletAddress: string
       mainSigner: string
-      operations: IntentOperation[]
+      calls: IntentCallsPayload[]
       preconditions: IntentPrecondition[]
     }) => {
       if (!apiClient) throw new Error('API client not available')
       if (!account.address) throw new Error('Account address not available')
 
       try {
-        const calculatedAddress = calculateIntentAddress(args.operations, args.mainSigner)
+        const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls)
         const receivedAddress = findPreconditionAddress(args.preconditions)
 
         const isVerified = isAddressEqual(Address.from(receivedAddress), calculatedAddress)
@@ -305,7 +315,7 @@ export const HomeIndexRoute = () => {
         const response = await apiClient.commitIntentConfig({
           walletAddress: calculatedAddress.toString(),
           mainSigner: args.mainSigner,
-          operations: args.operations,
+          calls: args.calls,
           preconditions: args.preconditions,
         })
         console.log('API Commit Response:', response)
@@ -314,7 +324,7 @@ export const HomeIndexRoute = () => {
         console.error('Error during commit intent mutation:', error)
         if (!verificationStatus?.success && !verificationStatus?.receivedAddress) {
           try {
-            const calculatedAddress = calculateIntentAddress(args.operations, args.mainSigner)
+            const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls)
             const receivedAddress = findPreconditionAddress(args.preconditions)
             setVerificationStatus({
               success: false,
@@ -358,7 +368,7 @@ export const HomeIndexRoute = () => {
     retry: 1,
   })
 
-  const createIntentMutation = useMutation<GetIntentOperationsReturn, Error, IntentAction>({
+  const createIntentMutation = useMutation<GetIntentCallsPayloadsReturn, Error, IntentAction>({
     mutationFn: async (action: IntentAction) => {
       if (!apiClient || !selectedToken || !account.address) {
         throw new Error('Missing API client, selected token, or account address')
@@ -453,10 +463,10 @@ export const HomeIndexRoute = () => {
               : destinationCall.transactionValue,
       }
 
-      const data = await apiClient.getIntentOperations(args)
+      const data = await apiClient.getIntentCallsPayloads(args)
 
       setMetaTxns(data.metaTxns)
-      setIntentOperations(data.operations)
+      setIntentCallsPayloads(data.calls)
       setIntentPreconditions(data.preconditions)
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
@@ -466,26 +476,26 @@ export const HomeIndexRoute = () => {
       console.log('Intent Config Success:', data)
       if (
         data &&
-        data.operations &&
-        data.operations.length > 0 &&
+        data.calls &&
+        data.calls.length > 0 &&
         data.preconditions &&
         data.preconditions.length > 0 &&
         data.metaTxns &&
         data.metaTxns.length > 0
       ) {
-        setIntentOperations(data.operations)
+        setIntentCallsPayloads(data.calls)
         setIntentPreconditions(data.preconditions)
         setMetaTxns(data.metaTxns)
       } else {
         console.warn('API returned success but no operations found.')
-        setIntentOperations(null)
+        setIntentCallsPayloads(null)
         setIntentPreconditions(null)
         setMetaTxns(null)
       }
     },
     onError: (error) => {
       console.error('Intent Config Error:', error)
-      setIntentOperations(null)
+      setIntentCallsPayloads(null)
       setIntentPreconditions(null)
       setMetaTxns(null)
     },
@@ -494,7 +504,7 @@ export const HomeIndexRoute = () => {
   useEffect(() => {
     if (!account.isConnected) {
       setSelectedToken(null)
-      setIntentOperations(null)
+      setIntentCallsPayloads(null)
       setIntentPreconditions(null)
       setMetaTxns(null)
       setCommittedIntentAddress(null)
@@ -503,7 +513,7 @@ export const HomeIndexRoute = () => {
   }, [account.isConnected])
 
   const handleActionClick = (action: IntentAction) => {
-    setIntentOperations(null)
+    setIntentCallsPayloads(null)
     setIntentPreconditions(null)
     setMetaTxns(null)
     setShowCustomCallForm(false)
@@ -831,13 +841,13 @@ export const HomeIndexRoute = () => {
   ])
 
   useEffect(() => {
-    if (!intentOperations?.[0]?.chainId || !selectedToken || !intentPreconditions || !account.address) {
+    if (!intentCallsPayloads?.[0]?.chainId || !selectedToken || !intentPreconditions || !account.address) {
       setOriginCallParams(null)
       return
     }
 
     try {
-      const intentAddress = calculateIntentAddress(intentOperations, account.address)
+      const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads)
       const intentAddressString = intentAddress.toString() as Address.Address
 
       let calcTo: Address.Address
@@ -889,7 +899,7 @@ export const HomeIndexRoute = () => {
       console.error('Failed to calculate origin call params for UI:', error)
       setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
     }
-  }, [intentOperations, selectedToken, intentPreconditions, account.address, calculateIntentAddress])
+  }, [intentCallsPayloads, selectedToken, intentPreconditions, account.address, calculateIntentAddress])
 
   useEffect(() => {
     // Auto-execute effect for handling chain switch and transaction
@@ -903,11 +913,11 @@ export const HomeIndexRoute = () => {
     }
   }, [isAutoExecuteEnabled, originCallParams, account.chainId])
 
-  // Effect to auto-commit when intent operations are ready
+  // Effect to auto-commit when intent calls payloads are ready
   useEffect(() => {
     if (
       isAutoExecuteEnabled &&
-      intentOperations &&
+      intentCallsPayloads &&
       intentPreconditions &&
       account.address &&
       !commitIntentConfigMutation.isPending &&
@@ -915,15 +925,15 @@ export const HomeIndexRoute = () => {
     ) {
       console.log('Auto-committing intent configuration...')
       commitIntentConfigMutation.mutate({
-        walletAddress: calculateIntentAddress(intentOperations, account.address).toString(),
+        walletAddress: calculateIntentAddress(account.address, intentCallsPayloads).toString(),
         mainSigner: account.address,
-        operations: intentOperations,
+        calls: intentCallsPayloads,
         preconditions: intentPreconditions,
       })
     }
   }, [
     isAutoExecuteEnabled,
-    intentOperations,
+    intentCallsPayloads,
     intentPreconditions,
     account.address,
     commitIntentConfigMutation.isPending,
@@ -952,7 +962,8 @@ export const HomeIndexRoute = () => {
   )
 
   const isCommitButtonDisabled = Boolean(
-    commitIntentConfigMutation.isPending || (isAutoExecuteEnabled && intentOperations && !!intentPreconditions?.length),
+    commitIntentConfigMutation.isPending ||
+      (isAutoExecuteEnabled && intentCallsPayloads && !!intentPreconditions?.length),
   )
 
   // Update button text and disabled state for send transaction button
@@ -986,18 +997,10 @@ export const HomeIndexRoute = () => {
     isSwitchingChain ||
     (isAutoExecuteEnabled && commitIntentConfigMutation.isSuccess) // Disable if auto-execute is on and commit was successful
 
-  // Effect to cleanup operation statuses and hashes when intent operations are reset
-  useEffect(() => {
-    if (!intentOperations) {
-      setOperationHashes({})
-    }
-  }, [intentOperations])
-
   // Effect to cleanup when account disconnects
   useEffect(() => {
     if (!account.isConnected) {
-      setOperationHashes({})
-      setIntentOperations(null)
+      setIntentCallsPayloads(null)
       setIntentPreconditions(null)
       setMetaTxns(null)
       setCommittedIntentAddress(null)
@@ -1008,12 +1011,12 @@ export const HomeIndexRoute = () => {
   // Update the sendMetaTxn mutation
   const sendMetaTxnMutation = useMutation({
     mutationFn: async ({ selectedId }: { selectedId: string | null }) => {
-      if (!intentOperations || !intentPreconditions || !metaTxns || !account.address) {
+      if (!intentCallsPayloads || !intentPreconditions || !metaTxns || !account.address) {
         throw new Error('Missing required data for meta-transaction')
       }
 
       try {
-        const intentAddress = calculateIntentAddress(intentOperations, account.address)
+        const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads)
 
         // If no specific ID is selected, send all meta transactions
         const txnsToSend = selectedId ? [metaTxns.find((tx) => tx.id === selectedId)] : metaTxns
@@ -1272,7 +1275,7 @@ export const HomeIndexRoute = () => {
                       } else {
                         setSelectedToken(token)
                       }
-                      setIntentOperations(null)
+                      setIntentCallsPayloads(null)
                       setIntentPreconditions(null)
                       setMetaTxns(null)
                       setCommittedIntentAddress(null)
@@ -1552,7 +1555,7 @@ export const HomeIndexRoute = () => {
                 </Text>
               </div>
             )}
-            {intentOperations && (
+            {intentCallsPayloads && (
               <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                 <Text
                   variant="medium"
@@ -1560,23 +1563,23 @@ export const HomeIndexRoute = () => {
                   className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                 >
                   <Zap className="h-4 w-4 mr-1" />
-                  Intent Operations
+                  Intent all payloads
                   <Text variant="small" color="secondary" className="ml-1">
-                    (List of operations that are pre-authorized to be executed):
+                    (List of all payloads that are pre-authorized to be executed):
                   </Text>
                 </Text>
 
-                {/* Intent Operations Section */}
-                {intentOperations && intentOperations.length > 0 ? (
+                {/* Intent call payloads Section */}
+                {intentCallsPayloads && intentCallsPayloads.length > 0 ? (
                   <div className="space-y-2">
-                    {intentOperations.map((operation, index) => (
+                    {intentCallsPayloads.map((operation, index) => (
                       <div
                         key={`operation-${index}`}
                         className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
                       >
                         <div className="pb-2">
                           <Text variant="small" color="primary" className="font-semibold">
-                            Operation #{index + 1}
+                            Payload #{index + 1}
                           </Text>
                         </div>
                         {operation.calls &&
@@ -1737,7 +1740,7 @@ export const HomeIndexRoute = () => {
               </div>
             )}
 
-            {!createIntentMutation.isPending && !createIntentMutation.isError && !intentOperations && (
+            {!createIntentMutation.isPending && !createIntentMutation.isError && !intentCallsPayloads && (
               <div className="bg-gray-800/50 border border-gray-700/30 rounded-lg p-4 flex items-center justify-center">
                 <Text variant="small" color="secondary" className="flex flex-col items-center text-center">
                   <ShieldCheck className="h-10 w-10 text-gray-600 mb-2" />
@@ -1748,7 +1751,7 @@ export const HomeIndexRoute = () => {
           </div>
 
           {/* 4. Commit Intent */}
-          {intentOperations && intentPreconditions && (
+          {intentCallsPayloads && intentPreconditions && (
             <div>
               <div className="flex items-center mb-4">
                 <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
@@ -1773,11 +1776,11 @@ export const HomeIndexRoute = () => {
                     <Button
                       variant="primary"
                       onClick={() => {
-                        if (!account.address || !intentOperations || !intentPreconditions) return
+                        if (!account.address || !intentCallsPayloads || !intentPreconditions) return
                         commitIntentConfigMutation.mutate({
-                          walletAddress: calculateIntentAddress(intentOperations, account.address).toString(),
+                          walletAddress: calculateIntentAddress(account.address, intentCallsPayloads).toString(),
                           mainSigner: account.address,
-                          operations: intentOperations,
+                          calls: intentCallsPayloads,
                           preconditions: intentPreconditions,
                         })
                       }}
@@ -1876,7 +1879,7 @@ export const HomeIndexRoute = () => {
           )}
 
           {/* 5. Origin Call */}
-          {intentOperations && intentPreconditions && (
+          {intentCallsPayloads && intentPreconditions && (
             <div>
               <div className="flex items-center mb-4">
                 <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
@@ -1967,7 +1970,7 @@ export const HomeIndexRoute = () => {
           )}
 
           {/* Preview calculated address */}
-          {account.address && intentOperations && (
+          {account.address && intentCallsPayloads && (
             <>
               <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
                 <Text variant="small" color="secondary">
@@ -2077,7 +2080,7 @@ export const HomeIndexRoute = () => {
       )}
 
       {/* Separate Relayer Status Card */}
-      {account.status === 'connected' && intentOperations && intentPreconditions && (
+      {account.status === 'connected' && intentCallsPayloads && intentPreconditions && (
         <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
