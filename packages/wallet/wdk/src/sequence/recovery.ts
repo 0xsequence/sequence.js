@@ -231,6 +231,8 @@ export class Recovery {
       })),
     )
 
+    await this.shared.sequence.stateProvider.savePayload(wallet, recoveryPayload, chainId)
+
     const requestId = await this.shared.modules.signatures.request(
       {
         wallet,
@@ -357,6 +359,8 @@ export class Recovery {
             // The id is the index + signer address + chainId + wallet address
             const id = `${i}-${signer.address}-${chainId}-${wallet.address}`
 
+            const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
+
             // Create a new payload
             const payloadEntry: QueuedRecoveryPayload = {
               id,
@@ -368,6 +372,7 @@ export class Recovery {
               startTimestamp: timestamp,
               endTimestamp: timestamp + signer.requiredDeltaTime,
               payloadHash,
+              payload,
             }
 
             await this.shared.databases.recovery.set(payloadEntry)
