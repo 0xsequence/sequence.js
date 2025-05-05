@@ -316,7 +316,7 @@ export class Manager {
 
     // Initialize modules
     for (const module of Object.values(modules)) {
-      if ('initialize' in module) {
+      if ('initialize' in module && typeof module.initialize === 'function') {
         module.initialize()
       }
     }
