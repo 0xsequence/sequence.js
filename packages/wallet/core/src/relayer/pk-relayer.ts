@@ -1,5 +1,5 @@
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
+import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
 import { LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
 
@@ -65,6 +65,15 @@ export class PkRelayer implements Relayer {
           params: [TransactionEnvelopeEip1559.serialize(signedRelayEnvelope)],
         })
         return tx
+      },
+      getTransactionReceipt: async (txHash: string) => {
+        Hex.assert(txHash)
+        const rpcReceipt = await this.provider.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
+        if (!rpcReceipt) {
+          return 'unknown'
+        }
+        const receipt = TransactionReceipt.fromRpc(rpcReceipt)
+        return receipt.status === 'success' ? 'success' : 'failed'
       },
     })
   }

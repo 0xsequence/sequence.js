@@ -1,9 +1,12 @@
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
+
+type GenericProviderTransactionReceipt = 'success' | 'failed' | 'unknown'
 
 export interface GenericProvider {
   sendTransaction(args: { to: string; data: string }): Promise<string>
+  getTransactionReceipt(txHash: string): Promise<GenericProviderTransactionReceipt>
 }
 
 export class LocalRelayer implements Relayer {
@@ -39,6 +42,18 @@ export class LocalRelayer implements Relayer {
         })
         return tx
       },
+      getTransactionReceipt: async (txHash) => {
+        const rpcReceipt = await eth.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
+        if (rpcReceipt) {
+          const receipt = TransactionReceipt.fromRpc(rpcReceipt)
+          if (receipt?.status === 'success') {
+            return 'success'
+          } else if (receipt?.status === 'reverted') {
+            return 'failed'
+          }
+        }
+        return 'unknown'
+      },
     })
   }
 
@@ -65,17 +80,23 @@ export class LocalRelayer implements Relayer {
   }
 
   async relay(to: Address.Address, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
-    const hash = Payload.hash(to, chainId, this.decodeCalls(data))
-
-    await this.provider.sendTransaction({
+    const txHash = await this.provider.sendTransaction({
       to,
       data,
     })
+    Hex.assert(txHash)
 
-    return { opHash: Hex.fromBytes(hash) }
+    return { opHash: txHash }
   }
 
-  status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
-    throw new Error('Method not implemented.')
+  async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
+    const receipt = await this.provider.getTransactionReceipt(opHash)
+    if (receipt === 'unknown') {
+      // Could be pending but we don't know
+      return { status: 'unknown' }
+    }
+    return receipt === 'success'
+      ? { status: 'confirmed', transactionHash: opHash }
+      : { status: 'failed', reason: 'failed' }
   }
 }
