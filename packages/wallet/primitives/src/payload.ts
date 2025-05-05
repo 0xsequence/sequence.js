@@ -1,7 +1,8 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, TypedData } from 'ox'
-import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
-import { minBytesFor } from './utils.js'
+import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex } from 'ox'
 import { getSignPayload } from 'ox/TypedData'
+import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
+import { Attestation } from './index.js'
+import { minBytesFor } from './utils.js'
 
 export const KIND_TRANSACTIONS = 0x00
 export const KIND_MESSAGE = 0x01
@@ -66,6 +67,12 @@ export type Digest = {
   digest: Hex.Hex
 }
 
+export type SessionImplicitAuthorize = {
+  type: 'session-implicit-authorize'
+  sessionAddress: Address.Address
+  attestation: Attestation.Attestation
+}
+
 export type Parent = {
   parentWallets?: Address.Address[]
 }
@@ -74,7 +81,15 @@ export type Recovery<T extends Calls | Message | ConfigUpdate | Digest> = T & {
   recovery: true
 }
 
-export type Payload = Calls | Message | ConfigUpdate | Digest | Recovery<Calls | Message | ConfigUpdate | Digest>
+export type MayRecoveryPayload = Calls | Message | ConfigUpdate | Digest
+
+export type Payload =
+  | Calls
+  | Message
+  | ConfigUpdate
+  | Digest
+  | Recovery<Calls | Message | ConfigUpdate | Digest>
+  | SessionImplicitAuthorize
 
 export type Parented = Payload & Parent
 
@@ -132,11 +147,19 @@ export function isConfigUpdate(payload: Payload): payload is ConfigUpdate {
   return payload.type === 'config-update'
 }
 
-export function isRecovery(payload: Payload): payload is Recovery<Payload> {
-  return (payload as Recovery<Payload>).recovery === true
+export function isDigest(payload: Payload): payload is Digest {
+  return payload.type === 'digest'
 }
 
-export function toRecovery<T extends Payload>(payload: T): Recovery<T> {
+export function isRecovery<T extends MayRecoveryPayload>(payload: Payload): payload is Recovery<T> {
+  if (isSessionImplicitAuthorize(payload)) {
+    return false
+  }
+
+  return (payload as Recovery<T>).recovery === true
+}
+
+export function toRecovery<T extends MayRecoveryPayload>(payload: T): Recovery<T> {
   if (isRecovery(payload)) {
     return payload
   }
@@ -145,6 +168,10 @@ export function toRecovery<T extends Payload>(payload: T): Recovery<T> {
     ...payload,
     recovery: true,
   }
+}
+
+export function isSessionImplicitAuthorize(payload: Payload): payload is SessionImplicitAuthorize {
+  return payload.type === 'session-implicit-authorize'
 }
 
 export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
@@ -345,6 +372,12 @@ export function encodeSapient(
 }
 
 export function hash(wallet: Address.Address, chainId: bigint, payload: Parented): Bytes.Bytes {
+  if (isDigest(payload)) {
+    return Bytes.fromHex(payload.digest)
+  }
+  if (isSessionImplicitAuthorize(payload)) {
+    return Attestation.hash(payload.attestation)
+  }
   const typedData = toTyped(wallet, chainId, payload)
   return Bytes.fromHex(getSignPayload(typedData))
 }
@@ -467,7 +500,11 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
     }
 
     case 'digest': {
-      throw new Error('Digest is not supported - Use message instead')
+      throw new Error('Digest does not support typed data - Use message instead')
+    }
+
+    case 'session-implicit-authorize': {
+      throw new Error('Payload does not support typed data')
     }
   }
 }

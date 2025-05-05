@@ -73,10 +73,10 @@ export class Signatures {
 
     const statuses = await Promise.all(
       signersAndKinds.map(async (sak) => {
-        const base = {
+        const base: SignerBase = {
           address: sak.address,
           imageHash: sak.imageHash,
-        } as SignerBase
+        }
 
         // We may have a signature for this signer already
         const signed = request.envelope.signatures.some((sig) => {
@@ -87,41 +87,45 @@ export class Signatures {
         })
 
         if (!sak.kind) {
-          return {
+          const status: SignerUnavailable = {
             ...base,
             handler: undefined,
             reason: 'unknown-signer-kind',
             status: 'unavailable',
-          } as SignerUnavailable
+          }
+          return status
         }
 
         const handler = this.shared.handlers.get(sak.kind)
         if (signed) {
-          return {
+          const status: SignerSigned = {
             ...base,
             handler,
             status: 'signed',
-          } as SignerSigned
+          }
+          return status
         }
 
         if (!handler) {
-          return {
+          const status: SignerUnavailable = {
             ...base,
             handler: undefined,
             reason: 'no-handler',
             status: 'unavailable',
-          } as SignerUnavailable
+          }
+          return status
         }
 
         return handler.status(sak.address, sak.imageHash, request)
       }),
     )
 
-    return {
+    const signatureRequest: SignatureRequest = {
       ...request,
       ...Envelope.weightOf(request.envelope),
       signers: statuses,
-    } as SignatureRequest
+    }
+    return signatureRequest
   }
 
   onSignatureRequestUpdate(

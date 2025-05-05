@@ -346,7 +346,7 @@ export function fromRecoveryLeaves(leaves: RecoveryLeaf[]): Tree {
  * @returns The payload hash
  */
 export function hashRecoveryPayload(
-  payload: Payload.Parented,
+  payload: Payload.MayRecoveryPayload,
   wallet: Address.Address,
   chainId: bigint,
   noChainId: boolean,
