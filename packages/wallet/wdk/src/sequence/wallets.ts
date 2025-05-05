@@ -67,6 +67,17 @@ export type LoginToPasskeyArgs = {
 
 export type LoginArgs = LoginToWalletArgs | LoginToMnemonicArgs | LoginToPasskeyArgs
 
+export type SignupResult =
+  | {
+      type: 'signup'
+      wallet: Address.Address
+    }
+  | {
+      type: 'login'
+      wallet: Address.Address
+      requestId: string
+    }
+
 export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
   return 'wallet' in args
 }
@@ -337,7 +348,7 @@ export class Wallets {
     }
 
     if (commitment.isSignUp) {
-      await this.signUp({
+      const result = await this.signUp({
         kind: commitment.kind,
         commitment,
         code: args.code,
@@ -356,14 +367,14 @@ export class Wallets {
     return commitment.target
   }
 
-  async signUp(args: SignupArgs) {
+  async signUp(args: SignupArgs): Promise<SignupResult> {
     const loginSigner = await this.prepareSignUp(args)
 
     // If there is an existing wallet callback, we check if any wallet already exist for this login signer
     if (this.walletSelectionUiHandler) {
       const existingWallets = await State.getWalletsFor(this.shared.sequence.stateProvider, loginSigner.signer)
       if (existingWallets.length > 0) {
-        const result = await this.walletSelectionUiHandler({
+        const selectedWallet = await this.walletSelectionUiHandler({
           existingWallets: existingWallets.map((w) => w.wallet),
           signerAddress: await loginSigner.signer.address,
           context: isAuthCodePkceArgs(args)
@@ -376,9 +387,17 @@ export class Wallets {
               },
         })
 
-        if (result) {
-          // A wallet was selected, we can exit early
-          return
+        if (selectedWallet && existingWallets.some((wallet) => wallet.wallet === selectedWallet)) {
+          // If a wallet was selected, we login to it
+          const requestId = await this.login({
+            wallet: selectedWallet,
+          })
+
+          return {
+            type: 'login',
+            wallet: selectedWallet,
+            requestId,
+          }
         }
       }
     } else {
@@ -459,10 +478,10 @@ export class Wallets {
       useGuard: !args.noGuard,
     })
 
-    return wallet.address
+    return { type: 'signup', wallet: wallet.address }
   }
 
-  async login(args: LoginArgs): Promise<string | undefined> {
+  async login(args: LoginArgs): Promise<string> {
     if (isLoginToWalletArgs(args)) {
       const prevWallet = await this.exists(args.wallet)
       if (prevWallet) {
