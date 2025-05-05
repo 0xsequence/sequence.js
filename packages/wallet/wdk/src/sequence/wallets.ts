@@ -1,6 +1,6 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
 import { Config, Extensions, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
@@ -776,5 +776,21 @@ export class Wallets {
       ]),
       raw,
     }
+  }
+
+  async getNonce(chainId: bigint, address: Address.Address, space: bigint) {
+    const wallet = new CoreWallet(address, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const network = this.shared.sequence.networks.find((n) => n.chainId === chainId)
+    if (!network) {
+      throw new Error('network-not-found')
+    }
+
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    return wallet.getNonce(provider, space)
   }
 }

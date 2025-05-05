@@ -202,5 +202,21 @@ describe('Recovery', () => {
     })
     expect(balance).toBeDefined()
     expect(balance).toBe('0x0')
+
+    // Refresh the queued recovery payloads, the executed one
+    // should be removed
+    await manager.updateQueuedRecoveryPayloads()
+    const recoveryPayloads2 = await new Promise<QueuedRecoveryPayload[]>((resolve) => {
+      const unsubscribe = manager.onQueuedRecoveryPayloadsUpdate(
+        wallet!,
+        (payloads) => {
+          unsubscribe()
+          resolve(payloads)
+        },
+        true,
+      )
+    })
+    expect(recoveryPayloads2).toBeDefined()
+    expect(recoveryPayloads2.length).toBe(0)
   }, 30000)
 })
