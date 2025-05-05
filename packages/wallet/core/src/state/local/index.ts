@@ -404,6 +404,18 @@ export class Provider implements ProviderInterface {
       context,
     )
   }
+
+  async getPayload(
+    opHash: Hex.Hex,
+  ): Promise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined> {
+    const data = await this.store.loadPayloadOfSubdigest(opHash)
+    return data ? { chainId: data.chainId, payload: data.content, wallet: data.wallet } : undefined
+  }
+
+  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+    const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
+    return this.store.savePayloadOfSubdigest(subdigest, { content: payload, chainId, wallet })
+  }
 }
 
 export * from './memory.js'

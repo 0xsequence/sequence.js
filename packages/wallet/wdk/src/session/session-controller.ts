@@ -104,6 +104,7 @@ export class SessionController {
   private async prepareUpdateConfiguration(
     topology: SessionConfig.SessionsTopology,
   ): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
+    // TODO: Reuse `requestConfigurationUpdate` and `getConfigurationParts` from wallets module
     // Create a new manager with the new topology
 
     // Store the new configuration

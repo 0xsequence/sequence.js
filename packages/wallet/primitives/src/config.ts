@@ -161,10 +161,10 @@ export function findSignerLeaf(
 }
 
 export function getWeight(
-  topology: RawTopology | RawConfig,
+  topology: RawTopology | RawConfig | Config,
   canSign: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
 ): { weight: bigint; maxWeight: bigint } {
-  topology = isRawConfig(topology) ? topology.topology : topology
+  topology = isRawConfig(topology) || isConfig(topology) ? topology.topology : topology
 
   if (isSignedSignerLeaf(topology)) {
     return { weight: topology.weight, maxWeight: topology.weight }

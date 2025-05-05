@@ -203,23 +203,30 @@ export class Wallet {
     }
   }
 
+  async getNonce(provider: Provider.Provider, space: bigint): Promise<bigint> {
+    const result = await provider.request({
+      method: 'eth_call',
+      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }],
+    })
+
+    if (result === '0x' || result.length === 0) {
+      return 0n
+    }
+
+    return BigInt(result)
+  }
+
   async prepareTransaction(
     provider: Provider.Provider,
     calls: Payload.Call[],
     options?: { space?: bigint },
   ): Promise<Envelope.Envelope<Payload.Calls>> {
     const space = options?.space ?? 0n
-    const status = await this.getStatus(provider)
 
-    let nonce: bigint = 0n
-    if (status.isDeployed) {
-      nonce = BigInt(
-        await provider.request({
-          method: 'eth_call',
-          params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }],
-        }),
-      )
-    }
+    const [chainId, nonce] = await Promise.all([
+      provider.request({ method: 'eth_chainId' }),
+      this.getNonce(provider, space),
+    ])
 
     return {
       payload: {
@@ -228,7 +235,7 @@ export class Wallet {
         nonce,
         calls,
       },
-      ...(await this.prepareBlankEnvelope(status.chainId ?? 0n)),
+      ...(await this.prepareBlankEnvelope(BigInt(chainId))),
     }
   }
 

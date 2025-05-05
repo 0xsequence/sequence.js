@@ -228,4 +228,26 @@ export class DevHttpProvider implements Provider {
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): Promise<void> {
     return this.request<void>('POST', '/deploy', { imageHash, context })
   }
+
+  async getPayload(opHash: Hex.Hex): Promise<
+    | {
+        chainId: bigint
+        payload: Payload.Parented
+        wallet: Address.Address
+      }
+    | undefined
+  > {
+    return this.request<
+      | {
+          chainId: bigint
+          payload: Payload.Parented
+          wallet: Address.Address
+        }
+      | undefined
+    >('GET', `/payload/${opHash}`)
+  }
+
+  async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+    return this.request<void>('POST', '/payload', { wallet, payload, chainId })
+  }
 }

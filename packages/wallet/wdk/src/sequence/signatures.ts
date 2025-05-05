@@ -12,9 +12,20 @@ import {
   SignerSigned,
   SignerUnavailable,
 } from './types/signature-request.js'
+import { Cron } from './cron.js'
 
 export class Signatures {
   constructor(private readonly shared: Shared) {}
+
+  initialize() {
+    this.shared.modules.cron.registerJob('prune-signatures', 10 * 60 * 1000, async () => {
+      const prunedSignatures = await this.prune()
+      if (prunedSignatures > 0) {
+        this.shared.modules.logger.log(`Pruned ${prunedSignatures} signatures`)
+      }
+    })
+    this.shared.modules.logger.log('Signatures module initialized and job registered.')
+  }
 
   private async getBase(requestId: string): Promise<BaseSignatureRequest> {
     const request = await this.shared.databases.signatures.get(requestId)
@@ -189,7 +200,7 @@ export class Signatures {
     action: A,
     options: {
       origin?: string
-    },
+    } = {},
   ): Promise<string> {
     // If the action is a config update, we need to remove all signature requests
     // for the same wallet that also involve configuration updates
