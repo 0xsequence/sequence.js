@@ -24,6 +24,7 @@ import { Kinds, RecoverySigner } from './types/signer.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
 import { Cron } from './cron.js'
 import { Recovery } from './recovery.js'
+import { RecoveryHandler } from './handlers/recovery.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -47,6 +48,7 @@ export type ManagerOptions = {
   relayers?: Relayer.Relayer[]
 
   defaultGuardTopology?: Config.Topology
+  defaultRecoverySettings?: RecoverySettings
 
   identity?: {
     url?: string
@@ -196,6 +198,8 @@ export class Manager {
   private readonly mnemonicHandler: MnemonicHandler
   private readonly devicesHandler: DevicesHandler
   private readonly passkeysHandler: PasskeysHandler
+  private readonly recoveryHandler: RecoveryHandler
+
   private readonly otpHandler?: OtpHandler
 
   constructor(options?: ManagerOptions) {
@@ -258,6 +262,9 @@ export class Manager {
 
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
+
+    this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
+    shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
 
     // TODO: configurable nitro rpc
     const nitro = new Identity.IdentityInstrument(ops.identity.url, ops.identity.fetch)
@@ -420,6 +427,10 @@ export class Manager {
     return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
   }
 
+  public getTransaction(transactionId: string): Promise<Transaction> {
+    return this.shared.modules.transactions.get(transactionId)
+  }
+
   public registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
@@ -515,5 +526,9 @@ export class Manager {
 
   public async completeRecoveryUpdate(requestId: string) {
     return this.shared.modules.recovery.completeRecoveryUpdate(requestId)
+  }
+
+  public async updateQueuedRecoveryPayloads() {
+    return this.shared.modules.recovery.updateQueuedRecoveryPayloads()
   }
 }

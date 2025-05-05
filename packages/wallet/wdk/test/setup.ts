@@ -1,4 +1,5 @@
 import { indexedDB, IDBFactory } from 'fake-indexeddb'
+import { Provider, RpcTransport } from 'ox'
 import { vi } from 'vitest'
 
 // Add IndexedDB support to the test environment
@@ -45,4 +46,22 @@ if (!global.navigator.locks || !('request' in global.navigator.locks)) {
   })
 } else {
   console.log('navigator.locks already exists and appears to have a "request" property.')
+}
+
+let ANVIL_RPC_URL = 'http://localhost:8545'
+
+export function setAnvilRpcUrl(url: string) {
+  ANVIL_RPC_URL = url
+}
+
+// Add window.ethereum support, pointing to the the Anvil local RPC
+if (typeof (window as any).ethereum === 'undefined') {
+  console.log('mocking window.ethereum')
+  ;(window as any).ethereum = {
+    request: vi.fn().mockImplementation(async (args: any) => {
+      // Pipe the request to the Anvil local RPC
+      const provider = Provider.from(RpcTransport.fromHttp(ANVIL_RPC_URL))
+      return provider.request(args)
+    }),
+  }
 }

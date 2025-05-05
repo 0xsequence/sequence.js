@@ -31,6 +31,12 @@ export class Signers {
     //   return Kinds.LocalDevice
     // }
 
+    // Some signers are known by the configuration of the wallet development kit, specifically
+    // some of the sapient signers, who always share the same address
+    if (this.shared.sequence.extensions.recovery === address) {
+      return Kinds.Recovery
+    }
+
     // We need to use the state provider (and witness) this will tell us the kind of signer
     // NOTICE: This looks expensive, but this operation should be cached by the state provider
     const witness = await (imageHash

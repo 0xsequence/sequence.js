@@ -11,5 +11,5 @@ export type QueuedRecoveryPayload = {
   startTimestamp: bigint
   endTimestamp: bigint
   payloadHash: Hex.Hex
-  payload?: Payload.Recovery<any>
+  payload?: Payload.Payload
 }

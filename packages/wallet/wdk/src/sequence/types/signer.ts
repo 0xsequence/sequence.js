@@ -7,6 +7,7 @@ export const Kinds = {
   LoginEmailOtp: 'login-email-otp',
   LoginGooglePkce: 'login-google-pkce',
   LoginApplePkce: 'login-apple-pkce',
+  Recovery: 'recovery-extension',
   Unknown: 'unknown',
 } as const
 

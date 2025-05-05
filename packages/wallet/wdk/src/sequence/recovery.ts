@@ -231,7 +231,11 @@ export class Recovery {
       })),
     )
 
-    await this.shared.sequence.stateProvider.savePayload(wallet, recoveryPayload, chainId)
+    // Save both versions of the payload in parallel
+    await Promise.all([
+      this.shared.sequence.stateProvider.savePayload(wallet, payload, chainId),
+      this.shared.sequence.stateProvider.savePayload(wallet, recoveryPayload, chainId),
+    ])
 
     const requestId = await this.shared.modules.signatures.request(
       {
@@ -289,21 +293,26 @@ export class Recovery {
     }
   }
 
+  async getQueuedRecoveryPayloads(wallet?: Address.Address): Promise<QueuedRecoveryPayload[]> {
+    const all = await this.shared.databases.recovery.list()
+    if (wallet) {
+      return all.filter((p) => p.wallet === wallet)
+    }
+
+    return all
+  }
+
   onQueuedRecoveryPayloadsUpdate(
-    wallet: Address.Address,
+    wallet: Address.Address | undefined,
     cb: (payloads: QueuedRecoveryPayload[]) => void,
     trigger?: boolean,
   ) {
-    const getPayloads = () => {
-      return this.shared.databases.recovery.list().then((all) => all.filter((p) => p.wallet === wallet))
-    }
-
     if (trigger) {
-      getPayloads().then(cb)
+      this.getQueuedRecoveryPayloads(wallet).then(cb)
     }
 
     return this.shared.databases.recovery.addListener(() => {
-      getPayloads().then(cb)
+      this.getQueuedRecoveryPayloads(wallet).then(cb)
     })
   }
 
@@ -372,7 +381,7 @@ export class Recovery {
               startTimestamp: timestamp,
               endTimestamp: timestamp + signer.requiredDeltaTime,
               payloadHash,
-              payload,
+              payload: payload?.payload,
             }
 
             await this.shared.databases.recovery.set(payloadEntry)
@@ -389,5 +398,22 @@ export class Recovery {
         }
       }
     }
+  }
+
+  async encodeRecoverySignature(imageHash: Hex.Hex, signer: Address.Address) {
+    const genericTree = await this.shared.sequence.stateProvider.getTree(imageHash)
+    if (!genericTree) {
+      throw new Error('recovery-module-tree-not-found')
+    }
+
+    const tree = Extensions.Recovery.fromGenericTree(genericTree)
+    const allSigners = Extensions.Recovery.getRecoveryLeaves(tree).leaves.map((l) => l.signer)
+
+    if (!allSigners.includes(signer)) {
+      throw new Error('signer-not-found-in-recovery-module')
+    }
+
+    const trimmed = Extensions.Recovery.trimTopology(tree, signer)
+    return Extensions.Recovery.encodeTopology(trimmed)
   }
 }
