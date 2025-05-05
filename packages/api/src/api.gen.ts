@@ -5,71 +5,70 @@
 //
 // webrpc-gen -schema=api.ridl -target=typescript -client -out=./clients/api.gen.ts
 
-export const WebrpcHeader = "Webrpc"
+export const WebrpcHeader = 'Webrpc'
 
-export const WebrpcHeaderValue = "webrpc@v0.25.3;gen-typescript@v0.17.0;sequence-api@v0.4.0"
+export const WebrpcHeaderValue = 'webrpc@v0.25.3;gen-typescript@v0.17.0;sequence-api@v0.4.0'
 
 // WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+export const WebRPCVersion = 'v1'
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v0.4.0"
+export const WebRPCSchemaVersion = 'v0.4.0'
 
 // Schema hash generated from your RIDL schema
 export const WebRPCSchemaHash = "d43a5aac616814072c69e63f2f81fe65ea10a7e0"
 
 type WebrpcGenVersions = {
-  webrpcGenVersion: string;
-  codeGenName: string;
-  codeGenVersion: string;
-  schemaName: string;
-  schemaVersion: string;
-};
+  webrpcGenVersion: string
+  codeGenName: string
+  codeGenVersion: string
+  schemaName: string
+  schemaVersion: string
+}
 
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
+  const headerValue = headers.get(WebrpcHeader)
   if (!headerValue) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  return parseWebrpcGenVersions(headerValue);
+  return parseWebrpcGenVersions(headerValue)
 }
 
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
+  const versions = header.split(';')
   if (versions.length < 3) {
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
+      webrpcGenVersion: '',
+      codeGenName: '',
+      codeGenVersion: '',
+      schemaName: '',
+      schemaVersion: ''
+    }
   }
 
-  const [_, webrpcGenVersion] = versions[0]!.split("@");
-  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
-  const [schemaName, schemaVersion] = versions[2]!.split("@");
+  const [_, webrpcGenVersion] = versions[0]!.split('@')
+  const [codeGenName, codeGenVersion] = versions[1]!.split('@')
+  const [schemaName, schemaVersion] = versions[2]!.split('@')
 
   return {
-    webrpcGenVersion: webrpcGenVersion ?? "",
-    codeGenName: codeGenName ?? "",
-    codeGenVersion: codeGenVersion ?? "",
-    schemaName: schemaName ?? "",
-    schemaVersion: schemaVersion ?? "",
-  };
+    webrpcGenVersion: webrpcGenVersion ?? '',
+    codeGenName: codeGenName ?? '',
+    codeGenVersion: codeGenVersion ?? '',
+    schemaName: schemaName ?? '',
+    schemaVersion: schemaVersion ?? ''
+  }
 }
 
 //
 // Types
 //
-
 
 export enum SortOrder {
   DESC = 'DESC',
@@ -150,7 +149,7 @@ export interface RuntimeStatus {
   branch: string
   commitHash: string
   checks: RuntimeChecks
-  numTxnsRelayed: {[key: string]: NumTxnsRelayed}
+  numTxnsRelayed: { [key: string]: NumTxnsRelayed }
 }
 
 export interface NumTxnsRelayed {
@@ -160,8 +159,7 @@ export interface NumTxnsRelayed {
   period: number
 }
 
-export interface RuntimeChecks {
-}
+export interface RuntimeChecks {}
 
 export interface SequenceContext {
   factory: string
@@ -965,9 +963,9 @@ export interface IntentQuote {
 
 export interface API {
   /**
-   * 
+   *
    * Runtime
-   * 
+   *
    */
   ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
   version(headers?: object, signal?: AbortSignal): Promise<VersionReturn>
@@ -975,48 +973,60 @@ export interface API {
   clock(headers?: object, signal?: AbortSignal): Promise<ClockReturn>
   getSequenceContext(headers?: object, signal?: AbortSignal): Promise<GetSequenceContextReturn>
   /**
-   * 
+   *
    * Auth
-   * 
+   *
    * TODO: rename 'ewtString' arg to 'ethauthProof'
    */
   getAuthToken(args: GetAuthTokenArgs, headers?: object, signal?: AbortSignal): Promise<GetAuthTokenReturn>
   getAuthToken2(args: GetAuthToken2Args, headers?: object, signal?: AbortSignal): Promise<GetAuthToken2Return>
-  sendPasswordlessLink(args: SendPasswordlessLinkArgs, headers?: object, signal?: AbortSignal): Promise<SendPasswordlessLinkReturn>
+  sendPasswordlessLink(
+    args: SendPasswordlessLinkArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SendPasswordlessLinkReturn>
   registerPublicKey(args: RegisterPublicKeyArgs, headers?: object, signal?: AbortSignal): Promise<RegisterPublicKeyReturn>
   getPublicKey(args: GetPublicKeyArgs, headers?: object, signal?: AbortSignal): Promise<GetPublicKeyReturn>
   /**
-   * 
+   *
    * Contacts / Friends
-   * 
+   *
    */
   friendList(args: FriendListArgs, headers?: object, signal?: AbortSignal): Promise<FriendListReturn>
   getFriendByAddress(args: GetFriendByAddressArgs, headers?: object, signal?: AbortSignal): Promise<GetFriendByAddressReturn>
   searchFriends(args: SearchFriendsArgs, headers?: object, signal?: AbortSignal): Promise<SearchFriendsReturn>
   addFriend(args: AddFriendArgs, headers?: object, signal?: AbortSignal): Promise<AddFriendReturn>
-  updateFriendNickname(args: UpdateFriendNicknameArgs, headers?: object, signal?: AbortSignal): Promise<UpdateFriendNicknameReturn>
+  updateFriendNickname(
+    args: UpdateFriendNicknameArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateFriendNicknameReturn>
   removeFriend(args: RemoveFriendArgs, headers?: object, signal?: AbortSignal): Promise<RemoveFriendReturn>
   /**
-   * 
+   *
    * Chain-Utils
-   * 
+   *
    */
   contractCall(args: ContractCallArgs, headers?: object, signal?: AbortSignal): Promise<ContractCallReturn>
   decodeContractCall(args: DecodeContractCallArgs, headers?: object, signal?: AbortSignal): Promise<DecodeContractCallReturn>
-  lookupContractCallSelectors(args: LookupContractCallSelectorsArgs, headers?: object, signal?: AbortSignal): Promise<LookupContractCallSelectorsReturn>
+  lookupContractCallSelectors(
+    args: LookupContractCallSelectorsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<LookupContractCallSelectorsReturn>
   /**
-   * 
+   *
    * User Storage
-   * 
+   *
    */
   userStorageFetch(args: UserStorageFetchArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageFetchReturn>
   userStorageSave(args: UserStorageSaveArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageSaveReturn>
   userStorageDelete(args: UserStorageDeleteArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageDeleteReturn>
   userStorageFetchAll(args: UserStorageFetchAllArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageFetchAllReturn>
   /**
-   * 
+   *
    * Wallet utils
-   * 
+   *
    */
   getMoonpayLink(args: GetMoonpayLinkArgs, headers?: object, signal?: AbortSignal): Promise<GetMoonpayLinkReturn>
   /**
@@ -1028,17 +1038,37 @@ export interface API {
    * NOTE: chainId can be either a number or canonical name
    */
   isValidSignature(args: IsValidSignatureArgs, headers?: object, signal?: AbortSignal): Promise<IsValidSignatureReturn>
-  isValidMessageSignature(args: IsValidMessageSignatureArgs, headers?: object, signal?: AbortSignal): Promise<IsValidMessageSignatureReturn>
-  isValidTypedDataSignature(args: IsValidTypedDataSignatureArgs, headers?: object, signal?: AbortSignal): Promise<IsValidTypedDataSignatureReturn>
+  isValidMessageSignature(
+    args: IsValidMessageSignatureArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsValidMessageSignatureReturn>
+  isValidTypedDataSignature(
+    args: IsValidTypedDataSignatureArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsValidTypedDataSignatureReturn>
   isValidETHAuthProof(args: IsValidETHAuthProofArgs, headers?: object, signal?: AbortSignal): Promise<IsValidETHAuthProofReturn>
   getOnRampURL(args: GetOnRampURLArgs, headers?: object, signal?: AbortSignal): Promise<GetOnRampURLReturn>
   sardineGetClientToken(headers?: object, signal?: AbortSignal): Promise<SardineGetClientTokenReturn>
-  sardineGetNFTCheckoutToken(args: SardineGetNFTCheckoutTokenArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetNFTCheckoutTokenReturn>
-  sardineGetNFTCheckoutOrderStatus(args: SardineGetNFTCheckoutOrderStatusArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetNFTCheckoutOrderStatusReturn>
+  sardineGetNFTCheckoutToken(
+    args: SardineGetNFTCheckoutTokenArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SardineGetNFTCheckoutTokenReturn>
+  sardineGetNFTCheckoutOrderStatus(
+    args: SardineGetNFTCheckoutOrderStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SardineGetNFTCheckoutOrderStatusReturn>
   sardineGetSupportedRegions(headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedRegionsReturn>
   sardineGetSupportedFiatCurrencies(headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedFiatCurrenciesReturn>
   sardineGetSupportedTokens(headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedTokensReturn>
-  sardineGetSupportedTokenForSwap(args: SardineGetSupportedTokenForSwapArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedTokenForSwapReturn>
+  sardineGetSupportedTokenForSwap(
+    args: SardineGetSupportedTokenForSwapArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SardineGetSupportedTokenForSwapReturn>
   sardineGetEnabledTokens(headers?: object, signal?: AbortSignal): Promise<SardineGetEnabledTokensReturn>
   sardineGetQuote(args: SardineGetQuoteArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetQuoteReturn>
   /**
@@ -1048,63 +1078,82 @@ export interface API {
   /**
    * Deprecated. Use SardineGetNFTCheckoutToken() instead.
    */
-  getSardineNFTCheckoutToken(args: GetSardineNFTCheckoutTokenArgs, headers?: object, signal?: AbortSignal): Promise<GetSardineNFTCheckoutTokenReturn>
+  getSardineNFTCheckoutToken(
+    args: GetSardineNFTCheckoutTokenArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetSardineNFTCheckoutTokenReturn>
   /**
    * Deprecated. Use SardineGetNFTCheckoutOrderStatus() instead.
    */
-  getSardineNFTCheckoutOrderStatus(args: GetSardineNFTCheckoutOrderStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetSardineNFTCheckoutOrderStatusReturn>
+  getSardineNFTCheckoutOrderStatus(
+    args: GetSardineNFTCheckoutOrderStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetSardineNFTCheckoutOrderStatusReturn>
   transakGetCountries(headers?: object, signal?: AbortSignal): Promise<TransakGetCountriesReturn>
   transakGetCryptoCurrencies(headers?: object, signal?: AbortSignal): Promise<TransakGetCryptoCurrenciesReturn>
   transakGetFiatCurrencies(headers?: object, signal?: AbortSignal): Promise<TransakGetFiatCurrenciesReturn>
   transakGetPrice(args: TransakGetPriceArgs, headers?: object, signal?: AbortSignal): Promise<TransakGetPriceReturn>
-  transakGetSupportedNFTCheckoutChains(headers?: object, signal?: AbortSignal): Promise<TransakGetSupportedNFTCheckoutChainsReturn>
+  transakGetSupportedNFTCheckoutChains(
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<TransakGetSupportedNFTCheckoutChainsReturn>
   /**
-   * 
+   *
    * Price Feed
-   * 
+   *
    */
   getCoinPrices(args: GetCoinPricesArgs, headers?: object, signal?: AbortSignal): Promise<GetCoinPricesReturn>
-  getCollectiblePrices(args: GetCollectiblePricesArgs, headers?: object, signal?: AbortSignal): Promise<GetCollectiblePricesReturn>
+  getCollectiblePrices(
+    args: GetCollectiblePricesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetCollectiblePricesReturn>
   /**
-   * 
+   *
    * Price Feed utils
-   * 
+   *
    */
   getExchangeRate(args: GetExchangeRateArgs, headers?: object, signal?: AbortSignal): Promise<GetExchangeRateReturn>
   /**
-   * 
+   *
    * Util / misc
-   * 
+   *
    */
   memoryStore(args: MemoryStoreArgs, headers?: object, signal?: AbortSignal): Promise<MemoryStoreReturn>
   memoryLoad(args: MemoryLoadArgs, headers?: object, signal?: AbortSignal): Promise<MemoryLoadReturn>
   /**
-   * 
+   *
    * Legacy
-   * 
+   *
    */
   getInviteInfo(headers?: object, signal?: AbortSignal): Promise<GetInviteInfoReturn>
   /**
    * NOTE: we're still using this from SW-API to Sequence-API to claim invite code
    */
   isValidAccessCode(args: IsValidAccessCodeArgs, headers?: object, signal?: AbortSignal): Promise<IsValidAccessCodeReturn>
-  internalClaimAccessCode(args: InternalClaimAccessCodeArgs, headers?: object, signal?: AbortSignal): Promise<InternalClaimAccessCodeReturn>
+  internalClaimAccessCode(
+    args: InternalClaimAccessCodeArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<InternalClaimAccessCodeReturn>
   /**
    * Utils
    */
   blockNumberAtTime(args: BlockNumberAtTimeArgs, headers?: object, signal?: AbortSignal): Promise<BlockNumberAtTimeReturn>
   /**
-   * 
+   *
    * Paper
    * TODO: deprecate in the future
-   * 
+   *
    */
   paperSessionSecret(args: PaperSessionSecretArgs, headers?: object, signal?: AbortSignal): Promise<PaperSessionSecretReturn>
   paperSessionSecret2(args: PaperSessionSecret2Args, headers?: object, signal?: AbortSignal): Promise<PaperSessionSecret2Return>
   /**
-   * 
+   *
    * Linked wallets (v0 -- simple support)
-   * 
+   *
    */
   linkWallet(args: LinkWalletArgs, headers?: object, signal?: AbortSignal): Promise<LinkWalletReturn>
   getLinkedWallets(args: GetLinkedWalletsArgs, headers?: object, signal?: AbortSignal): Promise<GetLinkedWalletsReturn>
@@ -1113,13 +1162,21 @@ export interface API {
    * NOTE: these methods are deprecated, please do not use them. We may resurface them in the future, but just wanted
    * to be clear, they are not necessary for our linked wallets.
    */
-  generateWaaSVerificationURL(args: GenerateWaaSVerificationURLArgs, headers?: object, signal?: AbortSignal): Promise<GenerateWaaSVerificationURLReturn>
-  validateWaaSVerificationNonce(args: ValidateWaaSVerificationNonceArgs, headers?: object, signal?: AbortSignal): Promise<ValidateWaaSVerificationNonceReturn>
+  generateWaaSVerificationURL(
+    args: GenerateWaaSVerificationURLArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GenerateWaaSVerificationURLReturn>
+  validateWaaSVerificationNonce(
+    args: ValidateWaaSVerificationNonceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ValidateWaaSVerificationNonceReturn>
   /**
-   * 
-   * 
+   *
+   *
    * WaaS child wallet adoption
-   * 
+   *
    */
   listAdoptedWallets(args: ListAdoptedWalletsArgs, headers?: object, signal?: AbortSignal): Promise<ListAdoptedWalletsReturn>
   getLifiChains(headers?: object, signal?: AbortSignal): Promise<GetLifiChainsReturn>
@@ -1141,20 +1198,48 @@ export interface API {
   /**
    * 
    * Inventory, payments and management
-   * 
+   *
    */
   listCurrencyGroups(headers?: object, signal?: AbortSignal): Promise<ListCurrencyGroupsReturn>
-  addOffchainInventory(args: AddOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<AddOffchainInventoryReturn>
-  getOffchainInventory(args: GetOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<GetOffchainInventoryReturn>
-  listOffchainInventories(args: ListOffchainInventoriesArgs, headers?: object, signal?: AbortSignal): Promise<ListOffchainInventoriesReturn>
-  updateOffchainInventory(args: UpdateOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<UpdateOffchainInventoryReturn>
-  deleteOffchainInventory(args: DeleteOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<DeleteOffchainInventoryReturn>
-  requestOffchainPayment(args: RequestOffchainPaymentArgs, headers?: object, signal?: AbortSignal): Promise<RequestOffchainPaymentReturn>
-  listOffchainPayments(args: ListOffchainPaymentsArgs, headers?: object, signal?: AbortSignal): Promise<ListOffchainPaymentsReturn>
+  addOffchainInventory(
+    args: AddOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddOffchainInventoryReturn>
+  getOffchainInventory(
+    args: GetOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetOffchainInventoryReturn>
+  listOffchainInventories(
+    args: ListOffchainInventoriesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListOffchainInventoriesReturn>
+  updateOffchainInventory(
+    args: UpdateOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateOffchainInventoryReturn>
+  deleteOffchainInventory(
+    args: DeleteOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DeleteOffchainInventoryReturn>
+  requestOffchainPayment(
+    args: RequestOffchainPaymentArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RequestOffchainPaymentReturn>
+  listOffchainPayments(
+    args: ListOffchainPaymentsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListOffchainPaymentsReturn>
   /**
-   * 
+   *
    * Packs
-   * 
+   *
    */
   savePack(args: SavePackArgs, headers?: object, signal?: AbortSignal): Promise<SavePackReturn>
   getPack(args: GetPackArgs, headers?: object, signal?: AbortSignal): Promise<GetPackReturn>
@@ -1185,35 +1270,30 @@ export interface API {
   queueMetaTxnReceipt(args: QueueMetaTxnReceiptArgs, headers?: object, signal?: AbortSignal): Promise<QueueMetaTxnReceiptReturn>
 }
 
-export interface PingArgs {
-}
+export interface PingArgs {}
 
 export interface PingReturn {
-  status: boolean  
+  status: boolean
 }
-export interface VersionArgs {
-}
+export interface VersionArgs {}
 
 export interface VersionReturn {
-  version: Version  
+  version: Version
 }
-export interface RuntimeStatusArgs {
-}
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
-  status: RuntimeStatus  
+  status: RuntimeStatus
 }
-export interface ClockArgs {
-}
+export interface ClockArgs {}
 
 export interface ClockReturn {
-  serverTime: string  
+  serverTime: string
 }
-export interface GetSequenceContextArgs {
-}
+export interface GetSequenceContextArgs {}
 
 export interface GetSequenceContextReturn {
-  data: SequenceContext  
+  data: SequenceContext
 }
 export interface GetAuthTokenArgs {
   ewtString: string
@@ -1224,7 +1304,7 @@ export interface GetAuthTokenReturn {
   status: boolean
   jwtToken: string
   address: string
-  user?: User  
+  user?: User
 }
 export interface GetAuthToken2Args {
   ewtString: string
@@ -1235,7 +1315,7 @@ export interface GetAuthToken2Return {
   status: boolean
   jwtToken: string
   address: string
-  user?: User  
+  user?: User
 }
 export interface SendPasswordlessLinkArgs {
   email: string
@@ -1244,21 +1324,21 @@ export interface SendPasswordlessLinkArgs {
 }
 
 export interface SendPasswordlessLinkReturn {
-  status: boolean  
+  status: boolean
 }
 export interface RegisterPublicKeyArgs {
   publicKey: PublicKey
 }
 
 export interface RegisterPublicKeyReturn {
-  status: boolean  
+  status: boolean
 }
 export interface GetPublicKeyArgs {
   id: string
 }
 
 export interface GetPublicKeyReturn {
-  publicKey: PublicKey  
+  publicKey: PublicKey
 }
 export interface FriendListArgs {
   nickname?: string
@@ -1267,7 +1347,7 @@ export interface FriendListArgs {
 
 export interface FriendListReturn {
   page: Page
-  friends: Array<Friend>  
+  friends: Array<Friend>
 }
 export interface GetFriendByAddressArgs {
   friendAddress: string
@@ -1275,7 +1355,7 @@ export interface GetFriendByAddressArgs {
 
 export interface GetFriendByAddressReturn {
   status: boolean
-  friend: Friend  
+  friend: Friend
 }
 export interface SearchFriendsArgs {
   filterUsername: string
@@ -1283,7 +1363,7 @@ export interface SearchFriendsArgs {
 }
 
 export interface SearchFriendsReturn {
-  friends: Array<Friend>  
+  friends: Array<Friend>
 }
 export interface AddFriendArgs {
   friendAddress: string
@@ -1292,7 +1372,7 @@ export interface AddFriendArgs {
 
 export interface AddFriendReturn {
   status: boolean
-  friend?: Friend  
+  friend?: Friend
 }
 export interface UpdateFriendNicknameArgs {
   friendAddress: string
@@ -1301,14 +1381,14 @@ export interface UpdateFriendNicknameArgs {
 
 export interface UpdateFriendNicknameReturn {
   status: boolean
-  friend?: Friend  
+  friend?: Friend
 }
 export interface RemoveFriendArgs {
   friendAddress: string
 }
 
 export interface RemoveFriendReturn {
-  status: boolean  
+  status: boolean
 }
 export interface ContractCallArgs {
   chainID: string
@@ -1319,28 +1399,28 @@ export interface ContractCallArgs {
 }
 
 export interface ContractCallReturn {
-  returns: Array<string>  
+  returns: Array<string>
 }
 export interface DecodeContractCallArgs {
   callData: string
 }
 
 export interface DecodeContractCallReturn {
-  call: ContractCall  
+  call: ContractCall
 }
 export interface LookupContractCallSelectorsArgs {
   selectors: Array<string>
 }
 
 export interface LookupContractCallSelectorsReturn {
-  signatures: Array<Array<string>>  
+  signatures: Array<Array<string>>
 }
 export interface UserStorageFetchArgs {
   key: string
 }
 
 export interface UserStorageFetchReturn {
-  object: any  
+  object: any
 }
 export interface UserStorageSaveArgs {
   key: string
@@ -1348,28 +1428,28 @@ export interface UserStorageSaveArgs {
 }
 
 export interface UserStorageSaveReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface UserStorageDeleteArgs {
   key: string
 }
 
 export interface UserStorageDeleteReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface UserStorageFetchAllArgs {
   keys?: Array<string>
 }
 
 export interface UserStorageFetchAllReturn {
-  objects: {[key: string]: any}  
+  objects: { [key: string]: any }
 }
 export interface GetMoonpayLinkArgs {
   url: string
 }
 
 export interface GetMoonpayLinkReturn {
-  signedUrl: string  
+  signedUrl: string
 }
 export interface ResolveENSAddressArgs {
   ens: string
@@ -1377,7 +1457,7 @@ export interface ResolveENSAddressArgs {
 
 export interface ResolveENSAddressReturn {
   address: string
-  ok: boolean  
+  ok: boolean
 }
 export interface IsValidSignatureArgs {
   chainId: string
@@ -1387,7 +1467,7 @@ export interface IsValidSignatureArgs {
 }
 
 export interface IsValidSignatureReturn {
-  isValid: boolean  
+  isValid: boolean
 }
 export interface IsValidMessageSignatureArgs {
   chainId: string
@@ -1397,7 +1477,7 @@ export interface IsValidMessageSignatureArgs {
 }
 
 export interface IsValidMessageSignatureReturn {
-  isValid: boolean  
+  isValid: boolean
 }
 export interface IsValidTypedDataSignatureArgs {
   chainId: string
@@ -1407,7 +1487,7 @@ export interface IsValidTypedDataSignatureArgs {
 }
 
 export interface IsValidTypedDataSignatureReturn {
-  isValid: boolean  
+  isValid: boolean
 }
 export interface IsValidETHAuthProofArgs {
   chainId: string
@@ -1427,41 +1507,39 @@ export interface GetOnRampURLReturn {
 }
 export interface SardineGetClientTokenArgs {
 }
+export interface SardineGetClientTokenArgs {}
 
 export interface SardineGetClientTokenReturn {
-  token: string  
+  token: string
 }
 export interface SardineGetNFTCheckoutTokenArgs {
   params: SardineNFTCheckoutParams
 }
 
 export interface SardineGetNFTCheckoutTokenReturn {
-  resp: SardineNFTCheckout  
+  resp: SardineNFTCheckout
 }
 export interface SardineGetNFTCheckoutOrderStatusArgs {
   orderId: string
 }
 
 export interface SardineGetNFTCheckoutOrderStatusReturn {
-  resp: SardineOrder  
+  resp: SardineOrder
 }
-export interface SardineGetSupportedRegionsArgs {
-}
+export interface SardineGetSupportedRegionsArgs {}
 
 export interface SardineGetSupportedRegionsReturn {
-  regions: Array<SardineRegion>  
+  regions: Array<SardineRegion>
 }
-export interface SardineGetSupportedFiatCurrenciesArgs {
-}
+export interface SardineGetSupportedFiatCurrenciesArgs {}
 
 export interface SardineGetSupportedFiatCurrenciesReturn {
-  tokens: Array<SardineFiatCurrency>  
+  tokens: Array<SardineFiatCurrency>
 }
-export interface SardineGetSupportedTokensArgs {
-}
+export interface SardineGetSupportedTokensArgs {}
 
 export interface SardineGetSupportedTokensReturn {
-  tokens: Array<SardineSupportedToken>  
+  tokens: Array<SardineSupportedToken>
 }
 export interface SardineGetSupportedTokenForSwapArgs {
   network: string
@@ -1469,92 +1547,86 @@ export interface SardineGetSupportedTokenForSwapArgs {
 }
 
 export interface SardineGetSupportedTokenForSwapReturn {
-  token: SardineSupportedTokenForSwap  
+  token: SardineSupportedTokenForSwap
 }
-export interface SardineGetEnabledTokensArgs {
-}
+export interface SardineGetEnabledTokensArgs {}
 
 export interface SardineGetEnabledTokensReturn {
-  tokens: Array<SardineEnabledToken>  
+  tokens: Array<SardineEnabledToken>
 }
 export interface SardineGetQuoteArgs {
   params: SardineGetQuoteParams
 }
 
 export interface SardineGetQuoteReturn {
-  quote: SardineQuote  
+  quote: SardineQuote
 }
-export interface GetSardineClientTokenArgs {
-}
+export interface GetSardineClientTokenArgs {}
 
 export interface GetSardineClientTokenReturn {
-  token: string  
+  token: string
 }
 export interface GetSardineNFTCheckoutTokenArgs {
   params: SardineNFTCheckoutParams
 }
 
 export interface GetSardineNFTCheckoutTokenReturn {
-  resp: SardineNFTCheckout  
+  resp: SardineNFTCheckout
 }
 export interface GetSardineNFTCheckoutOrderStatusArgs {
   orderId: string
 }
 
 export interface GetSardineNFTCheckoutOrderStatusReturn {
-  resp: SardineOrder  
+  resp: SardineOrder
 }
-export interface TransakGetCountriesArgs {
-}
+export interface TransakGetCountriesArgs {}
 
 export interface TransakGetCountriesReturn {
-  regions: Array<TransakCountry>  
+  regions: Array<TransakCountry>
 }
-export interface TransakGetCryptoCurrenciesArgs {
-}
+export interface TransakGetCryptoCurrenciesArgs {}
 
 export interface TransakGetCryptoCurrenciesReturn {
-  currencies: Array<TransakCryptoCurrency>  
+  currencies: Array<TransakCryptoCurrency>
 }
-export interface TransakGetFiatCurrenciesArgs {
-}
+export interface TransakGetFiatCurrenciesArgs {}
 
 export interface TransakGetFiatCurrenciesReturn {
-  currencies: Array<TransakFiatCurrency>  
+  currencies: Array<TransakFiatCurrency>
 }
 export interface TransakGetPriceArgs {
   params: TransakGetPriceParams
 }
 
 export interface TransakGetPriceReturn {
-  price: TransakPrice  
+  price: TransakPrice
 }
-export interface TransakGetSupportedNFTCheckoutChainsArgs {
-}
+export interface TransakGetSupportedNFTCheckoutChainsArgs {}
 
 export interface TransakGetSupportedNFTCheckoutChainsReturn {
-  chains: Array<TransakChain>  
+  chains: Array<TransakChain>
 }
 export interface GetCoinPricesArgs {
   tokens: Array<Token>
 }
 
 export interface GetCoinPricesReturn {
-  tokenPrices: Array<TokenPrice>  
+  tokenPrices: Array<TokenPrice>
 }
 export interface GetCollectiblePricesArgs {
   tokens: Array<Token>
 }
 
 export interface GetCollectiblePricesReturn {
-  tokenPrices: Array<TokenPrice>  
+  tokenPrices: Array<TokenPrice>
 }
 export interface GetExchangeRateArgs {
   toCurrency: string
 }
 
 export interface GetExchangeRateReturn {
-  exchangeRate: ExchangeRate  
+  exchangeRate: ExchangeRate
 }
 export interface MemoryStoreArgs {
   key: string
@@ -1562,27 +1634,26 @@ export interface MemoryStoreArgs {
 }
 
 export interface MemoryStoreReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface MemoryLoadArgs {
   key: string
 }
 
 export interface MemoryLoadReturn {
-  value: string  
+  value: string
 }
-export interface GetInviteInfoArgs {
-}
+export interface GetInviteInfoArgs {}
 
 export interface GetInviteInfoReturn {
-  inviteInfo: InviteInfo  
+  inviteInfo: InviteInfo
 }
 export interface IsValidAccessCodeArgs {
   accessCode: string
 }
 
 export interface IsValidAccessCodeReturn {
-  status: boolean  
+  status: boolean
 }
 export interface InternalClaimAccessCodeArgs {
   address: string
@@ -1590,7 +1661,7 @@ export interface InternalClaimAccessCodeArgs {
 }
 
 export interface InternalClaimAccessCodeReturn {
-  status: boolean  
+  status: boolean
 }
 export interface BlockNumberAtTimeArgs {
   chainId: number
@@ -1598,7 +1669,7 @@ export interface BlockNumberAtTimeArgs {
 }
 
 export interface BlockNumberAtTimeReturn {
-  blocks: Array<number>  
+  blocks: Array<number>
 }
 export interface PaperSessionSecretArgs {
   chainName: string
@@ -1608,7 +1679,7 @@ export interface PaperSessionSecretArgs {
 }
 
 export interface PaperSessionSecretReturn {
-  secret: string  
+  secret: string
 }
 export interface PaperSessionSecret2Args {
   chainName: string
@@ -1618,7 +1689,7 @@ export interface PaperSessionSecret2Args {
 }
 
 export interface PaperSessionSecret2Return {
-  secret: string  
+  secret: string
 }
 export interface LinkWalletArgs {
   parentWalletAddress: string
@@ -1632,7 +1703,7 @@ export interface LinkWalletArgs {
 }
 
 export interface LinkWalletReturn {
-  status: boolean  
+  status: boolean
 }
 export interface GetLinkedWalletsArgs {
   parentWalletAddress: string
@@ -1642,7 +1713,7 @@ export interface GetLinkedWalletsArgs {
 }
 
 export interface GetLinkedWalletsReturn {
-  linkedWallets: Array<LinkedWallet>  
+  linkedWallets: Array<LinkedWallet>
 }
 export interface RemoveLinkedWalletArgs {
   parentWalletAddress: string
@@ -1653,7 +1724,7 @@ export interface RemoveLinkedWalletArgs {
 }
 
 export interface RemoveLinkedWalletReturn {
-  status: boolean  
+  status: boolean
 }
 export interface GenerateWaaSVerificationURLArgs {
   walletAddress: string
@@ -1661,7 +1732,7 @@ export interface GenerateWaaSVerificationURLArgs {
 
 export interface GenerateWaaSVerificationURLReturn {
   nonce: string
-  verificationURL: string  
+  verificationURL: string
 }
 export interface ValidateWaaSVerificationNonceArgs {
   nonce: string
@@ -1671,7 +1742,7 @@ export interface ValidateWaaSVerificationNonceArgs {
 }
 
 export interface ValidateWaaSVerificationNonceReturn {
-  walletAddress: string  
+  walletAddress: string
 }
 export interface ListAdoptedWalletsArgs {
   page?: Page
@@ -1679,20 +1750,19 @@ export interface ListAdoptedWalletsArgs {
 
 export interface ListAdoptedWalletsReturn {
   page: Page
-  wallets: Array<AdoptedChildWallet>  
+  wallets: Array<AdoptedChildWallet>
 }
-export interface GetLifiChainsArgs {
-}
+export interface GetLifiChainsArgs {}
 
 export interface GetLifiChainsReturn {
-  chains: Array<number>  
+  chains: Array<number>
 }
 export interface GetLifiTokensArgs {
   chainIds: Array<number>
 }
 
 export interface GetLifiTokensReturn {
-  tokens: Array<Token>  
+  tokens: Array<Token>
 }
 export interface GetLifiSwapRoutesArgs {
   params: GetLifiSwapRouteParams
@@ -1703,7 +1773,7 @@ export interface GetLifiSwapRoutesArgs {
 }
 
 export interface GetLifiSwapRoutesReturn {
-  routes: Array<LifiSwapRoute>  
+  routes: Array<LifiSwapRoute>
 }
 export interface GetLifiSwapQuoteArgs {
   params: GetLifiSwapQuoteParams
@@ -1762,43 +1832,43 @@ export interface GetIntentConfigReturn {
 }
 export interface ListCurrencyGroupsArgs {
 }
+export interface ListCurrencyGroupsArgs {}
 
 export interface ListCurrencyGroupsReturn {
-  currencyGroups: Array<CurrencyGroup>  
+  currencyGroups: Array<CurrencyGroup>
 }
 export interface AddOffchainInventoryArgs {
   inventory: OffchainInventory
 }
 
 export interface AddOffchainInventoryReturn {
-  inventoryId: number  
+  inventoryId: number
 }
 export interface GetOffchainInventoryArgs {
   inventoryId: number
 }
 
 export interface GetOffchainInventoryReturn {
-  inventory: OffchainInventory  
+  inventory: OffchainInventory
 }
 export interface ListOffchainInventoriesArgs {
   projectId: number
 }
 
 export interface ListOffchainInventoriesReturn {
-  inventory: Array<OffchainInventory>  
+  inventory: Array<OffchainInventory>
 }
 export interface UpdateOffchainInventoryArgs {
   inventory: OffchainInventory
 }
 
-export interface UpdateOffchainInventoryReturn {  
-}
+export interface UpdateOffchainInventoryReturn {}
 export interface DeleteOffchainInventoryArgs {
   inventoryId: number
 }
 
 export interface DeleteOffchainInventoryReturn {
-  ok: boolean  
+  ok: boolean
 }
 export interface RequestOffchainPaymentArgs {
   inventoryId: number
@@ -1808,7 +1878,7 @@ export interface RequestOffchainPaymentArgs {
 }
 
 export interface RequestOffchainPaymentReturn {
-  payment: PaymentResponse  
+  payment: PaymentResponse
 }
 export interface ListOffchainPaymentsArgs {
   inventoryId: number
@@ -1817,14 +1887,14 @@ export interface ListOffchainPaymentsArgs {
 
 export interface ListOffchainPaymentsReturn {
   page: Page
-  payments: Array<OffchainPayment>  
+  payments: Array<OffchainPayment>
 }
 export interface SavePackArgs {
   pack: Pack
 }
 
 export interface SavePackReturn {
-  merkleRoot: string  
+  merkleRoot: string
 }
 export interface GetPackArgs {
   contractAddress: string
@@ -1833,7 +1903,7 @@ export interface GetPackArgs {
 }
 
 export interface GetPackReturn {
-  pack: Pack  
+  pack: Pack
 }
 export interface GetPackIdsArgs {
   contractAddress: string
@@ -1850,14 +1920,25 @@ export interface DeletePackArgs {
 }
 
 export interface DeletePackReturn {
-  status: boolean  
+  status: boolean
 }
 export interface UpdatePackContentArgs {
   pack: Pack
 }
 
 export interface UpdatePackContentReturn {
-  merkleRoot: string  
+  merkleRoot: string
+}
+export interface CheckoutOptionsPrimaryArgs {
+  chainId: number
+  wallet: string
+  contractAddress: string
+  collectionAddress: string
+  params: Array<CheckoutOptionsPrimaryParams>
+}
+
+export interface CheckoutOptionsPrimaryReturn {
+  options: CheckoutOptions
 }
 export interface GetRevealTxDataArgs {
   contractAddress: string
@@ -1887,7 +1968,7 @@ export interface CheckoutOptionsSecondaryArgs {
 }
 
 export interface CheckoutOptionsSecondaryReturn {
-  options: CheckoutOptions  
+  options: CheckoutOptions
 }
 export interface CheckoutOptionsGetTransakContractIDArgs {
   chainId: number
@@ -1895,7 +1976,7 @@ export interface CheckoutOptionsGetTransakContractIDArgs {
 }
 
 export interface CheckoutOptionsGetTransakContractIDReturn {
-  contractId: string  
+  contractId: string
 }
 export interface FortePayCreateIntentArgs {
   intent: FortePayCreateIntent
@@ -1959,8 +2040,6 @@ export interface QueueMetaTxnReceiptReturn {
   status: boolean  
 }
 
-
-  
 //
 // Client
 //
@@ -1977,427 +2056,487 @@ export class API implements API {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
-    return this.fetch(
-      this.url('Ping'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Ping'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   version = (headers?: object, signal?: AbortSignal): Promise<VersionReturn> => {
-    return this.fetch(
-      this.url('Version'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          version: <Version>(_data.version),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Version'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            version: <Version>_data.version
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   runtimeStatus = (headers?: object, signal?: AbortSignal): Promise<RuntimeStatusReturn> => {
-    return this.fetch(
-      this.url('RuntimeStatus'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <RuntimeStatus>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RuntimeStatus'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <RuntimeStatus>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   clock = (headers?: object, signal?: AbortSignal): Promise<ClockReturn> => {
-    return this.fetch(
-      this.url('Clock'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          serverTime: <string>(_data.serverTime),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('Clock'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            serverTime: <string>_data.serverTime
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getSequenceContext = (headers?: object, signal?: AbortSignal): Promise<GetSequenceContextReturn> => {
-    return this.fetch(
-      this.url('GetSequenceContext'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          data: <SequenceContext>(_data.data),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetSequenceContext'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            data: <SequenceContext>_data.data
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getAuthToken = (args: GetAuthTokenArgs, headers?: object, signal?: AbortSignal): Promise<GetAuthTokenReturn> => {
-    return this.fetch(
-      this.url('GetAuthToken'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          jwtToken: <string>(_data.jwtToken),
-          address: <string>(_data.address),
-          user: <User>(_data.user),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetAuthToken'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            jwtToken: <string>_data.jwtToken,
+            address: <string>_data.address,
+            user: <User>_data.user
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getAuthToken2 = (args: GetAuthToken2Args, headers?: object, signal?: AbortSignal): Promise<GetAuthToken2Return> => {
-    return this.fetch(
-      this.url('GetAuthToken2'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          jwtToken: <string>(_data.jwtToken),
-          address: <string>(_data.address),
-          user: <User>(_data.user),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetAuthToken2'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            jwtToken: <string>_data.jwtToken,
+            address: <string>_data.address,
+            user: <User>_data.user
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  sendPasswordlessLink = (args: SendPasswordlessLinkArgs, headers?: object, signal?: AbortSignal): Promise<SendPasswordlessLinkReturn> => {
-    return this.fetch(
-      this.url('SendPasswordlessLink'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  sendPasswordlessLink = (
+    args: SendPasswordlessLinkArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SendPasswordlessLinkReturn> => {
+    return this.fetch(this.url('SendPasswordlessLink'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   registerPublicKey = (args: RegisterPublicKeyArgs, headers?: object, signal?: AbortSignal): Promise<RegisterPublicKeyReturn> => {
-    return this.fetch(
-      this.url('RegisterPublicKey'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RegisterPublicKey'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getPublicKey = (args: GetPublicKeyArgs, headers?: object, signal?: AbortSignal): Promise<GetPublicKeyReturn> => {
-    return this.fetch(
-      this.url('GetPublicKey'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          publicKey: <PublicKey>(_data.publicKey),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetPublicKey'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            publicKey: <PublicKey>_data.publicKey
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   friendList = (args: FriendListArgs, headers?: object, signal?: AbortSignal): Promise<FriendListReturn> => {
-    return this.fetch(
-      this.url('FriendList'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          friends: <Array<Friend>>(_data.friends),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('FriendList'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            friends: <Array<Friend>>_data.friends
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getFriendByAddress = (args: GetFriendByAddressArgs, headers?: object, signal?: AbortSignal): Promise<GetFriendByAddressReturn> => {
-    return this.fetch(
-      this.url('GetFriendByAddress'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          friend: <Friend>(_data.friend),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getFriendByAddress = (
+    args: GetFriendByAddressArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetFriendByAddressReturn> => {
+    return this.fetch(this.url('GetFriendByAddress'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            friend: <Friend>_data.friend
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   searchFriends = (args: SearchFriendsArgs, headers?: object, signal?: AbortSignal): Promise<SearchFriendsReturn> => {
-    return this.fetch(
-      this.url('SearchFriends'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          friends: <Array<Friend>>(_data.friends),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SearchFriends'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            friends: <Array<Friend>>_data.friends
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   addFriend = (args: AddFriendArgs, headers?: object, signal?: AbortSignal): Promise<AddFriendReturn> => {
-    return this.fetch(
-      this.url('AddFriend'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          friend: <Friend>(_data.friend),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('AddFriend'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            friend: <Friend>_data.friend
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  updateFriendNickname = (args: UpdateFriendNicknameArgs, headers?: object, signal?: AbortSignal): Promise<UpdateFriendNicknameReturn> => {
-    return this.fetch(
-      this.url('UpdateFriendNickname'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-          friend: <Friend>(_data.friend),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  updateFriendNickname = (
+    args: UpdateFriendNicknameArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateFriendNicknameReturn> => {
+    return this.fetch(this.url('UpdateFriendNickname'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status,
+            friend: <Friend>_data.friend
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   removeFriend = (args: RemoveFriendArgs, headers?: object, signal?: AbortSignal): Promise<RemoveFriendReturn> => {
-    return this.fetch(
-      this.url('RemoveFriend'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('RemoveFriend'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   contractCall = (args: ContractCallArgs, headers?: object, signal?: AbortSignal): Promise<ContractCallReturn> => {
-    return this.fetch(
-      this.url('ContractCall'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          returns: <Array<string>>(_data.returns),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ContractCall'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            returns: <Array<string>>_data.returns
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  decodeContractCall = (args: DecodeContractCallArgs, headers?: object, signal?: AbortSignal): Promise<DecodeContractCallReturn> => {
-    return this.fetch(
-      this.url('DecodeContractCall'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          call: <ContractCall>(_data.call),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  decodeContractCall = (
+    args: DecodeContractCallArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DecodeContractCallReturn> => {
+    return this.fetch(this.url('DecodeContractCall'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            call: <ContractCall>_data.call
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  lookupContractCallSelectors = (args: LookupContractCallSelectorsArgs, headers?: object, signal?: AbortSignal): Promise<LookupContractCallSelectorsReturn> => {
-    return this.fetch(
-      this.url('LookupContractCallSelectors'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          signatures: <Array<Array<string>>>(_data.signatures),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  lookupContractCallSelectors = (
+    args: LookupContractCallSelectorsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<LookupContractCallSelectorsReturn> => {
+    return this.fetch(this.url('LookupContractCallSelectors'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            signatures: <Array<Array<string>>>_data.signatures
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   userStorageFetch = (args: UserStorageFetchArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageFetchReturn> => {
-    return this.fetch(
-      this.url('UserStorageFetch'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          object: <any>(_data.object),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UserStorageFetch'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            object: <any>_data.object
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   userStorageSave = (args: UserStorageSaveArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageSaveReturn> => {
-    return this.fetch(
-      this.url('UserStorageSave'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UserStorageSave'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   userStorageDelete = (args: UserStorageDeleteArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageDeleteReturn> => {
-    return this.fetch(
-      this.url('UserStorageDelete'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UserStorageDelete'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  userStorageFetchAll = (args: UserStorageFetchAllArgs, headers?: object, signal?: AbortSignal): Promise<UserStorageFetchAllReturn> => {
-    return this.fetch(
-      this.url('UserStorageFetchAll'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          objects: <{[key: string]: any}>(_data.objects),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  userStorageFetchAll = (
+    args: UserStorageFetchAllArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UserStorageFetchAllReturn> => {
+    return this.fetch(this.url('UserStorageFetchAll'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            objects: <{ [key: string]: any }>_data.objects
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getMoonpayLink = (args: GetMoonpayLinkArgs, headers?: object, signal?: AbortSignal): Promise<GetMoonpayLinkReturn> => {
-    return this.fetch(
-      this.url('GetMoonpayLink'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          signedUrl: <string>(_data.signedUrl),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetMoonpayLink'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            signedUrl: <string>_data.signedUrl
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   resolveENSAddress = (args: ResolveENSAddressArgs, headers?: object, signal?: AbortSignal): Promise<ResolveENSAddressReturn> => {
-    return this.fetch(
-      this.url('ResolveENSAddress'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          address: <string>(_data.address),
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ResolveENSAddress'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            address: <string>_data.address,
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   isValidSignature = (args: IsValidSignatureArgs, headers?: object, signal?: AbortSignal): Promise<IsValidSignatureReturn> => {
-    return this.fetch(
-      this.url('IsValidSignature'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          isValid: <boolean>(_data.isValid),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('IsValidSignature'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            isValid: <boolean>_data.isValid
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  isValidMessageSignature = (args: IsValidMessageSignatureArgs, headers?: object, signal?: AbortSignal): Promise<IsValidMessageSignatureReturn> => {
-    return this.fetch(
-      this.url('IsValidMessageSignature'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          isValid: <boolean>(_data.isValid),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  isValidMessageSignature = (
+    args: IsValidMessageSignatureArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsValidMessageSignatureReturn> => {
+    return this.fetch(this.url('IsValidMessageSignature'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            isValid: <boolean>_data.isValid
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  isValidTypedDataSignature = (args: IsValidTypedDataSignatureArgs, headers?: object, signal?: AbortSignal): Promise<IsValidTypedDataSignatureReturn> => {
-    return this.fetch(
-      this.url('IsValidTypedDataSignature'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          isValid: <boolean>(_data.isValid),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  isValidTypedDataSignature = (
+    args: IsValidTypedDataSignatureArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsValidTypedDataSignatureReturn> => {
+    return this.fetch(this.url('IsValidTypedDataSignature'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            isValid: <boolean>_data.isValid
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  isValidETHAuthProof = (args: IsValidETHAuthProofArgs, headers?: object, signal?: AbortSignal): Promise<IsValidETHAuthProofReturn> => {
-    return this.fetch(
-      this.url('IsValidETHAuthProof'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          isValid: <boolean>(_data.isValid),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  isValidETHAuthProof = (
+    args: IsValidETHAuthProofArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<IsValidETHAuthProofReturn> => {
+    return this.fetch(this.url('IsValidETHAuthProof'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            isValid: <boolean>_data.isValid
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
   
   getOnRampURL = (args: GetOnRampURLArgs, headers?: object, signal?: AbortSignal): Promise<GetOnRampURLReturn> => {
@@ -2415,549 +2554,633 @@ export class API implements API {
   }
   
   sardineGetClientToken = (headers?: object, signal?: AbortSignal): Promise<SardineGetClientTokenReturn> => {
-    return this.fetch(
-      this.url('SardineGetClientToken'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          token: <string>(_data.token),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SardineGetClientToken'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            token: <string>_data.token
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  sardineGetNFTCheckoutToken = (args: SardineGetNFTCheckoutTokenArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetNFTCheckoutTokenReturn> => {
-    return this.fetch(
-      this.url('SardineGetNFTCheckoutToken'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          resp: <SardineNFTCheckout>(_data.resp),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  sardineGetNFTCheckoutToken = (
+    args: SardineGetNFTCheckoutTokenArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SardineGetNFTCheckoutTokenReturn> => {
+    return this.fetch(this.url('SardineGetNFTCheckoutToken'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            resp: <SardineNFTCheckout>_data.resp
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  sardineGetNFTCheckoutOrderStatus = (args: SardineGetNFTCheckoutOrderStatusArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetNFTCheckoutOrderStatusReturn> => {
-    return this.fetch(
-      this.url('SardineGetNFTCheckoutOrderStatus'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          resp: <SardineOrder>(_data.resp),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  sardineGetNFTCheckoutOrderStatus = (
+    args: SardineGetNFTCheckoutOrderStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SardineGetNFTCheckoutOrderStatusReturn> => {
+    return this.fetch(this.url('SardineGetNFTCheckoutOrderStatus'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            resp: <SardineOrder>_data.resp
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   sardineGetSupportedRegions = (headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedRegionsReturn> => {
-    return this.fetch(
-      this.url('SardineGetSupportedRegions'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          regions: <Array<SardineRegion>>(_data.regions),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SardineGetSupportedRegions'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            regions: <Array<SardineRegion>>_data.regions
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  sardineGetSupportedFiatCurrencies = (headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedFiatCurrenciesReturn> => {
-    return this.fetch(
-      this.url('SardineGetSupportedFiatCurrencies'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokens: <Array<SardineFiatCurrency>>(_data.tokens),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  sardineGetSupportedFiatCurrencies = (
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SardineGetSupportedFiatCurrenciesReturn> => {
+    return this.fetch(this.url('SardineGetSupportedFiatCurrencies'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokens: <Array<SardineFiatCurrency>>_data.tokens
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   sardineGetSupportedTokens = (headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedTokensReturn> => {
-    return this.fetch(
-      this.url('SardineGetSupportedTokens'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokens: <Array<SardineSupportedToken>>(_data.tokens),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SardineGetSupportedTokens'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokens: <Array<SardineSupportedToken>>_data.tokens
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  sardineGetSupportedTokenForSwap = (args: SardineGetSupportedTokenForSwapArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetSupportedTokenForSwapReturn> => {
-    return this.fetch(
-      this.url('SardineGetSupportedTokenForSwap'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          token: <SardineSupportedTokenForSwap>(_data.token),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  sardineGetSupportedTokenForSwap = (
+    args: SardineGetSupportedTokenForSwapArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<SardineGetSupportedTokenForSwapReturn> => {
+    return this.fetch(this.url('SardineGetSupportedTokenForSwap'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            token: <SardineSupportedTokenForSwap>_data.token
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   sardineGetEnabledTokens = (headers?: object, signal?: AbortSignal): Promise<SardineGetEnabledTokensReturn> => {
-    return this.fetch(
-      this.url('SardineGetEnabledTokens'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokens: <Array<SardineEnabledToken>>(_data.tokens),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SardineGetEnabledTokens'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokens: <Array<SardineEnabledToken>>_data.tokens
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   sardineGetQuote = (args: SardineGetQuoteArgs, headers?: object, signal?: AbortSignal): Promise<SardineGetQuoteReturn> => {
-    return this.fetch(
-      this.url('SardineGetQuote'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          quote: <SardineQuote>(_data.quote),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SardineGetQuote'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            quote: <SardineQuote>_data.quote
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getSardineClientToken = (headers?: object, signal?: AbortSignal): Promise<GetSardineClientTokenReturn> => {
-    return this.fetch(
-      this.url('GetSardineClientToken'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          token: <string>(_data.token),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetSardineClientToken'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            token: <string>_data.token
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getSardineNFTCheckoutToken = (args: GetSardineNFTCheckoutTokenArgs, headers?: object, signal?: AbortSignal): Promise<GetSardineNFTCheckoutTokenReturn> => {
-    return this.fetch(
-      this.url('GetSardineNFTCheckoutToken'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          resp: <SardineNFTCheckout>(_data.resp),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getSardineNFTCheckoutToken = (
+    args: GetSardineNFTCheckoutTokenArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetSardineNFTCheckoutTokenReturn> => {
+    return this.fetch(this.url('GetSardineNFTCheckoutToken'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            resp: <SardineNFTCheckout>_data.resp
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getSardineNFTCheckoutOrderStatus = (args: GetSardineNFTCheckoutOrderStatusArgs, headers?: object, signal?: AbortSignal): Promise<GetSardineNFTCheckoutOrderStatusReturn> => {
-    return this.fetch(
-      this.url('GetSardineNFTCheckoutOrderStatus'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          resp: <SardineOrder>(_data.resp),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getSardineNFTCheckoutOrderStatus = (
+    args: GetSardineNFTCheckoutOrderStatusArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetSardineNFTCheckoutOrderStatusReturn> => {
+    return this.fetch(this.url('GetSardineNFTCheckoutOrderStatus'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            resp: <SardineOrder>_data.resp
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   transakGetCountries = (headers?: object, signal?: AbortSignal): Promise<TransakGetCountriesReturn> => {
-    return this.fetch(
-      this.url('TransakGetCountries'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          regions: <Array<TransakCountry>>(_data.regions),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('TransakGetCountries'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            regions: <Array<TransakCountry>>_data.regions
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   transakGetCryptoCurrencies = (headers?: object, signal?: AbortSignal): Promise<TransakGetCryptoCurrenciesReturn> => {
-    return this.fetch(
-      this.url('TransakGetCryptoCurrencies'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          currencies: <Array<TransakCryptoCurrency>>(_data.currencies),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('TransakGetCryptoCurrencies'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            currencies: <Array<TransakCryptoCurrency>>_data.currencies
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   transakGetFiatCurrencies = (headers?: object, signal?: AbortSignal): Promise<TransakGetFiatCurrenciesReturn> => {
-    return this.fetch(
-      this.url('TransakGetFiatCurrencies'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          currencies: <Array<TransakFiatCurrency>>(_data.currencies),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('TransakGetFiatCurrencies'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            currencies: <Array<TransakFiatCurrency>>_data.currencies
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   transakGetPrice = (args: TransakGetPriceArgs, headers?: object, signal?: AbortSignal): Promise<TransakGetPriceReturn> => {
-    return this.fetch(
-      this.url('TransakGetPrice'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          price: <TransakPrice>(_data.price),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('TransakGetPrice'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            price: <TransakPrice>_data.price
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  transakGetSupportedNFTCheckoutChains = (headers?: object, signal?: AbortSignal): Promise<TransakGetSupportedNFTCheckoutChainsReturn> => {
-    return this.fetch(
-      this.url('TransakGetSupportedNFTCheckoutChains'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          chains: <Array<TransakChain>>(_data.chains),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  transakGetSupportedNFTCheckoutChains = (
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<TransakGetSupportedNFTCheckoutChainsReturn> => {
+    return this.fetch(this.url('TransakGetSupportedNFTCheckoutChains'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            chains: <Array<TransakChain>>_data.chains
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getCoinPrices = (args: GetCoinPricesArgs, headers?: object, signal?: AbortSignal): Promise<GetCoinPricesReturn> => {
-    return this.fetch(
-      this.url('GetCoinPrices'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokenPrices: <Array<TokenPrice>>(_data.tokenPrices),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetCoinPrices'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokenPrices: <Array<TokenPrice>>_data.tokenPrices
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getCollectiblePrices = (args: GetCollectiblePricesArgs, headers?: object, signal?: AbortSignal): Promise<GetCollectiblePricesReturn> => {
-    return this.fetch(
-      this.url('GetCollectiblePrices'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokenPrices: <Array<TokenPrice>>(_data.tokenPrices),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getCollectiblePrices = (
+    args: GetCollectiblePricesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetCollectiblePricesReturn> => {
+    return this.fetch(this.url('GetCollectiblePrices'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokenPrices: <Array<TokenPrice>>_data.tokenPrices
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getExchangeRate = (args: GetExchangeRateArgs, headers?: object, signal?: AbortSignal): Promise<GetExchangeRateReturn> => {
-    return this.fetch(
-      this.url('GetExchangeRate'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          exchangeRate: <ExchangeRate>(_data.exchangeRate),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetExchangeRate'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            exchangeRate: <ExchangeRate>_data.exchangeRate
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   memoryStore = (args: MemoryStoreArgs, headers?: object, signal?: AbortSignal): Promise<MemoryStoreReturn> => {
-    return this.fetch(
-      this.url('MemoryStore'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('MemoryStore'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   memoryLoad = (args: MemoryLoadArgs, headers?: object, signal?: AbortSignal): Promise<MemoryLoadReturn> => {
-    return this.fetch(
-      this.url('MemoryLoad'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          value: <string>(_data.value),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('MemoryLoad'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            value: <string>_data.value
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getInviteInfo = (headers?: object, signal?: AbortSignal): Promise<GetInviteInfoReturn> => {
-    return this.fetch(
-      this.url('GetInviteInfo'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          inviteInfo: <InviteInfo>(_data.inviteInfo),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetInviteInfo'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            inviteInfo: <InviteInfo>_data.inviteInfo
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   isValidAccessCode = (args: IsValidAccessCodeArgs, headers?: object, signal?: AbortSignal): Promise<IsValidAccessCodeReturn> => {
-    return this.fetch(
-      this.url('IsValidAccessCode'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('IsValidAccessCode'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  internalClaimAccessCode = (args: InternalClaimAccessCodeArgs, headers?: object, signal?: AbortSignal): Promise<InternalClaimAccessCodeReturn> => {
-    return this.fetch(
-      this.url('InternalClaimAccessCode'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  internalClaimAccessCode = (
+    args: InternalClaimAccessCodeArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<InternalClaimAccessCodeReturn> => {
+    return this.fetch(this.url('InternalClaimAccessCode'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   blockNumberAtTime = (args: BlockNumberAtTimeArgs, headers?: object, signal?: AbortSignal): Promise<BlockNumberAtTimeReturn> => {
-    return this.fetch(
-      this.url('BlockNumberAtTime'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          blocks: <Array<number>>(_data.blocks),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('BlockNumberAtTime'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            blocks: <Array<number>>_data.blocks
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  paperSessionSecret = (args: PaperSessionSecretArgs, headers?: object, signal?: AbortSignal): Promise<PaperSessionSecretReturn> => {
-    return this.fetch(
-      this.url('PaperSessionSecret'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          secret: <string>(_data.secret),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  paperSessionSecret = (
+    args: PaperSessionSecretArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<PaperSessionSecretReturn> => {
+    return this.fetch(this.url('PaperSessionSecret'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            secret: <string>_data.secret
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  paperSessionSecret2 = (args: PaperSessionSecret2Args, headers?: object, signal?: AbortSignal): Promise<PaperSessionSecret2Return> => {
-    return this.fetch(
-      this.url('PaperSessionSecret2'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          secret: <string>(_data.secret),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  paperSessionSecret2 = (
+    args: PaperSessionSecret2Args,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<PaperSessionSecret2Return> => {
+    return this.fetch(this.url('PaperSessionSecret2'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            secret: <string>_data.secret
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   linkWallet = (args: LinkWalletArgs, headers?: object, signal?: AbortSignal): Promise<LinkWalletReturn> => {
-    return this.fetch(
-      this.url('LinkWallet'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('LinkWallet'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getLinkedWallets = (args: GetLinkedWalletsArgs, headers?: object, signal?: AbortSignal): Promise<GetLinkedWalletsReturn> => {
-    return this.fetch(
-      this.url('GetLinkedWallets'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          linkedWallets: <Array<LinkedWallet>>(_data.linkedWallets),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetLinkedWallets'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            linkedWallets: <Array<LinkedWallet>>_data.linkedWallets
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  removeLinkedWallet = (args: RemoveLinkedWalletArgs, headers?: object, signal?: AbortSignal): Promise<RemoveLinkedWalletReturn> => {
-    return this.fetch(
-      this.url('RemoveLinkedWallet'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  removeLinkedWallet = (
+    args: RemoveLinkedWalletArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RemoveLinkedWalletReturn> => {
+    return this.fetch(this.url('RemoveLinkedWallet'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  generateWaaSVerificationURL = (args: GenerateWaaSVerificationURLArgs, headers?: object, signal?: AbortSignal): Promise<GenerateWaaSVerificationURLReturn> => {
-    return this.fetch(
-      this.url('GenerateWaaSVerificationURL'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          nonce: <string>(_data.nonce),
-          verificationURL: <string>(_data.verificationURL),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  generateWaaSVerificationURL = (
+    args: GenerateWaaSVerificationURLArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GenerateWaaSVerificationURLReturn> => {
+    return this.fetch(this.url('GenerateWaaSVerificationURL'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            nonce: <string>_data.nonce,
+            verificationURL: <string>_data.verificationURL
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  validateWaaSVerificationNonce = (args: ValidateWaaSVerificationNonceArgs, headers?: object, signal?: AbortSignal): Promise<ValidateWaaSVerificationNonceReturn> => {
-    return this.fetch(
-      this.url('ValidateWaaSVerificationNonce'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          walletAddress: <string>(_data.walletAddress),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  validateWaaSVerificationNonce = (
+    args: ValidateWaaSVerificationNonceArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ValidateWaaSVerificationNonceReturn> => {
+    return this.fetch(this.url('ValidateWaaSVerificationNonce'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            walletAddress: <string>_data.walletAddress
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  listAdoptedWallets = (args: ListAdoptedWalletsArgs, headers?: object, signal?: AbortSignal): Promise<ListAdoptedWalletsReturn> => {
-    return this.fetch(
-      this.url('ListAdoptedWallets'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          wallets: <Array<AdoptedChildWallet>>(_data.wallets),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  listAdoptedWallets = (
+    args: ListAdoptedWalletsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListAdoptedWalletsReturn> => {
+    return this.fetch(this.url('ListAdoptedWallets'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            wallets: <Array<AdoptedChildWallet>>_data.wallets
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getLifiChains = (headers?: object, signal?: AbortSignal): Promise<GetLifiChainsReturn> => {
-    return this.fetch(
-      this.url('GetLifiChains'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          chains: <Array<number>>(_data.chains),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetLifiChains'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            chains: <Array<number>>_data.chains
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getLifiTokens = (args: GetLifiTokensArgs, headers?: object, signal?: AbortSignal): Promise<GetLifiTokensReturn> => {
-    return this.fetch(
-      this.url('GetLifiTokens'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          tokens: <Array<Token>>(_data.tokens),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetLifiTokens'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            tokens: <Array<Token>>_data.tokens
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getLifiSwapRoutes = (args: GetLifiSwapRoutesArgs, headers?: object, signal?: AbortSignal): Promise<GetLifiSwapRoutesReturn> => {
-    return this.fetch(
-      this.url('GetLifiSwapRoutes'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          routes: <Array<LifiSwapRoute>>(_data.routes),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetLifiSwapRoutes'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            routes: <Array<LifiSwapRoute>>_data.routes
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getLifiSwapQuote = (args: GetLifiSwapQuoteArgs, headers?: object, signal?: AbortSignal): Promise<GetLifiSwapQuoteReturn> => {
-    return this.fetch(
-      this.url('GetLifiSwapQuote'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          quote: <LifiSwapQuote>(_data.quote),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetLifiSwapQuote'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            quote: <LifiSwapQuote>_data.quote
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
   
   getIntentCallsPayloads = (args: GetIntentCallsPayloadsArgs, headers?: object, signal?: AbortSignal): Promise<GetIntentCallsPayloadsReturn> => {
@@ -3010,143 +3233,180 @@ export class API implements API {
   }
   
   listCurrencyGroups = (headers?: object, signal?: AbortSignal): Promise<ListCurrencyGroupsReturn> => {
-    return this.fetch(
-      this.url('ListCurrencyGroups'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          currencyGroups: <Array<CurrencyGroup>>(_data.currencyGroups),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('ListCurrencyGroups'), createHTTPRequest({}, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            currencyGroups: <Array<CurrencyGroup>>_data.currencyGroups
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  addOffchainInventory = (args: AddOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<AddOffchainInventoryReturn> => {
-    return this.fetch(
-      this.url('AddOffchainInventory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          inventoryId: <number>(_data.inventoryId),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  addOffchainInventory = (
+    args: AddOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<AddOffchainInventoryReturn> => {
+    return this.fetch(this.url('AddOffchainInventory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            inventoryId: <number>_data.inventoryId
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  getOffchainInventory = (args: GetOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<GetOffchainInventoryReturn> => {
-    return this.fetch(
-      this.url('GetOffchainInventory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          inventory: <OffchainInventory>(_data.inventory),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  getOffchainInventory = (
+    args: GetOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<GetOffchainInventoryReturn> => {
+    return this.fetch(this.url('GetOffchainInventory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            inventory: <OffchainInventory>_data.inventory
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  listOffchainInventories = (args: ListOffchainInventoriesArgs, headers?: object, signal?: AbortSignal): Promise<ListOffchainInventoriesReturn> => {
-    return this.fetch(
-      this.url('ListOffchainInventories'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          inventory: <Array<OffchainInventory>>(_data.inventory),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  listOffchainInventories = (
+    args: ListOffchainInventoriesArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListOffchainInventoriesReturn> => {
+    return this.fetch(this.url('ListOffchainInventories'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            inventory: <Array<OffchainInventory>>_data.inventory
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  updateOffchainInventory = (args: UpdateOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<UpdateOffchainInventoryReturn> => {
-    return this.fetch(
-      this.url('UpdateOffchainInventory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  updateOffchainInventory = (
+    args: UpdateOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<UpdateOffchainInventoryReturn> => {
+    return this.fetch(this.url('UpdateOffchainInventory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {}
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  deleteOffchainInventory = (args: DeleteOffchainInventoryArgs, headers?: object, signal?: AbortSignal): Promise<DeleteOffchainInventoryReturn> => {
-    return this.fetch(
-      this.url('DeleteOffchainInventory'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          ok: <boolean>(_data.ok),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  deleteOffchainInventory = (
+    args: DeleteOffchainInventoryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<DeleteOffchainInventoryReturn> => {
+    return this.fetch(this.url('DeleteOffchainInventory'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            ok: <boolean>_data.ok
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  requestOffchainPayment = (args: RequestOffchainPaymentArgs, headers?: object, signal?: AbortSignal): Promise<RequestOffchainPaymentReturn> => {
-    return this.fetch(
-      this.url('RequestOffchainPayment'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          payment: <PaymentResponse>(_data.payment),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  requestOffchainPayment = (
+    args: RequestOffchainPaymentArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<RequestOffchainPaymentReturn> => {
+    return this.fetch(this.url('RequestOffchainPayment'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            payment: <PaymentResponse>_data.payment
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
-  listOffchainPayments = (args: ListOffchainPaymentsArgs, headers?: object, signal?: AbortSignal): Promise<ListOffchainPaymentsReturn> => {
-    return this.fetch(
-      this.url('ListOffchainPayments'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          page: <Page>(_data.page),
-          payments: <Array<OffchainPayment>>(_data.payments),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  listOffchainPayments = (
+    args: ListOffchainPaymentsArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<ListOffchainPaymentsReturn> => {
+    return this.fetch(this.url('ListOffchainPayments'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            page: <Page>_data.page,
+            payments: <Array<OffchainPayment>>_data.payments
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   savePack = (args: SavePackArgs, headers?: object, signal?: AbortSignal): Promise<SavePackReturn> => {
-    return this.fetch(
-      this.url('SavePack'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          merkleRoot: <string>(_data.merkleRoot),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('SavePack'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            merkleRoot: <string>_data.merkleRoot
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   getPack = (args: GetPackArgs, headers?: object, signal?: AbortSignal): Promise<GetPackReturn> => {
-    return this.fetch(
-      this.url('GetPack'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          pack: <Pack>(_data.pack),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetPack'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            pack: <Pack>_data.pack
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
   
   getPackIds = (args: GetPackIdsArgs, headers?: object, signal?: AbortSignal): Promise<GetPackIdsReturn> => {
@@ -3164,31 +3424,33 @@ export class API implements API {
   }
   
   deletePack = (args: DeletePackArgs, headers?: object, signal?: AbortSignal): Promise<DeletePackReturn> => {
-    return this.fetch(
-      this.url('DeletePack'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          status: <boolean>(_data.status),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('DeletePack'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            status: <boolean>_data.status
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
-  
+
   updatePackContent = (args: UpdatePackContentArgs, headers?: object, signal?: AbortSignal): Promise<UpdatePackContentReturn> => {
-    return this.fetch(
-      this.url('UpdatePackContent'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          merkleRoot: <string>(_data.merkleRoot),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('UpdatePackContent'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            merkleRoot: <string>_data.merkleRoot
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
   
   getRevealTxData = (args: GetRevealTxDataArgs, headers?: object, signal?: AbortSignal): Promise<GetRevealTxDataReturn> => {
@@ -3232,19 +3494,43 @@ export class API implements API {
       throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
     })
   }
-  
-  checkoutOptionsGetTransakContractID = (args: CheckoutOptionsGetTransakContractIDArgs, headers?: object, signal?: AbortSignal): Promise<CheckoutOptionsGetTransakContractIDReturn> => {
-    return this.fetch(
-      this.url('CheckoutOptionsGetTransakContractID'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          contractId: <string>(_data.contractId),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  checkoutOptionsSecondary = (
+    args: CheckoutOptionsSecondaryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<CheckoutOptionsSecondaryReturn> => {
+    return this.fetch(this.url('CheckoutOptionsSecondary'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            options: <CheckoutOptions>_data.options
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
+  }
+
+  checkoutOptionsGetTransakContractID = (
+    args: CheckoutOptionsGetTransakContractIDArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<CheckoutOptionsGetTransakContractIDReturn> => {
+    return this.fetch(this.url('CheckoutOptionsGetTransakContractID'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            contractId: <string>_data.contractId
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
   
   fortePayCreateIntent = (args: FortePayCreateIntentArgs, headers?: object, signal?: AbortSignal): Promise<FortePayCreateIntentReturn> => {
@@ -3362,8 +3648,8 @@ export class API implements API {
   
 }
 
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
-  const reqHeaders: {[key: string]: string} = { ...headers, 'Content-Type': 'application/json' }
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+  const reqHeaders: { [key: string]: string } = { ...headers, 'Content-Type': 'application/json' }
   reqHeaders[WebrpcHeader] = WebrpcHeaderValue
 
   return {
@@ -3379,18 +3665,18 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(error) {
+    } catch (error) {
       let message = ''
-      if (error instanceof Error)  {
+      if (error instanceof Error) {
         message = error.message
       }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
-      )
+        cause: `JSON.parse(): ${message}: response text: ${text}`
+      })
     }
     if (!res.ok) {
-      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const code: number = typeof data.code === 'number' ? data.code : 0
       throw (webrpcErrorByCode[code] || WebrpcError).new(data)
     }
     return data
@@ -3571,7 +3857,6 @@ export class WebrpcStreamFinishedError extends WebrpcError {
     Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
   }
 }
-
 
 // Schema errors
 
@@ -3900,7 +4185,6 @@ export class UnsupportedNetworkError extends WebrpcError {
   }
 }
 
-
 export enum errors {
   WebrpcEndpoint = 'WebrpcEndpoint',
   WebrpcRequestFailed = 'WebrpcRequestFailed',
@@ -3937,7 +4221,7 @@ export enum errors {
   Unavailable = 'Unavailable',
   QueryFailed = 'QueryFailed',
   NotFound = 'NotFound',
-  UnsupportedNetwork = 'UnsupportedNetwork',
+  UnsupportedNetwork = 'UnsupportedNetwork'
 }
 
 export enum WebrpcErrorCodes {
@@ -3976,7 +4260,7 @@ export enum WebrpcErrorCodes {
   Unavailable = 2002,
   QueryFailed = 2003,
   NotFound = 3000,
-  UnsupportedNetwork = 3008,
+  UnsupportedNetwork = 3008
 }
 
 export const webrpcErrorByCode: { [code: number]: any } = {
@@ -4015,8 +4299,7 @@ export const webrpcErrorByCode: { [code: number]: any } = {
   [2002]: UnavailableError,
   [2003]: QueryFailedError,
   [3000]: NotFoundError,
-  [3008]: UnsupportedNetworkError,
+  [3008]: UnsupportedNetworkError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
-
