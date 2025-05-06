@@ -96,7 +96,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
-  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -225,7 +225,7 @@ export class Manager {
 
         stateProvider: ops.stateProvider,
         networks: ops.networks,
-        relayers: ops.relayers,
+        relayers: typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultSessionsTopology: ops.defaultSessionsTopology,

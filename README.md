@@ -30,6 +30,8 @@ Sequence v3 core libraries and [wallet-contracts-v3](https://github.com/0xsequen
 - Run tests:
   `pnpm test`
 
+  > **Note:** Tests require [anvil](https://github.com/foundry-rs/foundry/tree/master/anvil) and [forge](https://github.com/foundry-rs/foundry) to be installed. You can run a local anvil instance using `pnpm run test:anvil`.
+
 - Linting and formatting is enforced via git hooks
 
 ## License
