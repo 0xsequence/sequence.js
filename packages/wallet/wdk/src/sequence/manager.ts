@@ -473,6 +473,7 @@ export class Manager {
     args: AuthorizeImplicitSessionArgs,
   ): Promise<string> {
     return this.shared.modules.sessions.prepareAuthorizeImplicitSession(walletAddress, sessionAddress, args)
+    // Run completeAuthorizeImplicitSession next
   }
 
   public async completeAuthorizeImplicitSession(requestId: string): Promise<{
@@ -488,26 +489,26 @@ export class Manager {
     permissions: CoreSigners.Session.ExplicitParams,
   ): Promise<string> {
     return this.shared.modules.sessions.addExplicitSession(walletAddress, sessionAddress, permissions)
+    // Run completeSessionUpdate next
   }
 
   public async removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
     return this.shared.modules.sessions.removeExplicitSession(walletAddress, sessionAddress)
+    // Run completeSessionUpdate next
   }
 
   public async addBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
     return this.shared.modules.sessions.addBlacklistAddress(walletAddress, address)
+    // Run completeSessionUpdate next
   }
 
   public async removeBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
     return this.shared.modules.sessions.removeBlacklistAddress(walletAddress, address)
+    // Run completeSessionUpdate next
   }
 
   public async completeSessionUpdate(requestId: string) {
-    const sigRequest = await this.shared.modules.signatures.get(requestId)
-    if (sigRequest.action !== 'session-update' || !Payload.isConfigUpdate(sigRequest.envelope.payload)) {
-      throw new Error('Invalid action')
-    }
-    return this.shared.modules.sessions.completeSessionUpdate(sigRequest.wallet, requestId)
+    return this.shared.modules.sessions.completeSessionUpdate(requestId)
   }
 
   // Recovery

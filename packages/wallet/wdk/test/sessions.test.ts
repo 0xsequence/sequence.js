@@ -144,8 +144,6 @@ describe('Sessions (via Manager)', () => {
 
     // Send the transaction
     if (CAN_RUN_LIVE && PRIVATE_KEY) {
-      //FIXME Replace everything below with the sequence relayer call.
-
       // Load the sender
       const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
       const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)

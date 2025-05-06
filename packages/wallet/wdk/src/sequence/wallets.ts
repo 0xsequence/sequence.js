@@ -1,15 +1,14 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
-import { Config, Extensions, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { Shared } from './manager.js'
-import { Wallet } from './types/wallet.js'
-import { Kinds, RecoverySigner, WitnessExtraSignerKind } from './types/signer.js'
-import { WalletSelectionUiHandler } from './types/wallet.js'
 import { Action } from './types/index.js'
+import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
+import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple-pkce'
