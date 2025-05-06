@@ -56,7 +56,7 @@ export class MnemonicHandler implements Handler {
     return {
       address,
       handler: this,
-      status: 'ready',
+      status: 'actionable',
       handle: () =>
         new Promise(async (resolve, reject) => {
           const respond = async (mnemonic: string) => {

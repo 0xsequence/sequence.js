@@ -61,3 +61,17 @@ export function mockEthereum() {
     }
   }
 }
+
+export async function clearStorage() {
+  // Clear all IndexedDB databases
+  const databases = await indexedDB.databases()
+  for (const db of databases) {
+    if (db.name) {
+      console.log('deleting database', db.name)
+      await indexedDB.deleteDatabase(db.name)
+    }
+  }
+
+  // Clear localStorage
+  localStorage.clear()
+}

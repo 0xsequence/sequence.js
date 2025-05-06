@@ -552,4 +552,17 @@ export class Manager {
   public async updateQueuedRecoveryPayloads() {
     return this.shared.modules.recovery.updateQueuedRecoveryPayloads()
   }
+
+  // DBs
+
+  public async closeDBs() {
+    await Promise.all([
+      this.shared.databases.authKeys.close(),
+      this.shared.databases.authCommitments.close(),
+      this.shared.databases.manager.close(),
+      this.shared.databases.recovery.close(),
+      this.shared.databases.signatures.close(),
+      this.shared.databases.transactions.close(),
+    ])
+  }
 }
