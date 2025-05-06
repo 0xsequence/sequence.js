@@ -187,6 +187,10 @@ export const HomeIndexRoute = () => {
 
   const calculateIntentAddress = useCallback((mainSigner: string, calls: IntentCallsPayload[]) => {
     try {
+      console.log('Calculating intent address...')
+      console.log('Main signer:', mainSigner)
+      console.log('Calls:', JSON.stringify(calls, null, 2))
+
       const context: ContextLike.Context = {
         factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
         stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
