@@ -105,16 +105,18 @@ async function generateSessionsTopology(
   depth: number,
   options?: RandomOptions,
 ): Promise<SessionConfig.SessionsTopology> {
-  const isLeaf = (options?.seededRandom ?? Math.random)() * 2 > 1
+  const rand = options?.seededRandom ?? Math.random
+  const isLeaf = rand() * 2 > 1
 
   if (isLeaf || depth <= 1) {
-    const permissionsCount = Math.floor((options?.seededRandom ?? Math.random)() * (options?.maxPermissions ?? 5)) + 1
+    const permissionsCount = Math.floor(rand() * (options?.maxPermissions ?? 5)) + 1
     const permissions = await Promise.all(
       Array.from({ length: permissionsCount }, () => generateRandomPermission(options)),
     )
     return {
       type: 'session-permissions',
       signer: randomAddress(options),
+      allowMessages: rand() * 2 > 1,
       valueLimit: randomBigInt(100n, options),
       deadline: randomBigInt(1000n, options),
       permissions: permissions as [Permission.Permission, ...Permission.Permission[]],
