@@ -5,8 +5,8 @@ import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
 type GenericProviderTransactionReceipt = 'success' | 'failed' | 'unknown'
 
 export interface GenericProvider {
-  sendTransaction(args: { to: string; data: string }): Promise<string>
-  getTransactionReceipt(txHash: string): Promise<GenericProviderTransactionReceipt>
+  sendTransaction(args: { to: string; data: string }, chainId: bigint): Promise<string>
+  getTransactionReceipt(txHash: string, chainId: bigint): Promise<GenericProviderTransactionReceipt>
 }
 
 export class LocalRelayer implements Relayer {
@@ -21,14 +21,32 @@ export class LocalRelayer implements Relayer {
       return undefined
     }
 
+    const trySwitchChain = async (chainId: bigint) => {
+      try {
+        await eth.request({
+          method: 'wallet_switchEthereumChain',
+          params: [
+            {
+              chainId: `0x${chainId.toString(16)}`,
+            },
+          ],
+        })
+      } catch (error) {
+        // Log and continue
+        console.error('Error switching chain', error)
+      }
+    }
+
     return new LocalRelayer({
-      sendTransaction: async (args) => {
+      sendTransaction: async (args, chainId) => {
         const accounts: string[] = await eth.request({ method: 'eth_requestAccounts' })
         const from = accounts[0]
         if (!from) {
           console.warn('No account selected, skipping local relayer')
           return undefined
         }
+
+        await trySwitchChain(chainId)
 
         const tx = await eth.request({
           method: 'eth_sendTransaction',
@@ -42,7 +60,9 @@ export class LocalRelayer implements Relayer {
         })
         return tx
       },
-      getTransactionReceipt: async (txHash) => {
+      getTransactionReceipt: async (txHash, chainId) => {
+        await trySwitchChain(chainId)
+
         const rpcReceipt = await eth.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
         if (rpcReceipt) {
           const receipt = TransactionReceipt.fromRpc(rpcReceipt)
@@ -80,17 +100,20 @@ export class LocalRelayer implements Relayer {
   }
 
   async relay(to: Address.Address, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
-    const txHash = await this.provider.sendTransaction({
-      to,
-      data,
-    })
+    const txHash = await this.provider.sendTransaction(
+      {
+        to,
+        data,
+      },
+      chainId,
+    )
     Hex.assert(txHash)
 
     return { opHash: txHash }
   }
 
   async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
-    const receipt = await this.provider.getTransactionReceipt(opHash)
+    const receipt = await this.provider.getTransactionReceipt(opHash, chainId)
     if (receipt === 'unknown') {
       // Could be pending but we don't know
       return { status: 'unknown' }
