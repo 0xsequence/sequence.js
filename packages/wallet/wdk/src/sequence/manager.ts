@@ -555,7 +555,9 @@ export class Manager {
 
   // DBs
 
-  public async closeDBs() {
+  public async stop() {
+    await this.shared.modules.cron.stop()
+
     await Promise.all([
       this.shared.databases.authKeys.close(),
       this.shared.databases.authCommitments.close(),

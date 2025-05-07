@@ -572,6 +572,9 @@ export class Wallets {
       const device = await this.shared.modules.devices.create()
       const { devicesTopology, modules, guardTopology } = await this.getConfigurationParts(args.wallet)
 
+      // Witness the wallet
+      await this.shared.modules.devices.witness(device.address, args.wallet)
+
       // Add device to devices topology
       const prevDevices = Config.getSigners(devicesTopology)
       if (prevDevices.sapientSigners.length > 0) {
