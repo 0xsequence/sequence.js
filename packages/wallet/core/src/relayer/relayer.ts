@@ -1,4 +1,4 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 
 export interface FeeOption {
@@ -13,12 +13,20 @@ export interface FeeQuote {
   _quote: unknown
 }
 
-export type OperationUknownStatus = {
+export type OperationUnknownStatus = {
   status: 'unknown'
+}
+
+export type OperationQueuedStatus = {
+  status: 'queued'
 }
 
 export type OperationPendingStatus = {
   status: 'pending'
+}
+
+export type OperationPendingPreconditionStatus = {
+  status: 'pending-precondition'
 }
 
 export type OperationConfirmedStatus = {
@@ -32,8 +40,10 @@ export type OperationFailedStatus = {
 }
 
 export type OperationStatus =
-  | OperationUknownStatus
+  | OperationUnknownStatus
+  | OperationQueuedStatus
   | OperationPendingStatus
+  | OperationPendingPreconditionStatus
   | OperationConfirmedStatus
   | OperationFailedStatus
 
@@ -49,4 +59,6 @@ export interface Relayer {
   relay(to: Address.Address, data: Hex.Hex, chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }>
 
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
+
+  checkPrecondition(precondition: Precondition.Precondition): Promise<boolean>
 }
