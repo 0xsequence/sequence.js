@@ -1,5 +1,5 @@
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
+import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
 import { LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
 
@@ -13,7 +13,12 @@ export class PkRelayer implements Relayer {
   ) {
     const relayerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
     this.relayer = new LocalRelayer({
-      sendTransaction: async (args) => {
+      sendTransaction: async (args, chainId) => {
+        const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+        if (providerChainId !== chainId) {
+          throw new Error('Provider chain id does not match relayer chain id')
+        }
+
         const oxArgs = { ...args, to: args.to as `0x${string}`, data: args.data as `0x${string}` }
         // Estimate gas with a safety buffer
         const estimatedGas = BigInt(await this.provider.request({ method: 'eth_estimateGas', params: [oxArgs] }))
@@ -40,7 +45,6 @@ export class PkRelayer implements Relayer {
         )
 
         // Build the relay envelope
-        const chainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
         const relayEnvelope = TransactionEnvelopeEip1559.from({
           chainId: Number(chainId),
           type: 'eip1559',
@@ -65,6 +69,21 @@ export class PkRelayer implements Relayer {
           params: [TransactionEnvelopeEip1559.serialize(signedRelayEnvelope)],
         })
         return tx
+      },
+      getTransactionReceipt: async (txHash: string, chainId: bigint) => {
+        Hex.assert(txHash)
+
+        const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+        if (providerChainId !== chainId) {
+          throw new Error('Provider chain id does not match relayer chain id')
+        }
+
+        const rpcReceipt = await this.provider.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
+        if (!rpcReceipt) {
+          return 'unknown'
+        }
+        const receipt = TransactionReceipt.fromRpc(rpcReceipt)
+        return receipt.status === 'success' ? 'success' : 'failed'
       },
     })
   }
