@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.12
+
+### Patch Changes
+
+- Stack API updates
+
 ## 2.3.11
 
 ### Patch Changes

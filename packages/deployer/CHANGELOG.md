@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.3.12
+
+### Patch Changes
+
+- Stack API updates
+- Updated dependencies
+  - @0xsequence/utils@2.3.12
+
 ## 2.3.11
 
 ### Patch Changes

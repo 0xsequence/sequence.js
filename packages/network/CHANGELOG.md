@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.12
+
+### Patch Changes
+
+- Stack API updates
+- Updated dependencies
+  - @0xsequence/indexer@2.3.12
+  - @0xsequence/relayer@2.3.12
+  - @0xsequence/utils@2.3.12
+  - @0xsequence/core@2.3.12
+
 ## 2.3.11
 
 ### Patch Changes
