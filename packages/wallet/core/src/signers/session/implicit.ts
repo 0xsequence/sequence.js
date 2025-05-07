@@ -1,18 +1,19 @@
-import { Attestation, Payload, SessionSignature, Signature } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1 } from 'ox'
-import { SignerInterface } from './session.js'
+import { Attestation, Payload, Signature as SequenceSignature, SessionSignature } from '@0xsequence/wallet-primitives'
+import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
+import { SignerInterface } from './session.js'
 
 export type AttestationParams = Omit<Attestation.Attestation, 'approvedSigner'>
 
 export class Implicit implements SignerInterface {
   private readonly _privateKey: PkStore
+  private readonly _identitySignature: SequenceSignature.RSY
   public readonly address: Address.Address
 
   constructor(
     privateKey: Hex.Hex | PkStore,
     private readonly _attestation: Attestation.Attestation,
-    private readonly _identitySignature: Signature.RSY,
+    identitySignature: SequenceSignature.RSY | Hex.Hex,
     private readonly _sessionManager: Address.Address,
   ) {
     this._privateKey = typeof privateKey === 'string' ? new MemoryPkStore(privateKey) : privateKey
@@ -20,6 +21,8 @@ export class Implicit implements SignerInterface {
     if (this._attestation.approvedSigner !== this.address) {
       throw new Error('Invalid attestation')
     }
+    this._identitySignature =
+      typeof identitySignature === 'string' ? Signature.fromHex(identitySignature) : identitySignature
   }
 
   get identitySigner(): Address.Address {
