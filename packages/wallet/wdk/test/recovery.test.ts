@@ -2,29 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { Manager, QueuedRecoveryPayload, SignerReady, TransactionDefined } from '../src/sequence'
 import { Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
-
-const LOCAL_RPC_URL = 'http://localhost:8545'
+import { LOCAL_RPC_URL, newManager } from './constants'
 
 describe('Recovery', () => {
   it('Should execute a recovery', async () => {
-    const manager = new Manager({
+    const manager = newManager({
       defaultRecoverySettings: {
         requiredDeltaTime: 2n, // 2 seconds
         minTimestamp: 0n,
       },
-      networks: [
-        {
-          name: 'Arbitrum (local fork)',
-          rpc: LOCAL_RPC_URL,
-          chainId: 42161n,
-          explorer: 'https://arbiscan.io/',
-          nativeCurrency: {
-            name: 'Ether',
-            symbol: 'ETH',
-            decimals: 18,
-          },
-        },
-      ],
     })
 
     const mnemonic = Mnemonic.random(Mnemonic.english)

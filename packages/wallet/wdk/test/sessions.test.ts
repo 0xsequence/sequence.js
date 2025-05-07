@@ -4,6 +4,7 @@ import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State 
 import { Attestation, Constants, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
+import { SignerActionable } from '../src/sequence/index.js'
 
 describe('Sessions (via Manager)', () => {
   // Shared components
@@ -194,10 +195,10 @@ describe('Sessions (via Manager)', () => {
       // Sign and complete the request
       const sigRequest = await wdk.manager.getSignatureRequest(requestId)
       const identitySigner = sigRequest.signers.find((s) => s.address === wdk.identitySignerAddress)
-      if (!identitySigner || identitySigner.status !== 'ready') {
+      if (!identitySigner || identitySigner.status !== 'actionable') {
         throw new Error(`Identity signer not found or not ready: ${identitySigner?.status}`)
       }
-      const handled = await identitySigner.handle()
+      const handled = await (identitySigner as SignerActionable).handle()
       if (!handled) {
         throw new Error('Failed to handle identity signer')
       }
@@ -255,10 +256,10 @@ describe('Sessions (via Manager)', () => {
       // Sign the request (Wallet UI action)
       const sigRequest = await wdk.manager.getSignatureRequest(requestId)
       const identitySigner = sigRequest.signers[0]
-      if (!identitySigner || identitySigner.status !== 'ready') {
-        throw new Error(`Identity signer not found or not ready: ${identitySigner?.status}`)
+      if (!identitySigner || identitySigner.status !== 'actionable') {
+        throw new Error(`Identity signer not found or not actionable: ${identitySigner?.status}`)
       }
-      const handled = await identitySigner.handle()
+      const handled = await (identitySigner as SignerActionable).handle()
       if (!handled) {
         throw new Error('Failed to handle identity signer')
       }

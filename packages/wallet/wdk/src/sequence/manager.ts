@@ -96,7 +96,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
-  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -225,7 +225,7 @@ export class Manager {
 
         stateProvider: ops.stateProvider,
         networks: ops.networks,
-        relayers: ops.relayers,
+        relayers: typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultSessionsTopology: ops.defaultSessionsTopology,
@@ -551,5 +551,20 @@ export class Manager {
 
   public async updateQueuedRecoveryPayloads() {
     return this.shared.modules.recovery.updateQueuedRecoveryPayloads()
+  }
+
+  // DBs
+
+  public async stop() {
+    await this.shared.modules.cron.stop()
+
+    await Promise.all([
+      this.shared.databases.authKeys.close(),
+      this.shared.databases.authCommitments.close(),
+      this.shared.databases.manager.close(),
+      this.shared.databases.recovery.close(),
+      this.shared.databases.signatures.close(),
+      this.shared.databases.transactions.close(),
+    ])
   }
 }
