@@ -2,7 +2,7 @@ import { Address, Provider } from 'ox'
 import { Payload, SessionSignature } from '@0xsequence/wallet-primitives'
 
 export interface SessionSigner {
-  address: Address.Address
+  address: Address.Address | Promise<Address.Address>
 
   /// Check if the signer supports the call
   supportedCall: (
