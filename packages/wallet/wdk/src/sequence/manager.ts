@@ -35,6 +35,7 @@ import { WalletSelectionUiHandler } from './types/wallet.js'
 import { Cron } from './cron.js'
 import { Recovery } from './recovery.js'
 import { RecoveryHandler } from './handlers/recovery.js'
+import { AuthCodeHandler } from './handlers/authcode.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -298,9 +299,9 @@ export class Manager {
     }
     if (ops.identity.apple?.enabled) {
       shared.handlers.set(
-        Kinds.LoginApplePkce,
-        new AuthCodePkceHandler(
-          'apple-pkce',
+        Kinds.LoginApple,
+        new AuthCodeHandler(
+          'apple',
           'https://appleid.apple.com',
           ops.identity.apple.clientId,
           nitro,
@@ -455,7 +456,7 @@ export class Manager {
 
   public async setRedirectPrefix(prefix: string) {
     this.shared.handlers.forEach((handler) => {
-      if (handler instanceof AuthCodePkceHandler) {
+      if (handler instanceof AuthCodeHandler) {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })

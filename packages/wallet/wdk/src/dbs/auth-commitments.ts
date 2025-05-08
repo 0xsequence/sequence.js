@@ -4,12 +4,13 @@ const TABLE_NAME = 'auth-commitments'
 
 export type AuthCommitment = {
   id: string
-  kind: 'google-pkce' | 'apple-pkce'
+  kind: 'google-pkce' | 'apple'
   metadata: { [key: string]: string }
-  verifier: string
-  challenge: string
+  verifier?: string
+  challenge?: string
   target: string
   isSignUp: boolean
+  signer?: string
 }
 
 export class AuthCommitments extends Generic<AuthCommitment, 'id'> {

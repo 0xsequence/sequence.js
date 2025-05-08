@@ -12,7 +12,6 @@ export type {
   MnemonicSignupArgs,
   EmailOtpSignupArgs,
   CompleteRedirectArgs,
-  AuthCodePkceSignupArgs,
   SignupArgs,
   LoginToWalletArgs,
   LoginToMnemonicArgs,
