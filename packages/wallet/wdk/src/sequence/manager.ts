@@ -1,4 +1,5 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
+
 import {
   Attestation,
   Config,
@@ -10,6 +11,7 @@ import {
   SessionConfig,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
+import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import * as Identity from '../identity/index.js'
@@ -63,6 +65,8 @@ export type ManagerOptions = {
   identity?: {
     url?: string
     fetch?: typeof window.fetch
+    verifyAttestation?: boolean
+    expectedPcr0?: string[]
     email?: {
       enabled: boolean
     }
@@ -121,6 +125,7 @@ export const ManagerOptionsDefaults = {
     // TODO: change to prod url once deployed
     url: 'https://dev-identity.sequence-dev.app',
     fetch: window.fetch,
+    verifyAttestation: true,
     email: {
       enabled: false,
     },
@@ -272,12 +277,19 @@ export class Manager {
 
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
-
+    
     this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
     shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
 
-    // TODO: configurable nitro rpc
-    const nitro = new Identity.IdentityInstrument(ops.identity.url, ops.identity.fetch)
+    const verifyingFetch = ops.identity.verifyAttestation
+      ? createAttestationVerifyingFetch({
+          fetch: ops.identity.fetch,
+          expectedPCRs: ops.identity.expectedPcr0 ? new Map([[0, ops.identity.expectedPcr0]]) : undefined,
+          logTiming: true,
+        })
+      : ops.identity.fetch
+    const nitro = new Identity.IdentityInstrument(ops.identity.url, verifyingFetch)
+    
     if (ops.identity.email?.enabled) {
       this.otpHandler = new OtpHandler(nitro, modules.signatures, shared.databases.authKeys)
       shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
