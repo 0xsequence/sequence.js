@@ -624,7 +624,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert',
+          behaviorOnError: 'revert' as const,
         },
       ],
     }
@@ -663,7 +663,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert',
+          behaviorOnError: 'revert' as const,
         },
       ],
     }
@@ -681,7 +681,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert',
+          behaviorOnError: 'revert' as const,
         },
       ],
     }
@@ -720,7 +720,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore',
+          behaviorOnError: 'ignore' as const,
         },
       ],
     }
@@ -738,7 +738,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore',
+          behaviorOnError: 'ignore' as const,
         },
       ],
     }
@@ -754,27 +754,27 @@ describe('Intent Configuration Address', () => {
   })
 })
 
-describe('HashIntentParams', () => {
-  it('should error on empty fields', () => {
+describe('HashIntentParams (Go parity)', () => {
+  it('should error on empty fields (Go parity)', () => {
     expect(() =>
       hashIntentParams({
         userAddress: Address.from('0x0000000000000000000000000000000000000000'),
-        originChainId: 0n,
-        originTokenAddress: Address.from('0x0000000000000000000000000000000000000000'),
+        originTokens: [],
         destinationCalls: [],
+        destinationTokens: [],
       }),
     ).toThrow()
   })
 
-  it('should match hash for single call', () => {
-    const call: Payload.Call = {
+  it('should match hash for single call (Go parity)', () => {
+    const call = {
       to: Address.from('0x1111111111111111111111111111111111111111'),
       value: 123n,
       data: Bytes.toHex(Bytes.fromString('data1')) as Hex.Hex,
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
-      behaviorOnError: 'revert',
+      behaviorOnError: 'revert' as const,
     }
     const payload: IntentCallsPayload = {
       chainId: 1n,
@@ -785,33 +785,35 @@ describe('HashIntentParams', () => {
     }
     const params = {
       userAddress: Address.from('0x3333333333333333333333333333333333333333'),
-      originChainId: 1n,
-      originTokenAddress: Address.from('0x4444444444444444444444444444444444444444'),
+      originTokens: [{ address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }],
       destinationCalls: [payload],
+      destinationTokens: [
+        { address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n, amount: 123n },
+      ],
     }
     const hash = hashIntentParams(params)
-
-    expect(hash.toLowerCase()).toBe('0xa922e29ce304fb6c02f7e32a75a89e1b1ded5be7387e583a63871f5b6c550b01')
+    console.log('Hash (single call):', hash)
+    expect(hash.toLowerCase()).toBe('0x9622268e7b27321fa1f2e38e09444251a6a3febe8e5b022887b57df0916f00b2')
   })
 
-  it('should match hash for multiple calls', () => {
-    const call1: Payload.Call = {
+  it('should match hash for multiple calls (Go parity)', () => {
+    const call1 = {
       to: Address.from('0x1111111111111111111111111111111111111111'),
       value: 123n,
       data: Bytes.toHex(Bytes.fromString('data1')) as Hex.Hex,
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
-      behaviorOnError: 'revert',
+      behaviorOnError: 'revert' as const,
     }
-    const call2: Payload.Call = {
+    const call2 = {
       to: Address.from('0x5555555555555555555555555555555555555555'),
       value: 456n,
       data: Bytes.toHex(Bytes.fromString('data2')) as Hex.Hex,
       gasLimit: 0n,
       delegateCall: true,
       onlyFallback: false,
-      behaviorOnError: 'ignore',
+      behaviorOnError: 'ignore' as const,
     }
     const payload1: IntentCallsPayload = {
       chainId: 1n,
@@ -821,7 +823,7 @@ describe('HashIntentParams', () => {
       calls: [call1],
     }
     const payload2: IntentCallsPayload = {
-      chainId: 1n,
+      chainId: 2n,
       type: 'call',
       space: 0n,
       nonce: 0n,
@@ -829,12 +831,14 @@ describe('HashIntentParams', () => {
     }
     const params = {
       userAddress: Address.from('0x3333333333333333333333333333333333333333'),
-      originChainId: 1n,
-      originTokenAddress: Address.from('0x4444444444444444444444444444444444444444'),
+      originTokens: [{ address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }],
       destinationCalls: [payload1, payload2],
+      destinationTokens: [
+        { address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n, amount: 123n },
+      ],
     }
     const hash = hashIntentParams(params)
-
-    expect(hash.toLowerCase()).toBe('0x24ae10d23433225835212b2017324479cf43f3dc6358b33ad68226296ab1a2f5')
+    console.log('Hash (multiple calls):', hash)
+    expect(hash.toLowerCase()).toBe('0x3d89683957ae91a022ca6d0231a9d1b51be616512ee9bdcb5abc30a1f299b4ce')
   })
 })
