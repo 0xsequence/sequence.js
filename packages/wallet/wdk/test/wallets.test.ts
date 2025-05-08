@@ -14,6 +14,7 @@ describe('Wallets', () => {
     manager = newManager()
     const wallet = await manager.signUp({ mnemonic: Mnemonic.random(Mnemonic.english), kind: 'mnemonic' })
     expect(wallet).toBeDefined()
+    expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
   })
 
   it('Should logout from a wallet using the login key', async () => {
@@ -53,6 +54,7 @@ describe('Wallets', () => {
     expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
     const wallets2 = await manager.listWallets()
     expect(wallets2.length).toBe(0)
+    expect(manager.hasWallet(wallet!)).resolves.toBeFalsy()
   })
 
   it('Should logout from a wallet using the device key', async () => {
@@ -64,9 +66,15 @@ describe('Wallets', () => {
     const wallets = await manager.listWallets()
     expect(wallets.length).toBe(1)
     expect(wallets[0].address).toBe(wallet!)
+    expect(wallets[0].status).toBe('ready')
 
     const requestId = await manager.logout(wallet!)
     expect(requestId).toBeDefined()
+
+    const wallets2 = await manager.listWallets()
+    expect(wallets2.length).toBe(1)
+    expect(wallets2[0].address).toBe(wallet!)
+    expect(wallets2[0].status).toBe('logging-out')
 
     const request = await manager.getSignatureRequest(requestId)
     expect(request).toBeDefined()
@@ -81,8 +89,9 @@ describe('Wallets', () => {
 
     await manager.completeLogout(requestId)
     expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
-    const wallets2 = await manager.listWallets()
-    expect(wallets2.length).toBe(0)
+    const wallets3 = await manager.listWallets()
+    expect(wallets3.length).toBe(0)
+    expect(manager.hasWallet(wallet!)).resolves.toBeFalsy()
   })
 
   it('Should login to an existing wallet using the mnemonic signer', async () => {
@@ -98,6 +107,11 @@ describe('Wallets', () => {
     expect(manager.listWallets()).resolves.toEqual([])
     const requestId1 = await manager.login({ wallet: wallet! })
     expect(requestId1).toBeDefined()
+
+    const wallets = await manager.listWallets()
+    expect(wallets.length).toBe(1)
+    expect(wallets[0].address).toBe(wallet!)
+    expect(wallets[0].status).toBe('logging-in')
 
     let signRequests = 0
     const unregistedUI = manager.registerMnemonicUI(async (respond) => {
@@ -125,6 +139,7 @@ describe('Wallets', () => {
     const wallets2 = await manager.listWallets()
     expect(wallets2.length).toBe(1)
     expect(wallets2[0].address).toBe(wallet!)
+    expect(wallets2[0].status).toBe('ready')
 
     // The wallet should have 2 device keys and 2 recovery keys
     const config = await manager.getConfiguration(wallet!)
@@ -206,5 +221,78 @@ describe('Wallets', () => {
 
     // The kind of the recovery key should be 'local-recovery'
     expect(recovery?.[0].kind).toBe('local-device')
+  })
+
+  it('Should fail to logout from a non-existent wallet', async () => {
+    const manager = newManager()
+    const requestId = manager.logout('0x1234567890123456789012345678901234567890')
+    expect(requestId).rejects.toThrow('wallet-not-found')
+  })
+
+  it('Should fail to login to an already logged in wallet', async () => {
+    const manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    const requestId = manager.login({ wallet: wallet! })
+    expect(requestId).rejects.toThrow('wallet-already-logged-in')
+  })
+
+  it('Should make you select among a single option if login with mnemonic', async () => {
+    const manager = newManager()
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+    const wallet = await manager.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+    expect(wallet).toBeDefined()
+
+    await manager.logout(wallet!, { skipRemoveDevice: true })
+
+    let signRequests = 0
+    const unregistedUI = manager.registerMnemonicUI(async (respond) => {
+      signRequests++
+      await respond(mnemonic)
+    })
+
+    let selectWalletCalls = 0
+    const requestId = await manager.login({
+      mnemonic: mnemonic,
+      kind: 'mnemonic',
+      selectWallet: async () => {
+        selectWalletCalls++
+        return wallet!
+      },
+    })
+
+    expect(selectWalletCalls).toBe(1)
+    expect(requestId).toBeDefined()
+
+    const wallets = await manager.listWallets()
+    expect(wallets.length).toBe(1)
+    expect(wallets[0].address).toBe(wallet!)
+    expect(wallets[0].status).toBe('logging-in')
+
+    const request = await manager.getSignatureRequest(requestId!)
+    expect(request).toBeDefined()
+    expect(request.action).toBe('login')
+
+    const mnemonicSigner = request.signers.find((signer) => signer.handler?.kind === 'login-mnemonic')
+    expect(mnemonicSigner).toBeDefined()
+    expect(mnemonicSigner?.status).toBe('actionable')
+
+    const result = await (mnemonicSigner as SignerActionable).handle()
+    expect(result).toBe(true)
+
+    expect(signRequests).toBe(1)
+    unregistedUI()
+
+    await manager.completeLogin(requestId!)
+    expect((await manager.getSignatureRequest(requestId!))?.status).toBe('completed')
+    const wallets2 = await manager.listWallets()
+    expect(wallets2.length).toBe(1)
+    expect(wallets2[0].address).toBe(wallet!)
+    expect(wallets2[0].status).toBe('ready')
   })
 })
