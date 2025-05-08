@@ -629,7 +629,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => w.wallet === wallet)) {
+      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
         throw new Error('wallet-not-found')
       }
 
@@ -651,7 +651,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => w.wallet === wallet)) {
+      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
         throw new Error('wallet-not-found')
       }
 

@@ -1,5 +1,5 @@
 import { Config, Signature } from '@0xsequence/wallet-primitives'
-import { Bytes, Hex, Signature as OxSignature } from 'ox'
+import { Address, Bytes, Hex, Signature as OxSignature } from 'ox'
 import { type CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils.js'
 import { PossibleElements } from './config.js'
@@ -43,7 +43,7 @@ export async function doEncode(
   const allSignatures = signatures.map((s) => {
     const values = s.split(':')
     return {
-      address: values[0],
+      address: Address.from(values[0] as `0x${string}`),
       type: values[1],
       values: values.slice(2),
     }
@@ -52,7 +52,7 @@ export async function doEncode(
   const fullTopology = Signature.fillLeaves(config.topology, (leaf) => {
     if (Config.isSignerLeaf(leaf)) {
       // Type must be 1271, eth_sign, or hash
-      const candidate = allSignatures.find((s) => s.address === leaf.address)
+      const candidate = allSignatures.find((s) => Address.isEqual(s.address, leaf.address))
 
       if (!candidate) {
         return undefined
@@ -92,7 +92,7 @@ export async function doEncode(
     }
 
     if (Config.isSapientSignerLeaf(leaf)) {
-      const candidate = allSignatures.find((s) => s.address === leaf.address)
+      const candidate = allSignatures.find((s) => Address.isEqual(s.address, leaf.address))
       if (!candidate) {
         return undefined
       }

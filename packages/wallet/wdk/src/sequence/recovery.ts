@@ -86,7 +86,7 @@ export class Recovery {
   }
 
   hasRecoveryModule(modules: Config.SapientSignerLeaf[]): boolean {
-    return modules.some((m) => m.address === this.shared.sequence.extensions.recovery)
+    return modules.some((m) => Address.isEqual(m.address, this.shared.sequence.extensions.recovery))
   }
 
   async addRecoverySignerToModules(modules: Config.SapientSignerLeaf[], address: Address.Address) {
@@ -95,11 +95,11 @@ export class Recovery {
     }
 
     await this.updateRecoveryModule(modules, (leaves) => {
-      if (leaves.some((l) => l.signer === address)) {
+      if (leaves.some((l) => Address.isEqual(l.signer, address))) {
         return leaves
       }
 
-      const filtered = leaves.filter((l) => l.signer !== '0x0000000000000000000000000000000000000000')
+      const filtered = leaves.filter((l) => !Address.isEqual(l.signer, '0x0000000000000000000000000000000000000000'))
 
       return [
         ...filtered,
@@ -184,7 +184,7 @@ export class Recovery {
 
   async getRecoverySigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {
     const { raw } = await this.shared.modules.wallets.getConfiguration({ wallet: address })
-    const recoveryLeaf = raw.modules.find((m) => m.address === this.shared.sequence.extensions.recovery)
+    const recoveryLeaf = raw.modules.find((m) => Address.isEqual(m.address, this.shared.sequence.extensions.recovery))
     if (!recoveryLeaf) {
       return undefined
     }
@@ -206,10 +206,10 @@ export class Recovery {
     )
 
     return leaves
-      .filter((l) => l.signer !== '0x0000000000000000000000000000000000000000')
+      .filter((l) => !Address.isEqual(l.signer, '0x0000000000000000000000000000000000000000'))
       .map((l) => ({
         address: l.signer,
-        kind: kos.find((s) => s.address === l.signer)?.kind || 'unknown',
+        kind: kos.find((s) => Address.isEqual(s.address, l.signer))?.kind || 'unknown',
         isRecovery: true,
         minTimestamp: l.minTimestamp,
         requiredDeltaTime: l.requiredDeltaTime,
@@ -296,7 +296,7 @@ export class Recovery {
   async getQueuedRecoveryPayloads(wallet?: Address.Address): Promise<QueuedRecoveryPayload[]> {
     const all = await this.shared.databases.recovery.list()
     if (wallet) {
-      return all.filter((p) => p.wallet === wallet)
+      return all.filter((p) => Address.isEqual(p.wallet, wallet))
     }
 
     return all

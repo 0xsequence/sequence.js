@@ -203,7 +203,9 @@ export class Passkey implements SapientSigner, Witnessable {
     // Flatten and remove duplicates
     const flattened = signers
       .flat()
-      .filter((v, i, self) => self.findIndex((t) => t.wallet === v.wallet && t.imageHash === v.imageHash) === i)
+      .filter(
+        (v, i, self) => self.findIndex((t) => Address.isEqual(t.wallet, v.wallet) && t.imageHash === v.imageHash) === i,
+      )
 
     // If there are no signers, return undefined
     if (flattened.length === 0) {
