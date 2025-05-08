@@ -8,7 +8,7 @@ import {
   Signature as SequenceSignature,
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex } from 'ox'
+import { Address, Bytes, Hash, Hex } from 'ox'
 import { IdentityType } from '../identity/index.js'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
@@ -70,10 +70,8 @@ export class Sessions {
     if (handler instanceof IdentityHandler) {
       identityType = handler.identityType
       if (handler instanceof AuthCodePkceHandler) {
-        Hex.assert(handler.issuer)
-        Hex.assert(handler.audience)
-        issuerHash = handler.issuer
-        audienceHash = handler.audience
+        issuerHash = Hash.keccak256(Hex.fromString(handler.issuer))
+        audienceHash = Hash.keccak256(Hex.fromString(handler.audience))
       }
     }
     const attestation: Attestation.Attestation = {

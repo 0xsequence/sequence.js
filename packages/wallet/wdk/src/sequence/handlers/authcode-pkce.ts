@@ -82,10 +82,12 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    const signer = await this.getAuthKeySigner(address)
+    // Normalize address
+    const normalizedAddress = Address.checksum(address)
+    const signer = await this.getAuthKeySigner(normalizedAddress)
     if (signer) {
       return {
-        address,
+        address: normalizedAddress,
         handler: this,
         status: 'ready',
         handle: async () => {
@@ -96,12 +98,12 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
     }
 
     return {
-      address,
+      address: normalizedAddress,
       handler: this,
       status: 'actionable',
       message: 'request-redirect',
       handle: async () => {
-        const url = await this.commitAuth(window.location.pathname, false, request.id, address.toString())
+        const url = await this.commitAuth(window.location.pathname, false, request.id, normalizedAddress)
         window.location.href = url
         return true
       },
