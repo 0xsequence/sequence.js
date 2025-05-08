@@ -14,7 +14,7 @@ describe('Wallets', () => {
     manager = newManager()
     const wallet = await manager.signUp({ mnemonic: Mnemonic.random(Mnemonic.english), kind: 'mnemonic' })
     expect(wallet).toBeDefined()
-    expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
   })
 
   it('Should logout from a wallet using the login key', async () => {
@@ -54,7 +54,7 @@ describe('Wallets', () => {
     expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
     const wallets2 = await manager.listWallets()
     expect(wallets2.length).toBe(0)
-    expect(manager.hasWallet(wallet!)).resolves.toBeFalsy()
+    await expect(manager.hasWallet(wallet!)).resolves.toBeFalsy()
   })
 
   it('Should logout from a wallet using the device key', async () => {
@@ -91,7 +91,7 @@ describe('Wallets', () => {
     expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
     const wallets3 = await manager.listWallets()
     expect(wallets3.length).toBe(0)
-    expect(manager.hasWallet(wallet!)).resolves.toBeFalsy()
+    await expect(manager.hasWallet(wallet!)).resolves.toBeFalsy()
   })
 
   it('Should login to an existing wallet using the mnemonic signer', async () => {
@@ -104,7 +104,7 @@ describe('Wallets', () => {
     await manager.stop()
 
     manager = newManager(undefined, undefined, 'device-2')
-    expect(manager.listWallets()).resolves.toEqual([])
+    await expect(manager.listWallets()).resolves.toEqual([])
     const requestId1 = await manager.login({ wallet: wallet! })
     expect(requestId1).toBeDefined()
 
@@ -151,7 +151,7 @@ describe('Wallets', () => {
   it('Should logout and then login to an existing wallet using the mnemonic signer', async () => {
     manager = newManager()
 
-    expect(manager.listWallets()).resolves.toEqual([])
+    await expect(manager.listWallets()).resolves.toEqual([])
 
     const mnemonic = Mnemonic.random(Mnemonic.english)
     const wallet = await manager.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
@@ -178,7 +178,7 @@ describe('Wallets', () => {
     await manager.completeLogout(requestId)
     expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
 
-    expect(manager.listWallets()).resolves.toEqual([])
+    await expect(manager.listWallets()).resolves.toEqual([])
 
     // Login again to the same wallet
     const requestId2 = await manager.login({ wallet: wallet! })
@@ -294,5 +294,88 @@ describe('Wallets', () => {
     expect(wallets2.length).toBe(1)
     expect(wallets2[0].address).toBe(wallet!)
     expect(wallets2[0].status).toBe('ready')
+  })
+
+  it('Should trigger an update when a wallet is logged in', async () => {
+    const manager = newManager()
+
+    let wallet: any | undefined
+
+    let callbackCalls = 0
+    let unregisterCallback: (() => void) | undefined
+
+    const callbackFiredPromise = new Promise<void>((resolve) => {
+      unregisterCallback = manager.onWalletsUpdate((wallets) => {
+        callbackCalls++
+        expect(wallets.length).toBe(1)
+        expect(wallets[0].address).toBe(wallet!)
+        expect(wallets[0].status).toBe('ready')
+        resolve()
+      })
+    })
+
+    wallet = await manager.signUp({ mnemonic: Mnemonic.random(Mnemonic.english), kind: 'mnemonic', noGuard: true })
+    expect(wallet).toBeDefined()
+
+    await callbackFiredPromise
+
+    expect(callbackCalls).toBe(1)
+    unregisterCallback!()
+  })
+
+  it('Should trigger an update when a wallet is logged out', async () => {
+    const manager = newManager()
+
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    let callbackCalls = 0
+    let unregisterCallback: (() => void) | undefined
+    const callbackFiredPromise = new Promise<void>((resolve) => {
+      unregisterCallback = manager.onWalletsUpdate((wallets) => {
+        callbackCalls++
+        expect(wallets.length).toBe(0)
+        resolve()
+      })
+    })
+
+    await manager.logout(wallet!, { skipRemoveDevice: true })
+    await callbackFiredPromise
+
+    expect(callbackCalls).toBe(1)
+    unregisterCallback!()
+  })
+
+  it('Should trigger an update when a wallet is logging out', async () => {
+    const manager = newManager()
+
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    let callbackCalls = 0
+    let unregisterCallback: (() => void) | undefined
+    const callbackFiredPromise = new Promise<void>((resolve) => {
+      unregisterCallback = manager.onWalletsUpdate((wallets) => {
+        callbackCalls++
+        expect(wallets.length).toBe(1)
+        expect(wallets[0].address).toBe(wallet!)
+        expect(wallets[0].status).toBe('logging-out')
+        resolve()
+      })
+    })
+
+    await manager.logout(wallet!)
+    await callbackFiredPromise
+
+    expect(callbackCalls).toBe(1)
+    unregisterCallback!()
   })
 })
