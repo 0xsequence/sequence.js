@@ -137,8 +137,8 @@ export function isRawSignature(signature: any): signature is RawSignature {
 
 export function isRawConfig(configuration: any): configuration is RawConfig {
   return (
-    typeof configuration === 'object' &&
     configuration &&
+    typeof configuration === 'object' &&
     typeof configuration.threshold === 'bigint' &&
     typeof configuration.checkpoint === 'bigint' &&
     isRawTopology(configuration.topology) &&
@@ -172,7 +172,7 @@ export function isRawTopology(cand: any): cand is RawTopology {
 }
 
 export function isRawLeaf(cand: any): cand is RawLeaf {
-  return typeof cand === 'object' && 'weight' in cand && 'signature' in cand && !('tree' in cand)
+  return typeof cand === 'object' && 'weight' in cand && !('tree' in cand)
 }
 
 export function isRawNestedLeaf(cand: any): cand is RawNestedLeaf {
@@ -1389,5 +1389,8 @@ function encode(
         digest: payload.digest,
         parentWallets: payload.parentWallets ?? [],
       }
+
+    default:
+      throw new Error('Invalid payload type')
   }
 }

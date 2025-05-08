@@ -180,4 +180,15 @@ export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
   removeListener(listener: DbUpdateListener<T, K>): void {
     this.listeners = this.listeners.filter((l) => l !== listener)
   }
+
+  public async close(): Promise<void> {
+    if (this._db) {
+      this._db.close()
+      this._db = null
+    }
+    if (this.broadcastChannel) {
+      this.broadcastChannel.close()
+      this.broadcastChannel = undefined
+    }
+  }
 }

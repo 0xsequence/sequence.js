@@ -1,15 +1,15 @@
-import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
-import * as State from './state/index.js'
 import {
+  Config,
   Constants,
   Context,
-  Config,
-  Address as SequenceAddress,
   Erc6492,
   Payload,
+  Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
+import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
 import * as Envelope from './envelope.js'
+import * as State from './state/index.js'
 
 export type WalletOptions = {
   context: Context.Context
@@ -134,7 +134,11 @@ export class Wallet {
             method: 'eth_call',
             params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }],
           })
-          .then((res) => `0x${res.slice(26)}` as Address.Address)
+          .then((res) => {
+            const address = `0x${res.slice(-40)}`
+            Address.assert(address, { strict: false })
+            return address
+          })
           .catch(() => undefined),
       ])
 
@@ -144,9 +148,9 @@ export class Wallet {
 
       // Determine stage based on implementation address
       if (implementation) {
-        if (implementation.toLowerCase() === this.context.stage1.toLowerCase()) {
+        if (Address.isEqual(implementation, this.context.stage1)) {
           stage = 'stage1'
-        } else {
+        } else if (Address.isEqual(implementation, this.context.stage2)) {
           stage = 'stage2'
         }
       }
@@ -199,23 +203,30 @@ export class Wallet {
     }
   }
 
+  async getNonce(provider: Provider.Provider, space: bigint): Promise<bigint> {
+    const result = await provider.request({
+      method: 'eth_call',
+      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }],
+    })
+
+    if (result === '0x' || result.length === 0) {
+      return 0n
+    }
+
+    return BigInt(result)
+  }
+
   async prepareTransaction(
     provider: Provider.Provider,
     calls: Payload.Call[],
     options?: { space?: bigint },
   ): Promise<Envelope.Envelope<Payload.Calls>> {
     const space = options?.space ?? 0n
-    const status = await this.getStatus(provider)
 
-    let nonce: bigint = 0n
-    if (status.isDeployed) {
-      nonce = BigInt(
-        await provider.request({
-          method: 'eth_call',
-          params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }],
-        }),
-      )
-    }
+    const [chainId, nonce] = await Promise.all([
+      provider.request({ method: 'eth_chainId' }),
+      this.getNonce(provider, space),
+    ])
 
     return {
       payload: {
@@ -224,7 +235,7 @@ export class Wallet {
         nonce,
         calls,
       },
-      ...(await this.prepareBlankEnvelope(status.chainId ?? 0n)),
+      ...(await this.prepareBlankEnvelope(BigInt(chainId))),
     }
   }
 
@@ -244,7 +255,12 @@ export class Wallet {
         to: this.address,
         data: AbiFunction.encodeData(Constants.EXECUTE, [
           Bytes.toHex(Payload.encode(envelope.payload)),
-          Bytes.toHex(SequenceSignature.encodeSignature(signature)),
+          Bytes.toHex(
+            SequenceSignature.encodeSignature({
+              ...signature,
+              suffix: status.pendingUpdates.map(({ signature }) => signature),
+            }),
+          ),
         ]),
       }
     } else {
@@ -272,7 +288,12 @@ export class Wallet {
                 value: 0n,
                 data: AbiFunction.encodeData(Constants.EXECUTE, [
                   Bytes.toHex(Payload.encode(envelope.payload)),
-                  Bytes.toHex(SequenceSignature.encodeSignature(signature)),
+                  Bytes.toHex(
+                    SequenceSignature.encodeSignature({
+                      ...signature,
+                      suffix: status.pendingUpdates.map(({ signature }) => signature),
+                    }),
+                  ),
                 ]),
                 gasLimit: 0n,
                 delegateCall: false,

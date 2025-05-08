@@ -3,15 +3,6 @@ import type { CommandModule } from 'yargs'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { fromPosOrStdin } from '../utils.js'
 
-export const KIND_TRANSACTIONS = 0x00
-const KIND_MESSAGE = 0x01
-const KIND_CONFIG_UPDATE = 0x02
-const KIND_DIGEST = 0x03
-
-const BEHAVIOR_IGNORE_ERROR = 0x00
-const BEHAVIOR_REVERT_ON_ERROR = 0x01
-const BEHAVIOR_ABORT_ON_ERROR = 0x02
-
 const CallAbi = [
   { type: 'address', name: 'to' },
   { type: 'uint256', name: 'value' },
@@ -38,98 +29,17 @@ export const DecodedAbi = [
   { type: 'address[]', name: 'parentWallets' },
 ]
 
-export interface SolidityDecoded {
-  kind: number
-  noChainId: boolean
-  calls: SolidityCall[]
-  space: bigint
-  nonce: bigint
-  message: string
-  imageHash: string
-  digest: string
-  parentWallets: string[]
-}
-
-interface SolidityCall {
-  to: string
-  value: bigint
-  data: string
-  gasLimit: bigint
-  delegateCall: boolean
-  onlyFallback: boolean
-  behaviorOnError: bigint
-}
-
-function behaviorOnError(behavior: number): 'ignore' | 'revert' | 'abort' {
-  switch (behavior) {
-    case BEHAVIOR_IGNORE_ERROR:
-      return 'ignore'
-    case BEHAVIOR_REVERT_ON_ERROR:
-      return 'revert'
-    case BEHAVIOR_ABORT_ON_ERROR:
-      return 'abort'
-    default:
-      throw new Error(`Unknown behavior: ${behavior}`)
-  }
-}
-
 export async function doConvertToAbi(_payload: string): Promise<string> {
   // Not implemented yet, but following the pattern
   throw new Error('Not implemented')
 }
 
-export function solidityEncodedToParentedPayload(decoded: SolidityDecoded): Payload.Parented {
-  if (decoded.kind === KIND_TRANSACTIONS) {
-    return {
-      type: 'call',
-      nonce: decoded.nonce,
-      space: decoded.space,
-      calls: decoded.calls.map((call) => ({
-        to: Address.from(call.to),
-        value: call.value,
-        data: call.data as `0x${string}`,
-        gasLimit: call.gasLimit,
-        delegateCall: call.delegateCall,
-        onlyFallback: call.onlyFallback,
-        behaviorOnError: behaviorOnError(Number(call.behaviorOnError)),
-      })),
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
-    }
-  }
-
-  if (decoded.kind === KIND_MESSAGE) {
-    return {
-      type: 'message',
-      message: decoded.message as `0x${string}`,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
-    }
-  }
-
-  if (decoded.kind === KIND_CONFIG_UPDATE) {
-    return {
-      type: 'config-update',
-      imageHash: decoded.imageHash as `0x${string}`,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
-    }
-  }
-
-  if (decoded.kind === KIND_DIGEST) {
-    return {
-      type: 'digest',
-      digest: decoded.digest as `0x${string}`,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
-    }
-  }
-
-  throw new Error('Not implemented')
-}
-
 export async function doConvertToPacked(payload: string, wallet?: string): Promise<string> {
-  const decodedPayload = solidityEncodedToParentedPayload(
+  const decodedPayload = Payload.fromAbiFormat(
     AbiParameters.decode(
       [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
       payload as Hex.Hex,
-    )[0] as unknown as SolidityDecoded,
+    )[0] as unknown as Payload.SolidityDecoded,
   )
 
   if (Payload.isCalls(decodedPayload)) {
@@ -144,7 +54,7 @@ export async function doConvertToJson(payload: string): Promise<string> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload as Hex.Hex,
-  )[0] as unknown as SolidityDecoded
+  )[0] as unknown as Payload.SolidityDecoded
 
   const json = JSON.stringify(decoded)
   return json
@@ -154,9 +64,9 @@ export async function doHash(wallet: string, chainId: bigint, payload: string): 
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload as Hex.Hex,
-  )[0] as unknown as SolidityDecoded
+  )[0] as unknown as Payload.SolidityDecoded
 
-  return Hex.from(Payload.hash(Address.from(wallet), chainId, solidityEncodedToParentedPayload(decoded)))
+  return Hex.from(Payload.hash(Address.from(wallet), chainId, Payload.fromAbiFormat(decoded)))
 }
 
 const payloadCommand: CommandModule = {

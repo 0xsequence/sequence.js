@@ -1,10 +1,9 @@
 import { Signers } from '@0xsequence/wallet-core'
 import { Address, Hex, Mnemonic } from 'ox'
 import { Handler } from './handler.js'
-import * as Db from '../../dbs/index.js'
 import { Signatures } from '../signatures.js'
 import { Kinds } from '../types/signer.js'
-import { SignerReady, SignerUnavailable } from '../types/index.js'
+import { SignerReady, SignerUnavailable, BaseSignatureRequest, SignerActionable } from '../types/index.js'
 
 type RespondFn = (mnemonic: string) => Promise<void>
 
@@ -42,8 +41,8 @@ export class MnemonicHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
-  ): Promise<SignerUnavailable | SignerReady> {
+    request: BaseSignatureRequest,
+  ): Promise<SignerUnavailable | SignerActionable> {
     const onPromptMnemonic = this.onPromptMnemonic
     if (!onPromptMnemonic) {
       return {
@@ -57,7 +56,8 @@ export class MnemonicHandler implements Handler {
     return {
       address,
       handler: this,
-      status: 'ready',
+      status: 'actionable',
+      message: 'enter-mnemonic',
       handle: () =>
         new Promise(async (resolve, reject) => {
           const respond = async (mnemonic: string) => {

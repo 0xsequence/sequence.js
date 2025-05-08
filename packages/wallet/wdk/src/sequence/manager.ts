@@ -1,28 +1,42 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
-import { Config, Constants, Context, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+
+import {
+  Attestation,
+  Config,
+  Constants,
+  Context,
+  Extensions,
+  Network,
+  Payload,
+  SessionConfig,
+  Signature as SequenceSignature,
+} from '@0xsequence/wallet-primitives'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import * as Identity from '../identity/index.js'
 import { Devices } from './devices.js'
 import {
-  Handler,
-  DevicesHandler,
-  PasskeysHandler,
   AuthCodePkceHandler,
+  DevicesHandler,
+  Handler,
   MnemonicHandler,
   OtpHandler,
+  PasskeysHandler,
 } from './handlers/index.js'
 import { Logger } from './logger.js'
-import { Sessions } from './sessions.js'
+import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
 import { Signatures } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions } from './transactions.js'
-import { BaseSignatureRequest, SignatureRequest, Wallet } from './types/index.js'
+import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet } from './types/index.js'
 import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
-import { Kinds } from './types/signer.js'
+import { Kinds, RecoverySigner } from './types/signer.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
+import { Cron } from './cron.js'
+import { Recovery } from './recovery.js'
+import { RecoveryHandler } from './handlers/recovery.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -37,12 +51,16 @@ export type ManagerOptions = {
   signaturesDb?: Db.Signatures
   authCommitmentsDb?: Db.AuthCommitments
   authKeysDb?: Db.AuthKeys
+  recoveryDb?: Db.Recovery
+
+  dbPruningInterval?: number
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
-  relayers?: Relayer.Relayer[]
+  relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
 
   defaultGuardTopology?: Config.Topology
+  defaultRecoverySettings?: RecoverySettings
 
   identity?: {
     url?: string
@@ -75,11 +93,14 @@ export const ManagerOptionsDefaults = {
   signaturesDb: new Db.Signatures(),
   transactionsDb: new Db.Transactions(),
   authCommitmentsDb: new Db.AuthCommitments(),
+  recoveryDb: new Db.Recovery(),
   authKeysDb: new Db.AuthKeys(),
+
+  dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
 
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
-  relayers: [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -92,8 +113,13 @@ export const ManagerOptionsDefaults = {
     // TODO: Move this somewhere else
     type: 'sapient-signer',
     address: Constants.DefaultSessionManager,
-    weight: 1n,
+    weight: 10n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
+
+  defaultRecoverySettings: {
+    requiredDeltaTime: 2592000n, // 30 days (in seconds)
+    minTimestamp: 0n,
+  },
 
   identity: {
     // TODO: change to prod url once deployed
@@ -126,6 +152,11 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions) {
   }
 }
 
+export type RecoverySettings = {
+  requiredDeltaTime: bigint
+  minTimestamp: bigint
+}
+
 export type Databases = {
   readonly encryptedPks: CoreSigners.Pk.Encrypted.EncryptedPksDb
   readonly manager: Db.Wallets
@@ -133,6 +164,9 @@ export type Databases = {
   readonly transactions: Db.Transactions
   readonly authCommitments: Db.AuthCommitments
   readonly authKeys: Db.AuthKeys
+  readonly recovery: Db.Recovery
+
+  readonly pruningInterval: number
 }
 
 export type Sequence = {
@@ -147,6 +181,7 @@ export type Sequence = {
 
   readonly defaultGuardTopology: Config.Topology
   readonly defaultSessionsTopology: Omit<Config.SapientSignerLeaf, 'imageHash'>
+  readonly defaultRecoverySettings: RecoverySettings
 }
 
 export type Modules = {
@@ -157,6 +192,8 @@ export type Modules = {
   readonly signers: Signers
   readonly signatures: Signatures
   readonly transactions: Transactions
+  readonly recovery: Recovery
+  readonly cron: Cron
 }
 
 export type Shared = {
@@ -176,6 +213,8 @@ export class Manager {
   private readonly mnemonicHandler: MnemonicHandler
   private readonly devicesHandler: DevicesHandler
   private readonly passkeysHandler: PasskeysHandler
+  private readonly recoveryHandler: RecoveryHandler
+
   private readonly otpHandler?: OtpHandler
 
   constructor(options?: ManagerOptions) {
@@ -191,10 +230,11 @@ export class Manager {
 
         stateProvider: ops.stateProvider,
         networks: ops.networks,
-        relayers: ops.relayers,
+        relayers: typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultSessionsTopology: ops.defaultSessionsTopology,
+        defaultRecoverySettings: ops.defaultRecoverySettings,
       },
 
       databases: {
@@ -204,6 +244,9 @@ export class Manager {
         transactions: ops.transactionsDb,
         authCommitments: ops.authCommitmentsDb,
         authKeys: ops.authKeysDb,
+        recovery: ops.recoveryDb,
+
+        pruningInterval: ops.dbPruningInterval,
       },
 
       modules: {} as any,
@@ -211,6 +254,7 @@ export class Manager {
     }
 
     const modules: Modules = {
+      cron: new Cron(shared),
       logger: new Logger(shared),
       devices: new Devices(shared),
       wallets: new Wallets(shared),
@@ -218,6 +262,7 @@ export class Manager {
       signers: new Signers(shared),
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
+      recovery: new Recovery(shared),
     }
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
@@ -232,6 +277,9 @@ export class Manager {
 
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
+    
+    this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
+    shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
 
     const verifyingFetch = ops.identity.verifyAttestation
       ? createAttestationVerifyingFetch({
@@ -241,6 +289,7 @@ export class Manager {
         })
       : ops.identity.fetch
     const nitro = new Identity.IdentityInstrument(ops.identity.url, verifyingFetch)
+    
     if (ops.identity.email?.enabled) {
       this.otpHandler = new OtpHandler(nitro, modules.signatures, shared.databases.authKeys)
       shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
@@ -276,6 +325,13 @@ export class Manager {
 
     shared.modules = modules
     this.shared = shared
+
+    // Initialize modules
+    for (const module of Object.values(modules)) {
+      if ('initialize' in module && typeof module.initialize === 'function') {
+        module.initialize()
+      }
+    }
   }
 
   // Wallets
@@ -328,6 +384,10 @@ export class Manager {
     return this.shared.modules.wallets.unregisterWalletSelector(handler)
   }
 
+  public async getConfiguration(wallet: Address.Address) {
+    return this.shared.modules.wallets.getConfiguration({ wallet })
+  }
+
   // Signatures
 
   public async listSignatureRequests(): Promise<SignatureRequest[]> {
@@ -351,8 +411,8 @@ export class Manager {
     return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
   }
 
-  public async deleteSignatureRequest(requestId: string) {
-    return this.shared.modules.signatures.delete(requestId)
+  public async cancelSignatureRequest(requestId: string) {
+    return this.shared.modules.signatures.cancel(requestId)
   }
 
   // Transactions
@@ -393,6 +453,10 @@ export class Manager {
     return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
   }
 
+  public getTransaction(transactionId: string): Promise<Transaction> {
+    return this.shared.modules.transactions.get(transactionId)
+  }
+
   public registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
@@ -415,8 +479,20 @@ export class Manager {
     return this.shared.modules.sessions.getSessionTopology(walletAddress)
   }
 
-  public async addImplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address) {
-    return this.shared.modules.sessions.addImplicitSession(walletAddress, sessionAddress)
+  public async prepareAuthorizeImplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    args: AuthorizeImplicitSessionArgs,
+  ): Promise<string> {
+    return this.shared.modules.sessions.prepareAuthorizeImplicitSession(walletAddress, sessionAddress, args)
+    // Run completeAuthorizeImplicitSession next
+  }
+
+  public async completeAuthorizeImplicitSession(requestId: string): Promise<{
+    attestation: Attestation.Attestation
+    signature: SequenceSignature.RSY
+  }> {
+    return this.shared.modules.sessions.completeAuthorizeImplicitSession(requestId)
   }
 
   public async addExplicitSession(
@@ -425,30 +501,82 @@ export class Manager {
     permissions: CoreSigners.Session.ExplicitParams,
   ): Promise<string> {
     return this.shared.modules.sessions.addExplicitSession(walletAddress, sessionAddress, permissions)
+    // Run completeSessionUpdate next
   }
 
   public async removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
     return this.shared.modules.sessions.removeExplicitSession(walletAddress, sessionAddress)
+    // Run completeSessionUpdate next
   }
 
   public async addBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
     return this.shared.modules.sessions.addBlacklistAddress(walletAddress, address)
+    // Run completeSessionUpdate next
   }
 
   public async removeBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
     return this.shared.modules.sessions.removeBlacklistAddress(walletAddress, address)
+    // Run completeSessionUpdate next
   }
 
   public async completeSessionUpdate(requestId: string) {
-    const sigRequest = await this.shared.modules.signatures.get(requestId)
-    if (sigRequest.action !== 'session-update' || !Payload.isConfigUpdate(sigRequest.envelope.payload)) {
-      throw new Error('Invalid action')
-    }
-    console.log('Completing session update:', requestId)
-    return this.shared.modules.sessions.completeSessionUpdate(sigRequest.wallet, requestId)
+    return this.shared.modules.sessions.completeSessionUpdate(requestId)
   }
 
-  public async getConfiguration(wallet: Address.Address) {
-    return this.shared.modules.wallets.getConfiguration({ wallet })
+  // Recovery
+
+  public async getRecoverySigners(wallet: Address.Address): Promise<RecoverySigner[] | undefined> {
+    return this.shared.modules.recovery.getRecoverySigners(wallet)
+  }
+
+  public onQueuedRecoveryPayloadsUpdate(
+    wallet: Address.Address,
+    cb: (payloads: QueuedRecoveryPayload[]) => void,
+    trigger?: boolean,
+  ) {
+    return this.shared.modules.recovery.onQueuedRecoveryPayloadsUpdate(wallet, cb, trigger)
+  }
+
+  public async queueRecoveryPayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls) {
+    return this.shared.modules.recovery.queueRecoveryPayload(wallet, chainId, payload)
+  }
+
+  public async completeRecoveryPayload(requestId: string) {
+    return this.shared.modules.recovery.completeRecoveryPayload(requestId)
+  }
+
+  public async addRecoveryMnemonic(wallet: Address.Address, mnemonic: string) {
+    return this.shared.modules.recovery.addRecoveryMnemonic(wallet, mnemonic)
+  }
+
+  public async addRecoverySigner(wallet: Address.Address, address: Address.Address) {
+    return this.shared.modules.recovery.addRecoverySigner(wallet, address)
+  }
+
+  public async removeRecoverySigner(wallet: Address.Address, address: Address.Address) {
+    return this.shared.modules.recovery.removeRecoverySigner(wallet, address)
+  }
+
+  public async completeRecoveryUpdate(requestId: string) {
+    return this.shared.modules.recovery.completeRecoveryUpdate(requestId)
+  }
+
+  public async updateQueuedRecoveryPayloads() {
+    return this.shared.modules.recovery.updateQueuedRecoveryPayloads()
+  }
+
+  // DBs
+
+  public async stop() {
+    await this.shared.modules.cron.stop()
+
+    await Promise.all([
+      this.shared.databases.authKeys.close(),
+      this.shared.databases.authCommitments.close(),
+      this.shared.databases.manager.close(),
+      this.shared.databases.recovery.close(),
+      this.shared.databases.signatures.close(),
+      this.shared.databases.transactions.close(),
+    ])
   }
 }

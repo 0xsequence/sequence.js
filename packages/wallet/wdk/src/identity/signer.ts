@@ -14,7 +14,7 @@ export class IdentitySigner implements Signers.Signer {
     if (!Address.validate(this.authKey.identitySigner)) {
       throw new Error('No signer address found')
     }
-    return this.authKey.identitySigner as `0x${string}`
+    return Address.checksum(this.authKey.identitySigner)
   }
 
   async sign(

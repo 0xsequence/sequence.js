@@ -1,6 +1,5 @@
-import * as Db from '../../dbs/index.js'
 import { Address, Hex } from 'ox'
-import { SignerActionable, SignerReady, SignerUnavailable } from '../types/index.js'
+import { SignerActionable, SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 
 export interface Handler {
   kind: string
@@ -10,6 +9,6 @@ export interface Handler {
   status(
     address: Address.Address,
     imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable>
 }

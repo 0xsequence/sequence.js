@@ -3,7 +3,7 @@ import { Handler } from './handler.js'
 import * as Db from '../../dbs/index.js'
 import { Signatures } from '../signatures.js'
 import * as Identity from '../../identity/index.js'
-import { SignerUnavailable, SignerReady, SignerActionable } from '../types/signature-request.js'
+import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
 import { IdentitySigner } from '../../identity/signer.js'
 import { IdentityHandler } from './identity.js'
 
@@ -12,14 +12,14 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
 
   constructor(
     public readonly signupKind: 'google-pkce' | 'apple-pkce',
-    private readonly issuer: string,
-    private readonly audience: string,
+    public readonly issuer: string,
+    public readonly audience: string,
     nitro: Identity.IdentityInstrument,
     signatures: Signatures,
     private readonly commitments: Db.AuthCommitments,
     authKeys: Db.AuthKeys,
   ) {
-    super(nitro, authKeys, signatures)
+    super(nitro, authKeys, signatures, Identity.IdentityType.OIDC)
   }
 
   public get kind() {
@@ -80,12 +80,14 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
   async status(
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    const signer = await this.getAuthKeySigner(address)
+    // Normalize address
+    const normalizedAddress = Address.checksum(address)
+    const signer = await this.getAuthKeySigner(normalizedAddress)
     if (signer) {
       return {
-        address,
+        address: normalizedAddress,
         handler: this,
         status: 'ready',
         handle: async () => {
@@ -96,12 +98,12 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
     }
 
     return {
-      address,
+      address: normalizedAddress,
       handler: this,
       status: 'actionable',
       message: 'request-redirect',
       handle: async () => {
-        const url = await this.commitAuth(window.location.pathname, false, request.id, address.toString())
+        const url = await this.commitAuth(window.location.pathname, false, request.id, normalizedAddress)
         window.location.href = url
         return true
       },

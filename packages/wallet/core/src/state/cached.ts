@@ -206,4 +206,28 @@ export class Cached implements Provider {
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void> {
     return this.args.source.saveDeploy(imageHash, context)
   }
+
+  async getPayload(opHash: Hex.Hex): Promise<
+    | {
+        chainId: bigint
+        payload: Payload.Parented
+        wallet: Address.Address
+      }
+    | undefined
+  > {
+    const cached = await this.args.cache.getPayload(opHash)
+    if (cached) {
+      return cached
+    }
+
+    const source = await this.args.source.getPayload(opHash)
+    if (source) {
+      await this.args.cache.savePayload(source.wallet, source.payload, source.chainId)
+    }
+    return source
+  }
+
+  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void> {
+    return this.args.source.savePayload(wallet, payload, chainId)
+  }
 }

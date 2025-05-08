@@ -1,11 +1,10 @@
 import { Signers, State } from '@0xsequence/wallet-core'
-import * as Db from '../../dbs/index.js'
-import { Address, Bytes, Hex } from 'ox'
+import { Address, Hex } from 'ox'
 import { Kinds } from '../types/signer.js'
 import { Signatures } from '../signatures.js'
 import { Extensions } from '@0xsequence/wallet-primitives'
 import { Handler } from './handler.js'
-import { SignerActionable, SignerUnavailable } from '../types/index.js'
+import { SignerActionable, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 
 export class PasskeysHandler implements Handler {
   kind = Kinds.LoginPasskey
@@ -32,7 +31,7 @@ export class PasskeysHandler implements Handler {
   async status(
     address: Address.Address,
     imageHash: Hex.Hex | undefined,
-    request: Db.SignatureRequest,
+    request: BaseSignatureRequest,
   ): Promise<SignerActionable | SignerUnavailable> {
     const base = { address, imageHash, handler: this }
     if (address !== this.extensions.passkeys) {
