@@ -61,6 +61,52 @@ export class IdTokenChallenge extends Challenge {
   }
 }
 
+export class AuthCodeChallenge extends Challenge {
+  private handle = ''
+  private signer?: string
+
+  constructor(
+    readonly issuer: string,
+    readonly audience: string,
+    readonly redirectUri: string,
+    readonly authCode: string,
+  ) {
+    super()
+    const authCodeHash = Hash.keccak256(new TextEncoder().encode(this.authCode))
+    this.handle = Hex.fromBytes(authCodeHash)
+  }
+
+  public getCommitParams(): CommitChallengeParams {
+    return {
+      authMode: AuthMode.AuthCode,
+      identityType: IdentityType.OIDC,
+      signer: this.signer,
+      handle: this.handle,
+      metadata: {
+        iss: this.issuer,
+        aud: this.audience,
+        redirect_uri: this.redirectUri,
+      },
+    }
+  }
+
+  public getCompleteParams(): CompleteChallengeParams {
+    return {
+      authMode: AuthMode.AuthCode,
+      identityType: IdentityType.OIDC,
+      verifier: this.handle,
+      answer: this.authCode,
+    }
+  }
+
+  public withSigner(signer: string): AuthCodeChallenge {
+    const challenge = new AuthCodeChallenge(this.issuer, this.audience, this.redirectUri, this.authCode)
+    challenge.handle = this.handle
+    challenge.signer = signer
+    return challenge
+  }
+}
+
 export class AuthCodePkceChallenge extends Challenge {
   private verifier?: string
   private authCode?: string
