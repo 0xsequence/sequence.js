@@ -33,12 +33,15 @@ export type Signed<T extends Payload.Payload> = Envelope<T> & {
 
 export function signatureForLeaf(envelope: Signed<Payload.Payload>, leaf: Config.Leaf) {
   if (Config.isSignerLeaf(leaf)) {
-    return envelope.signatures.find((sig) => isSignature(sig) && sig.address === leaf.address)
+    return envelope.signatures.find((sig) => isSignature(sig) && Address.isEqual(sig.address, leaf.address))
   }
 
   if (Config.isSapientSignerLeaf(leaf)) {
     return envelope.signatures.find(
-      (sig) => isSapientSignature(sig) && sig.imageHash === leaf.imageHash && sig.signature.address === leaf.address,
+      (sig) =>
+        isSapientSignature(sig) &&
+        sig.imageHash === leaf.imageHash &&
+        Address.isEqual(sig.signature.address, leaf.address),
     )
   }
 
@@ -89,7 +92,7 @@ export function addSignature(
     const prev = envelope.signatures.find(
       (sig) =>
         isSapientSignature(sig) &&
-        sig.signature.address === signature.signature.address &&
+        Address.isEqual(sig.signature.address, signature.signature.address) &&
         sig.imageHash === signature.imageHash,
     ) as SapientSignature | undefined
 
@@ -110,9 +113,9 @@ export function addSignature(
     envelope.signatures.push(signature)
   } else if (isSignature(signature)) {
     // Find if the signature already exists in envelope
-    const prev = envelope.signatures.find((sig) => isSignature(sig) && sig.address === signature.address) as
-      | Signature
-      | undefined
+    const prev = envelope.signatures.find(
+      (sig) => isSignature(sig) && Address.isEqual(sig.address, signature.address),
+    ) as Signature | undefined
 
     if (prev) {
       // If the signatures are identical, then we can do nothing

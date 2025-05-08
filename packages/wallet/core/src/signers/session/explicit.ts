@@ -1,11 +1,11 @@
 import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
-import { SignerInterface } from './session.js'
+import { SessionSigner } from './session.js'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
-export class Explicit implements SignerInterface {
+export class Explicit implements SessionSigner {
   private readonly _privateKey: PkStore
 
   public readonly address: Address.Address

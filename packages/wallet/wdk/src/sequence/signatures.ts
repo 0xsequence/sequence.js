@@ -1,6 +1,6 @@
 import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Payload } from '@0xsequence/wallet-primitives'
-import { Hex } from 'ox'
+import { Address, Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {
@@ -81,9 +81,9 @@ export class Signatures {
         // We may have a signature for this signer already
         const signed = request.envelope.signatures.some((sig) => {
           if (Envelope.isSapientSignature(sig)) {
-            return sig.signature.address === sak.address && sig.imageHash === sak.imageHash
+            return Address.isEqual(sig.signature.address, sak.address) && sig.imageHash === sak.imageHash
           }
-          return sig.address === sak.address
+          return Address.isEqual(sig.address, sak.address)
         })
 
         if (!sak.kind) {
@@ -180,7 +180,7 @@ export class Signatures {
       const pendingRequests = await this.shared.databases.signatures.list()
       const pendingConfigUpdatesToClear = pendingRequests.filter(
         (sig) =>
-          sig.wallet === request.wallet &&
+          Address.isEqual(sig.wallet, request.wallet) &&
           sig.envelope.payload.type === 'config-update' &&
           sig.envelope.configuration.checkpoint <= request.envelope.configuration.checkpoint,
       )

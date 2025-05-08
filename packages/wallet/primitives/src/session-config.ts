@@ -166,7 +166,7 @@ export function getImplicitBlacklistLeaf(topology: SessionsTopology): ImplicitBl
 
 export function getSessionPermissions(topology: SessionsTopology, address: Address.Address): SessionPermissions | null {
   if (isSessionPermissions(topology)) {
-    if (topology.signer === address) {
+    if (Address.isEqual(topology.signer, address)) {
       return topology
     }
   }
@@ -426,7 +426,7 @@ export function removeExplicitSession(
   signerAddress: `0x${string}`,
 ): SessionsTopology | null {
   if (isSessionPermissions(topology)) {
-    if (topology.signer === signerAddress) {
+    if (Address.isEqual(topology.signer, signerAddress)) {
       return null
     }
     // Return the leaf unchanged
@@ -642,7 +642,7 @@ export function addToImplicitBlacklist(topology: SessionsTopology, address: Addr
     throw new Error('No blacklist found')
   }
   const { blacklist } = blacklistNode
-  if (blacklist.some((addr) => addr === address)) {
+  if (blacklist.some((addr) => Address.isEqual(addr, address))) {
     return topology
   }
   blacklist.push(address)

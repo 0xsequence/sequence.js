@@ -2,16 +2,16 @@ import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wall
 import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
-import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { Shared } from './manager.js'
 import { Action } from './types/index.js'
 import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
+import { AuthCodeHandler } from './handlers/authcode.js'
 
 export type StartSignUpWithRedirectArgs = {
-  kind: 'google-pkce' | 'apple-pkce'
+  kind: 'google-pkce' | 'apple'
   target: string
   metadata: { [key: string]: string }
 }
@@ -41,15 +41,15 @@ export type CompleteRedirectArgs = CommonSignupArgs & {
   code: string
 }
 
-export type AuthCodePkceSignupArgs = CommonSignupArgs & {
-  kind: 'google-pkce' | 'apple-pkce'
+export type AuthCodeSignupArgs = CommonSignupArgs & {
+  kind: 'google-pkce' | 'apple'
   commitment: AuthCommitment
   code: string
   target: string
   isRedirect: boolean
 }
 
-export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodePkceSignupArgs
+export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodeSignupArgs
 
 export type LoginToWalletArgs = {
   wallet: Address.Address
@@ -80,8 +80,8 @@ export function isLoginToPasskeyArgs(args: LoginArgs): args is LoginToPasskeyArg
   return 'kind' in args && args.kind === 'passkey'
 }
 
-export function isAuthCodePkceArgs(args: SignupArgs): args is AuthCodePkceSignupArgs {
-  return 'kind' in args && (args.kind === 'google-pkce' || args.kind === 'apple-pkce')
+export function isAuthCodeArgs(args: SignupArgs): args is AuthCodeSignupArgs {
+  return 'kind' in args && (args.kind === 'google-pkce' || args.kind === 'apple')
 }
 
 function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
@@ -337,8 +337,8 @@ export class Wallets {
       }
 
       case 'google-pkce':
-      case 'apple-pkce': {
-        const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodePkceHandler
+      case 'apple': {
+        const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
         if (!handler) {
           throw new Error('handler-not-registered')
         }
@@ -357,7 +357,7 @@ export class Wallets {
   }
 
   async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
-    const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodePkceHandler
+    const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
     if (!handler) {
       throw new Error('handler-not-registered')
     }
@@ -380,7 +380,7 @@ export class Wallets {
         isRedirect: true,
       })
     } else {
-      const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodePkceHandler
+      const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodeHandler
       if (!handler) {
         throw new Error('handler-not-registered')
       }
@@ -400,7 +400,7 @@ export class Wallets {
         const result = await this.walletSelectionUiHandler({
           existingWallets: existingWallets.map((w) => w.wallet),
           signerAddress: await loginSigner.signer.address,
-          context: isAuthCodePkceArgs(args)
+          context: isAuthCodeArgs(args)
             ? {
                 isRedirect: args.isRedirect,
                 target: args.target,
@@ -629,7 +629,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => w.wallet === wallet)) {
+      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
         throw new Error('wallet-not-found')
       }
 
@@ -651,7 +651,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => w.wallet === wallet)) {
+      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
         throw new Error('wallet-not-found')
       }
 

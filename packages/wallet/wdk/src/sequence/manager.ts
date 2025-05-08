@@ -1,4 +1,5 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
+
 import {
   Attestation,
   Config,
@@ -10,6 +11,7 @@ import {
   SessionConfig,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
+import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import * as Identity from '../identity/index.js'
@@ -35,6 +37,7 @@ import { WalletSelectionUiHandler } from './types/wallet.js'
 import { Cron } from './cron.js'
 import { Recovery } from './recovery.js'
 import { RecoveryHandler } from './handlers/recovery.js'
+import { AuthCodeHandler } from './handlers/authcode.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -55,7 +58,7 @@ export type ManagerOptions = {
 
   stateProvider?: State.Provider
   networks?: Network.Network[]
-  relayers?: Relayer.Relayer[]
+  relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
 
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
@@ -63,6 +66,8 @@ export type ManagerOptions = {
   identity?: {
     url?: string
     fetch?: typeof window.fetch
+    verifyAttestation?: boolean
+    expectedPcr0?: string[]
     email?: {
       enabled: boolean
     }
@@ -121,6 +126,7 @@ export const ManagerOptionsDefaults = {
     // TODO: change to prod url once deployed
     url: 'https://dev-identity.sequence-dev.app',
     fetch: window.fetch,
+    verifyAttestation: true,
     email: {
       enabled: false,
     },
@@ -272,12 +278,19 @@ export class Manager {
 
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
-
+    
     this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
     shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
 
-    // TODO: configurable nitro rpc
-    const nitro = new Identity.IdentityInstrument(ops.identity.url, ops.identity.fetch)
+    const verifyingFetch = ops.identity.verifyAttestation
+      ? createAttestationVerifyingFetch({
+          fetch: ops.identity.fetch,
+          expectedPCRs: ops.identity.expectedPcr0 ? new Map([[0, ops.identity.expectedPcr0]]) : undefined,
+          logTiming: true,
+        })
+      : ops.identity.fetch
+    const nitro = new Identity.IdentityInstrument(ops.identity.url, verifyingFetch)
+    
     if (ops.identity.email?.enabled) {
       this.otpHandler = new OtpHandler(nitro, modules.signatures, shared.databases.authKeys)
       shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
@@ -298,9 +311,9 @@ export class Manager {
     }
     if (ops.identity.apple?.enabled) {
       shared.handlers.set(
-        Kinds.LoginApplePkce,
-        new AuthCodePkceHandler(
-          'apple-pkce',
+        Kinds.LoginApple,
+        new AuthCodeHandler(
+          'apple',
           'https://appleid.apple.com',
           ops.identity.apple.clientId,
           nitro,
@@ -455,7 +468,7 @@ export class Manager {
 
   public async setRedirectPrefix(prefix: string) {
     this.shared.handlers.forEach((handler) => {
-      if (handler instanceof AuthCodePkceHandler) {
+      if (handler instanceof AuthCodeHandler) {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })

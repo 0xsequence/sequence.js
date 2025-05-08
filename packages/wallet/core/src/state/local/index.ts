@@ -271,7 +271,7 @@ export class Provider implements ProviderInterface {
         if (Config.isSapientSignerLeaf(leaf)) {
           const sapientSignature = signaturesOfSigners.find(
             ({ signer, imageHash }: { signer: Address.Address; imageHash?: Hex.Hex }) => {
-              return imageHash && signer === leaf.address && imageHash === leaf.imageHash
+              return imageHash && Address.isEqual(signer, leaf.address) && imageHash === leaf.imageHash
             },
           )?.signature
 
@@ -281,7 +281,7 @@ export class Provider implements ProviderInterface {
           }
         }
 
-        const signature = signaturesOfSigners.find(({ signer }) => signer === leaf.address)?.signature
+        const signature = signaturesOfSigners.find(({ signer }) => Address.isEqual(signer, leaf.address))?.signature
         if (!signature) {
           return undefined
         }

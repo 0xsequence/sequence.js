@@ -6,7 +6,7 @@ export const Kinds = {
   LoginMnemonic: 'login-mnemonic', // Todo: do not name it login-mnemonic, just mnemonic
   LoginEmailOtp: 'login-email-otp',
   LoginGooglePkce: 'login-google-pkce',
-  LoginApplePkce: 'login-apple-pkce',
+  LoginApple: 'login-apple',
   Recovery: 'recovery-extension',
   Unknown: 'unknown',
 } as const
