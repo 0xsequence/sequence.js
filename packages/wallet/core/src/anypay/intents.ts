@@ -1,8 +1,43 @@
-import { Address, Bytes, ContractAddress, Hash } from 'ox'
+import { AbiParameters, Address, Bytes, ContractAddress, Hash, Hex } from 'ox'
 import { Context, Config, Payload } from '@0xsequence/wallet-primitives'
 
 export interface IntentCallsPayload extends Payload.Calls {
   chainId: bigint
+}
+
+export function hashIntentParams(params: {
+  userAddress: Address.Address
+  originChainId: bigint
+  originTokenAddress: Address.Address
+  destinationCalls: Array<IntentCallsPayload>
+}): string {
+  if (!params) throw new Error('params is nil')
+  if (!params.userAddress || params.userAddress === '0x0000000000000000000000000000000000000000')
+    throw new Error('UserAddress is zero')
+  if (!params.originChainId || params.originChainId === 0n) throw new Error('OriginChainId is zero')
+  if (!params.originTokenAddress || params.originTokenAddress === '0x0000000000000000000000000000000000000000')
+    throw new Error('OriginTokenAddress is zero')
+  if (!params.destinationCalls || params.destinationCalls.length === 0) throw new Error('DestinationCalls is empty')
+  for (let i = 0; i < params.destinationCalls.length; i++) {
+    if (!params.destinationCalls[i]) throw new Error(`DestinationCalls[${i}] is nil`)
+  }
+
+  // ABI encode the fields in a deterministic order
+  let callsEncoded = Bytes.fromHex('0x')
+  for (const call of params.destinationCalls) {
+    callsEncoded = Bytes.concat(
+      callsEncoded,
+      Payload.encode(call, Address.from('0x0000000000000000000000000000000000000000')),
+    )
+  }
+
+  // ABI encode: address, uint256, address, bytes
+  const encoded = AbiParameters.encode(
+    [{ type: 'address' }, { type: 'uint256' }, { type: 'address' }, { type: 'bytes' }],
+    [params.userAddress, params.originChainId, params.originTokenAddress, Hex.fromBytes(callsEncoded) as Hex.Hex],
+  )
+
+  return Hash.keccak256(encoded)
 }
 
 export function calculateIntentConfigurationAddress(

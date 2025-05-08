@@ -1,4 +1,4 @@
-import { Address, Bytes, Provider, Hex, RpcTransport, Secp256k1, AbiFunction } from 'ox'
+import { Address, Bytes, Provider, Hex, RpcTransport, Secp256k1, AbiFunction, AbiParameters, Hash } from 'ox'
 import { Context, Payload } from '@0xsequence/wallet-primitives'
 import { LocalRelayer } from '../src/relayer/local'
 import { describe, it, expect, vi } from 'vitest'
@@ -13,7 +13,7 @@ import {
   Erc1155ApprovalPrecondition,
 } from '../src/preconditions/types'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
-import { calculateIntentConfigurationAddress, IntentCallsPayload } from '../src/anypay/intents'
+import { calculateIntentConfigurationAddress, hashIntentParams, IntentCallsPayload } from '../src/anypay/intents'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
@@ -620,7 +620,7 @@ describe('Intent Configuration Address', () => {
         {
           to: Address.from('0x0000000000000000000000000000000000000000'),
           value: 0n,
-          data: '0x1234' as Hex.Hex,
+          data: Bytes.toHex(Bytes.fromString('data1')) as Hex.Hex,
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
@@ -659,7 +659,7 @@ describe('Intent Configuration Address', () => {
         {
           to: Address.from('0x0000000000000000000000000000000000000000'),
           value: 0n,
-          data: '0x1234' as Hex.Hex,
+          data: Bytes.toHex(Bytes.fromString('data1')) as Hex.Hex,
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
@@ -677,7 +677,7 @@ describe('Intent Configuration Address', () => {
         {
           to: Address.from('0x0000000000000000000000000000000000000000'),
           value: 0n,
-          data: '0x5678' as Hex.Hex,
+          data: Bytes.toHex(Bytes.fromString('data2')) as Hex.Hex,
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
@@ -751,5 +751,90 @@ describe('Intent Configuration Address', () => {
 
     // Verify the address matches the expected value
     expect(isAddressEqual(address, '0x5bD7F0269F4AA805F5a13B3104D596c151d8eC76')).toBe(true)
+  })
+})
+
+describe('HashIntentParams', () => {
+  it('should error on empty fields', () => {
+    expect(() =>
+      hashIntentParams({
+        userAddress: Address.from('0x0000000000000000000000000000000000000000'),
+        originChainId: 0n,
+        originTokenAddress: Address.from('0x0000000000000000000000000000000000000000'),
+        destinationCalls: [],
+      }),
+    ).toThrow()
+  })
+
+  it('should match hash for single call', () => {
+    const call: Payload.Call = {
+      to: Address.from('0x1111111111111111111111111111111111111111'),
+      value: 123n,
+      data: Bytes.toHex(Bytes.fromString('data1')) as Hex.Hex,
+      gasLimit: 0n,
+      delegateCall: false,
+      onlyFallback: false,
+      behaviorOnError: 'revert',
+    }
+    const payload: IntentCallsPayload = {
+      chainId: 1n,
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [call],
+    }
+    const params = {
+      userAddress: Address.from('0x3333333333333333333333333333333333333333'),
+      originChainId: 1n,
+      originTokenAddress: Address.from('0x4444444444444444444444444444444444444444'),
+      destinationCalls: [payload],
+    }
+    const hash = hashIntentParams(params)
+
+    expect(hash.toLowerCase()).toBe('0xa922e29ce304fb6c02f7e32a75a89e1b1ded5be7387e583a63871f5b6c550b01')
+  })
+
+  it('should match hash for multiple calls', () => {
+    const call1: Payload.Call = {
+      to: Address.from('0x1111111111111111111111111111111111111111'),
+      value: 123n,
+      data: Bytes.toHex(Bytes.fromString('data1')) as Hex.Hex,
+      gasLimit: 0n,
+      delegateCall: false,
+      onlyFallback: false,
+      behaviorOnError: 'revert',
+    }
+    const call2: Payload.Call = {
+      to: Address.from('0x5555555555555555555555555555555555555555'),
+      value: 456n,
+      data: Bytes.toHex(Bytes.fromString('data2')) as Hex.Hex,
+      gasLimit: 0n,
+      delegateCall: true,
+      onlyFallback: false,
+      behaviorOnError: 'ignore',
+    }
+    const payload1: IntentCallsPayload = {
+      chainId: 1n,
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [call1],
+    }
+    const payload2: IntentCallsPayload = {
+      chainId: 1n,
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [call2],
+    }
+    const params = {
+      userAddress: Address.from('0x3333333333333333333333333333333333333333'),
+      originChainId: 1n,
+      originTokenAddress: Address.from('0x4444444444444444444444444444444444444444'),
+      destinationCalls: [payload1, payload2],
+    }
+    const hash = hashIntentParams(params)
+
+    expect(hash.toLowerCase()).toBe('0x24ae10d23433225835212b2017324479cf43f3dc6358b33ad68226296ab1a2f5')
   })
 })
