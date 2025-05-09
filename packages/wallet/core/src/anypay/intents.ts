@@ -29,23 +29,39 @@ export function hashIntentParams(params: {
   if (!params.destinationCalls || params.destinationCalls.length === 0) throw new Error('DestinationCalls is empty')
   if (!params.destinationTokens || params.destinationTokens.length === 0) throw new Error('DestinationTokens is empty')
   for (let i = 0; i < params.destinationCalls.length; i++) {
-    if (!params.destinationCalls[i]) throw new Error(`DestinationCalls[${i}] is nil`)
+    const currentCall = params.destinationCalls[i]
+    if (!currentCall) throw new Error(`DestinationCalls[${i}] is nil`)
+    if (!currentCall.calls || currentCall.calls.length === 0) {
+      throw new Error(`DestinationCalls[${i}] has no calls`)
+    }
   }
 
   const originTokensForAbi = params.originTokens.map((token) => ({
     address: token.address,
-    chainId: token.chainId, // Pass bigint, AbiParameters.encode handles for uint256
+    chainId: token.chainId,
   }))
 
-  const destinationCallsForAbi = params.destinationCalls.map(
-    (callPayload) =>
-      Bytes.toHex(Payload.encode(callPayload, Address.from('0x0000000000000000000000000000000000000000'))) as Hex.Hex, // Ensure it's a hex string for AbiParameters.encode
-  )
+  let cumulativeCallsHashBytes: Bytes.Bytes = Bytes.from(new Uint8Array(32))
+
+  for (let i = 0; i < params.destinationCalls.length; i++) {
+    const callPayload = params.destinationCalls[i]!
+
+    const currentDestCallPayloadHashBytes = Payload.hash(
+      Address.from('0x0000000000000000000000000000000000000000'),
+      callPayload.chainId,
+      callPayload,
+    )
+
+    cumulativeCallsHashBytes = Hash.keccak256(Bytes.concat(cumulativeCallsHashBytes, currentDestCallPayloadHashBytes), {
+      as: 'Bytes',
+    })
+  }
+  const cumulativeCallsHashHex = Bytes.toHex(cumulativeCallsHashBytes)
 
   const destinationTokensForAbi = params.destinationTokens.map((token) => ({
     address: token.address,
-    chainId: token.chainId, // Pass bigint
-    amount: token.amount, // Pass bigint
+    chainId: token.chainId,
+    amount: token.amount,
   }))
 
   const abiSchema = [
@@ -57,7 +73,6 @@ export function hashIntentParams(params: {
         { name: 'chainId', type: 'uint256' },
       ],
     },
-    { type: 'bytes[]' },
     {
       type: 'tuple[]',
       components: [
@@ -66,40 +81,25 @@ export function hashIntentParams(params: {
         { name: 'amount', type: 'uint256' },
       ],
     },
+    { type: 'bytes32' },
   ]
 
   const encodedHex = AbiParameters.encode(abiSchema, [
     params.userAddress,
     originTokensForAbi,
-    destinationCallsForAbi, // Now an array of Hex.Hex strings
     destinationTokensForAbi,
-  ]) as Hex.Hex // Assume AbiParameters.encode returns Hex.Hex
+    cumulativeCallsHashHex,
+  ]) as Hex.Hex
 
-  // Debug logging
   function bigintReplacer(_key: string, value: any) {
     return typeof value === 'bigint' ? value.toString() : value
   }
 
-  console.log('hashIntentParams debug (TS standard ABI):')
-  console.log('  userAddress:', params.userAddress)
-  console.log('  originTokensForAbi:', JSON.stringify(originTokensForAbi, bigintReplacer, 2))
-  console.log(
-    '  destinationCallsForAbi (lengths):',
-    destinationCallsForAbi.map((d) => d.length),
-  )
-  // To log actual hex of destinationCallsForAbi, map Bytes.toHex over it
-  // console.log('  destinationCallsForAbi (hex):', destinationCallsForAbi.map(d => Bytes.toHex(d)))
-  console.log('  destinationTokensForAbi:', JSON.stringify(destinationTokensForAbi, bigintReplacer, 2))
-  console.log('  ABI-encoded (hex):', encodedHex)
-  console.log('  ABI-encoded (length is hex string length):', encodedHex.length)
+  const encodedBytes = Bytes.fromHex(encodedHex)
+  const hashBytes = Hash.keccak256(encodedBytes)
+  const hashHex = Bytes.toHex(hashBytes)
 
-  const encodedBytes = Bytes.fromHex(encodedHex) // Convert to Bytes for hashing
-  const hashBytes = Hash.keccak256(encodedBytes) // This produces Bytes.Bytes
-  // console.log('  Hash (raw bytes):', hashBytes)
-  const hashHex = Bytes.toHex(hashBytes) // Convert Bytes.Bytes to Hex.Hex string
-  console.log('  Hash:', hashHex)
-
-  return hashHex // Return the Hex.Hex string
+  return hashHex
 }
 
 export function calculateIntentConfigurationAddress(
@@ -150,7 +150,7 @@ function createIntentConfiguration(mainSigner: Address.Address, calls: IntentCal
     return {
       threshold: 1n,
       checkpoint: 0n,
-      topology: [mainSignerLeaf, subdigestLeaves[0]] as Config.Topology,
+      topology: [mainSignerLeaf, subdigestLeaves[0]!] as Config.Topology,
     }
   }
 

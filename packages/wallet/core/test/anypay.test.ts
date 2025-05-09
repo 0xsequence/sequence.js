@@ -624,7 +624,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert' as const,
+          behaviorOnError: 'ignore' as const,
         },
       ],
     }
@@ -663,7 +663,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert' as const,
+          behaviorOnError: 'ignore' as const,
         },
       ],
     }
@@ -681,7 +681,7 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert' as const,
+          behaviorOnError: 'ignore' as const,
         },
       ],
     }
@@ -754,8 +754,8 @@ describe('Intent Configuration Address', () => {
   })
 })
 
-describe('HashIntentParams (Go parity)', () => {
-  it('should error on empty fields (Go parity)', () => {
+describe('HashIntentParams', () => {
+  it('should error on empty fields', () => {
     expect(() =>
       hashIntentParams({
         userAddress: Address.from('0x0000000000000000000000000000000000000000'),
@@ -766,7 +766,7 @@ describe('HashIntentParams (Go parity)', () => {
     ).toThrow()
   })
 
-  it('should match hash for single call (Go parity)', () => {
+  it('should match hash for single call', () => {
     const call = {
       to: Address.from('0x1111111111111111111111111111111111111111'),
       value: 123n,
@@ -774,7 +774,7 @@ describe('HashIntentParams (Go parity)', () => {
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
-      behaviorOnError: 'revert' as const,
+      behaviorOnError: 'ignore' as const,
     }
     const payload: IntentCallsPayload = {
       chainId: 1n,
@@ -793,10 +793,10 @@ describe('HashIntentParams (Go parity)', () => {
     }
     const hash = hashIntentParams(params)
 
-    expect(hash.toLowerCase()).toBe('0x0b8d4dd3cd166737a495e2404a5f4b4f81b5643daa93687ef1678ba4ffefe528')
+    expect(hash.toLowerCase()).toBe('0xd033d3e730025c33a97e791c3e5606e22fb4af1bc028faa994cb58818b9b3ea5')
   })
 
-  it('should match hash for multiple calls (Go parity)', () => {
+  it('should match hash for multiple calls', () => {
     const call1 = {
       to: Address.from('0x1111111111111111111111111111111111111111'),
       value: 123n,
@@ -804,7 +804,7 @@ describe('HashIntentParams (Go parity)', () => {
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
-      behaviorOnError: 'revert' as const,
+      behaviorOnError: 'ignore' as const,
     }
     const call2 = {
       to: Address.from('0x5555555555555555555555555555555555555555'),
@@ -838,7 +838,6 @@ describe('HashIntentParams (Go parity)', () => {
       ],
     }
     const hash = hashIntentParams(params)
-    console.log('Hash (multiple calls - Solidity parity):', hash)
-    expect(hash.toLowerCase()).toBe('0xa6fa28fd6bb9ca5cae503c6bb67342d15b16749c32aafdc325323c37d50822ec')
+    expect(hash.toLowerCase()).toBe('0xa3809d7b18b9d7b08536effc5bbd411147850972a576fcb0653993b96d43101e')
   })
 })
