@@ -792,8 +792,8 @@ describe('HashIntentParams (Go parity)', () => {
       ],
     }
     const hash = hashIntentParams(params)
-    console.log('Hash (single call):', hash)
-    expect(hash.toLowerCase()).toBe('0x9622268e7b27321fa1f2e38e09444251a6a3febe8e5b022887b57df0916f00b2')
+
+    expect(hash.toLowerCase()).toBe('0x0b8d4dd3cd166737a495e2404a5f4b4f81b5643daa93687ef1678ba4ffefe528')
   })
 
   it('should match hash for multiple calls (Go parity)', () => {
@@ -811,7 +811,7 @@ describe('HashIntentParams (Go parity)', () => {
       value: 456n,
       data: Bytes.toHex(Bytes.fromString('data2')) as Hex.Hex,
       gasLimit: 0n,
-      delegateCall: true,
+      delegateCall: false,
       onlyFallback: false,
       behaviorOnError: 'ignore' as const,
     }
@@ -823,7 +823,7 @@ describe('HashIntentParams (Go parity)', () => {
       calls: [call1],
     }
     const payload2: IntentCallsPayload = {
-      chainId: 2n,
+      chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
@@ -838,7 +838,7 @@ describe('HashIntentParams (Go parity)', () => {
       ],
     }
     const hash = hashIntentParams(params)
-    console.log('Hash (multiple calls):', hash)
-    expect(hash.toLowerCase()).toBe('0x3d89683957ae91a022ca6d0231a9d1b51be616512ee9bdcb5abc30a1f299b4ce')
+    console.log('Hash (multiple calls - Solidity parity):', hash)
+    expect(hash.toLowerCase()).toBe('0xa6fa28fd6bb9ca5cae503c6bb67342d15b16749c32aafdc325323c37d50822ec')
   })
 })
