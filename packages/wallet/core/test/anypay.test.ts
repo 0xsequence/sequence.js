@@ -763,6 +763,7 @@ describe('HashIntentParams', () => {
     expect(() =>
       hashIntentParams({
         userAddress: Address.from('0x0000000000000000000000000000000000000000'),
+        nonce: 0n,
         originTokens: [],
         destinationCalls: [],
         destinationTokens: [],
@@ -789,6 +790,7 @@ describe('HashIntentParams', () => {
     }
     const params = {
       userAddress: Address.from('0x3333333333333333333333333333333333333333'),
+      nonce: 0n,
       originTokens: [{ address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }],
       destinationCalls: [payload],
       destinationTokens: [
@@ -797,7 +799,7 @@ describe('HashIntentParams', () => {
     }
     const hash = hashIntentParams(params)
 
-    expect(hash.toLowerCase()).toBe('0xd033d3e730025c33a97e791c3e5606e22fb4af1bc028faa994cb58818b9b3ea5')
+    expect(hash.toLowerCase()).toBe('0x4479e1ed63b1cf70ed13228bec79f2a1d2ffa0e9372e2afc7d82263cd8107451')
   })
 
   it('should match hash for multiple calls', () => {
@@ -835,6 +837,7 @@ describe('HashIntentParams', () => {
     }
     const params = {
       userAddress: Address.from('0x3333333333333333333333333333333333333333'),
+      nonce: 0n,
       originTokens: [{ address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }],
       destinationCalls: [payload1, payload2],
       destinationTokens: [
@@ -842,6 +845,6 @@ describe('HashIntentParams', () => {
       ],
     }
     const hash = hashIntentParams(params)
-    expect(hash.toLowerCase()).toBe('0xa3809d7b18b9d7b08536effc5bbd411147850972a576fcb0653993b96d43101e')
+    expect(hash.toLowerCase()).toBe('0x64631a48bc218cd8196dca22437223d90dc9caa8208284cdcea4b7f32bfc7cec')
   })
 })

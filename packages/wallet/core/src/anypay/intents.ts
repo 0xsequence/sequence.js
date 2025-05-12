@@ -18,6 +18,7 @@ export interface DestinationTokenParam {
 
 export function hashIntentParams(params: {
   userAddress: Address.Address
+  nonce: bigint
   originTokens: OriginTokenParam[]
   destinationCalls: Array<IntentCallsPayload>
   destinationTokens: DestinationTokenParam[]
@@ -25,6 +26,7 @@ export function hashIntentParams(params: {
   if (!params) throw new Error('params is nil')
   if (!params.userAddress || params.userAddress === '0x0000000000000000000000000000000000000000')
     throw new Error('UserAddress is zero')
+  if (typeof params.nonce !== 'bigint') throw new Error('Nonce is not a bigint')
   if (!params.originTokens || params.originTokens.length === 0) throw new Error('OriginTokens is empty')
   if (!params.destinationCalls || params.destinationCalls.length === 0) throw new Error('DestinationCalls is empty')
   if (!params.destinationTokens || params.destinationTokens.length === 0) throw new Error('DestinationTokens is empty')
@@ -66,6 +68,7 @@ export function hashIntentParams(params: {
 
   const abiSchema = [
     { type: 'address' },
+    { type: 'uint256' },
     {
       type: 'tuple[]',
       components: [
@@ -86,6 +89,7 @@ export function hashIntentParams(params: {
 
   const encodedHex = AbiParameters.encode(abiSchema, [
     params.userAddress,
+    params.nonce,
     originTokensForAbi,
     destinationTokensForAbi,
     cumulativeCallsHashHex,
