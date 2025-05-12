@@ -67,6 +67,7 @@ export class IdentityHandler {
     })
 
     authKey.identitySigner = res.signer
+    authKey.expiresAt = new Date(Date.now() + 1000 * 60 * 3) // 3 minutes
     await this.authKeys.delBySigner('')
     await this.authKeys.set(authKey)
 
@@ -80,7 +81,6 @@ export class IdentityHandler {
       address: signer.address,
       signature,
     })
-    await this.authKeys.delBySigner(signer.address)
   }
 
   protected async getAuthKeySigner(address: string): Promise<Identity.IdentitySigner | undefined> {
@@ -106,7 +106,7 @@ export class IdentityHandler {
       authKey = {
         address: Hex.fromBytes(new Uint8Array(publicKey)),
         identitySigner: '',
-        expiresAt: new Date(Date.now() + 1000 * 60 * 3), // 3 minutes
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
         privateKey: keyPair.privateKey,
       }
       await this.authKeys.set(authKey)
