@@ -16,8 +16,6 @@ export type RelayerOption = {
   quote?: Relayer.FeeQuote
 }
 
-export type EnvelopeStatus = 'requested' | 'defined' | 'formed' | 'relayed'
-
 type TransactionBase = {
   id: string
   wallet: Address.Address
