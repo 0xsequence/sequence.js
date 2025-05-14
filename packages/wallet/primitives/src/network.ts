@@ -22,4 +22,16 @@ export const Arbitrum: Network = {
   },
 }
 
-export const All = [Arbitrum]
+export const ArbitrumSepolia: Network = {
+  name: 'Arbitrum Sepolia',
+  rpc: 'https://nodes.sequence.app/arbitrum-sepolia',
+  chainId: 421614n,
+  explorer: 'https://sepolia.arbiscan.io/',
+  nativeCurrency: {
+    name: 'Ether',
+    symbol: 'ETH',
+    decimals: 18,
+  },
+}
+
+export const All = [Arbitrum, ArbitrumSepolia]
