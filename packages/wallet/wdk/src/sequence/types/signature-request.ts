@@ -7,6 +7,7 @@ export type ActionToPayload = {
   [Actions.Logout]: Payload.ConfigUpdate
   [Actions.Login]: Payload.ConfigUpdate
   [Actions.SendTransaction]: Payload.Calls
+  [Actions.SignMessage]: Payload.Message
   [Actions.SessionUpdate]: Payload.ConfigUpdate
   [Actions.Recovery]: Payload.Recovery<Payload.Calls>
   [Actions.AddRecoverySigner]: Payload.ConfigUpdate
@@ -18,6 +19,7 @@ export const Actions = {
   Logout: 'logout',
   Login: 'login',
   SendTransaction: 'send-transaction',
+  SignMessage: 'sign-message',
   SessionUpdate: 'session-update',
   Recovery: 'recovery',
   AddRecoverySigner: 'add-recovery-signer',
