@@ -7,7 +7,7 @@ import {
   Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
 
@@ -305,6 +305,32 @@ export class Wallet {
         ),
       }
     }
+  }
+
+  async prepareMessageSignature(
+    message: Hex.Hex | Payload.TypedDataToSign,
+    chainId: bigint,
+  ): Promise<Envelope.Envelope<Payload.Message>> {
+    if (typeof message !== 'string') {
+      message = TypedData.encode(message)
+    }
+    return {
+      ...(await this.prepareBlankEnvelope(chainId)),
+      payload: Payload.fromMessage(message),
+    }
+  }
+
+  async buildMessageSignature(
+    envelope: Envelope.Signed<Payload.Message>,
+    provider?: Provider.Provider,
+  ): Promise<Hex.Hex> {
+    const status = await this.getStatus(provider)
+    const signature = Envelope.encodeSignature(envelope)
+    const encoded = SequenceSignature.encodeSignature({
+      ...signature,
+      suffix: status.pendingUpdates.map(({ signature }) => signature),
+    })
+    return Bytes.toHex(encoded)
   }
 
   private async prepareBlankEnvelope(chainId: bigint) {
