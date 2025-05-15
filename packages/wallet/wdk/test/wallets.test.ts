@@ -226,7 +226,7 @@ describe('Wallets', () => {
   it('Should fail to logout from a non-existent wallet', async () => {
     const manager = newManager()
     const requestId = manager.logout('0x1234567890123456789012345678901234567890')
-    expect(requestId).rejects.toThrow('wallet-not-found')
+    await expect(requestId).rejects.toThrow('wallet-not-found')
   })
 
   it('Should fail to login to an already logged in wallet', async () => {
@@ -239,7 +239,7 @@ describe('Wallets', () => {
     expect(wallet).toBeDefined()
 
     const requestId = manager.login({ wallet: wallet! })
-    expect(requestId).rejects.toThrow('wallet-already-logged-in')
+    await expect(requestId).rejects.toThrow('wallet-already-logged-in')
   })
 
   it('Should make you select among a single option if login with mnemonic', async () => {

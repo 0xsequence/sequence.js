@@ -1,5 +1,5 @@
 import { indexedDB, IDBFactory } from 'fake-indexeddb'
-import { Provider, RpcTransport } from 'ox'
+import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
 import { vi } from 'vitest'
 import { LOCAL_RPC_URL } from './constants'
 
@@ -61,3 +61,66 @@ export function mockEthereum() {
     }
   }
 }
+
+// export type SendTransactionParams = {
+//   provider: Provider.Provider
+//   sender?: Address.Address
+//   to: Address.Address
+//   data?: Hex.Hex
+//   value?: bigint | Hex.Hex
+//   gasLimit?: bigint | Hex.Hex
+// }
+
+// export async function sendTransactionWithManagedNonce({
+//   provider,
+//   sender,
+//   to,
+//   data = '0x' as Hex.Hex,
+//   value,
+//   gasLimit,
+// }: SendTransactionParams): Promise<Hex.Hex> {
+//   let effectiveSender: Address.Address
+
+//   if (sender) {
+//     effectiveSender = sender
+//   } else {
+//     // If sender is not provided, fetch accounts and use the first one (Anvil's default)
+//     const accounts = await provider.request({ method: 'eth_accounts' })
+//     if (!accounts || accounts.length === 0) {
+//       throw new Error('No accounts found in provider and no sender specified.')
+//     }
+//     effectiveSender = accounts[0]
+//   }
+
+//   const nonce = await provider.request({
+//     method: 'eth_getTransactionCount',
+//     params: [effectiveSender, 'pending'],
+//   })
+
+//   const txParams: {
+//     from: Address.Address
+//     to: Address.Address
+//     data: Hex.Hex
+//     nonce: Hex.Hex
+//     value?: Hex.Hex
+//     gas?: Hex.Hex
+//   } = {
+//     from: effectiveSender,
+//     to,
+//     data,
+//     nonce,
+//   }
+
+//   if (value !== undefined) {
+//     txParams.value = typeof value === 'bigint' ? Hex.fromNumber(value) : value
+//   }
+
+//   if (gasLimit !== undefined) {
+//     txParams.gas = typeof gasLimit === 'bigint' ? Hex.fromNumber(gasLimit) : gasLimit
+//   }
+
+//   return provider.request({
+//     method: 'eth_sendTransaction',
+//     params: [txParams],
+//   })
+// }

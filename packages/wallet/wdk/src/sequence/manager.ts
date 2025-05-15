@@ -278,7 +278,7 @@ export class Manager {
 
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
-    
+
     this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
     shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
 
@@ -290,7 +290,7 @@ export class Manager {
         })
       : ops.identity.fetch
     const nitro = new Identity.IdentityInstrument(ops.identity.url, verifyingFetch)
-    
+
     if (ops.identity.email?.enabled) {
       this.otpHandler = new OtpHandler(nitro, modules.signatures, shared.databases.authKeys)
       shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
