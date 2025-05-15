@@ -105,6 +105,7 @@ export class Messages {
       status: 'signed',
       messageSignature,
     } as MessageSigned)
+    await this.shared.modules.signatures.complete(signature.id)
 
     return messageSignature
   }
