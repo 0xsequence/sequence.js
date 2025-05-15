@@ -35,6 +35,10 @@ export type WalletStatus = {
   chainId?: bigint
 }
 
+export type WalletStatusWithOnchain = WalletStatus & {
+  onChainImageHash: Hex.Hex
+}
+
 export class Wallet {
   public readonly context: Context.Context
   public readonly guest: Address.Address
@@ -115,14 +119,16 @@ export class Wallet {
       }
     }
   }
-
-  async getStatus(provider?: Provider.Provider): Promise<WalletStatus> {
+  async getStatus<T extends Provider.Provider | undefined = undefined>(
+    provider?: T,
+  ): Promise<T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus> {
     let isDeployed = false
     let implementation: Address.Address | undefined
     let stage: 'stage1' | 'stage2' | undefined
     let chainId: bigint | undefined
     let imageHash: Hex.Hex
     let updates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }> = []
+    let onChainImageHash: Hex.Hex | undefined
 
     if (provider) {
       // Get chain ID, deployment status, and implementation
@@ -156,10 +162,9 @@ export class Wallet {
       }
 
       // Get image hash and updates
-      let fromImageHash: Hex.Hex
       if (isDeployed && stage === 'stage2') {
         // For deployed stage2 wallets, get the image hash from the contract
-        fromImageHash = await provider.request({
+        onChainImageHash = await provider.request({
           method: 'eth_call',
           params: [{ to: this.address, data: AbiFunction.encodeData(Constants.IMAGE_HASH) }],
         })
@@ -169,12 +174,12 @@ export class Wallet {
         if (!deployInformation) {
           throw new Error(`cannot find deploy information for ${this.address}`)
         }
-        fromImageHash = deployInformation.imageHash
+        onChainImageHash = deployInformation.imageHash
       }
 
       // Get configuration updates
-      updates = await this.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
-      imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
+      updates = await this.stateProvider.getConfigurationUpdates(this.address, onChainImageHash)
+      imageHash = updates[updates.length - 1]?.imageHash ?? onChainImageHash
     } else {
       // Without a provider, we can only get information from the state provider
       const deployInformation = await this.stateProvider.getDeploy(this.address)
@@ -191,15 +196,29 @@ export class Wallet {
       throw new Error(`cannot find configuration details for ${this.address}`)
     }
 
-    return {
-      address: this.address,
-      isDeployed,
-      implementation,
-      stage,
-      configuration,
-      imageHash,
-      pendingUpdates: [...updates].reverse(),
-      chainId,
+    if (provider) {
+      return {
+        address: this.address,
+        isDeployed,
+        implementation,
+        stage,
+        configuration,
+        imageHash,
+        pendingUpdates: [...updates].reverse(),
+        chainId,
+        onChainImageHash: onChainImageHash!,
+      } as T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus
+    } else {
+      return {
+        address: this.address,
+        isDeployed,
+        implementation,
+        stage,
+        configuration,
+        imageHash,
+        pendingUpdates: [...updates].reverse(),
+        chainId,
+      } as T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus
     }
   }
 
@@ -219,7 +238,7 @@ export class Wallet {
   async prepareTransaction(
     provider: Provider.Provider,
     calls: Payload.Call[],
-    options?: { space?: bigint },
+    options?: { space?: bigint; noConfigUpdate?: boolean },
   ): Promise<Envelope.Envelope<Payload.Calls>> {
     const space = options?.space ?? 0n
 
@@ -227,6 +246,23 @@ export class Wallet {
       provider.request({ method: 'eth_chainId' }),
       this.getNonce(provider, space),
     ])
+
+    // If the latest configuration does not match the onchain configuration
+    // then we bundle the update into the transaction envelope
+    if (!options?.noConfigUpdate) {
+      const status = await this.getStatus(provider)
+      if (status.imageHash !== status.onChainImageHash) {
+        calls.push({
+          to: this.address,
+          value: 0n,
+          data: AbiFunction.encodeData(Constants.UPDATE_IMAGE_HASH, [status.onChainImageHash]),
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        })
+      }
+    }
 
     return {
       payload: {

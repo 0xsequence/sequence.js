@@ -34,6 +34,7 @@ export class Transactions {
     options?: {
       skipDefineGas?: boolean
       source?: string
+      noConfigUpdate?: boolean
     },
   ): Promise<string> {
     const network = this.shared.sequence.networks.find((network) => network.chainId === chainId)
@@ -57,7 +58,9 @@ export class Transactions {
       }),
     )
 
-    const envelope = await wallet.prepareTransaction(provider, calls)
+    const envelope = await wallet.prepareTransaction(provider, calls, {
+      noConfigUpdate: options?.noConfigUpdate,
+    })
 
     const id = uuidv7()
     await this.shared.databases.transactions.set({

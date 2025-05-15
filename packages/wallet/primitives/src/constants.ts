@@ -26,6 +26,7 @@ export const GET_IMPLEMENTATION = Abi.from(['function getImplementation() extern
 export const IMAGE_HASH = Abi.from(['function imageHash() external view returns (bytes32)'])[0]
 export const READ_NONCE = Abi.from(['function readNonce(uint256 _space) public view returns (uint256)'])[0]
 export const EXECUTE = Abi.from(['function execute(bytes calldata _payload, bytes calldata _signature) external'])[0]
+export const UPDATE_IMAGE_HASH = Abi.from(['function updateImageHash(bytes32 _imageHash) external'])[0]
 
 // Sapient
 export const RECOVER_SAPIENT_SIGNATURE = Abi.from([
