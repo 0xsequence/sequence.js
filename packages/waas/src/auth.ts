@@ -344,16 +344,16 @@ export class SequenceWaaS {
    * @throws {Error} If server status check fails or Date header is missing
    */
   private async preSendIntent() {
-    const res = await fetch(`${this.config.rpcServer}/status`)
-
-    if (res.status !== 200) {
-      if (res.status === 451) {
-        throw new Error('Unavailable For Legal Reasons')
-      }
-      throw new Error(`Error with status ${res.status}`)
-    }
-
     if (getTimeDrift() === undefined) {
+      const res = await fetch(`${this.config.rpcServer}/status`)
+
+      if (res.status !== 200) {
+        if (res.status === 451) {
+          throw new Error('Unavailable For Legal Reasons')
+        }
+        throw new Error(`Error with status ${res.status}`)
+      }
+      
       const date = res.headers.get('Date')
       if (!date) {
         throw new Error('failed to get Date header value from /status')
