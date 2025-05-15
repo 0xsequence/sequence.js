@@ -40,7 +40,7 @@ export async function doEncode(
 ): Promise<string> {
   const config = Config.configFromJson(input)
 
-  const allSignatures = signatures.map((s) => {
+  const allSignatures = signatures.filter(Boolean).map((s) => {
     const values = s.split(':')
     return {
       address: Address.from(values[0] as `0x${string}`),
