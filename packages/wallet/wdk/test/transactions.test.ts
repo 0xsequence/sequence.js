@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { Manager, SignerActionable } from '../src/sequence'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Manager, SignerActionable, Transaction, TransactionDefined, TransactionRelayed } from '../src/sequence'
 import { Address, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { LOCAL_RPC_URL, newManager } from './constants'
 
@@ -196,5 +196,191 @@ describe('Transactions', () => {
     })
     expect(recipientBalance).toBeDefined()
     expect(recipientBalance).toBe('0x9')
+  })
+
+  it('Should call onTransactionsUpdate when a new transaction is requested', async () => {
+    manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+
+    let transactions: Transaction[] = []
+    let calledTimes = 0
+    manager.onTransactionsUpdate((txs) => {
+      transactions = txs
+      calledTimes++
+    })
+
+    const to = Address.from(Hex.random(20))
+    const txId = await manager.requestTransaction(wallet!, 42161n, [
+      {
+        to,
+        value: 9n,
+      },
+    ])
+
+    expect(txId).toBeDefined()
+    await manager.defineTransaction(txId!)
+
+    expect(calledTimes).toBe(1)
+    expect(transactions.length).toBe(1)
+    expect(transactions[0].status).toBe('requested')
+    expect(transactions[0].wallet).toBe(wallet!)
+    expect(transactions[0].requests.length).toBe(1)
+    expect(transactions[0].requests[0].to).toEqual(to)
+    expect(transactions[0].requests[0].value).toEqual(9n)
+  })
+
+  it('Should call onTransactionUpdate when a transaction is defined, relayer selected and relayed', async () => {
+    manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+
+    const to = Address.from(Hex.random(20))
+    const txId = await manager.requestTransaction(wallet!, 42161n, [
+      {
+        to,
+      },
+    ])
+
+    let tx: Transaction | undefined
+    let calledTimes = 0
+    manager.onTransactionUpdate(txId!, (t) => {
+      tx = t
+      calledTimes++
+    })
+
+    expect(txId).toBeDefined()
+    await manager.defineTransaction(txId!)
+
+    while (calledTimes < 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1))
+    }
+
+    expect(calledTimes).toBe(1)
+    expect(tx).toBeDefined()
+    expect(tx!.status).toBe('defined')
+    expect(tx!.wallet).toBe(wallet!)
+    expect(tx!.requests.length).toBe(1)
+    expect(tx!.requests[0].to).toEqual(to)
+    expect(tx!.requests[0].value).toBeUndefined()
+    expect(tx!.requests[0].gasLimit).toBeUndefined()
+    expect(tx!.requests[0].data).toBeUndefined()
+
+    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    expect(sigId).toBeDefined()
+
+    while (calledTimes < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 1))
+    }
+
+    expect(calledTimes).toBe(2)
+    expect(tx!.status).toBe('formed')
+
+    // Sign the transaction
+    const sigRequest = await manager.getSignatureRequest(sigId!)
+    expect(sigRequest).toBeDefined()
+    expect(sigRequest.status).toBe('pending')
+    expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
+
+    const deviceSigner = sigRequest.signers.find((s) => s.status === 'ready')!
+    await deviceSigner.handle()
+
+    await manager.relayTransaction(txId!)
+    while (calledTimes < 3) {
+      await new Promise((resolve) => setTimeout(resolve, 1))
+    }
+
+    expect(calledTimes).toBe(3)
+    expect(tx!.status).toBe('relayed')
+    expect((tx! as TransactionRelayed).opHash).toBeDefined()
+  })
+
+  it('Should delete an existing transaction before it is defined', async () => {
+    manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const to = Address.from(Hex.random(20))
+    const txId = await manager.requestTransaction(wallet!, 42161n, [
+      {
+        to,
+      },
+    ])
+
+    expect(txId).toBeDefined()
+
+    await manager.deleteTransaction(txId!)
+    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+  })
+
+  it('Should delete an existing transaction before the relayer is selected', async () => {
+    manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const to = Address.from(Hex.random(20))
+    const txId = await manager.requestTransaction(wallet!, 42161n, [
+      {
+        to,
+      },
+    ])
+
+    expect(txId).toBeDefined()
+
+    await manager.defineTransaction(txId!)
+
+    await manager.deleteTransaction(txId!)
+    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+  })
+
+  it('Should delete an existing transaction before it is relayed', async () => {
+    manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const to = Address.from(Hex.random(20))
+    const txId = await manager.requestTransaction(wallet!, 42161n, [
+      {
+        to,
+      },
+    ])
+
+    expect(txId).toBeDefined()
+
+    await manager.defineTransaction(txId!)
+
+    const tx = await manager.getTransaction(txId!)
+    expect(tx).toBeDefined()
+    expect(tx!.status).toBe('defined')
+
+    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    expect(sigId).toBeDefined()
+
+    await manager.deleteTransaction(txId!)
+    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+
+    // Signature request should be canceled
+    const sigRequest = await manager.getSignatureRequest(sigId!)
+    expect(sigRequest).toBeDefined()
+    expect(sigRequest.status).toBe('cancelled')
   })
 })

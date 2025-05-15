@@ -267,6 +267,12 @@ export class Transactions {
   }
 
   async delete(transactionId: string) {
+    const tx = await this.get(transactionId)
     await this.shared.databases.transactions.del(transactionId)
+
+    // Cancel any signature requests associated with this transaction
+    if (tx.status === 'formed') {
+      await this.shared.modules.signatures.cancel(tx.signatureId)
+    }
   }
 }
