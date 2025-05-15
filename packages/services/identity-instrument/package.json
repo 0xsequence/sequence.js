@@ -1,0 +1,27 @@
+{
+  "name": "@0xsequence/identity-instrument",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:^",
+    "@types/node": "^22.13.9",
+    "typescript": "^5.7.3",
+    "vitest": "^3.1.2"
+  },
+  "dependencies": {
+    "jwt-decode": "^4.0.0",
+    "ox": "^0.7.0"
+  }
+}
