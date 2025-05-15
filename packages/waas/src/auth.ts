@@ -349,7 +349,7 @@ export class SequenceWaaS {
 
       if (res.status !== 200) {
         if (res.status === 451) {
-          throw new Error('Unavailable For Legal Reasons')
+          throw new Error('Service unavailable due to legal and geographic restrictions')
         }
         throw new Error(`Error with status ${res.status}`)
       }
