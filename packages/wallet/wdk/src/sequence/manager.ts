@@ -11,10 +11,10 @@ import {
   SessionConfig,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
+import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
-import * as Identity from '../identity/index.js'
 import { Devices } from './devices.js'
 import {
   AuthCodePkceHandler,
@@ -278,7 +278,7 @@ export class Manager {
 
     this.mnemonicHandler = new MnemonicHandler(modules.signatures)
     shared.handlers.set(Kinds.LoginMnemonic, this.mnemonicHandler)
-    
+
     this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
     shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
 
@@ -289,10 +289,10 @@ export class Manager {
           logTiming: true,
         })
       : ops.identity.fetch
-    const nitro = new Identity.IdentityInstrument(ops.identity.url, verifyingFetch)
-    
+    const identityInstrument = new IdentityInstrument(ops.identity.url, verifyingFetch)
+
     if (ops.identity.email?.enabled) {
-      this.otpHandler = new OtpHandler(nitro, modules.signatures, shared.databases.authKeys)
+      this.otpHandler = new OtpHandler(identityInstrument, modules.signatures, shared.databases.authKeys)
       shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
     }
     if (ops.identity.google?.enabled) {
@@ -302,7 +302,7 @@ export class Manager {
           'google-pkce',
           'https://accounts.google.com',
           ops.identity.google.clientId,
-          nitro,
+          identityInstrument,
           modules.signatures,
           shared.databases.authCommitments,
           shared.databases.authKeys,
@@ -316,7 +316,7 @@ export class Manager {
           'apple',
           'https://appleid.apple.com',
           ops.identity.apple.clientId,
-          nitro,
+          identityInstrument,
           modules.signatures,
           shared.databases.authCommitments,
           shared.databases.authKeys,
