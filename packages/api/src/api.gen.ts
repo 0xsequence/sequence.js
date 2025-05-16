@@ -1929,6 +1929,15 @@ export interface UpdatePackContentArgs {
 export interface UpdatePackContentReturn {
   merkleRoot: string
 }
+export interface GetRevealTxDataArgs {
+  contractAddress: string
+  chainId: number
+  userAddress: string
+}
+
+export interface GetRevealTxDataReturn {
+  txData: string
+}
 export interface CheckoutOptionsPrimaryArgs {
   chainId: number
   wallet: string
@@ -3480,19 +3489,24 @@ export class API implements API {
       throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
     })
   }
-  
-  checkoutOptionsSecondary = (args: CheckoutOptionsSecondaryArgs, headers?: object, signal?: AbortSignal): Promise<CheckoutOptionsSecondaryReturn> => {
-    return this.fetch(
-      this.url('CheckoutOptionsSecondary'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          options: <CheckoutOptions>(_data.options),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+
+  checkoutOptionsPrimary = (
+    args: CheckoutOptionsPrimaryArgs,
+    headers?: object,
+    signal?: AbortSignal
+  ): Promise<CheckoutOptionsPrimaryReturn> => {
+    return this.fetch(this.url('CheckoutOptionsPrimary'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            options: <CheckoutOptions>_data.options
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
 
   checkoutOptionsSecondary = (
