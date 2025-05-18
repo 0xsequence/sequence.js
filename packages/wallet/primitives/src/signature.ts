@@ -1229,8 +1229,9 @@ async function recoverTopology(
               method: 'eth_call',
               params: block === undefined ? [call] : [call, Hex.fromNumber(block)],
             })
+            const decodedResult = AbiFunction.decodeResult(IS_VALID_SIGNATURE, response)
 
-            if (response === AbiFunction.getSelector(IS_VALID_SIGNATURE)) {
+            if (Hex.isEqual(decodedResult, AbiFunction.getSelector(IS_VALID_SIGNATURE))) {
               return {
                 topology: {
                   type: 'signer',
