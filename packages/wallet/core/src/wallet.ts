@@ -323,14 +323,18 @@ export class Wallet {
   async buildMessageSignature(
     envelope: Envelope.Signed<Payload.Message>,
     provider?: Provider.Provider,
-  ): Promise<Hex.Hex> {
+  ): Promise<Bytes.Bytes> {
     const status = await this.getStatus(provider)
     const signature = Envelope.encodeSignature(envelope)
+    if (!status.isDeployed) {
+      const deployTransaction = await this.buildDeployTransaction()
+      signature.erc6492 = { to: deployTransaction.to, data: Bytes.fromHex(deployTransaction.data) }
+    }
     const encoded = SequenceSignature.encodeSignature({
       ...signature,
       suffix: status.pendingUpdates.map(({ signature }) => signature),
     })
-    return Bytes.toHex(encoded)
+    return encoded
   }
 
   private async prepareBlankEnvelope(chainId: bigint) {
