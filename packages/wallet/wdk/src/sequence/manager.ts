@@ -35,7 +35,7 @@ import { Signatures } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions } from './transactions.js'
 import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet } from './types/index.js'
-import { MessageRequest } from './types/message-request.js'
+import { Message, MessageRequest } from './types/message-request.js'
 import { Kinds, RecoverySigner } from './types/signer.js'
 import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
@@ -484,6 +484,22 @@ export class Manager {
 
   // Messages
 
+  public async listMessageRequests() {
+    return this.shared.modules.messages.list()
+  }
+
+  public async getMessageRequest(messageOrSignatureId: string) {
+    return this.shared.modules.messages.get(messageOrSignatureId)
+  }
+
+  public onMessageRequestsUpdate(cb: (messages: Message[]) => void, trigger?: boolean) {
+    return this.shared.modules.messages.onMessagesUpdate(cb, trigger)
+  }
+
+  public onMessageRequestUpdate(messageOrSignatureId: string, cb: (message: Message) => void, trigger?: boolean) {
+    return this.shared.modules.messages.onMessageUpdate(messageOrSignatureId, cb, trigger)
+  }
+
   public async requestMessageSignature(
     wallet: Address.Address,
     message: MessageRequest,
@@ -493,12 +509,12 @@ export class Manager {
     return this.shared.modules.messages.request(wallet, message, chainId, options)
   }
 
-  public async deleteMessageRequest(messageOrSignatureId: string) {
-    return this.shared.modules.messages.delete(messageOrSignatureId)
-  }
-
   public async completedMessageSignature(messageOrSignatureId: string) {
     return this.shared.modules.messages.complete(messageOrSignatureId)
+  }
+
+  public async deleteMessageRequest(messageOrSignatureId: string) {
+    return this.shared.modules.messages.delete(messageOrSignatureId)
   }
 
   // Sessions
