@@ -754,25 +754,25 @@ export class Wallets {
     await this.shared.modules.devices.remove(walletEntry.device)
   }
 
-  async getConfiguration(args: { wallet: Address.Address }) {
-    const wallet = new CoreWallet(args.wallet, {
+  async getConfiguration(wallet: Address.Address) {
+    const walletObject = new CoreWallet(wallet, {
       context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
 
-    const status = await wallet.getStatus()
+    const status = await walletObject.getStatus()
     const raw = fromConfig(status.configuration)
 
     const deviceSigners = Config.getSigners(raw.devicesTopology)
     const loginSigners = Config.getSigners(raw.loginTopology)
 
     return {
-      devices: await this.shared.modules.signers.resolveKinds(wallet.address, [
+      devices: await this.shared.modules.signers.resolveKinds(wallet, [
         ...deviceSigners.signers,
         ...deviceSigners.sapientSigners,
       ]),
-      login: await this.shared.modules.signers.resolveKinds(wallet.address, [
+      login: await this.shared.modules.signers.resolveKinds(wallet, [
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
@@ -794,5 +794,60 @@ export class Wallets {
 
     const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
     return wallet.getNonce(provider, space)
+  }
+
+  async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
+    const walletObject = new CoreWallet(wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const network = this.shared.sequence.networks.find((n) => n.chainId === chainId)
+    if (!network) {
+      throw new Error('network-not-found')
+    }
+
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const status = await walletObject.getStatus(provider)
+
+    const onchainConfiguration = await this.shared.sequence.stateProvider.getConfiguration(status.onChainImageHash)
+    if (!onchainConfiguration) {
+      throw new Error('onchain-configuration-not-found')
+    }
+
+    const raw = fromConfig(status.configuration)
+
+    const deviceSigners = Config.getSigners(raw.devicesTopology)
+    const loginSigners = Config.getSigners(raw.loginTopology)
+
+    return {
+      devices: await this.shared.modules.signers.resolveKinds(wallet, [
+        ...deviceSigners.signers,
+        ...deviceSigners.sapientSigners,
+      ]),
+      login: await this.shared.modules.signers.resolveKinds(wallet, [
+        ...loginSigners.signers,
+        ...loginSigners.sapientSigners,
+      ]),
+      raw,
+    }
+  }
+
+  async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
+    const walletObject = new CoreWallet(wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const network = this.shared.sequence.networks.find((n) => n.chainId === chainId)
+    if (!network) {
+      throw new Error('network-not-found')
+    }
+
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const onchainStatus = await walletObject.getStatus(provider)
+    return onchainStatus.imageHash === onchainStatus.onChainImageHash
   }
 }

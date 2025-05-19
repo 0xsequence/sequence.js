@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Manager, SignerActionable, Transaction, TransactionDefined, TransactionRelayed } from '../src/sequence'
 import { Address, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { LOCAL_RPC_URL, newManager } from './constants'
+import { Payload } from '@0xsequence/wallet-primitives'
 
 describe('Transactions', () => {
   let manager: Manager | undefined
@@ -382,5 +383,82 @@ describe('Transactions', () => {
     const sigRequest = await manager.getSignatureRequest(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('cancelled')
+  })
+
+  it('Should update the onchain configuration when a transaction is sent', async () => {
+    const manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    // Add a recovery signer, just to change the configuration
+    const rSigId = await manager.addRecoverySigner(wallet!, Address.from(Hex.random(20)))
+    expect(rSigId).toBeDefined()
+
+    // Sign using the device signer
+    const rSigRequest = await manager.getSignatureRequest(rSigId!)
+    expect(rSigRequest).toBeDefined()
+    expect(rSigRequest.status).toBe('pending')
+    expect(rSigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
+
+    const rDeviceSigner = rSigRequest.signers.find((s) => s.status === 'ready')!
+    await rDeviceSigner.handle()
+
+    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
+
+    await manager.completeRecoveryUpdate(rSigId!)
+
+    // It should no longer be updated onchain
+    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
+
+    const randomAddress = Address.from(Hex.random(20))
+    const txId = await manager.requestTransaction(wallet!, 42161n, [
+      {
+        to: randomAddress,
+      },
+    ])
+
+    await manager.defineTransaction(txId!)
+
+    let tx = await manager.getTransaction(txId!)
+    expect(tx).toBeDefined()
+    expect(tx!.status).toBe('defined')
+
+    // The transaction should contain the one that we want to perform
+    // and a configuration update
+    expect((tx.envelope.payload as Payload.Calls).calls.length).toBe(2)
+
+    // The first call should be to the random address
+    // and the second one should be a call to self
+    const call1 = (tx.envelope.payload as Payload.Calls).calls[0]
+    const call2 = (tx.envelope.payload as Payload.Calls).calls[1]
+    expect(call1.to).toEqual(randomAddress)
+    expect(call2.to).toEqual(wallet)
+
+    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    expect(sigId).toBeDefined()
+
+    tx = await manager.getTransaction(txId!)
+    expect(tx).toBeDefined()
+    expect(tx!.status).toBe('formed')
+
+    // Sign using the device signer
+    const sigRequest = await manager.getSignatureRequest(sigId!)
+    expect(sigRequest).toBeDefined()
+    expect(sigRequest.status).toBe('pending')
+    expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
+
+    const deviceSigner = sigRequest.signers.find((s) => s.status === 'ready')!
+    await deviceSigner.handle()
+
+    await manager.relayTransaction(txId!)
+
+    // wait 1 second
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    // The onchain configuration should be updated
+    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
   })
 })

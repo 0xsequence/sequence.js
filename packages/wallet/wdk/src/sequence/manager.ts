@@ -386,7 +386,15 @@ export class Manager {
   }
 
   public async getConfiguration(wallet: Address.Address) {
-    return this.shared.modules.wallets.getConfiguration({ wallet })
+    return this.shared.modules.wallets.getConfiguration(wallet)
+  }
+
+  public async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
+    return this.shared.modules.wallets.getOnchainConfiguration(wallet, chainId)
+  }
+
+  public async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
+    return this.shared.modules.wallets.isUpdatedOnchain(wallet, chainId)
   }
 
   // Signatures

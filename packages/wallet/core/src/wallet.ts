@@ -255,7 +255,7 @@ export class Wallet {
         calls.push({
           to: this.address,
           value: 0n,
-          data: AbiFunction.encodeData(Constants.UPDATE_IMAGE_HASH, [status.onChainImageHash]),
+          data: AbiFunction.encodeData(Constants.UPDATE_IMAGE_HASH, [status.imageHash]),
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
