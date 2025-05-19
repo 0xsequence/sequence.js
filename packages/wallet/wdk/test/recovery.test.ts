@@ -141,6 +141,9 @@ describe('Recovery', () => {
       wallet!,
       42161n,
       (recoveryPayload!.payload as Payload.Calls).calls,
+      {
+        noConfigUpdate: true,
+      },
     )
     expect(requestId3).toBeDefined()
 
