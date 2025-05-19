@@ -23,6 +23,7 @@ describe('Wallet', async () => {
         method: 'eth_sendTransaction',
         params: [deployTransaction],
       })
+      await new Promise((resolve) => setTimeout(resolve, 3000))
       await provider.request({
         method: 'eth_getTransactionReceipt',
         params: [deployResult],
@@ -83,7 +84,7 @@ describe('Wallet', async () => {
         // Validate off chain with ERC-6492
         const isValid = await Erc6492.isValid(wallet.address, messageHash, signature, provider)
         expect(isValid).toBe(true)
-      })
+      }, 30000)
     })
   }
 })

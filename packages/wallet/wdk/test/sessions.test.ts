@@ -149,6 +149,7 @@ describe('Sessions (via Manager)', () => {
       const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)
       const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
       console.log('Transaction sent', tx)
+      await new Promise((resolve) => setTimeout(resolve, 3000))
       const receipt = await provider.request({ method: 'eth_getTransactionReceipt', params: [tx.opHash] })
       console.log('Transaction receipt', receipt)
       return tx.opHash
