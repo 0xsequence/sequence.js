@@ -236,11 +236,20 @@ function buildMerkleTreeFromMembers(members: Config.Topology[]): Config.Topology
     return members[0]! // Returns a single Leaf or a Node
   }
 
-  const mid = Math.floor(members.length / 2)
-  // Recursive calls return Topology
-  const leftSubBranch = buildMerkleTreeFromMembers(members.slice(0, mid))
-  const rightSubBranch = buildMerkleTreeFromMembers(members.slice(mid))
-
-  // Combine two Topology branches into a Node (which is also Topology)
-  return [leftSubBranch, rightSubBranch] as Config.Node
+  let currentLevel = [...members]
+  while (currentLevel.length > 1) {
+    const nextLevel: Config.Topology[] = []
+    for (let i = 0; i < currentLevel.length; i += 2) {
+      const left = currentLevel[i]!
+      if (i + 1 < currentLevel.length) {
+        const right = currentLevel[i + 1]!
+        nextLevel.push([left, right] as Config.Node)
+      } else {
+        // Odd one out, carries over to the next level
+        nextLevel.push(left)
+      }
+    }
+    currentLevel = nextLevel
+  }
+  return currentLevel[0]!
 }
