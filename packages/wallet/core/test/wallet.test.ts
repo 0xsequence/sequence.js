@@ -14,28 +14,28 @@ describe('Wallet', async () => {
     return { address, privateKey }
   }
 
+  const getWallet = async (config: Config.Config, provider: Provider.Provider, deployed: boolean) => {
+    const wallet = await Wallet.fromConfiguration(config, { stateProvider })
+    if (deployed && !(await wallet.isDeployed(provider))) {
+      // Deploy it
+      const deployTransaction = await wallet.buildDeployTransaction()
+      const deployResult = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [deployTransaction],
+      })
+      await provider.request({
+        method: 'eth_getTransactionReceipt',
+        params: [deployResult],
+      })
+    }
+    const isDeployed = await wallet.isDeployed(provider)
+    expect(isDeployed).toBe(deployed)
+    return wallet
+  }
+
   const types = ['deployed', 'not-deployed']
 
   for (const type of types) {
-    const getWallet = async (config: Config.Config, provider: Provider.Provider, deployed: boolean) => {
-      const wallet = await Wallet.fromConfiguration(config, { stateProvider })
-      if (deployed && !(await wallet.isDeployed(provider))) {
-        // Deploy it
-        const deployTransaction = await wallet.buildDeployTransaction()
-        const deployResult = await provider.request({
-          method: 'eth_sendTransaction',
-          params: [deployTransaction],
-        })
-        await provider.request({
-          method: 'eth_getTransactionReceipt',
-          params: [deployResult],
-        })
-      }
-      const isDeployed = await wallet.isDeployed(provider)
-      expect(isDeployed).toBe(deployed)
-      return wallet
-    }
-
     describe(type, async () => {
       it('should sign a message', async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
@@ -53,7 +53,11 @@ describe('Wallet', async () => {
         )
 
         const message = Hex.fromString('Hello, world!')
-        const messageHash = Hash.keccak256(message)
+        const encodedMessage = Hex.concat(
+          Hex.fromString(`${`\x19Ethereum Signed Message:\n${Hex.size(message)}`}`),
+          message,
+        )
+        const messageHash = Hash.keccak256(encodedMessage)
 
         const envelope = await wallet.prepareMessageSignature(message, chainId)
         const payloadHash = Payload.hash(wallet.address, chainId, envelope.payload)

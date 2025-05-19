@@ -311,12 +311,16 @@ export class Wallet {
     message: Hex.Hex | Payload.TypedDataToSign,
     chainId: bigint,
   ): Promise<Envelope.Envelope<Payload.Message>> {
+    let encodedMessage: Hex.Hex
     if (typeof message !== 'string') {
-      message = TypedData.encode(message)
+      encodedMessage = TypedData.encode(message)
+    } else {
+      const messageSize = Hex.size(message)
+      encodedMessage = Hex.concat(Hex.fromString(`${`\x19Ethereum Signed Message:\n${messageSize}`}`), message)
     }
     return {
       ...(await this.prepareBlankEnvelope(chainId)),
-      payload: Payload.fromMessage(message),
+      payload: Payload.fromMessage(encodedMessage),
     }
   }
 

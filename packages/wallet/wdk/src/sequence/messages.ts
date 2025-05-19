@@ -1,6 +1,6 @@
 import { Envelope, Wallet } from '@0xsequence/wallet-core'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Provider, RpcTransport } from 'ox'
+import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import { Message, MessageRequest, MessageRequested, MessageSigned } from './types/message-request.js'
@@ -97,7 +97,7 @@ export class Messages {
     }
 
     const wallet = new Wallet(message.wallet, { stateProvider: this.shared.sequence.stateProvider })
-    const messageSignature = Bytes.toHex(await wallet.buildMessageSignature(signatureEnvelope, provider))
+    const messageSignature = Hex.from(await wallet.buildMessageSignature(signatureEnvelope, provider))
 
     await this.shared.databases.messages.set({
       ...message,
