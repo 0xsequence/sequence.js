@@ -220,7 +220,7 @@ export const HomeIndexRoute = () => {
         })),
       }))
 
-      return AnyPay.calculateIntentConfigurationAddress(Address.from(mainSigner), coreCalls, context)
+      return AnyPay.calculateIntentConfigurationAddress(Address.from(mainSigner), coreCalls, undefined, context)
     } catch (error) {
       console.error('Error calculating intent address:', error)
       throw error

@@ -348,7 +348,7 @@ describe('AnyPay Preconditions', () => {
     }
 
     // Calculate intent configuration address
-    const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
+    const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], undefined, context)
 
     // Start the relay operation with a short check interval
     const relayPromise = relayer.relay(
@@ -491,7 +491,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], undefined, context)
 
       expect(configAddress).toBeDefined()
       expect(configAddress).not.toBe(testWalletAddress)
@@ -568,7 +568,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], undefined, context)
 
       // Mock the provider responses
       if (!CAN_RUN_LIVE) {
@@ -600,6 +600,108 @@ describe('AnyPay Preconditions', () => {
       }
     })
   }
+})
+
+describe('Intent Configuration Address with LifiInfo', () => {
+  const testContext: Context.Context = {
+    factory: Address.from('0x0000000000000000000000000000000000000000'),
+    stage1: '0x0000000000000000000000000000000000000000' as Hex.Hex, // MainModuleAddress
+    stage2: '0x0000000000000000000000000000000000000000' as Hex.Hex, // guestModule
+    creationCode:
+      '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex,
+  }
+
+  const mainSigner = Address.from('0x1111111111111111111111111111111111111111')
+  const attestationSigner = Address.from('0x2222222222222222222222222222222222222222')
+
+  const lifiInfos: AnypayLifiInfo[] = [
+    {
+      originToken: Address.from('0x1111111111111111111111111111111111111111'),
+      minAmount: 100n,
+      originChainId: 1n,
+      destinationChainId: 10n,
+    },
+  ]
+
+  it('should calculate address for single operation with lifiInfo', () => {
+    const payload: IntentCallsPayload = {
+      chainId: 1n,
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [
+        {
+          to: Address.from('0x0000000000000000000000000000000000000000'),
+          value: 0n,
+          data: '0x1234' as Hex.Hex,
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert' as const,
+        },
+      ],
+    }
+
+    const address = calculateIntentConfigurationAddress(
+      mainSigner,
+      [payload],
+      lifiInfos,
+      testContext,
+      attestationSigner,
+    )
+
+    console.log('Single Operation with LifiInfo Test Address:', address)
+    expect(isAddressEqual(address, '0x2627C2b5c0a257f7595C51726A8330035F23a307')).toBe(true)
+  })
+
+  it('should calculate address for multiple operations with lifiInfo', () => {
+    const payload1: IntentCallsPayload = {
+      chainId: 1n,
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [
+        {
+          to: Address.from('0x0000000000000000000000000000000000000000'),
+          value: 0n,
+          data: '0x1234' as Hex.Hex,
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert' as const,
+        },
+      ],
+    }
+
+    const payload2: IntentCallsPayload = {
+      chainId: 1n,
+      type: 'call',
+      space: 0n,
+      nonce: 0n,
+      calls: [
+        {
+          to: Address.from('0x0000000000000000000000000000000000000000'),
+          value: 0n,
+          data: '0x5678' as Hex.Hex,
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert' as const,
+        },
+      ],
+    }
+
+    const address = calculateIntentConfigurationAddress(
+      mainSigner,
+      [payload1, payload2],
+      lifiInfos,
+      testContext,
+      attestationSigner,
+    )
+
+    console.log('Multiple Operations with LifiInfo Test Address:', address)
+    expect(isAddressEqual(address, '0xe94A6831e46f6FB75E6d53E632B28155846908B3')).toBe(true)
+  })
 })
 
 describe('Intent Configuration Address', () => {
@@ -636,7 +738,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [payload], context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [payload], undefined, context)
 
     console.log('address', address)
 
@@ -695,7 +797,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [payload1, payload2], context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [payload1, payload2], undefined, context)
 
     console.log('address', address)
 
@@ -754,7 +856,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [arbitrumPayload, basePayload], context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [arbitrumPayload, basePayload], undefined, context)
 
     // Log the address
     console.log('address', address)

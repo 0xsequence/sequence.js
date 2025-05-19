@@ -153,10 +153,11 @@ export function getAnypayLifiInfoHash(lifiInfos: AnypayLifiInfo[], attestationAd
 export function calculateIntentConfigurationAddress(
   mainSigner: Address.Address,
   calls: IntentCallsPayload[],
+  lifiInfos: AnypayLifiInfo[] | undefined,
   context: Context.Context,
+  attestationSigner?: Address.Address,
 ): Address.Address {
-  // Create the intent configuration
-  const config = createIntentConfiguration(mainSigner, calls)
+  const config = createIntentConfiguration(mainSigner, calls, lifiInfos, attestationSigner)
 
   // Calculate the image hash of the configuration
   const imageHash = Config.hashConfiguration(config)
@@ -172,58 +173,74 @@ export function calculateIntentConfigurationAddress(
   })
 }
 
-function createIntentConfiguration(mainSigner: Address.Address, calls: IntentCallsPayload[]): Config.Config {
-  // Create the main signer leaf
+function createIntentConfiguration(
+  mainSigner: Address.Address,
+  calls: IntentCallsPayload[],
+  lifiInfos?: AnypayLifiInfo[],
+  attestationSigner?: Address.Address,
+): Config.Config {
   const mainSignerLeaf: Config.SignerLeaf = {
     type: 'signer',
     address: mainSigner,
     weight: 1n,
   }
 
-  // Create subdigest leaves for each operation
-  const subdigestLeaves = calls.map((call) => {
-    // Get the digest hash using Payload.hash
+  const subdigestLeaves: Config.AnyAddressSubdigestLeaf[] = calls.map((call) => {
     const digest = Payload.hash(Address.from('0x0000000000000000000000000000000000000000'), call.chainId, call)
     console.log('digest:', Bytes.toHex(digest))
-
-    // Create subdigest leaf
     return {
       type: 'any-address-subdigest',
       digest: Bytes.toHex(digest),
     } as Config.AnyAddressSubdigestLeaf
   })
 
-  // If there's only one operation, use its subdigest leaf directly
-  if (subdigestLeaves.length === 1) {
-    return {
-      threshold: 1n,
-      checkpoint: 0n,
-      topology: [mainSignerLeaf, subdigestLeaves[0]!] as Config.Topology,
+  let otherLeaves: Config.Topology[] = [...subdigestLeaves]
+
+  if (lifiInfos && lifiInfos.length > 0) {
+    if (attestationSigner && attestationSigner !== '0x0000000000000000000000000000000000000000') {
+      const lifiConditionLeaf: Config.SapientSignerLeaf = {
+        type: 'sapient-signer',
+        address: '0x0000000000000000000000000000000000000000',
+        weight: 1n,
+        imageHash: getAnypayLifiInfoHash(lifiInfos, attestationSigner),
+      }
+      otherLeaves.push(lifiConditionLeaf)
     }
   }
 
-  // Otherwise, create a tree of subdigest leaves
-  const subdigestTree = createSubdigestTree(subdigestLeaves)
+  if (otherLeaves.length === 0) {
+    throw new Error('Intent configuration must have at least one call or LiFi information.')
+  }
+
+  let secondaryTopologyNode: Config.Topology
+
+  if (otherLeaves.length === 1) {
+    secondaryTopologyNode = otherLeaves[0]!
+  } else {
+    secondaryTopologyNode = buildMerkleTreeFromMembers(otherLeaves)
+  }
 
   return {
     threshold: 1n,
     checkpoint: 0n,
-    topology: [mainSignerLeaf, subdigestTree] as Config.Topology,
+    topology: [mainSignerLeaf, secondaryTopologyNode] as Config.Node,
   }
 }
 
-function createSubdigestTree(leaves: Config.AnyAddressSubdigestLeaf[]): Config.Topology {
-  if (leaves.length === 0) {
-    throw new Error('Cannot create a tree from empty leaves')
+// Renamed and generalized from createSubdigestTree
+function buildMerkleTreeFromMembers(members: Config.Topology[]): Config.Topology {
+  if (members.length === 0) {
+    throw new Error('Cannot create a tree from empty members')
+  }
+  if (members.length === 1) {
+    return members[0]! // Returns a single Leaf or a Node
   }
 
-  if (leaves.length === 1) {
-    return leaves[0]!
-  }
+  const mid = Math.floor(members.length / 2)
+  // Recursive calls return Topology
+  const leftSubBranch = buildMerkleTreeFromMembers(members.slice(0, mid))
+  const rightSubBranch = buildMerkleTreeFromMembers(members.slice(mid))
 
-  const mid = Math.floor(leaves.length / 2)
-  const left = createSubdigestTree(leaves.slice(0, mid))
-  const right = createSubdigestTree(leaves.slice(mid))
-
-  return [left, right]
+  // Combine two Topology branches into a Node (which is also Topology)
+  return [leftSubBranch, rightSubBranch] as Config.Node
 }
