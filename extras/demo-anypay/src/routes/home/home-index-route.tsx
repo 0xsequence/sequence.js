@@ -130,6 +130,7 @@ export const HomeIndexRoute = () => {
   const [intentPreconditions, setIntentPreconditions] = useState<GetIntentCallsPayloadsReturn['preconditions'] | null>(
     null,
   )
+  const [lifiInfos, setLifiInfos] = useState<GetIntentCallsPayloadsReturn['lifiInfos'] | null>(null)
   const [txnHash, setTxnHash] = useState<Hex | undefined>()
   const [committedIntentAddress, setCommittedIntentAddress] = useState<string | null>(null)
   const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
@@ -296,9 +297,11 @@ export const HomeIndexRoute = () => {
       mainSigner: string
       calls: IntentCallsPayload[]
       preconditions: IntentPrecondition[]
+      lifiInfos: GetIntentCallsPayloadsReturn['lifiInfos']
     }) => {
       if (!apiClient) throw new Error('API client not available')
       if (!account.address) throw new Error('Account address not available')
+      if (!args.lifiInfos) throw new Error('LifiInfos not available')
 
       try {
         console.log('Calculating intent address...')
@@ -328,6 +331,7 @@ export const HomeIndexRoute = () => {
           mainSigner: args.mainSigner,
           calls: args.calls,
           preconditions: args.preconditions,
+          lifiInfos: args.lifiInfos,
         })
         console.log('API Commit Response:', response)
         return { calculatedAddress: calculatedAddress.toString(), response }
@@ -375,7 +379,7 @@ export const HomeIndexRoute = () => {
       return await apiClient.getIntentConfig({ walletAddress: committedIntentAddress })
     },
     enabled: !!committedIntentAddress && !!apiClient && commitIntentConfigMutation.isSuccess,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 1,
   })
 
@@ -479,6 +483,7 @@ export const HomeIndexRoute = () => {
       setMetaTxns(data.metaTxns)
       setIntentCallsPayloads(data.calls)
       setIntentPreconditions(data.preconditions)
+      setLifiInfos(data.lifiInfos) // Ensure lifiInfos is set here
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
       return data
@@ -497,11 +502,13 @@ export const HomeIndexRoute = () => {
         setIntentCallsPayloads(data.calls)
         setIntentPreconditions(data.preconditions)
         setMetaTxns(data.metaTxns)
+        setLifiInfos(data.lifiInfos)
       } else {
         console.warn('API returned success but no operations found.')
         setIntentCallsPayloads(null)
         setIntentPreconditions(null)
         setMetaTxns(null)
+        setLifiInfos(null)
       }
     },
     onError: (error) => {
@@ -509,6 +516,7 @@ export const HomeIndexRoute = () => {
       setIntentCallsPayloads(null)
       setIntentPreconditions(null)
       setMetaTxns(null)
+      setLifiInfos(null)
     },
   })
 
@@ -930,6 +938,7 @@ export const HomeIndexRoute = () => {
       isAutoExecuteEnabled &&
       intentCallsPayloads &&
       intentPreconditions &&
+      lifiInfos &&
       account.address &&
       !commitIntentConfigMutation.isPending &&
       !commitIntentConfigMutation.isSuccess
@@ -940,12 +949,14 @@ export const HomeIndexRoute = () => {
         mainSigner: account.address,
         calls: intentCallsPayloads,
         preconditions: intentPreconditions,
+        lifiInfos: lifiInfos,
       })
     }
   }, [
     isAutoExecuteEnabled,
     intentCallsPayloads,
     intentPreconditions,
+    lifiInfos, // Add lifiInfos dependency
     account.address,
     commitIntentConfigMutation.isPending,
     commitIntentConfigMutation.isSuccess,
@@ -1811,12 +1822,13 @@ export const HomeIndexRoute = () => {
                     <Button
                       variant="primary"
                       onClick={() => {
-                        if (!account.address || !intentCallsPayloads || !intentPreconditions) return
+                        if (!account.address || !intentCallsPayloads || !intentPreconditions || !lifiInfos) return
                         commitIntentConfigMutation.mutate({
                           walletAddress: calculateIntentAddress(account.address, intentCallsPayloads).toString(),
                           mainSigner: account.address,
                           calls: intentCallsPayloads,
                           preconditions: intentPreconditions,
+                          lifiInfos: lifiInfos,
                         })
                       }}
                       disabled={isCommitButtonDisabled}
