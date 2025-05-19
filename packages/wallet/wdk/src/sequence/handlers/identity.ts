@@ -1,8 +1,9 @@
-import { Hex } from 'ox'
+import { Hex, Bytes } from 'ox'
 import * as Db from '../../dbs/index.js'
-import * as Identity from '../../identity/index.js'
+import * as Identity from '@0xsequence/identity-instrument'
 import { Signatures } from '../signatures.js'
 import { BaseSignatureRequest } from '../types/signature-request.js'
+import { IdentitySigner, toIdentityAuthKey } from '../../identity/signer.js'
 
 export const identityTypeToHex = (identityType?: Identity.IdentityType): Hex.Hex => {
   // Bytes4
@@ -38,15 +39,7 @@ export class IdentityHandler {
       throw new Error('no-auth-key')
     }
 
-    const res = await this.nitro.commitVerifier({
-      params: {
-        ...challenge.getCommitParams(),
-        authKey: {
-          publicKey: authKey.address,
-          keyType: Identity.KeyType.P256R1,
-        },
-      },
-    })
+    const res = await this.nitro.commitVerifier(toIdentityAuthKey(authKey), challenge)
     return res
   }
 
@@ -56,26 +49,18 @@ export class IdentityHandler {
       throw new Error('no-auth-key')
     }
 
-    const res = await this.nitro.completeAuth({
-      params: {
-        ...challenge.getCompleteParams(),
-        authKey: {
-          publicKey: authKey.address,
-          keyType: Identity.KeyType.P256R1,
-        },
-      },
-    })
+    const res = await this.nitro.completeAuth(toIdentityAuthKey(authKey), challenge)
 
     authKey.identitySigner = res.signer
     authKey.expiresAt = new Date(Date.now() + 1000 * 60 * 3) // 3 minutes
     await this.authKeys.delBySigner('')
     await this.authKeys.set(authKey)
 
-    const signer = new Identity.IdentitySigner(this.nitro, authKey)
+    const signer = new IdentitySigner(this.nitro, authKey)
     return signer
   }
 
-  protected async sign(signer: Identity.IdentitySigner, request: BaseSignatureRequest) {
+  protected async sign(signer: IdentitySigner, request: BaseSignatureRequest) {
     const signature = await signer.sign(request.envelope.wallet, request.envelope.chainId, request.envelope.payload)
     await this.signatures.addSignature(request.id, {
       address: signer.address,
@@ -83,12 +68,12 @@ export class IdentityHandler {
     })
   }
 
-  protected async getAuthKeySigner(address: string): Promise<Identity.IdentitySigner | undefined> {
+  protected async getAuthKeySigner(address: string): Promise<IdentitySigner | undefined> {
     const authKey = await this.getAuthKey(address)
     if (!authKey) {
       return undefined
     }
-    return new Identity.IdentitySigner(this.nitro, authKey)
+    return new IdentitySigner(this.nitro, authKey)
   }
 
   private async getAuthKey(signer: string): Promise<Db.AuthKey | undefined> {

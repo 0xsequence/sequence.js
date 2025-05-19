@@ -9,7 +9,7 @@ import {
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hash, Hex } from 'ox'
-import { IdentityType } from '../identity/index.js'
+import { IdentityType } from '@0xsequence/identity-instrument'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'

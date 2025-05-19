@@ -1,8 +1,8 @@
 import { Bytes, Hash, Hex } from 'ox'
 import { jwtDecode } from 'jwt-decode'
-import { IdentityType, AuthMode } from './nitro/index.js'
+import { IdentityType, AuthMode } from './identity-instrument.gen.js'
 
-export interface CommitChallengeParams {
+interface CommitChallengeParams {
   authMode: AuthMode
   identityType: IdentityType
   handle?: string
@@ -10,7 +10,7 @@ export interface CommitChallengeParams {
   metadata: { [key: string]: string }
 }
 
-export interface CompleteChallengeParams {
+interface CompleteChallengeParams {
   authMode: AuthMode
   identityType: IdentityType
   verifier: string
