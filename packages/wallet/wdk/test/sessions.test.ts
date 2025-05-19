@@ -115,7 +115,7 @@ describe('Sessions (via Manager)', () => {
   })
 
   const signAndSend = async (call: Payload.Call) => {
-    const envelope = await dapp.wallet.prepareTransaction(provider, [call])
+    const envelope = await dapp.wallet.prepareTransaction(provider, [call], { noConfigUpdate: true })
     const parentedEnvelope: Payload.Parented = {
       ...envelope.payload,
       parentWallets: [dapp.wallet.address],
