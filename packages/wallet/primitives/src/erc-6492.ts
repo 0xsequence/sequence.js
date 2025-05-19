@@ -93,5 +93,5 @@ export function isValid(
       method: 'eth_call',
       params: [{ data: callData }, 'latest'],
     })
-    .then((result) => result === '0x01')
+    .then((result) => parseInt(result, 16) === 1)
 }
