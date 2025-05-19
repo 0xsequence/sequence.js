@@ -497,7 +497,7 @@ export class Manager {
     return this.shared.modules.messages.delete(messageOrSignatureId)
   }
 
-  public async getCompletedMessageSignature(messageOrSignatureId: string) {
+  public async completedMessageSignature(messageOrSignatureId: string) {
     return this.shared.modules.messages.complete(messageOrSignatureId)
   }
 
