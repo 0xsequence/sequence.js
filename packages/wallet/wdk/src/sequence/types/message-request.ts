@@ -2,7 +2,7 @@ import { Envelope } from '@0xsequence/wallet-core'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 
-export type MessageRequest = Hex.Hex | Payload.TypedDataToSign
+export type MessageRequest = string | Hex.Hex | Payload.TypedDataToSign
 
 type MessageBase = {
   id: string
