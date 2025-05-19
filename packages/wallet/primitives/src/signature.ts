@@ -652,10 +652,11 @@ export function encodeSignature(
   skipCheckpointerData?: boolean,
   skipCheckpointerAddress?: boolean,
 ): Uint8Array {
-  const { noChainId, checkpointerData, configuration: config, suffix } = signature
+  const { noChainId, checkpointerData, configuration: config, suffix, erc6492 } = signature
 
   if (suffix?.length) {
-    return encodeChainedSignature([{ ...signature, suffix: undefined }, ...suffix])
+    const chainedSig = encodeChainedSignature([{ ...signature, suffix: undefined, erc6492: undefined }, ...suffix])
+    return erc6492 ? wrap(chainedSig, erc6492) : chainedSig
   }
 
   let flag = 0
@@ -705,7 +706,7 @@ export function encodeSignature(
   const topologyBytes = encodeTopology(config.topology, signature)
   output = Bytes.concat(output, topologyBytes)
 
-  return signature.erc6492 ? wrap(output, signature.erc6492) : output
+  return erc6492 ? wrap(output, erc6492) : output
 }
 
 export function encodeTopology(
