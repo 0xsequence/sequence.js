@@ -106,6 +106,50 @@ export function hashIntentParams(params: {
   return hashHex
 }
 
+export interface AnypayLifiInfo {
+  originToken: Address.Address
+  minAmount: bigint
+  originChainId: bigint
+  destinationChainId: bigint
+}
+
+export function getAnypayLifiInfoHash(lifiInfos: AnypayLifiInfo[], attestationAddress: Address.Address): Hex.Hex {
+  if (!lifiInfos || lifiInfos.length === 0) {
+    throw new Error('lifiInfos is empty')
+  }
+  if (!attestationAddress || attestationAddress === '0x0000000000000000000000000000000000000000') {
+    throw new Error('attestationAddress is zero')
+  }
+
+  const anypayLifiInfoComponents = [
+    { name: 'originToken', type: 'address' },
+    { name: 'minAmount', type: 'uint256' },
+    { name: 'originChainId', type: 'uint256' },
+    { name: 'destinationChainId', type: 'uint256' },
+  ]
+
+  const lifiInfosForAbi = lifiInfos.map((info) => ({
+    originToken: info.originToken,
+    minAmount: info.minAmount,
+    originChainId: info.originChainId,
+    destinationChainId: info.destinationChainId,
+  }))
+
+  const abiSchema = [
+    {
+      type: 'tuple[]',
+      name: 'lifiInfos',
+      components: anypayLifiInfoComponents,
+    },
+    { type: 'address', name: 'attestationAddress' },
+  ]
+
+  const encodedHex = AbiParameters.encode(abiSchema, [lifiInfosForAbi, attestationAddress]) as Hex.Hex
+  const encodedBytes = Bytes.fromHex(encodedHex)
+  const hashBytes = Hash.keccak256(encodedBytes)
+  return Bytes.toHex(hashBytes)
+}
+
 export function calculateIntentConfigurationAddress(
   mainSigner: Address.Address,
   calls: IntentCallsPayload[],

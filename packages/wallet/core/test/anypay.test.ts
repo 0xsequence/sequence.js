@@ -13,7 +13,13 @@ import {
   Erc1155ApprovalPrecondition,
 } from '../src/preconditions/types'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
-import { calculateIntentConfigurationAddress, hashIntentParams, IntentCallsPayload } from '../src/anypay/intents'
+import {
+  calculateIntentConfigurationAddress,
+  hashIntentParams,
+  IntentCallsPayload,
+  AnypayLifiInfo,
+  getAnypayLifiInfoHash,
+} from '../src/anypay/intents'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
@@ -846,5 +852,61 @@ describe('HashIntentParams', () => {
     }
     const hash = hashIntentParams(params)
     expect(hash.toLowerCase()).toBe('0x64631a48bc218cd8196dca22437223d90dc9caa8208284cdcea4b7f32bfc7cec')
+  })
+})
+
+describe('GetAnypayLifiInfoHash', () => {
+  it('should match hash for single AnypayLifiInfo', () => {
+    const lifiInfos: AnypayLifiInfo[] = [
+      {
+        originToken: Address.from('0x1111111111111111111111111111111111111111'),
+        minAmount: 100n,
+        originChainId: 1n,
+        destinationChainId: 10n,
+      },
+    ]
+    const attestationAddress = Address.from('0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa')
+
+    const hash = getAnypayLifiInfoHash(lifiInfos, attestationAddress)
+    expect(hash.toLowerCase()).toBe('0x21872bd6b64711c4a5aecba95829c612f0b50c63f1a26991c2f76cf4a754aede')
+  })
+
+  it('should match hash for multiple AnypayLifiInfo', () => {
+    const lifiInfos: AnypayLifiInfo[] = [
+      {
+        originToken: Address.from('0x1111111111111111111111111111111111111111'),
+        minAmount: 100n,
+        originChainId: 1n,
+        destinationChainId: 10n,
+      },
+      {
+        originToken: Address.from('0x2222222222222222222222222222222222222222'),
+        minAmount: 200n,
+        originChainId: 137n,
+        destinationChainId: 42161n,
+      },
+    ]
+    const attestationAddress = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
+
+    const hash = getAnypayLifiInfoHash(lifiInfos, attestationAddress)
+    expect(hash.toLowerCase()).toBe('0xd18e54455db64ba31b9f9a447e181f83977cb70b136228d64ac85d64a6aefe71')
+  })
+
+  it('should error on empty lifiInfos', () => {
+    const attestationAddress = Address.from('0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa')
+    expect(() => getAnypayLifiInfoHash([], attestationAddress)).toThrow('lifiInfos is empty')
+  })
+
+  it('should error on zero attestationAddress', () => {
+    const lifiInfos: AnypayLifiInfo[] = [
+      {
+        originToken: Address.from('0x1111111111111111111111111111111111111111'),
+        minAmount: 100n,
+        originChainId: 1n,
+        destinationChainId: 10n,
+      },
+    ]
+    const attestationAddress = Address.from('0x0000000000000000000000000000000000000000')
+    expect(() => getAnypayLifiInfoHash(lifiInfos, attestationAddress)).toThrow('attestationAddress is zero')
   })
 })
