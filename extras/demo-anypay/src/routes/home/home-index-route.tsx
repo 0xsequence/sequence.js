@@ -230,12 +230,7 @@ export const HomeIndexRoute = () => {
           destinationChainId: BigInt(info.destinationChainId),
         }))
 
-        return AnyPay.calculateIntentConfigurationAddress(
-          Address.from(mainSigner),
-          coreCalls,
-          coreLifiInfos, // Pass the mapped array
-          context,
-        )
+        return AnyPay.calculateIntentConfigurationAddress(Address.from(mainSigner), coreCalls, coreLifiInfos, context)
       } catch (error) {
         console.error('Error calculating intent address:', error)
         throw error
@@ -1936,7 +1931,7 @@ export const HomeIndexRoute = () => {
                   {commitIntentConfigMutation.isSuccess && (
                     <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3 mt-2">
                       <Text variant="small" color="white">
-                        Intent configuration committed successfully! Fetching details...
+                        Intent configuration committed successfully!
                       </Text>
                     </div>
                   )}
