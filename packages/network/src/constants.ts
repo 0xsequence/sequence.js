@@ -1108,7 +1108,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'Somnia Testnet Explorer',
-      rootUrl: 'https://somnia-testnet.socialscan.io/'
+      rootUrl: 'https://shannon-explorer.somnia.network/'
     },
     nativeToken: {
       symbol: 'STT',
