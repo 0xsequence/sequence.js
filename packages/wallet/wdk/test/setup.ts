@@ -1,5 +1,5 @@
 import { indexedDB, IDBFactory } from 'fake-indexeddb'
-import { Provider, RpcTransport } from 'ox'
+import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
 import { vi } from 'vitest'
 import { LOCAL_RPC_URL } from './constants'
 

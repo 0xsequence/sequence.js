@@ -183,7 +183,7 @@ export class Recovery {
   }
 
   async getRecoverySigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {
-    const { raw } = await this.shared.modules.wallets.getConfiguration({ wallet: address })
+    const { raw } = await this.shared.modules.wallets.getConfiguration(address)
     const recoveryLeaf = raw.modules.find((m) => Address.isEqual(m.address, this.shared.sequence.extensions.recovery))
     if (!recoveryLeaf) {
       return undefined
