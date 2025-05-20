@@ -146,6 +146,14 @@ export class Explicit implements ExplicitSessionSigner {
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<boolean> {
+    if (
+      call.data.length > 4 &&
+      Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(INCREMENT_USAGE_LIMIT))
+    ) {
+      // Can sign increment usage calls
+      return true
+    }
+
     const permission = await this.findSupportedPermission(wallet, chainId, call, sessionManagerAddress, provider)
     if (!permission) {
       return false

@@ -230,24 +230,13 @@ export class SessionManager implements SapientSigner {
       throw new Error('Only calls are supported')
     }
 
-    //FIXME Needed?
-    let calls = payload.calls
-    const lastCall = payload.calls[payload.calls.length - 1]!
-    if (
-      Address.isEqual(lastCall.to, this.address) &&
-      Hex.isEqual(Hex.slice(lastCall.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
-    ) {
-      // Do not sign increment usage calls
-      calls = calls.slice(0, -1)
-    }
-
-    const signers = await this.findSignersForCalls(wallet, chainId, calls)
-    if (signers.length !== calls.length) {
+    const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
+    if (signers.length !== payload.calls.length) {
       throw new Error('No signer supported for call')
     }
     const signatures = await Promise.all(
       signers.map(async (signer, i) => {
-        const call = calls[i]!
+        const call = payload.calls[i]!
         try {
           return signer.signCall(wallet, chainId, call, payload, this.address, this._provider)
         } catch (error) {
@@ -258,26 +247,13 @@ export class SessionManager implements SapientSigner {
     )
 
     // Check if the last call is an increment usage call
-    const expectedIncrement = await this.prepareIncrement(wallet, chainId, calls)
+    const expectedIncrement = await this.prepareIncrement(wallet, chainId, payload.calls)
     if (expectedIncrement) {
       // This should equal the last call
+      const lastCall = payload.calls[payload.calls.length - 1]!
       if (!Address.isEqual(expectedIncrement.to, lastCall.to) || !Hex.isEqual(expectedIncrement.data, lastCall.data)) {
         throw new Error('Expected increment mismatch')
       }
-      // Sign the increment usage call with any explicit signer
-      const incrementSigner = signers.find((s) => isExplicitSessionSigner(s))
-      if (!incrementSigner) {
-        throw new Error('No explicit signer found')
-      }
-      const incrementSignature = await incrementSigner.signCall(
-        wallet,
-        chainId,
-        expectedIncrement,
-        payload,
-        this.address,
-        this._provider,
-      )
-      signatures.push(incrementSignature)
     }
 
     // Encode the signature
