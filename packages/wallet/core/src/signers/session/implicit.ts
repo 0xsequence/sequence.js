@@ -36,6 +36,7 @@ export class Implicit implements SessionSigner {
     wallet: Address.Address,
     _chainId: bigint,
     call: Payload.Call,
+    _sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<boolean> {
     if (!provider) {
@@ -73,7 +74,7 @@ export class Implicit implements SessionSigner {
       const expectedResult = Bytes.toHex(Attestation.generateImplicitRequestMagic(this._attestation, wallet))
       return acceptImplicitRequest === expectedResult
     } catch (error) {
-      console.log('implicit signer unsupported call', call, error)
+      // console.log('implicit signer unsupported call', call, error)
       return false
     }
   }
@@ -86,9 +87,10 @@ export class Implicit implements SessionSigner {
       space: bigint
       nonce: bigint
     },
+    sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
-    const isSupported = await this.supportedCall(wallet, chainId, call, provider)
+    const isSupported = await this.supportedCall(wallet, chainId, call, sessionManagerAddress, provider)
     if (!isSupported) {
       throw new Error('Unsupported call')
     }
