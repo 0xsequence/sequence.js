@@ -225,7 +225,7 @@ export const HomeIndexRoute = () => {
 
         const coreLifiInfos = lifiInfosArg?.map((info: AnypayLifiInfo) => ({
           originToken: Address.from(info.originToken),
-          minAmount: BigInt(info.minAmount),
+          amount: BigInt(info.amount),
           originChainId: BigInt(info.originChainId),
           destinationChainId: BigInt(info.destinationChainId),
         }))
@@ -450,6 +450,7 @@ export const HomeIndexRoute = () => {
         userAddress: account.address,
         originChainId: selectedToken.chainId || 8453,
         originTokenAddress: selectedToken.contractAddress,
+        originTokenAmount: selectedToken.balance.toString(),
         destinationChainId:
           action === 'custom_call'
             ? parseInt(customCallData.chainId)

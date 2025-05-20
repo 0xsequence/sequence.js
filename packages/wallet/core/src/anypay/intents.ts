@@ -108,7 +108,7 @@ export function hashIntentParams(params: {
 
 export interface AnypayLifiInfo {
   originToken: Address.Address
-  minAmount: bigint
+  amount: bigint
   originChainId: bigint
   destinationChainId: bigint
 }
@@ -130,7 +130,7 @@ export function getAnypayLifiInfoHash(lifiInfos: AnypayLifiInfo[], attestationAd
 
   const lifiInfosForAbi = lifiInfos.map((info) => ({
     originToken: info.originToken,
-    minAmount: info.minAmount,
+    amount: info.amount,
     originChainId: info.originChainId,
     destinationChainId: info.destinationChainId,
   }))
