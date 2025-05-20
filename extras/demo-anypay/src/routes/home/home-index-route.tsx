@@ -7,6 +7,7 @@ import {
   IntentCallsPayload,
   IntentPrecondition,
   GetIntentConfigReturn,
+  AnypayLifiInfo,
 } from '@0xsequence/api'
 import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
 import { useQuery, useMutation } from '@tanstack/react-query'
@@ -186,46 +187,63 @@ export const HomeIndexRoute = () => {
       : undefined,
   )
 
-  const calculateIntentAddress = useCallback((mainSigner: string, calls: IntentCallsPayload[]) => {
-    try {
-      console.log('Calculating intent address...')
-      console.log('Main signer:', mainSigner)
-      console.log('Calls:', JSON.stringify(calls, null, 2))
+  const calculateIntentAddress = useCallback(
+    (mainSigner: string, calls: IntentCallsPayload[], lifiInfosArg: AnypayLifiInfo[] | null | undefined) => {
+      try {
+        console.log('Calculating intent address...')
+        console.log('Main signer:', mainSigner)
+        console.log('Calls:', JSON.stringify(calls, null, 2))
+        console.log('LifiInfos (API type from arg):', JSON.stringify(lifiInfosArg, null, 2))
 
-      const context: ContextLike.Context = {
-        factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
-        stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
-        stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
-        creationCode:
-          '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
+        const context: ContextLike.Context = {
+          factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
+          stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
+          stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
+          creationCode:
+            '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
+        }
+
+        const coreCalls = calls.map((call) => ({
+          type: 'call' as const,
+          chainId: BigInt(call.chainId),
+          space: call.space ? BigInt(call.space) : 0n,
+          nonce: call.nonce ? BigInt(call.nonce) : 0n,
+          calls: call.calls.map((call) => ({
+            to: Address.from(call.to),
+            value: BigInt(call.value || '0'),
+            data: Bytes.toHex(Bytes.from((call.data as Hex) || '0x')),
+            gasLimit: BigInt(call.gasLimit || '0'),
+            delegateCall: !!call.delegateCall,
+            onlyFallback: !!call.onlyFallback,
+            behaviorOnError: (Number(call.behaviorOnError) === 0
+              ? 'ignore'
+              : Number(call.behaviorOnError) === 1
+                ? 'revert'
+                : 'abort') as 'ignore' | 'revert' | 'abort',
+          })),
+        }))
+
+        const coreLifiInfos = lifiInfosArg?.map((info: AnypayLifiInfo) => ({
+          originToken: Address.from(info.originToken),
+          minAmount: BigInt(info.minAmount),
+          originChainId: BigInt(info.originChainId),
+          destinationChainId: BigInt(info.destinationChainId),
+        }))
+        console.log('LifiInfos (Core type, mapped):', JSON.stringify(coreLifiInfos, null, 2))
+
+        return AnyPay.calculateIntentConfigurationAddress(
+          Address.from(mainSigner),
+          coreCalls,
+          coreLifiInfos, // Pass the mapped array
+          context,
+        )
+      } catch (error) {
+        console.error('Error calculating intent address:', error)
+        throw error
       }
-
-      const coreCalls = calls.map((call) => ({
-        type: 'call' as const,
-        chainId: BigInt(call.chainId),
-        space: call.space ? BigInt(call.space) : 0n,
-        nonce: call.nonce ? BigInt(call.nonce) : 0n,
-        calls: call.calls.map((call) => ({
-          to: Address.from(call.to),
-          value: BigInt(call.value || '0'),
-          data: Bytes.toHex(Bytes.from((call.data as Hex) || '0x')),
-          gasLimit: BigInt(call.gasLimit || '0'),
-          delegateCall: !!call.delegateCall,
-          onlyFallback: !!call.onlyFallback,
-          behaviorOnError: (Number(call.behaviorOnError) === 0
-            ? 'ignore'
-            : Number(call.behaviorOnError) === 1
-              ? 'revert'
-              : 'abort') as 'ignore' | 'revert' | 'abort',
-        })),
-      }))
-
-      return AnyPay.calculateIntentConfigurationAddress(Address.from(mainSigner), coreCalls, undefined, context)
-    } catch (error) {
-      console.error('Error calculating intent address:', error)
-      throw error
-    }
-  }, [])
+    },
+    [],
+  )
 
   const updateOriginCallStatus = (
     hash: Hex | undefined,
@@ -297,7 +315,7 @@ export const HomeIndexRoute = () => {
       mainSigner: string
       calls: IntentCallsPayload[]
       preconditions: IntentPrecondition[]
-      lifiInfos: GetIntentCallsPayloadsReturn['lifiInfos']
+      lifiInfos: AnypayLifiInfo[]
     }) => {
       if (!apiClient) throw new Error('API client not available')
       if (!account.address) throw new Error('Account address not available')
@@ -308,7 +326,7 @@ export const HomeIndexRoute = () => {
         console.log('Main signer:', args.mainSigner)
         console.log('Calls:', args.calls)
 
-        const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls)
+        const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls, args.lifiInfos)
         const receivedAddress = findPreconditionAddress(args.preconditions)
 
         console.log('Calculated address:', calculatedAddress.toString())
@@ -339,7 +357,7 @@ export const HomeIndexRoute = () => {
         console.error('Error during commit intent mutation:', error)
         if (!verificationStatus?.success && !verificationStatus?.receivedAddress) {
           try {
-            const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls)
+            const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls, args.lifiInfos)
             const receivedAddress = findPreconditionAddress(args.preconditions)
             setVerificationStatus({
               success: false,
@@ -866,7 +884,7 @@ export const HomeIndexRoute = () => {
     }
 
     try {
-      const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads)
+      const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
       const intentAddressString = intentAddress.toString() as Address.Address
 
       let calcTo: Address.Address
@@ -918,7 +936,7 @@ export const HomeIndexRoute = () => {
       console.error('Failed to calculate origin call params for UI:', error)
       setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
     }
-  }, [intentCallsPayloads, selectedToken, intentPreconditions, account.address, calculateIntentAddress])
+  }, [intentCallsPayloads, selectedToken, intentPreconditions, account.address, calculateIntentAddress, lifiInfos])
 
   useEffect(() => {
     // Auto-execute effect for handling chain switch and transaction
@@ -945,7 +963,7 @@ export const HomeIndexRoute = () => {
     ) {
       console.log('Auto-committing intent configuration...')
       commitIntentConfigMutation.mutate({
-        walletAddress: calculateIntentAddress(account.address, intentCallsPayloads).toString(),
+        walletAddress: calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos).toString(),
         mainSigner: account.address,
         calls: intentCallsPayloads,
         preconditions: intentPreconditions,
@@ -1033,12 +1051,12 @@ export const HomeIndexRoute = () => {
   // Update the sendMetaTxn mutation
   const sendMetaTxnMutation = useMutation({
     mutationFn: async ({ selectedId }: { selectedId: string | null }) => {
-      if (!intentCallsPayloads || !intentPreconditions || !metaTxns || !account.address) {
+      if (!intentCallsPayloads || !intentPreconditions || !metaTxns || !account.address || !lifiInfos) {
         throw new Error('Missing required data for meta-transaction')
       }
 
       try {
-        const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads)
+        const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
 
         // If no specific ID is selected, send all meta transactions
         const txnsToSend = selectedId ? [metaTxns.find((tx) => tx.id === selectedId)] : metaTxns
@@ -1855,7 +1873,11 @@ export const HomeIndexRoute = () => {
                       onClick={() => {
                         if (!account.address || !intentCallsPayloads || !intentPreconditions || !lifiInfos) return
                         commitIntentConfigMutation.mutate({
-                          walletAddress: calculateIntentAddress(account.address, intentCallsPayloads).toString(),
+                          walletAddress: calculateIntentAddress(
+                            account.address,
+                            intentCallsPayloads,
+                            lifiInfos,
+                          ).toString(),
                           mainSigner: account.address,
                           calls: intentCallsPayloads,
                           preconditions: intentPreconditions,
@@ -2052,7 +2074,9 @@ export const HomeIndexRoute = () => {
             <>
               <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
                 <Text variant="small" color="secondary">
-                  <strong className="text-blue-300">Calculated Address: </strong>
+                  <strong className="text-blue-300">
+                    Calculated Intent Address (used as recipient for origin call):{' '}
+                  </strong>
                   <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
                     {originCallParams?.to?.toString() || 'N/A'}
                   </span>
