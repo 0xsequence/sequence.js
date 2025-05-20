@@ -231,6 +231,9 @@ importers:
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
+      fake-indexeddb:
+        specifier: ^6.0.0
+        version: 6.0.0
       typescript:
         specifier: ^5.7.3
         version: 5.8.3

@@ -1,5 +1,7 @@
 import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 
+import { IdentityInstrument } from '@0xsequence/identity-instrument'
+import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import {
   Attestation,
   Config,
@@ -8,14 +10,14 @@ import {
   Extensions,
   Network,
   Payload,
-  SessionConfig,
   Signature as SequenceSignature,
+  SessionConfig,
 } from '@0xsequence/wallet-primitives'
-import { IdentityInstrument } from '@0xsequence/identity-instrument'
-import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
+import { Cron } from './cron.js'
 import { Devices } from './devices.js'
+import { AuthCodeHandler } from './handlers/authcode.js'
 import {
   AuthCodePkceHandler,
   DevicesHandler,
@@ -24,20 +26,20 @@ import {
   OtpHandler,
   PasskeysHandler,
 } from './handlers/index.js'
+import { RecoveryHandler } from './handlers/recovery.js'
 import { Logger } from './logger.js'
+import { Messages } from './messages.js'
+import { Recovery } from './recovery.js'
 import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
 import { Signatures } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions } from './transactions.js'
 import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet } from './types/index.js'
-import { Transaction, TransactionRequest } from './types/transaction-request.js'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
+import { Message, MessageRequest } from './types/message-request.js'
 import { Kinds, RecoverySigner } from './types/signer.js'
+import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
-import { Cron } from './cron.js'
-import { Recovery } from './recovery.js'
-import { RecoveryHandler } from './handlers/recovery.js'
-import { AuthCodeHandler } from './handlers/authcode.js'
+import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -50,6 +52,7 @@ export type ManagerOptions = {
   managerDb?: Db.Wallets
   transactionsDb?: Db.Transactions
   signaturesDb?: Db.Signatures
+  messagesDb?: Db.Messages
   authCommitmentsDb?: Db.AuthCommitments
   authKeysDb?: Db.AuthKeys
   recoveryDb?: Db.Recovery
@@ -93,6 +96,7 @@ export const ManagerOptionsDefaults = {
   managerDb: new Db.Wallets(),
   signaturesDb: new Db.Signatures(),
   transactionsDb: new Db.Transactions(),
+  messagesDb: new Db.Messages(),
   authCommitmentsDb: new Db.AuthCommitments(),
   recoveryDb: new Db.Recovery(),
   authKeysDb: new Db.AuthKeys(),
@@ -162,6 +166,7 @@ export type Databases = {
   readonly encryptedPks: CoreSigners.Pk.Encrypted.EncryptedPksDb
   readonly manager: Db.Wallets
   readonly signatures: Db.Signatures
+  readonly messages: Db.Messages
   readonly transactions: Db.Transactions
   readonly authCommitments: Db.AuthCommitments
   readonly authKeys: Db.AuthKeys
@@ -193,6 +198,7 @@ export type Modules = {
   readonly signers: Signers
   readonly signatures: Signatures
   readonly transactions: Transactions
+  readonly messages: Messages
   readonly recovery: Recovery
   readonly cron: Cron
 }
@@ -243,6 +249,7 @@ export class Manager {
         manager: ops.managerDb,
         signatures: ops.signaturesDb,
         transactions: ops.transactionsDb,
+        messages: ops.messagesDb,
         authCommitments: ops.authCommitmentsDb,
         authKeys: ops.authKeysDb,
         recovery: ops.recoveryDb,
@@ -263,6 +270,7 @@ export class Manager {
       signers: new Signers(shared),
       signatures: new Signatures(shared),
       transactions: new Transactions(shared),
+      messages: new Messages(shared),
       recovery: new Recovery(shared),
     }
 
@@ -480,6 +488,41 @@ export class Manager {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })
+  }
+
+  // Messages
+
+  public async listMessageRequests() {
+    return this.shared.modules.messages.list()
+  }
+
+  public async getMessageRequest(messageOrSignatureId: string) {
+    return this.shared.modules.messages.get(messageOrSignatureId)
+  }
+
+  public onMessageRequestsUpdate(cb: (messages: Message[]) => void, trigger?: boolean) {
+    return this.shared.modules.messages.onMessagesUpdate(cb, trigger)
+  }
+
+  public onMessageRequestUpdate(messageOrSignatureId: string, cb: (message: Message) => void, trigger?: boolean) {
+    return this.shared.modules.messages.onMessageUpdate(messageOrSignatureId, cb, trigger)
+  }
+
+  public async requestMessageSignature(
+    wallet: Address.Address,
+    message: MessageRequest,
+    chainId?: bigint,
+    options?: { source?: string },
+  ) {
+    return this.shared.modules.messages.request(wallet, message, chainId, options)
+  }
+
+  public async completedMessageSignature(messageOrSignatureId: string) {
+    return this.shared.modules.messages.complete(messageOrSignatureId)
+  }
+
+  public async deleteMessageRequest(messageOrSignatureId: string) {
+    return this.shared.modules.messages.delete(messageOrSignatureId)
   }
 
   // Sessions

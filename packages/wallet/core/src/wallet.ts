@@ -7,7 +7,7 @@ import {
   Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
 
@@ -341,6 +341,41 @@ export class Wallet {
         ),
       }
     }
+  }
+
+  async prepareMessageSignature(
+    message: string | Hex.Hex | Payload.TypedDataToSign,
+    chainId: bigint,
+  ): Promise<Envelope.Envelope<Payload.Message>> {
+    let encodedMessage: Hex.Hex
+    if (typeof message !== 'string') {
+      encodedMessage = TypedData.encode(message)
+    } else {
+      let hexMessage = Hex.validate(message) ? message : Hex.fromString(message)
+      const messageSize = Hex.size(hexMessage)
+      encodedMessage = Hex.concat(Hex.fromString(`${`\x19Ethereum Signed Message:\n${messageSize}`}`), hexMessage)
+    }
+    return {
+      ...(await this.prepareBlankEnvelope(chainId)),
+      payload: Payload.fromMessage(encodedMessage),
+    }
+  }
+
+  async buildMessageSignature(
+    envelope: Envelope.Signed<Payload.Message>,
+    provider?: Provider.Provider,
+  ): Promise<Bytes.Bytes> {
+    const status = await this.getStatus(provider)
+    const signature = Envelope.encodeSignature(envelope)
+    if (!status.isDeployed) {
+      const deployTransaction = await this.buildDeployTransaction()
+      signature.erc6492 = { to: deployTransaction.to, data: Bytes.fromHex(deployTransaction.data) }
+    }
+    const encoded = SequenceSignature.encodeSignature({
+      ...signature,
+      suffix: status.pendingUpdates.map(({ signature }) => signature),
+    })
+    return encoded
   }
 
   private async prepareBlankEnvelope(chainId: bigint) {
