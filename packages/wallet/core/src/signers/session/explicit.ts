@@ -1,10 +1,11 @@
-import { Payload, Permission, SessionSignature, Utils } from '@0xsequence/wallet-primitives'
+import { Payload, Permission, SessionSignature, Constants } from '@0xsequence/wallet-primitives'
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { ExplicitSessionSigner, UsageLimit } from './session.js'
-import { GET_LIMIT_USAGE, INCREMENT_USAGE_LIMIT } from '../../../../primitives/dist/constants.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
+
+const VALUE_TRACKING_ADDRESS: Address.Address = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 export class Explicit implements ExplicitSessionSigner {
   private readonly _privateKey: PkStore
@@ -28,6 +29,27 @@ export class Explicit implements ExplicitSessionSigner {
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<Permission.Permission | undefined> {
+    if (call.value !== 0n) {
+      // Validate the value
+      if (!provider) {
+        throw new Error('Value transaction validation requires a provider')
+      }
+      const usageHash = Hash.keccak256(
+        AbiParameters.encode(
+          [
+            { type: 'address', name: 'signer' },
+            { type: 'address', name: 'valueTrackingAddress' },
+          ],
+          [this.address, VALUE_TRACKING_ADDRESS],
+        ),
+      )
+      const { usageAmount } = await this.readCurrentUsageLimit(wallet, sessionManagerAddress, usageHash, provider)
+      const value = Bytes.fromNumber(usageAmount + call.value, { size: 32 })
+      if (Bytes.toBigInt(value) > this.sessionPermissions.valueLimit) {
+        return undefined
+      }
+    }
+
     for (const permission of this.sessionPermissions.permissions) {
       // Validate the permission
       if (await this.validatePermission(permission, call, wallet, sessionManagerAddress, provider)) {
@@ -37,12 +59,12 @@ export class Explicit implements ExplicitSessionSigner {
     return undefined
   }
 
-  async getCurrentUsageLimit(
+  private async getCurrentPermissionUsageLimit(
     wallet: Address.Address,
     sessionManagerAddress: Address.Address,
     permission: Permission.Permission,
     ruleIndex: number | bigint,
-    provider?: Provider.Provider,
+    provider: Provider.Provider,
   ): Promise<UsageLimit> {
     const encodedPermission = {
       target: permission.target,
@@ -54,15 +76,40 @@ export class Explicit implements ExplicitSessionSigner {
         mask: Bytes.toHex(rule.mask),
       })),
     }
-
     const usageHash = Hash.keccak256(
       AbiParameters.encode(
         [{ type: 'address', name: 'signer' }, Permission.permissionStructAbi, { type: 'uint256', name: 'ruleIndex' }],
         [this.address, encodedPermission, BigInt(ruleIndex)],
       ),
     )
-    const readData = AbiFunction.encodeData(GET_LIMIT_USAGE, [wallet, usageHash])
-    const getUsageLimitResult = await provider!.request({
+    return this.readCurrentUsageLimit(wallet, sessionManagerAddress, usageHash, provider)
+  }
+
+  private async getCurrentValueUsageLimit(
+    wallet: Address.Address,
+    sessionManagerAddress: Address.Address,
+    provider: Provider.Provider,
+  ): Promise<UsageLimit> {
+    const usageHash = Hash.keccak256(
+      AbiParameters.encode(
+        [
+          { type: 'address', name: 'signer' },
+          { type: 'address', name: 'valueTrackingAddress' },
+        ],
+        [this.address, VALUE_TRACKING_ADDRESS],
+      ),
+    )
+    return this.readCurrentUsageLimit(wallet, sessionManagerAddress, usageHash, provider)
+  }
+
+  private async readCurrentUsageLimit(
+    wallet: Address.Address,
+    sessionManagerAddress: Address.Address,
+    usageHash: Hex.Hex,
+    provider: Provider.Provider,
+  ): Promise<UsageLimit> {
+    const readData = AbiFunction.encodeData(Constants.GET_LIMIT_USAGE, [wallet, usageHash])
+    const getUsageLimitResult = await provider.request({
       method: 'eth_call',
       params: [
         {
@@ -71,7 +118,7 @@ export class Explicit implements ExplicitSessionSigner {
         },
       ],
     })
-    const usageAmount = AbiFunction.decodeResult(GET_LIMIT_USAGE, getUsageLimitResult)
+    const usageAmount = AbiFunction.decodeResult(Constants.GET_LIMIT_USAGE, getUsageLimitResult)
     return {
       usageHash,
       usageAmount,
@@ -99,7 +146,7 @@ export class Explicit implements ExplicitSessionSigner {
       let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
       if (rule.cumulative) {
         if (provider) {
-          const { usageAmount } = await this.getCurrentUsageLimit(
+          const { usageAmount } = await this.getCurrentPermissionUsageLimit(
             wallet,
             sessionManagerAddress,
             permission,
@@ -109,7 +156,7 @@ export class Explicit implements ExplicitSessionSigner {
           // Increment the value
           value = Bytes.fromNumber(usageAmount + Bytes.toBigInt(value), { size: 32 })
         } else {
-          throw new Error('Cumulative rules require a provider and usage hash')
+          throw new Error('Cumulative rules require a provider')
         }
       }
 
@@ -147,8 +194,8 @@ export class Explicit implements ExplicitSessionSigner {
     provider?: Provider.Provider,
   ): Promise<boolean> {
     if (
-      call.data.length > 4 &&
-      Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(INCREMENT_USAGE_LIMIT))
+      Hex.size(call.data) > 4 &&
+      Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
     ) {
       // Can sign increment usage calls
       return true
@@ -174,8 +221,8 @@ export class Explicit implements ExplicitSessionSigner {
   ): Promise<SessionSignature.SessionCallSignature> {
     let permissionIndex: number
     if (
-      call.data.length > 4 &&
-      Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(INCREMENT_USAGE_LIMIT))
+      Hex.size(call.data) > 4 &&
+      Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
     ) {
       // Permission check not required. Use the first permission
       permissionIndex = 0
@@ -231,12 +278,35 @@ export class Explicit implements ExplicitSessionSigner {
       if (Bytes.toBigInt(value) === 0n) continue
 
       // read on-chain "used so far"
-      const currentUsage = await this.getCurrentUsageLimit(wallet, sessionManagerAddress, perm, ruleIndex, provider)
+      const currentUsage = await this.getCurrentPermissionUsageLimit(
+        wallet,
+        sessionManagerAddress,
+        perm,
+        ruleIndex,
+        provider!,
+      )
       increments.push({
         usageHash: currentUsage.usageHash,
         usageAmount: Bytes.toBigInt(Bytes.fromNumber(currentUsage.usageAmount + Bytes.toBigInt(value), { size: 32 })),
       })
     }
+
+    // Check the value
+    if (call.value !== 0n) {
+      if (!provider) {
+        throw new Error('Value transaction validation requires a provider')
+      }
+      const currentUsage = await this.getCurrentValueUsageLimit(wallet, sessionManagerAddress, provider)
+      const value = Bytes.fromNumber(currentUsage.usageAmount + call.value, { size: 32 })
+      if (Bytes.toBigInt(value) > this.sessionPermissions.valueLimit) {
+        throw new Error('Value transaction validation failed')
+      }
+      increments.push({
+        usageHash: currentUsage.usageHash,
+        usageAmount: Bytes.toBigInt(value),
+      })
+    }
+
     return increments
   }
 }
