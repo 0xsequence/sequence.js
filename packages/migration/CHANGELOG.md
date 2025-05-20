@@ -1,5 +1,16 @@
 # @0xsequence/migration
 
+## 2.3.13
+
+### Patch Changes
+
+- - Improvements to geoblock check
+  - Updated Somnia explorer url
+- Updated dependencies
+  - @0xsequence/wallet@2.3.13
+  - @0xsequence/core@2.3.13
+  - @0xsequence/abi@2.3.13
+
 ## 2.3.12
 
 ### Patch Changes

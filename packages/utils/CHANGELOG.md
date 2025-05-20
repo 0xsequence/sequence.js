@@ -1,5 +1,12 @@
 # @0xsequence/utils
 
+## 2.3.13
+
+### Patch Changes
+
+- - Improvements to geoblock check
+  - Updated Somnia explorer url
+
 ## 2.3.12
 
 ### Patch Changes
