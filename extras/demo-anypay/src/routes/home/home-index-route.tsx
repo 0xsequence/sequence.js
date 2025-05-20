@@ -229,7 +229,6 @@ export const HomeIndexRoute = () => {
           originChainId: BigInt(info.originChainId),
           destinationChainId: BigInt(info.destinationChainId),
         }))
-        console.log('LifiInfos (Core type, mapped):', JSON.stringify(coreLifiInfos, null, 2))
 
         return AnyPay.calculateIntentConfigurationAddress(
           Address.from(mainSigner),
