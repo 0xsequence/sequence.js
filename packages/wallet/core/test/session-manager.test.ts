@@ -468,7 +468,7 @@ describe('SessionManager', () => {
               {
                 cumulative: true,
                 operation: Permission.ParameterOperation.EQUAL,
-                value: Bytes.padRight(Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0])), 32),
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0]), { size: 32 }),
                 offset: 0n,
                 mask: Permission.SELECTOR_MASK,
               },
@@ -565,7 +565,7 @@ describe('SessionManager', () => {
               {
                 cumulative: true,
                 operation: Permission.ParameterOperation.EQUAL,
-                value: Bytes.padRight(Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0])), 32),
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0]), { size: 32 }),
                 offset: 0n,
                 mask: Permission.SELECTOR_MASK,
               },
