@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.3.16
+
+### Patch Changes
+
+- somnia-testnet: wallet deployment 10M gas limit
+
 ## 2.3.15
 
 ### Patch Changes

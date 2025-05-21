@@ -1,5 +1,13 @@
 # @0xsequence/deployer
 
+## 2.3.16
+
+### Patch Changes
+
+- somnia-testnet: wallet deployment 10M gas limit
+- Updated dependencies
+  - @0xsequence/utils@2.3.16
+
 ## 2.3.15
 
 ### Patch Changes

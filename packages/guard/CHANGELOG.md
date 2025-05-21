@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.3.16
+
+### Patch Changes
+
+- somnia-testnet: wallet deployment 10M gas limit
+- Updated dependencies
+  - @0xsequence/account@2.3.16
+  - @0xsequence/signhub@2.3.16
+  - @0xsequence/utils@2.3.16
+  - @0xsequence/core@2.3.16
+
 ## 2.3.15
 
 ### Patch Changes
