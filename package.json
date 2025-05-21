@@ -1,0 +1,23 @@
+{
+  "name": "@0xsequence/wallet-primitives",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "github:0xsequence/sequence.js#dists/typescript-config",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "ox": "^0.7.0"
+  }
+}
