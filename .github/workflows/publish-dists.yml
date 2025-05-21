@@ -22,7 +22,7 @@ jobs:
 
       - name: Prepare dist branch
         run: |
-          PACKAGES=("repo/typescript-config" "services/identity-instrument" "wallet/core" "wallet/primitives" "wallet/wdk")
+          PACKAGES=("services/identity-instrument" "wallet/core" "wallet/primitives" "wallet/wdk")
 
           for PACKAGE in "${PACKAGES[@]}"; do
             BRANCH="dists/$PACKAGE"
