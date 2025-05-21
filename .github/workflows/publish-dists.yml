@@ -47,5 +47,5 @@ jobs:
 
           git add .
           git commit -m "Build: publish @0xsequence/wallet-$PACKAGE dist"
-          git remote add origin https://github.com/${{ github.repository }}.git
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push -f origin HEAD:$BRANCH
