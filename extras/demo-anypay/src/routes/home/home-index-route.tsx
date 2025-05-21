@@ -328,6 +328,7 @@ export const HomeIndexRoute = () => {
         console.log('Calculating intent address...')
         console.log('Main signer:', args.mainSigner)
         console.log('Calls:', args.calls)
+        console.log('LifiInfos:', args.lifiInfos)
 
         const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls, args.lifiInfos)
         const receivedAddress = findPreconditionAddress(args.preconditions)
