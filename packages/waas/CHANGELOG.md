@@ -1,5 +1,15 @@
 # @0xsequence/waas
 
+## 2.3.15
+
+### Patch Changes
+
+- somnia-testnet: wallet deployment 1M gas limit
+- Updated dependencies
+  - @0xsequence/network@2.3.15
+  - @0xsequence/utils@2.3.15
+  - @0xsequence/core@2.3.15
+
 ## 2.3.14
 
 ### Patch Changes

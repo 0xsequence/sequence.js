@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.15
+
+### Patch Changes
+
+- somnia-testnet: wallet deployment 1M gas limit
+
 ## 2.3.14
 
 ### Patch Changes

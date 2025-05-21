@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.15
+
+### Patch Changes
+
+- somnia-testnet: wallet deployment 1M gas limit
+- Updated dependencies
+  - @0xsequence/waas@2.3.15
+
 ## 2.3.14
 
 ### Patch Changes
