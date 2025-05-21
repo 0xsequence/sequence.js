@@ -238,9 +238,28 @@ export class Wallet {
   async prepareTransaction(
     provider: Provider.Provider,
     calls: Payload.Call[],
-    options?: { space?: bigint; noConfigUpdate?: boolean },
+    options?: {
+      space?: bigint
+      noConfigUpdate?: boolean
+      unsafe?: boolean
+    },
   ): Promise<Envelope.Envelope<Payload.Calls>> {
     const space = options?.space ?? 0n
+
+    // If safe mode is set, then we check that the transaction
+    // is not "dangerous", aka it does not have any delegate calls
+    // or calls to the wallet contract itself
+    if (!options?.unsafe) {
+      const lowerCaseSelf = this.address.toLowerCase()
+      for (const call of calls) {
+        if (call.delegateCall) {
+          throw new Error('delegate calls are not allowed in safe mode')
+        }
+        if (call.to.toLowerCase() === lowerCaseSelf) {
+          throw new Error('calls to the wallet contract itself are not allowed in safe mode')
+        }
+      }
+    }
 
     const [chainId, nonce] = await Promise.all([
       provider.request({ method: 'eth_chainId' }),

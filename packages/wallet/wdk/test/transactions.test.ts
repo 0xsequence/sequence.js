@@ -461,4 +461,45 @@ describe('Transactions', () => {
     // The onchain configuration should be updated
     await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
   })
+
+  it('Should reject unsafe transactions in safe mode (call to self)', async () => {
+    const manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId1 = manager.requestTransaction(wallet!, 42161n, [
+      {
+        to: wallet!,
+      },
+    ])
+
+    await expect(txId1).rejects.toThrow()
+  })
+
+  it('Should allow transactions to self in unsafe mode', async () => {
+    const manager = newManager()
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId1 = await manager.requestTransaction(
+      wallet!,
+      42161n,
+      [
+        {
+          to: wallet!,
+        },
+      ],
+      {
+        unsafe: true,
+      },
+    )
+
+    expect(txId1).toBeDefined()
+  })
 })
