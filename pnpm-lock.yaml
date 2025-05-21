@@ -215,6 +215,9 @@ importers:
 
   packages/wallet/core:
     dependencies:
+      '@0xsequence/relayer':
+        specifier: workspace:^
+        version: link:../../services/relayer
       '@0xsequence/wallet-primitives':
         specifier: workspace:^
         version: link:../primitives

@@ -2,7 +2,7 @@ import { config as dotenvConfig } from 'dotenv'
 import { Abi, Address } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'
 import { mockEthereum } from './setup'
-import { Signers as CoreSigners } from '@0xsequence/wallet-core'
+import { Signers as CoreSigners, Relayer } from '@0xsequence/wallet-core'
 import * as Db from '../src/dbs'
 
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
@@ -12,7 +12,7 @@ export const EMITTER_ADDRESS: Address.Address = '0x7F6e420Ed3017A36bE6e1DA8e3AFE
 export const EMITTER_ABI = Abi.from(['function explicitEmit()', 'function implicitEmit()'])
 
 // Environment variables
-export const { RPC_URL, PRIVATE_KEY } = process.env
+export const { RPC_URL, PRIVATE_KEY, RELAYER_URL } = process.env
 export const CAN_RUN_LIVE = !!RPC_URL && !!PRIVATE_KEY
 export const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL || 'http://localhost:8545'
 
@@ -46,6 +46,7 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
         },
       },
     ],
+    relayers: RELAYER_URL && new Relayer.Sequence.SequenceRelayer(RELAYER_URL),
     // Override DBs with unique names if not provided in options,
     // otherwise, use the provided DB instance.
     // This assumes options?.someDb is either undefined or a fully constructed DB instance.
