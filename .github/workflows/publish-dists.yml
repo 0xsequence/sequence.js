@@ -1,0 +1,55 @@
+name: Publish Dists for Packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - wallet-core
+          - wallet-primitives
+          - wallet-wdk
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build package
+        run: npm run build --workspace=packages/wallet/${{ matrix.package }}
+
+      - name: Prepare dist branch
+        run: |
+          PACKAGE=${{ matrix.package }}
+          BRANCH="dists/$PACKAGE"
+          PKG_DIR="packages/wallet/$PACKAGE"
+
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          mkdir /tmp/$PACKAGE
+          cp -r $PKG_DIR/* /tmp/$PACKAGE
+          cp -r $PKG_DIR/.* /tmp/$PACKAGE 2>/dev/null || true
+
+          cd /tmp/$PACKAGE
+          git init
+          git checkout -b $BRANCH
+          git remote add origin https://github.com/${{ github.repository }}.git
+          git add .
+          git commit -m "Build: publish $PACKAGE dist"
+          git push -f origin HEAD:$BRANCH
