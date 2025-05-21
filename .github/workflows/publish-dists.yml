@@ -12,9 +12,9 @@ jobs:
     strategy:
       matrix:
         package:
-          - wallet-core
-          - wallet-primitives
-          - wallet-wdk
+          - core
+          - primitives
+          - wdk
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
       - uses: ./.github/actions/install-dependencies
 
       - name: Build package
-        run: pnpm run build --workspace=packages/wallet/${{ matrix.package }}
+        run: pnpm run build
 
       - name: Prepare dist branch
         run: |
