@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.14
+
+### Patch Changes
+
+- Update stack api rpc
+- Updated dependencies
+  - @0xsequence/waas@2.3.14
+
 ## 2.3.13
 
 ### Patch Changes

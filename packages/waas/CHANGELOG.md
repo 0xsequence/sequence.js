@@ -1,5 +1,15 @@
 # @0xsequence/waas
 
+## 2.3.14
+
+### Patch Changes
+
+- Update stack api rpc
+- Updated dependencies
+  - @0xsequence/network@2.3.14
+  - @0xsequence/utils@2.3.14
+  - @0xsequence/core@2.3.14
+
 ## 2.3.13
 
 ### Patch Changes

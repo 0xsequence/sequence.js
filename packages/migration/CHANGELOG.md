@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.3.14
+
+### Patch Changes
+
+- Update stack api rpc
+- Updated dependencies
+  - @0xsequence/wallet@2.3.14
+  - @0xsequence/core@2.3.14
+  - @0xsequence/abi@2.3.14
+
 ## 2.3.13
 
 ### Patch Changes

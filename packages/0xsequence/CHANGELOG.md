@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 2.3.14
+
+### Patch Changes
+
+- Update stack api rpc
+- Updated dependencies
+  - @0xsequence/migration@2.3.14
+  - @0xsequence/metadata@2.3.14
+  - @0xsequence/provider@2.3.14
+  - @0xsequence/sessions@2.3.14
+  - @0xsequence/account@2.3.14
+  - @0xsequence/indexer@2.3.14
+  - @0xsequence/network@2.3.14
+  - @0xsequence/relayer@2.3.14
+  - @0xsequence/signhub@2.3.14
+  - @0xsequence/wallet@2.3.14
+  - @0xsequence/guard@2.3.14
+  - @0xsequence/utils@2.3.14
+  - @0xsequence/auth@2.3.14
+  - @0xsequence/core@2.3.14
+  - @0xsequence/abi@2.3.14
+  - @0xsequence/api@2.3.14
+
 ## 2.3.13
 
 ### Patch Changes

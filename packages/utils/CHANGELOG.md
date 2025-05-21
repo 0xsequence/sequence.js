@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.14
+
+### Patch Changes
+
+- Update stack api rpc
+
 ## 2.3.13
 
 ### Patch Changes
