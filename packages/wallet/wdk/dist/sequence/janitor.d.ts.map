@@ -1,0 +1,1 @@
+{"version":3,"file":"janitor.d.ts","sourceRoot":"","sources":["../../src/sequence/janitor.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,cAAc,CAAA;AAGrC,qBAAa,OAAO;IAGN,OAAO,CAAC,QAAQ,CAAC,MAAM;IAFnC,OAAO,CAAC,aAAa,CAAC,CAAgC;gBAEzB,MAAM,EAAE,MAAM;IAM3C,OAAO,CAAC,YAAY;IAOd,KAAK;CAMZ"}
