@@ -49,7 +49,14 @@ const MOCK_CHAIN_ID = chains.arbitrum.id
 // Mock Token Address for interaction on destination chain
 const MOCK_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
 // Mock Token Amount for interaction on destination chain
-const MOCK_TOKEN_AMOUNT = '300'
+const MOCK_TOKEN_AMOUNT = '3000000'
+
+// USDC Address for interaction on destination chain (base)
+const USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+// vitalik.eth - recipient Address for interaction on destination chain (base)
+const RECIPIENT_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+// Amount of USDC to transfer on destination chain (base)
+const AMOUNT = 300000n // 0.3 USDC (6 decimals)
 
 // Add type for calculated origin call parameters
 type OriginCallParams = {
@@ -403,10 +410,6 @@ export const HomeIndexRoute = () => {
       // Reset commit state when generating a new intent
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
-
-      const USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
-      const RECIPIENT_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
-      const AMOUNT = 30000n // 0.03 USDC (6 decimals)
 
       // Ensure we have a valid chain ID, defaulting to Base (8453) if none provided
       const destinationChainId = selectedToken.chainId || 8453
