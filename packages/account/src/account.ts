@@ -739,6 +739,9 @@ export class Account {
         case BigInt(ChainId.SKALE_NEBULA):
           gasLimit = 10000000n
           break
+        case BigInt(ChainId.SOMNIA_TESTNET):
+          gasLimit = 10000000n
+          break
       }
 
       // Wallet deployment will vary depending on the version

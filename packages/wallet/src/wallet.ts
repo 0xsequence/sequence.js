@@ -188,7 +188,7 @@ export class Wallet<
         gasLimit = 10000000n
         break
       case BigInt(ChainId.SOMNIA_TESTNET):
-        gasLimit = 1000000n
+        gasLimit = 10000000n
         break
     }
 
