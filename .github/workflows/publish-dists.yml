@@ -42,7 +42,7 @@ jobs:
             git config user.email "actions@github.com"
 
             echo "🔧 Rewriting workspace: deps in package.json..."
-            node -e '
+            BRANCH_NAME=$BRANCH node -e '
               const fs = require("fs");
               const path = require("path");
               const pkgPath = path.resolve("package.json");
@@ -52,14 +52,12 @@ jobs:
               const rewrite = (deps = {}) => {
                 for (const k in deps) {
                   if (deps[k].startsWith("workspace:")) {
-                    const branch = `${prefix}${k.split("/").pop()}`;
-                    deps[k] = `github:${repo}#${branch}`;
+                    deps[k] = `github:${repo}#${process.env.BRANCH_NAME}`;
                     console.log(`→ ${k} → ${deps[k]}`);
                   }
                 }
               };
               rewrite(pkg.dependencies);
-              rewrite(pkg.devDependencies);
               fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
             '
 
