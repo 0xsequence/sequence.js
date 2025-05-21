@@ -659,4 +659,119 @@ describe('SessionManager', () => {
     },
     timeout,
   )
+
+  it(
+    'signs a payload sending two transactions with cumulative rules using an explicit session',
+    async () => {
+      const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+
+      // Create explicit signer
+      const explicitPrivateKey = Secp256k1.randomPrivateKey()
+      const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
+      const sessionPermission: Signers.Session.ExplicitParams = {
+        valueLimit: 1000000000000000000n, // 1 ETH
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: explicitAddress,
+            rules: [
+              // This rule is a hack. The selector "usage" will increment for testing. As we check for greater than or equal,
+              // we can use this to test that the usage is cumulative.
+              {
+                cumulative: true,
+                operation: Permission.ParameterOperation.GREATER_THAN_OR_EQUAL,
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0]), { size: 32 }),
+                offset: 0n,
+                mask: Permission.SELECTOR_MASK,
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, sessionPermission)
+      const sessionTopology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+        ...sessionPermission,
+        signer: explicitSigner.address,
+      })
+      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+      // Create the wallet
+      const wallet = await Wallet.fromConfiguration(
+        {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: [
+            {
+              type: 'sapient-signer',
+              address: Constants.DefaultSessionManager,
+              weight: 1n,
+              imageHash,
+            },
+            // Include a random node leaf (bytes32) to prevent image hash collision
+            Hex.random(32),
+          ],
+        },
+        {
+          stateProvider,
+        },
+      )
+      // Force 1 ETH to the wallet
+      await provider.request({
+        method: 'anvil_setBalance',
+        params: [wallet.address, Hex.fromNumber(1000000000000000000n)],
+      })
+      // Create the session manager
+      const sessionManager = new Signers.SessionManager(wallet, {
+        provider,
+        explicitSigners: [explicitSigner],
+      })
+
+      const call: Payload.Call = {
+        to: explicitAddress,
+        value: 500000000000000000n, // 0.5 ETH
+        data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+
+      // Do it twice to test cumulative rules
+      const increment = await sessionManager.prepareIncrement(wallet.address, chainId, [call, call])
+      expect(increment).not.toBeNull()
+      expect(increment).toBeDefined()
+
+      if (!increment) {
+        return
+      }
+
+      // Build, sign and send the transaction
+      const transaction = await buildAndSignCall(wallet, sessionManager, [call, call, increment], provider, chainId)
+      await simulateTransaction(provider, transaction)
+
+      // Check the balances
+      const walletBalance = await provider.request({
+        method: 'eth_getBalance',
+        params: [wallet.address, 'latest'],
+      })
+      expect(BigInt(walletBalance)).toBe(0n)
+      const explicitAddressBalance = await provider.request({
+        method: 'eth_getBalance',
+        params: [explicitAddress, 'latest'],
+      })
+      expect(BigInt(explicitAddressBalance)).toBe(1000000000000000000n)
+
+      // Repeat call fails because the usage limit has been reached
+      try {
+        await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+        throw new Error('Expected call as no signer supported to fail')
+      } catch (error) {
+        expect(error).toBeDefined()
+        expect(error.message).toContain('No signer supported')
+      }
+    },
+    timeout,
+  )
 })

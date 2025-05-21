@@ -36,7 +36,7 @@ export interface ExplicitSessionSigner extends SessionSigner {
   prepareIncrements: (
     wallet: Address.Address,
     chainId: bigint,
-    call: Payload.Call,
+    calls: Payload.Call[],
     sessionManagerAddress: Address.Address,
     provider: Provider.Provider,
   ) => Promise<UsageLimit[]>

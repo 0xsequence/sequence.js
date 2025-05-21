@@ -168,22 +168,30 @@ export class SessionManager implements SapientSigner {
     }
     const signers = await this.findSignersForCalls(wallet, chainId, calls)
 
-    // Prepare increments for each explicit signer
+    // Create a map of signers to their associated calls
+    const signerToCalls = new Map<SessionSigner, Payload.Call[]>()
+    signers.forEach((signer, index) => {
+      const call = calls[index]!
+      const existingCalls = signerToCalls.get(signer) || []
+      signerToCalls.set(signer, [...existingCalls, call])
+    })
+
+    // Prepare increments for each explicit signer with their associated calls
     const increments: UsageLimit[] = (
       await Promise.all(
-        signers.map((s, i) => {
-          if (isExplicitSessionSigner(s)) {
-            return s.prepareIncrements(wallet, chainId, calls[i]!, this.address, this._provider!)
+        Array.from(signerToCalls.entries()).map(async ([signer, associatedCalls]) => {
+          if (isExplicitSessionSigner(signer)) {
+            return signer.prepareIncrements(wallet, chainId, associatedCalls, this.address, this._provider!)
           }
           return []
         }),
       )
     ).flat()
+
     if (increments.length === 0) {
       return null
     }
 
-    //FIXME Handle this in prepareIncrements
     // Error if there are repeated usage hashes
     const uniqueIncrements = increments.filter(
       (increment, index, self) => index === self.findIndex((t) => t.usageHash === increment.usageHash),

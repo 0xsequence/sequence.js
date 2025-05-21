@@ -59,13 +59,7 @@ export class Explicit implements ExplicitSessionSigner {
     return undefined
   }
 
-  private async getCurrentPermissionUsageLimit(
-    wallet: Address.Address,
-    sessionManagerAddress: Address.Address,
-    permission: Permission.Permission,
-    ruleIndex: number | bigint,
-    provider: Provider.Provider,
-  ): Promise<UsageLimit> {
+  private getPermissionUsageHash(permission: Permission.Permission, ruleIndex: number): Hex.Hex {
     const encodedPermission = {
       target: permission.target,
       rules: permission.rules.map((rule) => ({
@@ -76,21 +70,16 @@ export class Explicit implements ExplicitSessionSigner {
         mask: Bytes.toHex(rule.mask),
       })),
     }
-    const usageHash = Hash.keccak256(
+    return Hash.keccak256(
       AbiParameters.encode(
         [{ type: 'address', name: 'signer' }, Permission.permissionStructAbi, { type: 'uint256', name: 'ruleIndex' }],
         [this.address, encodedPermission, BigInt(ruleIndex)],
       ),
     )
-    return this.readCurrentUsageLimit(wallet, sessionManagerAddress, usageHash, provider)
   }
 
-  private async getCurrentValueUsageLimit(
-    wallet: Address.Address,
-    sessionManagerAddress: Address.Address,
-    provider: Provider.Provider,
-  ): Promise<UsageLimit> {
-    const usageHash = Hash.keccak256(
+  private getValueUsageHash(): Hex.Hex {
+    return Hash.keccak256(
       AbiParameters.encode(
         [
           { type: 'address', name: 'signer' },
@@ -99,30 +88,6 @@ export class Explicit implements ExplicitSessionSigner {
         [this.address, VALUE_TRACKING_ADDRESS],
       ),
     )
-    return this.readCurrentUsageLimit(wallet, sessionManagerAddress, usageHash, provider)
-  }
-
-  private async readCurrentUsageLimit(
-    wallet: Address.Address,
-    sessionManagerAddress: Address.Address,
-    usageHash: Hex.Hex,
-    provider: Provider.Provider,
-  ): Promise<UsageLimit> {
-    const readData = AbiFunction.encodeData(Constants.GET_LIMIT_USAGE, [wallet, usageHash])
-    const getUsageLimitResult = await provider.request({
-      method: 'eth_call',
-      params: [
-        {
-          to: sessionManagerAddress,
-          data: readData,
-        },
-      ],
-    })
-    const usageAmount = AbiFunction.decodeResult(Constants.GET_LIMIT_USAGE, getUsageLimitResult)
-    return {
-      usageHash,
-      usageAmount,
-    }
   }
 
   async validatePermission(
@@ -146,11 +111,10 @@ export class Explicit implements ExplicitSessionSigner {
       let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
       if (rule.cumulative) {
         if (provider) {
-          const { usageAmount } = await this.getCurrentPermissionUsageLimit(
+          const { usageAmount } = await this.readCurrentUsageLimit(
             wallet,
             sessionManagerAddress,
-            permission,
-            ruleIndex,
+            this.getPermissionUsageHash(permission, ruleIndex),
             provider,
           )
           // Increment the value
@@ -249,66 +213,113 @@ export class Explicit implements ExplicitSessionSigner {
     }
   }
 
-  // FIXME This should take a list of calls to cater for overlapping permissions
+  private async readCurrentUsageLimit(
+    wallet: Address.Address,
+    sessionManagerAddress: Address.Address,
+    usageHash: Hex.Hex,
+    provider: Provider.Provider,
+  ): Promise<UsageLimit> {
+    const readData = AbiFunction.encodeData(Constants.GET_LIMIT_USAGE, [wallet, usageHash])
+    const getUsageLimitResult = await provider.request({
+      method: 'eth_call',
+      params: [
+        {
+          to: sessionManagerAddress,
+          data: readData,
+        },
+      ],
+    })
+    const usageAmount = AbiFunction.decodeResult(Constants.GET_LIMIT_USAGE, getUsageLimitResult)
+    return {
+      usageHash,
+      usageAmount,
+    }
+  }
+
   async prepareIncrements(
     wallet: Address.Address,
     chainId: bigint,
-    call: Payload.Call,
+    calls: Payload.Call[],
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<UsageLimit[]> {
-    // Find matching permission
-    const perm = await this.findSupportedPermission(wallet, chainId, call, sessionManagerAddress, provider)
-    if (!perm) return []
+    const increments: { usageHash: Hex.Hex; increment: bigint }[] = []
+    const usageValueHash = this.getValueUsageHash()
 
-    // Read its storage slot and add the delta
-    const increments: UsageLimit[] = []
-    const cumulativeRules = perm.rules.filter((r) => r.cumulative)
-    if (cumulativeRules.length > 0) {
-      if (!provider) {
-        throw new Error('Cumulative rules require a provider')
+    for (const call of calls) {
+      // Find matching permission
+      const perm = await this.findSupportedPermission(wallet, chainId, call, sessionManagerAddress, provider)
+      if (!perm) continue
+
+      const cumulativeRules = perm.rules.filter((r) => r.cumulative)
+      if (cumulativeRules.length > 0) {
+        for (const [ruleIndex, rule] of cumulativeRules.entries()) {
+          // Extract the masked value
+          const callDataValue = Bytes.padRight(
+            Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
+            32,
+          )
+          let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
+          if (Bytes.toBigInt(value) === 0n) continue
+
+          // Add to list
+          const usageHash = this.getPermissionUsageHash(perm, ruleIndex)
+          const existingIncrement = increments.find((i) => Hex.isEqual(i.usageHash, usageHash))
+          if (existingIncrement) {
+            existingIncrement.increment += Bytes.toBigInt(value)
+          } else {
+            increments.push({
+              usageHash,
+              increment: Bytes.toBigInt(value),
+            })
+          }
+        }
       }
-      for (const [ruleIndex, rule] of cumulativeRules.entries()) {
-        // extract the raw parameter chunk
-        const callDataValue = Bytes.padRight(
-          Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
-          32,
-        )
-        // apply mask
-        let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
-        if (Bytes.toBigInt(value) === 0n) continue
 
-        // read on-chain "used so far"
-        const currentUsage = await this.getCurrentPermissionUsageLimit(
-          wallet,
-          sessionManagerAddress,
-          perm,
-          ruleIndex,
-          provider,
-        )
-        increments.push({
-          usageHash: currentUsage.usageHash,
-          usageAmount: Bytes.toBigInt(Bytes.fromNumber(currentUsage.usageAmount + Bytes.toBigInt(value), { size: 32 })),
-        })
+      // Check the value
+      if (call.value !== 0n) {
+        const existingIncrement = increments.find((i) => Hex.isEqual(i.usageHash, usageValueHash))
+        if (existingIncrement) {
+          existingIncrement.increment += call.value
+        } else {
+          increments.push({
+            usageHash: usageValueHash,
+            increment: call.value,
+          })
+        }
       }
     }
 
-    // Check the value
-    if (call.value !== 0n) {
-      if (!provider) {
-        throw new Error('Value transaction validation requires a provider')
-      }
-      const currentUsage = await this.getCurrentValueUsageLimit(wallet, sessionManagerAddress, provider)
-      const value = Bytes.fromNumber(currentUsage.usageAmount + call.value, { size: 32 })
-      if (Bytes.toBigInt(value) > this.sessionPermissions.valueLimit) {
-        throw new Error('Value transaction validation failed')
-      }
-      increments.push({
-        usageHash: currentUsage.usageHash,
-        usageAmount: Bytes.toBigInt(value),
-      })
+    // If no increments, return early
+    if (increments.length === 0) {
+      return []
     }
 
-    return increments
+    // Provider is required if we have increments
+    if (!provider) {
+      throw new Error('Provider required for cumulative rules')
+    }
+
+    // Apply current usage limit to each increment
+    return Promise.all(
+      increments.map(async ({ usageHash, increment }) => {
+        if (increment === 0n) return null
+
+        const currentUsage = await this.readCurrentUsageLimit(wallet, sessionManagerAddress, usageHash, provider)
+
+        // For value usage hash, validate against the limit
+        if (Hex.isEqual(usageHash, usageValueHash)) {
+          const totalValue = currentUsage.usageAmount + increment
+          if (totalValue > this.sessionPermissions.valueLimit) {
+            throw new Error('Value transaction validation failed')
+          }
+        }
+
+        return {
+          usageHash,
+          usageAmount: currentUsage.usageAmount + increment,
+        }
+      }),
+    ).then((results) => results.filter((r): r is UsageLimit => r !== null))
   }
 }
