@@ -124,7 +124,7 @@ export function getAnypayLifiInfoHash(lifiInfos: AnypayLifiInfo[], attestationAd
 
   const anypayLifiInfoComponents = [
     { name: 'originToken', type: 'address' },
-    { name: 'minAmount', type: 'uint256' },
+    { name: 'amount', type: 'uint256' },
     { name: 'originChainId', type: 'uint256' },
     { name: 'destinationChainId', type: 'uint256' },
   ]

@@ -617,7 +617,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
   const lifiInfos: AnypayLifiInfo[] = [
     {
       originToken: Address.from('0x1111111111111111111111111111111111111111'),
-      minAmount: 100n,
+      amount: 100n,
       originChainId: 1n,
       destinationChainId: 10n,
     },
@@ -651,7 +651,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
     )
 
     console.log('Single Operation with LifiInfo Test Address:', address)
-    expect(isAddressEqual(address, '0x2627C2b5c0a257f7595C51726A8330035F23a307')).toBe(true)
+    expect(isAddressEqual(address, '0xC8B15aAd357F1Bc327eeA838825a552e244d0CA9')).toBe(true)
   })
 
   it('should calculate address for multiple operations with lifiInfo', () => {
@@ -700,7 +700,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
     )
 
     console.log('Multiple Operations with LifiInfo Test Address:', address)
-    expect(isAddressEqual(address, '0xe94A6831e46f6FB75E6d53E632B28155846908B3')).toBe(true)
+    expect(isAddressEqual(address, '0x24b99b5b571fe723cB7Ec3bF580fA51663880F24')).toBe(true)
   })
 })
 
@@ -962,7 +962,7 @@ describe('GetAnypayLifiInfoHash', () => {
     const lifiInfos: AnypayLifiInfo[] = [
       {
         originToken: Address.from('0x1111111111111111111111111111111111111111'),
-        minAmount: 100n,
+        amount: 100n,
         originChainId: 1n,
         destinationChainId: 10n,
       },
@@ -977,13 +977,13 @@ describe('GetAnypayLifiInfoHash', () => {
     const lifiInfos: AnypayLifiInfo[] = [
       {
         originToken: Address.from('0x1111111111111111111111111111111111111111'),
-        minAmount: 100n,
+        amount: 100n,
         originChainId: 1n,
         destinationChainId: 10n,
       },
       {
         originToken: Address.from('0x2222222222222222222222222222222222222222'),
-        minAmount: 200n,
+        amount: 200n,
         originChainId: 137n,
         destinationChainId: 42161n,
       },
@@ -1003,7 +1003,7 @@ describe('GetAnypayLifiInfoHash', () => {
     const lifiInfos: AnypayLifiInfo[] = [
       {
         originToken: Address.from('0x1111111111111111111111111111111111111111'),
-        minAmount: 100n,
+        amount: 100n,
         originChainId: 1n,
         destinationChainId: 10n,
       },
