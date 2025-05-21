@@ -1,7 +1,7 @@
 import { AbiParameters, Address, Bytes, ContractAddress, Hash, Hex } from 'ox'
 import { Context, Config, Payload } from '@0xsequence/wallet-primitives'
-import { ANYPAY_LIFI_SAPIENT_SIGNER_ADDRESS } from './constants.js'
-
+// import { ANYPAY_LIFI_SAPIENT_SIGNER_ADDRESS } from './constants.js'
+import { ANYPAY_LIFI_SAPIENT_SIGNER_LITE_ADDRESS } from './constants.js'
 export interface IntentCallsPayload extends Payload.Calls {
   chainId: bigint
 }
@@ -201,7 +201,8 @@ function createIntentConfiguration(
     if (attestationSigner) {
       const lifiConditionLeaf: Config.SapientSignerLeaf = {
         type: 'sapient-signer',
-        address: ANYPAY_LIFI_SAPIENT_SIGNER_ADDRESS,
+        // address: ANYPAY_LIFI_SAPIENT_SIGNER_ADDRESS,
+        address: ANYPAY_LIFI_SAPIENT_SIGNER_LITE_ADDRESS,
         weight: 1n,
         imageHash: getAnypayLifiInfoHash(lifiInfos, attestationSigner),
       }
