@@ -29,20 +29,23 @@ jobs:
       - name: Prepare dist branch
         run: |
           PACKAGE=${{ matrix.package }}
-          BRANCH="dists/$PACKAGE"
+          BRANCH="dists/wallet-$PACKAGE"
           PKG_DIR="packages/wallet/$PACKAGE"
 
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          mkdir -p /tmp/$PACKAGE
 
-          mkdir /tmp/$PACKAGE
-          cp -r $PKG_DIR/* /tmp/$PACKAGE
-          cp -r $PKG_DIR/.* /tmp/$PACKAGE 2>/dev/null || true
+          # Copy files safely (excluding . and ..)
+          shopt -s dotglob
+          cp -r $PKG_DIR/* /tmp/$PACKAGE || true
 
           cd /tmp/$PACKAGE
           git init
           git checkout -b $BRANCH
-          git remote add origin https://github.com/${{ github.repository }}.git
+
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
           git add .
-          git commit -m "Build: publish $PACKAGE dist"
+          git commit -m "Build: publish @0xsequence/wallet-$PACKAGE dist"
+          git remote add origin https://github.com/${{ github.repository }}.git
           git push -f origin HEAD:$BRANCH
