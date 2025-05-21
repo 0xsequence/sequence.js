@@ -348,7 +348,7 @@ describe('AnyPay Preconditions', () => {
     }
 
     // Calculate intent configuration address
-    const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], undefined, context)
+    const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
     // Start the relay operation with a short check interval
     const relayPromise = relayer.relay(
@@ -491,7 +491,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], undefined, context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
       expect(configAddress).toBeDefined()
       expect(configAddress).not.toBe(testWalletAddress)
@@ -568,7 +568,7 @@ describe('AnyPay Preconditions', () => {
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], undefined, context)
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
       // Mock the provider responses
       if (!CAN_RUN_LIVE) {
@@ -645,9 +645,9 @@ describe('Intent Configuration Address with LifiInfo', () => {
     const address = calculateIntentConfigurationAddress(
       mainSigner,
       [payload],
-      lifiInfos,
       testContext,
       attestationSigner,
+      lifiInfos,
     )
 
     console.log('Single Operation with LifiInfo Test Address:', address)
@@ -694,9 +694,9 @@ describe('Intent Configuration Address with LifiInfo', () => {
     const address = calculateIntentConfigurationAddress(
       mainSigner,
       [payload1, payload2],
-      lifiInfos,
       testContext,
       attestationSigner,
+      lifiInfos,
     )
 
     console.log('Multiple Operations with LifiInfo Test Address:', address)
@@ -738,7 +738,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [payload], undefined, context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [payload], context)
 
     console.log('address', address)
 
@@ -797,7 +797,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [payload1, payload2], undefined, context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [payload1, payload2], context)
 
     console.log('address', address)
 
@@ -856,7 +856,7 @@ describe('Intent Configuration Address', () => {
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(mainSigner, [arbitrumPayload, basePayload], undefined, context)
+    const address = calculateIntentConfigurationAddress(mainSigner, [arbitrumPayload, basePayload], context)
 
     // Log the address
     console.log('address', address)

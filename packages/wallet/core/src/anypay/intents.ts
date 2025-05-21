@@ -154,11 +154,11 @@ export function getAnypayLifiInfoHash(lifiInfos: AnypayLifiInfo[], attestationAd
 export function calculateIntentConfigurationAddress(
   mainSigner: Address.Address,
   calls: IntentCallsPayload[],
-  lifiInfos: AnypayLifiInfo[] | undefined,
   context: Context.Context,
   attestationSigner?: Address.Address,
+  lifiInfos?: AnypayLifiInfo[],
 ): Address.Address {
-  const config = createIntentConfiguration(mainSigner, calls, lifiInfos, attestationSigner)
+  const config = createIntentConfiguration(mainSigner, calls, attestationSigner, lifiInfos)
 
   // Calculate the image hash of the configuration
   const imageHash = Config.hashConfiguration(config)
@@ -177,8 +177,8 @@ export function calculateIntentConfigurationAddress(
 function createIntentConfiguration(
   mainSigner: Address.Address,
   calls: IntentCallsPayload[],
-  lifiInfos?: AnypayLifiInfo[],
   attestationSigner?: Address.Address,
+  lifiInfos?: AnypayLifiInfo[],
 ): Config.Config {
   const mainSignerLeaf: Config.SignerLeaf = {
     type: 'signer',
@@ -198,7 +198,7 @@ function createIntentConfiguration(
   let otherLeaves: Config.Topology[] = [...subdigestLeaves]
 
   if (lifiInfos && lifiInfos.length > 0) {
-    if (attestationSigner && attestationSigner !== '0x0000000000000000000000000000000000000000') {
+    if (attestationSigner) {
       const lifiConditionLeaf: Config.SapientSignerLeaf = {
         type: 'sapient-signer',
         address: ANYPAY_LIFI_SAPIENT_SIGNER_ADDRESS,
