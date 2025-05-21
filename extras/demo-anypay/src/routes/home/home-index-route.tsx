@@ -243,7 +243,8 @@ export const HomeIndexRoute = () => {
           Address.from(mainSigner),
           coreCalls,
           context,
-          AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
+          // AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
+          Address.from('0x0000000000000000000000000000000000000001'),
           coreLifiInfos,
         )
       } catch (error) {
