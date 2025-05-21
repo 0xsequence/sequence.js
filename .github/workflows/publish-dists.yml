@@ -9,47 +9,71 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package:
-          - wallet-core
-          - wallet-primitives
-          - wallet-wdk
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Install deps
-        run: npm ci
+      - uses: ./.github/actions/install-dependencies
 
       - name: Build package
-        run: npm run build --workspace=packages/wallet/${{ matrix.package }}
+        run: pnpm run build
 
       - name: Prepare dist branch
         run: |
-          PACKAGE=${{ matrix.package }}
-          BRANCH="dists/$PACKAGE"
-          PKG_DIR="packages/wallet/$PACKAGE"
+          PACKAGES=("services/identity-instrument" "wallet/core" "wallet/primitives" "wallet/wdk")
 
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          for PACKAGE in "${PACKAGES[@]}"; do
+            BRANCH="dists/$PACKAGE"
+            PKG_DIR="packages/$PACKAGE"
 
-          mkdir /tmp/$PACKAGE
-          cp -r $PKG_DIR/* /tmp/$PACKAGE
-          cp -r $PKG_DIR/.* /tmp/$PACKAGE 2>/dev/null || true
+            echo "📦 Publishing $PACKAGE to $BRANCH"
 
-          cd /tmp/$PACKAGE
-          git init
-          git checkout -b $BRANCH
-          git remote add origin https://github.com/${{ github.repository }}.git
-          git add .
-          git commit -m "Build: publish $PACKAGE dist"
-          git push -f origin HEAD:$BRANCH
+            mkdir -p /tmp/$PACKAGE
+            shopt -s dotglob
+            cp -r $PKG_DIR/* /tmp/$PACKAGE || true
+
+            cd /tmp/$PACKAGE
+            git init
+            git checkout -b $BRANCH
+
+            git config user.name "github-actions"
+            git config user.email "actions@github.com"
+
+            echo "🔧 Rewriting workspace: deps in package.json..."
+            node -e '
+              const fs = require("fs");
+              const path = require("path");
+              const pkgPath = path.resolve("package.json");
+              const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+              const repo = "0xsequence/sequence.js";
+              const prefix = "dists/";
+
+              const branches = {
+                "@0xsequence/identity-instrument": "dists/services/identity-instrument",
+                "@0xsequence/wallet-core": "dists/wallet/core",
+                "@0xsequence/wallet-primitives": "dists/wallet/primitives",
+                "@0xsequence/wallet-wdk": "dists/wallet/wdk",
+              };
+
+              const rewrite = (deps = {}) => {
+                for (const k in deps) {
+                  if (deps[k].startsWith("workspace:")) {
+                    deps[k] = `github:${repo}#${branches[k]}`;
+                    console.log(`→ ${k} → ${deps[k]}`);
+                  }
+                }
+              };
+              rewrite(pkg.dependencies);
+              fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+            '
+
+            git add .
+            git commit -m "Build: publish $PACKAGE dist"
+
+            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+            git push -f origin HEAD:$BRANCH
+
+            cd -
+          done
