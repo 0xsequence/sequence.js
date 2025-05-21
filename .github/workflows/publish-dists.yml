@@ -17,21 +17,14 @@ jobs:
           - wallet-wdk
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Install deps
-        run: npm ci
+      - uses: ./.github/actions/install-dependencies
 
       - name: Build package
-        run: npm run build --workspace=packages/wallet/${{ matrix.package }}
+        run: pnpm run build --workspace=packages/wallet/${{ matrix.package }}
 
       - name: Prepare dist branch
         run: |
