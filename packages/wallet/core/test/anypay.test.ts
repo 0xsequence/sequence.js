@@ -612,7 +612,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
   }
 
   const mainSigner = Address.from('0x1111111111111111111111111111111111111111')
-  const attestationSigner = Address.from('0x2222222222222222222222222222222222222222')
+  const attestationSigner = Address.from('0x0000000000000000000000000000000000000001')
 
   const lifiInfos: AnypayLifiInfo[] = [
     {
@@ -651,7 +651,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
     )
 
     console.log('Single Operation with LifiInfo Test Address:', address)
-    expect(isAddressEqual(address, '0xC8B15aAd357F1Bc327eeA838825a552e244d0CA9')).toBe(true)
+    expect(isAddressEqual(address, '0x869929e07Cc5F6160e9729d5aC0716C10100C70b')).toBe(true)
   })
 
   it('should calculate address for multiple operations with lifiInfo', () => {
@@ -700,7 +700,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
     )
 
     console.log('Multiple Operations with LifiInfo Test Address:', address)
-    expect(isAddressEqual(address, '0x24b99b5b571fe723cB7Ec3bF580fA51663880F24')).toBe(true)
+    expect(isAddressEqual(address, '0x21b98Be5E52BcFE9b90a901De524af592901C9a8')).toBe(true)
   })
 })
 
