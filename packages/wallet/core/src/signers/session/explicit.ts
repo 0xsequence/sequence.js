@@ -264,31 +264,33 @@ export class Explicit implements ExplicitSessionSigner {
     // Read its storage slot and add the delta
     const increments: UsageLimit[] = []
     const cumulativeRules = perm.rules.filter((r) => r.cumulative)
-    if (cumulativeRules.length > 0 && !provider) {
-      throw new Error('Cumulative rules require a provider')
-    }
-    for (const [ruleIndex, rule] of cumulativeRules.entries()) {
-      // extract the raw parameter chunk
-      const callDataValue = Bytes.padRight(
-        Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
-        32,
-      )
-      // apply mask
-      let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
-      if (Bytes.toBigInt(value) === 0n) continue
+    if (cumulativeRules.length > 0) {
+      if (!provider) {
+        throw new Error('Cumulative rules require a provider')
+      }
+      for (const [ruleIndex, rule] of cumulativeRules.entries()) {
+        // extract the raw parameter chunk
+        const callDataValue = Bytes.padRight(
+          Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
+          32,
+        )
+        // apply mask
+        let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
+        if (Bytes.toBigInt(value) === 0n) continue
 
-      // read on-chain "used so far"
-      const currentUsage = await this.getCurrentPermissionUsageLimit(
-        wallet,
-        sessionManagerAddress,
-        perm,
-        ruleIndex,
-        provider!,
-      )
-      increments.push({
-        usageHash: currentUsage.usageHash,
-        usageAmount: Bytes.toBigInt(Bytes.fromNumber(currentUsage.usageAmount + Bytes.toBigInt(value), { size: 32 })),
-      })
+        // read on-chain "used so far"
+        const currentUsage = await this.getCurrentPermissionUsageLimit(
+          wallet,
+          sessionManagerAddress,
+          perm,
+          ruleIndex,
+          provider,
+        )
+        increments.push({
+          usageHash: currentUsage.usageHash,
+          usageAmount: Bytes.toBigInt(Bytes.fromNumber(currentUsage.usageAmount + Bytes.toBigInt(value), { size: 32 })),
+        })
+      }
     }
 
     // Check the value
