@@ -22,11 +22,11 @@ jobs:
 
       - name: Prepare dist branch
         run: |
-          PACKAGES=("core" "primitives" "wdk")
+          PACKAGES=("repo/typescript-config" "services/identity-instrument" "wallet/core" "wallet/primitives" "wallet/wdk")
 
           for PACKAGE in "${PACKAGES[@]}"; do
-            BRANCH="dists/wallet-$PACKAGE"
-            PKG_DIR="packages/wallet/$PACKAGE"
+            BRANCH="dists/$PACKAGE"
+            PKG_DIR="packages/$PACKAGE"
 
             echo "📦 Publishing $PACKAGE to $BRANCH"
 
@@ -64,7 +64,7 @@ jobs:
             '
 
             git add .
-            git commit -m "Build: publish @0xsequence/wallet-$PACKAGE dist"
+            git commit -m "Build: publish $PACKAGE dist"
 
             git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git push -f origin HEAD:$BRANCH
