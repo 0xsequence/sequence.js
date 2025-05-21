@@ -41,6 +41,28 @@ jobs:
             git config user.name "github-actions"
             git config user.email "actions@github.com"
 
+            echo "🔧 Rewriting workspace: deps in package.json..."
+            node -e '
+              const fs = require("fs");
+              const path = require("path");
+              const pkgPath = path.resolve("package.json");
+              const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+              const repo = "0xsequence/sequence.js";
+              const prefix = "dists/";
+              const rewrite = (deps = {}) => {
+                for (const k in deps) {
+                  if (deps[k].startsWith("workspace:")) {
+                    const branch = `${prefix}${k.split("/").pop()}`;
+                    deps[k] = `github:${repo}#${branch}`;
+                    console.log(`→ ${k} → ${deps[k]}`);
+                  }
+                }
+              };
+              rewrite(pkg.dependencies);
+              rewrite(pkg.devDependencies);
+              fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+            '
+
             git add .
             git commit -m "Build: publish @0xsequence/wallet-$PACKAGE dist"
 
