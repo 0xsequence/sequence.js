@@ -42,17 +42,25 @@ jobs:
             git config user.email "actions@github.com"
 
             echo "🔧 Rewriting workspace: deps in package.json..."
-            BRANCH_NAME=$BRANCH node -e '
+            node -e '
               const fs = require("fs");
               const path = require("path");
               const pkgPath = path.resolve("package.json");
               const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
               const repo = "0xsequence/sequence.js";
               const prefix = "dists/";
+
+              const branches = {
+                "@0xsequence/identity-instrument": "dists/services/identity-instrument",
+                "@0xsequence/wallet-core": "dists/wallet/core",
+                "@0xsequence/wallet-primitives": "dists/wallet/primitives",
+                "@0xsequence/wallet-wdk": "dists/wallet/wdk",
+              };
+
               const rewrite = (deps = {}) => {
                 for (const k in deps) {
                   if (deps[k].startsWith("workspace:")) {
-                    deps[k] = `github:${repo}#${process.env.BRANCH_NAME}`;
+                    deps[k] = `github:${repo}#${branches[k]}`;
                     console.log(`→ ${k} → ${deps[k]}`);
                   }
                 }
