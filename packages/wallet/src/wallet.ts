@@ -187,6 +187,9 @@ export class Wallet<
       case BigInt(ChainId.SKALE_NEBULA):
         gasLimit = 10000000n
         break
+      case BigInt(ChainId.SOMNIA_TESTNET):
+        gasLimit = 1000000n
+        break
     }
 
     const bundle = Wallet.buildDeployTransaction(this.context, imageHash, gasLimit)
