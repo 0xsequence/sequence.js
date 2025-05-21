@@ -51,8 +51,10 @@ const MOCK_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
 // Mock Token Amount for interaction on destination chain
 const MOCK_TOKEN_AMOUNT = '3000000'
 
+// Chain ID for destination chain (base)
+const BASE_USDC_DESTINATION_CHAIN_ID = chains.base.id
 // USDC Address for interaction on destination chain (base)
-const USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+const BASE_USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
 // vitalik.eth - recipient Address for interaction on destination chain (base)
 const RECIPIENT_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
 // Amount of USDC to transfer on destination chain (base)
@@ -125,9 +127,9 @@ export const HomeIndexRoute = () => {
     to: '',
     data: '',
     value: '0',
-    chainId: '8453',
+    chainId: BASE_USDC_DESTINATION_CHAIN_ID.toString(),
     tokenAmount: '0',
-    tokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // Default to USDC
+    tokenAddress: BASE_USDC_ADDRESS,
   })
 
   const apiClient = useAPIClient()
@@ -411,9 +413,6 @@ export const HomeIndexRoute = () => {
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
 
-      // Ensure we have a valid chain ID, defaulting to Base (8453) if none provided
-      const destinationChainId = selectedToken.chainId || 8453
-
       let destinationCall
       if (action === 'pay') {
         // ERC20 ABI functions
@@ -424,8 +423,8 @@ export const HomeIndexRoute = () => {
         const transactionData = encodedData.startsWith('0x') ? encodedData : `0x${encodedData}`
 
         destinationCall = {
-          chainId: 8453,
-          to: USDC_ADDRESS,
+          chainId: BASE_USDC_DESTINATION_CHAIN_ID,
+          to: BASE_USDC_ADDRESS,
           transactionData,
           transactionValue: '0',
         }
@@ -437,16 +436,19 @@ export const HomeIndexRoute = () => {
           transactionData: customCallData.data.startsWith('0x') ? customCallData.data : `0x${customCallData.data}`,
           transactionValue: customCallData.value,
         }
-      } else {
+      } else if (action === 'mock_interaction') {
         // Ensure mock data is prefixed with 0x
         const transactionData = MOCK_TRANSFER_DATA.startsWith('0x') ? MOCK_TRANSFER_DATA : `0x${MOCK_TRANSFER_DATA}`
+        const destinationChainId = selectedToken.chainId || 8453
 
         destinationCall = {
           chainId: destinationChainId,
-          to: USDC_ADDRESS,
+          to: BASE_USDC_ADDRESS,
           transactionData,
           transactionValue: '0',
         }
+      } else {
+        throw new Error('Invalid action')
       }
 
       const args = {
@@ -471,7 +473,7 @@ export const HomeIndexRoute = () => {
             ? customCallData.tokenAddress
             : action === 'mock_interaction'
               ? MOCK_TOKEN_ADDRESS
-              : USDC_ADDRESS,
+              : BASE_USDC_ADDRESS,
         destinationTokenAmount:
           action === 'custom_call'
             ? customCallData.tokenAmount
