@@ -239,7 +239,13 @@ export const HomeIndexRoute = () => {
           destinationChainId: BigInt(info.destinationChainId),
         }))
 
-        return AnyPay.calculateIntentConfigurationAddress(Address.from(mainSigner), coreCalls, coreLifiInfos, context)
+        return AnyPay.calculateIntentConfigurationAddress(
+          Address.from(mainSigner),
+          coreCalls,
+          context,
+          AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
+          coreLifiInfos,
+        )
       } catch (error) {
         console.error('Error calculating intent address:', error)
         throw error
