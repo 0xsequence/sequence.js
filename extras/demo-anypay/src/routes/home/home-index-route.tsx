@@ -55,8 +55,8 @@ const MOCK_TOKEN_AMOUNT = '3000000'
 const BASE_USDC_DESTINATION_CHAIN_ID = chains.base.id
 // USDC Address for interaction on destination chain (base)
 const BASE_USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
-// vitalik.eth - recipient Address for interaction on destination chain (base)
-const RECIPIENT_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+// Give Directly - recipient Address for interaction on destination chain (base)
+const RECIPIENT_ADDRESS = '0x750EF1D7a0b4Ab1c97B7A623D7917CcEb5ea779C'
 // Amount of USDC to transfer on destination chain (base)
 const AMOUNT = 300000n // 0.3 USDC (6 decimals)
 
@@ -1439,7 +1439,7 @@ export const HomeIndexRoute = () => {
                     <span>
                       Pay Action{' '}
                       <Text variant="small" color="secondary">
-                        (0.03 $USDC to Vitalik)
+                        (Donate 0.03 $USDC)
                       </Text>
                     </span>
                   </>
