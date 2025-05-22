@@ -40,7 +40,9 @@ createRoot(document.getElementById('root')!).render(
                     : import.meta.env.VITE_ENV === 'cors-anywhere'
                       ? 'http://localhost:8080/https://dev-api.sequence.app'
                       : import.meta.env.VITE_ENV === 'dev'
-                        ? 'https://dev-api.sequence.app'
+                        ? import.meta.env.VITE_USE_V3_API === 'true'
+                          ? 'https://dev-api-v3.sequence-dev.app/rpc'
+                          : 'https://dev-api.sequence.app'
                         : 'https://api.sequence.app',
               },
             }}
