@@ -37,3 +37,27 @@ export const RECOVER_SAPIENT_SIGNATURE = Abi.from([
 export const RECOVER_SAPIENT_SIGNATURE_COMPACT = Abi.from([
   'function recoverSapientSignatureCompact(bytes32 _digest, bytes calldata _signature) external view returns (bytes32)',
 ])[0]
+
+// SessionManager
+export const INCREMENT_USAGE_LIMIT = Abi.from([
+  {
+    type: 'function',
+    name: 'incrementUsageLimit',
+    inputs: [
+      {
+        name: 'limits',
+        type: 'tuple[]',
+        internalType: 'struct UsageLimit[]',
+        components: [
+          { name: 'usageHash', type: 'bytes32', internalType: 'bytes32' },
+          { name: 'usageAmount', type: 'uint256', internalType: 'uint256' },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+])[0]
+export const GET_LIMIT_USAGE = Abi.from([
+  'function getLimitUsage(address wallet, bytes32 usageHash) public view returns (uint256)',
+])[0]

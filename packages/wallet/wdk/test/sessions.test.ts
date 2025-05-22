@@ -177,9 +177,9 @@ describe('Sessions (via Manager)', () => {
                 // Require the explicitEmit selector
                 cumulative: false,
                 operation: Permission.ParameterOperation.EQUAL,
-                value: Bytes.padRight(Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0])), 32),
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0]), { size: 32 }),
                 offset: 0n,
-                mask: Bytes.padRight(Bytes.fromHex('0xffffffff'), 32),
+                mask: Bytes.fromHex('0xffffffff', { size: 32 }),
               },
             ],
           },

@@ -25,11 +25,6 @@ export function unpackRSY(rsy: Bytes.Bytes): { r: bigint; s: bigint; yParity: nu
   return { r, s, yParity }
 }
 
-export function getStorageSlotForMappingWithKey(mappingSlot: bigint, key: Hex.Hex): Hex.Hex {
-  const paddedKey = Hex.padLeft(key, 32)
-  return Hash.keccak256(AbiParameters.encode([{ type: 'bytes32' }, { type: 'uint256' }], [paddedKey, mappingSlot]))
-}
-
 /**
  * Creates a replacer function for JSON.stringify that handles BigInt and Uint8Array serialization
  * Converts BigInt values to objects with format { __bigint: "0x..." }
