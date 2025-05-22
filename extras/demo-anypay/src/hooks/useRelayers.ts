@@ -60,30 +60,52 @@ export const useRelayers = () => {
               : 'https://'
 
         // Chain-specific relayer endpoints
-        if (chainId === 42161) {
-          // Arbitrum
-          relayerUrl = `${baseUrl}arbitrum-relayer.sequence.app`
-        } else if (chainId === 10) {
-          // Optimism
-          relayerUrl = `${baseUrl}optimism-relayer.sequence.app`
-        } else if (chainId === 137) {
-          // Polygon
-          relayerUrl = `${baseUrl}polygon-relayer.sequence.app`
-        } else if (chainId === 8453) {
-          // Base
-          relayerUrl = `${baseUrl}base-relayer.sequence.app`
-        } else if (chainId === 43114) {
-          // Avalanche
-          relayerUrl = `${baseUrl}avalanche-relayer.sequence.app`
-        } else if (chainId === 56) {
-          // BSC
-          relayerUrl = `${baseUrl}bsc-relayer.sequence.app`
-        } else if (chainId === 1) {
-          // Mainnet
-          relayerUrl = `${baseUrl}mainnet-relayer.sequence.app`
+        if (import.meta.env.VITE_ENV === 'dev' && import.meta.env.VITE_USE_V3_RELAYERS === 'true') {
+          if (chainId === 42161) {
+            // Arbitrum
+            relayerUrl = 'https://dev-arbitrum-relayer-v3.sequence-dev.app'
+          } else if (chainId === 8453) {
+            // Base
+            relayerUrl = 'https://dev-base-relayer-v3.sequence-dev.app'
+          } else if (chainId === 10) {
+            // Optimism
+            relayerUrl = 'https://dev-optimism-relayer-v3.sequence-dev.app'
+          } else if (chainId === 137) {
+            // Polygon
+            relayerUrl = 'https://dev-polygon-relayer-v3.sequence-dev.app'
+          } else if (chainId === 1) {
+            // Mainnet
+            relayerUrl = 'https://dev-mainnet-relayer-v3.sequence-dev.app'
+          } else {
+            // Fallback to general dev relayer for other chains if V3 is specified but chain not V3-supported
+            relayerUrl = `${baseUrl}relayer.sequence.app`
+          }
         } else {
-          // Default fallback
-          relayerUrl = `${baseUrl}relayer.sequence.app`
+          if (chainId === 42161) {
+            // Arbitrum
+            relayerUrl = `${baseUrl}arbitrum-relayer.sequence.app`
+          } else if (chainId === 10) {
+            // Optimism
+            relayerUrl = `${baseUrl}optimism-relayer.sequence.app`
+          } else if (chainId === 137) {
+            // Polygon
+            relayerUrl = `${baseUrl}polygon-relayer.sequence.app`
+          } else if (chainId === 8453) {
+            // Base
+            relayerUrl = `${baseUrl}base-relayer.sequence.app`
+          } else if (chainId === 43114) {
+            // Avalanche
+            relayerUrl = `${baseUrl}avalanche-relayer.sequence.app`
+          } else if (chainId === 56) {
+            // BSC
+            relayerUrl = `${baseUrl}bsc-relayer.sequence.app`
+          } else if (chainId === 1) {
+            // Mainnet
+            relayerUrl = `${baseUrl}mainnet-relayer.sequence.app`
+          } else {
+            // Default fallback
+            relayerUrl = `${baseUrl}relayer.sequence.app`
+          }
         }
       }
 
