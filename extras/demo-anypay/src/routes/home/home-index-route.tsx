@@ -1592,7 +1592,7 @@ export const HomeIndexRoute = () => {
                 </div>
               }
             >
-              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border-t border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
+              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 mt-2 rounded-lg border-t border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                 <Text
                   variant="medium"
                   color="primary"
@@ -1860,12 +1860,12 @@ export const HomeIndexRoute = () => {
                     <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
                       <span>5</span>
                     </div>
-                    <h3 className="text-xl font-semibold text-white">Commit Intent Details</h3>
+                    <h3 className="text-xl font-semibold text-white">Commit Intent</h3>
                   </div>
                 }
               >
                 {/* Content for Commit Intent Details Accordion */}
-                <div className="bg-gray-800/50 p-4 rounded-lg border-t border-gray-700/30">
+                <div className="text-xs text-gray-300 bg-gray-900/90 p-4 mt-2 rounded-lg border-t border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                   <div className="flex flex-col space-y-4">
                     {/* Verification Banner */}
                     {verificationStatus && (
