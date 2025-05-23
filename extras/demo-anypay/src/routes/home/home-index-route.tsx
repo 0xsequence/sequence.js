@@ -757,6 +757,17 @@ export const HomeIndexRoute = () => {
         txnHash,
         status: 'Pending',
       })
+      if (
+        metaTxns &&
+        metaTxns.length > 0 &&
+        isAutoExecuteEnabled &&
+        !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])
+      ) {
+        console.log('Origin transaction successful, auto-sending all meta transactions...')
+        // Send all meta transactions at once (pass null to send all)
+        sendMetaTxn(null)
+      }
+
       return
     }
 
@@ -767,14 +778,6 @@ export const HomeIndexRoute = () => {
         gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
         effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
       })
-
-      // Only send meta transactions on successful receipt
-      if (receipt.status === 'success' && metaTxns && !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])) {
-        // Send all meta transactions that haven't been sent yet
-        for (const metaTxn of metaTxns) {
-          sendMetaTxn(metaTxn.id)
-        }
-      }
     } else if (isError) {
       setOriginCallStatus({
         txnHash,
@@ -782,7 +785,17 @@ export const HomeIndexRoute = () => {
         revertReason: receiptError?.message || 'Failed to get receipt',
       })
     }
-  }, [txnHash, isWaitingForReceipt, isSuccess, isError, receipt, receiptError, metaTxns, sentMetaTxns])
+  }, [
+    txnHash,
+    isWaitingForReceipt,
+    isSuccess,
+    isError,
+    receipt,
+    receiptError,
+    metaTxns,
+    sentMetaTxns,
+    isAutoExecuteEnabled,
+  ])
 
   // Modify the auto-execute effect
   useEffect(() => {
