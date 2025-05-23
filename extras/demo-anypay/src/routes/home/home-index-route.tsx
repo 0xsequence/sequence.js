@@ -34,6 +34,7 @@ import {
   PenSquare,
   ShieldCheck,
 } from 'lucide-react'
+import { SectionHeader } from '@/components/SectionHeader'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
@@ -1018,8 +1019,7 @@ export const HomeIndexRoute = () => {
   )
 
   const isCommitButtonDisabled = Boolean(
-    commitIntentConfigMutation.isPending ||
-      (isAutoExecuteEnabled && intentCallsPayloads && !!intentPreconditions?.length),
+    commitIntentConfigMutation.isPending || commitIntentConfigMutation.isSuccess, // Disable if commit is pending OR has already succeeded
   )
 
   // Update button text and disabled state for send transaction button
@@ -1180,24 +1180,30 @@ export const HomeIndexRoute = () => {
         <p className="text-gray-300 text-sm">Connect your wallet and explore cross-chain payment intents</p>
       </div>
 
-      {/* Account Info & Connect/Disconnect */}
-      <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6">
-        <div className="flex items-center justify-between mb-4">
+      {/* Account Info & Connect/Disconnect - Standalone Card */}
+      <SectionHeader
+        className="bg-gray-800/80 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6"
+        titleContainerClassName="p-6 flex items-center justify-between w-full"
+        contentContainerClassName="p-6 pt-0"
+        title={
           <div className="flex items-center">
             <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
               <span>1</span>
             </div>
             <h3 className="text-xl font-semibold text-white">Account</h3>
           </div>
+        }
+        statusPill={
           <div className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center">
             <span
               className={`w-2 h-2 rounded-full ${account.status === 'connected' ? 'bg-green-400' : 'bg-yellow-400'} mr-2 animate-pulse`}
             ></span>
             {account.status === 'connected' ? 'Connected' : 'Disconnected'}
           </div>
-        </div>
+        }
+      >
         {account.status === 'connected' ? (
-          <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/30 space-y-2">
+          <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/30 space-y-2 mt-4">
             <div className="flex items-center justify-between">
               <Text variant="small" color="secondary" className="flex items-center">
                 <span className="text-blue-300 font-semibold mr-2">Address:</span>
@@ -1258,20 +1264,26 @@ export const HomeIndexRoute = () => {
             </div>
           </div>
         )}
-      </div>
+      </SectionHeader>
 
-      {/* Main Workflow Card */}
+      {/* Main Workflow Card - Container for Steps 2-6 */}
       {account.status === 'connected' && (
-        <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm space-y-6 transition-all duration-300 hover:shadow-blue-900/20 mb-6">
-          {/* 1. Select Token */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
+        <div className="bg-gray-800/80 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm space-y-6 transition-all duration-300 hover:shadow-blue-900/20 mb-6">
+          {/* Step 2: Select Origin Token */}
+          <SectionHeader
+            noFrame={true} // Part of the larger card, so no individual frame
+            titleContainerClassName="px-6 pt-6 pb-4 flex items-center justify-between w-full"
+            contentContainerClassName="px-6 pb-4" // Padding for the content area
+            isCollapsible={false}
+            title={
               <div className="flex items-center">
                 <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
                   <span>2</span>
                 </div>
                 <h3 className="text-xl font-semibold text-white">Select Origin Token</h3>
               </div>
+            }
+            statusPill={
               <div className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center">
                 <span
                   className={`w-2 h-2 rounded-full ${isLoadingBalances ? 'bg-yellow-400' : sortedTokens.length > 0 ? 'bg-green-400' : 'bg-red-400'} mr-2 animate-pulse`}
@@ -1282,7 +1294,8 @@ export const HomeIndexRoute = () => {
                     ? `${sortedTokens.length} Tokens`
                     : 'No Tokens'}
               </div>
-            </div>
+            }
+          >
             {isLoadingBalances && (
               <Text variant="small" color="secondary">
                 Loading balances...
@@ -1390,16 +1403,23 @@ export const HomeIndexRoute = () => {
                 </Text>
               </div>
             )}
-          </div>
+          </SectionHeader>
 
-          {/* 2. Choose Action */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center">
-              <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
-                <span>3</span>
+          {/* Step 3: Choose Action */}
+          <SectionHeader
+            noFrame={true}
+            titleContainerClassName="px-6 pb-4 flex items-center justify-between w-full"
+            contentContainerClassName="px-6 pb-4 flex flex-col gap-4"
+            isCollapsible={false}
+            title={
+              <div className="flex items-center">
+                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                  <span>3</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white">Choose Action</h3>
               </div>
-              <h3 className="text-xl font-semibold text-white">Choose Action</h3>
-            </div>
+            }
+          >
             {/* Auto-Execute Toggle */}
             <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
               <div className="flex items-center justify-between">
@@ -1583,17 +1603,11 @@ export const HomeIndexRoute = () => {
                 Please select a token first.
               </Text>
             )}
-          </div>
+          </SectionHeader>
 
-          {/* 3. Intent Quote Display */}
-          <div>
-            <div className="flex items-center mb-4">
-              <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
-                <span>4</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white">Intent Quote</h3>
-            </div>
-            {createIntentMutation.isPending && (
+          {/* Step 4: Intent Quote Display */}
+          {createIntentMutation.isPending && (
+            <div className="px-6 pb-6">
               <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3 animate-pulse">
                 <div className="flex items-center text-center">
                   <Loader2 className="animate-spin h-4 w-4 mr-2 text-yellow-500" />
@@ -1602,17 +1616,35 @@ export const HomeIndexRoute = () => {
                   </Text>
                 </div>
               </div>
-            )}
-            {createIntentMutation.isError && (
+            </div>
+          )}
+          {createIntentMutation.isError && (
+            <div className="px-6 pb-6">
               <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
                 <Text variant="small" color="negative" className="break-words flex items-center text-center">
                   <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
                   <span>Error: {createIntentMutation.error.message}</span>
                 </Text>
               </div>
-            )}
-            {intentCallsPayloads && (
-              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
+            </div>
+          )}
+          {intentCallsPayloads && (
+            <SectionHeader
+              noFrame={true}
+              titleContainerClassName="px-6 pt-4 pb-4 flex items-center justify-between w-full hover:bg-gray-700/60 rounded-md"
+              contentContainerClassName="px-6 pb-4 border-t border-gray-700/30"
+              isCollapsible={true}
+              defaultOpen={false}
+              title={
+                <div className="flex items-center">
+                  <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                    <span>4</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Intent Quote</h3>
+                </div>
+              }
+            >
+              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border-t border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                 <Text
                   variant="medium"
                   color="primary"
@@ -1849,29 +1881,136 @@ export const HomeIndexRoute = () => {
                   </div>
                 )}
               </div>
-            )}
+            </SectionHeader>
+          )}
 
-            {!createIntentMutation.isPending && !createIntentMutation.isError && !intentCallsPayloads && (
+          {/* Fallback for Intent Quote section when nothing else is shown */}
+          {!createIntentMutation.isPending && !createIntentMutation.isError && !intentCallsPayloads && (
+            <div className="px-6 pb-6">
+              {' '}
+              {/* Added pb-6 for bottom padding */}
               <div className="bg-gray-800/50 border border-gray-700/30 rounded-lg p-4 flex items-center justify-center">
                 <Text variant="small" color="secondary" className="flex flex-col items-center text-center">
                   <ShieldCheck className="h-10 w-10 text-gray-600 mb-2" />
                   Select a token and click an action above to generate the intent quote.
                 </Text>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* 4. Commit Intent */}
+          {/* Step 5: Commit Intent */}
           {intentCallsPayloads && intentPreconditions && (
-            <div>
-              <div className="flex items-center mb-4">
-                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
-                  <span>5</span>
+            <>
+              <SectionHeader
+                noFrame={true}
+                titleContainerClassName="px-6 pt-4 pb-4 flex items-center justify-between w-full hover:bg-gray-700/60 rounded-md"
+                contentContainerClassName="px-6 pb-4 border-t border-gray-700/30"
+                isCollapsible={true}
+                defaultOpen={false}
+                title={
+                  <div className="flex items-center">
+                    <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                      <span>5</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">Commit Intent Details</h3>
+                  </div>
+                }
+              >
+                {/* Content for Commit Intent Details Accordion */}
+                <div className="bg-gray-800/50 p-4 rounded-lg border-t border-gray-700/30">
+                  <div className="flex flex-col space-y-4">
+                    {/* Verification Banner */}
+                    {verificationStatus && (
+                      <div
+                        className={`bg-gray-900/50 p-3 rounded-lg border ${verificationStatus.success ? 'border-green-700/30' : 'border-red-700/30'}`}
+                      >
+                        <div className="flex items-center">
+                          <div className="flex flex-col w-full">
+                            <Text
+                              variant="small"
+                              color={verificationStatus.success ? 'info' : 'negative'}
+                              className="font-semibold"
+                            >
+                              {verificationStatus.success
+                                ? 'Address Verification Successful'
+                                : 'Address Verification Failed'}
+                            </Text>
+                            <div className="mt-2 text-xs text-gray-400 flex flex-col space-y-1 w-full">
+                              <div>
+                                Calculated:{/* */}
+                                <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
+                                  {verificationStatus.calculatedAddress || 'N/A'}
+                                </span>
+                              </div>
+                              <div>
+                                Expected (from precondition):{/* */}
+                                <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
+                                  {verificationStatus.receivedAddress || 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Commit Status Messages */}
+                    {commitIntentConfigMutation.isError && (
+                      <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mt-2">
+                        <Text variant="small" color="negative">
+                          Commit Error: {commitIntentConfigMutation.error.message}
+                        </Text>
+                      </div>
+                    )}
+                    {commitIntentConfigMutation.isSuccess && (
+                      <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3 mt-2">
+                        <Text variant="small" color="white">
+                          Intent configuration committed successfully!
+                        </Text>
+                      </div>
+                    )}
+
+                    {/* Display Fetched Committed Config */}
+                    {committedIntentAddress && commitIntentConfigMutation.isSuccess && (
+                      <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                        <div className="flex items-center justify-between">
+                          <Text variant="medium" color="primary" className="border-b border-gray-700/50">
+                            Committed Configuration Details on Database
+                          </Text>
+                        </div>
+                        {isLoadingCommittedConfig && (
+                          <div className="flex items-center text-center">
+                            <Loader2 className="animate-spin h-4 w-4 mr-2 text-yellow-500" />
+                            <Text variant="small" color="secondary">
+                              Loading committed config...
+                            </Text>
+                          </div>
+                        )}
+                        {committedConfigError && (
+                          <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
+                            <Text
+                              variant="small"
+                              color="negative"
+                              className="break-words flex items-center text-center"
+                            >
+                              <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                              <span>Error fetching config: {committedConfigError.message}</span>
+                            </Text>
+                          </div>
+                        )}
+                        {committedIntentConfig && !isLoadingCommittedConfig && !committedConfigError && (
+                          <pre className="font-mono text-xs overflow-x-auto whitespace-pre-wrap bg-gray-800/70 p-3 text-gray-300 rounded-md max-h-60 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                            {JSON.stringify(committedIntentConfig, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-white">Commit Intent</h3>
-              </div>
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
-                <div className="flex flex-col space-y-4">
+              </SectionHeader>
+              {/* Commit Button remains outside the accordion */}
+              <div className="px-6 pt-4">
+                <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/30">
                   <div className="flex items-center justify-between">
                     <Text
                       variant="medium"
@@ -1879,7 +2018,7 @@ export const HomeIndexRoute = () => {
                       className="mb-2 pb-1 border-b border-gray-700/50 flex items-center"
                     >
                       <Zap className="h-4 w-4 mr-1" />
-                      Commit Intent
+                      Commit Intent Action
                       <Text variant="small" color="secondary" className="ml-1">
                         (Verify and Send Transaction)
                       </Text>
@@ -1906,104 +2045,28 @@ export const HomeIndexRoute = () => {
                       {commitButtonText}
                     </Button>
                   </div>
-
-                  {/* Verification Banner */}
-                  {verificationStatus && (
-                    <div
-                      className={`bg-gray-900/50 p-3 rounded-lg border ${verificationStatus.success ? 'border-green-700/30' : 'border-red-700/30'}`}
-                    >
-                      <div className="flex items-center">
-                        <div className="flex flex-col w-full">
-                          <Text
-                            variant="small"
-                            color={verificationStatus.success ? 'info' : 'negative'}
-                            className="font-semibold"
-                          >
-                            {verificationStatus.success
-                              ? 'Address Verification Successful'
-                              : 'Address Verification Failed'}
-                          </Text>
-                          <div className="mt-2 text-xs text-gray-400 flex flex-col space-y-1 w-full">
-                            <div>
-                              Calculated:{' '}
-                              <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
-                                {verificationStatus.calculatedAddress || 'N/A'}
-                              </span>
-                            </div>
-                            <div>
-                              Expected (from precondition):{' '}
-                              <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
-                                {verificationStatus.receivedAddress || 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Commit Status Messages */}
-                  {commitIntentConfigMutation.isError && (
-                    <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mt-2">
-                      <Text variant="small" color="negative">
-                        Commit Error: {commitIntentConfigMutation.error.message}
-                      </Text>
-                    </div>
-                  )}
-                  {commitIntentConfigMutation.isSuccess && (
-                    <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3 mt-2">
-                      <Text variant="small" color="white">
-                        Intent configuration committed successfully!
-                      </Text>
-                    </div>
-                  )}
-
-                  {/* Display Fetched Committed Config */}
-                  {committedIntentAddress && commitIntentConfigMutation.isSuccess && (
-                    <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
-                      <div className="flex items-center justify-between">
-                        <Text variant="medium" color="primary" className="border-b border-gray-700/50">
-                          Committed Configuration Details on Database
-                        </Text>
-                      </div>
-                      {isLoadingCommittedConfig && (
-                        <div className="flex items-center text-center">
-                          <Loader2 className="animate-spin h-4 w-4 mr-2 text-yellow-500" />
-                          <Text variant="small" color="secondary">
-                            Loading committed config...
-                          </Text>
-                        </div>
-                      )}
-                      {committedConfigError && (
-                        <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
-                          <Text variant="small" color="negative" className="break-words flex items-center text-center">
-                            <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            <span>Error fetching config: {committedConfigError.message}</span>
-                          </Text>
-                        </div>
-                      )}
-                      {committedIntentConfig && !isLoadingCommittedConfig && !committedConfigError && (
-                        <pre className="font-mono text-xs overflow-x-auto whitespace-pre-wrap bg-gray-800/70 p-3 text-gray-300 rounded-md max-h-60 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                          {JSON.stringify(committedIntentConfig, null, 2)}
-                        </pre>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
+            </>
           )}
 
-          {/* 5. Origin Call */}
+          {/* Step 6: Origin Call */}
           {intentCallsPayloads && intentPreconditions && (
-            <div>
-              <div className="flex items-center mb-4">
-                <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
-                  <span>6</span>
+            <SectionHeader
+              noFrame={true}
+              titleContainerClassName="px-6 pt-4 pb-4 flex items-center justify-between w-full"
+              contentContainerClassName="px-6 pb-6"
+              isCollapsible={false}
+              title={
+                <div className="flex items-center">
+                  <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
+                    <span>6</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Origin Call</h3>
                 </div>
-                <h3 className="text-xl font-semibold text-white">Origin Call</h3>
-              </div>
-              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
+              }
+            >
+              <div className="text-xs text-gray-300 bg-gray-900/90 p-4 rounded-lg border-t border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                 <Text variant="medium" color="primary" className="pb-1 border-b border-gray-700/50 flex items-center">
                   <Zap className="h-4 w-4 mr-1" />
                   Transaction Details
@@ -2082,13 +2145,15 @@ export const HomeIndexRoute = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </SectionHeader>
           )}
 
-          {/* Preview calculated address */}
+          {/* Container for Preview Calculated Address and Manual Meta Txn Controls */}
           {account.address && intentCallsPayloads && (
-            <>
-              {/* Main container for Calculated Intent Address & Explorer Links - START of first block to modify */}
+            <div className="px-6 space-y-6 pb-6">
+              {' '}
+              {/* Outer container for padding and spacing */}
+              {/* Preview calculated address */}
               <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 shadow-inner space-y-3">
                 <Text variant="small" color="secondary">
                   <strong className="text-blue-300">
@@ -2131,9 +2196,8 @@ export const HomeIndexRoute = () => {
                   </div>
                 )}
               </div>
-
               {/* Manual Meta Transaction Controls */}
-              <div className="mt-4 bg-gray-900/50 p-4 rounded-lg border border-purple-700/30">
+              <div className="bg-gray-900/50 p-4 rounded-lg border border-purple-700/30">
                 <div className="flex items-center justify-between mb-4">
                   <Text variant="medium" color="primary" className="flex items-center">
                     <Layers className="h-4 w-4 mr-2" />
@@ -2225,24 +2289,30 @@ export const HomeIndexRoute = () => {
                   </Text>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}
 
-      {/* Separate Relayer Status Card */}
-      {account.status === 'connected' && intentCallsPayloads && intentPreconditions && (
-        <div className="bg-gray-800/80 p-6 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20">
-          <div className="flex items-center justify-between mb-6">
+      {/* Relayer Status Card - Standalone Card - Visible when account is connected */}
+      {account.status === 'connected' && (
+        <SectionHeader
+          className="bg-gray-800/80 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6"
+          titleContainerClassName="p-6 flex items-center justify-between w-full"
+          contentContainerClassName="p-6 pt-0"
+          isCollapsible={false}
+          title={
             <div className="flex items-center">
               <div className="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center mr-2 shadow-lg">
                 <span>7</span>
               </div>
               <h3 className="text-xl font-semibold text-white">Relayer Status</h3>
             </div>
-          </div>
-
-          <div className="space-y-6">
+          }
+        >
+          <div className="space-y-6 mt-4">
+            {' '}
+            {/* Added mt-4 to space content from header */}
             {/* Origin Call Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
@@ -2303,7 +2373,6 @@ export const HomeIndexRoute = () => {
                 </div>
               </div>
             </div>
-
             {/* Preconditions Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
@@ -2315,25 +2384,32 @@ export const HomeIndexRoute = () => {
                 Preconditions Status
               </Text>
               <div className="space-y-3">
-                {intentPreconditions.map((precondition, index) => (
-                  <div key={index} className="bg-gray-800/70 p-3 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">
-                        Precondition {index + 1} ({precondition.type}):{' '}
-                      </strong>
-                      <span className="font-mono">
-                        {preconditionStatuses[index] ? (
-                          <span className="text-green-400">Met</span>
-                        ) : (
-                          <span className="text-red-400">Not Met</span>
-                        )}
-                      </span>
+                {intentPreconditions && intentPreconditions.length > 0 ? (
+                  intentPreconditions.map((precondition, index) => (
+                    <div key={index} className="bg-gray-800/70 p-3 rounded-md">
+                      <Text variant="small" color="secondary">
+                        <strong className="text-blue-300">
+                          Precondition {index + 1} ({precondition.type}):{' '}
+                        </strong>
+                        <span className="font-mono">
+                          {preconditionStatuses[index] ? (
+                            <span className="text-green-400">Met</span>
+                          ) : (
+                            <span className="text-red-400">Not Met</span>
+                          )}
+                        </span>
+                      </Text>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-gray-800/70 p-3 rounded-md">
+                    <Text variant="small" color="secondary" className="text-center">
+                      No preconditions available yet. Select a token and action first.
                     </Text>
                   </div>
-                ))}
+                )}
               </div>
             </div>
-
             {/* Meta Transactions Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
@@ -2448,17 +2524,17 @@ export const HomeIndexRoute = () => {
                     </div>
                   )
                 })}
-                {!metaTxns?.length && (
+                {(!metaTxns || metaTxns.length === 0) && (
                   <div className="bg-gray-800/70 p-3 rounded-md">
                     <Text variant="small" color="secondary" className="text-center">
-                      No meta transactions available
+                      No meta transactions available yet. Select a token and action first.
                     </Text>
                   </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
+        </SectionHeader>
       )}
     </div>
   )
