@@ -20,6 +20,8 @@ import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { useMetaTxnsMonitor, MetaTxn } from '@/hooks/useMetaTxnsMonitor'
 import { useRelayers } from '@/hooks/useRelayers'
+import { useTokenBalances } from '@/hooks/useTokenBalances'
+import { Relayer } from '@0xsequence/wallet-core'
 import {
   AlertTriangle,
   Loader2,
@@ -32,12 +34,18 @@ import {
   PenSquare,
   ShieldCheck,
 } from 'lucide-react'
-import { useTokenBalances } from '@/hooks/useTokenBalances'
-import { Relayer } from '@0xsequence/wallet-core'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
   return Object.values(chains).find((chain) => chain.id === chainId) || null
+}
+
+const getExplorerUrl = (chainId: number, address: string): string | null => {
+  const chainInfo = getChainInfo(chainId)
+  if (chainInfo && chainInfo.blockExplorers?.default?.url) {
+    return `${chainInfo.blockExplorers.default.url}/address/${address}`
+  }
+  return null
 }
 
 // Mock Data
@@ -2080,7 +2088,8 @@ export const HomeIndexRoute = () => {
           {/* Preview calculated address */}
           {account.address && intentCallsPayloads && (
             <>
-              <div className="bg-gray-900/50 p-3 rounded-lg border border-blue-700/30">
+              {/* Main container for Calculated Intent Address & Explorer Links - START of first block to modify */}
+              <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 shadow-inner space-y-3">
                 <Text variant="small" color="secondary">
                   <strong className="text-blue-300">
                     Calculated Intent Address (used as recipient for origin call):{' '}
@@ -2089,6 +2098,38 @@ export const HomeIndexRoute = () => {
                     {originCallParams?.to?.toString() || 'N/A'}
                   </span>
                 </Text>
+                {originCallParams?.to && metaTxns && metaTxns.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-gray-700/50 space-y-2">
+                    {' '}
+                    {/* Added space-y-2 for link items */}
+                    <Text variant="small" color="secondary" className="mb-1 text-blue-300 font-semibold">
+                      Open in explorer:
+                    </Text>
+                    <div className="flex flex-col space-y-1">
+                      {[...new Set(metaTxns.map((tx) => tx.chainId))]
+                        .map((chainIdStr) => parseInt(chainIdStr))
+                        .map((chainId) => {
+                          const explorerUrl = getExplorerUrl(chainId, originCallParams.to!)
+                          const chainInfo = getChainInfo(chainId)
+                          if (!explorerUrl) return null
+                          return (
+                            <div key={`${chainId}-explorer-link`} className="bg-gray-800/70 p-2 rounded-md">
+                              <a
+                                href={explorerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`Open ${originCallParams.to} on ${chainInfo?.name || 'explorer'}`}
+                                className="text-gray-300 flex items-center space-x-1 hover:underline text-xs"
+                              >
+                                <NetworkImage chainId={chainId} size="xs" className="w-3 h-3" />
+                                <span>{explorerUrl}</span>
+                              </a>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Manual Meta Transaction Controls */}
