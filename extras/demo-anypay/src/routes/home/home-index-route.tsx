@@ -177,6 +177,7 @@ export const HomeIndexRoute = () => {
 
   const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
   const [selectedMetaTxnId, setSelectedMetaTxnId] = useState<string | null>(null)
+  const [hasAutoExecuted, setHasAutoExecuted] = useState(false)
 
   const RETRY_WINDOW_MS = 10_000
 
@@ -563,6 +564,7 @@ export const HomeIndexRoute = () => {
       setMetaTxns(null)
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
+      setHasAutoExecuted(false)
     }
   }, [account.isConnected])
 
@@ -574,6 +576,7 @@ export const HomeIndexRoute = () => {
     setCommittedIntentAddress(null)
     setVerificationStatus(null)
     setOperationHashes({})
+    setHasAutoExecuted(false)
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
     } else {
@@ -704,57 +707,6 @@ export const HomeIndexRoute = () => {
     }
   }, [switchChainError])
 
-  // Effect to handle auto-execution after chain switch
-  useEffect(() => {
-    if (isAutoExecuteEnabled && originCallParams?.chainId && account.chainId === originCallParams.chainId) {
-      // Chain has been switched successfully, now send the transaction
-      if (!originCallParams.to || !originCallParams.data || originCallParams.value === null) {
-        console.error('Invalid origin call parameters for auto-execution')
-        return
-      }
-
-      if (!estimatedGas && !isEstimateError) {
-        setIsEstimatingGas(true)
-        return // Wait for gas estimation
-      }
-
-      if (isEstimateError) {
-        console.error('Gas estimation failed:', estimateError)
-        updateOriginCallStatus(
-          undefined,
-          'reverted',
-          undefined,
-          undefined,
-          `Gas estimation failed: ${estimateError?.message}`,
-        )
-        return
-      }
-
-      // Add 20% buffer to estimated gas
-      const gasLimit = estimatedGas ? BigInt(Math.floor(Number(estimatedGas) * 1.2)) : undefined
-
-      sendTransaction(
-        {
-          to: originCallParams.to,
-          data: originCallParams.data,
-          value: originCallParams.value,
-          chainId: originCallParams.chainId,
-          gas: gasLimit,
-        },
-        {
-          onSuccess: (hash) => {
-            console.log('Auto-executed transaction sent, hash:', hash)
-            setTxnHash(hash)
-          },
-          onError: (error) => {
-            console.error('Auto-executed transaction failed:', error)
-            updateOriginCallStatus(undefined, 'reverted', undefined, undefined, error.message)
-          },
-        },
-      )
-    }
-  }, [isAutoExecuteEnabled, originCallParams?.chainId, account.chainId, estimatedGas, isEstimateError])
-
   // Reset gas estimation state when parameters change
   useEffect(() => {
     setIsEstimatingGas(false)
@@ -847,10 +799,12 @@ export const HomeIndexRoute = () => {
       !isWaitingForReceipt &&
       !txnHash &&
       !isChainSwitchRequired &&
-      !originCallStatus
+      !originCallStatus &&
+      !hasAutoExecuted
 
     if (shouldAutoSend) {
       console.log('Auto-executing transaction: All conditions met.')
+      setHasAutoExecuted(true)
 
       // Set initial status
       setOriginCallStatus({
@@ -878,6 +832,7 @@ export const HomeIndexRoute = () => {
               status: 'Failed',
               revertReason: error.message,
             })
+            setHasAutoExecuted(false)
           },
         },
       )
@@ -892,6 +847,7 @@ export const HomeIndexRoute = () => {
     txnHash,
     isChainSwitchRequired,
     originCallStatus,
+    hasAutoExecuted,
   ])
 
   useEffect(() => {
@@ -955,18 +911,6 @@ export const HomeIndexRoute = () => {
     }
   }, [intentCallsPayloads, selectedToken, intentPreconditions, account.address, calculateIntentAddress, lifiInfos])
 
-  useEffect(() => {
-    // Auto-execute effect for handling chain switch and transaction
-    if (
-      isAutoExecuteEnabled &&
-      originCallParams &&
-      !originCallParams.error &&
-      account.chainId !== originCallParams.chainId
-    ) {
-      handleSendOriginCall()
-    }
-  }, [isAutoExecuteEnabled, originCallParams, account.chainId])
-
   // Effect to auto-commit when intent calls payloads are ready
   useEffect(() => {
     if (
@@ -996,17 +940,6 @@ export const HomeIndexRoute = () => {
     commitIntentConfigMutation.isPending,
     commitIntentConfigMutation.isSuccess,
   ])
-
-  useEffect(() => {
-    if (
-      isAutoExecuteEnabled &&
-      originCallParams &&
-      !originCallParams.error &&
-      account.chainId !== originCallParams.chainId
-    ) {
-      handleSendOriginCall()
-    }
-  }, [isAutoExecuteEnabled, originCallParams, account.chainId])
 
   // Update button text and disabled state for commit button
   const commitButtonText = commitIntentConfigMutation.isPending ? (
@@ -1061,6 +994,7 @@ export const HomeIndexRoute = () => {
       setMetaTxns(null)
       setCommittedIntentAddress(null)
       setVerificationStatus(null)
+      setHasAutoExecuted(false)
     }
   }, [account.isConnected])
 
@@ -1349,6 +1283,7 @@ export const HomeIndexRoute = () => {
                       setMetaTxns(null)
                       setCommittedIntentAddress(null)
                       setVerificationStatus(null)
+                      setHasAutoExecuted(false)
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${selectedToken?.chainId === token.chainId && (isNative ? selectedToken?.contractAddress === zeroAddress : selectedToken?.contractAddress === token.contractAddress) ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
                   >
