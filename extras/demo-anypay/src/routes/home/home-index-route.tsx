@@ -1415,7 +1415,7 @@ export const HomeIndexRoute = () => {
                     <span>
                       Pay Action{' '}
                       <Text variant="small" color="secondary">
-                        (Donate 0.03 $USDC)
+                        (Donate 0.30 $USDC)
                       </Text>
                     </span>
                   </>
