@@ -53,38 +53,42 @@ export class SequenceRelayer implements Relayer {
   }
 
   async status(opHash: Hex.Hex, _chainId: bigint): Promise<OperationStatus> {
-    const {
-      receipt: { status, revertReason, txnReceipt },
-    } = await this.service.getMetaTxnReceipt({ metaTxID: opHash })
+    try {
+      const {
+        receipt: { status, revertReason, txnReceipt },
+      } = await this.service.getMetaTxnReceipt({ metaTxID: opHash })
 
-    switch (status) {
-      case ETHTxnStatus.UNKNOWN:
-        return { status: 'unknown' }
+      switch (status) {
+        case ETHTxnStatus.UNKNOWN:
+          return { status: 'unknown' }
 
-      case ETHTxnStatus.DROPPED:
-        return { status: 'failed', reason: revertReason ?? status }
+        case ETHTxnStatus.DROPPED:
+          return { status: 'failed', reason: revertReason ?? status }
 
-      case ETHTxnStatus.QUEUED:
-        return { status: 'pending' }
+        case ETHTxnStatus.QUEUED:
+          return { status: 'pending' }
 
-      case ETHTxnStatus.SENT:
-        return { status: 'pending' }
+        case ETHTxnStatus.SENT:
+          return { status: 'pending' }
 
-      case ETHTxnStatus.SUCCEEDED: {
-        const receipt = JSON.parse(txnReceipt)
-        const transactionHash = receipt.transactionHash
-        Hex.assert(transactionHash)
-        return { status: 'confirmed', transactionHash }
+        case ETHTxnStatus.SUCCEEDED: {
+          const receipt = JSON.parse(txnReceipt)
+          const transactionHash = receipt.transactionHash
+          Hex.assert(transactionHash)
+          return { status: 'confirmed', transactionHash }
+        }
+
+        case ETHTxnStatus.PARTIALLY_FAILED:
+          return { status: 'failed', reason: revertReason ?? status }
+
+        case ETHTxnStatus.FAILED:
+          return { status: 'failed', reason: revertReason ?? status }
+
+        default:
+          throw new Error(`unknown transaction status '${status}'`)
       }
-
-      case ETHTxnStatus.PARTIALLY_FAILED:
-        return { status: 'failed', reason: revertReason ?? status }
-
-      case ETHTxnStatus.FAILED:
-        return { status: 'failed', reason: revertReason ?? status }
-
-      default:
-        throw new Error(`unknown transaction status '${status}'`)
+    } catch {
+      return { status: 'pending' }
     }
   }
 }
