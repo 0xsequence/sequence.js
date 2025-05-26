@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 2.3.17
+
+### Patch Changes
+
+- Add Incentiv Testnet, remove Frequency
+
 ## 2.3.16
 
 ### Patch Changes

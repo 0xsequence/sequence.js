@@ -1,5 +1,18 @@
 # @0xsequence/wallet
 
+## 2.3.17
+
+### Patch Changes
+
+- Add Incentiv Testnet, remove Frequency
+- Updated dependencies
+  - @0xsequence/network@2.3.17
+  - @0xsequence/relayer@2.3.17
+  - @0xsequence/signhub@2.3.17
+  - @0xsequence/utils@2.3.17
+  - @0xsequence/core@2.3.17
+  - @0xsequence/abi@2.3.17
+
 ## 2.3.16
 
 ### Patch Changes
