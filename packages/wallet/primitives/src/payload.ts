@@ -177,6 +177,7 @@ export function isSessionImplicitAuthorize(payload: Payload): payload is Session
 export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
   const callsLen = payload.calls.length
   const nonceBytesNeeded = minBytesFor(payload.nonce)
+  console.log('TS encode: nonce value:', payload.nonce, 'nonceBytesNeeded:', nonceBytesNeeded)
   if (nonceBytesNeeded > 15) {
     throw new Error('Nonce is too large')
   }

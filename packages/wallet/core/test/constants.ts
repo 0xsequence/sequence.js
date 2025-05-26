@@ -13,3 +13,5 @@ export const EMITTER_EVENT_TOPICS = [
 
 // Environment variables
 export const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL || 'http://localhost:8545'
+export const { RPC_URL, PRIVATE_KEY } = process.env
+export const CAN_RUN_LIVE = !!RPC_URL && !!PRIVATE_KEY
