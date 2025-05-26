@@ -137,8 +137,8 @@ export function isRawSignature(signature: any): signature is RawSignature {
 
 export function isRawConfig(configuration: any): configuration is RawConfig {
   return (
-    typeof configuration === 'object' &&
     configuration &&
+    typeof configuration === 'object' &&
     typeof configuration.threshold === 'bigint' &&
     typeof configuration.checkpoint === 'bigint' &&
     isRawTopology(configuration.topology) &&
@@ -172,7 +172,7 @@ export function isRawTopology(cand: any): cand is RawTopology {
 }
 
 export function isRawLeaf(cand: any): cand is RawLeaf {
-  return typeof cand === 'object' && 'weight' in cand && 'signature' in cand && !('tree' in cand)
+  return typeof cand === 'object' && 'weight' in cand && !('tree' in cand)
 }
 
 export function isRawNestedLeaf(cand: any): cand is RawNestedLeaf {
@@ -652,10 +652,11 @@ export function encodeSignature(
   skipCheckpointerData?: boolean,
   skipCheckpointerAddress?: boolean,
 ): Uint8Array {
-  const { noChainId, checkpointerData, configuration: config, suffix } = signature
+  const { noChainId, checkpointerData, configuration: config, suffix, erc6492 } = signature
 
   if (suffix?.length) {
-    return encodeChainedSignature([{ ...signature, suffix: undefined }, ...suffix])
+    const chainedSig = encodeChainedSignature([{ ...signature, suffix: undefined, erc6492: undefined }, ...suffix])
+    return erc6492 ? wrap(chainedSig, erc6492) : chainedSig
   }
 
   let flag = 0
@@ -705,7 +706,7 @@ export function encodeSignature(
   const topologyBytes = encodeTopology(config.topology, signature)
   output = Bytes.concat(output, topologyBytes)
 
-  return signature.erc6492 ? wrap(output, signature.erc6492) : output
+  return erc6492 ? wrap(output, erc6492) : output
 }
 
 export function encodeTopology(
@@ -1229,8 +1230,9 @@ async function recoverTopology(
               method: 'eth_call',
               params: block === undefined ? [call] : [call, Hex.fromNumber(block)],
             })
+            const decodedResult = AbiFunction.decodeResult(IS_VALID_SIGNATURE, response)
 
-            if (response === AbiFunction.getSelector(IS_VALID_SIGNATURE)) {
+            if (Hex.isEqual(decodedResult, AbiFunction.getSelector(IS_VALID_SIGNATURE))) {
               return {
                 topology: {
                   type: 'signer',
@@ -1389,5 +1391,8 @@ function encode(
         digest: payload.digest,
         parentWallets: payload.parentWallets ?? [],
       }
+
+    default:
+      throw new Error('Invalid payload type')
   }
 }

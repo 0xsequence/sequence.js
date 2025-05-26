@@ -1,17 +1,17 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
 import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
-import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { Shared } from './manager.js'
-import { Wallet } from './types/wallet.js'
+import { Action } from './types/index.js'
 import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
-import { WalletSelectionUiHandler } from './types/wallet.js'
+import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
+import { AuthCodeHandler } from './handlers/authcode.js'
 
 export type StartSignUpWithRedirectArgs = {
-  kind: 'google-pkce' | 'apple-pkce'
+  kind: 'google-pkce' | 'apple'
   target: string
   metadata: { [key: string]: string }
 }
@@ -19,6 +19,7 @@ export type StartSignUpWithRedirectArgs = {
 export type CommonSignupArgs = {
   noGuard?: boolean
   noSessionManager?: boolean
+  noRecovery?: boolean
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
@@ -40,15 +41,15 @@ export type CompleteRedirectArgs = CommonSignupArgs & {
   code: string
 }
 
-export type AuthCodePkceSignupArgs = CommonSignupArgs & {
-  kind: 'google-pkce' | 'apple-pkce'
+export type AuthCodeSignupArgs = CommonSignupArgs & {
+  kind: 'google-pkce' | 'apple'
   commitment: AuthCommitment
   code: string
   target: string
   isRedirect: boolean
 }
 
-export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodePkceSignupArgs
+export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodeSignupArgs
 
 export type LoginToWalletArgs = {
   wallet: Address.Address
@@ -79,8 +80,8 @@ export function isLoginToPasskeyArgs(args: LoginArgs): args is LoginToPasskeyArg
   return 'kind' in args && args.kind === 'passkey'
 }
 
-export function isAuthCodePkceArgs(args: SignupArgs): args is AuthCodePkceSignupArgs {
-  return 'kind' in args && (args.kind === 'google-pkce' || args.kind === 'apple-pkce')
+export function isAuthCodeArgs(args: SignupArgs): args is AuthCodeSignupArgs {
+  return 'kind' in args && (args.kind === 'google-pkce' || args.kind === 'apple')
 }
 
 function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
@@ -152,28 +153,61 @@ function toConfig(
   checkpoint: bigint,
   loginTopology: Config.Topology,
   devicesTopology: Config.Topology,
-  modules: Config.Topology,
+  modules: Config.SapientSignerLeaf[],
   guardTopology?: Config.Topology,
 ): Config.Config {
   if (!guardTopology) {
     return {
       checkpoint: checkpoint,
       threshold: 1n,
-      topology: [[loginTopology, devicesTopology], modules],
+      topology: [[loginTopology, devicesTopology], toModulesTopology(modules)],
     }
   } else {
     return {
       checkpoint: checkpoint,
       threshold: 2n,
-      topology: [[[loginTopology, devicesTopology], guardTopology], modules],
+      topology: [[[loginTopology, devicesTopology], guardTopology], toModulesTopology(modules)],
     }
   }
+}
+
+function toModulesTopology(modules: Config.SapientSignerLeaf[]): Config.Topology {
+  // We always include a modules topology, even if there are no modules
+  // in that case we just add a signer with address 0 and no weight
+  if (modules.length === 0) {
+    return {
+      type: 'signer',
+      address: '0x0000000000000000000000000000000000000000',
+      weight: 0n,
+    } as Config.SignerLeaf
+  }
+
+  return Config.flatLeavesToTopology(modules)
+}
+
+function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLeaf[] {
+  let modules: Config.SapientSignerLeaf[] = []
+
+  if (Config.isNode(topology)) {
+    modules = [...fromModulesTopology(topology[0]), ...fromModulesTopology(topology[1])]
+  } else if (Config.isSapientSignerLeaf(topology)) {
+    modules.push(topology)
+  } else if (Config.isSignerLeaf(topology)) {
+    // This signals that the wallet has no modules, so we just ignore it
+    if (topology.address !== '0x0000000000000000000000000000000000000000') {
+      throw new Error('signer-leaf-not-allowed-in-modules-topology')
+    }
+  } else {
+    throw new Error('unknown-modules-topology-format')
+  }
+
+  return modules
 }
 
 function fromConfig(config: Config.Config): {
   loginTopology: Config.Topology
   devicesTopology: Config.Topology
-  modules: Config.Topology
+  modules: Config.SapientSignerLeaf[]
   guardTopology?: Config.Topology
 } {
   if (config.threshold === 1n) {
@@ -181,7 +215,7 @@ function fromConfig(config: Config.Config): {
       return {
         loginTopology: config.topology[0][0],
         devicesTopology: config.topology[0][1],
-        modules: config.topology[1],
+        modules: fromModulesTopology(config.topology[1]),
       }
     } else {
       throw new Error('unknown-config-format')
@@ -192,7 +226,7 @@ function fromConfig(config: Config.Config): {
         loginTopology: config.topology[0][0][0],
         devicesTopology: config.topology[0][0][1],
         guardTopology: config.topology[0][1],
-        modules: config.topology[1],
+        modules: fromModulesTopology(config.topology[1]),
       }
     } else {
       throw new Error('unknown-config-format')
@@ -303,8 +337,8 @@ export class Wallets {
       }
 
       case 'google-pkce':
-      case 'apple-pkce': {
-        const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodePkceHandler
+      case 'apple': {
+        const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
         if (!handler) {
           throw new Error('handler-not-registered')
         }
@@ -323,7 +357,7 @@ export class Wallets {
   }
 
   async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
-    const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodePkceHandler
+    const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
     if (!handler) {
       throw new Error('handler-not-registered')
     }
@@ -346,7 +380,7 @@ export class Wallets {
         isRedirect: true,
       })
     } else {
-      const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodePkceHandler
+      const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodeHandler
       if (!handler) {
         throw new Error('handler-not-registered')
       }
@@ -366,7 +400,7 @@ export class Wallets {
         const result = await this.walletSelectionUiHandler({
           existingWallets: existingWallets.map((w) => w.wallet),
           signerAddress: await loginSigner.signer.address,
-          context: isAuthCodePkceArgs(args)
+          context: isAuthCodeArgs(args)
             ? {
                 isRedirect: args.isRedirect,
                 target: args.target,
@@ -408,11 +442,8 @@ export class Wallets {
     // TODO: Add recovery module
     // TODO: Add smart sessions module
     // Placeholder
-    let modules: Config.Topology = {
-      type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
-      weight: 0n,
-    }
+    let modules: Config.SapientSignerLeaf[] = []
+
     if (!args.noSessionManager) {
       //  Calculate image hash with the identity signer
       const sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
@@ -421,13 +452,14 @@ export class Wallets {
       this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
       // Prepare the configuration leaf
       const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
-      modules = [
-        {
-          ...this.shared.sequence.defaultSessionsTopology,
-          imageHash: sessionsImageHash,
-        },
-        modules,
-      ]
+      modules.push({
+        ...this.shared.sequence.defaultSessionsTopology,
+        imageHash: sessionsImageHash,
+      })
+    }
+
+    if (!args.noRecovery) {
+      await this.shared.modules.recovery.initRecoveryModule(modules, device.address)
     }
 
     // Create initial configuration
@@ -462,6 +494,74 @@ export class Wallets {
     return wallet.address
   }
 
+  public async getConfigurationParts(address: Address.Address) {
+    const wallet = new CoreWallet(address, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const status = await wallet.getStatus()
+    return fromConfig(status.configuration)
+  }
+
+  public async requestConfigurationUpdate(
+    address: Address.Address,
+    changes: Partial<ReturnType<typeof fromConfig>>,
+    action: Action,
+    origin?: string,
+  ) {
+    const wallet = new CoreWallet(address, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const status = await wallet.getStatus()
+    const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
+
+    const nextLoginTopology = changes.loginTopology ?? loginTopology
+    const nextDevicesTopology = changes.devicesTopology ?? devicesTopology
+    const nextModules = changes.modules ?? modules
+    const nextGuardTopology = changes.guardTopology ?? guardTopology
+
+    const envelope = await wallet.prepareUpdate(
+      toConfig(
+        status.configuration.checkpoint + 1n,
+        nextLoginTopology,
+        nextDevicesTopology,
+        nextModules,
+        nextGuardTopology,
+      ),
+    )
+
+    const requestId = await this.shared.modules.signatures.request(envelope, action, {
+      origin,
+    })
+
+    return requestId
+  }
+
+  public async completeConfigurationUpdate(requestId: string) {
+    const request = await this.shared.modules.signatures.get(requestId)
+    if (!Payload.isConfigUpdate(request.envelope.payload)) {
+      throw new Error('invalid-request-payload')
+    }
+
+    if (!Envelope.reachedThreshold(request.envelope)) {
+      throw new Error('insufficient-weight')
+    }
+
+    const wallet = new CoreWallet(request.wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>)
+    await this.shared.modules.signatures.complete(requestId)
+  }
+
   async login(args: LoginArgs): Promise<string | undefined> {
     if (isLoginToWalletArgs(args)) {
       const prevWallet = await this.exists(args.wallet)
@@ -469,16 +569,11 @@ export class Wallets {
         throw new Error('wallet-already-logged-in')
       }
 
-      const wallet = new CoreWallet(args.wallet, {
-        context: this.shared.sequence.context,
-        stateProvider: this.shared.sequence.stateProvider,
-        guest: this.shared.sequence.guest,
-      })
-
       const device = await this.shared.modules.devices.create()
-      const status = await wallet.getStatus()
+      const { devicesTopology, modules, guardTopology } = await this.getConfigurationParts(args.wallet)
 
-      const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
+      // Witness the wallet
+      await this.shared.modules.devices.witness(device.address, args.wallet)
 
       // Add device to devices topology
       const prevDevices = Config.getSigners(devicesTopology)
@@ -497,18 +592,13 @@ export class Wallets {
         ...prevDevices.sapientSigners.map((x) => ({ address: x.address, imageHash: x.imageHash })),
         { address: device.address },
       ])
-      const envelope = await wallet.prepareUpdate(
-        toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
-      )
 
-      const requestId = await this.shared.modules.signatures.request(envelope, 'login', {
-        origin: 'wallet-webapp',
-      })
-
-      await this.shared.modules.devices.witness(device.address, wallet.address)
+      if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
+        await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
+      }
 
       await this.shared.databases.manager.set({
-        address: wallet.address,
+        address: args.wallet,
         status: 'logging-in',
         loginDate: new Date().toISOString(),
         device: device.address,
@@ -516,7 +606,15 @@ export class Wallets {
         useGuard: guardTopology !== undefined,
       })
 
-      return requestId
+      return this.requestConfigurationUpdate(
+        args.wallet,
+        {
+          devicesTopology: nextDevicesTopology,
+          modules,
+        },
+        'login',
+        'wallet-webapp',
+      )
     }
 
     if (isLoginToMnemonicArgs(args)) {
@@ -531,7 +629,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => w.wallet === wallet)) {
+      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
         throw new Error('wallet-not-found')
       }
 
@@ -553,7 +651,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => w.wallet === wallet)) {
+      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
         throw new Error('wallet-not-found')
       }
 
@@ -566,28 +664,12 @@ export class Wallets {
   async completeLogin(requestId: string) {
     const request = await this.shared.modules.signatures.get(requestId)
 
-    const envelope = request.envelope
-    if (!Payload.isConfigUpdate(envelope.payload)) {
-      throw new Error('invalid-request-payload')
-    }
-
-    if (!Envelope.reachedThreshold(envelope)) {
-      throw new Error('insufficient-weight')
-    }
-
     const walletEntry = await this.shared.databases.manager.get(request.wallet)
     if (!walletEntry) {
       throw new Error('login-for-wallet-not-found')
     }
 
-    const wallet = new CoreWallet(request.wallet, {
-      context: this.shared.sequence.context,
-      stateProvider: this.shared.sequence.stateProvider,
-      guest: this.shared.sequence.guest,
-    })
-
-    await wallet.submitUpdate(envelope as Envelope.Signed<Payload.ConfigUpdate>)
-    await this.shared.modules.signatures.complete(requestId)
+    await this.completeConfigurationUpdate(requestId)
 
     // Save entry in the manager db
     await this.shared.databases.manager.set({
@@ -612,8 +694,6 @@ export class Wallets {
       throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
     }
 
-    await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
-
     if (options?.skipRemoveDevice) {
       await Promise.all([
         this.shared.databases.manager.del(wallet),
@@ -627,15 +707,7 @@ export class Wallets {
       throw new Error('device-not-found')
     }
 
-    const walletObj = new CoreWallet(wallet, {
-      context: this.shared.sequence.context,
-      stateProvider: this.shared.sequence.stateProvider,
-      guest: this.shared.sequence.guest,
-    })
-
-    const status = await walletObj.getStatus()
-    const { loginTopology, devicesTopology, modules, guardTopology } = fromConfig(status.configuration)
-
+    const { devicesTopology, modules } = await this.getConfigurationParts(wallet)
     const nextDevicesTopology = buildCappedTree([
       ...Config.getSigners(devicesTopology)
         .signers.filter((x) => x !== '0x0000000000000000000000000000000000000000' && x !== device.address)
@@ -643,25 +715,28 @@ export class Wallets {
       ...Config.getSigners(devicesTopology).sapientSigners,
     ])
 
-    console.log('nextDevicesTopology', nextDevicesTopology)
+    // Remove device from the recovery topology, if it exists
+    if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
+      await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, device.address)
+    }
 
-    const envelope = await walletObj.prepareUpdate(
-      toConfig(status.configuration.checkpoint + 1n, loginTopology, nextDevicesTopology, modules, guardTopology),
+    const requestId = await this.requestConfigurationUpdate(
+      wallet,
+      {
+        devicesTopology: nextDevicesTopology,
+        modules,
+      },
+      'logout',
+      'wallet-webapp',
     )
 
-    const requestId = await this.shared.modules.signatures.request(envelope, 'logout', {
-      origin: 'wallet-webapp',
-    })
+    await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
 
     return requestId as any
   }
 
   async completeLogout(requestId: string, options?: { skipValidateSave?: boolean }) {
     const request = await this.shared.modules.signatures.get(requestId)
-    if (!Payload.isConfigUpdate(request.envelope.payload)) {
-      throw new Error('invalid-request-payload')
-    }
-
     const walletEntry = await this.shared.databases.manager.get(request.wallet)
     if (!walletEntry) {
       throw new Error('wallet-not-found')
@@ -674,43 +749,105 @@ export class Wallets {
       )
     }
 
-    const wallet = new CoreWallet(request.wallet, {
-      context: this.shared.sequence.context,
-      stateProvider: this.shared.sequence.stateProvider,
-      guest: this.shared.sequence.guest,
-    })
-
-    await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>, {
-      validateSave: !options?.skipValidateSave,
-    })
-
-    await this.shared.modules.signatures.complete(requestId)
+    await this.completeConfigurationUpdate(requestId)
     await this.shared.databases.manager.del(request.wallet)
     await this.shared.modules.devices.remove(walletEntry.device)
   }
 
-  async getConfiguration(args: { wallet: Address.Address }) {
-    const wallet = new CoreWallet(args.wallet, {
+  async getConfiguration(wallet: Address.Address) {
+    const walletObject = new CoreWallet(wallet, {
       context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
 
-    const status = await wallet.getStatus()
-    const { devicesTopology, loginTopology } = fromConfig(status.configuration)
+    const status = await walletObject.getStatus()
+    const raw = fromConfig(status.configuration)
 
-    const deviceSigners = Config.getSigners(devicesTopology)
-    const loginSigners = Config.getSigners(loginTopology)
+    const deviceSigners = Config.getSigners(raw.devicesTopology)
+    const loginSigners = Config.getSigners(raw.loginTopology)
 
     return {
-      devices: await this.shared.modules.signers.resolveKinds(wallet.address, [
+      devices: await this.shared.modules.signers.resolveKinds(wallet, [
         ...deviceSigners.signers,
         ...deviceSigners.sapientSigners,
       ]),
-      login: await this.shared.modules.signers.resolveKinds(wallet.address, [
+      login: await this.shared.modules.signers.resolveKinds(wallet, [
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
+      raw,
     }
+  }
+
+  async getNonce(chainId: bigint, address: Address.Address, space: bigint) {
+    const wallet = new CoreWallet(address, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const network = this.shared.sequence.networks.find((n) => n.chainId === chainId)
+    if (!network) {
+      throw new Error('network-not-found')
+    }
+
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    return wallet.getNonce(provider, space)
+  }
+
+  async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
+    const walletObject = new CoreWallet(wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const network = this.shared.sequence.networks.find((n) => n.chainId === chainId)
+    if (!network) {
+      throw new Error('network-not-found')
+    }
+
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const status = await walletObject.getStatus(provider)
+
+    const onchainConfiguration = await this.shared.sequence.stateProvider.getConfiguration(status.onChainImageHash)
+    if (!onchainConfiguration) {
+      throw new Error('onchain-configuration-not-found')
+    }
+
+    const raw = fromConfig(status.configuration)
+
+    const deviceSigners = Config.getSigners(raw.devicesTopology)
+    const loginSigners = Config.getSigners(raw.loginTopology)
+
+    return {
+      devices: await this.shared.modules.signers.resolveKinds(wallet, [
+        ...deviceSigners.signers,
+        ...deviceSigners.sapientSigners,
+      ]),
+      login: await this.shared.modules.signers.resolveKinds(wallet, [
+        ...loginSigners.signers,
+        ...loginSigners.sapientSigners,
+      ]),
+      raw,
+    }
+  }
+
+  async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
+    const walletObject = new CoreWallet(wallet, {
+      context: this.shared.sequence.context,
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const network = this.shared.sequence.networks.find((n) => n.chainId === chainId)
+    if (!network) {
+      throw new Error('network-not-found')
+    }
+
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const onchainStatus = await walletObject.getStatus(provider)
+    return onchainStatus.imageHash === onchainStatus.onChainImageHash
   }
 }

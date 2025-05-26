@@ -149,11 +149,11 @@ export function findSignerLeaf(
   } else if (isNode(configuration)) {
     return findSignerLeaf(configuration[0], address) || findSignerLeaf(configuration[1], address)
   } else if (isSignerLeaf(configuration)) {
-    if (configuration.address === address) {
+    if (Address.isEqual(configuration.address, address)) {
       return configuration
     }
   } else if (isSapientSignerLeaf(configuration)) {
-    if (configuration.address === address) {
+    if (Address.isEqual(configuration.address, address)) {
       return configuration
     }
   }
@@ -161,10 +161,10 @@ export function findSignerLeaf(
 }
 
 export function getWeight(
-  topology: RawTopology | RawConfig,
+  topology: RawTopology | RawConfig | Config,
   canSign: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
 ): { weight: bigint; maxWeight: bigint } {
-  topology = isRawConfig(topology) ? topology.topology : topology
+  topology = isRawConfig(topology) || isConfig(topology) ? topology.topology : topology
 
   if (isSignedSignerLeaf(topology)) {
     return { weight: topology.weight, maxWeight: topology.weight }

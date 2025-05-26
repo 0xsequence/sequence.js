@@ -1,6 +1,6 @@
 import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Payload } from '@0xsequence/wallet-primitives'
-import { Hex } from 'ox'
+import { Address, Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {
@@ -12,9 +12,20 @@ import {
   SignerSigned,
   SignerUnavailable,
 } from './types/signature-request.js'
+import { Cron } from './cron.js'
 
 export class Signatures {
   constructor(private readonly shared: Shared) {}
+
+  initialize() {
+    this.shared.modules.cron.registerJob('prune-signatures', 10 * 60 * 1000, async () => {
+      const prunedSignatures = await this.prune()
+      if (prunedSignatures > 0) {
+        this.shared.modules.logger.log(`Pruned ${prunedSignatures} signatures`)
+      }
+    })
+    this.shared.modules.logger.log('Signatures module initialized and job registered.')
+  }
 
   private async getBase(requestId: string): Promise<BaseSignatureRequest> {
     const request = await this.shared.databases.signatures.get(requestId)
@@ -62,55 +73,59 @@ export class Signatures {
 
     const statuses = await Promise.all(
       signersAndKinds.map(async (sak) => {
-        const base = {
+        const base: SignerBase = {
           address: sak.address,
           imageHash: sak.imageHash,
-        } as SignerBase
+        }
 
         // We may have a signature for this signer already
         const signed = request.envelope.signatures.some((sig) => {
           if (Envelope.isSapientSignature(sig)) {
-            return sig.signature.address === sak.address && sig.imageHash === sak.imageHash
+            return Address.isEqual(sig.signature.address, sak.address) && sig.imageHash === sak.imageHash
           }
-          return sig.address === sak.address
+          return Address.isEqual(sig.address, sak.address)
         })
 
         if (!sak.kind) {
-          return {
+          const status: SignerUnavailable = {
             ...base,
             handler: undefined,
             reason: 'unknown-signer-kind',
             status: 'unavailable',
-          } as SignerUnavailable
+          }
+          return status
         }
 
         const handler = this.shared.handlers.get(sak.kind)
         if (signed) {
-          return {
+          const status: SignerSigned = {
             ...base,
             handler,
             status: 'signed',
-          } as SignerSigned
+          }
+          return status
         }
 
         if (!handler) {
-          return {
+          const status: SignerUnavailable = {
             ...base,
             handler: undefined,
             reason: 'no-handler',
             status: 'unavailable',
-          } as SignerUnavailable
+          }
+          return status
         }
 
         return handler.status(sak.address, sak.imageHash, request)
       }),
     )
 
-    return {
+    const signatureRequest: SignatureRequest = {
       ...request,
       ...Envelope.weightOf(request.envelope),
       signers: statuses,
-    } as SignatureRequest
+    }
+    return signatureRequest
   }
 
   onSignatureRequestUpdate(
@@ -165,7 +180,7 @@ export class Signatures {
       const pendingRequests = await this.shared.databases.signatures.list()
       const pendingConfigUpdatesToClear = pendingRequests.filter(
         (sig) =>
-          sig.wallet === request.wallet &&
+          Address.isEqual(sig.wallet, request.wallet) &&
           sig.envelope.payload.type === 'config-update' &&
           sig.envelope.configuration.checkpoint <= request.envelope.configuration.checkpoint,
       )
@@ -185,7 +200,7 @@ export class Signatures {
     action: A,
     options: {
       origin?: string
-    },
+    } = {},
   ): Promise<string> {
     // If the action is a config update, we need to remove all signature requests
     // for the same wallet that also involve configuration updates

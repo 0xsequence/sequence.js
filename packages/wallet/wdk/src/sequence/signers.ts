@@ -1,5 +1,5 @@
-import { Address, Bytes, Hex } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Hex } from 'ox'
 import { Shared } from './manager.js'
 import { Kind, Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 
@@ -30,6 +30,12 @@ export class Signers {
     // if (await this.devices.has(address)) {
     //   return Kinds.LocalDevice
     // }
+
+    // Some signers are known by the configuration of the wallet development kit, specifically
+    // some of the sapient signers, who always share the same address
+    if (Address.isEqual(this.shared.sequence.extensions.recovery, address)) {
+      return Kinds.Recovery
+    }
 
     // We need to use the state provider (and witness) this will tell us the kind of signer
     // NOTICE: This looks expensive, but this operation should be cached by the state provider

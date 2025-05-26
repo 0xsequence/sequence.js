@@ -7,7 +7,7 @@ import {
   Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
 
@@ -33,6 +33,10 @@ export type WalletStatus = {
   /** Pending updates in reverse chronological order (newest first) */
   pendingUpdates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>
   chainId?: bigint
+}
+
+export type WalletStatusWithOnchain = WalletStatus & {
+  onChainImageHash: Hex.Hex
 }
 
 export class Wallet {
@@ -115,14 +119,16 @@ export class Wallet {
       }
     }
   }
-
-  async getStatus(provider?: Provider.Provider): Promise<WalletStatus> {
+  async getStatus<T extends Provider.Provider | undefined = undefined>(
+    provider?: T,
+  ): Promise<T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus> {
     let isDeployed = false
     let implementation: Address.Address | undefined
     let stage: 'stage1' | 'stage2' | undefined
     let chainId: bigint | undefined
     let imageHash: Hex.Hex
     let updates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }> = []
+    let onChainImageHash: Hex.Hex | undefined
 
     if (provider) {
       // Get chain ID, deployment status, and implementation
@@ -156,10 +162,9 @@ export class Wallet {
       }
 
       // Get image hash and updates
-      let fromImageHash: Hex.Hex
       if (isDeployed && stage === 'stage2') {
         // For deployed stage2 wallets, get the image hash from the contract
-        fromImageHash = await provider.request({
+        onChainImageHash = await provider.request({
           method: 'eth_call',
           params: [{ to: this.address, data: AbiFunction.encodeData(Constants.IMAGE_HASH) }],
         })
@@ -169,12 +174,12 @@ export class Wallet {
         if (!deployInformation) {
           throw new Error(`cannot find deploy information for ${this.address}`)
         }
-        fromImageHash = deployInformation.imageHash
+        onChainImageHash = deployInformation.imageHash
       }
 
       // Get configuration updates
-      updates = await this.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
-      imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
+      updates = await this.stateProvider.getConfigurationUpdates(this.address, onChainImageHash)
+      imageHash = updates[updates.length - 1]?.imageHash ?? onChainImageHash
     } else {
       // Without a provider, we can only get information from the state provider
       const deployInformation = await this.stateProvider.getDeploy(this.address)
@@ -191,34 +196,91 @@ export class Wallet {
       throw new Error(`cannot find configuration details for ${this.address}`)
     }
 
-    return {
-      address: this.address,
-      isDeployed,
-      implementation,
-      stage,
-      configuration,
-      imageHash,
-      pendingUpdates: [...updates].reverse(),
-      chainId,
+    if (provider) {
+      return {
+        address: this.address,
+        isDeployed,
+        implementation,
+        stage,
+        configuration,
+        imageHash,
+        pendingUpdates: [...updates].reverse(),
+        chainId,
+        onChainImageHash: onChainImageHash!,
+      } as T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus
+    } else {
+      return {
+        address: this.address,
+        isDeployed,
+        implementation,
+        stage,
+        configuration,
+        imageHash,
+        pendingUpdates: [...updates].reverse(),
+        chainId,
+      } as T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus
     }
+  }
+
+  async getNonce(provider: Provider.Provider, space: bigint): Promise<bigint> {
+    const result = await provider.request({
+      method: 'eth_call',
+      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }],
+    })
+
+    if (result === '0x' || result.length === 0) {
+      return 0n
+    }
+
+    return BigInt(result)
   }
 
   async prepareTransaction(
     provider: Provider.Provider,
     calls: Payload.Call[],
-    options?: { space?: bigint },
+    options?: {
+      space?: bigint
+      noConfigUpdate?: boolean
+      unsafe?: boolean
+    },
   ): Promise<Envelope.Envelope<Payload.Calls>> {
     const space = options?.space ?? 0n
-    const status = await this.getStatus(provider)
 
-    let nonce: bigint = 0n
-    if (status.isDeployed) {
-      nonce = BigInt(
-        await provider.request({
-          method: 'eth_call',
-          params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }],
-        }),
-      )
+    // If safe mode is set, then we check that the transaction
+    // is not "dangerous", aka it does not have any delegate calls
+    // or calls to the wallet contract itself
+    if (!options?.unsafe) {
+      const lowerCaseSelf = this.address.toLowerCase()
+      for (const call of calls) {
+        if (call.delegateCall) {
+          throw new Error('delegate calls are not allowed in safe mode')
+        }
+        if (call.to.toLowerCase() === lowerCaseSelf) {
+          throw new Error('calls to the wallet contract itself are not allowed in safe mode')
+        }
+      }
+    }
+
+    const [chainId, nonce] = await Promise.all([
+      provider.request({ method: 'eth_chainId' }),
+      this.getNonce(provider, space),
+    ])
+
+    // If the latest configuration does not match the onchain configuration
+    // then we bundle the update into the transaction envelope
+    if (!options?.noConfigUpdate) {
+      const status = await this.getStatus(provider)
+      if (status.imageHash !== status.onChainImageHash) {
+        calls.push({
+          to: this.address,
+          value: 0n,
+          data: AbiFunction.encodeData(Constants.UPDATE_IMAGE_HASH, [status.imageHash]),
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        })
+      }
     }
 
     return {
@@ -228,7 +290,7 @@ export class Wallet {
         nonce,
         calls,
       },
-      ...(await this.prepareBlankEnvelope(status.chainId ?? 0n)),
+      ...(await this.prepareBlankEnvelope(BigInt(chainId))),
     }
   }
 
@@ -298,6 +360,41 @@ export class Wallet {
         ),
       }
     }
+  }
+
+  async prepareMessageSignature(
+    message: string | Hex.Hex | Payload.TypedDataToSign,
+    chainId: bigint,
+  ): Promise<Envelope.Envelope<Payload.Message>> {
+    let encodedMessage: Hex.Hex
+    if (typeof message !== 'string') {
+      encodedMessage = TypedData.encode(message)
+    } else {
+      let hexMessage = Hex.validate(message) ? message : Hex.fromString(message)
+      const messageSize = Hex.size(hexMessage)
+      encodedMessage = Hex.concat(Hex.fromString(`${`\x19Ethereum Signed Message:\n${messageSize}`}`), hexMessage)
+    }
+    return {
+      ...(await this.prepareBlankEnvelope(chainId)),
+      payload: Payload.fromMessage(encodedMessage),
+    }
+  }
+
+  async buildMessageSignature(
+    envelope: Envelope.Signed<Payload.Message>,
+    provider?: Provider.Provider,
+  ): Promise<Bytes.Bytes> {
+    const status = await this.getStatus(provider)
+    const signature = Envelope.encodeSignature(envelope)
+    if (!status.isDeployed) {
+      const deployTransaction = await this.buildDeployTransaction()
+      signature.erc6492 = { to: deployTransaction.to, data: Bytes.fromHex(deployTransaction.data) }
+    }
+    const encoded = SequenceSignature.encodeSignature({
+      ...signature,
+      suffix: status.pendingUpdates.map(({ signature }) => signature),
+    })
+    return encoded
   }
 
   private async prepareBlankEnvelope(chainId: bigint) {

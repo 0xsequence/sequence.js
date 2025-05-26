@@ -1,7 +1,39 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, TypedData } from 'ox'
-import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
-import { minBytesFor } from './utils.js'
+import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex } from 'ox'
 import { getSignPayload } from 'ox/TypedData'
+import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
+import { Attestation } from './index.js'
+import { minBytesFor } from './utils.js'
+
+export const KIND_TRANSACTIONS = 0x00
+export const KIND_MESSAGE = 0x01
+export const KIND_CONFIG_UPDATE = 0x02
+export const KIND_DIGEST = 0x03
+
+export const BEHAVIOR_IGNORE_ERROR = 0x00
+export const BEHAVIOR_REVERT_ON_ERROR = 0x01
+export const BEHAVIOR_ABORT_ON_ERROR = 0x02
+
+interface SolidityCall {
+  to: Address.Address
+  value: bigint
+  data: Hex.Hex
+  gasLimit: bigint
+  delegateCall: boolean
+  onlyFallback: boolean
+  behaviorOnError: bigint
+}
+
+export interface SolidityDecoded {
+  kind: number
+  noChainId: boolean
+  calls: SolidityCall[]
+  space: bigint
+  nonce: bigint
+  message: Hex.Hex
+  imageHash: Hex.Hex
+  digest: Hex.Hex
+  parentWallets: Address.Address[]
+}
 
 export type Call = {
   to: Address.Address
@@ -35,11 +67,29 @@ export type Digest = {
   digest: Hex.Hex
 }
 
+export type SessionImplicitAuthorize = {
+  type: 'session-implicit-authorize'
+  sessionAddress: Address.Address
+  attestation: Attestation.Attestation
+}
+
 export type Parent = {
   parentWallets?: Address.Address[]
 }
 
-export type Payload = Calls | Message | ConfigUpdate | Digest
+export type Recovery<T extends Calls | Message | ConfigUpdate | Digest> = T & {
+  recovery: true
+}
+
+export type MayRecoveryPayload = Calls | Message | ConfigUpdate | Digest
+
+export type Payload =
+  | Calls
+  | Message
+  | ConfigUpdate
+  | Digest
+  | Recovery<Calls | Message | ConfigUpdate | Digest>
+  | SessionImplicitAuthorize
 
 export type Parented = Payload & Parent
 
@@ -95,6 +145,33 @@ export function isMessage(payload: Payload): payload is Message {
 
 export function isConfigUpdate(payload: Payload): payload is ConfigUpdate {
   return payload.type === 'config-update'
+}
+
+export function isDigest(payload: Payload): payload is Digest {
+  return payload.type === 'digest'
+}
+
+export function isRecovery<T extends MayRecoveryPayload>(payload: Payload): payload is Recovery<T> {
+  if (isSessionImplicitAuthorize(payload)) {
+    return false
+  }
+
+  return (payload as Recovery<T>).recovery === true
+}
+
+export function toRecovery<T extends MayRecoveryPayload>(payload: T): Recovery<T> {
+  if (isRecovery(payload)) {
+    return payload
+  }
+
+  return {
+    ...payload,
+    recovery: true,
+  }
+}
+
+export function isSessionImplicitAuthorize(payload: Payload): payload is SessionImplicitAuthorize {
+  return payload.type === 'session-implicit-authorize'
 }
 
 export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
@@ -296,17 +373,45 @@ export function encodeSapient(
 }
 
 export function hash(wallet: Address.Address, chainId: bigint, payload: Parented): Bytes.Bytes {
+  if (isDigest(payload)) {
+    return Bytes.fromHex(payload.digest)
+  }
+  if (isSessionImplicitAuthorize(payload)) {
+    return Attestation.hash(payload.attestation)
+  }
   const typedData = toTyped(wallet, chainId, payload)
   return Bytes.fromHex(getSignPayload(typedData))
 }
 
-export function toTyped(wallet: Address.Address, chainId: bigint, payload: Parented): TypedDataToSign {
-  const domain = {
+function domainFor(
+  payload: Payload,
+  wallet: Address.Address,
+  chainId: bigint,
+): {
+  name: string
+  version: string
+  chainId: number
+  verifyingContract: Address.Address
+} {
+  if (isRecovery(payload)) {
+    return {
+      name: 'Sequence Wallet - Recovery Mode',
+      version: '1',
+      chainId: Number(chainId),
+      verifyingContract: wallet,
+    }
+  }
+
+  return {
     name: 'Sequence Wallet',
     version: '3',
     chainId: Number(chainId),
     verifyingContract: wallet,
   }
+}
+
+export function toTyped(wallet: Address.Address, chainId: bigint, payload: Parented): TypedDataToSign {
+  const domain = domainFor(payload, wallet, chainId)
 
   switch (payload.type) {
     case 'call': {
@@ -396,7 +501,11 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
     }
 
     case 'digest': {
-      throw new Error('Digest is not supported - Use message instead')
+      throw new Error('Digest does not support typed data - Use message instead')
+    }
+
+    case 'session-implicit-authorize': {
+      throw new Error('Payload does not support typed data')
     }
   }
 }
@@ -404,11 +513,11 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
 export function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']): number {
   switch (behaviorOnError) {
     case 'ignore':
-      return 0
+      return BEHAVIOR_IGNORE_ERROR
     case 'revert':
-      return 1
+      return BEHAVIOR_REVERT_ON_ERROR
     case 'abort':
-      return 2
+      return BEHAVIOR_ABORT_ON_ERROR
   }
 }
 
@@ -587,4 +696,131 @@ export function decodeBehaviorOnError(value: number): Call['behaviorOnError'] {
     default:
       throw new Error(`Invalid behaviorOnError value: ${value}`)
   }
+}
+
+function parseBehaviorOnError(behavior: number): 'ignore' | 'revert' | 'abort' {
+  switch (behavior) {
+    case BEHAVIOR_IGNORE_ERROR:
+      return 'ignore'
+    case BEHAVIOR_REVERT_ON_ERROR:
+      return 'revert'
+    case BEHAVIOR_ABORT_ON_ERROR:
+      return 'abort'
+    default:
+      throw new Error(`Unknown behavior: ${behavior}`)
+  }
+}
+
+export function fromAbiFormat(decoded: SolidityDecoded): Parented {
+  if (decoded.kind === KIND_TRANSACTIONS) {
+    return {
+      type: 'call',
+      nonce: decoded.nonce,
+      space: decoded.space,
+      calls: decoded.calls.map((call) => ({
+        to: Address.from(call.to),
+        value: call.value,
+        data: call.data as `0x${string}`,
+        gasLimit: call.gasLimit,
+        delegateCall: call.delegateCall,
+        onlyFallback: call.onlyFallback,
+        behaviorOnError: parseBehaviorOnError(Number(call.behaviorOnError)),
+      })),
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  if (decoded.kind === KIND_MESSAGE) {
+    return {
+      type: 'message',
+      message: decoded.message as `0x${string}`,
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  if (decoded.kind === KIND_CONFIG_UPDATE) {
+    return {
+      type: 'config-update',
+      imageHash: decoded.imageHash as `0x${string}`,
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  if (decoded.kind === KIND_DIGEST) {
+    return {
+      type: 'digest',
+      digest: decoded.digest as `0x${string}`,
+      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+    }
+  }
+
+  throw new Error('Not implemented')
+}
+
+export function toAbiFormat(payload: Parented): SolidityDecoded {
+  if (payload.type === 'call') {
+    return {
+      kind: KIND_TRANSACTIONS,
+      noChainId: false,
+      calls: payload.calls.map((call) => ({
+        to: call.to,
+        value: call.value,
+        data: call.data,
+        gasLimit: call.gasLimit,
+        delegateCall: call.delegateCall,
+        onlyFallback: call.onlyFallback,
+        behaviorOnError: BigInt(encodeBehaviorOnError(call.behaviorOnError)),
+      })),
+      space: payload.space,
+      nonce: payload.nonce,
+      message: '0x',
+      imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      parentWallets: payload.parentWallets ?? [],
+    }
+  }
+
+  if (payload.type === 'message') {
+    return {
+      kind: KIND_MESSAGE,
+      noChainId: false,
+      calls: [],
+      space: 0n,
+      nonce: 0n,
+      message: payload.message,
+      imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      parentWallets: payload.parentWallets ?? [],
+    }
+  }
+
+  if (payload.type === 'config-update') {
+    return {
+      kind: KIND_CONFIG_UPDATE,
+      noChainId: false,
+      calls: [],
+      space: 0n,
+      nonce: 0n,
+      message: '0x',
+      imageHash: payload.imageHash,
+      digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      parentWallets: payload.parentWallets ?? [],
+    }
+  }
+
+  if (payload.type === 'digest') {
+    return {
+      kind: KIND_DIGEST,
+      noChainId: false,
+      calls: [],
+      space: 0n,
+      nonce: 0n,
+      message: '0x',
+      imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      digest: payload.digest,
+      parentWallets: payload.parentWallets ?? [],
+    }
+  }
+
+  throw new Error('Invalid payload type')
 }

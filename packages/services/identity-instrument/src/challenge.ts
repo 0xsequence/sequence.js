@@ -1,8 +1,8 @@
 import { Bytes, Hash, Hex } from 'ox'
 import { jwtDecode } from 'jwt-decode'
-import { IdentityType, AuthMode } from './nitro/index.js'
+import { IdentityType, AuthMode } from './identity-instrument.gen.js'
 
-export interface CommitChallengeParams {
+interface CommitChallengeParams {
   authMode: AuthMode
   identityType: IdentityType
   handle?: string
@@ -10,7 +10,7 @@ export interface CommitChallengeParams {
   metadata: { [key: string]: string }
 }
 
-export interface CompleteChallengeParams {
+interface CompleteChallengeParams {
   authMode: AuthMode
   identityType: IdentityType
   verifier: string
@@ -58,6 +58,52 @@ export class IdTokenChallenge extends Challenge {
       verifier: this.handle,
       answer: this.idToken,
     }
+  }
+}
+
+export class AuthCodeChallenge extends Challenge {
+  private handle = ''
+  private signer?: string
+
+  constructor(
+    readonly issuer: string,
+    readonly audience: string,
+    readonly redirectUri: string,
+    readonly authCode: string,
+  ) {
+    super()
+    const authCodeHash = Hash.keccak256(new TextEncoder().encode(this.authCode))
+    this.handle = Hex.fromBytes(authCodeHash)
+  }
+
+  public getCommitParams(): CommitChallengeParams {
+    return {
+      authMode: AuthMode.AuthCode,
+      identityType: IdentityType.OIDC,
+      signer: this.signer,
+      handle: this.handle,
+      metadata: {
+        iss: this.issuer,
+        aud: this.audience,
+        redirect_uri: this.redirectUri,
+      },
+    }
+  }
+
+  public getCompleteParams(): CompleteChallengeParams {
+    return {
+      authMode: AuthMode.AuthCode,
+      identityType: IdentityType.OIDC,
+      verifier: this.handle,
+      answer: this.authCode,
+    }
+  }
+
+  public withSigner(signer: string): AuthCodeChallenge {
+    const challenge = new AuthCodeChallenge(this.issuer, this.audience, this.redirectUri, this.authCode)
+    challenge.handle = this.handle
+    challenge.signer = signer
+    return challenge
   }
 }
 

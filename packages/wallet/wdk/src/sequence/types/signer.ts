@@ -3,10 +3,11 @@ import { Address, Hex } from 'ox'
 export const Kinds = {
   LocalDevice: 'local-device',
   LoginPasskey: 'login-passkey',
-  LoginMnemonic: 'login-mnemonic',
+  LoginMnemonic: 'login-mnemonic', // Todo: do not name it login-mnemonic, just mnemonic
   LoginEmailOtp: 'login-email-otp',
   LoginGooglePkce: 'login-google-pkce',
-  LoginApplePkce: 'login-apple-pkce',
+  LoginApple: 'login-apple',
+  Recovery: 'recovery-extension',
   Unknown: 'unknown',
 } as const
 
@@ -20,4 +21,12 @@ export type SignerWithKind = {
   address: Address.Address
   kind?: Kind
   imageHash?: Hex.Hex
+}
+
+export type RecoverySigner = {
+  kind: Kind
+  isRecovery: true
+  address: Address.Address
+  minTimestamp: bigint
+  requiredDeltaTime: bigint
 }

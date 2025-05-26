@@ -271,7 +271,7 @@ export class Provider implements ProviderInterface {
         if (Config.isSapientSignerLeaf(leaf)) {
           const sapientSignature = signaturesOfSigners.find(
             ({ signer, imageHash }: { signer: Address.Address; imageHash?: Hex.Hex }) => {
-              return imageHash && signer === leaf.address && imageHash === leaf.imageHash
+              return imageHash && Address.isEqual(signer, leaf.address) && imageHash === leaf.imageHash
             },
           )?.signature
 
@@ -281,7 +281,7 @@ export class Provider implements ProviderInterface {
           }
         }
 
-        const signature = signaturesOfSigners.find(({ signer }) => signer === leaf.address)?.signature
+        const signature = signaturesOfSigners.find(({ signer }) => Address.isEqual(signer, leaf.address))?.signature
         if (!signature) {
           return undefined
         }
@@ -403,6 +403,18 @@ export class Provider implements ProviderInterface {
       imageHash,
       context,
     )
+  }
+
+  async getPayload(
+    opHash: Hex.Hex,
+  ): Promise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined> {
+    const data = await this.store.loadPayloadOfSubdigest(opHash)
+    return data ? { chainId: data.chainId, payload: data.content, wallet: data.wallet } : undefined
+  }
+
+  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+    const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
+    return this.store.savePayloadOfSubdigest(subdigest, { content: payload, chainId, wallet })
   }
 }
 

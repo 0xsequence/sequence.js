@@ -2,32 +2,21 @@ import { Hex, Address, Bytes } from 'ox'
 import { Handler } from './handler.js'
 import * as Db from '../../dbs/index.js'
 import { Signatures } from '../signatures.js'
-import * as Identity from '../../identity/index.js'
-import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
+import * as Identity from '@0xsequence/identity-instrument'
 import { IdentitySigner } from '../../identity/signer.js'
-import { IdentityHandler } from './identity.js'
+import { AuthCodeHandler } from './authcode.js'
 
-export class AuthCodePkceHandler extends IdentityHandler implements Handler {
-  private redirectUri: string = ''
-
+export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
   constructor(
-    public readonly signupKind: 'google-pkce' | 'apple-pkce',
-    private readonly issuer: string,
-    private readonly audience: string,
+    signupKind: 'google-pkce',
+    issuer: string,
+    audience: string,
     nitro: Identity.IdentityInstrument,
     signatures: Signatures,
-    private readonly commitments: Db.AuthCommitments,
+    commitments: Db.AuthCommitments,
     authKeys: Db.AuthKeys,
   ) {
-    super(nitro, authKeys, signatures)
-  }
-
-  public get kind() {
-    return 'login-' + this.signupKind
-  }
-
-  public setRedirectUri(redirectUri: string) {
-    this.redirectUri = redirectUri
+    super(signupKind, issuer, audience, nitro, signatures, commitments, authKeys)
   }
 
   public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
@@ -70,52 +59,12 @@ export class AuthCodePkceHandler extends IdentityHandler implements Handler {
     code: string,
   ): Promise<[IdentitySigner, { [key: string]: string }]> {
     const challenge = new Identity.AuthCodePkceChallenge('', '', '')
+    if (!commitment.verifier) {
+      throw new Error('Missing verifier in commitment')
+    }
     const signer = await this.nitroCompleteAuth(challenge.withAnswer(commitment.verifier, code))
-
     await this.commitments.del(commitment.id)
 
     return [signer, commitment.metadata]
-  }
-
-  async status(
-    address: Address.Address,
-    _imageHash: Hex.Hex | undefined,
-    request: BaseSignatureRequest,
-  ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    const signer = await this.getAuthKeySigner(address)
-    if (signer) {
-      return {
-        address,
-        handler: this,
-        status: 'ready',
-        handle: async () => {
-          await this.sign(signer, request)
-          return true
-        },
-      }
-    }
-
-    return {
-      address,
-      handler: this,
-      status: 'actionable',
-      message: 'request-redirect',
-      handle: async () => {
-        const url = await this.commitAuth(window.location.pathname, false, request.id, address.toString())
-        window.location.href = url
-        return true
-      },
-    }
-  }
-
-  private oauthUrl() {
-    switch (this.issuer) {
-      case 'https://accounts.google.com':
-        return 'https://accounts.google.com/o/oauth2/v2/auth'
-      case 'https://appleid.apple.com':
-        return 'https://appleid.apple.com/auth/authorize'
-      default:
-        throw new Error('unsupported-issuer')
-    }
   }
 }

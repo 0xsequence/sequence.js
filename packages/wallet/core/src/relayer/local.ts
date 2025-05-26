@@ -1,5 +1,5 @@
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex } from 'ox'
+import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
 import { IntentPrecondition } from './rpc/relayer.gen.js'
 import { decodePrecondition } from '../preconditions/index.js'
@@ -12,10 +12,13 @@ import {
   erc1155IsApprovedForAll,
 } from './abi.js'
 
+type GenericProviderTransactionReceipt = 'success' | 'failed' | 'unknown'
+
 export interface GenericProvider {
-  sendTransaction(args: { to: string; data: string }): Promise<string>
+  sendTransaction(args: { to: string; data: string }, chainId: bigint): Promise<string>
   getBalance(address: string): Promise<bigint>
   call(args: { to: string; data: string }): Promise<string>
+  getTransactionReceipt(txHash: string, chainId: bigint): Promise<GenericProviderTransactionReceipt>
 }
 
 export class LocalRelayer implements Relayer {
@@ -30,14 +33,32 @@ export class LocalRelayer implements Relayer {
       return undefined
     }
 
+    const trySwitchChain = async (chainId: bigint) => {
+      try {
+        await eth.request({
+          method: 'wallet_switchEthereumChain',
+          params: [
+            {
+              chainId: `0x${chainId.toString(16)}`,
+            },
+          ],
+        })
+      } catch (error) {
+        // Log and continue
+        console.error('Error switching chain', error)
+      }
+    }
+
     return new LocalRelayer({
-      sendTransaction: async (args) => {
+      sendTransaction: async (args, chainId) => {
         const accounts: string[] = await eth.request({ method: 'eth_requestAccounts' })
         const from = accounts[0]
         if (!from) {
           console.warn('No account selected, skipping local relayer')
           return undefined
         }
+
+        await trySwitchChain(chainId)
 
         const tx = await eth.request({
           method: 'eth_sendTransaction',
@@ -63,6 +84,20 @@ export class LocalRelayer implements Relayer {
           method: 'eth_call',
           params: [args, 'latest'],
         })
+      },
+      getTransactionReceipt: async (txHash, chainId) => {
+        await trySwitchChain(chainId)
+
+        const rpcReceipt = await eth.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
+        if (rpcReceipt) {
+          const receipt = TransactionReceipt.fromRpc(rpcReceipt)
+          if (receipt?.status === 'success') {
+            return 'success'
+          } else if (receipt?.status === 'reverted') {
+            return 'failed'
+          }
+        }
+        return 'unknown'
       },
     })
   }
@@ -116,10 +151,13 @@ export class LocalRelayer implements Relayer {
     if (await checkAllPreconditions()) {
       // If all preconditions are met, relay the transaction
       const hash = Payload.hash(to, chainId, this.decodeCalls(data))
-      await this.provider.sendTransaction({
-        to,
-        data,
-      })
+      await this.provider.sendTransaction(
+        {
+          to,
+          data,
+        },
+        chainId,
+      )
       return { opHash: Hex.fromBytes(hash) }
     }
 
@@ -137,10 +175,13 @@ export class LocalRelayer implements Relayer {
             isResolved = true
             clearTimeout(timeoutId)
             const hash = Payload.hash(to, chainId, this.decodeCalls(data))
-            await this.provider.sendTransaction({
-              to,
-              data,
-            })
+            await this.provider.sendTransaction(
+              {
+                to,
+                data,
+              },
+              chainId,
+            )
             resolve({ opHash: Hex.fromBytes(hash) })
           } else {
             // Schedule next check
@@ -164,8 +205,121 @@ export class LocalRelayer implements Relayer {
     })
   }
 
-  status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
-    throw new Error('Method not implemented.')
+  async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
+    const receipt = await this.provider.getTransactionReceipt(opHash, chainId)
+    if (receipt === 'unknown') {
+      // Could be pending but we don't know
+      return { status: 'unknown' }
+    }
+    return receipt === 'success'
+      ? { status: 'confirmed', transactionHash: opHash }
+      : { status: 'failed', reason: 'failed' }
+  }
+
+  async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+    const decoded = decodePrecondition(precondition)
+
+    if (!decoded) {
+      return false
+    }
+
+    switch (decoded.type()) {
+      case 'native-balance': {
+        const native = decoded as any
+        const balance = await this.provider.getBalance(native.address.toString())
+        if (native.min !== undefined && balance < native.min) {
+          return false
+        }
+        if (native.max !== undefined && balance > native.max) {
+          return false
+        }
+        return true
+      }
+
+      case 'erc20-balance': {
+        const erc20 = decoded as any
+        const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address.toString()])
+        const result = await this.provider.call({
+          to: erc20.token.toString(),
+          data,
+        })
+        const balance = BigInt(result)
+        if (erc20.min !== undefined && balance < erc20.min) {
+          return false
+        }
+        if (erc20.max !== undefined && balance > erc20.max) {
+          return false
+        }
+        return true
+      }
+
+      case 'erc20-approval': {
+        const erc20 = decoded as any
+        const data = AbiFunction.encodeData(erc20Allowance, [erc20.address.toString(), erc20.operator.toString()])
+        const result = await this.provider.call({
+          to: erc20.token.toString(),
+          data,
+        })
+        const allowance = BigInt(result)
+        return allowance >= erc20.min
+      }
+
+      case 'erc721-ownership': {
+        const erc721 = decoded as any
+        const data = AbiFunction.encodeData(erc721OwnerOf, [erc721.tokenId])
+        const result = await this.provider.call({
+          to: erc721.token.toString(),
+          data,
+        })
+        const owner = '0x' + result.slice(26)
+        const isOwner = owner.toLowerCase() === erc721.address.toString().toLowerCase()
+        return erc721.owned === undefined ? isOwner : erc721.owned === isOwner
+      }
+
+      case 'erc721-approval': {
+        const erc721 = decoded as any
+        const data = AbiFunction.encodeData(erc721GetApproved, [erc721.tokenId])
+        const result = await this.provider.call({
+          to: erc721.token.toString(),
+          data,
+        })
+        const approved = '0x' + result.slice(26)
+        return approved.toLowerCase() === erc721.operator.toString().toLowerCase()
+      }
+
+      case 'erc1155-balance': {
+        const erc1155 = decoded as any
+        const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address.toString(), erc1155.tokenId])
+        const result = await this.provider.call({
+          to: erc1155.token.toString(),
+          data,
+        })
+        const balance = BigInt(result)
+        if (erc1155.min !== undefined && balance < erc1155.min) {
+          return false
+        }
+        if (erc1155.max !== undefined && balance > erc1155.max) {
+          return false
+        }
+        return true
+      }
+
+      case 'erc1155-approval': {
+        const erc1155 = decoded as any
+        const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [
+          erc1155.address.toString(),
+          erc1155.operator.toString(),
+        ])
+        const result = await this.provider.call({
+          to: erc1155.token.toString(),
+          data,
+        })
+        return BigInt(result) === 1n
+      }
+
+      default:
+        return false
+    }
   }
 
   async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {

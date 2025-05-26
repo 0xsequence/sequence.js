@@ -1,12 +1,32 @@
 import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
 import { Signers, State } from '@0xsequence/wallet-core'
+import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
 import { AuthKey } from '../dbs/auth-keys.js'
-import { IdentityInstrument, KeyType } from './nitro/index.js'
 import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
+import * as Identity from '@0xsequence/identity-instrument'
+
+export function toIdentityAuthKey(authKey: AuthKey): Identity.AuthKey {
+  return {
+    address: authKey.address,
+    keyType: Identity.KeyType.P256R1,
+    signer: authKey.identitySigner,
+    async sign(digest: Bytes.Bytes) {
+      const authKeySignature = await window.crypto.subtle.sign(
+        {
+          name: 'ECDSA',
+          hash: 'SHA-256',
+        },
+        authKey.privateKey,
+        digest,
+      )
+      return Hex.fromBytes(new Uint8Array(authKeySignature))
+    },
+  }
+}
 
 export class IdentitySigner implements Signers.Signer {
   constructor(
-    readonly nitro: IdentityInstrument,
+    readonly identityInstrument: IdentityInstrument,
     readonly authKey: AuthKey,
   ) {}
 
@@ -14,7 +34,7 @@ export class IdentitySigner implements Signers.Signer {
     if (!Address.validate(this.authKey.identitySigner)) {
       throw new Error('No signer address found')
     }
-    return this.authKey.identitySigner as `0x${string}`
+    return Address.checksum(this.authKey.identitySigner)
   }
 
   async sign(
@@ -27,26 +47,8 @@ export class IdentitySigner implements Signers.Signer {
   }
 
   async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeafHash> {
-    const authKeySignature = await window.crypto.subtle.sign(
-      {
-        name: 'ECDSA',
-        hash: 'SHA-256',
-      },
-      this.authKey.privateKey,
-      digest,
-    )
-    const params = {
-      signer: this.address,
-      digest: Hex.fromBytes(digest),
-      authKey: {
-        publicKey: this.authKey.address,
-        keyType: KeyType.P256R1,
-      },
-      signature: Hex.fromBytes(new Uint8Array(authKeySignature)),
-    }
-    const res = await this.nitro.sign({ params })
-    Hex.assert(res.signature)
-    const sig = Signature.fromHex(res.signature)
+    const sigHex = await this.identityInstrument.sign(toIdentityAuthKey(this.authKey), digest)
+    const sig = Signature.fromHex(sigHex)
     return {
       type: 'hash',
       ...sig,

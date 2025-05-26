@@ -1,11 +1,11 @@
 import { Hex, Address } from 'ox'
-import { Handler } from './handler.js'
 import { Signers } from '@0xsequence/wallet-core'
+import * as Identity from '@0xsequence/identity-instrument'
+import { Handler } from './handler.js'
 import * as Db from '../../dbs/index.js'
 import { Signatures } from '../signatures.js'
 import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
 import { Kinds } from '../types/signer.js'
-import * as Identity from '../../identity/index.js'
 import { IdentityHandler } from './identity.js'
 
 type RespondFn = (otp: string) => Promise<void>
@@ -16,7 +16,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
   private onPromptOtp: undefined | ((recipient: string, respond: RespondFn) => Promise<void>)
 
   constructor(nitro: Identity.IdentityInstrument, signatures: Signatures, authKeys: Db.AuthKeys) {
-    super(nitro, authKeys, signatures)
+    super(nitro, authKeys, signatures, Identity.IdentityType.Email)
   }
 
   public registerUI(onPromptOtp: (recipient: string, respond: RespondFn) => Promise<void>) {
@@ -36,7 +36,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
       throw new Error('otp-handler-ui-not-registered')
     }
 
-    const challenge = Identity.OtpChallenge.fromRecipient(Identity.IdentityType.Email, email)
+    const challenge = Identity.OtpChallenge.fromRecipient(this.identityType, email)
     const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
 
     return new Promise(async (resolve, reject) => {
@@ -87,7 +87,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
       message: 'request-otp',
       handle: () =>
         new Promise(async (resolve, reject) => {
-          const challenge = Identity.OtpChallenge.fromSigner(Identity.IdentityType.Email, address)
+          const challenge = Identity.OtpChallenge.fromSigner(this.identityType, address)
           const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
 
           const respond = async (otp: string) => {
