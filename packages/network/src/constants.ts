@@ -139,6 +139,9 @@ export enum ChainId {
 
   //SOMNIA_TESTNET
   SOMNIA_TESTNET = 50312,
+
+  // INCENTIV TESTNET
+  INCENTIV_TESTNET = 11690,
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1095,7 +1098,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-
   [ChainId.SOMNIA_TESTNET]: {
     chainId: ChainId.SOMNIA_TESTNET,
     type: NetworkType.TESTNET,
@@ -1112,6 +1114,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'STT',
       decimals: 18
     }
+  },
+  [ChainId.INCENTIV_TESTNET]: {
+    chainId: ChainId.INCENTIV_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'incentiv-testnet',
+    title: 'Incentiv Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Incentiv Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.incentiv.net/',
+    },
+    nativeToken: {
+      symbol: 'CENT',
+      name: 'CENT',
+      decimals: 18,
+    },
   }
 }
 
