@@ -41,7 +41,7 @@ createRoot(document.getElementById('root')!).render(
                       ? 'http://localhost:8080/https://dev-api.sequence.app'
                       : import.meta.env.VITE_ENV === 'dev'
                         ? import.meta.env.VITE_USE_V3_API === 'true'
-                          ? 'https://dev-api-v3.sequence-dev.app/rpc'
+                          ? 'https://v3-api.sequence.app'
                           : 'https://dev-api.sequence.app'
                         : 'https://api.sequence.app',
               },

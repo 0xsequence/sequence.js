@@ -55,30 +55,32 @@ export const useRelayers = () => {
         const baseUrl =
           import.meta.env.VITE_ENV === 'cors-anywhere'
             ? 'http://localhost:8080/https://'
-            : import.meta.env.VITE_ENV === 'dev'
-              ? 'https://dev-'
-              : 'https://'
+            : import.meta.env.VITE_ENV === 'dev' && import.meta.env.VITE_USE_V3_RELAYERS === 'true'
+              ? 'https://v3-'
+              : import.meta.env.VITE_ENV === 'dev'
+                ? 'https://dev-relayer.sequence.app'
+                : 'https://'
 
         // Chain-specific relayer endpoints
         if (import.meta.env.VITE_ENV === 'dev' && import.meta.env.VITE_USE_V3_RELAYERS === 'true') {
           if (chainId === 42161) {
             // Arbitrum
-            relayerUrl = 'https://dev-arbitrum-relayer-v3.sequence-dev.app'
+            relayerUrl = 'https://v3-arbitrum-relayer.sequence.app'
           } else if (chainId === 8453) {
             // Base
-            relayerUrl = 'https://dev-base-relayer-v3.sequence-dev.app'
+            relayerUrl = 'https://v3-base-relayer.sequence.app'
           } else if (chainId === 10) {
             // Optimism
-            relayerUrl = 'https://dev-optimism-relayer-v3.sequence-dev.app'
+            relayerUrl = 'https://v3-optimism-relayer.sequence.app'
           } else if (chainId === 137) {
             // Polygon
-            relayerUrl = 'https://dev-polygon-relayer-v3.sequence-dev.app'
+            relayerUrl = 'https://v3-polygon-relayer.sequence.app'
           } else if (chainId === 1) {
             // Mainnet
-            relayerUrl = 'https://dev-mainnet-relayer-v3.sequence-dev.app'
+            relayerUrl = 'https://v3-mainnet-relayer.sequence.app'
           } else {
             // Fallback to general dev relayer for other chains if V3 is specified but chain not V3-supported
-            relayerUrl = `${baseUrl}relayer.sequence.app`
+            relayerUrl = `${baseUrl}${getChain(chainId).name}-relayer.sequence.app`
           }
         } else {
           if (chainId === 42161) {
