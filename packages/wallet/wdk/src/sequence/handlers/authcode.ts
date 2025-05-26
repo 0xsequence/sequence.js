@@ -75,12 +75,10 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    // Normalize address
-    const normalizedAddress = Address.checksum(address)
-    const signer = await this.getAuthKeySigner(normalizedAddress)
+    const signer = await this.getAuthKeySigner(address)
     if (signer) {
       return {
-        address: normalizedAddress,
+        address,
         handler: this,
         status: 'ready',
         handle: async () => {
@@ -91,12 +89,12 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     }
 
     return {
-      address: normalizedAddress,
+      address,
       handler: this,
       status: 'actionable',
       message: 'request-redirect',
       handle: async () => {
-        const url = await this.commitAuth(window.location.pathname, false, request.id, normalizedAddress)
+        const url = await this.commitAuth(window.location.pathname, false, request.id, address)
         window.location.href = url
         return true
       },
