@@ -404,24 +404,27 @@ describe('AnyPay Preconditions', () => {
 
     // Verify the transaction was sent
     if (!CAN_RUN_LIVE) {
-      expect((provider as any).sendTransaction).toHaveBeenCalledWith({
-        to: configAddress,
-        data: Bytes.toHex(
-          Payload.encode(
-            Payload.fromCall(0n, 0n, [
-              {
-                to: ERC20_IMPLICIT_MINT_CONTRACT,
-                value: 0n,
-                data: '0x' as Hex.Hex,
-                gasLimit: 0n,
-                delegateCall: false,
-                onlyFallback: false,
-                behaviorOnError: 'ignore',
-              },
-            ]),
+      expect((provider as any).sendTransaction).toHaveBeenCalledWith(
+        {
+          to: configAddress,
+          data: Bytes.toHex(
+            Payload.encode(
+              Payload.fromCall(0n, 0n, [
+                {
+                  to: ERC20_IMPLICIT_MINT_CONTRACT,
+                  value: 0n,
+                  data: '0x' as Hex.Hex,
+                  gasLimit: 0n,
+                  delegateCall: false,
+                  onlyFallback: false,
+                  behaviorOnError: 'ignore',
+                },
+              ]),
+            ),
           ),
-        ),
-      })
+        },
+        1n,
+      )
     }
   })
 
