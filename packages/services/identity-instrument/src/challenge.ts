@@ -1,12 +1,15 @@
 import { Bytes, Hash, Hex } from 'ox'
 import { jwtDecode } from 'jwt-decode'
-import { IdentityType, AuthMode } from './identity-instrument.gen.js'
+import { IdentityType, AuthMode, KeyType } from './identity-instrument.gen.js'
 
 interface CommitChallengeParams {
   authMode: AuthMode
   identityType: IdentityType
   handle?: string
-  signer?: string
+  signer?: {
+    address: string
+    keyType: KeyType
+  }
   metadata: { [key: string]: string }
 }
 
@@ -80,7 +83,7 @@ export class AuthCodeChallenge extends Challenge {
     return {
       authMode: AuthMode.AuthCode,
       identityType: IdentityType.OIDC,
-      signer: this.signer,
+      signer: this.signer ? { address: this.signer, keyType: KeyType.Secp256k1 } : undefined,
       handle: this.handle,
       metadata: {
         iss: this.issuer,
@@ -124,7 +127,7 @@ export class AuthCodePkceChallenge extends Challenge {
     return {
       authMode: AuthMode.AuthCodePKCE,
       identityType: IdentityType.OIDC,
-      signer: this.signer,
+      signer: this.signer ? { address: this.signer, keyType: KeyType.Secp256k1 } : undefined,
       metadata: {
         iss: this.issuer,
         aud: this.audience,
@@ -192,7 +195,7 @@ export class OtpChallenge extends Challenge {
       authMode: AuthMode.OTP,
       identityType: this.identityType,
       handle: this.recipient,
-      signer: this.signer,
+      signer: this.signer ? { address: this.signer, keyType: KeyType.Secp256k1 } : undefined,
       metadata: {},
     }
   }
