@@ -42,7 +42,6 @@ You can use this file as a reference to look up the correct network name slug a 
 | Avalanche Testnet | 43113 | avalanche-testnet |
 | Avalanche | 43114 | avalanche |
 | Somnia Testnet | 50312 | somnia-testnet |
-| Frequency Testnet | 53716 | frequency-testnet |
 | LAOS Sigma Testnet | 62850 | laos-sigma-testnet |
 | Polygon Amoy | 80002 | amoy |
 | Blast | 81457 | blast |
