@@ -2683,6 +2683,23 @@ export const HomeIndexRoute = () => {
                             <span className="font-mono text-yellow-300 break-all">{String(monitorStatus.txHash)}</span>
                           </Text>
                         )}
+                        {monitorStatus?.status === 'confirmed' &&
+                          monitorStatus &&
+                          'txHash' in monitorStatus &&
+                          typeof monitorStatus.txHash === 'string' &&
+                          monitorStatus.txHash && (
+                            <Text variant="small" color="secondary">
+                              <strong className="text-blue-300">Explorer: </strong>
+                              <a
+                                href={getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash) || '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-mono text-purple-400 hover:underline break-all"
+                              >
+                                {getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash)}
+                              </a>
+                            </Text>
+                          )}
                         {monitorStatus?.status === 'failed' && monitorStatus && 'reason' in monitorStatus && (
                           <Text variant="small" color="negative">
                             <strong className="text-red-300">Error: </strong>
