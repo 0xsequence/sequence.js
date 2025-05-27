@@ -1,7 +1,7 @@
 import { http, createConfig } from 'wagmi'
 import * as chains from 'viem/chains'
 import { injected, metaMask } from 'wagmi/connectors'
-import { sequenceWallet } from '@0xsequence/wagmi-connector'
+// import { sequenceWallet } from '@0xsequence/wagmi-connector'
 
 const projectAccessKey = import.meta.env.VITE_PROJECT_ACCESS_KEY
 
@@ -13,13 +13,13 @@ export const config = createConfig({
   // @ts-expect-error
   chains: Object.values(chains),
   connectors: [
-    sequenceWallet({
-      connectOptions: {
-        app: 'Demo Anypay',
-        projectAccessKey: projectAccessKey,
-      },
-      defaultNetwork: chains.mainnet.id,
-    }),
+    // sequenceWallet({
+    //   connectOptions: {
+    //     app: 'Demo Anypay',
+    //     projectAccessKey: projectAccessKey,
+    //   },
+    //   defaultNetwork: chains.mainnet.id,
+    // }),
     injected(),
     metaMask(),
   ],
