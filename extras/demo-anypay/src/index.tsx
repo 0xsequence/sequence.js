@@ -27,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
               projectAccessKey: import.meta.env.VITE_PROJECT_ACCESS_KEY,
               env: {
                 indexerUrl: indexerUrl,
+                indexerGatewayUrl: indexerUrl,
                 // indexerUrl: 'https://dev-indexer.sequence.app',
                 // indexerUrl:
                 //   import.meta.env.VITE_ENV === 'local'
