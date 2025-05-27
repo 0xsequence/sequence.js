@@ -152,7 +152,7 @@ export const HomeIndexRoute = () => {
   const [lifiInfos, setLifiInfos] = useState<GetIntentCallsPayloadsReturn['lifiInfos'] | null>(null)
   const [txnHash, setTxnHash] = useState<Hex | undefined>()
   const [committedIntentAddress, setCommittedIntentAddress] = useState<string | null>(null)
-  const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
+  // const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
   const [verificationStatus, setVerificationStatus] = useState<{
     success: boolean
     receivedAddress?: string
@@ -288,46 +288,46 @@ export const HomeIndexRoute = () => {
     })
   }
 
-  const checkPreconditionStatuses = useCallback(async () => {
-    if (!intentPreconditions) return
+  // const checkPreconditionStatuses = useCallback(async () => {
+  //   if (!intentPreconditions) return
 
-    const statuses = await Promise.all(
-      intentPreconditions.map(async (precondition) => {
-        try {
-          const chainIdString = precondition.chainId
-          if (!chainIdString) {
-            console.warn('Precondition missing chainId:', precondition)
-            return false
-          }
-          const chainId = parseInt(chainIdString)
-          if (isNaN(chainId) || chainId <= 0) {
-            console.warn('Precondition has invalid chainId:', chainIdString, precondition)
-            return false
-          }
+  //   const statuses = await Promise.all(
+  //     intentPreconditions.map(async (precondition) => {
+  //       try {
+  //         const chainIdString = precondition.chainId
+  //         if (!chainIdString) {
+  //           console.warn('Precondition missing chainId:', precondition)
+  //           return false
+  //         }
+  //         const chainId = parseInt(chainIdString)
+  //         if (isNaN(chainId) || chainId <= 0) {
+  //           console.warn('Precondition has invalid chainId:', chainIdString, precondition)
+  //           return false
+  //         }
 
-          const chainRelayer = getRelayer(chainId)
-          if (!chainRelayer) {
-            console.error(`No relayer found for chainId: ${chainId}`)
-            return false
-          }
+  //         const chainRelayer = getRelayer(chainId)
+  //         if (!chainRelayer) {
+  //           console.error(`No relayer found for chainId: ${chainId}`)
+  //           return false
+  //         }
 
-          return await chainRelayer.checkPrecondition(precondition)
-        } catch (error) {
-          console.error('Error checking precondition:', error, 'Precondition:', precondition)
-          return false
-        }
-      }),
-    )
+  //         return await chainRelayer.checkPrecondition(precondition)
+  //       } catch (error) {
+  //         console.error('Error checking precondition:', error, 'Precondition:', precondition)
+  //         return false
+  //       }
+  //     }),
+  //   )
 
-    setPreconditionStatuses(statuses)
-  }, [intentPreconditions, getRelayer])
+  //   setPreconditionStatuses(statuses)
+  // }, [intentPreconditions, getRelayer])
 
-  useEffect(() => {
-    // TODO: Remove this once we have a way to check precondition statuses
-    if (false) {
-      checkPreconditionStatuses()
-    }
-  }, [intentPreconditions, checkPreconditionStatuses])
+  // useEffect(() => {
+  //   // TODO: Remove this once we have a way to check precondition statuses
+  //   if (false) {
+  //     checkPreconditionStatuses()
+  //   }
+  // }, [intentPreconditions, checkPreconditionStatuses])
 
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
