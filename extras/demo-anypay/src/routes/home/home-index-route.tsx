@@ -161,7 +161,7 @@ export const HomeIndexRoute = () => {
   const [originCallStatus, setOriginCallStatus] = useState<{
     txnHash?: string
     status?: string
-    revertReason?: string
+    revertReason?: string | null
     gasUsed?: number
     effectiveGasPrice?: string
   } | null>(null)
@@ -2293,7 +2293,7 @@ export const HomeIndexRoute = () => {
                     {' '}
                     {/* Added space-y-2 for link items */}
                     <Text variant="small" color="secondary" className="mb-1 text-blue-300 font-semibold">
-                      Open in explorer:
+                      Open in explorer (Calculated Intent Address):
                     </Text>
                     <div className="flex flex-col space-y-1">
                       {[...new Set(metaTxns.map((tx) => tx.chainId))]
@@ -2309,7 +2309,7 @@ export const HomeIndexRoute = () => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title={`Open ${originCallParams.to} on ${chainInfo?.name || 'explorer'}`}
-                                className="text-gray-300 flex items-center space-x-1 hover:underline text-xs"
+                                className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
                               >
                                 <NetworkImage chainId={chainId} size="xs" className="w-3 h-3" />
                                 <span>{explorerUrl}</span>
@@ -2317,6 +2317,66 @@ export const HomeIndexRoute = () => {
                             </div>
                           )
                         })}
+                    </div>
+                  </div>
+                )}
+                {intentCallsPayloads && createIntentMutation.variables && (
+                  <div className="mt-2 pt-2 border-t border-gray-700/50 space-y-2">
+                    <Text variant="small" color="secondary" className="mb-1 text-blue-300 font-semibold">
+                      Open in Explorer: (Final Destination Address)
+                    </Text>
+                    <div className="flex flex-col space-y-1">
+                      {(() => {
+                        const currentAction = createIntentMutation.variables
+                        let finalDestAddress: string | undefined = undefined
+                        let finalDestChainId: number | undefined = undefined
+                        let labelPrefix = 'Final Destination Address'
+
+                        if (currentAction === 'pay') {
+                          finalDestAddress = RECIPIENT_ADDRESS
+                          finalDestChainId = BASE_USDC_DESTINATION_CHAIN_ID
+                          labelPrefix = 'Final Donation Address'
+                        } else if (currentAction === 'mock_interaction') {
+                          finalDestAddress = MOCK_CONTRACT_ADDRESS
+                          finalDestChainId = MOCK_CHAIN_ID
+                          labelPrefix = 'Mock Target Address'
+                        } else if (currentAction === 'custom_call') {
+                          finalDestAddress = customCallData.to
+                          finalDestChainId = customCallData.chainId ? parseInt(customCallData.chainId) : undefined
+                          labelPrefix = 'Custom Call Target Address'
+                        }
+
+                        if (finalDestAddress && finalDestChainId !== undefined) {
+                          const explorerUrl = getExplorerUrl(finalDestChainId, finalDestAddress)
+                          const chainInfo = getChainInfo(finalDestChainId)
+                          if (!explorerUrl)
+                            return (
+                              <Text variant="small" color="secondary">
+                                Explorer URL not available for this destination.
+                              </Text>
+                            )
+
+                          return (
+                            <div className="bg-gray-800/70 p-2 rounded-md">
+                              <a
+                                href={explorerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`View ${labelPrefix.toLowerCase()} ${finalDestAddress} on ${chainInfo?.name || 'explorer'}`}
+                                className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
+                              >
+                                <NetworkImage chainId={finalDestChainId} size="xs" className="w-3 h-3" />
+                                <span>{explorerUrl}</span>
+                              </a>
+                            </div>
+                          )
+                        }
+                        return (
+                          <Text variant="small" color="secondary">
+                            Final destination details not available for this action.
+                          </Text>
+                        )
+                      })()}
                     </div>
                   </div>
                 )}
