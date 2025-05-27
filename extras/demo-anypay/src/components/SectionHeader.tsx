@@ -11,6 +11,8 @@ interface SectionHeaderProps {
   className?: string // For the root div
   titleContainerClassName?: string // For the div housing title & pill/chevron
   contentContainerClassName?: string // For the div housing children content
+  actionSubtitle?: ReactNode
+  subtitle?: ReactNode
 }
 
 export const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -23,6 +25,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   className = '',
   titleContainerClassName = '', // Default to empty, caller must provide for padding/bg
   contentContainerClassName = '', // Default to empty, caller must provide for padding/bg
+  actionSubtitle,
+  subtitle,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen && isCollapsible)
 
@@ -59,8 +63,17 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   return (
     <div className={rootClasses}>
       <div onClick={handleHeaderClick} className={titleEffectiveClasses}>
-        {/* Allow title to be a simple string or a more complex ReactNode */}
-        {typeof title === 'string' ? <div className="flex items-center text-white font-semibold">{title}</div> : title}
+        <div className="flex-grow">
+          {typeof title === 'string' ? (
+            <div className="flex items-center text-white font-semibold">{title}</div>
+          ) : (
+            title
+          )}
+          {actionSubtitle && (
+            <div className="text-sm text-gray-300 mt-2 ml-1.5 flex items-center">{actionSubtitle}</div>
+          )}
+          {subtitle && <div className="text-sm text-gray-400 mt-1 ml-1.5 flex items-center">{subtitle}</div>}
+        </div>
         {statusPill ? (
           statusPill
         ) : isCollapsible ? (

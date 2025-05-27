@@ -1591,6 +1591,183 @@ export const HomeIndexRoute = () => {
                   <h3 className="text-xl font-semibold text-white">Intent Quote</h3>
                 </div>
               }
+              actionSubtitle={(() => {
+                let primarySubtitleNode: React.ReactNode = null
+                const currentAction = createIntentMutation.variables
+
+                if (intentCallsPayloads && currentAction && selectedToken) {
+                  if (currentAction === 'pay') {
+                    const baseChainInfo = getChainInfo(BASE_USDC_DESTINATION_CHAIN_ID)
+                    const baseChainName = baseChainInfo?.name || `Chain ID ${BASE_USDC_DESTINATION_CHAIN_ID}`
+                    primarySubtitleNode = (
+                      <>
+                        <Zap className="h-3.5 w-3.5 mr-1.5 text-purple-400 flex-shrink-0" />
+                        Intent: Send <strong className="text-gray-200 mx-1">{formatUnits(AMOUNT, 6)} USDC</strong>
+                        to{' '}
+                        <strong
+                          className="text-gray-200 font-mono mx-1 truncate max-w-[100px]"
+                          title={RECIPIENT_ADDRESS}
+                        >
+                          {RECIPIENT_ADDRESS}
+                        </strong>
+                        on <strong className="text-gray-200 mx-1">{baseChainName}</strong>
+                      </>
+                    )
+                  } else if (currentAction === 'mock_interaction') {
+                    const mockChainInfo = getChainInfo(MOCK_CHAIN_ID)
+                    const mockChainName = mockChainInfo?.name || `Chain ID ${MOCK_CHAIN_ID}`
+                    primarySubtitleNode = (
+                      <>
+                        <ShieldCheck className="h-3.5 w-3.5 mr-1.5 text-yellow-400 flex-shrink-0" />
+                        Intent: Target{' '}
+                        <strong
+                          className="text-gray-200 font-mono mx-1 truncate max-w-[70px]"
+                          title={MOCK_CONTRACT_ADDRESS}
+                        >
+                          {MOCK_CONTRACT_ADDRESS}
+                        </strong>
+                        on <strong className="text-gray-200 mx-1">{mockChainName}</strong>.
+                        {(MOCK_TOKEN_ADDRESS || MOCK_TOKEN_AMOUNT) && (
+                          <span className="ml-1">
+                            (Token:{' '}
+                            <strong
+                              className="text-gray-200 font-mono mx-1 truncate max-w-[70px]"
+                              title={MOCK_TOKEN_ADDRESS || 'N/A'}
+                            >
+                              {MOCK_TOKEN_ADDRESS || 'N/A'}
+                            </strong>
+                            , Amount: <strong className="text-gray-200 mx-1">{MOCK_TOKEN_AMOUNT || 'N/A'} wei</strong>)
+                          </span>
+                        )}
+                      </>
+                    )
+                  } else if (currentAction === 'custom_call') {
+                    const destChainId = parseInt(customCallData.chainId)
+                    const destChainInfo = getChainInfo(destChainId)
+                    const destChainName = destChainInfo?.name || `Chain ID ${destChainId}`
+                    const formattedVal = formatUnits(
+                      BigInt(customCallData.value || '0'),
+                      destChainInfo?.nativeCurrency.decimals || 18,
+                    )
+                    const nativeSymbol = destChainInfo?.nativeCurrency.symbol || 'ETH'
+
+                    primarySubtitleNode = (
+                      <>
+                        <PenSquare className="h-3.5 w-3.5 mr-1.5 text-green-400 flex-shrink-0" />
+                        Intent: Call{' '}
+                        <strong
+                          className="text-gray-200 font-mono mx-1 truncate max-w-[70px]"
+                          title={customCallData.to}
+                        >
+                          {customCallData.to}
+                        </strong>
+                        on <strong className="text-gray-200 mx-1">{destChainName}</strong>.
+                        {BigInt(customCallData.value || '0') > 0 && (
+                          <span className="ml-1">
+                            (Value:{' '}
+                            <strong className="text-gray-200 mx-1">
+                              {formattedVal} {nativeSymbol}
+                            </strong>
+                            )
+                          </span>
+                        )}
+                      </>
+                    )
+                  }
+                }
+                return primarySubtitleNode
+              })()}
+              subtitle={(() => {
+                let routeSubtitleNode: React.ReactNode = null
+                const currentAction = createIntentMutation.variables
+
+                if (
+                  intentCallsPayloads &&
+                  currentAction &&
+                  selectedToken &&
+                  account.address &&
+                  lifiInfos &&
+                  intentPreconditions
+                ) {
+                  const tokenName = selectedToken.contractInfo?.symbol || selectedToken.contractInfo?.name || 'Token'
+                  const originChainInfo = getChainInfo(selectedToken.chainId)
+                  const originChainName = originChainInfo?.name || `Chain ID ${selectedToken.chainId}`
+                  let amountToSendFormatted = '[Amount Error]'
+
+                  try {
+                    const isNative = selectedToken.contractAddress === zeroAddress
+                    let amountBigInt: bigint | undefined = undefined
+                    let decimals: number | undefined = undefined
+
+                    if (isNative) {
+                      const nativePrecondition = intentPreconditions.find(
+                        (p) =>
+                          (p.type === 'transfer-native' || p.type === 'native-balance') &&
+                          p.chainId === selectedToken.chainId.toString(),
+                      )
+                      const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
+                      if (nativeMinAmount !== undefined) {
+                        amountBigInt = BigInt(nativeMinAmount)
+                        decimals = selectedToken.contractInfo?.decimals || 18
+                      }
+                    } else {
+                      const erc20Precondition = intentPreconditions.find(
+                        (p) =>
+                          p.type === 'erc20-balance' &&
+                          p.chainId === selectedToken.chainId.toString() &&
+                          p.data?.token &&
+                          isAddressEqual(Address.from(p.data.token), Address.from(selectedToken.contractAddress)),
+                      )
+                      const erc20MinAmount = erc20Precondition?.data?.min
+                      if (erc20MinAmount !== undefined) {
+                        amountBigInt = BigInt(erc20MinAmount)
+                        decimals = selectedToken.contractInfo?.decimals
+                      }
+                    }
+
+                    if (amountBigInt !== undefined && decimals !== undefined) {
+                      amountToSendFormatted = formatUnits(amountBigInt, decimals)
+                    } else {
+                      console.warn('Could not determine amount to send from preconditions for subtitle.')
+                      amountToSendFormatted = '[Unknown Amount]'
+                    }
+
+                    const calculatedIntentAddress = calculateIntentAddress(
+                      account.address,
+                      intentCallsPayloads,
+                      lifiInfos,
+                    ).toString()
+
+                    routeSubtitleNode = (
+                      <>
+                        <Info className="h-3.5 w-3.5 mr-1.5 text-sky-400 flex-shrink-0" />
+                        <span>
+                          Via route: Sending{' '}
+                          <strong className="text-gray-200 mx-1">
+                            {amountToSendFormatted} {tokenName}
+                          </strong>
+                          on <strong className="text-gray-200 mx-1">{originChainName}</strong> to intent addr:
+                          <strong
+                            className="text-gray-200 font-mono mx-1 truncate max-w-[70px] sm:max-w-[100px] inline-block align-bottom"
+                            title={calculatedIntentAddress}
+                          >
+                            {calculatedIntentAddress}
+                          </strong>
+                        </span>
+                      </>
+                    )
+                  } catch (routeError) {
+                    console.error('Error processing route subtitle data:', routeError)
+                    routeSubtitleNode = (
+                      <span className="flex items-center text-red-400">
+                        <AlertTriangle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                        Error generating route summary.
+                      </span>
+                    )
+                  }
+                }
+                return routeSubtitleNode
+              })()}
             >
               <div className="text-xs text-gray-300 bg-gray-900/90 p-4 mt-2 rounded-lg border-t border-gray-700/70 overflow-x-auto space-y-2 shadow-inner animate-fadeIn">
                 <Text
