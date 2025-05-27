@@ -2322,7 +2322,7 @@ export const HomeIndexRoute = () => {
               </div>
             </div>
             {/* Preconditions Status */}
-            <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
+            {/* <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
                 variant="medium"
                 color="primary"
@@ -2357,7 +2357,7 @@ export const HomeIndexRoute = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
             {/* Meta Transactions Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
