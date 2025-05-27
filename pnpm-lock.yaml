@@ -151,7 +151,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^3.1.2
-        version: 3.1.2(@types/node@22.13.9)(happy-dom@13.10.1)
+        version: 3.1.2(@types/node@22.13.9)(happy-dom@15.10.2)
 
   packages/services/indexer:
     devDependencies:
@@ -242,7 +242,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^3.1.2
-        version: 3.1.2(@types/node@22.13.9)(happy-dom@13.10.1)
+        version: 3.1.2(@types/node@22.13.9)(happy-dom@15.10.2)
 
   packages/wallet/primitives:
     dependencies:
@@ -334,14 +334,14 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       happy-dom:
-        specifier: ^13.2.0
-        version: 13.10.1
+        specifier: ^15.10.2
+        version: 15.10.2
       typescript:
         specifier: ^5.7.3
         version: 5.8.3
       vitest:
         specifier: ^3.1.2
-        version: 3.1.2(@types/node@22.13.9)(happy-dom@13.10.1)
+        version: 3.1.2(@types/node@22.13.9)(happy-dom@15.10.2)
 
   repo/eslint-config:
     devDependencies:
@@ -1920,9 +1920,9 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  happy-dom@13.10.1:
-    resolution: {integrity: sha512-9GZLEFvQL5EgfJX2zcBgu1nsPUn98JF/EiJnSfQbdxI6YEQGqpd09lXXxOmYonRBIEFz9JlGCOiPflDzgS1p8w==}
-    engines: {node: '>=16.0.0'}
+  happy-dom@15.10.2:
+    resolution: {integrity: sha512-NbA5XrSovenJIIcfixCREX3ZnV7yHP4phhbfuxxf4CPn+LZpz/jIM9EqJ2DrPwgVDSMoAKH3pZwQvkbsSiCrUw==}
+    engines: {node: '>=18.0.0'}
 
   has-bigints@1.0.2:
     resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
@@ -5045,7 +5045,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  happy-dom@13.10.1:
+  happy-dom@15.10.2:
     dependencies:
       entities: 4.5.0
       webidl-conversions: 7.0.0
@@ -6405,7 +6405,7 @@ snapshots:
       '@types/node': 22.13.9
       fsevents: 2.3.3
 
-  vitest@3.1.2(@types/node@22.13.9)(happy-dom@13.10.1):
+  vitest@3.1.2(@types/node@22.13.9)(happy-dom@15.10.2):
     dependencies:
       '@vitest/expect': 3.1.2
       '@vitest/mocker': 3.1.2(vite@6.3.2(@types/node@22.13.9))
@@ -6430,7 +6430,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.13.9
-      happy-dom: 13.10.1
+      happy-dom: 15.10.2
     transitivePeerDependencies:
       - jiti
       - less
