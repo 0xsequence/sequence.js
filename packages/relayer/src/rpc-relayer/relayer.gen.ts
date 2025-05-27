@@ -431,24 +431,28 @@ export interface PingArgs {}
 export interface PingReturn {
   status: boolean
 }
+export interface VersionArgs {}
 
 export interface VersionArgs {}
 
 export interface VersionReturn {
   version: Version
 }
+export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusReturn {
   status: RuntimeStatus
 }
+export interface GetSequenceContextArgs {}
 
 export interface GetSequenceContextArgs {}
 
 export interface GetSequenceContextReturn {
   data: SequenceContext
 }
+export interface GetChainIDArgs {}
 
 export interface GetChainIDArgs {}
 
@@ -512,6 +516,7 @@ export interface UpdateMetaTxnGasLimitsArgs {
 export interface UpdateMetaTxnGasLimitsReturn {
   payload: string
 }
+export interface FeeTokensArgs {}
 
 export interface FeeTokensArgs {}
 
