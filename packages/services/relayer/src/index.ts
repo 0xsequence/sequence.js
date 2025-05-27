@@ -1,1 +1,1 @@
-export * from './rpc-relayer'
+export * from './rpc-relayer/index.js'

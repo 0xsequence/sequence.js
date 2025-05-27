@@ -1,1 +1,1 @@
-export * from './relayer.gen'
+export * from './relayer.gen.js'
