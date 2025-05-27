@@ -2671,16 +2671,6 @@ export const HomeIndexRoute = () => {
                         </div>
                       </div>
                       <div className="mt-2 space-y-2">
-                        {typedMetaTxn.contract !== undefined && (
-                          <div>
-                            <Text variant="small" color="secondary">
-                              <strong className="text-blue-300">Contract: </strong>
-                              <span className="font-mono text-yellow-300 break-all">
-                                {typedMetaTxn.contract || 'N/A'}
-                              </span>
-                            </Text>
-                          </div>
-                        )}
                         <div>
                           <Text variant="small" color="secondary">
                             <strong className="text-blue-300">ID: </strong>
@@ -2705,6 +2695,21 @@ export const HomeIndexRoute = () => {
                             <span className="font-mono">{monitorStatus.gasUsed.toString()}</span>
                           </Text>
                         )}
+                        {(monitorStatus?.status === 'confirmed' || monitorStatus?.status === 'failed') &&
+                          monitorStatus && (
+                            <div className="mt-2 bg-gray-900/50 p-2 rounded border border-gray-700/50">
+                              <Text variant="small" color="secondary" className="font-semibold mb-1">
+                                Meta Transaction Status Details:
+                              </Text>
+                              <pre className="font-mono text-xs overflow-x-auto whitespace-pre-wrap bg-gray-800/70 p-2 text-gray-300 rounded-md max-h-60 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                                {JSON.stringify(
+                                  monitorStatus,
+                                  (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+                                  2,
+                                )}
+                              </pre>
+                            </div>
+                          )}
                       </div>
                     </div>
                   )

@@ -145,7 +145,8 @@ export class RpcRelayer implements Relayer {
 
   async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
     try {
-      const result = await this.client.getMetaTxnReceipt({ metaTxID: Hex.toString(opHash) })
+      const cleanedOpHash = opHash.startsWith('0x') ? opHash.substring(2) : opHash
+      const result = await this.client.getMetaTxnReceipt({ metaTxID: cleanedOpHash })
       const receipt = result.receipt
 
       switch (receipt.status as ETHTxnStatus) {

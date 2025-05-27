@@ -39,10 +39,11 @@ export const useMetaTxnsMonitor = (
 
     const monitorStatus = async (metaTxn: MetaTxn) => {
       const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
-      const opHash = operationHashes[operationKey]
+      const opHashToPoll = metaTxn.id as Hex
       const relayer = getRelayer(parseInt(metaTxn.chainId))
+      console.log('opHashToPoll', opHashToPoll)
 
-      if (!opHash || !relayer) {
+      if (!opHashToPoll || !relayer) {
         if (isSubscribed) {
           setStatuses((prev) => ({
             ...prev,
@@ -65,7 +66,7 @@ export const useMetaTxnsMonitor = (
 
       try {
         lastCheckedRef.current[operationKey] = now
-        const status = await relayer.status(opHash, BigInt(metaTxn.chainId))
+        const status = await relayer.status(opHashToPoll, BigInt(metaTxn.chainId))
 
         if (!isSubscribed) return
 
