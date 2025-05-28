@@ -16,6 +16,6 @@ export class Transactions extends Generic<Transaction, 'id'> {
           db.createObjectStore(TABLE_NAME)
         }
       },
-    ] as Migration[])
+    ])
   }
 }

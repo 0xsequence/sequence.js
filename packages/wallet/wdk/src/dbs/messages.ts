@@ -16,6 +16,6 @@ export class Messages extends Generic<Message, 'id'> {
           db.createObjectStore(TABLE_NAME)
         }
       },
-    ] as Migration[])
+    ])
   }
 }

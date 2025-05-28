@@ -15,6 +15,6 @@ export class Recovery extends Generic<QueuedRecoveryPayload, 'id'> {
           db.createObjectStore(TABLE_NAME)
         }
       },
-    ] as Migration[])
+    ])
   }
 }

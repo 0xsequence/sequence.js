@@ -16,6 +16,6 @@ export class Wallets extends Generic<Wallet, 'address'> {
           db.createObjectStore(TABLE_NAME)
         }
       },
-    ] as Migration[])
+    ])
   }
 }

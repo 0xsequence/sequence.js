@@ -26,7 +26,7 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
           store.createIndex('identitySigner', 'identitySigner', { unique: true })
         }
       },
-    ] as Migration[])
+    ])
   }
 
   async handleOpenDB(): Promise<void> {

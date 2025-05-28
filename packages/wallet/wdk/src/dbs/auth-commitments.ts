@@ -26,6 +26,6 @@ export class AuthCommitments extends Generic<AuthCommitment, 'id'> {
           db.createObjectStore(TABLE_NAME)
         }
       },
-    ] as Migration[])
+    ])
   }
 }

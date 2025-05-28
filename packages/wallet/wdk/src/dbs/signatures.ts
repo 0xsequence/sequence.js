@@ -15,6 +15,6 @@ export class Signatures extends Generic<BaseSignatureRequest, 'id'> {
           db.createObjectStore(TABLE_NAME)
         }
       },
-    ] as Migration[])
+    ])
   }
 }
