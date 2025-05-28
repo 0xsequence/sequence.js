@@ -1124,7 +1124,7 @@ export const HomeIndexRoute = () => {
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600 mb-2">
           Sequence Anypay Demo
         </h1>
-        <p className="text-gray-300 text-sm">Connect your wallet and explore cross-chain payment intents</p>
+        <p className="text-gray-300 text-sm">Connect your wallet and explore cross-chain intents</p>
       </div>
 
       {/* Account Info & Connect/Disconnect - Standalone Card */}
