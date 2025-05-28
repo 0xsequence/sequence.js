@@ -48,8 +48,8 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1(0xsequence@2.3.8(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(wagmi@2.15.0(@tanstack/query-core@5.74.3)(@tanstack/react-query@5.74.3(react@19.0.0))(@types/react@19.1.2)(bufferutil@4.0.9)(react@19.0.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2))
       '@0xsequence/wallet-core':
-        specifier: 0.0.0-20250528185915
-        version: 0.0.0-20250528185915(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
+        specifier: 0.0.0-20250528195743
+        version: 0.0.0-20250528195743(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@0xsequence/wallet-primitives':
         specifier: 0.0.0-anypay-20250527101311
         version: 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
@@ -613,8 +613,8 @@ packages:
       react-dom: '>= 17'
       viem: '>= 2.0.0'
 
-  '@0xsequence/identity-instrument@0.0.0-anypay-20250527101311':
-    resolution: {integrity: sha512-E7sRqP4dAy99O/7OsKrq8jt0NzjWNDfEK9VZPw7JfYf8nNDUcPqrP+d9rf6zQfjNlJwIAAaq+AId2KxBBXwPbw==}
+  '@0xsequence/identity-instrument@0.0.0-anypay-20250528092509':
+    resolution: {integrity: sha512-GxHqUZniiz2rOD3GWigkATI9A2zgK9C9woAAvLnyHmy/uvoLI0iPgrt2TfVjSjlFucZjoBpJ254qYtuajf0qAw==}
 
   '@0xsequence/indexer@2.3.8':
     resolution: {integrity: sha512-UtmUwhquwRxWx3+JoR7Ai0luRLWvL/jMIDNuSkE6/A87UFLzJ09GQ1VkSLSkipkYv95q1xcbAUQxjZH58JPxfg==}
@@ -691,8 +691,8 @@ packages:
       viem: '>= 2.0.0'
       wagmi: '>= 2.0.0'
 
-  '@0xsequence/wallet-core@0.0.0-20250528185915':
-    resolution: {integrity: sha512-3BKc+4/DFPREv6/b5Qlq7lwQaOsqZEUZfjgDq+w6lelhtKcYyGsFRG05IiRPbQiG8zONGY0NRKfnCQUNkD38pA==}
+  '@0xsequence/wallet-core@0.0.0-20250528195743':
+    resolution: {integrity: sha512-xcuRM+EJMYvtrVIBkkzrlf7G4qdC1QGECilFFuWxXF4FlcIgArKPyq6U4nhnl98hLO5x7gUaJlP6/JWws1OxzQ==}
 
   '@0xsequence/wallet-core@0.0.0-anypay-20250528092509':
     resolution: {integrity: sha512-BC3QPDFJEvLOY3y+NyFRcMWDPY7C7QnAtIupQi+L7arbbFJONz68i1CiJC/UcVtBlaytbEM502fqSYvx9r7+vQ==}
@@ -5843,7 +5843,7 @@ snapshots:
       react-dom: 19.0.0(react@19.0.0)
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
 
-  '@0xsequence/identity-instrument@0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)':
+  '@0xsequence/identity-instrument@0.0.0-anypay-20250528092509(typescript@5.7.3)(zod@3.24.2)':
     dependencies:
       jwt-decode: 4.0.0
       ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
@@ -5952,7 +5952,7 @@ snapshots:
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       wagmi: 2.15.0(@tanstack/query-core@5.74.3)(@tanstack/react-query@5.74.3(react@19.0.0))(@types/react@19.1.2)(bufferutil@4.0.9)(react@19.0.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
 
-  '@0xsequence/wallet-core@0.0.0-20250528185915(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
+  '@0xsequence/wallet-core@0.0.0-20250528195743(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
     dependencies:
       '@0xsequence/wallet-primitives': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
       ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
@@ -5990,7 +5990,7 @@ snapshots:
 
   '@0xsequence/wallet-wdk@0.0.0-anypay-20250527101311(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
     dependencies:
-      '@0xsequence/identity-instrument': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
+      '@0xsequence/identity-instrument': 0.0.0-anypay-20250528092509(typescript@5.7.3)(zod@3.24.2)
       '@0xsequence/tee-verifier': 0.1.0
       '@0xsequence/wallet-core': 0.0.0-anypay-20250528092509(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@0xsequence/wallet-primitives': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
