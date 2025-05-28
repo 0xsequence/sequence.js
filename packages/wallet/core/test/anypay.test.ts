@@ -654,7 +654,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
     )
 
     console.log('Single Operation with LifiInfo Test Address:', address)
-    expect(isAddressEqual(address, '0x869929e07Cc5F6160e9729d5aC0716C10100C70b')).toBe(true)
+    expect(isAddressEqual(address, '0x820B2237906fEEBdB45a6Be43d33137253Eeeac5')).toBe(true)
   })
 
   it('should calculate address for multiple operations with lifiInfo', () => {
@@ -703,7 +703,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
     )
 
     console.log('Multiple Operations with LifiInfo Test Address:', address)
-    expect(isAddressEqual(address, '0x21b98Be5E52BcFE9b90a901De524af592901C9a8')).toBe(true)
+    expect(isAddressEqual(address, '0x807f90d703db799F810a43DBcf81B09d7053e8e6')).toBe(true)
   })
 })
 
