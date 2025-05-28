@@ -1,6 +1,6 @@
 {
   "name": "@repo/ui",
-  "version": "0.0.0",
+  "version": "0.0.0-20250528184736",
   "private": true,
   "exports": {
     "./button": "./src/button.tsx",

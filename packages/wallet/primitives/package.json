@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/wallet-primitives",
-  "version": "0.0.0",
+  "version": "0.0.0-20250528184736",
   "license": "Apache-2.0",
   "type": "module",
   "publishConfig": {

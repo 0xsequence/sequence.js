@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 0.0.0-20250528184736
+
+### Patch Changes
+
+- anypay
+
 ## 2.3.8
 
 ### Patch Changes
