@@ -1,4 +1,5 @@
-import { Generic } from './generic.js'
+import { Generic, Migration } from './generic.js'
+import { IDBPDatabase, IDBPTransaction } from 'idb'
 
 const TABLE_NAME = 'auth-keys'
 
@@ -14,13 +15,18 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
 
   constructor(dbName: string = 'sequence-auth-keys') {
     super(dbName, TABLE_NAME, 'address', [
-      (db: IDBDatabase) => {
+      (
+        db: IDBPDatabase<unknown>,
+        _tx: IDBPTransaction<unknown, string[], 'versionchange'>,
+        _event: IDBVersionChangeEvent,
+      ) => {
         if (!db.objectStoreNames.contains(TABLE_NAME)) {
           const store = db.createObjectStore(TABLE_NAME)
+
           store.createIndex('identitySigner', 'identitySigner', { unique: true })
         }
       },
-    ])
+    ] as Migration[])
   }
 
   async handleOpenDB(): Promise<void> {
@@ -46,14 +52,44 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
     return result
   }
 
-  async getBySigner(signer: string): Promise<AuthKey | undefined> {
+  async getBySigner(signer: string, attempt: number = 1): Promise<AuthKey | undefined> {
+    const normalizedSigner = signer.toLowerCase()
     const store = await this.getStore('readonly')
     const index = store.index('identitySigner')
-    return new Promise((resolve, reject) => {
-      const req = index.get(signer.toLowerCase())
-      req.onsuccess = () => resolve(req.result)
-      req.onerror = () => reject(req.error)
-    })
+
+    // Below code has a workaround where get does not work as expected
+    // and we fall back to getAll to find the key by identitySigner.
+    try {
+      const result = await index.get(normalizedSigner)
+      if (result !== undefined) {
+        return result
+      } else if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        return this.getBySigner(signer, attempt + 1)
+      } else {
+        try {
+          const allKeys = await store.getAll()
+          if (allKeys && allKeys.length > 0) {
+            const foundKey = allKeys.find((key) => key.identitySigner.toLowerCase() === normalizedSigner)
+            return foundKey
+          }
+          return undefined
+        } catch (getAllError) {
+          console.error(
+            `[AuthKeys.getBySigner] Fallback: Error during getAll() for signer ${normalizedSigner}:`,
+            getAllError,
+          )
+          throw getAllError
+        }
+      }
+    } catch (error) {
+      console.error(
+        `[AuthKeys.getBySigner attempt #${attempt}] Index query error for signer ${normalizedSigner}:`,
+        error,
+      )
+
+      throw error
+    }
   }
 
   async delBySigner(signer: string): Promise<void> {
