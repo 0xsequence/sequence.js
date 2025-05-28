@@ -48,8 +48,8 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1(0xsequence@2.3.8(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(wagmi@2.15.0(@tanstack/query-core@5.74.3)(@tanstack/react-query@5.74.3(react@19.0.0))(@types/react@19.1.2)(bufferutil@4.0.9)(react@19.0.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2))
       '@0xsequence/wallet-core':
-        specifier: 0.0.0-anypay-20250527101311
-        version: 0.0.0-anypay-20250527101311(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
+        specifier: 0.0.0-anypay-20250528092509
+        version: 0.0.0-anypay-20250528092509(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@0xsequence/wallet-primitives':
         specifier: 0.0.0-anypay-20250527101311
         version: 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
@@ -691,11 +691,14 @@ packages:
       viem: '>= 2.0.0'
       wagmi: '>= 2.0.0'
 
-  '@0xsequence/wallet-core@0.0.0-anypay-20250527101311':
-    resolution: {integrity: sha512-QPUhXrJvKnWU8IuLyyR1aGVl7jzUJ772vYgly0NB4mF2CwvpxfxiGBBPhKIWJHRu7KHFYQbGzmeuxyjjxAj/ww==}
+  '@0xsequence/wallet-core@0.0.0-anypay-20250528092509':
+    resolution: {integrity: sha512-BC3QPDFJEvLOY3y+NyFRcMWDPY7C7QnAtIupQi+L7arbbFJONz68i1CiJC/UcVtBlaytbEM502fqSYvx9r7+vQ==}
 
   '@0xsequence/wallet-primitives@0.0.0-anypay-20250527101311':
     resolution: {integrity: sha512-uy+q2xGfHKTMMRtW2VGPHB2MCIem3SP72+/IOc606ccSLWtwPtdC70QcTujJzkLVJfAsZ/l6nFNclz8KOEeMoA==}
+
+  '@0xsequence/wallet-primitives@0.0.0-anypay-20250528092509':
+    resolution: {integrity: sha512-EB7UZGs7uDxvLVqCe0N1goJHLCkZH7muPZyxwCEizQNomvCF5mnVbAaDlqQoZxFaMrApalIdZ4/cHHqEi7KpnA==}
 
   '@0xsequence/wallet-wdk@0.0.0-anypay-20250527101311':
     resolution: {integrity: sha512-UdBc43HmM1tk62JKQARKMEHVu5atYzwAxwtL2kk2FXTT/nOKeh3/S2xD12XJazMCh2D2quEWzZfxY3vhUlLFPQ==}
@@ -5946,9 +5949,9 @@ snapshots:
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       wagmi: 2.15.0(@tanstack/query-core@5.74.3)(@tanstack/react-query@5.74.3(react@19.0.0))(@types/react@19.1.2)(bufferutil@4.0.9)(react@19.0.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
 
-  '@0xsequence/wallet-core@0.0.0-anypay-20250527101311(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
+  '@0xsequence/wallet-core@0.0.0-anypay-20250528092509(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
     dependencies:
-      '@0xsequence/wallet-primitives': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
+      '@0xsequence/wallet-primitives': 0.0.0-anypay-20250528092509(typescript@5.7.3)(zod@3.24.2)
       ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
     transitivePeerDependencies:
@@ -5964,11 +5967,18 @@ snapshots:
       - typescript
       - zod
 
+  '@0xsequence/wallet-primitives@0.0.0-anypay-20250528092509(typescript@5.7.3)(zod@3.24.2)':
+    dependencies:
+      ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
+    transitivePeerDependencies:
+      - typescript
+      - zod
+
   '@0xsequence/wallet-wdk@0.0.0-anypay-20250527101311(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
     dependencies:
       '@0xsequence/identity-instrument': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
       '@0xsequence/tee-verifier': 0.1.0
-      '@0xsequence/wallet-core': 0.0.0-anypay-20250527101311(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
+      '@0xsequence/wallet-core': 0.0.0-anypay-20250528092509(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@0xsequence/wallet-primitives': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
       idb: 7.1.1
       jwt-decode: 4.0.0
