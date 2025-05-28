@@ -30,6 +30,8 @@ export type SessionPermissions = {
 export const MAX_PERMISSIONS_COUNT = 2 ** 7 - 1
 export const MAX_RULES_COUNT = 2 ** 8 - 1
 
+export const SELECTOR_MASK = Bytes.fromHex('0xffffffff', { size: 32 })
+
 // Encoding
 
 export function encodeSessionPermissions(sessionPermissions: SessionPermissions): Bytes.Bytes {
