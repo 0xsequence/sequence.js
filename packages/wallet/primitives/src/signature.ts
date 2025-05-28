@@ -141,7 +141,7 @@ export function isRawConfig(configuration: any): configuration is RawConfig {
     typeof configuration === 'object' &&
     typeof configuration.threshold === 'bigint' &&
     typeof configuration.checkpoint === 'bigint' &&
-    isRawTopology(configuration.topology) &&
+    (isRawTopology(configuration.topology) || isTopology(configuration.topology)) &&
     (configuration.checkpointer === undefined || Address.validate(configuration.checkpointer))
   )
 }

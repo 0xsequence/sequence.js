@@ -298,6 +298,7 @@ export class Wallet {
     const status = await this.getStatus(provider)
 
     const updatedEnvelope = { ...envelope, configuration: status.configuration }
+    console.log(updatedEnvelope)
     const { weight, threshold } = Envelope.weightOf(updatedEnvelope)
     if (weight < threshold) {
       throw new Error('insufficient weight in envelope')
@@ -397,7 +398,7 @@ export class Wallet {
     return encoded
   }
 
-  private async prepareBlankEnvelope(chainId: bigint) {
+  public async prepareBlankEnvelope(chainId: bigint) {
     const status = await this.getStatus()
 
     return {

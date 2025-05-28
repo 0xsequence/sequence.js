@@ -19,6 +19,9 @@ export const DEPLOY = Abi.from([
   'function deploy(address _mainModule, bytes32 _salt) public payable returns (address _contract)',
 ])[0]
 
+// Commons
+export const ADD_HOOK = Abi.from(['function addHook(bytes4 _selector, address _hook) external'])[0]
+
 // Stage1Module
 export const GET_IMPLEMENTATION = Abi.from(['function getImplementation() external view returns (address)'])[0]
 
@@ -37,3 +40,6 @@ export const RECOVER_SAPIENT_SIGNATURE = Abi.from([
 export const RECOVER_SAPIENT_SIGNATURE_COMPACT = Abi.from([
   'function recoverSapientSignatureCompact(bytes32 _digest, bytes calldata _signature) external view returns (bytes32)',
 ])[0]
+
+// ERC4337
+export const EXECUTE_USER_OP = Abi.from(['function executeUserOp(bytes calldata _userOp) external'])[0]
