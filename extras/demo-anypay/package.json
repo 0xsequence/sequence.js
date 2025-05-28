@@ -24,7 +24,7 @@
     "@0xsequence/indexer": "^2.3.9",
     "@0xsequence/network": "^2.3.9",
     "@0xsequence/wagmi-connector": "^4.0.1",
-    "@0xsequence/wallet-core": "0.0.0-anypay-20250528092509",
+    "@0xsequence/wallet-core": "0.0.0-20250528185915",
     "@0xsequence/wallet-primitives": "0.0.0-anypay-20250527101311",
     "@0xsequence/wallet-wdk": "0.0.0-anypay-20250527101311",
     "@radix-ui/react-popover": "^1.1.6",
