@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@0xsequence/identity-instrument": "workspace:^",
-    "@0xsequence/tee-verifier": "^0.1.0",
+    "@0xsequence/tee-verifier": "^0.1.1",
     "@0xsequence/wallet-core": "workspace:^",
     "@0xsequence/wallet-primitives": "workspace:^",
     "idb": "^7.1.1",

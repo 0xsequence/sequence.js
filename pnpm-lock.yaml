@@ -215,6 +215,9 @@ importers:
 
   packages/wallet/core:
     dependencies:
+      '@0xsequence/relayer':
+        specifier: workspace:^
+        version: link:../../services/relayer
       '@0xsequence/wallet-primitives':
         specifier: workspace:^
         version: link:../primitives
@@ -297,8 +300,8 @@ importers:
         specifier: workspace:^
         version: link:../../services/identity-instrument
       '@0xsequence/tee-verifier':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       '@0xsequence/wallet-core':
         specifier: workspace:^
         version: link:../core
@@ -411,8 +414,8 @@ importers:
 
 packages:
 
-  '@0xsequence/tee-verifier@0.1.0':
-    resolution: {integrity: sha512-uSN5MHfxCfFL6Ig5IRF88G/xK189IYz2zi1DZeTcRykBIGgtSQJMXmCrdQS3tZXYJCOFd1Q+ew5nWoRuB0RhFg==}
+  '@0xsequence/tee-verifier@0.1.1':
+    resolution: {integrity: sha512-tBWy/P4reDHzw1dUHL7ydCKI1FKMLVBgLi6gi3b1bTl5zTaV6IZkOzTBCEsOGarfjQ4TQtXqhmoWIlvli0AMqQ==}
 
   '@adraffy/ens-normalize@1.11.0':
     resolution: {integrity: sha512-/3DDPKHqqIqxUULp8yP4zODUY1i+2xvVWsv8A79xGWdCAG+8sb0hRh0Rk2QyOJUnnbyPUAZYcpBuRe3nS2OIUg==}
@@ -3348,7 +3351,7 @@ packages:
 
 snapshots:
 
-  '@0xsequence/tee-verifier@0.1.0':
+  '@0xsequence/tee-verifier@0.1.1':
     dependencies:
       cbor2: 1.12.0
       pkijs: 3.2.5
