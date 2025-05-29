@@ -195,6 +195,31 @@ export const HomeIndexRoute = () => {
 
   const { getRelayer } = useRelayers()
 
+  // Helper to calculate time since origin
+  const formatTimeSinceOrigin = (metaTxnTimestamp: number | null, originTimestamp: number | null): string => {
+    if (originTimestamp === null) {
+      return 'Waiting for origin call timestamp...'
+    }
+    if (metaTxnTimestamp === null) {
+      return 'Meta transaction timestamp not available'
+    }
+    if (metaTxnTimestamp < originTimestamp) {
+      return 'Before origin call'
+    }
+    const diffSeconds = metaTxnTimestamp - originTimestamp
+    if (diffSeconds < 60) {
+      return `${diffSeconds} second${diffSeconds === 1 ? '' : 's'} after origin call`
+    }
+    const diffMinutes = Math.floor(diffSeconds / 60)
+    const remainingSeconds = diffSeconds % 60
+    if (diffMinutes < 60) {
+      return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}${remainingSeconds > 0 ? ` ${remainingSeconds}s` : ''} after origin call`
+    }
+    const diffHours = Math.floor(diffMinutes / 60)
+    const remainingMinutes = diffMinutes % 60
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'}${remainingMinutes > 0 ? ` ${remainingMinutes}m` : ''} after origin call`
+  }
+
   // Add monitoring for each meta transaction
   const metaTxnMonitorStatuses = useMetaTxnsMonitor(metaTxns as unknown as MetaTxn[] | undefined, getRelayer)
 
@@ -2776,8 +2801,16 @@ export const HomeIndexRoute = () => {
                           <Text variant="small" color="secondary">
                             <strong className="text-blue-300">Block Timestamp: </strong>
                             <span className="font-mono">
-                              {new Date((metaTxnBlockTimestamps[operationKey]?.timestamp || 0) * 1000).toLocaleString()}{' '}
-                              (Epoch: {metaTxnBlockTimestamps[operationKey]?.timestamp})
+                              {new Date((metaTxnBlockTimestamps[operationKey]?.timestamp || 0) * 1000).toLocaleString()}
+                            </span>
+                            <br />
+                            <span className="font-mono text-purple-300">
+                              (Executed:{' '}
+                              {formatTimeSinceOrigin(
+                                metaTxnBlockTimestamps[operationKey]?.timestamp || null,
+                                originBlockTimestamp,
+                              )}
+                              )
                             </span>
                           </Text>
                         )}
