@@ -4,6 +4,7 @@ import {
   MetaTxn as RpcMetaTxn,
   FeeTokenType,
   IntentPrecondition,
+  GetMetaTxnReceiptReturn,
 } from './relayer.gen.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
@@ -141,6 +142,28 @@ export class RpcRelayer implements Relayer {
     }
 
     return { opHash: Hex.fromString(result.txnHash) }
+  }
+
+  async receipt(opHash: Hex.Hex, chainId: bigint): Promise<GetMetaTxnReceiptReturn> {
+    try {
+      const cleanedOpHash = opHash.startsWith('0x') ? opHash.substring(2) : opHash
+      const result = await this.client.getMetaTxnReceipt({ metaTxID: cleanedOpHash })
+      return result
+    } catch (error) {
+      console.error(`RpcRelayer.receipt failed for opHash ${opHash}:`, error)
+      return {
+        receipt: {
+          status: ETHTxnStatus.UNKNOWN,
+          txnReceipt: '',
+          revertReason: 'Failed to fetch receipt',
+          logs: [],
+          id: opHash,
+          index: 0,
+          receipts: [],
+          txnHash: '',
+        },
+      }
+    }
   }
 
   async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {

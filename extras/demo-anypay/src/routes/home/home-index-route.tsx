@@ -49,6 +49,14 @@ const getExplorerUrl = (chainId: number, address: string): string | null => {
   return null
 }
 
+export const getExplorerTransactionUrl = (chainId: number, transactionHash: string): string | null => {
+  const chainInfo = getChainInfo(chainId)
+  if (chainInfo && chainInfo.blockExplorers?.default?.url) {
+    return `${chainInfo.blockExplorers.default.url}/tx/${transactionHash}`
+  }
+  return null
+}
+
 // Mock Data
 const MOCK_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'
 // Mock Calldata for interaction
@@ -2680,18 +2688,26 @@ export const HomeIndexRoute = () => {
                         )}
                         {monitorStatus?.status === 'confirmed' &&
                           monitorStatus &&
-                          'txHash' in monitorStatus &&
-                          typeof monitorStatus.txHash === 'string' &&
-                          monitorStatus.txHash && (
+                          'transactionHash' in monitorStatus &&
+                          typeof monitorStatus.transactionHash === 'string' &&
+                          monitorStatus.transactionHash && (
                             <Text variant="small" color="secondary">
                               <strong className="text-blue-300">Explorer: </strong>
                               <a
-                                href={getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash) || '#'}
+                                href={
+                                  getExplorerTransactionUrl(
+                                    parseInt(typedMetaTxn.chainId),
+                                    monitorStatus.transactionHash,
+                                  ) || '#'
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="font-mono text-purple-400 hover:underline break-all"
                               >
-                                {getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash)}
+                                {getExplorerTransactionUrl(
+                                  parseInt(typedMetaTxn.chainId),
+                                  monitorStatus.transactionHash,
+                                )}
                               </a>
                             </Text>
                           )}
