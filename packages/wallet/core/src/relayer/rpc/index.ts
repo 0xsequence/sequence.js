@@ -27,6 +27,8 @@ import {
 import { PublicClient, createPublicClient, http, Chain } from 'viem'
 import * as chains from 'viem/chains'
 
+export * from './relayer.gen.js'
+
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
 export const getChain = (chainId: number): Chain => {
@@ -160,6 +162,7 @@ export class RpcRelayer implements Relayer {
           id: opHash,
           index: 0,
           receipts: [],
+          blockNumber: '0x0',
           txnHash: '',
         },
       }

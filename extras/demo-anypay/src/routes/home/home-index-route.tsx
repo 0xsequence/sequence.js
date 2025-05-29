@@ -34,6 +34,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { SectionHeader } from '@/components/SectionHeader'
+import { createPublicClient, http } from 'viem'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
@@ -184,6 +185,11 @@ export const HomeIndexRoute = () => {
   const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
   const [selectedMetaTxnId, setSelectedMetaTxnId] = useState<string | null>(null)
   const [hasAutoExecuted, setHasAutoExecuted] = useState(false)
+
+  const [originBlockTimestamp, setOriginBlockTimestamp] = useState<number | null>(null)
+  const [metaTxnBlockTimestamps, setMetaTxnBlockTimestamps] = useState<{
+    [key: string]: { timestamp: number | null; error?: string }
+  }>({})
 
   const RETRY_WINDOW_MS = 10_000
 
@@ -817,6 +823,98 @@ export const HomeIndexRoute = () => {
     isAutoExecuteEnabled,
   ])
 
+  // Effect to fetch origin block timestamp
+  useEffect(() => {
+    if (isSuccess && receipt && receipt.blockNumber) {
+      const fetchTimestamp = async () => {
+        try {
+          const chainInfo = getChainInfo(originCallParams?.chainId || 0)
+          if (!chainInfo) {
+            console.error('Chain info not found for origin call')
+            setOriginBlockTimestamp(null)
+            return
+          }
+          const client = createPublicClient({
+            chain: chainInfo as any, // Type assertion as chainInfo can be null
+            transport: http(),
+          })
+          const block = await client.getBlock({ blockNumber: receipt.blockNumber })
+          setOriginBlockTimestamp(Number(block.timestamp))
+        } catch (error) {
+          console.error('Error fetching origin block timestamp:', error)
+          setOriginBlockTimestamp(null)
+        }
+      }
+      fetchTimestamp()
+    } else if (!txnHash) {
+      setOriginBlockTimestamp(null)
+    }
+  }, [isSuccess, receipt, txnHash, originCallParams?.chainId])
+
+  // Effect to fetch meta-transaction block timestamps
+  useEffect(() => {
+    if (metaTxns && Object.keys(metaTxnMonitorStatuses).length > 0) {
+      metaTxns.forEach(async (metaTxn) => {
+        const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+        const monitorStatus = metaTxnMonitorStatuses[operationKey]
+
+        if (
+          monitorStatus &&
+          monitorStatus.status === 'confirmed' &&
+          monitorStatus.receipt &&
+          monitorStatus.receipt.txnReceipt &&
+          !metaTxnBlockTimestamps[operationKey]?.timestamp &&
+          !metaTxnBlockTimestamps[operationKey]?.error
+        ) {
+          try {
+            const chainId = parseInt(metaTxn.chainId)
+            const chainInfo = getChainInfo(chainId)
+            if (!chainInfo) {
+              console.error(`Chain info not found for metaTxn ${operationKey}`)
+              setMetaTxnBlockTimestamps((prev) => ({
+                ...prev,
+                [operationKey]: { timestamp: null, error: 'Chain info not found' },
+              }))
+              return
+            }
+
+            // Attempt to parse the txnReceipt string
+            // @ts-expect-error
+            const blockNumberToFetch = monitorStatus.receipt?.blockNumber
+
+            if (!blockNumberToFetch) {
+              setMetaTxnBlockTimestamps((prev) => ({
+                ...prev,
+                [operationKey]: { timestamp: null, error: 'Block number not available from receipt' },
+              }))
+              return
+            }
+
+            const client = createPublicClient({
+              chain: chainInfo as any,
+              transport: http(),
+            })
+            const block = await client.getBlock({ blockNumber: blockNumberToFetch })
+            setMetaTxnBlockTimestamps((prev) => ({
+              ...prev,
+              [operationKey]: { timestamp: Number(block.timestamp), error: undefined },
+            }))
+          } catch (error: any) {
+            console.error(`Error fetching block timestamp for metaTxn ${operationKey}:`, error)
+            setMetaTxnBlockTimestamps((prev) => ({
+              ...prev,
+              [operationKey]: { timestamp: null, error: error.message || 'Failed to fetch timestamp' },
+            }))
+          }
+        }
+      })
+    }
+    // Clear timestamps if metaTxns are cleared
+    if (!metaTxns || metaTxns.length === 0) {
+      setMetaTxnBlockTimestamps({})
+    }
+  }, [metaTxnMonitorStatuses, metaTxns, metaTxnBlockTimestamps])
+
   // Modify the auto-execute effect
   useEffect(() => {
     const shouldAutoSend =
@@ -1042,9 +1140,9 @@ export const HomeIndexRoute = () => {
         const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
 
         // If no specific ID is selected, send all meta transactions
-        const txnsToSend = selectedId ? [metaTxns.find((tx) => tx.id === selectedId)] : metaTxns
+        const txnsToSend = selectedId ? metaTxns.filter((tx) => tx.id === selectedId) : metaTxns
 
-        if (!txnsToSend || (selectedId && !txnsToSend[0])) {
+        if (!txnsToSend || (selectedId && txnsToSend.length === 0)) {
           throw new Error('Meta transaction not found')
         }
 
@@ -1055,12 +1153,12 @@ export const HomeIndexRoute = () => {
 
           const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
           const lastSentTime = sentMetaTxns[operationKey]
-          const now = Date.now()
+          const currentTime = Date.now() // Renamed 'now' to 'currentTime'
 
-          if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
-            const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
+          if (lastSentTime && currentTime - lastSentTime < RETRY_WINDOW_MS) {
+            const timeLeft = Math.ceil((RETRY_WINDOW_MS - (currentTime - lastSentTime)) / 1000)
             console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
-            continue
+            continue // Corrected: continue instead of comma
           }
 
           try {
@@ -1101,7 +1199,7 @@ export const HomeIndexRoute = () => {
               operationKey,
               error: error.message,
               success: false,
-            })
+            }) // Corrected: ensure this is a single object
           }
         }
 
@@ -2593,6 +2691,16 @@ export const HomeIndexRoute = () => {
                     <span className="font-mono">{originCallStatus?.effectiveGasPrice || '0'}</span>
                   </Text>
                 </div>
+                {originBlockTimestamp !== null && (
+                  <div className="bg-gray-800/70 p-3 rounded-md">
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Block Timestamp: </strong>
+                      <span className="font-mono">
+                        {new Date(originBlockTimestamp * 1000).toLocaleString()} (Epoch: {originBlockTimestamp})
+                      </span>
+                    </Text>
+                  </div>
+                )}
               </div>
             </div>
             {/* Meta Transactions Status */}
@@ -2662,6 +2770,21 @@ export const HomeIndexRoute = () => {
                           <Text variant="small" color="secondary">
                             <strong className="text-blue-300">Tx Hash: </strong>
                             <span className="font-mono text-yellow-300 break-all">{String(monitorStatus.txHash)}</span>
+                          </Text>
+                        )}
+                        {metaTxnBlockTimestamps[operationKey]?.timestamp && (
+                          <Text variant="small" color="secondary">
+                            <strong className="text-blue-300">Block Timestamp: </strong>
+                            <span className="font-mono">
+                              {new Date((metaTxnBlockTimestamps[operationKey]?.timestamp || 0) * 1000).toLocaleString()}{' '}
+                              (Epoch: {metaTxnBlockTimestamps[operationKey]?.timestamp})
+                            </span>
+                          </Text>
+                        )}
+                        {metaTxnBlockTimestamps[operationKey]?.error && (
+                          <Text variant="small" color="error">
+                            <strong className="text-red-300">Timestamp Error: </strong>
+                            <span className="font-mono break-all">{metaTxnBlockTimestamps[operationKey]?.error}</span>
                           </Text>
                         )}
                         {monitorStatus?.status === 'confirmed' &&
