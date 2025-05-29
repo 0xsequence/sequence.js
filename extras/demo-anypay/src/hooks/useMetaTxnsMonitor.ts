@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
 import { Relayer } from '@0xsequence/wallet-core'
 import { Hex } from 'viem'
 import { ETHTxnStatus, MetaTxnReceipt } from '../gen/relayer.gen'
+import { Query, useQueries } from '@tanstack/react-query'
 
 export type MetaTxn = {
   id: string
@@ -22,136 +22,100 @@ type MetaTxnStatus = {
   [key: string]: MetaTxnStatusValue
 }
 
-type LastChecked = {
-  [key: string]: number
-}
-
 const POLL_INTERVAL = 3_000 // 3 seconds
 
 export const useMetaTxnsMonitor = (
   metaTxns: MetaTxn[] | undefined,
   getRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer,
 ) => {
-  const [statuses, setStatuses] = useState<MetaTxnStatus>({})
-  const lastCheckedRef = useRef<LastChecked>({})
-  const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({})
-
-  useEffect(() => {
-    if (!metaTxns || metaTxns.length === 0) {
-      setStatuses({})
-      return
-    }
-
-    let isSubscribed = true
-
-    const monitorStatus = async (metaTxn: MetaTxn) => {
-      const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+  const results = useQueries({
+    queries: (metaTxns || []).map((metaTxn) => {
+      // const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
       const opHashToPoll = metaTxn.id as Hex
-      const relayer = getRelayer(parseInt(metaTxn.chainId))
-      console.log('opHashToPoll', opHashToPoll, 'for chainId', metaTxn.chainId)
 
-      if (!opHashToPoll) {
-        if (isSubscribed) {
-          setStatuses((prev) => ({
-            ...prev,
-            [operationKey]: { status: 'failed', reason: 'Missing operation hash for monitoring.' },
-          }))
-        }
-        return
-      }
+      return {
+        queryKey: ['metaTxnStatus', metaTxn.chainId, metaTxn.id],
+        queryFn: async () => {
+          const relayer = getRelayer(parseInt(metaTxn.chainId))
 
-      if (!relayer) {
-        if (isSubscribed) {
-          setStatuses((prev) => ({
-            ...prev,
-            [operationKey]: { status: 'failed', reason: `Relayer not available for chain ${metaTxn.chainId}.` },
-          }))
-        }
-        return
-      }
-
-      const now = Date.now()
-      const lastChecked = lastCheckedRef.current[operationKey] || 0
-      const timeSinceLastCheck = now - lastChecked
-
-      // Skip if we checked too recently
-      if (timeSinceLastCheck < POLL_INTERVAL) {
-        const timeToNextCheck = POLL_INTERVAL - timeSinceLastCheck
-        timeoutsRef.current[operationKey] = setTimeout(() => monitorStatus(metaTxn), timeToNextCheck)
-        return
-      }
-
-      try {
-        lastCheckedRef.current[operationKey] = now
-        const res = await relayer.receipt(opHashToPoll, BigInt(metaTxn.chainId))
-
-        if (!isSubscribed) return
-
-        const apiStatus = res.receipt?.status as ETHTxnStatus
-        let newStatusEntry: MetaTxnStatusValue
-
-        switch (apiStatus) {
-          case ETHTxnStatus.QUEUED:
-          case ETHTxnStatus.PENDING_PRECONDITION:
-          case ETHTxnStatus.SENT:
-            newStatusEntry = { status: 'pending', receipt: res.receipt }
-            break
-          case ETHTxnStatus.SUCCEEDED:
-            newStatusEntry = { status: 'confirmed', transactionHash: res.receipt.txnHash as Hex, receipt: res.receipt }
-            break
-          case ETHTxnStatus.FAILED:
-          case ETHTxnStatus.PARTIALLY_FAILED:
-            newStatusEntry = {
-              status: 'failed',
-              reason: res.receipt.revertReason || 'Relayer reported failure',
-              receipt: res.receipt,
-            }
-            break
-          case ETHTxnStatus.DROPPED:
-            newStatusEntry = { status: 'failed', reason: 'Transaction dropped', receipt: res.receipt }
-            break
-          case ETHTxnStatus.UNKNOWN:
-          default:
-            newStatusEntry = { status: 'unknown', receipt: res.receipt }
-            break
-        }
-
-        if (isSubscribed) {
-          setStatuses((prev) => ({
-            ...prev,
-            [operationKey]: newStatusEntry,
-          }))
-
-          if (newStatusEntry.status === 'pending' || newStatusEntry.status === 'unknown') {
-            timeoutsRef.current[operationKey] = setTimeout(() => monitorStatus(metaTxn), POLL_INTERVAL)
+          if (!opHashToPoll) {
+            return { status: 'failed', reason: 'Missing operation hash for monitoring.' }
           }
-        }
-      } catch (error: any) {
-        if (!isSubscribed) return
-        setStatuses((prev) => ({
-          ...prev,
-          [operationKey]: {
-            status: 'failed',
-            reason: error.message,
-          },
-        }))
+
+          if (!relayer) {
+            return { status: 'failed', reason: `Relayer not available for chain ${metaTxn.chainId}.` }
+          }
+
+          const res = await relayer.receipt(opHashToPoll, BigInt(metaTxn.chainId))
+          const apiStatus = res.receipt?.status as ETHTxnStatus
+          let newStatusEntry: MetaTxnStatusValue
+
+          switch (apiStatus) {
+            case ETHTxnStatus.QUEUED:
+            case ETHTxnStatus.PENDING_PRECONDITION:
+            case ETHTxnStatus.SENT:
+              newStatusEntry = { status: 'pending', receipt: res.receipt }
+              break
+            case ETHTxnStatus.SUCCEEDED:
+              newStatusEntry = {
+                status: 'confirmed',
+                transactionHash: res.receipt.txnHash as Hex,
+                receipt: res.receipt,
+              }
+              break
+            case ETHTxnStatus.FAILED:
+            case ETHTxnStatus.PARTIALLY_FAILED:
+              newStatusEntry = {
+                status: 'failed',
+                reason: res.receipt.revertReason || 'Relayer reported failure',
+                receipt: res.receipt,
+              }
+              break
+            case ETHTxnStatus.DROPPED:
+              newStatusEntry = { status: 'failed', reason: 'Transaction dropped', receipt: res.receipt }
+              break
+            case ETHTxnStatus.UNKNOWN:
+            default:
+              newStatusEntry = { status: 'unknown', receipt: res.receipt }
+              break
+          }
+          return newStatusEntry
+        },
+        refetchInterval: (
+          query: Query<MetaTxnStatusValue, Error, MetaTxnStatusValue, readonly (string | number)[]>,
+        ) => {
+          const data = query.state.data
+          if (data?.status === 'pending' || data?.status === 'unknown') {
+            return POLL_INTERVAL
+          }
+          return false // Disable polling if status is terminal
+        },
+        enabled: !!metaTxn && !!metaTxn.id && !!metaTxn.chainId,
+        // Keep previous data while refetching to avoid UI flickering if needed
+        // keepPreviousData: true,
       }
-    }
+    }),
+  })
 
-    // Start monitoring all meta transactions
-    metaTxns.forEach((metaTxn) => {
-      monitorStatus(metaTxn)
-    })
+  const statuses: MetaTxnStatus = {}
+  ;(metaTxns || []).forEach((metaTxn, index) => {
+    const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+    const queryResult = results[index]
 
-    return () => {
-      isSubscribed = false
-      // Clear all timeouts
-      Object.values(timeoutsRef.current).forEach((timeout) => {
-        clearTimeout(timeout)
-      })
-      timeoutsRef.current = {}
+    if (queryResult.isLoading && queryResult.fetchStatus !== 'idle' && !queryResult.data) {
+      statuses[operationKey] = { status: 'loading' }
+    } else if (queryResult.isError) {
+      statuses[operationKey] = {
+        status: 'failed',
+        reason: (queryResult.error as Error)?.message || 'An unknown error occurred',
+      }
+    } else if (queryResult.data) {
+      statuses[operationKey] = queryResult.data as MetaTxnStatusValue
+    } else {
+      // Default or initial state before first fetch attempt if not loading and no data/error
+      statuses[operationKey] = { status: 'unknown' }
     }
-  }, [metaTxns, getRelayer])
+  })
 
   return statuses
 }
