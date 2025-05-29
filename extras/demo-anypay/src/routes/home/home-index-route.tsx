@@ -168,7 +168,6 @@ export const HomeIndexRoute = () => {
   const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
   const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
   const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
-  const [operationHashes, setOperationHashes] = useState<{ [key: string]: Hex }>({})
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
   const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)
 
@@ -184,11 +183,7 @@ export const HomeIndexRoute = () => {
   const { getRelayer } = useRelayers()
 
   // Add monitoring for each meta transaction
-  const metaTxnMonitorStatuses = useMetaTxnsMonitor(
-    metaTxns as unknown as MetaTxn[] | undefined,
-    operationHashes,
-    getRelayer,
-  )
+  const metaTxnMonitorStatuses = useMetaTxnsMonitor(metaTxns as unknown as MetaTxn[] | undefined, getRelayer)
 
   // Add gas estimation hook with proper types
   const {
@@ -575,7 +570,6 @@ export const HomeIndexRoute = () => {
     setShowCustomCallForm(false)
     setCommittedIntentAddress(null)
     setVerificationStatus(null)
-    setOperationHashes({})
     setHasAutoExecuted(false)
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
@@ -1097,11 +1091,6 @@ export const HomeIndexRoute = () => {
           setSentMetaTxns((prev) => ({
             ...prev,
             [operationKey]: Date.now(),
-          }))
-
-          setOperationHashes((prev) => ({
-            ...prev,
-            [operationKey]: opHash,
           }))
         }
       })

@@ -22,7 +22,6 @@ const POLL_INTERVAL = 10_000 // 10 seconds
 
 export const useMetaTxnsMonitor = (
   metaTxns: MetaTxn[] | undefined,
-  operationHashes: { [key: string]: Hex },
   getRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer,
 ) => {
   const [statuses, setStatuses] = useState<MetaTxnStatus>({})
@@ -41,13 +40,23 @@ export const useMetaTxnsMonitor = (
       const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
       const opHashToPoll = metaTxn.id as Hex
       const relayer = getRelayer(parseInt(metaTxn.chainId))
-      console.log('opHashToPoll', opHashToPoll)
+      console.log('opHashToPoll', opHashToPoll, 'for chainId', metaTxn.chainId)
 
-      if (!opHashToPoll || !relayer) {
+      if (!opHashToPoll) {
         if (isSubscribed) {
           setStatuses((prev) => ({
             ...prev,
-            [operationKey]: { status: 'pending' },
+            [operationKey]: { status: 'failed', reason: 'Missing operation hash for monitoring.' },
+          }))
+        }
+        return
+      }
+
+      if (!relayer) {
+        if (isSubscribed) {
+          setStatuses((prev) => ({
+            ...prev,
+            [operationKey]: { status: 'failed', reason: `Relayer not available for chain ${metaTxn.chainId}.` },
           }))
         }
         return
@@ -104,7 +113,7 @@ export const useMetaTxnsMonitor = (
       })
       timeoutsRef.current = {}
     }
-  }, [metaTxns, operationHashes, getRelayer])
+  }, [metaTxns, getRelayer])
 
   return statuses
 }
