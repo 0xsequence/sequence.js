@@ -2270,34 +2270,40 @@ export const HomeIndexRoute = () => {
               {/* Preview calculated address */}
               <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 shadow-inner space-y-3">
                 <Text variant="small" color="secondary">
-                  <strong className="text-blue-300">
-                    Calculated Intent Address (used as recipient for origin call):{' '}
-                  </strong>
+                  <strong className="text-blue-300">Calculated Intent Address: </strong>
                   <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
-                    {originCallParams?.to?.toString() || 'N/A'}
+                    {(intentCallsPayloads && account.address && lifiInfos
+                      ? calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)?.toString()
+                      : null) || 'N/A'}
                   </span>
                 </Text>
-                {originCallParams?.to && metaTxns && metaTxns.length > 0 && (
+                {intentCallsPayloads && account.address && lifiInfos && metaTxns && metaTxns.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-gray-700/50 space-y-2">
                     {' '}
                     {/* Added space-y-2 for link items */}
                     <Text variant="small" color="secondary" className="mb-1 text-blue-300 font-semibold">
-                      Open in explorer (Calculated Intent Address):
+                      Open Intent Address in Explorer:
                     </Text>
                     <div className="flex flex-col space-y-1">
                       {[...new Set(metaTxns.map((tx) => tx.chainId))]
                         .map((chainIdStr) => parseInt(chainIdStr))
                         .map((chainId) => {
-                          const explorerUrl = getExplorerUrl(chainId, originCallParams.to!)
+                          const actualIntentConfigAddress = calculateIntentAddress(
+                            account.address!,
+                            intentCallsPayloads!,
+                            lifiInfos!,
+                          )?.toString()
+                          if (!actualIntentConfigAddress) return null
+                          const explorerUrl = getExplorerUrl(chainId, actualIntentConfigAddress)
                           const chainInfo = getChainInfo(chainId)
                           if (!explorerUrl) return null
                           return (
-                            <div key={`${chainId}-explorer-link`} className="bg-gray-800/70 p-2 rounded-md">
+                            <div key={`${chainId}-explorer-link-intent`} className="bg-gray-800/70 p-2 rounded-md">
                               <a
                                 href={explorerUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                title={`Open ${originCallParams.to} on ${chainInfo?.name || 'explorer'}`}
+                                title={`Open ${actualIntentConfigAddress} on ${chainInfo?.name || 'explorer'}`}
                                 className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
                               >
                                 <NetworkImage chainId={chainId} size="xs" className="w-3 h-3" />
