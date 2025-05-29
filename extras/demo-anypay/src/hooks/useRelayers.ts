@@ -24,6 +24,20 @@ export const useRelayers = () => {
     return relayerMap
   }, [])
 
+  const getBackupRelayer = (chainId: number): Relayer.Rpc.RpcRelayer | undefined => {
+    if (chainId === 42161) {
+      return new Relayer.Rpc.RpcRelayer(
+        'https://a1b4a8c5d856.ngrok.app/',
+        chainId,
+        'https://nodes.sequence.app/arbitrum',
+      )
+    } else if (chainId === 8453) {
+      return new Relayer.Rpc.RpcRelayer('https://644a6aeb891e.ngrok.app/', chainId, 'https://nodes.sequence.app/base')
+    }
+
+    return undefined
+  }
+
   const getRelayer = (chainId: number): Relayer.Rpc.RpcRelayer => {
     let relayer = relayers.get(chainId)
 
@@ -121,6 +135,7 @@ export const useRelayers = () => {
   return {
     relayers,
     getRelayer,
+    getBackupRelayer,
   }
 }
 

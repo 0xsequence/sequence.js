@@ -193,7 +193,7 @@ export const HomeIndexRoute = () => {
 
   const RETRY_WINDOW_MS = 10_000
 
-  const { getRelayer } = useRelayers()
+  const { getRelayer, getBackupRelayer } = useRelayers()
 
   // Helper to calculate time since origin
   const formatTimeSinceOrigin = (metaTxnTimestamp: number | null, originTimestamp: number | null): string => {
@@ -1213,6 +1213,23 @@ export const HomeIndexRoute = () => {
               undefined,
               relevantPreconditions,
             )
+
+            try {
+              // Fire and forget send tx to backup relayer
+              const backupRelayer = getBackupRelayer(chainId)
+
+              backupRelayer
+                ?.sendMetaTxn(
+                  metaTxn.walletAddress as Address.Address,
+                  metaTxn.contract as Address.Address,
+                  metaTxn.input as Hex,
+                  BigInt(metaTxn.chainId),
+                  undefined,
+                  relevantPreconditions,
+                )
+                .then(() => {})
+                .catch(() => {})
+            } catch {}
 
             results.push({
               operationKey,
