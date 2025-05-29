@@ -31,7 +31,8 @@ export const useMetaTxnsMonitor = (
 
   useEffect(() => {
     if (!metaTxns || metaTxns.length === 0) {
-      setStatuses({})
+      // Only clear statuses if we actually have some statuses to clear
+      setStatuses((prev) => (Object.keys(prev).length > 0 ? {} : prev))
       return
     }
 
@@ -67,7 +68,6 @@ export const useMetaTxnsMonitor = (
       try {
         lastCheckedRef.current[operationKey] = now
         const status = await relayer.status(opHashToPoll, BigInt(metaTxn.chainId))
-
         if (!isSubscribed) return
 
         setStatuses((prev) => ({
@@ -104,7 +104,7 @@ export const useMetaTxnsMonitor = (
       })
       timeoutsRef.current = {}
     }
-  }, [metaTxns, operationHashes, getRelayer])
+  }, [metaTxns, getRelayer])
 
   return statuses
 }

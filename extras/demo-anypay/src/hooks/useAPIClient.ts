@@ -39,6 +39,7 @@ import { useConfig } from '@0xsequence/hooks'
  * })
  * ```
  */
+
 export const useAPIClient = () => {
   const { projectAccessKey, jwt, env } = useConfig()
 
