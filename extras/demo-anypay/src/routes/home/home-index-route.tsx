@@ -748,42 +748,61 @@ export const HomeIndexRoute = () => {
       return
     }
 
-    // Don't update status if it's already set for this hash
-    if (originCallStatus?.txnHash === txnHash && !isWaitingForReceipt) {
+    // If status is already final for this txnHash, and receipt data is stable, don't reprocess.
+    if (
+      originCallStatus?.txnHash === txnHash &&
+      (originCallStatus?.status === 'Success' || originCallStatus?.status === 'Failed') &&
+      !isWaitingForReceipt
+    ) {
       return
     }
 
     if (isWaitingForReceipt) {
-      setOriginCallStatus({
+      setOriginCallStatus((prevStatus) => ({
+        ...(prevStatus?.txnHash === txnHash
+          ? prevStatus
+          : { gasUsed: undefined, effectiveGasPrice: undefined, revertReason: undefined }),
         txnHash,
         status: 'Pending',
+      }))
+      return
+    }
+
+    if (isSuccess && receipt) {
+      const newStatus = receipt.status === 'success' ? 'Success' : 'Failed'
+      setOriginCallStatus({
+        txnHash: receipt.transactionHash,
+        status: newStatus,
+        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
+        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+        revertReason:
+          receipt.status === 'reverted'
+            ? receiptError && typeof (receiptError as any).message === 'string'
+              ? (receiptError as any).message
+              : 'Transaction reverted by receipt status'
+            : undefined,
       })
+
       if (
+        newStatus === 'Success' &&
         metaTxns &&
         metaTxns.length > 0 &&
         isAutoExecuteEnabled &&
         !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])
       ) {
         console.log('Origin transaction successful, auto-sending all meta transactions...')
-        // Send all meta transactions at once (pass null to send all)
         sendMetaTxn(null)
       }
-
-      return
-    }
-
-    if (isSuccess && receipt) {
-      setOriginCallStatus({
-        txnHash: receipt.transactionHash,
-        status: receipt.status === 'success' ? 'Success' : 'Failed',
-        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
-        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
-      })
     } else if (isError) {
       setOriginCallStatus({
         txnHash,
         status: 'Failed',
-        revertReason: receiptError?.message || 'Failed to get receipt',
+        revertReason:
+          receiptError && typeof (receiptError as any).message === 'string'
+            ? (receiptError as any).message
+            : 'Failed to get receipt',
+        gasUsed: undefined,
+        effectiveGasPrice: undefined,
       })
     }
   }, [
@@ -2560,43 +2579,6 @@ export const HomeIndexRoute = () => {
                 </div>
               </div>
             </div>
-            {/* Preconditions Status */}
-            {/* <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
-              <Text
-                variant="medium"
-                color="primary"
-                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
-              >
-                <Clipboard className="h-4 w-4 mr-2" />
-                Preconditions Status
-              </Text>
-              <div className="space-y-3">
-                {intentPreconditions && intentPreconditions.length > 0 ? (
-                  intentPreconditions.map((precondition, index) => (
-                    <div key={index} className="bg-gray-800/70 p-3 rounded-md">
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">
-                          Precondition {index + 1} ({precondition.type}):{' '}
-                        </strong>
-                        <span className="font-mono">
-                          {preconditionStatuses[index] ? (
-                            <span className="text-green-400">Met</span>
-                          ) : (
-                            <span className="text-red-400">Not Met</span>
-                          )}
-                        </span>
-                      </Text>
-                    </div>
-                  ))
-                ) : (
-                  <div className="bg-gray-800/70 p-3 rounded-md">
-                    <Text variant="small" color="secondary" className="text-center">
-                      No preconditions available yet. Select a token and action first.
-                    </Text>
-                  </div>
-                )}
-              </div>
-            </div> */}
             {/* Meta Transactions Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
@@ -2672,8 +2654,7 @@ export const HomeIndexRoute = () => {
                           'txnHash' in monitorStatus.receipt &&
                           typeof monitorStatus.receipt.txnHash === 'string' &&
                           monitorStatus.receipt.txnHash && (
-                            <Text variant="small" color="secondary">
-                              <strong className="text-blue-300">Explorer: </strong>
+                            <div className="bg-gray-800/70 p-2 rounded-md">
                               <a
                                 href={
                                   getExplorerTransactionUrl(
@@ -2683,14 +2664,18 @@ export const HomeIndexRoute = () => {
                                 }
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-mono text-purple-400 hover:underline break-all"
+                                title={`View transaction ${monitorStatus.receipt.txnHash} on ${getChainInfo(parseInt(typedMetaTxn.chainId))?.name || 'explorer'}`}
+                                className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
                               >
-                                {getExplorerTransactionUrl(
-                                  parseInt(typedMetaTxn.chainId),
-                                  monitorStatus.receipt.txnHash,
-                                )}
+                                <NetworkImage chainId={parseInt(typedMetaTxn.chainId)} size="xs" className="w-3 h-3" />
+                                <span>
+                                  {getExplorerTransactionUrl(
+                                    parseInt(typedMetaTxn.chainId),
+                                    monitorStatus.receipt.txnHash,
+                                  )}
+                                </span>
                               </a>
-                            </Text>
+                            </div>
                           )}
                         {monitorStatus?.status === 'failed' && monitorStatus && 'reason' in monitorStatus && (
                           <Text variant="small" color="negative">
