@@ -21,7 +21,6 @@ import { useWaitForTransactionReceipt } from 'wagmi'
 import { useMetaTxnsMonitor, MetaTxn } from '@/hooks/useMetaTxnsMonitor'
 import { useRelayers } from '@/hooks/useRelayers'
 import { useTokenBalances } from '@/hooks/useTokenBalances'
-import { Relayer } from '@0xsequence/wallet-core'
 import {
   AlertTriangle,
   Loader2,
@@ -2614,25 +2613,6 @@ export const HomeIndexRoute = () => {
                   const monitorStatus = metaTxnMonitorStatuses[operationKey]
                   const typedMetaTxn = metaTxn as unknown as MetaTxn
 
-                  // Type guard for operation status with gas used
-                  type OperationStatusWithGas = {
-                    status: 'confirmed'
-                    gasUsed: bigint
-                    txHash: string
-                    transactionHash: `0x${string}`
-                  }
-
-                  const hasGasUsed = (
-                    status: Relayer.OperationStatus | undefined,
-                  ): status is OperationStatusWithGas => {
-                    return (
-                      !!status &&
-                      status.status === 'confirmed' &&
-                      'gasUsed' in status &&
-                      typeof status.gasUsed === 'bigint'
-                    )
-                  }
-
                   const getStatusDisplay = () => {
                     if (!monitorStatus) return 'Pending'
                     switch (monitorStatus.status) {
@@ -2688,16 +2668,17 @@ export const HomeIndexRoute = () => {
                         )}
                         {monitorStatus?.status === 'confirmed' &&
                           monitorStatus &&
-                          'transactionHash' in monitorStatus &&
-                          typeof monitorStatus.transactionHash === 'string' &&
-                          monitorStatus.transactionHash && (
+                          monitorStatus.receipt &&
+                          'txnHash' in monitorStatus.receipt &&
+                          typeof monitorStatus.receipt.txnHash === 'string' &&
+                          monitorStatus.receipt.txnHash && (
                             <Text variant="small" color="secondary">
                               <strong className="text-blue-300">Explorer: </strong>
                               <a
                                 href={
                                   getExplorerTransactionUrl(
                                     parseInt(typedMetaTxn.chainId),
-                                    monitorStatus.transactionHash,
+                                    monitorStatus.receipt.txnHash,
                                   ) || '#'
                                 }
                                 target="_blank"
@@ -2706,7 +2687,7 @@ export const HomeIndexRoute = () => {
                               >
                                 {getExplorerTransactionUrl(
                                   parseInt(typedMetaTxn.chainId),
-                                  monitorStatus.transactionHash,
+                                  monitorStatus.receipt.txnHash,
                                 )}
                               </a>
                             </Text>
@@ -2717,12 +2698,16 @@ export const HomeIndexRoute = () => {
                             <span className="font-mono break-all">{String(monitorStatus.reason)}</span>
                           </Text>
                         )}
-                        {hasGasUsed(monitorStatus) && (
-                          <Text variant="small" color="secondary">
-                            <strong className="text-blue-300">Gas Used: </strong>
-                            <span className="font-mono">{monitorStatus.gasUsed.toString()}</span>
-                          </Text>
-                        )}
+                        {monitorStatus?.status === 'confirmed' &&
+                          monitorStatus &&
+                          monitorStatus.receipt &&
+                          'gasUsed' in monitorStatus.receipt &&
+                          typeof monitorStatus.receipt.gasUsed === 'bigint' && (
+                            <Text variant="small" color="secondary">
+                              <strong className="text-blue-300">Gas Used: </strong>
+                              <span className="font-mono">{monitorStatus.receipt.gasUsed}</span>
+                            </Text>
+                          )}
                         {(monitorStatus?.status === 'confirmed' || monitorStatus?.status === 'failed') &&
                           monitorStatus && (
                             <div className="mt-2 bg-gray-900/50 p-2 rounded border border-gray-700/50">

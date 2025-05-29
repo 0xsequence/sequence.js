@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Relayer } from '@0xsequence/wallet-core'
 import { Hex } from 'viem'
+import { ETHTxnStatus, MetaTxnReceipt } from '../gen/relayer.gen'
 
 export type MetaTxn = {
   id: string
@@ -10,8 +11,15 @@ export type MetaTxn = {
   walletAddress?: string | undefined
 }
 
+type MetaTxnStatusValue = {
+  status: string
+  reason?: string
+  receipt?: MetaTxnReceipt
+  transactionHash?: Hex
+}
+
 type MetaTxnStatus = {
-  [key: string]: Relayer.OperationStatus
+  [key: string]: MetaTxnStatusValue
 }
 
 type LastChecked = {
@@ -75,18 +83,48 @@ export const useMetaTxnsMonitor = (
 
       try {
         lastCheckedRef.current[operationKey] = now
-        const status = await relayer.status(opHashToPoll, BigInt(metaTxn.chainId))
+        const res = await relayer.receipt(opHashToPoll, BigInt(metaTxn.chainId))
 
         if (!isSubscribed) return
 
-        setStatuses((prev) => ({
-          ...prev,
-          [operationKey]: status,
-        }))
+        const apiStatus = res.receipt?.status as ETHTxnStatus
+        let newStatusEntry: MetaTxnStatusValue
 
-        // Continue monitoring if still pending
-        if (status.status === 'pending' && isSubscribed) {
-          timeoutsRef.current[operationKey] = setTimeout(() => monitorStatus(metaTxn), POLL_INTERVAL)
+        switch (apiStatus) {
+          case ETHTxnStatus.QUEUED:
+          case ETHTxnStatus.PENDING_PRECONDITION:
+          case ETHTxnStatus.SENT:
+            newStatusEntry = { status: 'pending', receipt: res.receipt }
+            break
+          case ETHTxnStatus.SUCCEEDED:
+            newStatusEntry = { status: 'confirmed', transactionHash: res.receipt.txnHash as Hex, receipt: res.receipt }
+            break
+          case ETHTxnStatus.FAILED:
+          case ETHTxnStatus.PARTIALLY_FAILED:
+            newStatusEntry = {
+              status: 'failed',
+              reason: res.receipt.revertReason || 'Relayer reported failure',
+              receipt: res.receipt,
+            }
+            break
+          case ETHTxnStatus.DROPPED:
+            newStatusEntry = { status: 'failed', reason: 'Transaction dropped', receipt: res.receipt }
+            break
+          case ETHTxnStatus.UNKNOWN:
+          default:
+            newStatusEntry = { status: 'unknown', receipt: res.receipt }
+            break
+        }
+
+        if (isSubscribed) {
+          setStatuses((prev) => ({
+            ...prev,
+            [operationKey]: newStatusEntry,
+          }))
+
+          if (newStatusEntry.status === 'pending' || newStatusEntry.status === 'unknown') {
+            timeoutsRef.current[operationKey] = setTimeout(() => monitorStatus(metaTxn), POLL_INTERVAL)
+          }
         }
       } catch (error: any) {
         if (!isSubscribed) return
