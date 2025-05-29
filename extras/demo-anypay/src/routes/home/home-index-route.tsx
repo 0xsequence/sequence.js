@@ -2536,6 +2536,22 @@ export const HomeIndexRoute = () => {
                     <span className="text-yellow-300 break-all font-mono">
                       {originCallStatus?.txnHash || 'Not sent yet'}
                     </span>
+                    {originCallStatus?.txnHash && originCallParams?.chainId && (
+                      <div className="mt-1">
+                        <a
+                          href={getExplorerTransactionUrl(originCallParams.chainId, originCallStatus.txnHash) || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`View transaction ${originCallStatus.txnHash} on ${
+                            getChainInfo(originCallParams.chainId)?.name || 'explorer'
+                          }`}
+                          className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
+                        >
+                          <NetworkImage chainId={originCallParams.chainId} size="xs" className="w-3 h-3" />
+                          <span>{getExplorerTransactionUrl(originCallParams.chainId, originCallStatus.txnHash)}</span>
+                        </a>
+                      </div>
+                    )}
                   </Text>
                 </div>
                 <div className="bg-gray-800/70 p-3 rounded-md">
