@@ -26,7 +26,7 @@ type LastChecked = {
   [key: string]: number
 }
 
-const POLL_INTERVAL = 10_000 // 10 seconds
+const POLL_INTERVAL = 3_000 // 3 seconds
 
 export const useMetaTxnsMonitor = (
   metaTxns: MetaTxn[] | undefined,
