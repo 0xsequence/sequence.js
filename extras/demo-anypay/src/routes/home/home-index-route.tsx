@@ -742,7 +742,7 @@ export const HomeIndexRoute = () => {
     }
 
     // Don't update status if it's already set for this hash
-    if (originCallStatus?.txnHash === txnHash) {
+    if (originCallStatus?.txnHash === txnHash && !isWaitingForReceipt) {
       return
     }
 
