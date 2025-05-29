@@ -2814,12 +2814,12 @@ export const HomeIndexRoute = () => {
                             </span>
                           </Text>
                         )}
-                        {metaTxnBlockTimestamps[operationKey]?.error && (
+                        {/* {metaTxnBlockTimestamps[operationKey]?.error && (
                           <Text variant="small" color="error">
                             <strong className="text-red-300">Timestamp Error: </strong>
                             <span className="font-mono break-all">{metaTxnBlockTimestamps[operationKey]?.error}</span>
                           </Text>
-                        )}
+                        )} */}
                         {monitorStatus?.status === 'confirmed' &&
                           monitorStatus &&
                           monitorStatus.receipt &&
