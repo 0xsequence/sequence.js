@@ -1,7 +1,10 @@
 import { Abi, Address, Hex } from 'ox'
 
-export const DEFAULT_CREATION_CODE: Hex.Hex =
+export const DEFAULT_CREATION_CODE_V0_1_0: Hex.Hex =
   '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3'
+
+export const DEFAULT_CREATION_CODE_V0_2_0: Hex.Hex =
+  '0x6041600e3d396021805130553df33d3d36153402601f57363d3d373d363d30545af43d82803e903d91601f57fd5bf3'
 
 export const DefaultFactory: Address.Address = '0xe068ec288d8b4Aaf7F7FC028Ce0797a7a353EF2d'
 export const DefaultStage1: Address.Address = '0x302608CcdCc540761A0ec89C9d8Fa195dc8049C6'

@@ -11,7 +11,7 @@ export async function doCalculateAddress(options: {
   const context = {
     factory: Address.from(options.factory),
     stage1: Address.from(options.module),
-    creationCode: (options.creationCode || Constants.DEFAULT_CREATION_CODE) as `0x${string}`,
+    creationCode: (options.creationCode || Constants.DEFAULT_CREATION_CODE_V0_2_0) as `0x${string}`,
   }
 
   return SequenceAddress.from(Bytes.fromHex(options.imageHash as `0x${string}`), context)
@@ -45,7 +45,7 @@ const addressCommand: CommandModule = {
             .option('creationCode', {
               type: 'string',
               description: 'Creation code (optional)',
-              default: Constants.DEFAULT_CREATION_CODE,
+              default: Constants.DEFAULT_CREATION_CODE_V0_2_0,
             })
         },
         async (argv) => {
