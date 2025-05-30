@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSendTransaction, useSwitchChain, useEstimateGas } from 'wagmi'
 import {
   GetIntentCallsPayloadsReturn,
@@ -6,17 +6,32 @@ import {
   IntentPrecondition,
   GetIntentConfigReturn,
   AnypayLifiInfo,
+  GetIntentCallsPayloadsArgs,
 } from '@0xsequence/api'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { AnyPay, Relayer } from '@0xsequence/wallet-core'
 import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
-import { Address, Bytes } from 'ox'
-import { Hex, isAddressEqual } from 'viem'
-import { useAPIClient } from './useAPIClient'
+import { Address, Bytes, AbiFunction } from 'ox'
+import { Hex, isAddressEqual, zeroAddress } from 'viem'
+import { useAPIClient, SequenceAPIClient } from './useAPIClient'
 import { useMetaTxnsMonitor, MetaTxn } from './useMetaTxnsMonitor'
 import { useRelayers } from './useRelayers'
+
+// Add type for calculated origin call parameters
+export type OriginCallParams = {
+  to: `0x${string}` | null
+  data: Hex | null
+  value: bigint | null
+  chainId: number | null
+  error?: string
+}
+
+function getERC20TransferData(recipient: string, amount: bigint) {
+  const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
+  return AbiFunction.encodeData(erc20Transfer, [recipient as Address.Address, amount]) as Hex
+}
 
 const findPreconditionAddress = (preconditions: IntentPrecondition[]) => {
   const preconditionTypes = ['erc20-balance', 'native-balance'] as const
@@ -33,7 +48,6 @@ const findPreconditionAddress = (preconditions: IntentPrecondition[]) => {
 
 type UseAnypayConfig = {
   account: any // TODO: Add type
-  originCallParams: any // TODO: Add type
   disableAutoExecute?: boolean
   env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
   useV3Relayers: boolean
@@ -44,9 +58,13 @@ const RETRY_WINDOW_MS = 10_000
 export type RelayerOperationStatus = Relayer.OperationStatus
 export { type NativeTokenBalance, type TokenBalance }
 
+export async function getIntentCallsPayloads(apiClient: SequenceAPIClient, args: GetIntentCallsPayloadsArgs) {
+  return apiClient.getIntentCallsPayloads(args)
+}
+
 // TODO: Add type for return value
 export function useAnyPay(config: UseAnypayConfig): any {
-  const { account, originCallParams, disableAutoExecute = false, env, useV3Relayers } = config
+  const { account, disableAutoExecute = false, env, useV3Relayers } = config
   const apiClient = useAPIClient()
 
   const [isAutoExecute, setIsAutoExecute] = useState(!disableAutoExecute)
@@ -65,6 +83,8 @@ export function useAnyPay(config: UseAnypayConfig): any {
   const [txnHash, setTxnHash] = useState<Hex | undefined>()
   const [committedIntentAddress, setCommittedIntentAddress] = useState<string | null>(null)
   // const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
+
+  const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
 
   const [operationHashes, setOperationHashes] = useState<{ [key: string]: Hex }>({})
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
@@ -259,9 +279,8 @@ export function useAnyPay(config: UseAnypayConfig): any {
     retry: 1,
   })
 
-  async function getIntentCallsPayloads(args: any) {
-    const data = await apiClient.getIntentCallsPayloads(args)
-    return data
+  async function getIntentCallsPayloads(args: GetIntentCallsPayloadsArgs) {
+    return apiClient.getIntentCallsPayloads(args)
   }
 
   // TODO: Add type for args
@@ -364,7 +383,7 @@ export function useAnyPay(config: UseAnypayConfig): any {
     })
   }
 
-  const handleSendOriginCall = async () => {
+  const sendOriginTransaction = async () => {
     if (
       isTransactionInProgress || // Prevent duplicate transactions
       !originCallParams ||
@@ -781,6 +800,73 @@ export function useAnyPay(config: UseAnypayConfig): any {
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000), // Exponential backoff
   })
 
+  const [tokenAddress, setTokenAddress] = useState<string | null>(null)
+  const [originChainId, setOriginChainId] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (
+      !intentCallsPayloads?.[0]?.chainId ||
+      !tokenAddress ||
+      !originChainId ||
+      !intentPreconditions ||
+      !account.address
+    ) {
+      setOriginCallParams(null)
+      return
+    }
+
+    try {
+      const intentAddressString = calculatedIntentAddress as Address.Address
+
+      let calcTo: Address.Address
+      let calcData: Hex = '0x'
+      let calcValue: bigint = 0n
+
+      const recipientAddress = intentAddressString
+
+      const isNative = tokenAddress === zeroAddress
+
+      if (isNative) {
+        const nativePrecondition = intentPreconditions.find(
+          (p: any) =>
+            (p.type === 'transfer-native' || p.type === 'native-balance') && p.chainId === originChainId.toString(),
+        )
+        const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
+        if (nativeMinAmount === undefined) {
+          throw new Error('Could not find native precondition (transfer-native or native-balance) or min amount')
+        }
+        calcValue = BigInt(nativeMinAmount)
+        calcTo = recipientAddress
+      } else {
+        const erc20Precondition = intentPreconditions.find(
+          (p: any) =>
+            p.type === 'erc20-balance' &&
+            p.chainId === originChainId.toString() &&
+            p.data?.token &&
+            isAddressEqual(Address.from(p.data.token), Address.from(tokenAddress)),
+        )
+
+        const erc20MinAmount = erc20Precondition?.data?.min
+        if (erc20MinAmount === undefined) {
+          throw new Error('Could not find ERC20 balance precondition or min amount')
+        }
+        calcData = getERC20TransferData(recipientAddress, erc20MinAmount)
+        calcTo = tokenAddress as Address.Address
+      }
+
+      setOriginCallParams({
+        to: calcTo,
+        data: calcData,
+        value: calcValue,
+        chainId: originChainId,
+        error: undefined,
+      })
+    } catch (error: any) {
+      console.error('Failed to calculate origin call params for UI:', error)
+      setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
+    }
+  }, [intentCallsPayloads, tokenAddress, originChainId, intentPreconditions, account.address, lifiInfos])
+
   // const checkPreconditionStatuses = useCallback(async () => {
   //   if (!intentPreconditions) return
 
@@ -837,6 +923,13 @@ export function useAnyPay(config: UseAnypayConfig): any {
     createIntentMutation.mutate(args)
   }
 
+  const calculatedIntentAddress = useMemo(() => {
+    if (!account.address || !intentCallsPayloads || !lifiInfos) {
+      return null
+    }
+    return calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
+  }, [account.address, intentCallsPayloads, lifiInfos])
+
   const createIntentPending = createIntentMutation.isPending
   const createIntentSuccess = createIntentMutation.isSuccess
   const createIntentError = createIntentMutation.error
@@ -844,6 +937,16 @@ export function useAnyPay(config: UseAnypayConfig): any {
 
   function commitIntentConfig(args: any) {
     commitIntentConfigMutation.mutate(args)
+  }
+
+  function updateOriginCallParams(args: any) {
+    if (!args) {
+      setOriginCallParams(null)
+      return
+    }
+    const { originChainId, tokenAddress } = args
+    setOriginChainId(originChainId)
+    setTokenAddress(tokenAddress)
   }
 
   const commitIntentConfigPending = commitIntentConfigMutation.isPending
@@ -876,7 +979,7 @@ export function useAnyPay(config: UseAnypayConfig): any {
     getIntentCallsPayloads,
     operationHashes,
     callIntentCallsPayload,
-    handleSendOriginCall,
+    sendOriginTransaction,
     switchChain,
     isSwitchingChain,
     switchChainError,
@@ -905,5 +1008,8 @@ export function useAnyPay(config: UseAnypayConfig): any {
     createIntentSuccess,
     createIntentError,
     createIntentArgs,
+    calculatedIntentAddress,
+    originCallParams,
+    updateOriginCallParams,
   }
 }

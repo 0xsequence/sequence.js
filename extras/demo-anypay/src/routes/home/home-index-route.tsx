@@ -40,15 +40,6 @@ const getExplorerUrl = (chainId: number, address: string): string | null => {
   return null
 }
 
-// Add type for calculated origin call parameters
-type OriginCallParams = {
-  to: `0x${string}` | null
-  data: Hex | null
-  value: bigint | null
-  chainId: number | null
-  error?: string
-}
-
 // Mock Data
 const MOCK_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'
 // Mock Calldata for interaction
@@ -105,7 +96,6 @@ function useHook() {
   const account = useAccount()
   const { connectors, connect, status: connectStatus, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
-  const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null)
   const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
   const [showCustomCallForm, setShowCustomCallForm] = useState(false)
@@ -125,7 +115,6 @@ function useHook() {
     lifiInfos,
     committedIntentAddress,
     verificationStatus,
-    calculateIntentAddress,
     committedIntentConfig,
     isLoadingCommittedConfig,
     committedConfigError,
@@ -152,9 +141,11 @@ function useHook() {
     sendMetaTxnMutation,
     clearIntent,
     metaTxnMonitorStatuses,
+    calculatedIntentAddress,
+    updateOriginCallParams,
+    originCallParams,
   } = useAnyPay({
     account,
-    originCallParams,
     env: import.meta.env.VITE_ENV,
     useV3Relayers: import.meta.env.VITE_USE_V3_RELAYERS,
   })
@@ -290,67 +281,17 @@ function useHook() {
     setShowCustomCallForm(false)
   }
 
-  // TODO: move intent address calculation to the SDK
   useEffect(() => {
-    if (!intentCallsPayloads?.[0]?.chainId || !selectedToken || !intentPreconditions || !account.address) {
-      setOriginCallParams(null)
+    if (!selectedToken) {
+      updateOriginCallParams(null)
       return
     }
 
-    try {
-      const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
-      const intentAddressString = intentAddress.toString() as Address.Address
-
-      let calcTo: Address.Address
-      let calcData: Hex = '0x'
-      let calcValue: bigint = 0n
-      const originChainId: number = selectedToken.chainId
-
-      const recipientAddress = intentAddressString
-
-      const isNative = selectedToken.contractAddress === zeroAddress
-
-      if (isNative) {
-        const nativePrecondition = intentPreconditions.find(
-          (p: any) =>
-            (p.type === 'transfer-native' || p.type === 'native-balance') && p.chainId === originChainId.toString(),
-        )
-        const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
-        if (nativeMinAmount === undefined) {
-          throw new Error('Could not find native precondition (transfer-native or native-balance) or min amount')
-        }
-        calcValue = BigInt(nativeMinAmount)
-        calcTo = recipientAddress
-      } else {
-        const erc20Precondition = intentPreconditions.find(
-          (p: any) =>
-            p.type === 'erc20-balance' &&
-            p.chainId === originChainId.toString() &&
-            p.data?.token &&
-            isAddressEqual(Address.from(p.data.token), Address.from(selectedToken.contractAddress)),
-        )
-
-        const erc20MinAmount = erc20Precondition?.data?.min
-        if (erc20MinAmount === undefined) {
-          throw new Error('Could not find ERC20 balance precondition or min amount')
-        }
-        const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
-        calcData = AbiFunction.encodeData(erc20Transfer, [recipientAddress, BigInt(erc20MinAmount)]) as Hex
-        calcTo = selectedToken.contractAddress as Address.Address
-      }
-
-      setOriginCallParams({
-        to: calcTo,
-        data: calcData,
-        value: calcValue,
-        chainId: originChainId,
-        error: undefined,
-      })
-    } catch (error: any) {
-      console.error('Failed to calculate origin call params for UI:', error)
-      setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
-    }
-  }, [intentCallsPayloads, selectedToken, intentPreconditions, account.address, calculateIntentAddress, lifiInfos])
+    updateOriginCallParams({
+      originChainId: selectedToken.chainId,
+      tokenAddress: selectedToken.contractAddress,
+    })
+  }, [selectedToken])
 
   // Update button text and disabled state for commit button
   const commitButtonText = commitIntentConfigPending ? (
@@ -434,7 +375,6 @@ function useHook() {
     committedIntentConfig,
     verificationStatus,
     intentActionType,
-    calculateIntentAddress,
 
     // Transaction State
     originCallParams,
@@ -493,6 +433,8 @@ function useHook() {
     isSendButtonDisabled,
     commitButtonText,
     isCommitButtonDisabled,
+
+    calculatedIntentAddress,
   }
 }
 
@@ -522,7 +464,6 @@ export const HomeIndexRoute = () => {
     committedIntentConfig,
     verificationStatus,
     intentActionType,
-    calculateIntentAddress,
 
     // Transaction State
     originCallParams,
@@ -571,6 +512,8 @@ export const HomeIndexRoute = () => {
     isSendButtonDisabled,
     commitButtonText,
     isCommitButtonDisabled,
+
+    calculatedIntentAddress,
   } = useHook()
 
   return (
@@ -1182,12 +1125,6 @@ export const HomeIndexRoute = () => {
                       amountToSendFormatted = '[Unknown Amount]'
                     }
 
-                    const calculatedIntentAddress = calculateIntentAddress(
-                      account.address,
-                      intentCallsPayloads,
-                      lifiInfos,
-                    ).toString()
-
                     routeSubtitleNode = (
                       <>
                         <Info className="h-3.5 w-3.5 mr-1.5 text-sky-400 flex-shrink-0" />
@@ -1603,11 +1540,7 @@ export const HomeIndexRoute = () => {
                       onClick={() => {
                         if (!account.address || !intentCallsPayloads || !intentPreconditions || !lifiInfos) return
                         commitIntentConfig({
-                          walletAddress: calculateIntentAddress(
-                            account.address,
-                            intentCallsPayloads,
-                            lifiInfos,
-                          ).toString(),
+                          walletAddress: calculatedIntentAddress,
                           mainSigner: account.address,
                           calls: intentCallsPayloads,
                           preconditions: intentPreconditions,
