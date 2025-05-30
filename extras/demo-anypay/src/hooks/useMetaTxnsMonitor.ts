@@ -47,7 +47,30 @@ export const useMetaTxnsMonitor = (
           }
 
           const res = await relayer.receipt(opHashToPoll, BigInt(metaTxn.chainId))
-          const apiStatus = res.receipt?.status as ETHTxnStatus
+
+          console.log(`🔍 Meta transaction debug for ${opHashToPoll}:`, {
+            opHash: opHashToPoll,
+            chainId: metaTxn.chainId,
+            hasResponse: !!res,
+            hasReceipt: !!res?.receipt,
+            receiptStatus: res?.receipt?.status,
+            statusType: typeof res?.receipt?.status,
+            fullResponse: res,
+          })
+
+          if (!res || !res.receipt) {
+            console.warn(`❌ No receipt for ${opHashToPoll}:`, res)
+            return { status: 'unknown', reason: 'No receipt available' }
+          }
+
+          const apiStatus = res.receipt.status as ETHTxnStatus
+
+          if (!apiStatus) {
+            console.warn(`❌ No status in receipt for ${opHashToPoll}:`, res.receipt)
+            return { status: 'unknown', reason: 'Receipt status is null or undefined', receipt: res.receipt }
+          }
+
+          console.log(`📊 Processing status ${apiStatus} for ${opHashToPoll}`)
           let newStatusEntry: MetaTxnStatusValue
 
           switch (apiStatus) {
@@ -57,6 +80,7 @@ export const useMetaTxnsMonitor = (
               newStatusEntry = { status: 'pending', receipt: res.receipt }
               break
             case ETHTxnStatus.SUCCEEDED:
+              console.log(`✅ Success for ${opHashToPoll}:`, res.receipt)
               newStatusEntry = {
                 status: 'confirmed',
                 transactionHash: res.receipt.txnHash as Hex,
@@ -75,24 +99,43 @@ export const useMetaTxnsMonitor = (
               newStatusEntry = { status: 'failed', reason: 'Transaction dropped', receipt: res.receipt }
               break
             case ETHTxnStatus.UNKNOWN:
-            default:
+              console.warn(`❓ Unknown status for ${opHashToPoll}:`, res.receipt)
               newStatusEntry = { status: 'unknown', receipt: res.receipt }
               break
+            default:
+              console.warn(`⚠️ Unexpected status "${apiStatus}" for ${opHashToPoll}:`, res.receipt)
+              newStatusEntry = { status: 'unknown', receipt: res.receipt, reason: `Unexpected status: ${apiStatus}` }
+              break
           }
+
+          console.log(`🎯 Final status for ${opHashToPoll}:`, newStatusEntry.status)
           return newStatusEntry
         },
-        refetchInterval: (
-          query: Query<MetaTxnStatusValue, Error, MetaTxnStatusValue, readonly (string | number)[]>,
-        ) => {
+        refetchInterval: (query: Query<MetaTxnStatusValue, Error, MetaTxnStatusValue, readonly unknown[]>) => {
           const data = query.state.data
-          if (data?.status === 'pending' || data?.status === 'unknown') {
+
+          if (data?.status === 'confirmed' || data?.status === 'failed') {
+            return false
+          }
+
+          if (data?.status === 'pending') {
             return POLL_INTERVAL
           }
-          return false // Disable polling if status is terminal
+
+          if (data?.status === 'unknown') {
+            return POLL_INTERVAL
+          }
+
+          return POLL_INTERVAL
         },
         enabled: !!metaTxn && !!metaTxn.id && !!metaTxn.chainId,
-        // Keep previous data while refetching to avoid UI flickering if needed
-        // keepPreviousData: true,
+        retry: (failureCount: number, error: Error) => {
+          if (failureCount >= 30) {
+            console.error(`❌ Giving up on transaction ${opHashToPoll} after 3 failed API attempts:`, error)
+            return false
+          }
+          return true
+        },
       }
     }),
   })
