@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Provider } from 'react'
 import { useSendTransaction, useSwitchChain, useEstimateGas } from 'wagmi'
 import {
   GetIntentCallsPayloadsReturn,
@@ -14,7 +14,7 @@ import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Address, Bytes, AbiFunction } from 'ox'
-import { Hex, isAddressEqual, zeroAddress } from 'viem'
+import { Hex, isAddressEqual, zeroAddress, PrivateKeyAccount, PublicClient, WalletClient, Chain } from 'viem'
 import { useAPIClient, SequenceAPIClient } from './useAPIClient'
 import { useMetaTxnsMonitor, MetaTxn } from './useMetaTxnsMonitor'
 import { useRelayers } from './useRelayers'
@@ -28,29 +28,38 @@ export type OriginCallParams = {
   error?: string
 }
 
-function getERC20TransferData(recipient: string, amount: bigint) {
+export function getERC20TransferData(recipient: string, amount: bigint) {
   const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
   return AbiFunction.encodeData(erc20Transfer, [recipient as Address.Address, amount]) as Hex
 }
 
 const findPreconditionAddress = (preconditions: IntentPrecondition[]) => {
+  console.log('Finding precondition address from:', JSON.stringify(preconditions, null, 2))
+
   const preconditionTypes = ['erc20-balance', 'native-balance'] as const
 
   for (const type of preconditionTypes) {
     const precondition = preconditions.find((p) => p.type === type && p.data?.address)
     if (precondition) {
+      console.log(`Found ${type} precondition with address:`, precondition.data.address)
       return precondition.data.address
     }
   }
 
-  return `N/A (No ${preconditionTypes.join(' or ')} precondition with address found)`
+  const msg = `N/A (No ${preconditionTypes.join(' or ')} precondition with address found)`
+  console.log(msg)
+  return msg
 }
 
-type UseAnypayConfig = {
-  account: any // TODO: Add type
+export type UseAnypayConfig = {
+  account: {
+    address: `0x${string}`
+    isConnected: boolean
+    chainId: number
+  }
   disableAutoExecute?: boolean
   env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
-  useV3Relayers: boolean
+  useV3Relayers?: boolean
 }
 
 const RETRY_WINDOW_MS = 10_000
@@ -60,6 +69,120 @@ export { type NativeTokenBalance, type TokenBalance }
 
 export async function getIntentCallsPayloads(apiClient: SequenceAPIClient, args: GetIntentCallsPayloadsArgs) {
   return apiClient.getIntentCallsPayloads(args)
+}
+
+export async function sendOriginTransaction(
+  wallet: PrivateKeyAccount,
+  client: WalletClient,
+  originParams: any,
+): Promise<`0x${string}`> {
+  const hash = await client.sendTransaction({
+    account: wallet,
+    to: originParams.to as `0x${string}`,
+    data: originParams.data as `0x${string}`,
+    value: BigInt(originParams.value),
+    chain: originParams.chain,
+  })
+  return hash
+}
+
+export function calculateIntentAddress(
+  mainSigner: string,
+  calls: IntentCallsPayload[],
+  lifiInfosArg: AnypayLifiInfo[] | null | undefined,
+) {
+  console.log('calculateIntentAddress inputs:', {
+    mainSigner,
+    calls: JSON.stringify(calls, null, 2),
+    lifiInfosArg: JSON.stringify(lifiInfosArg, null, 2),
+  })
+
+  const context: ContextLike.Context = {
+    factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
+    stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
+    stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
+    creationCode:
+      '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
+  }
+
+  const coreCalls = calls.map((call) => ({
+    type: 'call' as const,
+    chainId: BigInt(call.chainId),
+    space: call.space ? BigInt(call.space) : 0n,
+    nonce: call.nonce ? BigInt(call.nonce) : 0n,
+    calls: call.calls.map((call) => ({
+      to: Address.from(call.to),
+      value: BigInt(call.value || '0'),
+      data: Bytes.toHex(Bytes.from((call.data as Hex) || '0x')),
+      gasLimit: BigInt(call.gasLimit || '0'),
+      delegateCall: !!call.delegateCall,
+      onlyFallback: !!call.onlyFallback,
+      behaviorOnError: (Number(call.behaviorOnError) === 0
+        ? 'ignore'
+        : Number(call.behaviorOnError) === 1
+          ? 'revert'
+          : 'abort') as 'ignore' | 'revert' | 'abort',
+    })),
+  }))
+
+  //console.log('Transformed coreCalls:', JSON.stringify(coreCalls, null, 2))
+
+  const coreLifiInfos = lifiInfosArg?.map((info: AnypayLifiInfo) => ({
+    originToken: Address.from(info.originToken),
+    amount: BigInt(info.amount),
+    originChainId: BigInt(info.originChainId),
+    destinationChainId: BigInt(info.destinationChainId),
+  }))
+
+  console.log(
+    'Transformed coreLifiInfos:',
+    JSON.stringify(coreLifiInfos, (_, v) => (typeof v === 'bigint' ? v.toString() : v), 2),
+  )
+
+  const calculatedAddress = AnyPay.calculateIntentConfigurationAddress(
+    Address.from(mainSigner),
+    coreCalls,
+    context,
+    // AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
+    Address.from('0x0000000000000000000000000000000000000001'),
+    coreLifiInfos,
+  )
+
+  console.log('Final calculated address:', calculatedAddress.toString())
+  return calculatedAddress
+}
+
+export function commitIntentConfig(
+  apiClient: SequenceAPIClient,
+  mainSigner: string,
+  calls: IntentCallsPayload[],
+  preconditions: IntentPrecondition[],
+  lifiInfos: AnypayLifiInfo[],
+) {
+  console.log('commitIntentConfig inputs:', {
+    mainSigner,
+    calls: JSON.stringify(calls, null, 2),
+    preconditions: JSON.stringify(preconditions, null, 2),
+    lifiInfos: JSON.stringify(lifiInfos, null, 2),
+  })
+
+  const calculatedAddress = calculateIntentAddress(mainSigner, calls, lifiInfos)
+  const receivedAddress = findPreconditionAddress(preconditions)
+  console.log('Address comparison:', {
+    receivedAddress,
+    calculatedAddress: calculatedAddress.toString(),
+    match: isAddressEqual(Address.from(receivedAddress), calculatedAddress),
+  })
+
+  const args = {
+    walletAddress: calculatedAddress.toString(),
+    mainSigner: mainSigner,
+    calls: calls,
+    preconditions: preconditions,
+    lifiInfos: lifiInfos,
+  }
+  console.log('args', args)
+  return apiClient.commitIntentConfig(args)
 }
 
 // TODO: Add type for return value
@@ -127,65 +250,6 @@ export function useAnyPay(config: UseAnypayConfig): any {
       : undefined,
   )
 
-  const calculateIntentAddress = useCallback(
-    (mainSigner: string, calls: IntentCallsPayload[], lifiInfosArg: AnypayLifiInfo[] | null | undefined) => {
-      try {
-        console.log('Calculating intent address...')
-        console.log('Main signer:', mainSigner)
-        console.log('Calls:', JSON.stringify(calls, null, 2))
-        console.log('LifiInfos (API type from arg):', JSON.stringify(lifiInfosArg, null, 2))
-
-        const context: ContextLike.Context = {
-          factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
-          stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
-          stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
-          creationCode:
-            '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
-        }
-
-        const coreCalls = calls.map((call) => ({
-          type: 'call' as const,
-          chainId: BigInt(call.chainId),
-          space: call.space ? BigInt(call.space) : 0n,
-          nonce: call.nonce ? BigInt(call.nonce) : 0n,
-          calls: call.calls.map((call) => ({
-            to: Address.from(call.to),
-            value: BigInt(call.value || '0'),
-            data: Bytes.toHex(Bytes.from((call.data as Hex) || '0x')),
-            gasLimit: BigInt(call.gasLimit || '0'),
-            delegateCall: !!call.delegateCall,
-            onlyFallback: !!call.onlyFallback,
-            behaviorOnError: (Number(call.behaviorOnError) === 0
-              ? 'ignore'
-              : Number(call.behaviorOnError) === 1
-                ? 'revert'
-                : 'abort') as 'ignore' | 'revert' | 'abort',
-          })),
-        }))
-
-        const coreLifiInfos = lifiInfosArg?.map((info: AnypayLifiInfo) => ({
-          originToken: Address.from(info.originToken),
-          amount: BigInt(info.amount),
-          originChainId: BigInt(info.originChainId),
-          destinationChainId: BigInt(info.destinationChainId),
-        }))
-
-        return AnyPay.calculateIntentConfigurationAddress(
-          Address.from(mainSigner),
-          coreCalls,
-          context,
-          // AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
-          Address.from('0x0000000000000000000000000000000000000001'),
-          coreLifiInfos,
-        )
-      } catch (error) {
-        console.error('Error calculating intent address:', error)
-        throw error
-      }
-    },
-    [],
-  )
-
   const commitIntentConfigMutation = useMutation({
     mutationFn: async (args: {
       walletAddress: string
@@ -195,7 +259,6 @@ export function useAnyPay(config: UseAnypayConfig): any {
       lifiInfos: AnypayLifiInfo[]
     }) => {
       if (!apiClient) throw new Error('API client not available')
-      if (!account.address) throw new Error('Account address not available')
       if (!args.lifiInfos) throw new Error('LifiInfos not available')
 
       try {
@@ -676,12 +739,13 @@ export function useAnyPay(config: UseAnypayConfig): any {
       intentPreconditions &&
       lifiInfos &&
       account.address &&
+      calculatedIntentAddress &&
       !commitIntentConfigMutation.isPending &&
       !commitIntentConfigMutation.isSuccess
     ) {
       console.log('Auto-committing intent configuration...')
       commitIntentConfigMutation.mutate({
-        walletAddress: calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos).toString(),
+        walletAddress: calculatedIntentAddress.toString(),
         mainSigner: account.address,
         calls: intentCallsPayloads,
         preconditions: intentPreconditions,
@@ -936,6 +1000,7 @@ export function useAnyPay(config: UseAnypayConfig): any {
   const createIntentArgs = createIntentMutation.variables
 
   function commitIntentConfig(args: any) {
+    console.log('commitIntentConfig', args)
     commitIntentConfigMutation.mutate(args)
   }
 
