@@ -1,15 +1,28 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
     "declaration": true,
-    "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true,
+    "sourceMap": true,
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node"
+    "strict": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@0xsequence/*": ["node_modules/@0xsequence/*/src"]
+    }
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -42,6 +42,7 @@ export const useMetaTxnsMonitor = (
       const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
       const opHashToPoll = metaTxn.id as Hex
       const relayer = getRelayer(parseInt(metaTxn.chainId))
+
       console.log('opHashToPoll', opHashToPoll)
 
       if (!opHashToPoll || !relayer) {

@@ -18,7 +18,12 @@ export type RelayerConfig = {
   rpcUrl: string
 }
 
-export const useRelayers = () => {
+export type RelayerEnvConfig = {
+  env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
+  useV3Relayers?: boolean
+}
+
+export const useRelayers = (config: RelayerEnvConfig) => {
   const relayers = useMemo(() => {
     const relayerMap = new Map<number, Relayer.Rpc.RpcRelayer>()
     return relayerMap
@@ -32,7 +37,7 @@ export const useRelayers = () => {
       const rpcUrl = chain.rpcUrls.default.http[0]
 
       let relayerUrl
-      if (import.meta.env.VITE_ENV === 'local') {
+      if (config.env === 'local') {
         // Use specific ports for different chains in local environment
         if (chainId === 42161) {
           // Arbitrum
@@ -53,16 +58,16 @@ export const useRelayers = () => {
       } else {
         // For cors-anywhere, dev, and production environments
         const baseUrl =
-          import.meta.env.VITE_ENV === 'cors-anywhere'
+          config.env === 'cors-anywhere'
             ? 'http://localhost:8080/https://'
-            : import.meta.env.VITE_ENV === 'dev' && import.meta.env.VITE_USE_V3_RELAYERS === 'true'
+            : config.env === 'dev' && config.useV3Relayers
               ? 'https://v3-'
-              : import.meta.env.VITE_ENV === 'dev'
+              : config.env === 'dev'
                 ? 'https://dev-relayer.sequence.app'
                 : 'https://'
 
         // Chain-specific relayer endpoints
-        if (import.meta.env.VITE_ENV === 'dev' && import.meta.env.VITE_USE_V3_RELAYERS === 'true') {
+        if (config.env === 'dev' && config.useV3Relayers) {
           if (chainId === 42161) {
             // Arbitrum
             relayerUrl = 'https://v3-arbitrum-relayer.sequence.app'

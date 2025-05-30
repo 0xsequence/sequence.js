@@ -11,11 +11,39 @@ npm install anypay-sdk
 ## Usage
 
 ```typescript
-import { anypay } from 'anypay-sdk'
+import { AnypaySDK } from 'anypay-sdk'
 
-// Create an anypay instance
-const test = anypay()
+// Initialize the SDK
+const sdk = new AnypaySDK({
+  projectAccessKey: 'your-project-key',
+  env: 'dev',
+  apiUrl: 'https://api.sequence.app',
+  useV3Relayers: true, // optional
+})
+
+// Get token balances for an address
+const balances = await sdk.getTokenBalances('0x...')
+console.log('Token balances:', balances.sortedTokens)
+
+// Get meta transaction status
+const status = await sdk.getMetaTxnStatus({
+  id: '0x...',
+  chainId: '1',
+})
+console.log('Transaction status:', status)
+
+// Get a relayer instance for a specific chain
+const relayer = sdk.getRelayer(1) // Ethereum mainnet
 ```
+
+## Features
+
+- Token balance tracking across multiple chains
+- Meta transaction status monitoring
+- Relayer management for different chains
+- Support for multiple environments (local, dev, prod)
+- Built-in sorting and filtering of token balances
+- Comprehensive error handling
 
 ## Development
 
