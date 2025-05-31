@@ -20,6 +20,10 @@ type LastChecked = {
 
 const POLL_INTERVAL = 10_000 // 10 seconds
 
+export async function getMetaTxStatus(relayer: Relayer.Rpc.RpcRelayer, metaTxId: string, chainId: number) {
+  return relayer.status(metaTxId as `0x${string}`, BigInt(chainId))
+}
+
 export const useMetaTxnsMonitor = (
   metaTxns: MetaTxn[] | undefined,
   operationHashes: { [key: string]: Hex },
@@ -68,7 +72,7 @@ export const useMetaTxnsMonitor = (
 
       try {
         lastCheckedRef.current[operationKey] = now
-        const status = await relayer.status(opHashToPoll, BigInt(metaTxn.chainId))
+        const status = await getMetaTxStatus(relayer, opHashToPoll, parseInt(metaTxn.chainId))
         if (!isSubscribed) return
 
         setStatuses((prev) => ({

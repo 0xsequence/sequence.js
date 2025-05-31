@@ -185,6 +185,23 @@ export function commitIntentConfig(
   return apiClient.commitIntentConfig(args)
 }
 
+export async function relayerSendMetaTx(
+  relayer: Relayer.Rpc.RpcRelayer,
+  metaTx: MetaTxn,
+  preconditions: IntentPrecondition[],
+) {
+  const { opHash } = await relayer.sendMetaTxn(
+    metaTx.walletAddress as `0x${string}`,
+    metaTx.contract as `0x${string}`,
+    metaTx.input as Hex,
+    BigInt(metaTx.chainId),
+    undefined,
+    preconditions,
+  )
+
+  return opHash
+}
+
 // TODO: Add type for return value
 export function useAnyPay(config: UseAnypayConfig): any {
   const { account, disableAutoExecute = false, env, useV3Relayers } = config
