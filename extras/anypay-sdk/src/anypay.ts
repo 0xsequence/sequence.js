@@ -201,8 +201,8 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
         const calculatedAddress = calculateIntentAddress(
           args.mainSigner,
-          args.calls,
-          args.lifiInfos
+          args.calls as any[], // TODO: Add proper type
+          args.lifiInfos as any[] // TODO: Add proper type
         )
         const receivedAddress = findPreconditionAddress(args.preconditions)
 
@@ -238,8 +238,8 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
           try {
             const calculatedAddress = calculateIntentAddress(
               args.mainSigner,
-              args.calls,
-              args.lifiInfos
+              args.calls as any[], // TODO: Add proper type
+              args.lifiInfos as any[] // TODO: Add proper type
             )
             const receivedAddress = findPreconditionAddress(args.preconditions)
             setVerificationStatus({
@@ -746,7 +746,11 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         throw new Error('Missing required data for meta-transaction')
       }
 
-      const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
+      const intentAddress = calculateIntentAddress(
+        account.address,
+        intentCallsPayloads as any[],
+        lifiInfos as any[]
+      ) // TODO: Add proper type
 
       // If no specific ID is selected, send all meta transactions
       const txnsToSend = selectedId ? [metaTxns.find(tx => tx.id === selectedId)] : metaTxns
@@ -982,7 +986,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     if (!account.address || !intentCallsPayloads || !lifiInfos) {
       return null
     }
-    return calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
+    return calculateIntentAddress(account.address, intentCallsPayloads as any[], lifiInfos as any[]) // TODO: Add proper type
   }, [account.address, intentCallsPayloads, lifiInfos])
 
   const createIntentPending = createIntentMutation.isPending

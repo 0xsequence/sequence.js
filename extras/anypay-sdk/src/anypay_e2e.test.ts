@@ -10,7 +10,7 @@ import {
   relayerSendMetaTx,
   getMetaTxStatus,
   type GetIntentCallsPayloadsReturn
-} from './'
+} from '.'
 import { privateKeyToAccount } from 'viem/accounts'
 import { createWalletClient, createPublicClient, http } from 'viem'
 import { arbitrum, base, optimism } from 'viem/chains'
@@ -56,7 +56,7 @@ async function prepareSend(options: SendOptions) {
   }
 
   console.log('Creating intent with args:', JSON.stringify(args, null, 2))
-  let intent: GetIntentCallsPayloadsReturn | null = cachedIntent
+  let intent: any = cachedIntent // TODO: Add proper type
   if (!intent) {
     intent = await getIntentCallsPayloads(apiClient, args)
   }
@@ -83,7 +83,7 @@ async function prepareSend(options: SendOptions) {
         console.log('sending origin transaction')
         const originCallParams = {
           to: intent.preconditions[0].data.address,
-          data: '0x' as `0x${string}`,
+          data: '0x',
           value: BigInt(intent.preconditions[0].data.min) + BigInt('5600000000000'),
           chainId: originChainId,
           chain
@@ -99,7 +99,7 @@ async function prepareSend(options: SendOptions) {
           transport: http()
         })
 
-        const tx = await sendOriginTransaction(account, walletClient, originCallParams)
+        const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
         console.log('origin tx', tx)
         // Wait for transaction receipt
         const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
@@ -160,9 +160,7 @@ describe('AnyPay', () => {
       const destinationTokenAddress = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' // USDC
       const destinationTokenAmount = '300003'
 
-      console.log('sending 1111111')
-
-      const send1 = await prepareSend({
+      const preparedSend = await prepareSend({
         originChainId: 42161,
         destinationChainId: 8453,
         recipient,
@@ -170,7 +168,9 @@ describe('AnyPay', () => {
         destinationTokenAmount
       })
 
-      await send1.send()
+      console.log('preparedSend intentAddress', preparedSend.intentAddress) // TODO: to a second send using this intentAddress as the destination address
+
+      await preparedSend.send()
 
       console.log('done')
     },
