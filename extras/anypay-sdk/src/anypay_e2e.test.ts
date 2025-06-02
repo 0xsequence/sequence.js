@@ -35,7 +35,7 @@ async function prepareSend(options: SendOptions) {
     destinationTokenAmount
   } = options
   const chain = originChainId === 42161 ? arbitrum : destinationChainId === 8453 ? base : optimism
-  const apiClient = getAPIClient('http://localhost:4422', 'AQAAAAAAAJbd_5JOcE50AqglZCtvu51YlGI')
+  const apiClient = getAPIClient('http://localhost:4422', process.env.SEQUENCE_API_KEY as string)
   const originRelayer = getRelayer({ env: 'local' }, originChainId)
   const destinationRelayer = getRelayer({ env: 'local' }, destinationChainId)
 

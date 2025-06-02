@@ -9,7 +9,7 @@ import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, ContractAddress, Hash, Hex } from 'ox'
 import { Context, Config, Payload } from '@0xsequence/wallet-primitives'
 import { ANYPAY_LIFI_SAPIENT_SIGNER_LITE_ADDRESS } from './constants'
-import { isAddressEqual, WalletClient, PrivateKeyAccount, Chain } from 'viem'
+import { isAddressEqual, WalletClient, PrivateKeyAccount, Chain, Account } from 'viem'
 import { findPreconditionAddress } from './preconditions'
 
 export interface AnypayLifiInfo {
@@ -147,7 +147,7 @@ export function commitIntentConfig(
 }
 
 export async function sendOriginTransaction(
-  wallet: PrivateKeyAccount,
+  wallet: Account,
   client: WalletClient,
   originParams: SendOriginCallTxArgs
 ): Promise<`0x${string}`> {

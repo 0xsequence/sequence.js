@@ -1,10 +1,14 @@
 import React, { useState } from 'react'
+import { useAccount } from 'wagmi'
 import Modal from './components/Modal'
 import ConnectWallet from './components/ConnectWallet'
 import TokenList from './components/TokenList'
 import SendForm from './components/SendForm'
 import TransferPending from './components/TransferPending'
 import Receipt from './components/Receipt'
+import { prepareSend } from '../../../../anypay-sdk/src/anypay'
+import { createWalletClient, custom, type WalletClient } from 'viem'
+import { mainnet, base, optimism, arbitrum } from 'viem/chains'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
 
@@ -23,25 +27,83 @@ interface Token {
   }
 }
 
+const getChainConfig = (chainId: number) => {
+  switch (chainId) {
+    case 1:
+      return mainnet
+    case 8453:
+      return base
+    case 10:
+      return optimism
+    case 42161:
+      return arbitrum
+    default:
+      throw new Error(`Unsupported chain ID: ${chainId}`)
+  }
+}
+
 export const Widget: React.FC = () => {
+  const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentScreen, setCurrentScreen] = useState<Screen>('connect')
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [txHash, setTxHash] = useState('')
+  const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
 
   const handleConnect = () => {
+    if (window.ethereum && address && chainId) {
+      const chain = getChainConfig(chainId)
+      const client = createWalletClient({
+        account: address,
+        chain,
+        transport: custom(window.ethereum),
+      })
+      setWalletClient(client)
+    }
     setCurrentScreen('tokens')
   }
 
   const handleTokenSelect = (token: Token) => {
+    if (window.ethereum && address) {
+      const chain = getChainConfig(token.chainId)
+      const client = createWalletClient({
+        account: address,
+        chain,
+        transport: custom(window.ethereum),
+      })
+      setWalletClient(client)
+    }
     setSelectedToken(token)
     setCurrentScreen('send')
   }
 
-  const handleSend = (amount: string, recipient: string) => {
-    console.log('Sending', amount, recipient)
-    setTxHash('0x123...') // Example transaction hash
-    setCurrentScreen('pending')
+  const handleSend = async (amount: string, recipient: string) => {
+    if (!address || !isConnected || !chainId || !selectedToken || !window.ethereum || !walletClient?.account) return
+
+    try {
+      setCurrentScreen('pending')
+
+      const { intentAddress, send } = await prepareSend({
+        account: walletClient.account,
+        originTokenAddress: selectedToken.contractAddress,
+        originChainId: selectedToken.chainId,
+        originTokenAmount: selectedToken.balance,
+        destinationChainId: chainId,
+        recipient,
+        destinationTokenAddress: selectedToken.contractAddress,
+        destinationTokenAmount: amount,
+        sequenceApiKey: import.meta.env.VITE_SEQUENCE_API_KEY as string,
+      })
+
+      console.log('Intent address:', intentAddress.toString())
+      await send()
+
+      setTxHash('0x123...')
+      setCurrentScreen('receipt')
+    } catch (error) {
+      console.error('Error in prepareSend:', error)
+      setCurrentScreen('send')
+    }
   }
 
   const handleTransferComplete = () => {
@@ -54,14 +116,12 @@ export const Widget: React.FC = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
-    // Reset all state when modal is closed
     setCurrentScreen('connect')
     setSelectedToken(null)
     setTxHash('')
   }
 
   const handleBack = () => {
-    // Handle back navigation based on current screen
     switch (currentScreen) {
       case 'tokens':
         setCurrentScreen('connect')
@@ -87,7 +147,9 @@ export const Widget: React.FC = () => {
       case 'tokens':
         return <TokenList onContinue={handleTokenSelect} onBack={handleBack} />
       case 'send':
-        return selectedToken ? <SendForm onSend={handleSend} selectedToken={selectedToken} /> : null
+        return selectedToken && walletClient?.account ? (
+          <SendForm onSend={handleSend} selectedToken={selectedToken} account={walletClient.account} />
+        ) : null
       case 'pending':
         return <TransferPending onComplete={handleTransferComplete} />
       case 'receipt':

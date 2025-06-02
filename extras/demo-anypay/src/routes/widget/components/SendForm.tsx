@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { NetworkImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import { formatUnits } from 'viem'
+import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
 import { ChevronDown } from 'lucide-react'
+import { prepareSend, getChainConfig } from '@anypay/sdk'
+import { zeroAddress } from 'viem'
 
 interface Token {
   id: number
@@ -22,6 +24,7 @@ interface Token {
 interface SendFormProps {
   selectedToken: Token
   onSend: (amount: string, recipient: string) => void
+  account: Account
 }
 
 // Available chains
@@ -59,7 +62,7 @@ const formatBalance = (balance: string, decimals: number = 18) => {
   }
 }
 
-export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend }) => {
+export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, account }) => {
   const [amount, setAmount] = useState('')
   const [recipient, setRecipient] = useState('')
   const [selectedChain, setSelectedChain] = useState(
@@ -88,9 +91,44 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend }) => 
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSend(amount, recipient)
+
+    try {
+      // Convert amount to proper decimal format
+      const decimals = selectedToken.contractInfo?.decimals || 18
+      const parsedAmount = parseUnits(amount, decimals).toString()
+
+      console.log('account', account)
+
+      const client = createWalletClient({
+        account,
+        chain: getChainConfig(selectedChain.id),
+        transport: custom(window.ethereum),
+      })
+
+      const options = {
+        account,
+        originTokenAddress: selectedToken.contractAddress,
+        originChainId: selectedToken.chainId,
+        originTokenAmount: selectedToken.balance,
+        destinationChainId: selectedChain.id,
+        recipient,
+        destinationTokenAddress: selectedDestToken.symbol === 'ETH' ? zeroAddress : selectedToken.contractAddress,
+        destinationTokenAmount: parsedAmount,
+        sequenceApiKey: import.meta.env.VITE_SEQUENCE_API_KEY as string,
+        fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(),
+        client,
+      }
+
+      const { intentAddress, send } = await prepareSend(options)
+      console.log('Intent address:', intentAddress.toString())
+
+      await send()
+      onSend(amount, recipient)
+    } catch (error) {
+      console.error('Error in prepareSend:', error)
+    }
   }
 
   return (

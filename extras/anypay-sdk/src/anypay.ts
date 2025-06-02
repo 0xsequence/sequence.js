@@ -12,12 +12,30 @@ import {
 import { useQuery, useMutation, UseMutationResult } from '@tanstack/react-query'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Address } from 'ox'
-import { Hex, isAddressEqual, zeroAddress } from 'viem'
-import { useAPIClient } from './apiClient'
-import { useMetaTxnsMonitor, MetaTxn } from './metaTxnMonitor'
-import { useRelayers } from './relayer'
+import {
+  createPublicClient,
+  createWalletClient,
+  Hex,
+  http,
+  isAddressEqual,
+  zeroAddress,
+  Chain,
+  Account as AccountType,
+  WalletClient
+} from 'viem'
+import { arbitrum, base, mainnet, optimism } from 'viem/chains'
+import { useAPIClient, getAPIClient } from './apiClient'
+import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus } from './metaTxnMonitor'
+import { relayerSendMetaTx } from './metaTxns'
+import { useRelayers, getRelayer } from './relayer'
 import { findPreconditionAddress } from './preconditions'
-import { calculateIntentAddress, OriginCallParams } from './intents'
+import {
+  calculateIntentAddress,
+  OriginCallParams,
+  commitIntentConfig,
+  getIntentCallsPayloads,
+  sendOriginTransaction
+} from './intents'
 import { getERC20TransferData } from './encoders'
 import { RelayerOperationStatus } from './relayer'
 
@@ -115,6 +133,21 @@ export type UseAnypayReturn = {
 }
 
 const RETRY_WINDOW_MS = 10_000
+
+export const getChainConfig = (chainId: number): Chain => {
+  switch (chainId) {
+    case 1:
+      return mainnet
+    case 10:
+      return optimism
+    case 42161:
+      return arbitrum
+    case 8453:
+      return base
+    default:
+      throw new Error(`Unsupported chain ID: ${chainId}`)
+  }
+}
 
 export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
   const { account, disableAutoExecute = false, env, useV3Relayers } = config
@@ -1089,5 +1122,160 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     calculatedIntentAddress,
     originCallParams,
     updateOriginCallParams
+  }
+}
+
+type SendOptions = {
+  account: AccountType
+  originTokenAddress: string
+  originChainId: number
+  originTokenAmount: string
+  destinationChainId: number
+  recipient: string
+  destinationTokenAddress: string
+  destinationTokenAmount: string
+  sequenceApiKey: string
+  fee: string
+  client?: WalletClient
+}
+
+// TODO: fix up this one-click
+export async function prepareSend(options: SendOptions) {
+  const {
+    account,
+    originTokenAddress,
+    originChainId,
+    originTokenAmount, // account balance
+    destinationChainId,
+    recipient,
+    destinationTokenAddress,
+    destinationTokenAmount,
+    sequenceApiKey,
+    fee,
+    client
+  } = options
+  const chain = getChainConfig(originChainId)
+  const apiClient = getAPIClient('http://localhost:4422', sequenceApiKey)
+  const originRelayer = getRelayer({ env: 'local' }, originChainId)
+  const destinationRelayer = getRelayer({ env: 'local' }, destinationChainId)
+
+  const mainSigner = account.address
+
+  const publicClient = createPublicClient({
+    chain,
+    transport: http()
+  })
+
+  const args = {
+    userAddress: mainSigner,
+    originChainId,
+    originTokenAddress,
+    originTokenAmount, // max amount
+    destinationChainId,
+    destinationToAddress:
+      destinationTokenAddress == zeroAddress ? recipient : destinationTokenAddress,
+    destinationTokenAddress: destinationTokenAddress,
+    destinationTokenAmount: destinationTokenAmount,
+    destinationCallData:
+      destinationTokenAddress !== zeroAddress
+        ? getERC20TransferData(recipient, BigInt(destinationTokenAmount))
+        : '0x',
+    destinationCallValue: destinationTokenAddress === zeroAddress ? destinationTokenAmount : '0'
+  }
+
+  console.log('Creating intent with args:', args)
+  const intent = await getIntentCallsPayloads(apiClient, args as any) // TODO: Add proper type
+  console.log('Got intent:', intent)
+
+  const intentAddress = calculateIntentAddress(
+    mainSigner,
+    intent.calls as any[],
+    intent.lifiInfos as any[]
+  ) // TODO: Add proper type
+  console.log('Calculated intent address:', intentAddress.toString())
+
+  await commitIntentConfig(
+    apiClient,
+    mainSigner,
+    intent.calls as any[],
+    intent.preconditions as any[],
+    intent.lifiInfos as any[]
+  )
+
+  console.log('Committed intent config')
+
+  return {
+    intentAddress,
+    send: async () => {
+      console.log('sending origin transaction')
+      const originCallParams = {
+        to: intent.preconditions[0].data.address,
+        data: '0x',
+        value: BigInt(intent.preconditions[0].data.min) + BigInt(fee),
+        chainId: originChainId,
+        chain
+      }
+
+      const walletClient =
+        client ??
+        createWalletClient({
+          chain,
+          transport: http()
+        })
+
+      const publicClient = createPublicClient({
+        chain,
+        transport: http()
+      })
+
+      const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
+      console.log('origin tx', tx)
+      // Wait for transaction receipt
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
+      console.log('receipt', receipt)
+
+      await new Promise(resolve => setTimeout(resolve, 5000))
+
+      const metaTx = intent.metaTxns[0]
+      console.log('metaTx', metaTx)
+      const opHash = await relayerSendMetaTx(originRelayer, metaTx, [intent.preconditions[0]])
+
+      console.log('opHash', opHash)
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        console.log('polling status', metaTx.id as `0x${string}`, BigInt(metaTx.chainId))
+        const status = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
+        console.log('status', status)
+        if (status.status === 'confirmed') {
+          break
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      const metaTx2 = intent.metaTxns[1]
+      console.log('metaTx2', metaTx2)
+
+      const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [
+        intent.preconditions[1]
+      ])
+      console.log('opHash2', opHash2)
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
+        const status = await getMetaTxStatus(
+          destinationRelayer,
+          metaTx2.id,
+          Number(metaTx2.chainId)
+        )
+        console.log('status', status)
+        if (status.status === 'confirmed') {
+          break
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
   }
 }
