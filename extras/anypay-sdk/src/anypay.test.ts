@@ -12,55 +12,60 @@ import {
 } from './'
 import { privateKeyToAccount } from 'viem/accounts'
 import { createWalletClient, createPublicClient, http } from 'viem'
-import { arbitrum } from 'viem/chains'
+import { arbitrum, base, optimism } from 'viem/chains'
 import 'dotenv/config'
 import { Hex } from 'viem'
 
 const cachedIntent = null
 
-describe('AnyPay', () => {
-  it(
-    'should should an e2e test',
-    async () => {
-      const originChainId = 42161
-      const destinationChainId = 8453
-      const apiClient = getAPIClient('http://localhost:4422', 'AQAAAAAAAJbd_5JOcE50AqglZCtvu51YlGI')
-      const originRelayer = getRelayer({ env: 'local' }, originChainId)
-      const destinationRelayer = getRelayer({ env: 'local' }, destinationChainId)
+type SendOptions = {
+  originChainId: number
+  destinationChainId: number
+  recipient: string
+  destinationTokenAddress: string
+  destinationTokenAmount: string
+}
 
-      const account = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY as `0x${string}`)
-      const mainSigner = account.address
-      const recipient = '0xef180EDd4B6303a4CeBaF9b6e3a38CC39f381A99'
-      const destinationTokenAddress = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
-      const destinationTokenAmount = '300003'
+async function prepareSend(options: SendOptions) {
+  const { originChainId, destinationChainId, recipient, destinationTokenAddress, destinationTokenAmount } = options
+  const chain = originChainId === 42161 ? arbitrum : destinationChainId === 8453 ? base : optimism
+  const apiClient = getAPIClient('http://localhost:4422', 'AQAAAAAAAJbd_5JOcE50AqglZCtvu51YlGI')
+  const originRelayer = getRelayer({ env: 'local' }, originChainId)
+  const destinationRelayer = getRelayer({ env: 'local' }, destinationChainId)
 
-      const args = {
-        userAddress: mainSigner,
-        originChainId: 42161,
-        originTokenAddress: '0x0000000000000000000000000000000000000000',
-        originTokenAmount: '1000000000000000', // max amount
-        destinationChainId: 8453,
-        destinationToAddress: destinationTokenAddress,
-        destinationTokenAddress: destinationTokenAddress,
-        destinationTokenAmount: destinationTokenAmount,
-        destinationCallData: getERC20TransferData(recipient, BigInt(destinationTokenAmount)),
-        destinationCallValue: '0',
-      }
+  const account = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY as `0x${string}`)
+  const mainSigner = account.address
 
-      console.log('Creating intent with args:', JSON.stringify(args, null, 2))
-      let intent: any = cachedIntent
-      if (!intent) {
-        intent = await getIntentCallsPayloads(apiClient, args)
-      }
-      console.log('Got intent:', JSON.stringify(intent, null, 2))
+  const args = {
+    userAddress: mainSigner,
+    originChainId,
+    originTokenAddress: '0x0000000000000000000000000000000000000000',
+    originTokenAmount: '1000000000000000', // max amount
+    destinationChainId,
+    destinationToAddress: destinationTokenAddress,
+    destinationTokenAddress: destinationTokenAddress,
+    destinationTokenAmount: destinationTokenAmount,
+    destinationCallData: getERC20TransferData(recipient, BigInt(destinationTokenAmount)),
+    destinationCallValue: '0',
+  }
 
-      const intentAddress = calculateIntentAddress(mainSigner, intent.calls, intent.lifiInfos)
-      console.log('Calculated intent address:', intentAddress.toString())
+  console.log('Creating intent with args:', JSON.stringify(args, null, 2))
+  let intent: any = cachedIntent
+  if (!intent) {
+    intent = await getIntentCallsPayloads(apiClient, args)
+  }
+  console.log('Got intent:', JSON.stringify(intent, null, 2))
 
-      if (!cachedIntent) {
-        await commitIntentConfig(apiClient, mainSigner, intent.calls, intent.preconditions, intent.lifiInfos)
-      }
+  const intentAddress = calculateIntentAddress(mainSigner, intent.calls, intent.lifiInfos)
+  console.log('Calculated intent address:', intentAddress.toString())
 
+  if (!cachedIntent) {
+    await commitIntentConfig(apiClient, mainSigner, intent.calls, intent.preconditions, intent.lifiInfos)
+  }
+
+  return {
+    intentAddress,
+    send: async () => {
       const shouldSend = !cachedIntent
       if (shouldSend) {
         console.log('sending origin transaction')
@@ -69,16 +74,16 @@ describe('AnyPay', () => {
           data: '0x',
           value: BigInt(intent.preconditions[0].data.min) + BigInt('5600000000000'),
           chainId: originChainId,
-          chain: arbitrum,
+          chain,
         }
 
         const walletClient = createWalletClient({
-          chain: arbitrum,
+          chain,
           transport: http(),
         })
 
         const publicClient = createPublicClient({
-          chain: arbitrum,
+          chain,
           transport: http(),
         })
 
@@ -123,8 +128,30 @@ describe('AnyPay', () => {
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
+    },
+  }
+}
 
-      expect(intent).toBeDefined()
+describe('AnyPay', () => {
+  it(
+    'should should an e2e test',
+    async () => {
+      const recipient = '0xef180EDd4B6303a4CeBaF9b6e3a38CC39f381A99'
+      const destinationTokenAddress = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' // USDC
+      const destinationTokenAmount = '300003'
+
+      console.log('sending 1111111')
+
+      const send1 = await prepareSend({
+        originChainId: 42161,
+        destinationChainId: 8453,
+        recipient,
+        destinationTokenAddress,
+        destinationTokenAmount,
+      })
+
+      await send1.send()
+
       console.log('done')
     },
     10 * 60 * 1000,

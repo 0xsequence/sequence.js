@@ -4,6 +4,8 @@ import * as chains from 'viem/chains'
 import { Chain } from 'viem'
 import fetch from 'isomorphic-fetch'
 
+export type RelayerOperationStatus = Relayer.OperationStatus
+
 // Helper to get chain info
 const getChain = (chainId: number): Chain => {
   const chain = Object.values(chains).find((c: any) => c.id === chainId)
@@ -24,6 +26,7 @@ export type RelayerEnvConfig = {
   useV3Relayers?: boolean
 }
 
+// TODO: add relayer url to config
 function getRelayerUrl(config: RelayerEnvConfig, chainId: number) {
   let relayerUrl
   if (config.env === 'local') {

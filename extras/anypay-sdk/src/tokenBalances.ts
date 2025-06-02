@@ -9,6 +9,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Address } from 'ox'
 import { useMemo } from 'react'
 
+export { type NativeTokenBalance, type TokenBalance }
+
 // Default empty page info for query fallback
 const defaultPage = { page: 1, pageSize: 10, more: false }
 

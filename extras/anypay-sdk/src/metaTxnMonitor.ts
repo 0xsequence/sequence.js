@@ -84,13 +84,13 @@ export const useMetaTxnsMonitor = (
         if (status.status === 'pending' && isSubscribed) {
           timeoutsRef.current[operationKey] = setTimeout(() => monitorStatus(metaTxn), POLL_INTERVAL)
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!isSubscribed) return
         setStatuses((prev) => ({
           ...prev,
           [operationKey]: {
             status: 'failed',
-            reason: error.message,
+            reason: error instanceof Error ? error.message : 'Unknown error',
           },
         }))
       }

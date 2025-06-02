@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, Provider } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSendTransaction, useSwitchChain, useEstimateGas } from 'wagmi'
 import {
   GetIntentCallsPayloadsReturn,
@@ -9,47 +9,15 @@ import {
   GetIntentCallsPayloadsArgs,
 } from '@0xsequence/api'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { AnyPay, Relayer } from '@0xsequence/wallet-core'
-import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
-import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { useWaitForTransactionReceipt } from 'wagmi'
-import { Address, Bytes, AbiFunction } from 'ox'
-import { Hex, isAddressEqual, zeroAddress, PrivateKeyAccount, PublicClient, WalletClient, Chain } from 'viem'
-import { useAPIClient, SequenceAPIClient } from './useAPIClient'
-import { useMetaTxnsMonitor, MetaTxn } from './useMetaTxnsMonitor'
-import { useRelayers } from './useRelayers'
-
-// Add type for calculated origin call parameters
-export type OriginCallParams = {
-  to: `0x${string}` | null
-  data: Hex | null
-  value: bigint | null
-  chainId: number | null
-  error?: string
-}
-
-export function getERC20TransferData(recipient: string, amount: bigint) {
-  const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
-  return AbiFunction.encodeData(erc20Transfer, [recipient as Address.Address, amount]) as Hex
-}
-
-const findPreconditionAddress = (preconditions: IntentPrecondition[]) => {
-  console.log('Finding precondition address from:', JSON.stringify(preconditions, null, 2))
-
-  const preconditionTypes = ['erc20-balance', 'native-balance'] as const
-
-  for (const type of preconditionTypes) {
-    const precondition = preconditions.find((p) => p.type === type && p.data?.address)
-    if (precondition) {
-      console.log(`Found ${type} precondition with address:`, precondition.data.address)
-      return precondition.data.address
-    }
-  }
-
-  const msg = `N/A (No ${preconditionTypes.join(' or ')} precondition with address found)`
-  console.log(msg)
-  return msg
-}
+import { Address } from 'ox'
+import { Hex, isAddressEqual, zeroAddress } from 'viem'
+import { useAPIClient } from './apiClient'
+import { useMetaTxnsMonitor, MetaTxn } from './metaTxnMonitor'
+import { useRelayers } from './relayer'
+import { findPreconditionAddress } from './preconditions'
+import { calculateIntentAddress, OriginCallParams } from './intents'
+import { getERC20TransferData } from './encoders'
 
 export type UseAnypayConfig = {
   account: {
@@ -63,144 +31,6 @@ export type UseAnypayConfig = {
 }
 
 const RETRY_WINDOW_MS = 10_000
-
-export type RelayerOperationStatus = Relayer.OperationStatus
-export { type NativeTokenBalance, type TokenBalance }
-
-export async function getIntentCallsPayloads(apiClient: SequenceAPIClient, args: GetIntentCallsPayloadsArgs) {
-  return apiClient.getIntentCallsPayloads(args)
-}
-
-export async function sendOriginTransaction(
-  wallet: PrivateKeyAccount,
-  client: WalletClient,
-  originParams: any,
-): Promise<`0x${string}`> {
-  const hash = await client.sendTransaction({
-    account: wallet,
-    to: originParams.to as `0x${string}`,
-    data: originParams.data as `0x${string}`,
-    value: BigInt(originParams.value),
-    chain: originParams.chain,
-  })
-  return hash
-}
-
-export function calculateIntentAddress(
-  mainSigner: string,
-  calls: IntentCallsPayload[],
-  lifiInfosArg: AnypayLifiInfo[] | null | undefined,
-) {
-  console.log('calculateIntentAddress inputs:', {
-    mainSigner,
-    calls: JSON.stringify(calls, null, 2),
-    lifiInfosArg: JSON.stringify(lifiInfosArg, null, 2),
-  })
-
-  const context: ContextLike.Context = {
-    factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
-    stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
-    stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
-    creationCode:
-      '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
-  }
-
-  const coreCalls = calls.map((call) => ({
-    type: 'call' as const,
-    chainId: BigInt(call.chainId),
-    space: call.space ? BigInt(call.space) : 0n,
-    nonce: call.nonce ? BigInt(call.nonce) : 0n,
-    calls: call.calls.map((call) => ({
-      to: Address.from(call.to),
-      value: BigInt(call.value || '0'),
-      data: Bytes.toHex(Bytes.from((call.data as Hex) || '0x')),
-      gasLimit: BigInt(call.gasLimit || '0'),
-      delegateCall: !!call.delegateCall,
-      onlyFallback: !!call.onlyFallback,
-      behaviorOnError: (Number(call.behaviorOnError) === 0
-        ? 'ignore'
-        : Number(call.behaviorOnError) === 1
-          ? 'revert'
-          : 'abort') as 'ignore' | 'revert' | 'abort',
-    })),
-  }))
-
-  //console.log('Transformed coreCalls:', JSON.stringify(coreCalls, null, 2))
-
-  const coreLifiInfos = lifiInfosArg?.map((info: AnypayLifiInfo) => ({
-    originToken: Address.from(info.originToken),
-    amount: BigInt(info.amount),
-    originChainId: BigInt(info.originChainId),
-    destinationChainId: BigInt(info.destinationChainId),
-  }))
-
-  console.log(
-    'Transformed coreLifiInfos:',
-    JSON.stringify(coreLifiInfos, (_, v) => (typeof v === 'bigint' ? v.toString() : v), 2),
-  )
-
-  const calculatedAddress = AnyPay.calculateIntentConfigurationAddress(
-    Address.from(mainSigner),
-    coreCalls,
-    context,
-    // AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
-    Address.from('0x0000000000000000000000000000000000000001'),
-    coreLifiInfos,
-  )
-
-  console.log('Final calculated address:', calculatedAddress.toString())
-  return calculatedAddress
-}
-
-export function commitIntentConfig(
-  apiClient: SequenceAPIClient,
-  mainSigner: string,
-  calls: IntentCallsPayload[],
-  preconditions: IntentPrecondition[],
-  lifiInfos: AnypayLifiInfo[],
-) {
-  console.log('commitIntentConfig inputs:', {
-    mainSigner,
-    calls: JSON.stringify(calls, null, 2),
-    preconditions: JSON.stringify(preconditions, null, 2),
-    lifiInfos: JSON.stringify(lifiInfos, null, 2),
-  })
-
-  const calculatedAddress = calculateIntentAddress(mainSigner, calls, lifiInfos)
-  const receivedAddress = findPreconditionAddress(preconditions)
-  console.log('Address comparison:', {
-    receivedAddress,
-    calculatedAddress: calculatedAddress.toString(),
-    match: isAddressEqual(Address.from(receivedAddress), calculatedAddress),
-  })
-
-  const args = {
-    walletAddress: calculatedAddress.toString(),
-    mainSigner: mainSigner,
-    calls: calls,
-    preconditions: preconditions,
-    lifiInfos: lifiInfos,
-  }
-  console.log('args', args)
-  return apiClient.commitIntentConfig(args)
-}
-
-export async function relayerSendMetaTx(
-  relayer: Relayer.Rpc.RpcRelayer,
-  metaTx: MetaTxn,
-  preconditions: IntentPrecondition[],
-) {
-  const { opHash } = await relayer.sendMetaTxn(
-    metaTx.walletAddress as `0x${string}`,
-    metaTx.contract as `0x${string}`,
-    metaTx.input as Hex,
-    BigInt(metaTx.chainId),
-    undefined,
-    preconditions,
-  )
-
-  return opHash
-}
 
 // TODO: Add type for return value
 export function useAnyPay(config: UseAnypayConfig): any {
@@ -844,17 +674,17 @@ export function useAnyPay(config: UseAnypayConfig): any {
               opHash,
               success: true,
             })
-          } catch (error: any) {
+          } catch (error: unknown) {
             results.push({
               operationKey,
-              error: error.message,
+              error: error instanceof Error ? error.message : 'Unknown error',
               success: false,
             })
           }
         }
 
         return results
-      } catch (error: any) {
+      } catch (error: unknown) {
         throw error
       }
     },
@@ -942,9 +772,15 @@ export function useAnyPay(config: UseAnypayConfig): any {
         chainId: originChainId,
         error: undefined,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to calculate origin call params for UI:', error)
-      setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
+      setOriginCallParams({
+        to: null,
+        data: null,
+        value: null,
+        chainId: null,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
     }
   }, [intentCallsPayloads, tokenAddress, originChainId, intentPreconditions, account.address, lifiInfos])
 
