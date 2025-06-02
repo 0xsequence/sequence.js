@@ -12,7 +12,8 @@ import {
   RelayerOperationStatus,
   NativeTokenBalance,
   TokenBalance,
-} from 'anypay-sdk'
+  Account,
+} from '@anypay/sdk'
 import {
   AlertTriangle,
   Loader2,
@@ -128,7 +129,7 @@ function useHook() {
     createIntentSuccess,
     createIntentError,
     createIntentArgs,
-    handleSendOriginCall,
+    sendOriginTransaction,
     isSwitchingChain,
     isTransactionInProgress,
     isChainSwitchRequired,
@@ -138,14 +139,18 @@ function useHook() {
     isWaitingForReceipt,
     hasAutoExecuted,
     updateAutoExecute,
-    sendMetaTxnMutation,
+    sendMetaTxn,
+    sendMetaTxnPending,
+    sendMetaTxnSuccess,
+    sendMetaTxnError,
+    sendMetaTxnArgs,
     clearIntent,
     metaTxnMonitorStatuses,
     calculatedIntentAddress,
     updateOriginCallParams,
     originCallParams,
   } = useAnyPay({
-    account,
+    account: account as Account,
     env: import.meta.env.VITE_ENV,
     useV3Relayers: import.meta.env.VITE_USE_V3_RELAYERS,
   })
@@ -346,8 +351,12 @@ function useHook() {
   }, [account.isConnected])
 
   // Replace the sendMetaTxn function with a wrapper that uses the mutation
-  const sendMetaTxn = (selectedId: string | null) => {
-    sendMetaTxnMutation.mutate({ selectedId })
+  const handleSendMetaTxn = (selectedId: string | null) => {
+    sendMetaTxn(selectedId)
+  }
+
+  function handleSendOriginCall() {
+    sendOriginTransaction()
   }
 
   return {
@@ -397,7 +406,10 @@ function useHook() {
     selectedMetaTxnId,
     setSelectedMetaTxnId,
     metaTxnMonitorStatuses,
-    sendMetaTxnMutation,
+    sendMetaTxnPending,
+    sendMetaTxnSuccess,
+    sendMetaTxnError,
+    sendMetaTxnArgs,
 
     // Custom Call Form
     showCustomCallForm,
@@ -409,7 +421,7 @@ function useHook() {
     handleActionClick,
     handleCustomCallSubmit,
     handleSendOriginCall,
-    sendMetaTxn,
+    handleSendMetaTxn,
     clearIntent,
 
     // Intent Mutation State
@@ -480,7 +492,6 @@ export const HomeIndexRoute = () => {
     selectedMetaTxnId,
     setSelectedMetaTxnId,
     metaTxnMonitorStatuses,
-    sendMetaTxnMutation,
 
     // Custom Call Form
     showCustomCallForm,
@@ -492,7 +503,7 @@ export const HomeIndexRoute = () => {
     handleActionClick,
     handleCustomCallSubmit,
     handleSendOriginCall,
-    sendMetaTxn,
+    handleSendMetaTxn,
     clearIntent,
 
     // Intent Mutation State
@@ -514,6 +525,7 @@ export const HomeIndexRoute = () => {
     isCommitButtonDisabled,
 
     calculatedIntentAddress,
+    sendMetaTxnPending,
   } = useHook()
 
   return (
@@ -1136,9 +1148,9 @@ export const HomeIndexRoute = () => {
                           on <strong className="text-gray-200 mx-1">{originChainName}</strong> to intent addr:
                           <strong
                             className="text-gray-200 font-mono mx-1 truncate max-w-[70px] sm:max-w-[100px] inline-block align-bottom"
-                            title={calculatedIntentAddress}
+                            title={calculatedIntentAddress || 'N/A'}
                           >
-                            {calculatedIntentAddress}
+                            {calculatedIntentAddress || 'N/A'}
                           </strong>
                         </span>
                       </>
@@ -1827,13 +1839,11 @@ export const HomeIndexRoute = () => {
                     <div className="flex gap-2">
                       <Button
                         variant="feature"
-                        onClick={() => sendMetaTxn(selectedMetaTxnId)}
-                        disabled={
-                          !metaTxns || metaTxns.length === 0 || !account.address || sendMetaTxnMutation.isPending
-                        }
+                        onClick={() => handleSendMetaTxn(selectedMetaTxnId)}
+                        disabled={!metaTxns || metaTxns.length === 0 || !account.address || sendMetaTxnPending}
                         className="flex-1 px-4 py-2 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center bg-purple-600 hover:bg-purple-700"
                       >
-                        {sendMetaTxnMutation.isPending ? (
+                        {sendMetaTxnPending ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Sending...

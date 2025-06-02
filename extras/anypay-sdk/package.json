@@ -1,5 +1,5 @@
 {
-  "name": "@anypay-sdk",
+  "name": "@anypay/sdk",
   "version": "0.0.1",
   "description": "SDK for Anypay functionality",
   "type": "module",
@@ -31,6 +31,7 @@
     "@0xsequence/wallet-core": "0.0.0-20250528195743",
     "@0xsequence/wallet-primitives": "0.0.0-anypay-20250527101311",
     "@tanstack/react-query": "^5.69.0",
+    "buffer": "^6.0.3",
     "dotenv": "^16.4.7",
     "isomorphic-fetch": "^3.0.0",
     "ox": "^0.7.0",

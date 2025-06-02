@@ -1,3 +1,5 @@
+import './buffer'
+
 export * from './tokenBalances'
 export * from './metaTxnMonitor'
 export * from './apiClient'
@@ -10,7 +12,7 @@ export * from './metaTxns'
 export type { MetaTxn } from './metaTxnMonitor'
 export type { RelayerConfig, Relayer } from './relayer'
 export type { NativeTokenBalance, TokenBalance } from './tokenBalances'
-export type { UseAnypayConfig } from './anypay'
+export type { UseAnypayConfig, Account } from './anypay'
 export type {
   OriginCallParams,
   SendOriginCallTxArgs,

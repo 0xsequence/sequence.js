@@ -21,12 +21,14 @@ import { calculateIntentAddress, OriginCallParams } from './intents'
 import { getERC20TransferData } from './encoders'
 import { RelayerOperationStatus } from './relayer'
 
+export type Account = {
+  address: `0x${string}`
+  isConnected: boolean
+  chainId: number
+}
+
 export type UseAnypayConfig = {
-  account: {
-    address: `0x${string}`
-    isConnected: boolean
-    chainId: number
-  }
+  account: Account
   disableAutoExecute?: boolean
   env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
   useV3Relayers?: boolean
@@ -95,17 +97,11 @@ export type UseAnypayReturn = {
   receiptError: Error | null
   hasAutoExecuted: boolean
   sentMetaTxns: { [key: string]: number }
-  setSentMetaTxns: React.Dispatch<React.SetStateAction<{ [key: string]: number }>>
-  sendMetaTxnMutation: UseMutationResult<
-    Array<{
-      operationKey: string
-      opHash?: Hex
-      error?: string
-      success: boolean
-    }>,
-    Error,
-    { selectedId: string | null }
-  >
+  sendMetaTxn: (selectedId: string | null) => void
+  sendMetaTxnPending: boolean
+  sendMetaTxnSuccess: boolean
+  sendMetaTxnError: Error | null
+  sendMetaTxnArgs: { selectedId: string | null } | undefined
   clearIntent: () => void
   metaTxnMonitorStatuses: { [key: string]: RelayerOperationStatus }
   createIntent: (args: any) => void // TODO: Add proper type
@@ -400,6 +396,16 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
   }
 
   const sendOriginTransaction = async () => {
+    console.log('Sending origin transaction...')
+    console.log(
+      isTransactionInProgress,
+      originCallParams,
+      originCallParams?.error,
+      originCallParams?.to,
+      originCallParams?.data,
+      originCallParams?.value,
+      originCallParams?.chainId
+    )
     if (
       isTransactionInProgress || // Prevent duplicate transactions
       !originCallParams ||
@@ -1005,10 +1011,19 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     setTokenAddress(tokenAddress)
   }
 
+  function sendMetaTxn(selectedId: string | null) {
+    sendMetaTxnMutation.mutate({ selectedId })
+  }
+
   const commitIntentConfigPending = commitIntentConfigMutation.isPending
   const commitIntentConfigSuccess = commitIntentConfigMutation.isSuccess
   const commitIntentConfigError = commitIntentConfigMutation.error
   const commitIntentConfigArgs = commitIntentConfigMutation.variables
+
+  const sendMetaTxnPending = sendMetaTxnMutation.isPending
+  const sendMetaTxnSuccess = sendMetaTxnMutation.isSuccess
+  const sendMetaTxnError = sendMetaTxnMutation.error
+  const sendMetaTxnArgs = sendMetaTxnMutation.variables
 
   return {
     apiClient,
@@ -1055,8 +1070,11 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     receiptError,
     hasAutoExecuted,
     sentMetaTxns,
-    setSentMetaTxns,
-    sendMetaTxnMutation,
+    sendMetaTxn,
+    sendMetaTxnPending,
+    sendMetaTxnSuccess,
+    sendMetaTxnError,
+    sendMetaTxnArgs,
     clearIntent,
     metaTxnMonitorStatuses,
     createIntent,
