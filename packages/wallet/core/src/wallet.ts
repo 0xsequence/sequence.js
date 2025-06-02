@@ -105,9 +105,9 @@ export class Wallet {
    */
   async prepareUpdate(
     configuration: Config.Config,
-    options: { unsafe?: boolean },
+    options?: { unsafe?: boolean },
   ): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
-    if (!options.unsafe) {
+    if (!options?.unsafe) {
       Config.evaluateConfigurationSafety(configuration)
     }
 
