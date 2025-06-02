@@ -1,49 +1,102 @@
-# anypay-sdk
+# @anypay/sdk
 
 Anypay SDK for sending any token from any chain.
 
 ## Installation
 
 ```bash
-npm install anypay-sdk
+npm install @anypay/sdk
 ```
 
 ## Usage
 
+### Basic Example
+
 ```typescript
-import { AnypaySDK } from 'anypay-sdk'
+import { prepareSend } from '@anypay/sdk'
+import { createWalletClient, custom } from 'viem'
 
-// Initialize the SDK
-const sdk = new AnypaySDK({
-  projectAccessKey: 'your-project-key',
-  env: 'dev',
-  apiUrl: 'https://api.sequence.app',
-  useV3Relayers: true, // optional
+// Initialize a wallet client
+const client = createWalletClient({
+  account,
+  chain: getChainConfig(chainId),
+  transport: custom(window.ethereum)
 })
 
-// Get token balances for an address
-const balances = await sdk.getTokenBalances('0x...')
-console.log('Token balances:', balances.sortedTokens)
+// Prepare and send a transaction
+const options = {
+  account,
+  originTokenAddress: '0x0000000000000000000000000000000000000000', // ETH
+  originChainId: 42161, // Arbitrum
+  originTokenAmount: '1000000000000000',
+  destinationChainId: 8453, // Base
+  recipient: '0xYourRecipientAddress',
+  destinationTokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC on Base
+  destinationTokenAmount: '300003', // Amount in USDC decimals (6)
+  sequenceApiKey: 'your-api-key',
+  fee: '5600000000000',
+  client
+}
 
-// Get meta transaction status
-const status = await sdk.getMetaTxnStatus({
-  id: '0x...',
-  chainId: '1',
-})
-console.log('Transaction status:', status)
+const { intentAddress, send } = await prepareSend(options)
+console.log('Intent address:', intentAddress.toString())
 
-// Get a relayer instance for a specific chain
-const relayer = sdk.getRelayer(1) // Ethereum mainnet
+// Send the transaction
+await send()
 ```
 
-## Features
+### Example
 
-- Token balance tracking across multiple chains
-- Meta transaction status monitoring
-- Relayer management for different chains
-- Support for multiple environments (local, dev, prod)
-- Built-in sorting and filtering of token balances
-- Comprehensive error handling
+```typescript
+import {
+  getAPIClient,
+  getRelayer,
+  getIntentCallsPayloads,
+  calculateIntentAddress,
+  commitIntentConfig,
+  sendOriginTransaction,
+  getERC20TransferData
+} from '@anypay/sdk'
+import { createWalletClient, http } from 'viem'
+import { arbitrum } from 'viem/chains'
+
+async function sendCrossChainToken() {
+  // Initialize clients
+  const apiClient = getAPIClient('http://localhost:4422', process.env.SEQUENCE_API_KEY)
+  const originRelayer = getRelayer({ env: 'local' }, originChainId)
+  const destinationRelayer = getRelayer({ env: 'local' }, destinationChainId)
+
+  // Create intent
+  const args = {
+    userAddress: account.address,
+    originChainId: 42161,
+    originTokenAddress: '0x0000000000000000000000000000000000000000',
+    originTokenAmount: '1000000000000000',
+    destinationChainId: 8453,
+    destinationToAddress: destinationTokenAddress,
+    destinationTokenAddress: destinationTokenAddress,
+    destinationTokenAmount: destinationTokenAmount,
+    destinationCallData: getERC20TransferData(recipient, BigInt(destinationTokenAmount)),
+    destinationCallValue: '0'
+  }
+
+  const intent = await getIntentCallsPayloads(apiClient, args)
+
+  // Calculate and commit intent
+  const intentAddress = calculateIntentAddress(account.address, intent.calls, intent.lifiInfos)
+  await commitIntentConfig(
+    apiClient,
+    account.address,
+    intent.calls,
+    intent.preconditions,
+    intent.lifiInfos
+  )
+
+  // Monitor transaction status
+  const status = await getMetaTxStatus(relayer, metaTxId, chainId)
+  console.log('Transaction status:', status)
+}
+```
 
 ## Development
 
