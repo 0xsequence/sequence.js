@@ -11,5 +11,9 @@ export type { MetaTxn } from './metaTxnMonitor'
 export type { RelayerConfig, Relayer } from './relayer'
 export type { NativeTokenBalance, TokenBalance } from './tokenBalances'
 export type { UseAnypayConfig } from './anypay'
-export type { OriginCallParams } from './intents'
+export type {
+  OriginCallParams,
+  SendOriginCallTxArgs,
+  GetIntentCallsPayloadsReturn
+} from './intents'
 export type { RelayerOperationStatus } from './relayer'

@@ -4,7 +4,11 @@ import { useConfig } from '@0xsequence/hooks'
 
 export { type SequenceAPIClient }
 
-export function getAPIClient(apiUrl: string, projectAccessKey: string, jwt?: string) {
+export function getAPIClient(
+  apiUrl: string,
+  projectAccessKey: string,
+  jwt?: string
+): SequenceAPIClient {
   return new SequenceAPIClient(apiUrl, projectAccessKey, jwt)
 }
 
@@ -13,7 +17,7 @@ export const useAPIClient = () => {
 
   const apiClient = useMemo(() => {
     return getAPIClient(env.apiUrl, projectAccessKey, jwt)
-  }, [projectAccessKey, jwt])
+  }, [projectAccessKey, jwt, env.apiUrl])
 
   return apiClient
 }

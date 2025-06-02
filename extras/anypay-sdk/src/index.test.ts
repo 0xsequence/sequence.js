@@ -7,7 +7,7 @@ jest.mock('./', () => ({
   useMetaTxnsMonitor: jest.fn(),
   useRelayers: jest.fn(),
   useTokenBalances: jest.fn(),
-  useAnyPay: jest.fn(),
+  useAnyPay: jest.fn()
 }))
 
 describe('SDK Exports', () => {
@@ -26,8 +26,8 @@ describe('SDK Exports', () => {
       chainId: '1',
       contract: '0x123',
       input: '0x456',
-      walletAddress: '0x789',
+      walletAddress: '0x789'
     }
-    expect(true).toBe(true) // Type check is done at compile time
+    expect(_metaTxn).toBeDefined()
   })
 })

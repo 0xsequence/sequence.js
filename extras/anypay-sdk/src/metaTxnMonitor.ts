@@ -20,15 +20,19 @@ type LastChecked = {
 
 const POLL_INTERVAL = 10_000 // 10 seconds
 
-export async function getMetaTxStatus(relayer: Relayer.Rpc.RpcRelayer, metaTxId: string, chainId: number) {
+export async function getMetaTxStatus(
+  relayer: Relayer.Rpc.RpcRelayer,
+  metaTxId: string,
+  chainId: number
+): Promise<Relayer.OperationStatus> {
   return relayer.status(metaTxId as `0x${string}`, BigInt(chainId))
 }
 
-export const useMetaTxnsMonitor = (
+export function useMetaTxnsMonitor(
   metaTxns: MetaTxn[] | undefined,
   operationHashes: { [key: string]: Hex },
-  getRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer,
-) => {
+  getRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer
+): MetaTxnStatus {
   const [statuses, setStatuses] = useState<MetaTxnStatus>({})
   const lastCheckedRef = useRef<LastChecked>({})
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({})
@@ -36,7 +40,7 @@ export const useMetaTxnsMonitor = (
   useEffect(() => {
     if (!metaTxns || metaTxns.length === 0) {
       // Only clear statuses if we actually have some statuses to clear
-      setStatuses((prev) => (Object.keys(prev).length > 0 ? {} : prev))
+      setStatuses(prev => (Object.keys(prev).length > 0 ? {} : prev))
       return
     }
 
@@ -51,9 +55,9 @@ export const useMetaTxnsMonitor = (
 
       if (!opHashToPoll || !relayer) {
         if (isSubscribed) {
-          setStatuses((prev) => ({
+          setStatuses(prev => ({
             ...prev,
-            [operationKey]: { status: 'pending' },
+            [operationKey]: { status: 'pending' }
           }))
         }
         return
@@ -66,7 +70,10 @@ export const useMetaTxnsMonitor = (
       // Skip if we checked too recently
       if (timeSinceLastCheck < POLL_INTERVAL) {
         const timeToNextCheck = POLL_INTERVAL - timeSinceLastCheck
-        timeoutsRef.current[operationKey] = setTimeout(() => monitorStatus(metaTxn), timeToNextCheck)
+        timeoutsRef.current[operationKey] = setTimeout(
+          () => monitorStatus(metaTxn),
+          timeToNextCheck
+        )
         return
       }
 
@@ -75,36 +82,39 @@ export const useMetaTxnsMonitor = (
         const status = await getMetaTxStatus(relayer, opHashToPoll, parseInt(metaTxn.chainId))
         if (!isSubscribed) return
 
-        setStatuses((prev) => ({
+        setStatuses(prev => ({
           ...prev,
-          [operationKey]: status,
+          [operationKey]: status
         }))
 
         // Continue monitoring if still pending
         if (status.status === 'pending' && isSubscribed) {
-          timeoutsRef.current[operationKey] = setTimeout(() => monitorStatus(metaTxn), POLL_INTERVAL)
+          timeoutsRef.current[operationKey] = setTimeout(
+            () => monitorStatus(metaTxn),
+            POLL_INTERVAL
+          )
         }
       } catch (error: unknown) {
         if (!isSubscribed) return
-        setStatuses((prev) => ({
+        setStatuses(prev => ({
           ...prev,
           [operationKey]: {
             status: 'failed',
-            reason: error instanceof Error ? error.message : 'Unknown error',
-          },
+            reason: error instanceof Error ? error.message : 'Unknown error'
+          }
         }))
       }
     }
 
     // Start monitoring all meta transactions
-    metaTxns.forEach((metaTxn) => {
+    metaTxns.forEach(metaTxn => {
       monitorStatus(metaTxn)
     })
 
     return () => {
       isSubscribed = false
       // Clear all timeouts
-      Object.values(timeoutsRef.current).forEach((timeout) => {
+      Object.values(timeoutsRef.current).forEach(timeout => {
         clearTimeout(timeout)
       })
       timeoutsRef.current = {}

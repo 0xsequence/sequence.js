@@ -3,7 +3,7 @@ import { ContractVerificationStatus, NativeTokenBalance, TokenBalance } from '@0
 import {
   GetTokenBalancesSummaryReturn,
   GatewayNativeTokenBalances,
-  GatewayTokenBalance,
+  GatewayTokenBalance
 } from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
 import { useQuery } from '@tanstack/react-query'
 import { Address } from 'ox'
@@ -22,20 +22,29 @@ function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
   return true
 }
 
-export const useTokenBalances = (address: Address.Address) => {
+export function useTokenBalances(address: Address.Address): {
+  tokenBalancesData: any // TODO: Add proper type
+  isLoadingBalances: boolean
+  balanceError: Error | null
+  sortedTokens: any[] // TODO: Add proper type
+} {
   const indexerClient = useIndexerGatewayClient()
 
   // Fetch token balances
   const {
     data: tokenBalancesData,
     isLoading: isLoadingBalances,
-    error: balanceError,
+    error: balanceError
   } = useQuery<GetTokenBalancesSummaryReturn>({
     queryKey: ['tokenBalances', address],
     queryFn: async () => {
       if (!address) {
         console.warn('No account address or indexer client')
-        return { balances: [], nativeBalances: [], page: defaultPage } as GetTokenBalancesSummaryReturn
+        return {
+          balances: [],
+          nativeBalances: [],
+          page: defaultPage
+        } as GetTokenBalancesSummaryReturn
       }
       try {
         const summary = await indexerClient.getTokenBalancesSummary({
@@ -43,19 +52,23 @@ export const useTokenBalances = (address: Address.Address) => {
             accountAddresses: [address],
             contractStatus: ContractVerificationStatus.VERIFIED,
             contractTypes: ['ERC20'],
-            omitNativeBalances: false,
-          },
+            omitNativeBalances: false
+          }
         })
 
         return summary
       } catch (error) {
         console.error('Failed to fetch token balances:', error)
-        return { balances: [], nativeBalances: [], page: defaultPage } as GetTokenBalancesSummaryReturn
+        return {
+          balances: [],
+          nativeBalances: [],
+          page: defaultPage
+        } as GetTokenBalancesSummaryReturn
       }
     },
     enabled: !!address,
     staleTime: 30000,
-    retry: 1,
+    retry: 1
   })
 
   const sortedTokens = useMemo(() => {
@@ -64,12 +77,14 @@ export const useTokenBalances = (address: Address.Address) => {
     }
 
     // Flatten both native and token balances
-    const nativeBalances = tokenBalancesData.nativeBalances.flatMap((b: GatewayNativeTokenBalances) => b.results)
+    const nativeBalances = tokenBalancesData.nativeBalances.flatMap(
+      (b: GatewayNativeTokenBalances) => b.results
+    )
     const tokenBalances = tokenBalancesData.balances.flatMap((b: GatewayTokenBalance) => b.results)
     const balances = [...nativeBalances, ...tokenBalances]
 
     return [...balances]
-      .filter((token) => {
+      .filter(token => {
         try {
           return BigInt(token.balance) > 0n
         } catch {
@@ -95,6 +110,6 @@ export const useTokenBalances = (address: Address.Address) => {
     tokenBalancesData,
     isLoadingBalances,
     balanceError,
-    sortedTokens,
+    sortedTokens
   }
 }

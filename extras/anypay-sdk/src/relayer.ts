@@ -5,10 +5,11 @@ import { Chain } from 'viem'
 import fetch from 'isomorphic-fetch'
 
 export type RelayerOperationStatus = Relayer.OperationStatus
+export type Relayer = Relayer.Rpc.RpcRelayer
 
 // Helper to get chain info
-const getChain = (chainId: number): Chain => {
-  const chain = Object.values(chains).find((c: any) => c.id === chainId)
+function getChain(chainId: number): Chain {
+  const chain = Object.values(chains).find((c: Chain) => c.id === chainId)
   if (!chain) {
     throw new Error(`Chain with id ${chainId} not found`)
   }
@@ -27,7 +28,7 @@ export type RelayerEnvConfig = {
 }
 
 // TODO: add relayer url to config
-function getRelayerUrl(config: RelayerEnvConfig, chainId: number) {
+function getRelayerUrl(config: RelayerEnvConfig, chainId: number): string {
   let relayerUrl
   if (config.env === 'local') {
     // Use specific ports for different chains in local environment
@@ -124,7 +125,10 @@ export function getRelayer(config: RelayerEnvConfig, chainId: number): Relayer.R
   return new Relayer.Rpc.RpcRelayer(relayerUrl, chainId, rpcUrl, fetch)
 }
 
-export const useRelayers = (config: RelayerEnvConfig) => {
+export function useRelayers(config: RelayerEnvConfig): {
+  relayers: Map<number, Relayer.Rpc.RpcRelayer>
+  getRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer
+} {
   const relayers = useMemo(() => {
     const relayerMap = new Map<number, Relayer.Rpc.RpcRelayer>()
     return relayerMap
@@ -134,7 +138,6 @@ export const useRelayers = (config: RelayerEnvConfig) => {
     let relayer = relayers.get(chainId)
 
     if (!relayer) {
-      const chain = getChain(chainId)
       relayer = getRelayer(config, chainId)
       relayers.set(chainId, relayer)
     }
@@ -144,7 +147,7 @@ export const useRelayers = (config: RelayerEnvConfig) => {
 
   return {
     relayers,
-    getRelayer: getCachedRelayer,
+    getRelayer: getCachedRelayer
   }
 }
 
