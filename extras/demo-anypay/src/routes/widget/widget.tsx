@@ -14,6 +14,13 @@ interface Token {
   symbol: string
   balance: string
   imageUrl: string
+  chainId: number
+  contractAddress: string
+  contractInfo?: {
+    decimals: number
+    symbol: string
+    name: string
+  }
 }
 
 export const Widget: React.FC = () => {
@@ -53,18 +60,38 @@ export const Widget: React.FC = () => {
     setTxHash('')
   }
 
+  const handleBack = () => {
+    // Handle back navigation based on current screen
+    switch (currentScreen) {
+      case 'tokens':
+        setCurrentScreen('connect')
+        break
+      case 'send':
+        setCurrentScreen('tokens')
+        setSelectedToken(null)
+        break
+      case 'receipt':
+        setCurrentScreen('tokens')
+        setSelectedToken(null)
+        setTxHash('')
+        break
+      default:
+        break
+    }
+  }
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'connect':
         return <ConnectWallet onConnect={handleConnect} />
       case 'tokens':
-        return <TokenList onContinue={handleTokenSelect} />
+        return <TokenList onContinue={handleTokenSelect} onBack={handleBack} />
       case 'send':
         return selectedToken ? <SendForm onSend={handleSend} selectedToken={selectedToken} /> : null
       case 'pending':
         return <TransferPending onComplete={handleTransferComplete} />
       case 'receipt':
-        return <Receipt onSendAnother={handleSendAnother} txHash={txHash} />
+        return <Receipt onSendAnother={handleSendAnother} onClose={handleCloseModal} txHash={txHash} />
       default:
         return null
     }

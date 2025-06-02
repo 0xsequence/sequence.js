@@ -1,11 +1,12 @@
 import React from 'react'
 
 interface ReceiptProps {
-  onSendAnother: () => void
   txHash: string
+  onSendAnother: () => void
+  onClose: () => void
 }
 
-export const Receipt: React.FC<ReceiptProps> = ({ onSendAnother, txHash }) => {
+export const Receipt: React.FC<ReceiptProps> = ({ txHash, onSendAnother, onClose }) => {
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -28,12 +29,20 @@ export const Receipt: React.FC<ReceiptProps> = ({ onSendAnother, txHash }) => {
         </a>
       </div>
 
-      <button
-        onClick={onSendAnother}
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-      >
-        Send Another Transaction
-      </button>
+      <div className="space-y-3">
+        <button
+          onClick={onSendAnother}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+        >
+          Start Another Transaction
+        </button>
+        <button
+          onClick={onClose}
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors"
+        >
+          Close
+        </button>
+      </div>
     </div>
   )
 }

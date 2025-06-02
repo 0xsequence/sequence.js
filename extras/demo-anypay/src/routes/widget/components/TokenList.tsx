@@ -5,7 +5,7 @@ import { Address } from 'ox'
 import { formatUnits, isAddressEqual, zeroAddress } from 'viem'
 import { NetworkImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import { Search } from 'lucide-react'
+import { Search, ArrowLeft } from 'lucide-react'
 
 interface Token {
   id: number
@@ -24,6 +24,7 @@ interface Token {
 
 interface TokenListProps {
   onContinue: (selectedToken: Token) => void
+  onBack: () => void
 }
 
 // Helper to get chain info
@@ -47,7 +48,7 @@ const formatBalance = (balance: string, decimals: number = 18) => {
   }
 }
 
-export const TokenList: React.FC<TokenListProps> = ({ onContinue }) => {
+export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const { address } = useAccount()
@@ -211,13 +212,22 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue }) => {
         })}
       </div>
 
-      <button
-        onClick={() => selectedToken && onContinue(selectedToken)}
-        disabled={!selectedToken}
-        className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-      >
-        Continue
-      </button>
+      <div className="space-y-3">
+        <button
+          onClick={() => selectedToken && onContinue(selectedToken)}
+          disabled={!selectedToken}
+          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+        >
+          Continue
+        </button>
+        <button
+          onClick={onBack}
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back
+        </button>
+      </div>
     </div>
   )
 }
