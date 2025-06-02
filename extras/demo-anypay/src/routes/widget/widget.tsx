@@ -9,6 +9,7 @@ import Receipt from './components/Receipt'
 import { prepareSend } from '../../../../anypay-sdk/src/anypay'
 import { createWalletClient, custom, type WalletClient } from 'viem'
 import { mainnet, base, optimism, arbitrum } from 'viem/chains'
+import { parseUnits } from 'viem'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
 
@@ -81,9 +82,7 @@ export const Widget: React.FC = () => {
     if (!address || !isConnected || !chainId || !selectedToken || !window.ethereum || !walletClient?.account) return
 
     try {
-      setCurrentScreen('pending')
-
-      const { intentAddress, send } = await prepareSend({
+      const options = {
         account: walletClient.account,
         originTokenAddress: selectedToken.contractAddress,
         originChainId: selectedToken.chainId,
@@ -93,8 +92,11 @@ export const Widget: React.FC = () => {
         destinationTokenAddress: selectedToken.contractAddress,
         destinationTokenAmount: amount,
         sequenceApiKey: import.meta.env.VITE_SEQUENCE_API_KEY as string,
-      })
+        fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(),
+        client: walletClient,
+      }
 
+      const { intentAddress, send } = await prepareSend(options)
       console.log('Intent address:', intentAddress.toString())
       await send()
 
@@ -151,6 +153,8 @@ export const Widget: React.FC = () => {
           <SendForm
             onSend={handleSend}
             onBack={handleBack}
+            onConfirm={() => setCurrentScreen('pending')}
+            onComplete={() => setCurrentScreen('receipt')}
             selectedToken={selectedToken}
             account={walletClient.account}
           />

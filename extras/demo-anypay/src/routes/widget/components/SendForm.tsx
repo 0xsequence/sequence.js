@@ -25,6 +25,8 @@ interface SendFormProps {
   selectedToken: Token
   onSend: (amount: string, recipient: string) => void
   onBack: () => void
+  onConfirm: () => void
+  onComplete: () => void
   account: Account
 }
 
@@ -89,7 +91,14 @@ function getDestTokenAddress(chainId: number, tokenSymbol: string) {
   throw new Error(`Unsupported token symbol: ${tokenSymbol} for chainId: ${chainId}`)
 }
 
-export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, onBack, account }) => {
+export const SendForm: React.FC<SendFormProps> = ({
+  selectedToken,
+  onSend,
+  onBack,
+  onConfirm,
+  onComplete,
+  account,
+}) => {
   const [amount, setAmount] = useState('')
   const [recipient, setRecipient] = useState('')
   const [selectedChain, setSelectedChain] = useState(
@@ -124,15 +133,12 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, onBac
 
     try {
       setIsSubmitting(true)
-      // Convert amount to proper decimal format
       const decimals = selectedDestToken.symbol === 'ETH' ? 18 : 6
       const parsedAmount = parseUnits(amount, decimals).toString()
 
-      console.log('account', account)
-
       const client = createWalletClient({
         account,
-        chain: getChainConfig(selectedChain.id),
+        chain: getChainConfig(selectedToken.chainId),
         transport: custom(window.ethereum),
       })
 
@@ -160,11 +166,21 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, onBac
       const { intentAddress, send } = await prepareSend(options)
       console.log('Intent address:', intentAddress.toString())
 
-      await send()
+      // Start the send process
       onSend(amount, recipient)
+
+      // Wait for send to complete
+      send().then(() => {
+        // Move to receipt screen
+        onComplete()
+      })
+
+      // Move to confirmation screen after 5 seconds
+      setTimeout(() => {
+        onConfirm()
+      }, 10_000)
     } catch (error) {
       console.error('Error in prepareSend:', error)
-    } finally {
       setIsSubmitting(false)
     }
   }
