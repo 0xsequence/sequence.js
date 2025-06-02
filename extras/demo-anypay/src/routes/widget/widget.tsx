@@ -45,6 +45,14 @@ export const Widget: React.FC = () => {
     setCurrentScreen('tokens')
   }
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    // Reset all state when modal is closed
+    setCurrentScreen('connect')
+    setSelectedToken(null)
+    setTxHash('')
+  }
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'connect':
@@ -79,7 +87,7 @@ export const Widget: React.FC = () => {
         Start Transfer
       </button>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         {renderScreen()}
       </Modal>
     </div>
