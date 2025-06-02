@@ -148,7 +148,12 @@ export const Widget: React.FC = () => {
         return <TokenList onContinue={handleTokenSelect} onBack={handleBack} />
       case 'send':
         return selectedToken && walletClient?.account ? (
-          <SendForm onSend={handleSend} selectedToken={selectedToken} account={walletClient.account} />
+          <SendForm
+            onSend={handleSend}
+            onBack={handleBack}
+            selectedToken={selectedToken}
+            account={walletClient.account}
+          />
         ) : null
       case 'pending':
         return <TransferPending onComplete={handleTransferComplete} />

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { NetworkImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Loader2 } from 'lucide-react'
 import { prepareSend, getChainConfig } from '@anypay/sdk'
 import { zeroAddress } from 'viem'
 
@@ -24,6 +24,7 @@ interface Token {
 interface SendFormProps {
   selectedToken: Token
   onSend: (amount: string, recipient: string) => void
+  onBack: () => void
   account: Account
 }
 
@@ -62,7 +63,33 @@ const formatBalance = (balance: string, decimals: number = 18) => {
   }
 }
 
-export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, account }) => {
+function getDestTokenAddress(chainId: number, tokenSymbol: string) {
+  if (tokenSymbol === 'ETH') {
+    return zeroAddress
+  }
+
+  if (chainId === 10) {
+    if (tokenSymbol === 'USDC') {
+      return '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'
+    }
+  }
+
+  if (chainId === 42161) {
+    if (tokenSymbol === 'USDC') {
+      return '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+    }
+  }
+
+  if (chainId === 8453) {
+    if (tokenSymbol === 'USDC') {
+      return '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    }
+  }
+
+  throw new Error(`Unsupported token symbol: ${tokenSymbol} for chainId: ${chainId}`)
+}
+
+export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, onBack, account }) => {
   const [amount, setAmount] = useState('')
   const [recipient, setRecipient] = useState('')
   const [selectedChain, setSelectedChain] = useState(
@@ -74,6 +101,7 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, accou
   const chainDropdownRef = useRef<HTMLDivElement>(null)
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
   const chainInfo = getChainInfo(selectedToken.chainId)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const formattedBalance = formatBalance(selectedToken.balance, selectedToken.contractInfo?.decimals)
 
@@ -95,8 +123,9 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, accou
     e.preventDefault()
 
     try {
+      setIsSubmitting(true)
       // Convert amount to proper decimal format
-      const decimals = selectedToken.contractInfo?.decimals || 18
+      const decimals = selectedDestToken.symbol === 'ETH' ? 18 : 6
       const parsedAmount = parseUnits(amount, decimals).toString()
 
       console.log('account', account)
@@ -107,6 +136,8 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, accou
         transport: custom(window.ethereum),
       })
 
+      console.log('selectedDestToken.symbol', selectedDestToken)
+
       const options = {
         account,
         originTokenAddress: selectedToken.contractAddress,
@@ -114,12 +145,17 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, accou
         originTokenAmount: selectedToken.balance,
         destinationChainId: selectedChain.id,
         recipient,
-        destinationTokenAddress: selectedDestToken.symbol === 'ETH' ? zeroAddress : selectedToken.contractAddress,
+        destinationTokenAddress:
+          selectedDestToken.symbol === 'ETH'
+            ? zeroAddress
+            : getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
         destinationTokenAmount: parsedAmount,
         sequenceApiKey: import.meta.env.VITE_SEQUENCE_API_KEY as string,
         fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(),
         client,
       }
+
+      console.log('options', options)
 
       const { intentAddress, send } = await prepareSend(options)
       console.log('Intent address:', intentAddress.toString())
@@ -128,6 +164,8 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, accou
       onSend(amount, recipient)
     } catch (error) {
       console.error('Error in prepareSend:', error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -273,13 +311,31 @@ export const SendForm: React.FC<SendFormProps> = ({ selectedToken, onSend, accou
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={!amount || !recipient}
-          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-        >
-          Receive {amount ? `${amount} ${selectedDestToken.symbol}` : ''}
-        </button>
+        <div className="flex flex-col space-y-3">
+          <button
+            type="submit"
+            disabled={!amount || !recipient || isSubmitting}
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors relative"
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <span>Processing...</span>
+              </div>
+            ) : (
+              `Receive ${amount ? `${amount} ${selectedDestToken.symbol}` : ''}`
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+          >
+            Back
+          </button>
+        </div>
       </form>
     </div>
   )
