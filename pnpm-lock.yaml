@@ -30,14 +30,14 @@ importers:
   extras/demo-anypay:
     dependencies:
       '@0xsequence/api':
-        specifier: 0.0.0-anypay-20250527101311
-        version: 0.0.0-anypay-20250527101311
+        specifier: workspace:*
+        version: link:../../packages/services/api
       '@0xsequence/design-system':
         specifier: ^2.1.6
         version: 2.1.6(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(motion@12.7.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@0xsequence/hooks':
         specifier: ^5.1.0
-        version: 5.1.1(@0xsequence/api@0.0.0-anypay-20250527101311)(@0xsequence/indexer@2.3.9)(@0xsequence/metadata@2.3.8)(@0xsequence/network@2.3.9(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(@tanstack/react-query@5.74.3(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))
+        version: 5.1.1(@0xsequence/api@packages+services+api)(@0xsequence/indexer@2.3.9)(@0xsequence/metadata@2.3.8)(@0xsequence/network@2.3.9(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(@tanstack/react-query@5.74.3(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))
       '@0xsequence/indexer':
         specifier: ^2.3.9
         version: 2.3.9
@@ -48,14 +48,14 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1(0xsequence@2.3.8(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(wagmi@2.15.0(@tanstack/query-core@5.74.3)(@tanstack/react-query@5.74.3(react@19.0.0))(@types/react@19.1.2)(bufferutil@4.0.9)(react@19.0.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2))
       '@0xsequence/wallet-core':
-        specifier: 0.0.0-20250528195743
-        version: 0.0.0-20250528195743(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
+        specifier: workspace:*
+        version: link:../../packages/wallet/core
       '@0xsequence/wallet-primitives':
-        specifier: 0.0.0-anypay-20250527101311
-        version: 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
+        specifier: workspace:*
+        version: link:../../packages/wallet/primitives
       '@0xsequence/wallet-wdk':
-        specifier: 0.0.0-anypay-20250527101311
-        version: 0.0.0-anypay-20250527101311(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
+        specifier: workspace:*
+        version: link:../../packages/wallet/wdk
       '@anypay/sdk':
         specifier: workspace:*
         version: link:../../packages/wallet/anypay-sdk
@@ -722,9 +722,6 @@ packages:
       react-dom: '>= 17'
       viem: '>= 2.0.0'
 
-  '@0xsequence/identity-instrument@0.0.0-anypay-20250529090443':
-    resolution: {integrity: sha512-5iqsIHZZ9mVHwu4LKX/GPF4r1mzNLkjriTrs/NP1DOGbNXQ4bsZ6Wi/UuA1XYJhRtxu5Epp3tLN371qc70Bgrg==}
-
   '@0xsequence/indexer@2.3.8':
     resolution: {integrity: sha512-UtmUwhquwRxWx3+JoR7Ai0luRLWvL/jMIDNuSkE6/A87UFLzJ09GQ1VkSLSkipkYv95q1xcbAUQxjZH58JPxfg==}
 
@@ -800,20 +797,8 @@ packages:
       viem: '>= 2.0.0'
       wagmi: '>= 2.0.0'
 
-  '@0xsequence/wallet-core@0.0.0-20250528195743':
-    resolution: {integrity: sha512-xcuRM+EJMYvtrVIBkkzrlf7G4qdC1QGECilFFuWxXF4FlcIgArKPyq6U4nhnl98hLO5x7gUaJlP6/JWws1OxzQ==}
-
-  '@0xsequence/wallet-core@0.0.0-anypay-20250529090443':
-    resolution: {integrity: sha512-OlUuvb/Y6zhXEmAxAcJsvQru+69RoqGBSzyt6ZoXqaJjKCoJkNpgM49vJfYRPOTllzgXDgAemJzmfmyoILrYww==}
-
   '@0xsequence/wallet-primitives@0.0.0-anypay-20250527101311':
     resolution: {integrity: sha512-uy+q2xGfHKTMMRtW2VGPHB2MCIem3SP72+/IOc606ccSLWtwPtdC70QcTujJzkLVJfAsZ/l6nFNclz8KOEeMoA==}
-
-  '@0xsequence/wallet-primitives@0.0.0-anypay-20250529102004':
-    resolution: {integrity: sha512-Yf57/gl8HWTeX/j+Y3NZ1KE6rMroUlTUJbAOBI2S+QIumOHii8N5JM+hdF8wMwb5ckS9GEn5Jh4elwkyq6ReSg==}
-
-  '@0xsequence/wallet-wdk@0.0.0-anypay-20250527101311':
-    resolution: {integrity: sha512-UdBc43HmM1tk62JKQARKMEHVu5atYzwAxwtL2kk2FXTT/nOKeh3/S2xD12XJazMCh2D2quEWzZfxY3vhUlLFPQ==}
 
   '@0xsequence/wallet@2.3.8':
     resolution: {integrity: sha512-HH4KiO4VYGsmQDc/thtXLrIiYtjHGOKQ+ms/u5F/SZDa8hBw+VwYElli7FEgsbg+tpUYmMlaPeKZz67Buqe9zQ==}
@@ -6064,9 +6049,9 @@ snapshots:
       react-dom: 19.0.0(react@18.3.1)
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
 
-  '@0xsequence/hooks@5.1.1(@0xsequence/api@0.0.0-anypay-20250527101311)(@0xsequence/indexer@2.3.9)(@0xsequence/metadata@2.3.8)(@0xsequence/network@2.3.9(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(@tanstack/react-query@5.74.3(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))':
+  '@0xsequence/hooks@5.1.1(@0xsequence/api@packages+services+api)(@0xsequence/indexer@2.3.9)(@0xsequence/metadata@2.3.8)(@0xsequence/network@2.3.9(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(@tanstack/react-query@5.74.3(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))':
     dependencies:
-      '@0xsequence/api': 0.0.0-anypay-20250527101311
+      '@0xsequence/api': link:packages/services/api
       '@0xsequence/indexer': 2.3.9
       '@0xsequence/metadata': 2.3.8
       '@0xsequence/network': 2.3.9(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))
@@ -6074,14 +6059,6 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
-
-  '@0xsequence/identity-instrument@0.0.0-anypay-20250529090443(typescript@5.7.3)(zod@3.24.2)':
-    dependencies:
-      jwt-decode: 4.0.0
-      ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
-    transitivePeerDependencies:
-      - typescript
-      - zod
 
   '@0xsequence/indexer@2.3.8': {}
 
@@ -6191,56 +6168,11 @@ snapshots:
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       wagmi: 2.15.0(@tanstack/query-core@5.74.3)(@tanstack/react-query@5.74.3(react@19.0.0))(@types/react@19.1.2)(bufferutil@4.0.9)(react@19.0.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
 
-  '@0xsequence/wallet-core@0.0.0-20250528195743(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
-    dependencies:
-      '@0xsequence/wallet-primitives': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
-      ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
-      viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-      - zod
-
-  '@0xsequence/wallet-core@0.0.0-anypay-20250529090443(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
-    dependencies:
-      '@0xsequence/wallet-primitives': 0.0.0-anypay-20250529102004(typescript@5.7.3)(zod@3.24.2)
-      ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
-      viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-      - zod
-
   '@0xsequence/wallet-primitives@0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)':
     dependencies:
       ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
     transitivePeerDependencies:
       - typescript
-      - zod
-
-  '@0xsequence/wallet-primitives@0.0.0-anypay-20250529102004(typescript@5.7.3)(zod@3.24.2)':
-    dependencies:
-      ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
-    transitivePeerDependencies:
-      - typescript
-      - zod
-
-  '@0xsequence/wallet-wdk@0.0.0-anypay-20250527101311(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)':
-    dependencies:
-      '@0xsequence/identity-instrument': 0.0.0-anypay-20250529090443(typescript@5.7.3)(zod@3.24.2)
-      '@0xsequence/tee-verifier': 0.1.0
-      '@0xsequence/wallet-core': 0.0.0-anypay-20250529090443(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
-      '@0xsequence/wallet-primitives': 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
-      idb: 7.1.1
-      jwt-decode: 4.0.0
-      ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
       - zod
 
   '@0xsequence/wallet@2.3.8(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
