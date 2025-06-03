@@ -1,10 +1,12 @@
 import { useIndexerGatewayClient } from '@0xsequence/hooks'
-import { ContractVerificationStatus, NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
 import {
-  GetTokenBalancesSummaryReturn,
+  ContractVerificationStatus,
+  NativeTokenBalance,
+  TokenBalance,
   GatewayNativeTokenBalances,
-  GatewayTokenBalance
-} from '@0xsequence/indexer/dist/declarations/src/indexergw.gen'
+  GatewayTokenBalance,
+  GetTokenBalancesSummaryReturn
+} from '@0xsequence/indexer'
 import { useQuery } from '@tanstack/react-query'
 import { Address } from 'ox'
 import { useMemo } from 'react'
@@ -78,9 +80,9 @@ export function useTokenBalances(address: Address.Address): {
 
     // Flatten both native and token balances
     const nativeBalances = tokenBalancesData.nativeBalances.flatMap(
-      (b: GatewayNativeTokenBalances) => b.results
+      (b: any) => b.results // TODO: Add proper type
     )
-    const tokenBalances = tokenBalancesData.balances.flatMap((b: GatewayTokenBalance) => b.results)
+    const tokenBalances = tokenBalancesData.balances.flatMap((b: any) => b.results) // TODO: Add proper type
     const balances = [...nativeBalances, ...tokenBalances]
 
     return [...balances]

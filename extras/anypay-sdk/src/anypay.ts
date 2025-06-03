@@ -24,20 +24,20 @@ import {
   WalletClient
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
-import { useAPIClient, getAPIClient } from './apiClient'
-import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus } from './metaTxnMonitor'
-import { relayerSendMetaTx } from './metaTxns'
-import { useRelayers, getRelayer } from './relayer'
-import { findPreconditionAddress } from './preconditions'
+import { useAPIClient, getAPIClient } from './apiClient.js'
+import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus } from './metaTxnMonitor.js'
+import { relayerSendMetaTx } from './metaTxns.js'
+import { useRelayers, getRelayer } from './relayer.js'
+import { findPreconditionAddress } from './preconditions.js'
 import {
   calculateIntentAddress,
   OriginCallParams,
   commitIntentConfig,
   getIntentCallsPayloads,
   sendOriginTransaction
-} from './intents'
-import { getERC20TransferData } from './encoders'
-import { RelayerOperationStatus } from './relayer'
+} from './intents.js'
+import { getERC20TransferData } from './encoders.js'
+import { RelayerOperationStatus } from './relayer.js'
 
 export type Account = {
   address: `0x${string}`
@@ -1187,6 +1187,22 @@ export async function prepareSend(options: SendOptions) {
   const intent = await getIntentCallsPayloads(apiClient, args as any) // TODO: Add proper type
   console.log('Got intent:', intent)
 
+  if (!intent) {
+    throw new Error('Invalid intent')
+  }
+
+  if (!intent.preconditions?.length || !intent.calls?.length || !intent.lifiInfos?.length) {
+    throw new Error('Invalid intent')
+  }
+
+  if (intent.preconditions.length !== intent.calls.length) {
+    throw new Error('Preconditions and calls length mismatch')
+  }
+
+  if (intent.calls.length < 2) {
+    throw new Error('At least 2 calls are required')
+  }
+
   const intentAddress = calculateIntentAddress(
     mainSigner,
     intent.calls as any[],
@@ -1209,9 +1225,9 @@ export async function prepareSend(options: SendOptions) {
     send: async () => {
       console.log('sending origin transaction')
       const originCallParams = {
-        to: intent.preconditions[0].data.address,
+        to: intent.preconditions[0]!.data!.address,
         data: '0x',
-        value: BigInt(intent.preconditions[0].data.min) + BigInt(fee),
+        value: BigInt(intent.preconditions[0]!.data!.min) + BigInt(fee),
         chainId: originChainId,
         chain
       }
@@ -1236,9 +1252,9 @@ export async function prepareSend(options: SendOptions) {
 
       await new Promise(resolve => setTimeout(resolve, 5000))
 
-      const metaTx = intent.metaTxns[0]
+      const metaTx = intent.metaTxns[0]!
       console.log('metaTx', metaTx)
-      const opHash = await relayerSendMetaTx(originRelayer, metaTx, [intent.preconditions[0]])
+      const opHash = await relayerSendMetaTx(originRelayer, metaTx, [intent.preconditions[0]!])
 
       console.log('opHash', opHash)
 
@@ -1254,11 +1270,11 @@ export async function prepareSend(options: SendOptions) {
       }
 
       await new Promise(resolve => setTimeout(resolve, 5000))
-      const metaTx2 = intent.metaTxns[1]
+      const metaTx2 = intent.metaTxns[1]!
       console.log('metaTx2', metaTx2)
 
       const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [
-        intent.preconditions[1]
+        intent.preconditions[1]!
       ])
       console.log('opHash2', opHash2)
 

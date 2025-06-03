@@ -1,6 +1,6 @@
 import { describe, it, expect, jest } from '@jest/globals'
-import type { MetaTxn } from './metaTxnMonitor'
-import * as hooks from './'
+import type { MetaTxn } from './metaTxnMonitor.js'
+import * as hooks from './index.js'
 
 jest.mock('./', () => ({
   useAPIClient: jest.fn(),

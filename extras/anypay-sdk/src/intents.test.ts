@@ -20,7 +20,7 @@ import {
   IntentCallsPayload,
   AnypayLifiInfo,
   getAnypayLifiInfoHash
-} from './intents'
+} from './intents.js'
 import 'dotenv/config'
 
 const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL || 'http://localhost:8545'
@@ -49,7 +49,7 @@ describe('AnyPay Preconditions', () => {
     let provider: Provider.Provider
     let chainId = 1n
     if (CAN_RUN_LIVE) {
-      provider = Provider.from(RpcTransport.fromHttp(RPC_URL!!))
+      provider = Provider.from(RpcTransport.fromHttp(RPC_URL!))
       chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
     } else {
       provider = {

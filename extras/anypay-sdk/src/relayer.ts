@@ -9,7 +9,9 @@ export type Relayer = Relayer.Rpc.RpcRelayer
 
 // Helper to get chain info
 function getChain(chainId: number): Chain {
-  const chain = Object.values(chains).find((c: Chain) => c.id === chainId)
+  const chain = Object.values(chains as unknown as Record<string, Chain>).find(
+    (c: Chain) => c.id === chainId
+  )
   if (!chain) {
     throw new Error(`Chain with id ${chainId} not found`)
   }
@@ -118,7 +120,15 @@ function getRelayerUrl(config: RelayerEnvConfig, chainId: number): string {
 
 export function getRelayer(config: RelayerEnvConfig, chainId: number): Relayer.Rpc.RpcRelayer {
   const chain = getChain(chainId)
+
+  if (!chain) {
+    throw new Error(`Chain with id ${chainId} not found`)
+  }
+
   const rpcUrl = chain.rpcUrls.default.http[0]
+  if (!rpcUrl) {
+    throw new Error(`No RPC URL found for chain ${chainId}`)
+  }
 
   const relayerUrl = getRelayerUrl(config, chainId)
 

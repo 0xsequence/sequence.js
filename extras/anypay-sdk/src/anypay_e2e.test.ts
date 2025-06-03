@@ -10,7 +10,7 @@ import {
   relayerSendMetaTx,
   getMetaTxStatus,
   type GetIntentCallsPayloadsReturn
-} from '.'
+} from './index.js'
 import { privateKeyToAccount } from 'viem/accounts'
 import { createWalletClient, createPublicClient, http } from 'viem'
 import { arbitrum, base, optimism } from 'viem/chains'

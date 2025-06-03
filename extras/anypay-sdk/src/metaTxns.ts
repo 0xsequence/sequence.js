@@ -1,7 +1,7 @@
 import { IntentPrecondition } from '@0xsequence/api'
 import { Relayer } from '@0xsequence/wallet-core'
 import { Hex } from 'viem'
-import { MetaTxn } from './metaTxnMonitor'
+import { MetaTxn } from './metaTxnMonitor.js'
 
 export async function relayerSendMetaTx(
   relayer: Relayer.Rpc.RpcRelayer,
