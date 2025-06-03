@@ -9,9 +9,7 @@ export type Relayer = Relayer.Rpc.RpcRelayer
 
 // Helper to get chain info
 function getChain(chainId: number): Chain {
-  const chain = Object.values(chains as unknown as Record<string, Chain>).find(
-    (c: Chain) => c.id === chainId
-  )
+  const chain = Object.values(chains as unknown as Record<string, Chain>).find((c: Chain) => c.id === chainId)
   if (!chain) {
     throw new Error(`Chain with id ${chainId} not found`)
   }
@@ -27,6 +25,16 @@ export type RelayerConfig = {
 export type RelayerEnvConfig = {
   env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
   useV3Relayers?: boolean
+}
+
+export function getBackupRelayer(chainId: number): Relayer.Rpc.RpcRelayer | undefined {
+  if (chainId === 42161) {
+    return new Relayer.Rpc.RpcRelayer('https://a1b4a8c5d856.ngrok.app/', chainId, 'https://nodes.sequence.app/arbitrum')
+  } else if (chainId === 8453) {
+    return new Relayer.Rpc.RpcRelayer('https://644a6aeb891e.ngrok.app/', chainId, 'https://nodes.sequence.app/base')
+  }
+
+  return undefined
 }
 
 // TODO: add relayer url to config
@@ -138,6 +146,7 @@ export function getRelayer(config: RelayerEnvConfig, chainId: number): Relayer.R
 export function useRelayers(config: RelayerEnvConfig): {
   relayers: Map<number, Relayer.Rpc.RpcRelayer>
   getRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer
+  getBackupRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer | undefined
 } {
   const relayers = useMemo(() => {
     const relayerMap = new Map<number, Relayer.Rpc.RpcRelayer>()
@@ -157,7 +166,8 @@ export function useRelayers(config: RelayerEnvConfig): {
 
   return {
     relayers,
-    getRelayer: getCachedRelayer
+    getRelayer: getCachedRelayer,
+    getBackupRelayer,
   }
 }
 

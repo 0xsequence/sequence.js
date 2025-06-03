@@ -9,10 +9,10 @@ import {
   useAnyPay,
   useTokenBalances,
   MetaTxn,
-  RelayerOperationStatus,
   NativeTokenBalance,
   TokenBalance,
   Account,
+  calculateIntentAddress,
 } from '@anypay/sdk'
 import {
   AlertTriangle,
@@ -27,6 +27,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { SectionHeader } from '@/components/SectionHeader'
+import { createPublicClient, http } from 'viem'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
@@ -37,6 +38,14 @@ const getExplorerUrl = (chainId: number, address: string): string | null => {
   const chainInfo = getChainInfo(chainId)
   if (chainInfo && chainInfo.blockExplorers?.default?.url) {
     return `${chainInfo.blockExplorers.default.url}/address/${address}`
+  }
+  return null
+}
+
+export const getExplorerTransactionUrl = (chainId: number, transactionHash: string): string | null => {
+  const chainInfo = getChainInfo(chainId)
+  if (chainInfo && chainInfo.blockExplorers?.default?.url) {
+    return `${chainInfo.blockExplorers.default.url}/tx/${transactionHash}`
   }
   return null
 }
@@ -91,6 +100,31 @@ const formatBalance = (balance: TokenBalance | NativeTokenBalance) => {
     console.error('Error formatting balance:', e)
     return balance.balance
   }
+}
+
+// Helper to calculate time since origin
+const formatTimeSinceOrigin = (metaTxnTimestamp: number | null, originTimestamp: number | null): string => {
+  if (originTimestamp === null) {
+    return 'Waiting for origin call timestamp...'
+  }
+  if (metaTxnTimestamp === null) {
+    return 'Meta transaction timestamp not available'
+  }
+  if (metaTxnTimestamp < originTimestamp) {
+    return 'Before origin call'
+  }
+  const diffSeconds = metaTxnTimestamp - originTimestamp
+  if (diffSeconds < 60) {
+    return `${diffSeconds} second${diffSeconds === 1 ? '' : 's'} after origin call`
+  }
+  const diffMinutes = Math.floor(diffSeconds / 60)
+  const remainingSeconds = diffSeconds % 60
+  if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}${remainingSeconds > 0 ? ` ${remainingSeconds}s` : ''} after origin call`
+  }
+  const diffHours = Math.floor(diffMinutes / 60)
+  const remainingMinutes = diffMinutes % 60
+  return `${diffHours} hour${diffHours === 1 ? '' : 's'}${remainingMinutes > 0 ? ` ${remainingMinutes}m` : ''} after origin call`
 }
 
 function useHook() {
@@ -149,6 +183,9 @@ function useHook() {
     calculatedIntentAddress,
     updateOriginCallParams,
     originCallParams,
+    receiptIsSuccess,
+    receipt,
+    txnHash,
   } = useAnyPay({
     account: account as Account,
     env: import.meta.env.VITE_ENV,
@@ -159,6 +196,103 @@ function useHook() {
   const [intentActionType, setIntentActionType] = useState<IntentAction | null>(null)
   const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
   const [selectedMetaTxnId, setSelectedMetaTxnId] = useState<string | null>(null)
+
+  const [originBlockTimestamp, setOriginBlockTimestamp] = useState<number | null>(null)
+  const [metaTxnBlockTimestamps, setMetaTxnBlockTimestamps] = useState<{
+    [key: string]: { timestamp: number | null; error?: string }
+  }>({})
+
+  // Effect to fetch origin block timestamp
+  useEffect(() => {
+    if (receiptIsSuccess && receipt && receipt.blockNumber) {
+      const fetchTimestamp = async () => {
+        try {
+          const chainInfo = getChainInfo(originCallParams?.chainId || 0)
+          if (!chainInfo) {
+            console.error('Chain info not found for origin call')
+            setOriginBlockTimestamp(null)
+            return
+          }
+          const client = createPublicClient({
+            chain: chainInfo as any, // Type assertion as chainInfo can be null
+            transport: http(),
+          })
+          const block = await client.getBlock({ blockNumber: receipt.blockNumber })
+          setOriginBlockTimestamp(Number(block.timestamp))
+        } catch (error) {
+          console.error('Error fetching origin block timestamp:', error)
+          setOriginBlockTimestamp(null)
+        }
+      }
+      fetchTimestamp()
+    } else if (!txnHash) {
+      setOriginBlockTimestamp(null)
+    }
+  }, [receiptIsSuccess, receipt, txnHash, originCallParams?.chainId])
+
+  // Effect to fetch meta-transaction block timestamps
+  useEffect(() => {
+    if (metaTxns && Object.keys(metaTxnMonitorStatuses).length > 0) {
+      metaTxns.forEach(async (metaTxn) => {
+        const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+        const monitorStatus = metaTxnMonitorStatuses[operationKey]
+
+        if (
+          monitorStatus &&
+          monitorStatus.status === 'confirmed' &&
+          monitorStatus.receipt &&
+          monitorStatus.receipt.txnReceipt &&
+          !metaTxnBlockTimestamps[operationKey]?.timestamp &&
+          !metaTxnBlockTimestamps[operationKey]?.error
+        ) {
+          try {
+            const chainId = parseInt(metaTxn.chainId)
+            const chainInfo = getChainInfo(chainId)
+            if (!chainInfo) {
+              console.error(`Chain info not found for metaTxn ${operationKey}`)
+              setMetaTxnBlockTimestamps((prev) => ({
+                ...prev,
+                [operationKey]: { timestamp: null, error: 'Chain info not found' },
+              }))
+              return
+            }
+
+            // Attempt to parse the txnReceipt string
+            // @ts-expect-error
+            const blockNumberToFetch = monitorStatus.receipt?.blockNumber
+
+            if (!blockNumberToFetch) {
+              setMetaTxnBlockTimestamps((prev) => ({
+                ...prev,
+                [operationKey]: { timestamp: null, error: 'Block number not available from receipt' },
+              }))
+              return
+            }
+
+            const client = createPublicClient({
+              chain: chainInfo as any,
+              transport: http(),
+            })
+            const block = await client.getBlock({ blockNumber: blockNumberToFetch })
+            setMetaTxnBlockTimestamps((prev) => ({
+              ...prev,
+              [operationKey]: { timestamp: Number(block.timestamp), error: undefined },
+            }))
+          } catch (error: any) {
+            console.error(`Error fetching block timestamp for metaTxn ${operationKey}:`, error)
+            setMetaTxnBlockTimestamps((prev) => ({
+              ...prev,
+              [operationKey]: { timestamp: null, error: error.message || 'Failed to fetch timestamp' },
+            }))
+          }
+        }
+      })
+    }
+    // Clear timestamps if metaTxns are cleared
+    if (!metaTxns || metaTxns.length === 0) {
+      setMetaTxnBlockTimestamps({})
+    }
+  }, [metaTxnMonitorStatuses, metaTxns, metaTxnBlockTimestamps])
 
   function createIntentAction(action: IntentAction) {
     if (!selectedToken || !account.address) {
@@ -447,6 +581,9 @@ function useHook() {
     isCommitButtonDisabled,
 
     calculatedIntentAddress,
+    originBlockTimestamp,
+    metaTxnBlockTimestamps,
+    formatTimeSinceOrigin,
   }
 }
 
@@ -526,6 +663,9 @@ export const HomeIndexRoute = () => {
 
     calculatedIntentAddress,
     sendMetaTxnPending,
+    originBlockTimestamp,
+    metaTxnBlockTimestamps,
+    formatTimeSinceOrigin,
   } = useHook()
 
   return (
@@ -1676,34 +1816,40 @@ export const HomeIndexRoute = () => {
               {/* Preview calculated address */}
               <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 shadow-inner space-y-3">
                 <Text variant="small" color="secondary">
-                  <strong className="text-blue-300">
-                    Calculated Intent Address (used as recipient for origin call):{' '}
-                  </strong>
+                  <strong className="text-blue-300">Calculated Intent Address: </strong>
                   <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
-                    {originCallParams?.to?.toString() || 'N/A'}
+                    {(intentCallsPayloads && account.address && lifiInfos
+                      ? calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)?.toString()
+                      : null) || 'N/A'}
                   </span>
                 </Text>
-                {originCallParams?.to && metaTxns && metaTxns.length > 0 && (
+                {intentCallsPayloads && account.address && lifiInfos && metaTxns && metaTxns.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-gray-700/50 space-y-2">
                     {' '}
                     {/* Added space-y-2 for link items */}
                     <Text variant="small" color="secondary" className="mb-1 text-blue-300 font-semibold">
-                      Open in explorer (Calculated Intent Address):
+                      Open Intent Address in Explorer:
                     </Text>
                     <div className="flex flex-col space-y-1">
-                      {[...new Set(metaTxns.map((tx: any) => tx.chainId))]
-                        .map((chainIdStr: any) => parseInt(chainIdStr))
-                        .map((chainId: number) => {
-                          const explorerUrl = getExplorerUrl(chainId, originCallParams.to!)
+                      {[...new Set(metaTxns.map((tx) => tx.chainId))]
+                        .map((chainIdStr) => parseInt(chainIdStr))
+                        .map((chainId) => {
+                          const actualIntentConfigAddress = calculateIntentAddress(
+                            account.address!,
+                            intentCallsPayloads!,
+                            lifiInfos!,
+                          )?.toString()
+                          if (!actualIntentConfigAddress) return null
+                          const explorerUrl = getExplorerUrl(chainId, actualIntentConfigAddress)
                           const chainInfo = getChainInfo(chainId)
                           if (!explorerUrl) return null
                           return (
-                            <div key={`${chainId}-explorer-link`} className="bg-gray-800/70 p-2 rounded-md">
+                            <div key={`${chainId}-explorer-link-intent`} className="bg-gray-800/70 p-2 rounded-md">
                               <a
                                 href={explorerUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                title={`Open ${originCallParams.to} on ${chainInfo?.name || 'explorer'}`}
+                                title={`Open ${actualIntentConfigAddress} on ${chainInfo?.name || 'explorer'}`}
                                 className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
                               >
                                 <NetworkImage chainId={chainId} size="xs" className="w-3 h-3" />
@@ -1908,6 +2054,22 @@ export const HomeIndexRoute = () => {
                     <span className="text-yellow-300 break-all font-mono">
                       {originCallStatus?.txnHash || 'Not sent yet'}
                     </span>
+                    {originCallStatus?.txnHash && originCallParams?.chainId && (
+                      <div className="mt-1">
+                        <a
+                          href={getExplorerTransactionUrl(originCallParams.chainId, originCallStatus.txnHash) || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`View transaction ${originCallStatus.txnHash} on ${
+                            getChainInfo(originCallParams.chainId)?.name || 'explorer'
+                          }`}
+                          className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
+                        >
+                          <NetworkImage chainId={originCallParams.chainId} size="xs" className="w-3 h-3" />
+                          <span>{getExplorerTransactionUrl(originCallParams.chainId, originCallStatus.txnHash)}</span>
+                        </a>
+                      </div>
+                    )}
                   </Text>
                 </div>
                 <div className="bg-gray-800/70 p-3 rounded-md">
@@ -1949,45 +2111,18 @@ export const HomeIndexRoute = () => {
                     <span className="font-mono">{originCallStatus?.effectiveGasPrice || '0'}</span>
                   </Text>
                 </div>
-              </div>
-            </div>
-            {/* Preconditions Status */}
-            {/* <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
-              <Text
-                variant="medium"
-                color="primary"
-                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
-              >
-                <Clipboard className="h-4 w-4 mr-2" />
-                Preconditions Status
-              </Text>
-              <div className="space-y-3">
-                {intentPreconditions && intentPreconditions.length > 0 ? (
-                  intentPreconditions.map((precondition, index) => (
-                    <div key={index} className="bg-gray-800/70 p-3 rounded-md">
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">
-                          Precondition {index + 1} ({precondition.type}):{' '}
-                        </strong>
-                        <span className="font-mono">
-                          {preconditionStatuses[index] ? (
-                            <span className="text-green-400">Met</span>
-                          ) : (
-                            <span className="text-red-400">Not Met</span>
-                          )}
-                        </span>
-                      </Text>
-                    </div>
-                  ))
-                ) : (
+                {originBlockTimestamp !== null && (
                   <div className="bg-gray-800/70 p-3 rounded-md">
-                    <Text variant="small" color="secondary" className="text-center">
-                      No preconditions available yet. Select a token and action first.
+                    <Text variant="small" color="secondary">
+                      <strong className="text-blue-300">Block Timestamp: </strong>
+                      <span className="font-mono">
+                        {new Date(originBlockTimestamp * 1000).toLocaleString()} (Epoch: {originBlockTimestamp})
+                      </span>
                     </Text>
                   </div>
                 )}
               </div>
-            </div> */}
+            </div>
             {/* Meta Transactions Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
@@ -2003,23 +2138,6 @@ export const HomeIndexRoute = () => {
                   const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
                   const monitorStatus = metaTxnMonitorStatuses[operationKey]
                   const typedMetaTxn = metaTxn as unknown as MetaTxn
-
-                  // Type guard for operation status with gas used
-                  type OperationStatusWithGas = {
-                    status: 'confirmed'
-                    gasUsed: bigint
-                    txHash: string
-                    transactionHash: `0x${string}`
-                  }
-
-                  const hasGasUsed = (status: RelayerOperationStatus | undefined): status is OperationStatusWithGas => {
-                    return (
-                      !!status &&
-                      status.status === 'confirmed' &&
-                      'gasUsed' in status &&
-                      typeof status.gasUsed === 'bigint'
-                    )
-                  }
 
                   const getStatusDisplay = () => {
                     if (!monitorStatus) return 'Pending'
@@ -2074,22 +2192,57 @@ export const HomeIndexRoute = () => {
                             <span className="font-mono text-yellow-300 break-all">{String(monitorStatus.txHash)}</span>
                           </Text>
                         )}
+                        {metaTxnBlockTimestamps[operationKey]?.timestamp && (
+                          <Text variant="small" color="secondary">
+                            <strong className="text-blue-300">Block Timestamp: </strong>
+                            <span className="font-mono">
+                              {new Date((metaTxnBlockTimestamps[operationKey]?.timestamp || 0) * 1000).toLocaleString()}
+                            </span>
+                            <br />
+                            <span className="font-mono text-purple-300">
+                              (Executed:{' '}
+                              {formatTimeSinceOrigin(
+                                metaTxnBlockTimestamps[operationKey]?.timestamp || null,
+                                originBlockTimestamp,
+                              )}
+                              )
+                            </span>
+                          </Text>
+                        )}
+                        {/* {metaTxnBlockTimestamps[operationKey]?.error && (
+                          <Text variant="small" color="error">
+                            <strong className="text-red-300">Timestamp Error: </strong>
+                            <span className="font-mono break-all">{metaTxnBlockTimestamps[operationKey]?.error}</span>
+                          </Text>
+                        )} */}
                         {monitorStatus?.status === 'confirmed' &&
                           monitorStatus &&
-                          'txHash' in monitorStatus &&
-                          typeof monitorStatus.txHash === 'string' &&
-                          monitorStatus.txHash && (
-                            <Text variant="small" color="secondary">
-                              <strong className="text-blue-300">Explorer: </strong>
+                          monitorStatus.receipt &&
+                          'txnHash' in monitorStatus.receipt &&
+                          typeof monitorStatus.receipt.txnHash === 'string' &&
+                          monitorStatus.receipt.txnHash && (
+                            <div className="bg-gray-800/70 p-2 rounded-md">
                               <a
-                                href={getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash) || '#'}
+                                href={
+                                  getExplorerTransactionUrl(
+                                    parseInt(typedMetaTxn.chainId),
+                                    monitorStatus.receipt.txnHash,
+                                  ) || '#'
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-mono text-purple-400 hover:underline break-all"
+                                title={`View transaction ${monitorStatus.receipt.txnHash} on ${getChainInfo(parseInt(typedMetaTxn.chainId))?.name || 'explorer'}`}
+                                className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
                               >
-                                {getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash)}
+                                <NetworkImage chainId={parseInt(typedMetaTxn.chainId)} size="xs" className="w-3 h-3" />
+                                <span>
+                                  {getExplorerTransactionUrl(
+                                    parseInt(typedMetaTxn.chainId),
+                                    monitorStatus.receipt.txnHash,
+                                  )}
+                                </span>
                               </a>
-                            </Text>
+                            </div>
                           )}
                         {monitorStatus?.status === 'failed' && monitorStatus && 'reason' in monitorStatus && (
                           <Text variant="small" color="negative">
@@ -2097,12 +2250,16 @@ export const HomeIndexRoute = () => {
                             <span className="font-mono break-all">{String(monitorStatus.reason)}</span>
                           </Text>
                         )}
-                        {hasGasUsed(monitorStatus) && (
-                          <Text variant="small" color="secondary">
-                            <strong className="text-blue-300">Gas Used: </strong>
-                            <span className="font-mono">{monitorStatus.gasUsed.toString()}</span>
-                          </Text>
-                        )}
+                        {monitorStatus?.status === 'confirmed' &&
+                          monitorStatus &&
+                          monitorStatus.receipt &&
+                          'gasUsed' in monitorStatus.receipt &&
+                          typeof monitorStatus.receipt.gasUsed === 'bigint' && (
+                            <Text variant="small" color="secondary">
+                              <strong className="text-blue-300">Gas Used: </strong>
+                              <span className="font-mono">{monitorStatus.receipt.gasUsed}</span>
+                            </Text>
+                          )}
                         {(monitorStatus?.status === 'confirmed' || monitorStatus?.status === 'failed') &&
                           monitorStatus && (
                             <div className="mt-2 bg-gray-900/50 p-2 rounded border border-gray-700/50">

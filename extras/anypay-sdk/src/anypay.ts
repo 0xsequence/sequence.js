@@ -25,9 +25,9 @@ import {
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
-import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus } from './metaTxnMonitor.js'
+import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus, MetaTxnStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
-import { useRelayers, getRelayer } from './relayer.js'
+import { useRelayers, getRelayer, getBackupRelayer } from './relayer.js'
 import { findPreconditionAddress } from './preconditions.js'
 import {
   calculateIntentAddress,
@@ -45,14 +45,14 @@ export type Account = {
   chainId: number
 }
 
-export type UseAnypayConfig = {
+export type UseAnyPayConfig = {
   account: Account
   disableAutoExecute?: boolean
   env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
   useV3Relayers?: boolean
 }
 
-export type UseAnypayReturn = {
+export type UseAnyPayReturn = {
   apiClient: SequenceAPIClient
   metaTxns: GetIntentCallsPayloadsReturn['metaTxns'] | null
   intentCallsPayloads: GetIntentCallsPayloadsReturn['calls'] | null
@@ -119,7 +119,7 @@ export type UseAnypayReturn = {
   sendMetaTxnError: Error | null
   sendMetaTxnArgs: { selectedId: string | null } | undefined
   clearIntent: () => void
-  metaTxnMonitorStatuses: { [key: string]: RelayerOperationStatus }
+  metaTxnMonitorStatuses: MetaTxnStatus
   createIntent: (args: any) => void // TODO: Add proper type
   createIntentPending: boolean
   createIntentSuccess: boolean
@@ -147,7 +147,7 @@ export const getChainConfig = (chainId: number): Chain => {
   }
 }
 
-export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
+export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
   const { account, disableAutoExecute = false, env, useV3Relayers } = config
   const apiClient = useAPIClient()
 
@@ -594,42 +594,61 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       return
     }
 
-    // Don't update status if it's already set for this hash
-    if (originCallStatus?.txnHash === txnHash) {
+    // If status is already final for this txnHash, and receipt data is stable, don't reprocess.
+    if (
+      originCallStatus?.txnHash === txnHash &&
+      (originCallStatus?.status === 'Success' || originCallStatus?.status === 'Failed') &&
+      !isWaitingForReceipt
+    ) {
       return
     }
 
     if (isWaitingForReceipt) {
-      setOriginCallStatus({
+      setOriginCallStatus((prevStatus) => ({
+        ...(prevStatus?.txnHash === txnHash
+          ? prevStatus
+          : { gasUsed: undefined, effectiveGasPrice: undefined, revertReason: undefined }),
         txnHash,
         status: 'Pending',
+      }))
+      return
+    }
+
+    if (receiptIsSuccess && receipt) {
+      const newStatus = receipt.status === 'success' ? 'Success' : 'Failed'
+      setOriginCallStatus({
+        txnHash: receipt.transactionHash,
+        status: newStatus,
+        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
+        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+        revertReason:
+          receipt.status === 'reverted'
+            ? receiptError && typeof (receiptError as any).message === 'string'
+              ? (receiptError as any).message
+              : 'Transaction reverted by receipt status'
+            : undefined,
       })
+
       if (
+        newStatus === 'Success' &&
         metaTxns &&
         metaTxns.length > 0 &&
         isAutoExecute &&
         !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])
       ) {
         console.log('Origin transaction successful, auto-sending all meta transactions...')
-        // Send all meta transactions at once (pass null to send all)
-        sendMetaTxnMutation.mutate({ selectedId: null })
+        sendMetaTxn(null)
       }
-
-      return
-    }
-
-    if (receiptIsSuccess && receipt) {
-      setOriginCallStatus({
-        txnHash: receipt.transactionHash,
-        status: receipt.status === 'success' ? 'Success' : 'Failed',
-        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
-        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
-      })
     } else if (receiptIsError) {
       setOriginCallStatus({
         txnHash,
         status: 'Failed',
-        revertReason: receiptError?.message || 'Failed to get receipt',
+        revertReason:
+          receiptError && typeof (receiptError as any).message === 'string'
+            ? (receiptError as any).message
+            : 'Failed to get receipt',
+        gasUsed: undefined,
+        effectiveGasPrice: undefined,
       })
     }
   }, [
@@ -759,7 +778,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       // If no specific ID is selected, send all meta transactions
       const txnsToSend = selectedId ? [metaTxns.find((tx) => tx.id === selectedId)] : metaTxns
 
-      if (!txnsToSend || (selectedId && !txnsToSend[0])) {
+      if (!txnsToSend || (selectedId && txnsToSend.length === 0)) {
         throw new Error('Meta transaction not found')
       }
 
@@ -770,10 +789,10 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
         const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
         const lastSentTime = sentMetaTxns[operationKey]
-        const now = Date.now()
+        const currentTime = Date.now()
 
-        if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
-          const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
+        if (lastSentTime && currentTime - lastSentTime < RETRY_WINDOW_MS) {
+          const timeLeft = Math.ceil((RETRY_WINDOW_MS - (currentTime - lastSentTime)) / 1000)
           console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
           continue
         }
@@ -800,6 +819,23 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             undefined,
             relevantPreconditions,
           )
+
+          try {
+            // Fire and forget send tx to backup relayer
+            const backupRelayer = getBackupRelayer(chainId)
+
+            backupRelayer
+              ?.sendMetaTxn(
+                metaTxn.walletAddress as Address.Address,
+                metaTxn.contract as Address.Address,
+                metaTxn.input as Hex,
+                BigInt(metaTxn.chainId),
+                undefined,
+                relevantPreconditions,
+              )
+              .then(() => {})
+              .catch(() => {})
+          } catch {}
 
           results.push({
             operationKey,
@@ -1062,8 +1098,8 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     sendMetaTxnSuccess,
     sendMetaTxnError,
     sendMetaTxnArgs,
-    clearIntent,
     metaTxnMonitorStatuses,
+    clearIntent,
     createIntent,
     createIntentPending,
     createIntentSuccess,

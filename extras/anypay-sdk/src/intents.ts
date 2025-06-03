@@ -49,8 +49,8 @@ export async function getIntentCallsPayloads(
 
 export function calculateIntentAddress(
   mainSigner: string,
-  calls: IntentCallsPayload[],
-  lifiInfosArg: AnypayLifiInfo[] | null | undefined,
+  calls: any[], // TODO: Add proper type
+  lifiInfosArg: any[] | null | undefined, // TODO: Add proper type
 ): `0x${string}` {
   console.log('calculateIntentAddress inputs:', {
     mainSigner,
@@ -71,7 +71,8 @@ export function calculateIntentAddress(
     chainId: BigInt(call.chainId),
     space: call.space ? BigInt(call.space) : 0n,
     nonce: call.nonce ? BigInt(call.nonce) : 0n,
-    calls: call.calls.map((call) => ({
+    calls: call.calls.map((call: any) => ({
+      // TODO: Add proper type
       to: Address.from(call.to),
       value: BigInt(call.value || '0'),
       data: Bytes.toHex(Bytes.from((call.data as Hex.Hex) || '0x')),
