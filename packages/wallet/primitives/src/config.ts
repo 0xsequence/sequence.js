@@ -523,6 +523,12 @@ export function evaluateConfigurationSafety(config: Config) {
     throw new Error('threshold-0')
   }
 
+  // The configuration may have invalid values, that are not possible
+  // to encode in a signature
+  if (hasInvalidValues(config)) {
+    throw new Error('unsafe-invalid-values')
+  }
+
   // The contracts can safely handle trees up to a depth of 54
   // but we use 32 as a maximum depth to leave some safety margning
   // as 32 should be more than enough for all use cases
@@ -535,12 +541,6 @@ export function evaluateConfigurationSafety(config: Config) {
   const { maxWeight } = getWeight(config.topology, () => true)
   if (maxWeight < config.threshold) {
     throw new Error('unsafe-threshold')
-  }
-
-  // The configuration may have invalid values, that are not possible
-  // to encode in a signature
-  if (hasInvalidValues(config)) {
-    throw new Error('unsafe-invalid-values')
   }
 }
 
