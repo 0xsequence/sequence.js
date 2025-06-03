@@ -7,9 +7,9 @@ import {
   GetIntentConfigReturn,
   AnypayLifiInfo,
   GetIntentCallsPayloadsArgs,
-  SequenceAPIClient
+  SequenceAPIClient,
 } from '@0xsequence/api'
-import { useQuery, useMutation, UseMutationResult } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Address } from 'ox'
 import {
@@ -21,7 +21,7 @@ import {
   zeroAddress,
   Chain,
   Account as AccountType,
-  WalletClient
+  WalletClient,
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
@@ -34,7 +34,7 @@ import {
   OriginCallParams,
   commitIntentConfig,
   getIntentCallsPayloads,
-  sendOriginTransaction
+  sendOriginTransaction,
 } from './intents.js'
 import { getERC20TransferData } from './encoders.js'
 import { RelayerOperationStatus } from './relayer.js'
@@ -78,9 +78,7 @@ export type UseAnypayReturn = {
   commitIntentConfigSuccess: boolean
   commitIntentConfigError: Error | null
   commitIntentConfigArgs: any // TODO: Add proper type
-  getIntentCallsPayloads: (
-    args: GetIntentCallsPayloadsArgs
-  ) => Promise<GetIntentCallsPayloadsReturn>
+  getIntentCallsPayloads: (args: GetIntentCallsPayloadsArgs) => Promise<GetIntentCallsPayloadsReturn>
   operationHashes: { [key: string]: Hex }
   callIntentCallsPayload: (args: any) => void // TODO: Add proper type
   sendOriginTransaction: () => Promise<void>
@@ -103,7 +101,7 @@ export type UseAnypayReturn = {
     status: 'success' | 'reverted' | 'pending' | 'sending',
     gasUsed?: bigint,
     effectiveGasPrice?: bigint,
-    revertReason?: string | null
+    revertReason?: string | null,
   ) => void
   isEstimatingGas: boolean
   isAutoExecute: boolean
@@ -161,12 +159,10 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
   // State declarations
   const [metaTxns, setMetaTxns] = useState<GetIntentCallsPayloadsReturn['metaTxns'] | null>(null)
-  const [intentCallsPayloads, setIntentCallsPayloads] = useState<
-    GetIntentCallsPayloadsReturn['calls'] | null
-  >(null)
-  const [intentPreconditions, setIntentPreconditions] = useState<
-    GetIntentCallsPayloadsReturn['preconditions'] | null
-  >(null)
+  const [intentCallsPayloads, setIntentCallsPayloads] = useState<GetIntentCallsPayloadsReturn['calls'] | null>(null)
+  const [intentPreconditions, setIntentPreconditions] = useState<GetIntentCallsPayloadsReturn['preconditions'] | null>(
+    null,
+  )
   const [lifiInfos, setLifiInfos] = useState<GetIntentCallsPayloadsReturn['lifiInfos'] | null>(null)
   const [txnHash, setTxnHash] = useState<Hex | undefined>()
   const [committedIntentAddress, setCommittedIntentAddress] = useState<string | null>(null)
@@ -196,23 +192,23 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
   const { getRelayer } = useRelayers({
     env,
-    useV3Relayers
+    useV3Relayers,
   })
 
   // Add gas estimation hook with proper types
   const {
     data: estimatedGas,
     isError: isEstimateError,
-    error: estimateError
+    error: estimateError,
   } = useEstimateGas(
     originCallParams?.to && originCallParams?.chainId && !originCallParams.error
       ? {
           to: originCallParams.to || undefined,
           data: originCallParams.data || undefined,
           value: originCallParams.value || undefined,
-          chainId: originCallParams.chainId || undefined
+          chainId: originCallParams.chainId || undefined,
         }
-      : undefined
+      : undefined,
   )
 
   const commitIntentConfigMutation = useMutation({
@@ -235,7 +231,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         const calculatedAddress = calculateIntentAddress(
           args.mainSigner,
           args.calls as any[], // TODO: Add proper type
-          args.lifiInfos as any[] // TODO: Add proper type
+          args.lifiInfos as any[], // TODO: Add proper type
         )
         const receivedAddress = findPreconditionAddress(args.preconditions)
 
@@ -246,13 +242,11 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         setVerificationStatus({
           success: isVerified,
           receivedAddress: receivedAddress,
-          calculatedAddress: calculatedAddress.toString()
+          calculatedAddress: calculatedAddress.toString(),
         })
 
         if (!isVerified) {
-          throw new Error(
-            'Address verification failed: Calculated address does not match received address.'
-          )
+          throw new Error('Address verification failed: Calculated address does not match received address.')
         }
 
         // Commit the intent config
@@ -261,7 +255,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
           mainSigner: args.mainSigner,
           calls: args.calls,
           preconditions: args.preconditions,
-          lifiInfos: args.lifiInfos
+          lifiInfos: args.lifiInfos,
         })
         console.log('API Commit Response:', response)
         return { calculatedAddress: calculatedAddress.toString(), response }
@@ -272,40 +266,37 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             const calculatedAddress = calculateIntentAddress(
               args.mainSigner,
               args.calls as any[], // TODO: Add proper type
-              args.lifiInfos as any[] // TODO: Add proper type
+              args.lifiInfos as any[], // TODO: Add proper type
             )
             const receivedAddress = findPreconditionAddress(args.preconditions)
             setVerificationStatus({
               success: false,
               receivedAddress: receivedAddress,
-              calculatedAddress: calculatedAddress.toString()
+              calculatedAddress: calculatedAddress.toString(),
             })
           } catch (calcError) {
-            console.error(
-              'Error calculating addresses for verification status on failure:',
-              calcError
-            )
+            console.error('Error calculating addresses for verification status on failure:', calcError)
             setVerificationStatus({ success: false })
           }
         }
         throw error
       }
     },
-    onSuccess: data => {
+    onSuccess: (data) => {
       console.log('Intent config committed successfully, Wallet Address:', data.calculatedAddress)
       setCommittedIntentAddress(data.calculatedAddress)
     },
-    onError: error => {
+    onError: (error) => {
       console.error('Failed to commit intent config:', error)
       setCommittedIntentAddress(null)
-    }
+    },
   })
 
   // New Query to fetch committed intent config
   const {
     data: committedIntentConfig,
     isLoading: isLoadingCommittedConfig,
-    error: committedConfigError
+    error: committedConfigError,
   } = useQuery<GetIntentConfigReturn, Error>({
     queryKey: ['getIntentConfig', committedIntentAddress],
     queryFn: async () => {
@@ -317,7 +308,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     },
     enabled: !!committedIntentAddress && !!apiClient && commitIntentConfigMutation.isSuccess,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 1
+    retry: 1,
   })
 
   async function getIntentCallsPayloads(args: GetIntentCallsPayloadsArgs) {
@@ -325,11 +316,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
   }
 
   // TODO: Add type for args
-  const createIntentMutation = useMutation<
-    GetIntentCallsPayloadsReturn,
-    Error,
-    GetIntentCallsPayloadsArgs
-  >({
+  const createIntentMutation = useMutation<GetIntentCallsPayloadsReturn, Error, GetIntentCallsPayloadsArgs>({
     mutationFn: async (args: GetIntentCallsPayloadsArgs) => {
       if (!account.address) {
         throw new Error('Missing selected token or account address')
@@ -349,7 +336,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       setVerificationStatus(null)
       return data
     },
-    onSuccess: data => {
+    onSuccess: (data) => {
       console.log('Intent Config Success:', data)
       if (
         data &&
@@ -372,13 +359,13 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         setLifiInfos(null)
       }
     },
-    onError: error => {
+    onError: (error) => {
       console.error('Intent Config Error:', error)
       setIntentCallsPayloads(null)
       setIntentPreconditions(null)
       setMetaTxns(null)
       setLifiInfos(null)
-    }
+    },
   })
 
   function callIntentCallsPayload(args: GetIntentCallsPayloadsArgs) {
@@ -410,7 +397,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     status: 'success' | 'reverted' | 'pending' | 'sending',
     gasUsed?: bigint,
     effectiveGasPrice?: bigint,
-    revertReason?: string | null
+    revertReason?: string | null,
   ) => {
     setOriginCallStatus({
       txnHash: hash,
@@ -424,7 +411,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
               : 'Pending',
       revertReason: status === 'reverted' ? revertReason || 'Transaction reverted' : undefined,
       gasUsed: gasUsed ? Number(gasUsed) : undefined,
-      effectiveGasPrice: effectiveGasPrice?.toString()
+      effectiveGasPrice: effectiveGasPrice?.toString(),
     })
   }
 
@@ -437,7 +424,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       originCallParams?.to,
       originCallParams?.data,
       originCallParams?.value,
-      originCallParams?.chainId
+      originCallParams?.chainId,
     )
     if (
       isTransactionInProgress || // Prevent duplicate transactions
@@ -449,13 +436,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       originCallParams.chainId === null
     ) {
       console.error('Origin call parameters not available or invalid:', originCallParams)
-      updateOriginCallStatus(
-        undefined,
-        'reverted',
-        undefined,
-        undefined,
-        'Origin call parameters not ready'
-      )
+      updateOriginCallStatus(undefined, 'reverted', undefined, undefined, 'Origin call parameters not ready')
       return
     }
 
@@ -467,7 +448,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         'pending',
         undefined,
         undefined,
-        `Switching to chain ${originCallParams.chainId}...`
+        `Switching to chain ${originCallParams.chainId}...`,
       )
 
       try {
@@ -486,7 +467,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
           'reverted',
           undefined,
           undefined,
-          `Failed to switch chain: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `Failed to switch chain: ${error instanceof Error ? error.message : 'Unknown error'}`,
         )
         setIsChainSwitchRequired(false)
       }
@@ -511,7 +492,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
           'reverted',
           undefined,
           undefined,
-          `Gas estimation failed: ${estimateError?.message}`
+          `Gas estimation failed: ${estimateError?.message}`,
         )
         setIsTransactionInProgress(false)
         return
@@ -526,7 +507,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
           data: originCallParams.data,
           value: originCallParams.value,
           chainId: originCallParams.chainId,
-          gas: gasLimit
+          gas: gasLimit,
         },
         {
           onSuccess: (hash: Hex) => {
@@ -547,11 +528,11 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
               'reverted',
               undefined,
               undefined,
-              error instanceof Error ? error.message : 'Unknown error'
+              error instanceof Error ? error.message : 'Unknown error',
             )
             setIsTransactionInProgress(false)
-          }
-        }
+          },
+        },
       )
     } else {
       console.warn('Transaction already in progress. Skipping duplicate request.')
@@ -567,7 +548,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         'reverted',
         undefined,
         undefined,
-        `Chain switch failed: ${switchChainError.message || 'Unknown error'}`
+        `Chain switch failed: ${switchChainError.message || 'Unknown error'}`,
       )
       setIsChainSwitchRequired(false)
     }
@@ -591,13 +572,13 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     isLoading: isWaitingForReceipt,
     isSuccess: receiptIsSuccess,
     isError: receiptIsError,
-    error: receiptError
+    error: receiptError,
   } = useWaitForTransactionReceipt({
     hash: txnHash,
     confirmations: 1,
     query: {
-      enabled: !!txnHash
-    }
+      enabled: !!txnHash,
+    },
   })
 
   // Modify the effect that watches for transaction status
@@ -621,13 +602,13 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     if (isWaitingForReceipt) {
       setOriginCallStatus({
         txnHash,
-        status: 'Pending'
+        status: 'Pending',
       })
       if (
         metaTxns &&
         metaTxns.length > 0 &&
         isAutoExecute &&
-        !metaTxns.some(tx => sentMetaTxns[`${tx.chainId}-${tx.id}`])
+        !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])
       ) {
         console.log('Origin transaction successful, auto-sending all meta transactions...')
         // Send all meta transactions at once (pass null to send all)
@@ -642,13 +623,13 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         txnHash: receipt.transactionHash,
         status: receipt.status === 'success' ? 'Success' : 'Failed',
         gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
-        effectiveGasPrice: receipt.effectiveGasPrice?.toString()
+        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
       })
     } else if (receiptIsError) {
       setOriginCallStatus({
         txnHash,
         status: 'Failed',
-        revertReason: receiptError?.message || 'Failed to get receipt'
+        revertReason: receiptError?.message || 'Failed to get receipt',
       })
     }
   }, [
@@ -661,7 +642,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     metaTxns,
     sentMetaTxns,
     isAutoExecute,
-    originCallStatus?.txnHash
+    originCallStatus?.txnHash,
   ])
 
   // Modify the auto-execute effect
@@ -688,7 +669,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
       // Set initial status
       setOriginCallStatus({
-        status: 'Sending...'
+        status: 'Sending...',
       })
 
       sendTransaction(
@@ -696,7 +677,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
           to: originCallParams.to!,
           data: originCallParams.data!,
           value: originCallParams.value!,
-          chainId: originCallParams.chainId!
+          chainId: originCallParams.chainId!,
         },
         {
           onSuccess: (hash: Hex) => {
@@ -713,11 +694,11 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             }
             setOriginCallStatus({
               status: 'Failed',
-              revertReason: error instanceof Error ? error.message : 'Unknown error'
+              revertReason: error instanceof Error ? error.message : 'Unknown error',
             })
             setHasAutoExecuted(false)
-          }
-        }
+          },
+        },
       )
     }
   }, [
@@ -731,7 +712,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     isChainSwitchRequired,
     originCallStatus,
     hasAutoExecuted,
-    sendTransaction
+    sendTransaction,
   ])
 
   // Effect to auto-commit when intent calls payloads are ready
@@ -752,7 +733,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         mainSigner: account.address,
         calls: intentCallsPayloads,
         preconditions: intentPreconditions,
-        lifiInfos: lifiInfos
+        lifiInfos: lifiInfos,
       })
     }
   }, [
@@ -763,30 +744,20 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     account.address,
     commitIntentConfigMutation,
     commitIntentConfigMutation.isPending,
-    commitIntentConfigMutation.isSuccess
+    commitIntentConfigMutation.isSuccess,
   ])
 
   // Update the sendMetaTxn mutation
   const sendMetaTxnMutation = useMutation({
     mutationFn: async ({ selectedId }: { selectedId: string | null }) => {
-      if (
-        !intentCallsPayloads ||
-        !intentPreconditions ||
-        !metaTxns ||
-        !account.address ||
-        !lifiInfos
-      ) {
+      if (!intentCallsPayloads || !intentPreconditions || !metaTxns || !account.address || !lifiInfos) {
         throw new Error('Missing required data for meta-transaction')
       }
 
-      const intentAddress = calculateIntentAddress(
-        account.address,
-        intentCallsPayloads as any[],
-        lifiInfos as any[]
-      ) // TODO: Add proper type
+      const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads as any[], lifiInfos as any[]) // TODO: Add proper type
 
       // If no specific ID is selected, send all meta transactions
-      const txnsToSend = selectedId ? [metaTxns.find(tx => tx.id === selectedId)] : metaTxns
+      const txnsToSend = selectedId ? [metaTxns.find((tx) => tx.id === selectedId)] : metaTxns
 
       if (!txnsToSend || (selectedId && !txnsToSend[0])) {
         throw new Error('Meta transaction not found')
@@ -803,9 +774,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
         if (lastSentTime && now - lastSentTime < RETRY_WINDOW_MS) {
           const timeLeft = Math.ceil((RETRY_WINDOW_MS - (now - lastSentTime)) / 1000)
-          console.log(
-            `Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`
-          )
+          console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
           continue
         }
 
@@ -819,14 +788,9 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             throw new Error(`No relayer found for chainId: ${chainId}`)
           }
 
-          const relevantPreconditions = intentPreconditions.filter(
-            p => p.chainId && parseInt(p.chainId) === chainId
-          )
+          const relevantPreconditions = intentPreconditions.filter((p) => p.chainId && parseInt(p.chainId) === chainId)
 
-          console.log(
-            `Relaying meta transaction ${operationKey} to intent ${intentAddress} via relayer:`,
-            chainRelayer
-          )
+          console.log(`Relaying meta transaction ${operationKey} to intent ${intentAddress} via relayer:`, chainRelayer)
 
           const { opHash } = await chainRelayer.sendMetaTxn(
             metaTxn.walletAddress as Address.Address,
@@ -834,46 +798,46 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             metaTxn.input as Hex,
             BigInt(metaTxn.chainId),
             undefined,
-            relevantPreconditions
+            relevantPreconditions,
           )
 
           results.push({
             operationKey,
             opHash,
-            success: true
+            success: true,
           })
         } catch (error: unknown) {
           results.push({
             operationKey,
             error: error instanceof Error ? error.message : 'Unknown error',
-            success: false
+            success: false,
           })
         }
       }
 
       return results
     },
-    onSuccess: results => {
+    onSuccess: (results) => {
       // Update states based on results
       results.forEach(({ operationKey, opHash, success }) => {
         if (success && opHash) {
-          setSentMetaTxns(prev => ({
+          setSentMetaTxns((prev) => ({
             ...prev,
-            [operationKey]: Date.now()
+            [operationKey]: Date.now(),
           }))
 
-          setOperationHashes(prev => ({
+          setOperationHashes((prev) => ({
             ...prev,
-            [operationKey]: opHash
+            [operationKey]: opHash,
           }))
         }
       })
     },
-    onError: error => {
+    onError: (error) => {
       console.error('Error in meta-transaction process:', error)
     },
     retry: 5, // Allow up to 2 retries
-    retryDelay: attemptIndex => Math.min(1000 * Math.pow(2, attemptIndex), 30000) // Exponential backoff
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000), // Exponential backoff
   })
 
   const [tokenAddress, setTokenAddress] = useState<string | null>(null)
@@ -905,14 +869,11 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       if (isNative) {
         const nativePrecondition = intentPreconditions.find(
           (p: IntentPrecondition) =>
-            (p.type === 'transfer-native' || p.type === 'native-balance') &&
-            p.chainId === originChainId.toString()
+            (p.type === 'transfer-native' || p.type === 'native-balance') && p.chainId === originChainId.toString(),
         )
         const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
         if (nativeMinAmount === undefined) {
-          throw new Error(
-            'Could not find native precondition (transfer-native or native-balance) or min amount'
-          )
+          throw new Error('Could not find native precondition (transfer-native or native-balance) or min amount')
         }
         calcValue = BigInt(nativeMinAmount)
         calcTo = recipientAddress
@@ -922,7 +883,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             p.type === 'erc20-balance' &&
             p.chainId === originChainId.toString() &&
             p.data?.token &&
-            isAddressEqual(Address.from(p.data.token), Address.from(tokenAddress))
+            isAddressEqual(Address.from(p.data.token), Address.from(tokenAddress)),
         )
 
         const erc20MinAmount = erc20Precondition?.data?.min
@@ -938,7 +899,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         data: calcData,
         value: calcValue,
         chainId: originChainId,
-        error: undefined
+        error: undefined,
       })
     } catch (error: unknown) {
       console.error('Failed to calculate origin call params for UI:', error)
@@ -947,17 +908,10 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
         data: null,
         value: null,
         chainId: null,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
     }
-  }, [
-    intentCallsPayloads,
-    tokenAddress,
-    originChainId,
-    intentPreconditions,
-    account.address,
-    lifiInfos
-  ])
+  }, [intentCallsPayloads, tokenAddress, originChainId, intentPreconditions, account.address, lifiInfos])
 
   // const checkPreconditionStatuses = useCallback(async () => {
   //   if (!intentPreconditions) return
@@ -1001,11 +955,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
   // }, [intentPreconditions, checkPreconditionStatuses])
 
   // Add monitoring for each meta transaction
-  const metaTxnMonitorStatuses = useMetaTxnsMonitor(
-    metaTxns as unknown as MetaTxn[] | undefined,
-    operationHashes,
-    getRelayer
-  )
+  const metaTxnMonitorStatuses = useMetaTxnsMonitor(metaTxns as unknown as MetaTxn[] | undefined, getRelayer)
 
   const updateAutoExecute = (enabled: boolean) => {
     setIsAutoExecute(enabled)
@@ -1121,7 +1071,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     createIntentArgs,
     calculatedIntentAddress,
     originCallParams,
-    updateOriginCallParams
+    updateOriginCallParams,
   }
 }
 
@@ -1152,7 +1102,7 @@ export async function prepareSend(options: SendOptions) {
     destinationTokenAmount,
     sequenceApiKey,
     fee,
-    client
+    client,
   } = options
   const chain = getChainConfig(originChainId)
   const apiClient = getAPIClient('http://localhost:4422', sequenceApiKey)
@@ -1161,26 +1111,18 @@ export async function prepareSend(options: SendOptions) {
 
   const mainSigner = account.address
 
-  const publicClient = createPublicClient({
-    chain,
-    transport: http()
-  })
-
   const args = {
     userAddress: mainSigner,
     originChainId,
     originTokenAddress,
     originTokenAmount, // max amount
     destinationChainId,
-    destinationToAddress:
-      destinationTokenAddress == zeroAddress ? recipient : destinationTokenAddress,
+    destinationToAddress: destinationTokenAddress == zeroAddress ? recipient : destinationTokenAddress,
     destinationTokenAddress: destinationTokenAddress,
     destinationTokenAmount: destinationTokenAmount,
     destinationCallData:
-      destinationTokenAddress !== zeroAddress
-        ? getERC20TransferData(recipient, BigInt(destinationTokenAmount))
-        : '0x',
-    destinationCallValue: destinationTokenAddress === zeroAddress ? destinationTokenAmount : '0'
+      destinationTokenAddress !== zeroAddress ? getERC20TransferData(recipient, BigInt(destinationTokenAmount)) : '0x',
+    destinationCallValue: destinationTokenAddress === zeroAddress ? destinationTokenAmount : '0',
   }
 
   console.log('Creating intent with args:', args)
@@ -1203,11 +1145,7 @@ export async function prepareSend(options: SendOptions) {
     throw new Error('At least 2 calls are required')
   }
 
-  const intentAddress = calculateIntentAddress(
-    mainSigner,
-    intent.calls as any[],
-    intent.lifiInfos as any[]
-  ) // TODO: Add proper type
+  const intentAddress = calculateIntentAddress(mainSigner, intent.calls as any[], intent.lifiInfos as any[]) // TODO: Add proper type
   console.log('Calculated intent address:', intentAddress.toString())
 
   await commitIntentConfig(
@@ -1215,7 +1153,7 @@ export async function prepareSend(options: SendOptions) {
     mainSigner,
     intent.calls as any[],
     intent.preconditions as any[],
-    intent.lifiInfos as any[]
+    intent.lifiInfos as any[],
   )
 
   console.log('Committed intent config')
@@ -1229,19 +1167,19 @@ export async function prepareSend(options: SendOptions) {
         data: '0x',
         value: BigInt(intent.preconditions[0]!.data!.min) + BigInt(fee),
         chainId: originChainId,
-        chain
+        chain,
       }
 
       const walletClient =
         client ??
         createWalletClient({
           chain,
-          transport: http()
+          transport: http(),
         })
 
       const publicClient = createPublicClient({
         chain,
-        transport: http()
+        transport: http(),
       })
 
       const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
@@ -1250,7 +1188,7 @@ export async function prepareSend(options: SendOptions) {
       const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
       console.log('receipt', receipt)
 
-      await new Promise(resolve => setTimeout(resolve, 5000))
+      await new Promise((resolve) => setTimeout(resolve, 5000))
 
       const metaTx = intent.metaTxns[0]!
       console.log('metaTx', metaTx)
@@ -1266,32 +1204,26 @@ export async function prepareSend(options: SendOptions) {
         if (status.status === 'confirmed') {
           break
         }
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       }
 
-      await new Promise(resolve => setTimeout(resolve, 5000))
+      await new Promise((resolve) => setTimeout(resolve, 5000))
       const metaTx2 = intent.metaTxns[1]!
       console.log('metaTx2', metaTx2)
 
-      const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [
-        intent.preconditions[1]!
-      ])
+      const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [intent.preconditions[1]!])
       console.log('opHash2', opHash2)
 
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
-        const status = await getMetaTxStatus(
-          destinationRelayer,
-          metaTx2.id,
-          Number(metaTx2.chainId)
-        )
+        const status = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
         console.log('status', status)
         if (status.status === 'confirmed') {
           break
         }
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       }
-    }
+    },
   }
 }

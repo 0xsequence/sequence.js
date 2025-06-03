@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import Modal from './components/Modal'
 import ConnectWallet from './components/ConnectWallet'
@@ -6,7 +6,7 @@ import TokenList from './components/TokenList'
 import SendForm from './components/SendForm'
 import TransferPending from './components/TransferPending'
 import Receipt from './components/Receipt'
-import { prepareSend } from '../../../../anypay-sdk/src/anypay'
+import { prepareSend } from '@anypay/sdk'
 import { createWalletClient, custom, type WalletClient } from 'viem'
 import { mainnet, base, optimism, arbitrum } from 'viem/chains'
 import { parseUnits } from 'viem'
@@ -43,7 +43,7 @@ const getChainConfig = (chainId: number) => {
   }
 }
 
-export const Widget: React.FC = () => {
+export const Widget = () => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentScreen, setCurrentScreen] = useState<Screen>('connect')

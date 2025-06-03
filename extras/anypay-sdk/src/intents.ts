@@ -9,7 +9,7 @@ import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, ContractAddress, Hash, Hex } from 'ox'
 import { Context, Config, Payload } from '@0xsequence/wallet-primitives'
 import { ANYPAY_LIFI_SAPIENT_SIGNER_LITE_ADDRESS } from './constants.js'
-import { isAddressEqual, WalletClient, PrivateKeyAccount, Chain, Account } from 'viem'
+import { isAddressEqual, WalletClient, Chain, Account } from 'viem'
 import { findPreconditionAddress } from './preconditions.js'
 
 export interface AnypayLifiInfo {
@@ -251,16 +251,16 @@ export function hashIntentParams(params: {
     cumulativeCallsHashHex,
   ]) as Hex.Hex
 
-  function bigintReplacer(_key: string, value: any) {
-    // TODO: Add proper type
-    return typeof value === 'bigint' ? value.toString() : value
-  }
-
   const encodedBytes = Bytes.fromHex(encodedHex)
   const hashBytes = Hash.keccak256(encodedBytes)
   const hashHex = Bytes.toHex(hashBytes)
 
   return hashHex
+}
+
+// TODO: Add proper type
+export function bigintReplacer(_key: string, value: any) {
+  return typeof value === 'bigint' ? value.toString() : value
 }
 
 export function getAnypayLifiInfoHash(lifiInfos: AnypayLifiInfo[], attestationAddress: Address.Address): Hex.Hex {
