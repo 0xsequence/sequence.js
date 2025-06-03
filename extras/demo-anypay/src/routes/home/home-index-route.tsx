@@ -1,26 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect, useSendTransaction, useSwitchChain, useEstimateGas } from 'wagmi'
+import { useState, useEffect } from 'react'
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Connector } from 'wagmi'
-import { NativeTokenBalance, TokenBalance } from '@0xsequence/indexer'
-import {
-  GetIntentCallsPayloadsReturn,
-  IntentCallsPayload,
-  IntentPrecondition,
-  GetIntentConfigReturn,
-  AnypayLifiInfo,
-} from '@0xsequence/api'
 import { formatUnits, Hex, isAddressEqual, zeroAddress } from 'viem'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { useAPIClient } from '@/hooks/useAPIClient'
 import { Button, Text, NetworkImage } from '@0xsequence/design-system'
-import { AbiFunction, Address, Bytes } from 'ox'
+import { AbiFunction, Address } from 'ox'
 import * as chains from 'viem/chains'
-import { AnyPay } from '@0xsequence/wallet-core'
-import { Context as ContextLike } from '@0xsequence/wallet-primitives'
-import { useWaitForTransactionReceipt } from 'wagmi'
-import { useMetaTxnsMonitor, MetaTxn } from '@/hooks/useMetaTxnsMonitor'
-import { useRelayers } from '@/hooks/useRelayers'
-import { useTokenBalances } from '@/hooks/useTokenBalances'
+import {
+  useAnyPay,
+  useTokenBalances,
+  MetaTxn,
+  RelayerOperationStatus,
+  NativeTokenBalance,
+  TokenBalance,
+  Account,
+} from '@anypay/sdk'
 import {
   AlertTriangle,
   Loader2,
@@ -77,15 +70,6 @@ const RECIPIENT_ADDRESS = '0x750EF1D7a0b4Ab1c97B7A623D7917CcEb5ea779C'
 // Amount of USDC to transfer on destination chain (base)
 const AMOUNT = 300000n // 0.3 USDC (6 decimals)
 
-// Add type for calculated origin call parameters
-type OriginCallParams = {
-  to: `0x${string}` | null
-  data: Hex | null
-  value: bigint | null
-  chainId: number | null
-  error?: string
-}
-
 // Types for intent actions
 type IntentAction = 'pay' | 'mock_interaction' | 'custom_call'
 
@@ -118,28 +102,13 @@ const formatBalance = (balance: TokenBalance | NativeTokenBalance) => {
   }
 }
 
-const findPreconditionAddress = (preconditions: IntentPrecondition[]) => {
-  const preconditionTypes = ['erc20-balance', 'native-balance'] as const
-
-  for (const type of preconditionTypes) {
-    const precondition = preconditions.find((p) => p.type === type && p.data?.address)
-    if (precondition) {
-      return precondition.data.address
-    }
-  }
-
-  return `N/A (No ${preconditionTypes.join(' or ')} precondition with address found)`
-}
-
-export const HomeIndexRoute = () => {
+function useHook() {
   const account = useAccount()
   const { connectors, connect, status: connectStatus, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
-  const { sendTransaction, isPending: isSendingTransaction } = useSendTransaction()
-  const { switchChain, isPending: isSwitchingChain, error: switchChainError } = useSwitchChain()
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null)
+  const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
   const [showCustomCallForm, setShowCustomCallForm] = useState(false)
-  const [isEstimatingGas, setIsEstimatingGas] = useState(false)
   const [customCallData, setCustomCallData] = useState({
     to: '',
     data: '',
@@ -149,956 +118,197 @@ export const HomeIndexRoute = () => {
     tokenAddress: BASE_USDC_ADDRESS,
   })
 
-  const apiClient = useAPIClient()
+  const {
+    metaTxns,
+    intentCallsPayloads,
+    intentPreconditions,
+    lifiInfos,
+    committedIntentAddress,
+    verificationStatus,
+    committedIntentConfig,
+    isLoadingCommittedConfig,
+    committedConfigError,
+    commitIntentConfig,
+    commitIntentConfigPending,
+    commitIntentConfigSuccess,
+    commitIntentConfigError,
+    commitIntentConfigArgs,
+    createIntent,
+    createIntentPending,
+    createIntentSuccess,
+    createIntentError,
+    createIntentArgs,
+    sendOriginTransaction,
+    isSwitchingChain,
+    isTransactionInProgress,
+    isChainSwitchRequired,
+    isSendingTransaction,
+    originCallStatus,
+    isEstimatingGas,
+    isWaitingForReceipt,
+    hasAutoExecuted,
+    updateAutoExecute,
+    sendMetaTxn,
+    sendMetaTxnPending,
+    sendMetaTxnSuccess,
+    sendMetaTxnError,
+    sendMetaTxnArgs,
+    clearIntent,
+    metaTxnMonitorStatuses,
+    calculatedIntentAddress,
+    updateOriginCallParams,
+    originCallParams,
+  } = useAnyPay({
+    account: account as Account,
+    env: import.meta.env.VITE_ENV,
+    useV3Relayers: import.meta.env.VITE_USE_V3_RELAYERS,
+  })
 
-  // State declarations
-  const [metaTxns, setMetaTxns] = useState<GetIntentCallsPayloadsReturn['metaTxns'] | null>(null)
-  const [intentCallsPayloads, setIntentCallsPayloads] = useState<GetIntentCallsPayloadsReturn['calls'] | null>(null)
-  const [intentPreconditions, setIntentPreconditions] = useState<GetIntentCallsPayloadsReturn['preconditions'] | null>(
-    null,
-  )
-  const [lifiInfos, setLifiInfos] = useState<GetIntentCallsPayloadsReturn['lifiInfos'] | null>(null)
-  const [txnHash, setTxnHash] = useState<Hex | undefined>()
-  const [committedIntentAddress, setCommittedIntentAddress] = useState<string | null>(null)
-  // const [preconditionStatuses, setPreconditionStatuses] = useState<boolean[]>([])
-  const [verificationStatus, setVerificationStatus] = useState<{
-    success: boolean
-    receivedAddress?: string
-    calculatedAddress?: string
-  } | null>(null)
-  const [originCallStatus, setOriginCallStatus] = useState<{
-    txnHash?: string
-    status?: string
-    revertReason?: string | null
-    gasUsed?: number
-    effectiveGasPrice?: string
-  } | null>(null)
-  const [originCallParams, setOriginCallParams] = useState<OriginCallParams | null>(null)
-  const [isChainSwitchRequired, setIsChainSwitchRequired] = useState(false)
-  const [isAutoExecuteEnabled, setIsAutoExecuteEnabled] = useState(true)
-  const [isTransactionInProgress, setIsTransactionInProgress] = useState(false)
   const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)
-
-  // Track timestamps of when each meta-transaction was last sent
-  const [sentMetaTxns, setSentMetaTxns] = useState<{ [key: string]: number }>({})
-
+  const [intentActionType, setIntentActionType] = useState<IntentAction | null>(null)
   const [isManualMetaTxnEnabled, setIsManualMetaTxnEnabled] = useState(false)
   const [selectedMetaTxnId, setSelectedMetaTxnId] = useState<string | null>(null)
-  const [hasAutoExecuted, setHasAutoExecuted] = useState(false)
 
-  const [originBlockTimestamp, setOriginBlockTimestamp] = useState<number | null>(null)
-  const [metaTxnBlockTimestamps, setMetaTxnBlockTimestamps] = useState<{
-    [key: string]: { timestamp: number | null; error?: string }
-  }>({})
+  function createIntentAction(action: IntentAction) {
+    if (!selectedToken || !account.address) {
+      throw new Error('Missing selected token or account address')
+    }
 
-  const RETRY_WINDOW_MS = 10_000
+    setIntentActionType(action)
 
-  const { getRelayer, getBackupRelayer } = useRelayers()
+    let destinationCall
+    if (action === 'pay') {
+      // ERC20 ABI functions
+      const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
+      const encodedData = AbiFunction.encodeData(erc20Transfer, [RECIPIENT_ADDRESS, AMOUNT]) as Hex
 
-  // Helper to calculate time since origin
-  const formatTimeSinceOrigin = (metaTxnTimestamp: number | null, originTimestamp: number | null): string => {
-    if (originTimestamp === null) {
-      return 'Waiting for origin call timestamp...'
+      // Ensure calldata is prefixed with 0x
+      const transactionData = encodedData.startsWith('0x') ? encodedData : `0x${encodedData}`
+
+      destinationCall = {
+        chainId: BASE_USDC_DESTINATION_CHAIN_ID,
+        to: BASE_USDC_ADDRESS,
+        transactionData,
+        transactionValue: '0',
+      }
+    } else if (action === 'custom_call') {
+      // Handle custom call
+      destinationCall = {
+        chainId: parseInt(customCallData.chainId),
+        to: customCallData.to,
+        transactionData: customCallData.data.startsWith('0x') ? customCallData.data : `0x${customCallData.data}`,
+        transactionValue: customCallData.value,
+      }
+    } else if (action === 'mock_interaction') {
+      // Ensure mock data is prefixed with 0x
+      const transactionData = MOCK_TRANSFER_DATA.startsWith('0x') ? MOCK_TRANSFER_DATA : `0x${MOCK_TRANSFER_DATA}`
+      const destinationChainId = selectedToken.chainId || 8453
+
+      destinationCall = {
+        chainId: destinationChainId,
+        to: BASE_USDC_ADDRESS,
+        transactionData,
+        transactionValue: '0',
+      }
+    } else {
+      throw new Error('Invalid action')
     }
-    if (metaTxnTimestamp === null) {
-      return 'Meta transaction timestamp not available'
+
+    const args = {
+      userAddress: account.address,
+      originChainId: selectedToken.chainId || 8453,
+      originTokenAddress: selectedToken.contractAddress,
+      originTokenAmount: selectedToken.balance.toString(),
+      destinationChainId:
+        action === 'custom_call'
+          ? parseInt(customCallData.chainId)
+          : action === 'mock_interaction'
+            ? MOCK_CHAIN_ID
+            : destinationCall.chainId,
+      destinationToAddress:
+        action === 'custom_call'
+          ? customCallData.to
+          : action === 'mock_interaction'
+            ? MOCK_CONTRACT_ADDRESS
+            : destinationCall.to,
+      destinationTokenAddress:
+        action === 'custom_call'
+          ? customCallData.tokenAddress
+          : action === 'mock_interaction'
+            ? MOCK_TOKEN_ADDRESS
+            : BASE_USDC_ADDRESS,
+      destinationTokenAmount:
+        action === 'custom_call'
+          ? customCallData.tokenAmount
+          : action === 'mock_interaction'
+            ? MOCK_TOKEN_AMOUNT
+            : AMOUNT.toString(),
+      destinationCallData:
+        action === 'custom_call'
+          ? customCallData.data.startsWith('0x')
+            ? customCallData.data
+            : `0x${customCallData.data}`
+          : action === 'mock_interaction'
+            ? MOCK_TRANSFER_DATA
+            : destinationCall.transactionData,
+      destinationCallValue:
+        action === 'custom_call'
+          ? customCallData.value
+          : action === 'mock_interaction'
+            ? MOCK_TOKEN_AMOUNT
+            : destinationCall.transactionValue,
     }
-    if (metaTxnTimestamp < originTimestamp) {
-      return 'Before origin call'
-    }
-    const diffSeconds = metaTxnTimestamp - originTimestamp
-    if (diffSeconds < 60) {
-      return `${diffSeconds} second${diffSeconds === 1 ? '' : 's'} after origin call`
-    }
-    const diffMinutes = Math.floor(diffSeconds / 60)
-    const remainingSeconds = diffSeconds % 60
-    if (diffMinutes < 60) {
-      return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}${remainingSeconds > 0 ? ` ${remainingSeconds}s` : ''} after origin call`
-    }
-    const diffHours = Math.floor(diffMinutes / 60)
-    const remainingMinutes = diffMinutes % 60
-    return `${diffHours} hour${diffHours === 1 ? '' : 's'}${remainingMinutes > 0 ? ` ${remainingMinutes}m` : ''} after origin call`
+
+    return args
   }
 
-  // Add monitoring for each meta transaction
-  const metaTxnMonitorStatuses = useMetaTxnsMonitor(metaTxns as unknown as MetaTxn[] | undefined, getRelayer)
-
-  // Add gas estimation hook with proper types
-  const {
-    data: estimatedGas,
-    isError: isEstimateError,
-    error: estimateError,
-  } = useEstimateGas(
-    originCallParams?.to && originCallParams?.chainId && !originCallParams.error
-      ? {
-          to: originCallParams.to || undefined,
-          data: originCallParams.data || undefined,
-          value: originCallParams.value || undefined,
-          chainId: originCallParams.chainId || undefined,
-        }
-      : undefined,
-  )
-
-  const calculateIntentAddress = useCallback(
-    (mainSigner: string, calls: IntentCallsPayload[], lifiInfosArg: AnypayLifiInfo[] | null | undefined) => {
-      try {
-        console.log('Calculating intent address...')
-        console.log('Main signer:', mainSigner)
-        console.log('Calls:', JSON.stringify(calls, null, 2))
-        console.log('LifiInfos (API type from arg):', JSON.stringify(lifiInfosArg, null, 2))
-
-        const context: ContextLike.Context = {
-          factory: '0xBd0F8abD58B4449B39C57Ac9D5C67433239aC447' as `0x${string}`,
-          stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
-          stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
-          creationCode:
-            '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
-        }
-
-        const coreCalls = calls.map((call) => ({
-          type: 'call' as const,
-          chainId: BigInt(call.chainId),
-          space: call.space ? BigInt(call.space) : 0n,
-          nonce: call.nonce ? BigInt(call.nonce) : 0n,
-          calls: call.calls.map((call) => ({
-            to: Address.from(call.to),
-            value: BigInt(call.value || '0'),
-            data: Bytes.toHex(Bytes.from((call.data as Hex) || '0x')),
-            gasLimit: BigInt(call.gasLimit || '0'),
-            delegateCall: !!call.delegateCall,
-            onlyFallback: !!call.onlyFallback,
-            behaviorOnError: (Number(call.behaviorOnError) === 0
-              ? 'ignore'
-              : Number(call.behaviorOnError) === 1
-                ? 'revert'
-                : 'abort') as 'ignore' | 'revert' | 'abort',
-          })),
-        }))
-
-        const coreLifiInfos = lifiInfosArg?.map((info: AnypayLifiInfo) => ({
-          originToken: Address.from(info.originToken),
-          amount: BigInt(info.amount),
-          originChainId: BigInt(info.originChainId),
-          destinationChainId: BigInt(info.destinationChainId),
-        }))
-
-        return AnyPay.calculateIntentConfigurationAddress(
-          Address.from(mainSigner),
-          coreCalls,
-          context,
-          // AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
-          Address.from('0x0000000000000000000000000000000000000001'),
-          coreLifiInfos,
-        )
-      } catch (error) {
-        console.error('Error calculating intent address:', error)
-        throw error
-      }
-    },
-    [],
-  )
-
-  const updateOriginCallStatus = (
-    hash: Hex | undefined,
-    status: 'success' | 'reverted' | 'pending' | 'sending',
-    gasUsed?: bigint,
-    effectiveGasPrice?: bigint,
-    revertReason?: string | null,
-  ) => {
-    setOriginCallStatus({
-      txnHash: hash,
-      status:
-        status === 'success'
-          ? 'Success'
-          : status === 'reverted'
-            ? 'Failed'
-            : status === 'sending'
-              ? 'Sending...'
-              : 'Pending',
-      revertReason: status === 'reverted' ? revertReason || 'Transaction reverted' : undefined,
-      gasUsed: gasUsed ? Number(gasUsed) : undefined,
-      effectiveGasPrice: effectiveGasPrice?.toString(),
-    })
+  function createIntentMutationAction(action: IntentAction) {
+    const args = createIntentAction(action)
+    createIntent(args)
   }
-
-  // const checkPreconditionStatuses = useCallback(async () => {
-  //   if (!intentPreconditions) return
-
-  //   const statuses = await Promise.all(
-  //     intentPreconditions.map(async (precondition) => {
-  //       try {
-  //         const chainIdString = precondition.chainId
-  //         if (!chainIdString) {
-  //           console.warn('Precondition missing chainId:', precondition)
-  //           return false
-  //         }
-  //         const chainId = parseInt(chainIdString)
-  //         if (isNaN(chainId) || chainId <= 0) {
-  //           console.warn('Precondition has invalid chainId:', chainIdString, precondition)
-  //           return false
-  //         }
-
-  //         const chainRelayer = getRelayer(chainId)
-  //         if (!chainRelayer) {
-  //           console.error(`No relayer found for chainId: ${chainId}`)
-  //           return false
-  //         }
-
-  //         return await chainRelayer.checkPrecondition(precondition)
-  //       } catch (error) {
-  //         console.error('Error checking precondition:', error, 'Precondition:', precondition)
-  //         return false
-  //       }
-  //     }),
-  //   )
-
-  //   setPreconditionStatuses(statuses)
-  // }, [intentPreconditions, getRelayer])
-
-  // useEffect(() => {
-  //   // TODO: Remove this once we have a way to check precondition statuses
-  //   if (false) {
-  //     checkPreconditionStatuses()
-  //   }
-  // }, [intentPreconditions, checkPreconditionStatuses])
-
-  const commitIntentConfigMutation = useMutation({
-    mutationFn: async (args: {
-      walletAddress: string
-      mainSigner: string
-      calls: IntentCallsPayload[]
-      preconditions: IntentPrecondition[]
-      lifiInfos: AnypayLifiInfo[]
-    }) => {
-      if (!apiClient) throw new Error('API client not available')
-      if (!account.address) throw new Error('Account address not available')
-      if (!args.lifiInfos) throw new Error('LifiInfos not available')
-
-      try {
-        console.log('Calculating intent address...')
-        console.log('Main signer:', args.mainSigner)
-        console.log('Calls:', args.calls)
-        console.log('LifiInfos:', args.lifiInfos)
-
-        const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls, args.lifiInfos)
-        const receivedAddress = findPreconditionAddress(args.preconditions)
-
-        console.log('Calculated address:', calculatedAddress.toString())
-        console.log('Received address:', receivedAddress)
-
-        const isVerified = isAddressEqual(Address.from(receivedAddress), calculatedAddress)
-        setVerificationStatus({
-          success: isVerified,
-          receivedAddress: receivedAddress,
-          calculatedAddress: calculatedAddress.toString(),
-        })
-
-        if (!isVerified) {
-          throw new Error('Address verification failed: Calculated address does not match received address.')
-        }
-
-        // Commit the intent config
-        const response = await apiClient.commitIntentConfig({
-          walletAddress: calculatedAddress.toString(),
-          mainSigner: args.mainSigner,
-          calls: args.calls,
-          preconditions: args.preconditions,
-          lifiInfos: args.lifiInfos,
-        })
-        console.log('API Commit Response:', response)
-        return { calculatedAddress: calculatedAddress.toString(), response }
-      } catch (error) {
-        console.error('Error during commit intent mutation:', error)
-        if (!verificationStatus?.success && !verificationStatus?.receivedAddress) {
-          try {
-            const calculatedAddress = calculateIntentAddress(args.mainSigner, args.calls, args.lifiInfos)
-            const receivedAddress = findPreconditionAddress(args.preconditions)
-            setVerificationStatus({
-              success: false,
-              receivedAddress: receivedAddress,
-              calculatedAddress: calculatedAddress.toString(),
-            })
-          } catch (calcError) {
-            console.error('Error calculating addresses for verification status on failure:', calcError)
-            setVerificationStatus({ success: false })
-          }
-        }
-        throw error
-      }
-    },
-    onSuccess: (data) => {
-      console.log('Intent config committed successfully, Wallet Address:', data.calculatedAddress)
-      setCommittedIntentAddress(data.calculatedAddress)
-    },
-    onError: (error) => {
-      console.error('Failed to commit intent config:', error)
-      setCommittedIntentAddress(null)
-    },
-  })
-
-  // New Query to fetch committed intent config
-  const {
-    data: committedIntentConfig,
-    isLoading: isLoadingCommittedConfig,
-    error: committedConfigError,
-  } = useQuery<GetIntentConfigReturn, Error>({
-    queryKey: ['getIntentConfig', committedIntentAddress],
-    queryFn: async () => {
-      if (!apiClient || !committedIntentAddress) {
-        throw new Error('API client or committed intent address not available')
-      }
-      console.log('Fetching intent config for address:', committedIntentAddress)
-      return await apiClient.getIntentConfig({ walletAddress: committedIntentAddress })
-    },
-    enabled: !!committedIntentAddress && !!apiClient && commitIntentConfigMutation.isSuccess,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 1,
-  })
-
-  const createIntentMutation = useMutation<GetIntentCallsPayloadsReturn, Error, IntentAction>({
-    mutationFn: async (action: IntentAction) => {
-      if (!apiClient || !selectedToken || !account.address) {
-        throw new Error('Missing API client, selected token, or account address')
-      }
-      // Reset commit state when generating a new intent
-      setCommittedIntentAddress(null)
-      setVerificationStatus(null)
-
-      let destinationCall
-      if (action === 'pay') {
-        // ERC20 ABI functions
-        const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
-        const encodedData = AbiFunction.encodeData(erc20Transfer, [RECIPIENT_ADDRESS, AMOUNT]) as Hex
-
-        // Ensure calldata is prefixed with 0x
-        const transactionData = encodedData.startsWith('0x') ? encodedData : `0x${encodedData}`
-
-        destinationCall = {
-          chainId: BASE_USDC_DESTINATION_CHAIN_ID,
-          to: BASE_USDC_ADDRESS,
-          transactionData,
-          transactionValue: '0',
-        }
-      } else if (action === 'custom_call') {
-        // Handle custom call
-        destinationCall = {
-          chainId: parseInt(customCallData.chainId),
-          to: customCallData.to,
-          transactionData: customCallData.data.startsWith('0x') ? customCallData.data : `0x${customCallData.data}`,
-          transactionValue: customCallData.value,
-        }
-      } else if (action === 'mock_interaction') {
-        // Ensure mock data is prefixed with 0x
-        const transactionData = MOCK_TRANSFER_DATA.startsWith('0x') ? MOCK_TRANSFER_DATA : `0x${MOCK_TRANSFER_DATA}`
-        const destinationChainId = selectedToken.chainId || 8453
-
-        destinationCall = {
-          chainId: destinationChainId,
-          to: BASE_USDC_ADDRESS,
-          transactionData,
-          transactionValue: '0',
-        }
-      } else {
-        throw new Error('Invalid action')
-      }
-
-      const args = {
-        userAddress: account.address,
-        originChainId: selectedToken.chainId || 8453,
-        originTokenAddress: selectedToken.contractAddress,
-        originTokenAmount: selectedToken.balance.toString(),
-        destinationChainId:
-          action === 'custom_call'
-            ? parseInt(customCallData.chainId)
-            : action === 'mock_interaction'
-              ? MOCK_CHAIN_ID
-              : destinationCall.chainId,
-        destinationToAddress:
-          action === 'custom_call'
-            ? customCallData.to
-            : action === 'mock_interaction'
-              ? MOCK_CONTRACT_ADDRESS
-              : destinationCall.to,
-        destinationTokenAddress:
-          action === 'custom_call'
-            ? customCallData.tokenAddress
-            : action === 'mock_interaction'
-              ? MOCK_TOKEN_ADDRESS
-              : BASE_USDC_ADDRESS,
-        destinationTokenAmount:
-          action === 'custom_call'
-            ? customCallData.tokenAmount
-            : action === 'mock_interaction'
-              ? MOCK_TOKEN_AMOUNT
-              : AMOUNT.toString(),
-        destinationCallData:
-          action === 'custom_call'
-            ? customCallData.data.startsWith('0x')
-              ? customCallData.data
-              : `0x${customCallData.data}`
-            : action === 'mock_interaction'
-              ? MOCK_TRANSFER_DATA
-              : destinationCall.transactionData,
-        destinationCallValue:
-          action === 'custom_call'
-            ? customCallData.value
-            : action === 'mock_interaction'
-              ? MOCK_TOKEN_AMOUNT
-              : destinationCall.transactionValue,
-      }
-
-      const data = await apiClient.getIntentCallsPayloads(args)
-
-      setMetaTxns(data.metaTxns)
-      setIntentCallsPayloads(data.calls)
-      setIntentPreconditions(data.preconditions)
-      setLifiInfos(data.lifiInfos) // Ensure lifiInfos is set here
-      setCommittedIntentAddress(null)
-      setVerificationStatus(null)
-      return data
-    },
-    onSuccess: (data) => {
-      console.log('Intent Config Success:', data)
-      if (
-        data &&
-        data.calls &&
-        data.calls.length > 0 &&
-        data.preconditions &&
-        data.preconditions.length > 0 &&
-        data.metaTxns &&
-        data.metaTxns.length > 0
-      ) {
-        setIntentCallsPayloads(data.calls)
-        setIntentPreconditions(data.preconditions)
-        setMetaTxns(data.metaTxns)
-        setLifiInfos(data.lifiInfos)
-      } else {
-        console.warn('API returned success but no operations found.')
-        setIntentCallsPayloads(null)
-        setIntentPreconditions(null)
-        setMetaTxns(null)
-        setLifiInfos(null)
-      }
-    },
-    onError: (error) => {
-      console.error('Intent Config Error:', error)
-      setIntentCallsPayloads(null)
-      setIntentPreconditions(null)
-      setMetaTxns(null)
-      setLifiInfos(null)
-    },
-  })
 
   useEffect(() => {
     if (!account.isConnected) {
       setSelectedToken(null)
-      setIntentCallsPayloads(null)
-      setIntentPreconditions(null)
-      setMetaTxns(null)
-      setCommittedIntentAddress(null)
-      setVerificationStatus(null)
-      setHasAutoExecuted(false)
+      clearIntent()
     }
   }, [account.isConnected])
 
+  useEffect(() => {
+    updateAutoExecute(isAutoExecuteEnabled)
+  }, [isAutoExecuteEnabled])
+
   const handleActionClick = (action: IntentAction) => {
-    setIntentCallsPayloads(null)
-    setIntentPreconditions(null)
-    setMetaTxns(null)
+    clearIntent()
+
     setShowCustomCallForm(false)
-    setCommittedIntentAddress(null)
-    setVerificationStatus(null)
-    setHasAutoExecuted(false)
     if (action === 'custom_call') {
       setShowCustomCallForm(true)
     } else {
-      createIntentMutation.mutate(action)
+      createIntentMutationAction(action)
     }
   }
 
   const handleCustomCallSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    createIntentMutation.mutate('custom_call')
+    createIntentMutationAction('custom_call')
     setShowCustomCallForm(false)
   }
 
-  const handleSendOriginCall = async () => {
-    if (
-      isTransactionInProgress || // Prevent duplicate transactions
-      !originCallParams ||
-      originCallParams.error ||
-      !originCallParams.to ||
-      originCallParams.data === null ||
-      originCallParams.value === null ||
-      originCallParams.chainId === null
-    ) {
-      console.error('Origin call parameters not available or invalid:', originCallParams)
-      updateOriginCallStatus(undefined, 'reverted', undefined, undefined, 'Origin call parameters not ready')
+  useEffect(() => {
+    if (!selectedToken) {
+      updateOriginCallParams(null)
       return
     }
 
-    // Check if we need to switch chains
-    if (account.chainId !== originCallParams.chainId) {
-      setIsChainSwitchRequired(true)
-      updateOriginCallStatus(
-        undefined,
-        'pending',
-        undefined,
-        undefined,
-        `Switching to chain ${originCallParams.chainId}...`,
-      )
-
-      try {
-        console.log('Switching to chain:', originCallParams.chainId)
-        await switchChain({ chainId: originCallParams.chainId })
-      } catch (error: any) {
-        console.error('Failed to switch chain:', error)
-        if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
-          setIsAutoExecuteEnabled(false)
-        }
-        updateOriginCallStatus(
-          undefined,
-          'reverted',
-          undefined,
-          undefined,
-          `Failed to switch chain: ${error.message || 'Unknown error'}`,
-        )
-        setIsChainSwitchRequired(false)
-      }
-      return // Stop execution here whether switch succeeded or failed.
-    }
-
-    // Ensure only one transaction is sent at a time
-    if (!isTransactionInProgress) {
-      setIsTransactionInProgress(true) // Mark transaction as in progress
-      setTxnHash(undefined)
-      updateOriginCallStatus(undefined, 'sending')
-
-      if (!estimatedGas && !isEstimateError) {
-        setIsEstimatingGas(true)
-        return // Wait for gas estimation
-      }
-
-      if (isEstimateError) {
-        console.error('Gas estimation failed:', estimateError)
-        updateOriginCallStatus(
-          undefined,
-          'reverted',
-          undefined,
-          undefined,
-          `Gas estimation failed: ${estimateError?.message}`,
-        )
-        setIsTransactionInProgress(false)
-        return
-      }
-
-      // Add 20% buffer to estimated gas
-      const gasLimit = estimatedGas ? BigInt(Math.floor(Number(estimatedGas) * 1.2)) : undefined
-
-      sendTransaction(
-        {
-          to: originCallParams.to,
-          data: originCallParams.data,
-          value: originCallParams.value,
-          chainId: originCallParams.chainId,
-          gas: gasLimit,
-        },
-        {
-          onSuccess: (hash) => {
-            console.log('Transaction sent, hash:', hash)
-            setTxnHash(hash)
-            setIsTransactionInProgress(false) // Reset transaction state
-          },
-          onError: (error) => {
-            console.error('Transaction failed:', error)
-            if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
-              setIsAutoExecuteEnabled(false)
-            }
-            updateOriginCallStatus(undefined, 'reverted', undefined, undefined, error.message)
-            setIsTransactionInProgress(false)
-          },
-        },
-      )
-    } else {
-      console.warn('Transaction already in progress. Skipping duplicate request.')
-    }
-  }
-
-  // Remove the chain change effect that might be resetting state
-  useEffect(() => {
-    if (switchChainError) {
-      console.error('Chain switch error:', switchChainError)
-      updateOriginCallStatus(
-        undefined,
-        'reverted',
-        undefined,
-        undefined,
-        `Chain switch failed: ${switchChainError.message || 'Unknown error'}`,
-      )
-      setIsChainSwitchRequired(false)
-    }
-  }, [switchChainError])
-
-  // Reset gas estimation state when parameters change
-  useEffect(() => {
-    setIsEstimatingGas(false)
-  }, [originCallParams])
-
-  // Only update chain switch required state when needed
-  useEffect(() => {
-    if (originCallParams?.chainId && account.chainId === originCallParams.chainId) {
-      setIsChainSwitchRequired(false)
-    }
-  }, [account.chainId, originCallParams?.chainId])
-
-  // Hook to wait for transaction receipt
-  const {
-    data: receipt,
-    isLoading: isWaitingForReceipt,
-    isSuccess,
-    isError,
-    error: receiptError,
-  } = useWaitForTransactionReceipt({
-    hash: txnHash,
-    confirmations: 1,
-    query: {
-      enabled: !!txnHash,
-    },
-  })
-
-  // Modify the effect that watches for transaction status
-  useEffect(() => {
-    if (!txnHash) {
-      // Only reset these when txnHash is cleared
-      if (originCallStatus?.txnHash) {
-        setOriginCallStatus(null)
-      }
-      if (Object.keys(sentMetaTxns).length > 0) {
-        setSentMetaTxns({})
-      }
-      return
-    }
-
-    // If status is already final for this txnHash, and receipt data is stable, don't reprocess.
-    if (
-      originCallStatus?.txnHash === txnHash &&
-      (originCallStatus?.status === 'Success' || originCallStatus?.status === 'Failed') &&
-      !isWaitingForReceipt
-    ) {
-      return
-    }
-
-    if (isWaitingForReceipt) {
-      setOriginCallStatus((prevStatus) => ({
-        ...(prevStatus?.txnHash === txnHash
-          ? prevStatus
-          : { gasUsed: undefined, effectiveGasPrice: undefined, revertReason: undefined }),
-        txnHash,
-        status: 'Pending',
-      }))
-      return
-    }
-
-    if (isSuccess && receipt) {
-      const newStatus = receipt.status === 'success' ? 'Success' : 'Failed'
-      setOriginCallStatus({
-        txnHash: receipt.transactionHash,
-        status: newStatus,
-        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
-        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
-        revertReason:
-          receipt.status === 'reverted'
-            ? receiptError && typeof (receiptError as any).message === 'string'
-              ? (receiptError as any).message
-              : 'Transaction reverted by receipt status'
-            : undefined,
-      })
-
-      if (
-        newStatus === 'Success' &&
-        metaTxns &&
-        metaTxns.length > 0 &&
-        isAutoExecuteEnabled &&
-        !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])
-      ) {
-        console.log('Origin transaction successful, auto-sending all meta transactions...')
-        sendMetaTxn(null)
-      }
-    } else if (isError) {
-      setOriginCallStatus({
-        txnHash,
-        status: 'Failed',
-        revertReason:
-          receiptError && typeof (receiptError as any).message === 'string'
-            ? (receiptError as any).message
-            : 'Failed to get receipt',
-        gasUsed: undefined,
-        effectiveGasPrice: undefined,
-      })
-    }
-  }, [
-    txnHash,
-    isWaitingForReceipt,
-    isSuccess,
-    isError,
-    receipt,
-    receiptError,
-    metaTxns,
-    sentMetaTxns,
-    isAutoExecuteEnabled,
-  ])
-
-  // Effect to fetch origin block timestamp
-  useEffect(() => {
-    if (isSuccess && receipt && receipt.blockNumber) {
-      const fetchTimestamp = async () => {
-        try {
-          const chainInfo = getChainInfo(originCallParams?.chainId || 0)
-          if (!chainInfo) {
-            console.error('Chain info not found for origin call')
-            setOriginBlockTimestamp(null)
-            return
-          }
-          const client = createPublicClient({
-            chain: chainInfo as any, // Type assertion as chainInfo can be null
-            transport: http(),
-          })
-          const block = await client.getBlock({ blockNumber: receipt.blockNumber })
-          setOriginBlockTimestamp(Number(block.timestamp))
-        } catch (error) {
-          console.error('Error fetching origin block timestamp:', error)
-          setOriginBlockTimestamp(null)
-        }
-      }
-      fetchTimestamp()
-    } else if (!txnHash) {
-      setOriginBlockTimestamp(null)
-    }
-  }, [isSuccess, receipt, txnHash, originCallParams?.chainId])
-
-  // Effect to fetch meta-transaction block timestamps
-  useEffect(() => {
-    if (metaTxns && Object.keys(metaTxnMonitorStatuses).length > 0) {
-      metaTxns.forEach(async (metaTxn) => {
-        const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
-        const monitorStatus = metaTxnMonitorStatuses[operationKey]
-
-        if (
-          monitorStatus &&
-          monitorStatus.status === 'confirmed' &&
-          monitorStatus.receipt &&
-          monitorStatus.receipt.txnReceipt &&
-          !metaTxnBlockTimestamps[operationKey]?.timestamp &&
-          !metaTxnBlockTimestamps[operationKey]?.error
-        ) {
-          try {
-            const chainId = parseInt(metaTxn.chainId)
-            const chainInfo = getChainInfo(chainId)
-            if (!chainInfo) {
-              console.error(`Chain info not found for metaTxn ${operationKey}`)
-              setMetaTxnBlockTimestamps((prev) => ({
-                ...prev,
-                [operationKey]: { timestamp: null, error: 'Chain info not found' },
-              }))
-              return
-            }
-
-            // Attempt to parse the txnReceipt string
-            // @ts-expect-error
-            const blockNumberToFetch = monitorStatus.receipt?.blockNumber
-
-            if (!blockNumberToFetch) {
-              setMetaTxnBlockTimestamps((prev) => ({
-                ...prev,
-                [operationKey]: { timestamp: null, error: 'Block number not available from receipt' },
-              }))
-              return
-            }
-
-            const client = createPublicClient({
-              chain: chainInfo as any,
-              transport: http(),
-            })
-            const block = await client.getBlock({ blockNumber: blockNumberToFetch })
-            setMetaTxnBlockTimestamps((prev) => ({
-              ...prev,
-              [operationKey]: { timestamp: Number(block.timestamp), error: undefined },
-            }))
-          } catch (error: any) {
-            console.error(`Error fetching block timestamp for metaTxn ${operationKey}:`, error)
-            setMetaTxnBlockTimestamps((prev) => ({
-              ...prev,
-              [operationKey]: { timestamp: null, error: error.message || 'Failed to fetch timestamp' },
-            }))
-          }
-        }
-      })
-    }
-    // Clear timestamps if metaTxns are cleared
-    if (!metaTxns || metaTxns.length === 0) {
-      setMetaTxnBlockTimestamps({})
-    }
-  }, [metaTxnMonitorStatuses, metaTxns, metaTxnBlockTimestamps])
-
-  // Modify the auto-execute effect
-  useEffect(() => {
-    const shouldAutoSend =
-      isAutoExecuteEnabled &&
-      commitIntentConfigMutation.isSuccess &&
-      originCallParams?.chainId &&
-      account.chainId === originCallParams.chainId &&
-      !originCallParams.error &&
-      originCallParams.to &&
-      originCallParams.data !== null &&
-      originCallParams.value !== null &&
-      !isSendingTransaction &&
-      !isWaitingForReceipt &&
-      !txnHash &&
-      !isChainSwitchRequired &&
-      !originCallStatus &&
-      !hasAutoExecuted
-
-    if (shouldAutoSend) {
-      console.log('Auto-executing transaction: All conditions met.')
-      setHasAutoExecuted(true)
-
-      // Set initial status
-      setOriginCallStatus({
-        status: 'Sending...',
-      })
-
-      sendTransaction(
-        {
-          to: originCallParams.to!,
-          data: originCallParams.data!,
-          value: originCallParams.value!,
-          chainId: originCallParams.chainId!,
-        },
-        {
-          onSuccess: (hash) => {
-            console.log('Auto-executed transaction sent, hash:', hash)
-            setTxnHash(hash)
-          },
-          onError: (error) => {
-            console.error('Auto-executed transaction failed:', error)
-            if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
-              setIsAutoExecuteEnabled(false)
-            }
-            setOriginCallStatus({
-              status: 'Failed',
-              revertReason: error.message,
-            })
-            setHasAutoExecuted(false)
-          },
-        },
-      )
-    }
-  }, [
-    isAutoExecuteEnabled,
-    commitIntentConfigMutation.isSuccess,
-    originCallParams,
-    account.chainId,
-    isSendingTransaction,
-    isWaitingForReceipt,
-    txnHash,
-    isChainSwitchRequired,
-    originCallStatus,
-    hasAutoExecuted,
-  ])
-
-  useEffect(() => {
-    if (!intentCallsPayloads?.[0]?.chainId || !selectedToken || !intentPreconditions || !account.address) {
-      setOriginCallParams(null)
-      return
-    }
-
-    try {
-      const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
-      const intentAddressString = intentAddress.toString() as Address.Address
-
-      let calcTo: Address.Address
-      let calcData: Hex = '0x'
-      let calcValue: bigint = 0n
-      const originChainId: number = selectedToken.chainId
-
-      const recipientAddress = intentAddressString
-
-      const isNative = selectedToken.contractAddress === zeroAddress
-
-      if (isNative) {
-        const nativePrecondition = intentPreconditions.find(
-          (p) =>
-            (p.type === 'transfer-native' || p.type === 'native-balance') && p.chainId === originChainId.toString(),
-        )
-        const nativeMinAmount = nativePrecondition?.data?.minAmount ?? nativePrecondition?.data?.min
-        if (nativeMinAmount === undefined) {
-          throw new Error('Could not find native precondition (transfer-native or native-balance) or min amount')
-        }
-        calcValue = BigInt(nativeMinAmount)
-        calcTo = recipientAddress
-      } else {
-        const erc20Precondition = intentPreconditions.find(
-          (p) =>
-            p.type === 'erc20-balance' &&
-            p.chainId === originChainId.toString() &&
-            p.data?.token &&
-            isAddressEqual(Address.from(p.data.token), Address.from(selectedToken.contractAddress)),
-        )
-
-        const erc20MinAmount = erc20Precondition?.data?.min
-        if (erc20MinAmount === undefined) {
-          throw new Error('Could not find ERC20 balance precondition or min amount')
-        }
-        const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
-        calcData = AbiFunction.encodeData(erc20Transfer, [recipientAddress, BigInt(erc20MinAmount)]) as Hex
-        calcTo = selectedToken.contractAddress as Address.Address
-      }
-
-      setOriginCallParams({
-        to: calcTo,
-        data: calcData,
-        value: calcValue,
-        chainId: originChainId,
-        error: undefined,
-      })
-    } catch (error: any) {
-      console.error('Failed to calculate origin call params for UI:', error)
-      setOriginCallParams({ to: null, data: null, value: null, chainId: null, error: error.message })
-    }
-  }, [intentCallsPayloads, selectedToken, intentPreconditions, account.address, calculateIntentAddress, lifiInfos])
-
-  // Effect to auto-commit when intent calls payloads are ready
-  useEffect(() => {
-    if (
-      isAutoExecuteEnabled &&
-      intentCallsPayloads &&
-      intentPreconditions &&
-      lifiInfos &&
-      account.address &&
-      !commitIntentConfigMutation.isPending &&
-      !commitIntentConfigMutation.isSuccess
-    ) {
-      console.log('Auto-committing intent configuration...')
-      commitIntentConfigMutation.mutate({
-        walletAddress: calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos).toString(),
-        mainSigner: account.address,
-        calls: intentCallsPayloads,
-        preconditions: intentPreconditions,
-        lifiInfos: lifiInfos,
-      })
-    }
-  }, [
-    isAutoExecuteEnabled,
-    intentCallsPayloads,
-    intentPreconditions,
-    lifiInfos, // Add lifiInfos dependency
-    account.address,
-    commitIntentConfigMutation.isPending,
-    commitIntentConfigMutation.isSuccess,
-  ])
+    updateOriginCallParams({
+      originChainId: selectedToken.chainId,
+      tokenAddress: selectedToken.contractAddress,
+    })
+  }, [selectedToken])
 
   // Update button text and disabled state for commit button
-  const commitButtonText = commitIntentConfigMutation.isPending ? (
+  const commitButtonText = commitIntentConfigPending ? (
     <div className="flex items-center">
       <Loader2 className="animate-spin h-4 w-4 mr-2" />
       Committing...
@@ -1108,7 +318,7 @@ export const HomeIndexRoute = () => {
   )
 
   const isCommitButtonDisabled = Boolean(
-    commitIntentConfigMutation.isPending || commitIntentConfigMutation.isSuccess, // Disable if commit is pending OR has already succeeded
+    commitIntentConfigPending || commitIntentConfigSuccess, // Disable if commit is pending OR has already succeeded
   )
 
   // Update button text and disabled state for send transaction button
@@ -1140,138 +350,192 @@ export const HomeIndexRoute = () => {
     !originCallParams ||
     !!originCallParams.error ||
     isSwitchingChain ||
-    (isAutoExecuteEnabled && commitIntentConfigMutation.isSuccess) // Disable if auto-execute is on and commit was successful
+    (isAutoExecuteEnabled && commitIntentConfigSuccess) // Disable if auto-execute is on and commit was successful
 
   // Effect to cleanup when account disconnects
   useEffect(() => {
     if (!account.isConnected) {
-      setIntentCallsPayloads(null)
-      setIntentPreconditions(null)
-      setMetaTxns(null)
-      setCommittedIntentAddress(null)
-      setVerificationStatus(null)
-      setHasAutoExecuted(false)
+      clearIntent()
     }
   }, [account.isConnected])
 
-  // Update the sendMetaTxn mutation
-  const sendMetaTxnMutation = useMutation({
-    mutationFn: async ({ selectedId }: { selectedId: string | null }) => {
-      if (!intentCallsPayloads || !intentPreconditions || !metaTxns || !account.address || !lifiInfos) {
-        throw new Error('Missing required data for meta-transaction')
-      }
-
-      try {
-        const intentAddress = calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)
-
-        // If no specific ID is selected, send all meta transactions
-        const txnsToSend = selectedId ? metaTxns.filter((tx) => tx.id === selectedId) : metaTxns
-
-        if (!txnsToSend || (selectedId && txnsToSend.length === 0)) {
-          throw new Error('Meta transaction not found')
-        }
-
-        const results = []
-
-        for (const metaTxn of txnsToSend) {
-          if (!metaTxn) continue
-
-          const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
-          const lastSentTime = sentMetaTxns[operationKey]
-          const currentTime = Date.now() // Renamed 'now' to 'currentTime'
-
-          if (lastSentTime && currentTime - lastSentTime < RETRY_WINDOW_MS) {
-            const timeLeft = Math.ceil((RETRY_WINDOW_MS - (currentTime - lastSentTime)) / 1000)
-            console.log(`Meta transaction for ${operationKey} was sent recently. Wait ${timeLeft}s before retry`)
-            continue // Corrected: continue instead of comma
-          }
-
-          try {
-            const chainId = parseInt(metaTxn.chainId)
-            if (isNaN(chainId) || chainId <= 0) {
-              throw new Error(`Invalid chainId for meta transaction: ${chainId}`)
-            }
-            const chainRelayer = getRelayer(chainId)
-            if (!chainRelayer) {
-              throw new Error(`No relayer found for chainId: ${chainId}`)
-            }
-
-            const relevantPreconditions = intentPreconditions.filter(
-              (p) => p.chainId && parseInt(p.chainId) === chainId,
-            )
-
-            console.log(
-              `Relaying meta transaction ${operationKey} to intent ${intentAddress} via relayer:`,
-              chainRelayer,
-            )
-
-            const { opHash } = await chainRelayer.sendMetaTxn(
-              metaTxn.walletAddress as Address.Address,
-              metaTxn.contract as Address.Address,
-              metaTxn.input as Hex,
-              BigInt(metaTxn.chainId),
-              undefined,
-              relevantPreconditions,
-            )
-
-            try {
-              // Fire and forget send tx to backup relayer
-              const backupRelayer = getBackupRelayer(chainId)
-
-              backupRelayer
-                ?.sendMetaTxn(
-                  metaTxn.walletAddress as Address.Address,
-                  metaTxn.contract as Address.Address,
-                  metaTxn.input as Hex,
-                  BigInt(metaTxn.chainId),
-                  undefined,
-                  relevantPreconditions,
-                )
-                .then(() => {})
-                .catch(() => {})
-            } catch {}
-
-            results.push({
-              operationKey,
-              opHash,
-              success: true,
-            })
-          } catch (error: any) {
-            results.push({
-              operationKey,
-              error: error.message,
-              success: false,
-            }) // Corrected: ensure this is a single object
-          }
-        }
-
-        return results
-      } catch (error: any) {
-        throw error
-      }
-    },
-    onSuccess: (results) => {
-      // Update states based on results
-      results.forEach(({ operationKey, opHash, success }) => {
-        if (success && opHash) {
-          setSentMetaTxns((prev) => ({
-            ...prev,
-            [operationKey]: Date.now(),
-          }))
-        }
-      })
-    },
-    onError: (error) => {
-      console.error('Error in meta-transaction process:', error)
-    },
-    retry: 5, // Allow up to 2 retries
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000), // Exponential backoff
-  })
-
   // Replace the sendMetaTxn function with a wrapper that uses the mutation
-  const sendMetaTxn = (selectedId: string | null) => {
-    sendMetaTxnMutation.mutate({ selectedId })
+  const handleSendMetaTxn = (selectedId: string | null) => {
+    sendMetaTxn(selectedId)
   }
+
+  function handleSendOriginCall() {
+    sendOriginTransaction()
+  }
+
+  return {
+    // Account Management
+    account,
+    connectors,
+    connect,
+    disconnect,
+    connectStatus,
+    connectError,
+
+    // Token Management
+    selectedToken,
+    setSelectedToken,
+    sortedTokens,
+    isLoadingBalances,
+    balanceError,
+
+    // Intent State
+    intentCallsPayloads,
+    intentPreconditions,
+    metaTxns,
+    lifiInfos,
+    committedIntentAddress,
+    committedIntentConfig,
+    verificationStatus,
+    intentActionType,
+
+    // Transaction State
+    originCallParams,
+    originCallStatus,
+    isTransactionInProgress,
+    isSendingTransaction,
+    isSwitchingChain,
+    isWaitingForReceipt,
+    isEstimatingGas,
+    isChainSwitchRequired,
+    hasAutoExecuted,
+
+    // Auto-Execute Controls
+    isAutoExecuteEnabled,
+    setIsAutoExecuteEnabled,
+
+    // Meta Transaction Management
+    isManualMetaTxnEnabled,
+    setIsManualMetaTxnEnabled,
+    selectedMetaTxnId,
+    setSelectedMetaTxnId,
+    metaTxnMonitorStatuses,
+    sendMetaTxnPending,
+    sendMetaTxnSuccess,
+    sendMetaTxnError,
+    sendMetaTxnArgs,
+
+    // Custom Call Form
+    showCustomCallForm,
+    setShowCustomCallForm,
+    customCallData,
+    setCustomCallData,
+
+    // Action Handlers
+    handleActionClick,
+    handleCustomCallSubmit,
+    handleSendOriginCall,
+    handleSendMetaTxn,
+    clearIntent,
+
+    // Intent Mutation State
+    createIntentMutationAction,
+    createIntentPending,
+    createIntentSuccess,
+    createIntentError,
+    createIntentArgs,
+
+    // Config Mutation State
+    commitIntentConfig,
+    commitIntentConfigPending,
+    commitIntentConfigSuccess,
+    commitIntentConfigError,
+    commitIntentConfigArgs,
+    isLoadingCommittedConfig,
+    committedConfigError,
+
+    // UI State
+    sendButtonText,
+    isSendButtonDisabled,
+    commitButtonText,
+    isCommitButtonDisabled,
+
+    calculatedIntentAddress,
+  }
+}
+
+export const HomeIndexRoute = () => {
+  const {
+    // Account Management
+    account,
+    connectors,
+    connect,
+    disconnect,
+    connectStatus,
+    connectError,
+
+    // Token Management
+    selectedToken,
+    setSelectedToken,
+    sortedTokens,
+    isLoadingBalances,
+    balanceError,
+
+    // Intent State
+    intentCallsPayloads,
+    intentPreconditions,
+    metaTxns,
+    lifiInfos,
+    committedIntentAddress,
+    committedIntentConfig,
+    verificationStatus,
+    intentActionType,
+
+    // Transaction State
+    originCallParams,
+    originCallStatus,
+    isWaitingForReceipt,
+
+    // Auto-Execute Controls
+    isAutoExecuteEnabled,
+    setIsAutoExecuteEnabled,
+
+    // Meta Transaction Management
+    isManualMetaTxnEnabled,
+    setIsManualMetaTxnEnabled,
+    selectedMetaTxnId,
+    setSelectedMetaTxnId,
+    metaTxnMonitorStatuses,
+
+    // Custom Call Form
+    showCustomCallForm,
+    setShowCustomCallForm,
+    customCallData,
+    setCustomCallData,
+
+    // Action Handlers
+    handleActionClick,
+    handleCustomCallSubmit,
+    handleSendOriginCall,
+    handleSendMetaTxn,
+    clearIntent,
+
+    // Intent Mutation State
+    createIntentPending,
+    createIntentError,
+    createIntentArgs,
+
+    // Config Mutation State
+    commitIntentConfig,
+    commitIntentConfigSuccess,
+    commitIntentConfigError,
+    isLoadingCommittedConfig,
+    committedConfigError,
+
+    // UI State
+    sendButtonText,
+    isSendButtonDisabled,
+    commitButtonText,
+    isCommitButtonDisabled,
+
+    calculatedIntentAddress,
+    sendMetaTxnPending,
+  } = useHook()
 
   return (
     <div className="p-6 space-y-8 max-w-3xl mx-auto min-h-screen">
@@ -1319,7 +583,7 @@ export const HomeIndexRoute = () => {
               <Text variant="small" color="secondary" className="flex items-center">
                 <span className="text-blue-300 font-semibold mr-2">Chain:</span>
                 <div className="flex items-center">
-                  <NetworkImage chainId={account.chainId} size="sm" className="w-4 h-4 mr-1" />
+                  <NetworkImage chainId={Number(account.chainId)} size="sm" className="w-4 h-4 mr-1" />
                   <span className="font-mono bg-gray-800/70 px-3 py-1 rounded-full">{account.chainId}</span>
                 </div>
               </Text>
@@ -1446,12 +710,7 @@ export const HomeIndexRoute = () => {
                       } else {
                         setSelectedToken(token)
                       }
-                      setIntentCallsPayloads(null)
-                      setIntentPreconditions(null)
-                      setMetaTxns(null)
-                      setCommittedIntentAddress(null)
-                      setVerificationStatus(null)
-                      setHasAutoExecuted(false)
+                      clearIntent()
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 flex justify-between items-center ${selectedToken?.chainId === token.chainId && (isNative ? selectedToken?.contractAddress === zeroAddress : selectedToken?.contractAddress === token.contractAddress) ? 'bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800 shadow-lg' : 'bg-gray-700/80 hover:bg-gray-600/90 hover:shadow-md'}`}
                   >
@@ -1559,10 +818,10 @@ export const HomeIndexRoute = () => {
                 variant="primary"
                 size="sm"
                 onClick={() => handleActionClick('pay')}
-                disabled={!selectedToken || createIntentMutation.isPending}
+                disabled={!selectedToken || createIntentPending}
                 className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
               >
-                {createIntentMutation.isPending && createIntentMutation.variables === 'pay' ? (
+                {createIntentPending && createIntentArgs === 'pay' ? (
                   'Processing...'
                 ) : (
                   <>
@@ -1580,10 +839,10 @@ export const HomeIndexRoute = () => {
                 variant="raised"
                 size="sm"
                 onClick={() => handleActionClick('mock_interaction')}
-                disabled={!selectedToken || createIntentMutation.isPending}
+                disabled={!selectedToken || createIntentPending}
                 className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
               >
-                {createIntentMutation.isPending && createIntentMutation.variables === 'mock_interaction' ? (
+                {createIntentPending && intentActionType === 'mock_interaction' ? (
                   'Processing...'
                 ) : (
                   <>
@@ -1596,10 +855,10 @@ export const HomeIndexRoute = () => {
                 variant="feature"
                 size="sm"
                 onClick={() => handleActionClick('custom_call')}
-                disabled={!selectedToken || createIntentMutation.isPending}
+                disabled={!selectedToken || createIntentPending}
                 className="px-2.5 py-1 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
               >
-                {createIntentMutation.isPending && createIntentMutation.variables === 'custom_call' ? (
+                {createIntentPending && intentActionType === 'custom_call' ? (
                   'Processing...'
                 ) : (
                   <div className="flex items-center gap-2">
@@ -1709,7 +968,7 @@ export const HomeIndexRoute = () => {
           </SectionHeader>
 
           {/* Step 4: Intent Quote Display */}
-          {createIntentMutation.isPending && (
+          {createIntentPending && (
             <div className="px-6 pb-6">
               <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3 animate-pulse">
                 <div className="flex items-center text-center">
@@ -1721,12 +980,12 @@ export const HomeIndexRoute = () => {
               </div>
             </div>
           )}
-          {createIntentMutation.isError && (
+          {createIntentError && (
             <div className="px-6 pb-6">
               <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
                 <Text variant="small" color="negative" className="break-words flex items-center text-center">
                   <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                  <span>Error: {createIntentMutation.error.message}</span>
+                  <span>Error: {createIntentError.message}</span>
                 </Text>
               </div>
             </div>
@@ -1748,7 +1007,7 @@ export const HomeIndexRoute = () => {
               }
               actionSubtitle={(() => {
                 let primarySubtitleNode: React.ReactNode = null
-                const currentAction = createIntentMutation.variables
+                const currentAction = intentActionType
 
                 if (intentCallsPayloads && currentAction && selectedToken) {
                   if (currentAction === 'pay') {
@@ -1834,7 +1093,7 @@ export const HomeIndexRoute = () => {
               })()}
               subtitle={(() => {
                 let routeSubtitleNode: React.ReactNode = null
-                const currentAction = createIntentMutation.variables
+                const currentAction = intentActionType
 
                 if (
                   intentCallsPayloads &&
@@ -1856,7 +1115,7 @@ export const HomeIndexRoute = () => {
 
                     if (isNative) {
                       const nativePrecondition = intentPreconditions.find(
-                        (p) =>
+                        (p: any) =>
                           (p.type === 'transfer-native' || p.type === 'native-balance') &&
                           p.chainId === selectedToken.chainId.toString(),
                       )
@@ -1867,7 +1126,7 @@ export const HomeIndexRoute = () => {
                       }
                     } else {
                       const erc20Precondition = intentPreconditions.find(
-                        (p) =>
+                        (p: any) =>
                           p.type === 'erc20-balance' &&
                           p.chainId === selectedToken.chainId.toString() &&
                           p.data?.token &&
@@ -1887,12 +1146,6 @@ export const HomeIndexRoute = () => {
                       amountToSendFormatted = '[Unknown Amount]'
                     }
 
-                    const calculatedIntentAddress = calculateIntentAddress(
-                      account.address,
-                      intentCallsPayloads,
-                      lifiInfos,
-                    ).toString()
-
                     routeSubtitleNode = (
                       <>
                         <Info className="h-3.5 w-3.5 mr-1.5 text-sky-400 flex-shrink-0" />
@@ -1904,9 +1157,9 @@ export const HomeIndexRoute = () => {
                           on <strong className="text-gray-200 mx-1">{originChainName}</strong> to intent addr:
                           <strong
                             className="text-gray-200 font-mono mx-1 truncate max-w-[70px] sm:max-w-[100px] inline-block align-bottom"
-                            title={calculatedIntentAddress}
+                            title={calculatedIntentAddress || 'N/A'}
                           >
-                            {calculatedIntentAddress}
+                            {calculatedIntentAddress || 'N/A'}
                           </strong>
                         </span>
                       </>
@@ -1952,7 +1205,7 @@ export const HomeIndexRoute = () => {
                         {JSON.stringify(intentCallsPayloads, null, 2)}
                       </pre>
                     </div>
-                    {intentCallsPayloads.map((operation, index) => (
+                    {intentCallsPayloads.map((operation: any, index: number) => (
                       <div
                         key={`operation-${index}`}
                         className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
@@ -1964,7 +1217,7 @@ export const HomeIndexRoute = () => {
                         </div>
                         {operation.calls &&
                           operation.calls.length > 0 &&
-                          operation.calls.map((call, callIndex) => (
+                          operation.calls.map((call: any, callIndex: number) => (
                             <div key={`call-${index}-${callIndex}`} className="space-y-2">
                               <div className="bg-gray-800/70 p-2 rounded-md mb-1">
                                 <Text variant="small" color="secondary">
@@ -2044,7 +1297,7 @@ export const HomeIndexRoute = () => {
                           {JSON.stringify(metaTxns, null, 2)}
                         </pre>
                       </div>
-                      {metaTxns.map((tx, index) => (
+                      {metaTxns.map((tx: any, index: number) => (
                         <div
                           key={`metatx-${index}`}
                           className="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50"
@@ -2165,7 +1418,7 @@ export const HomeIndexRoute = () => {
           )}
 
           {/* Fallback for Intent Quote section when nothing else is shown */}
-          {!createIntentMutation.isPending && !createIntentMutation.isError && !intentCallsPayloads && (
+          {!createIntentPending && !createIntentError && !intentCallsPayloads && (
             <div className="px-6 pb-6">
               {' '}
               {/* Added pb-6 for bottom padding */}
@@ -2235,14 +1488,14 @@ export const HomeIndexRoute = () => {
                     )}
 
                     {/* Commit Status Messages */}
-                    {commitIntentConfigMutation.isError && (
+                    {commitIntentConfigError && (
                       <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mt-2">
                         <Text variant="small" color="negative">
-                          Commit Error: {commitIntentConfigMutation.error.message}
+                          Commit Error: {commitIntentConfigError.message}
                         </Text>
                       </div>
                     )}
-                    {commitIntentConfigMutation.isSuccess && (
+                    {commitIntentConfigSuccess && (
                       <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3 mt-2">
                         <Text variant="small" color="white">
                           Intent configuration committed successfully!
@@ -2251,7 +1504,7 @@ export const HomeIndexRoute = () => {
                     )}
 
                     {/* Display Fetched Committed Config */}
-                    {committedIntentAddress && commitIntentConfigMutation.isSuccess && (
+                    {committedIntentAddress && commitIntentConfigSuccess && (
                       <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
                         <div className="flex items-center justify-between">
                           <Text variant="medium" color="primary" className="border-b border-gray-700/50">
@@ -2307,12 +1560,8 @@ export const HomeIndexRoute = () => {
                       variant="primary"
                       onClick={() => {
                         if (!account.address || !intentCallsPayloads || !intentPreconditions || !lifiInfos) return
-                        commitIntentConfigMutation.mutate({
-                          walletAddress: calculateIntentAddress(
-                            account.address,
-                            intentCallsPayloads,
-                            lifiInfos,
-                          ).toString(),
+                        commitIntentConfig({
+                          walletAddress: calculatedIntentAddress,
                           mainSigner: account.address,
                           calls: intentCallsPayloads,
                           preconditions: intentPreconditions,
@@ -2451,16 +1700,10 @@ export const HomeIndexRoute = () => {
                       Open Intent Address in Explorer:
                     </Text>
                     <div className="flex flex-col space-y-1">
-                      {[...new Set(metaTxns.map((tx) => tx.chainId))]
-                        .map((chainIdStr) => parseInt(chainIdStr))
-                        .map((chainId) => {
-                          const actualIntentConfigAddress = calculateIntentAddress(
-                            account.address!,
-                            intentCallsPayloads!,
-                            lifiInfos!,
-                          )?.toString()
-                          if (!actualIntentConfigAddress) return null
-                          const explorerUrl = getExplorerUrl(chainId, actualIntentConfigAddress)
+                      {[...new Set(metaTxns.map((tx: any) => tx.chainId))]
+                        .map((chainIdStr: any) => parseInt(chainIdStr))
+                        .map((chainId: number) => {
+                          const explorerUrl = getExplorerUrl(chainId, originCallParams.to!)
                           const chainInfo = getChainInfo(chainId)
                           if (!explorerUrl) return null
                           return (
@@ -2481,14 +1724,14 @@ export const HomeIndexRoute = () => {
                     </div>
                   </div>
                 )}
-                {intentCallsPayloads && createIntentMutation.variables && (
+                {intentCallsPayloads && intentActionType && (
                   <div className="mt-2 pt-2 border-t border-gray-700/50 space-y-2">
                     <Text variant="small" color="secondary" className="mb-1 text-blue-300 font-semibold">
                       Open in Explorer: (Final Destination Address)
                     </Text>
                     <div className="flex flex-col space-y-1">
                       {(() => {
-                        const currentAction = createIntentMutation.variables
+                        const currentAction = intentActionType
                         let finalDestAddress: string | undefined = undefined
                         let finalDestChainId: number | undefined = undefined
                         let labelPrefix = 'Final Destination Address'
@@ -2575,7 +1818,7 @@ export const HomeIndexRoute = () => {
                         Select Meta Transaction:
                       </Text>
                       <div className="space-y-2">
-                        {metaTxns?.map((tx, index) => (
+                        {metaTxns?.map((tx: any, index: number) => (
                           <div
                             key={tx.id}
                             onClick={() => setSelectedMetaTxnId(tx.id)}
@@ -2605,13 +1848,11 @@ export const HomeIndexRoute = () => {
                     <div className="flex gap-2">
                       <Button
                         variant="feature"
-                        onClick={() => sendMetaTxn(selectedMetaTxnId)}
-                        disabled={
-                          !metaTxns || metaTxns.length === 0 || !account.address || sendMetaTxnMutation.isPending
-                        }
+                        onClick={() => handleSendMetaTxn(selectedMetaTxnId)}
+                        disabled={!metaTxns || metaTxns.length === 0 || !account.address || sendMetaTxnPending}
                         className="flex-1 px-4 py-2 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center bg-purple-600 hover:bg-purple-700"
                       >
-                        {sendMetaTxnMutation.isPending ? (
+                        {sendMetaTxnPending ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Sending...
@@ -2756,10 +1997,27 @@ export const HomeIndexRoute = () => {
                 Meta Transactions Status
               </Text>
               <div className="space-y-4">
-                {metaTxns?.map((metaTxn, index) => {
+                {metaTxns?.map((metaTxn: any, index: number) => {
                   const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
                   const monitorStatus = metaTxnMonitorStatuses[operationKey]
                   const typedMetaTxn = metaTxn as unknown as MetaTxn
+
+                  // Type guard for operation status with gas used
+                  type OperationStatusWithGas = {
+                    status: 'confirmed'
+                    gasUsed: bigint
+                    txHash: string
+                    transactionHash: `0x${string}`
+                  }
+
+                  const hasGasUsed = (status: RelayerOperationStatus | undefined): status is OperationStatusWithGas => {
+                    return (
+                      !!status &&
+                      status.status === 'confirmed' &&
+                      'gasUsed' in status &&
+                      typeof status.gasUsed === 'bigint'
+                    )
+                  }
 
                   const getStatusDisplay = () => {
                     if (!monitorStatus) return 'Pending'
