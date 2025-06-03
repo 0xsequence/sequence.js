@@ -91,6 +91,8 @@ function useHook() {
     calculatedIntentAddress,
     updateOriginCallParams,
     originCallParams,
+    originBlockTimestamp,
+    metaTxnBlockTimestamps,
   } = useAnyPay({
     account: account as Account,
     env: import.meta.env.VITE_ENV,
@@ -389,6 +391,8 @@ function useHook() {
     isCommitButtonDisabled,
 
     calculatedIntentAddress,
+    originBlockTimestamp,
+    metaTxnBlockTimestamps,
   }
 }
 
@@ -470,6 +474,8 @@ export const HomeIndexRoute = () => {
 
     calculatedIntentAddress,
     sendMetaTxnPending,
+    originBlockTimestamp,
+    metaTxnBlockTimestamps,
   } = useHook()
 
   return (
@@ -589,6 +595,9 @@ export const HomeIndexRoute = () => {
           isWaitingForReceipt={isWaitingForReceipt}
           metaTxns={metaTxns}
           metaTxnMonitorStatuses={metaTxnMonitorStatuses}
+          originBlockTimestamp={originBlockTimestamp}
+          metaTxnBlockTimestamps={metaTxnBlockTimestamps}
+          originCallParams={originCallParams}
         />
       )}
     </div>

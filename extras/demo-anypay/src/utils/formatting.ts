@@ -62,6 +62,31 @@ export const formatBalance = (balance: TokenBalance | NativeTokenBalance): strin
   }
 }
 
+// Helper to format time since origin (using the version from user's HomeIndexRoute example)
+export const formatTimeSinceOrigin = (metaTxnTimestamp: number | null, originTimestamp: number | null): string => {
+  if (originTimestamp === null) {
+    return 'Waiting for origin call timestamp...'
+  }
+  if (metaTxnTimestamp === null) {
+    return 'Meta transaction timestamp not available'
+  }
+  if (metaTxnTimestamp < originTimestamp) {
+    return 'Before origin call' // Or handle as an anomaly
+  }
+  const diffSeconds = metaTxnTimestamp - originTimestamp
+  if (diffSeconds < 60) {
+    return `${diffSeconds} second${diffSeconds === 1 ? '' : 's'} after origin call`
+  }
+  const diffMinutes = Math.floor(diffSeconds / 60)
+  const remainingSeconds = diffSeconds % 60
+  if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}${remainingSeconds > 0 ? ` ${remainingSeconds}s` : ''} after origin call`
+  }
+  const diffHours = Math.floor(diffMinutes / 60)
+  const remainingMinutes = diffMinutes % 60
+  return `${diffHours} hour${diffHours === 1 ? '' : 's'}${remainingMinutes > 0 ? ` ${remainingMinutes}m` : ''} after origin call`
+}
+
 // Helper to get explorer URL
 export const getExplorerUrl = (chainId: number, address: string): string | null => {
   const chainInfo = getChainInfo(chainId)

@@ -1,8 +1,8 @@
 import { Text, NetworkImage } from '@0xsequence/design-system'
 import { Box, Layers } from 'lucide-react'
 import { SectionHeader } from '@/components/SectionHeader'
-import { MetaTxn, MetaTxnStatus } from '@anypay/sdk'
-import { getChainInfo, getExplorerUrlForTransaction } from '@/utils/formatting'
+import { MetaTxn, MetaTxnStatus, OriginCallParams } from '@anypay/sdk'
+import { getChainInfo, getExplorerUrlForTransaction, formatTimeSinceOrigin } from '@/utils/formatting'
 
 interface OriginCallStatusData {
   txnHash?: string
@@ -17,6 +17,11 @@ interface RelayerStatusSectionProps {
   isWaitingForReceipt: boolean
   metaTxns: MetaTxn[] | null
   metaTxnMonitorStatuses: MetaTxnStatus
+  originBlockTimestamp: number | null
+  metaTxnBlockTimestamps: {
+    [key: string]: { timestamp: number | null; error?: string }
+  }
+  originCallParams: OriginCallParams | null
 }
 
 export const RelayerStatusSection = ({
@@ -24,7 +29,17 @@ export const RelayerStatusSection = ({
   isWaitingForReceipt,
   metaTxns,
   metaTxnMonitorStatuses,
+  originBlockTimestamp,
+  metaTxnBlockTimestamps,
+  originCallParams,
 }: RelayerStatusSectionProps) => {
+  console.log('[RelayerStatusSection] Props received - originBlockTimestamp:', originBlockTimestamp)
+  console.log(
+    '[RelayerStatusSection] Props received - metaTxnBlockTimestamps:',
+    JSON.stringify(metaTxnBlockTimestamps, null, 2),
+  )
+  // console.log('[RelayerStatusSection] Props received - metaTxns:', JSON.stringify(metaTxns, null, 2)); // Can be verbose
+
   return (
     <SectionHeader
       className="bg-gray-800/80 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6"
@@ -54,6 +69,22 @@ export const RelayerStatusSection = ({
                 <span className="text-yellow-300 break-all font-mono">
                   {originCallStatus?.txnHash || 'Not sent yet'}
                 </span>
+                {originCallStatus?.txnHash && originCallParams?.chainId && (
+                  <div className="mt-1">
+                    <a
+                      href={getExplorerUrlForTransaction(originCallParams.chainId, originCallStatus.txnHash) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`View transaction ${originCallStatus.txnHash} on ${
+                        getChainInfo(originCallParams.chainId)?.name || 'explorer'
+                      }`}
+                      className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
+                    >
+                      <NetworkImage chainId={originCallParams.chainId} size="xs" className="w-3 h-3" />
+                      <span>{getExplorerUrlForTransaction(originCallParams.chainId, originCallStatus.txnHash)}</span>
+                    </a>
+                  </div>
+                )}
               </Text>
             </div>
             <div className="bg-gray-800/70 p-3 rounded-md">
@@ -95,6 +126,16 @@ export const RelayerStatusSection = ({
                 <span className="font-mono">{originCallStatus?.effectiveGasPrice || '0'}</span>
               </Text>
             </div>
+            {typeof originBlockTimestamp === 'number' && Number.isFinite(originBlockTimestamp) && (
+              <div className="bg-gray-800/70 p-3 rounded-md">
+                <Text variant="small" color="secondary">
+                  <strong className="text-blue-300">Block Timestamp: </strong>
+                  <span className="font-mono">
+                    {new Date(originBlockTimestamp * 1000).toLocaleString()} (Epoch: {originBlockTimestamp})
+                  </span>
+                </Text>
+              </div>
+            )}
           </div>
         </div>
 
@@ -108,8 +149,6 @@ export const RelayerStatusSection = ({
             {metaTxns?.map((metaTxn: MetaTxn, index: number) => {
               const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
               const monitorStatus = metaTxnMonitorStatuses[operationKey]
-
-              console.log('monitorStatus', monitorStatus)
 
               const getStatusDisplay = () => {
                 if (!monitorStatus) return 'Pending'
@@ -158,47 +197,67 @@ export const RelayerStatusSection = ({
                         <span className="font-mono text-yellow-300 break-all">{metaTxn.id || 'N/A'}</span>
                       </Text>
                     </div>
-                    {monitorStatus?.status === 'confirmed' && monitorStatus && 'txHash' in monitorStatus && (
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">Tx Hash: </strong>
-                        <span className="font-mono text-yellow-300 break-all">
-                          {String((monitorStatus as any).txHash)}
-                        </span>
-                      </Text>
-                    )}
-                    {monitorStatus?.status === 'confirmed' &&
-                      monitorStatus &&
-                      'transactionHash' in monitorStatus &&
-                      typeof monitorStatus.transactionHash === 'string' &&
-                      monitorStatus.transactionHash && (
+                    {monitorStatus?.status === 'confirmed' && monitorStatus.transactionHash && (
+                      <div>
                         <Text variant="small" color="secondary">
-                          <strong className="text-blue-300">Explorer: </strong>
-                          <a
-                            href={
-                              getExplorerUrlForTransaction(parseInt(metaTxn.chainId), monitorStatus.transactionHash) ||
-                              '#'
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-mono text-purple-400 hover:underline break-all"
-                          >
-                            {getExplorerUrlForTransaction(parseInt(metaTxn.chainId), monitorStatus.transactionHash)}
-                          </a>
+                          <strong className="text-blue-300">Tx Hash: </strong>
+                          <span className="font-mono text-yellow-300 break-all">
+                            {String(monitorStatus.transactionHash)}
+                          </span>
                         </Text>
-                      )}
+                      </div>
+                    )}
+                    {metaTxnBlockTimestamps && metaTxnBlockTimestamps[operationKey]?.timestamp && (
+                      <div>
+                        <Text variant="small" color="secondary">
+                          <strong className="text-blue-300">Block Timestamp: </strong>
+                          <span className="font-mono">
+                            {new Date((metaTxnBlockTimestamps[operationKey]?.timestamp || 0) * 1000).toLocaleString()}
+                          </span>
+                          <br />
+                          <span className="font-mono text-purple-300">
+                            (Executed:{' '}
+                            {formatTimeSinceOrigin(
+                              metaTxnBlockTimestamps[operationKey]?.timestamp || null,
+                              originBlockTimestamp,
+                            )}
+                            )
+                          </span>
+                        </Text>
+                      </div>
+                    )}
+                    {monitorStatus?.status === 'confirmed' && monitorStatus && monitorStatus.transactionHash && (
+                      <div className="bg-gray-800/70 p-2 rounded-md">
+                        <a
+                          href={
+                            getExplorerUrlForTransaction(parseInt(metaTxn.chainId), monitorStatus.transactionHash) ||
+                            '#'
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`View transaction ${monitorStatus.transactionHash} on ${
+                            getChainInfo(parseInt(metaTxn.chainId))?.name || 'explorer'
+                          }`}
+                          className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
+                        >
+                          <NetworkImage chainId={parseInt(metaTxn.chainId)} size="xs" className="w-3 h-3" />
+                          <span>
+                            {getExplorerUrlForTransaction(parseInt(metaTxn.chainId), monitorStatus.transactionHash)}
+                          </span>
+                        </a>
+                      </div>
+                    )}
                     {monitorStatus?.status === 'failed' && monitorStatus && 'reason' in monitorStatus && (
                       <Text variant="small" color="negative">
                         <strong className="text-red-300">Error: </strong>
                         <span className="font-mono break-all">{String((monitorStatus as any).reason)}</span>
                       </Text>
                     )}
-                    {/* {monitorStatus?.status === 'confirmed' && monitorStatus && 'receipt' in monitorStatus && (
-                      <Text variant="small" color="secondary">
-                        <strong className="text-blue-300">Gas Used: </strong>
-                        <span className="font-mono">
-                          {monitorStatus.receipt.receipt.receipts[0].}
-                        </span>
-                      </Text>
+                    {/* {monitorStatus?.status === 'confirmed' && monitorStatus.data && typeof monitorStatus.data.receipt.!== 'undefined' && (
+                        <Text variant="small" color="secondary">
+                            <strong className="text-blue-300">Gas Used: </strong>
+                            <span className="font-mono">{String(monitorStatus.data.gasUsed)}</span>
+                        </Text>
                     )} */}
                     {(monitorStatus?.status === 'confirmed' || monitorStatus?.status === 'failed') && monitorStatus && (
                       <div className="mt-2 bg-gray-900/50 p-2 rounded border border-gray-700/50">
