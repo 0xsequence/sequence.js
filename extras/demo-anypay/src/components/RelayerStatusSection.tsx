@@ -1,65 +1,30 @@
 import { Text, NetworkImage } from '@0xsequence/design-system'
 import { Box, Layers } from 'lucide-react'
 import { SectionHeader } from '@/components/SectionHeader'
-import { MetaTxn, RelayerOperationStatus } from '@anypay/sdk'
-import * as chains from 'viem/chains'
+import { MetaTxn, MonitoredOperationsStatuses } from '@anypay/sdk'
+import { getChainInfo, getExplorerUrlForTransaction } from '@/utils/formatting'
 
-// Helper to get chain info
-const getChainInfo = (chainId: number) => {
-  return Object.values(chains).find((chain) => chain.id === chainId) || null
-}
-
-const getExplorerUrl = (chainId: number, addressOrTxHash: string): string | null => {
-  const chainInfo = getChainInfo(chainId)
-  if (chainInfo && chainInfo.blockExplorers?.default?.url) {
-    if (addressOrTxHash.length === 42) {
-      // Likely an address
-      return `${chainInfo.blockExplorers.default.url}/address/${addressOrTxHash}`
-    } else if (addressOrTxHash.length === 66) {
-      // Likely a transaction hash
-      return `${chainInfo.blockExplorers.default.url}/tx/${addressOrTxHash}`
-    }
-  }
-  return null
+interface OriginCallStatusData {
+  txnHash?: string
+  status?: string
+  revertReason?: string | null
+  gasUsed?: number
+  effectiveGasPrice?: string
 }
 
 interface RelayerStatusSectionProps {
-  accountStatus: string
-  originCallStatus?: {
-    txnHash?: string
-    status?: string
-    revertReason?: string | null
-    gasUsed?: string | number
-    effectiveGasPrice?: string | number
-  } | null
+  originCallStatus: OriginCallStatusData | null
   isWaitingForReceipt: boolean
-  metaTxns?: MetaTxn[] | null
-  metaTxnMonitorStatuses: Record<string, RelayerOperationStatus>
-}
-
-// Type guard for operation status with gas used
-type OperationStatusWithGas = {
-  status: 'confirmed'
-  gasUsed: bigint
-  txHash: string
-  transactionHash: `0x${string}`
-}
-
-const hasGasUsed = (status: RelayerOperationStatus | undefined): status is OperationStatusWithGas => {
-  return !!status && status.status === 'confirmed' && 'gasUsed' in status && typeof status.gasUsed === 'bigint'
+  metaTxns: MetaTxn[] | null
+  metaTxnMonitorStatuses: MonitoredOperationsStatuses
 }
 
 export const RelayerStatusSection = ({
-  accountStatus,
   originCallStatus,
   isWaitingForReceipt,
   metaTxns,
   metaTxnMonitorStatuses,
 }: RelayerStatusSectionProps) => {
-  if (accountStatus !== 'connected') {
-    return null
-  }
-
   return (
     <SectionHeader
       className="bg-gray-800/80 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6"
@@ -121,13 +86,13 @@ export const RelayerStatusSection = ({
             <div className="bg-gray-800/70 p-3 rounded-md">
               <Text variant="small" color="secondary">
                 <strong className="text-blue-300">Gas Used: </strong>
-                <span className="font-mono">{originCallStatus?.gasUsed?.toString() || '0'}</span>
+                <span className="font-mono">{originCallStatus?.gasUsed || '0'}</span>
               </Text>
             </div>
             <div className="bg-gray-800/70 p-3 rounded-md">
               <Text variant="small" color="secondary">
                 <strong className="text-blue-300">Effective Gas Price: </strong>
-                <span className="font-mono">{originCallStatus?.effectiveGasPrice?.toString() || '0'}</span>
+                <span className="font-mono">{originCallStatus?.effectiveGasPrice || '0'}</span>
               </Text>
             </div>
           </div>
@@ -194,38 +159,45 @@ export const RelayerStatusSection = ({
                     {monitorStatus?.status === 'confirmed' && monitorStatus && 'txHash' in monitorStatus && (
                       <Text variant="small" color="secondary">
                         <strong className="text-blue-300">Tx Hash: </strong>
-                        <span className="font-mono text-yellow-300 break-all">{String(monitorStatus.txHash)}</span>
+                        <span className="font-mono text-yellow-300 break-all">
+                          {String((monitorStatus as any).txHash)}
+                        </span>
                       </Text>
                     )}
                     {monitorStatus?.status === 'confirmed' &&
                       monitorStatus &&
-                      'txHash' in monitorStatus &&
-                      typeof monitorStatus.txHash === 'string' &&
-                      monitorStatus.txHash && (
+                      'transactionHash' in monitorStatus &&
+                      typeof monitorStatus.transactionHash === 'string' &&
+                      monitorStatus.transactionHash && (
                         <Text variant="small" color="secondary">
                           <strong className="text-blue-300">Explorer: </strong>
                           <a
-                            href={getExplorerUrl(parseInt(metaTxn.chainId), monitorStatus.txHash) || '#'}
+                            href={
+                              getExplorerUrlForTransaction(parseInt(metaTxn.chainId), monitorStatus.transactionHash) ||
+                              '#'
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-mono text-purple-400 hover:underline break-all"
                           >
-                            {getExplorerUrl(parseInt(metaTxn.chainId), monitorStatus.txHash)}
+                            {getExplorerUrlForTransaction(parseInt(metaTxn.chainId), monitorStatus.transactionHash)}
                           </a>
                         </Text>
                       )}
                     {monitorStatus?.status === 'failed' && monitorStatus && 'reason' in monitorStatus && (
                       <Text variant="small" color="negative">
                         <strong className="text-red-300">Error: </strong>
-                        <span className="font-mono break-all">{String(monitorStatus.reason)}</span>
+                        <span className="font-mono break-all">{String((monitorStatus as any).reason)}</span>
                       </Text>
                     )}
-                    {hasGasUsed(monitorStatus) && (
+                    {/* {monitorStatus?.status === 'confirmed' && monitorStatus && 'receipt' in monitorStatus && (
                       <Text variant="small" color="secondary">
                         <strong className="text-blue-300">Gas Used: </strong>
-                        <span className="font-mono">{monitorStatus.gasUsed.toString()}</span>
+                        <span className="font-mono">
+                          {monitorStatus.receipt.receipt.receipts[0].}
+                        </span>
                       </Text>
-                    )}
+                    )} */}
                     {(monitorStatus?.status === 'confirmed' || monitorStatus?.status === 'failed') && monitorStatus && (
                       <div className="mt-2 bg-gray-900/50 p-2 rounded border border-gray-700/50">
                         <Text variant="small" color="secondary" className="font-semibold mb-1">

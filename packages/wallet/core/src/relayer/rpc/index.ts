@@ -146,29 +146,6 @@ export class RpcRelayer implements Relayer {
     return { opHash: Hex.fromString(result.txnHash) }
   }
 
-  async receipt(opHash: Hex.Hex, chainId: bigint): Promise<GetMetaTxnReceiptReturn> {
-    try {
-      const cleanedOpHash = opHash.startsWith('0x') ? opHash.substring(2) : opHash
-      const result = await this.client.getMetaTxnReceipt({ metaTxID: cleanedOpHash })
-      return result
-    } catch (error) {
-      console.error(`RpcRelayer.receipt failed for opHash ${opHash}:`, error)
-      return {
-        receipt: {
-          status: ETHTxnStatus.UNKNOWN,
-          txnReceipt: '',
-          revertReason: 'Failed to fetch receipt',
-          logs: [],
-          id: opHash,
-          index: 0,
-          receipts: [],
-          blockNumber: '0x0',
-          txnHash: '',
-        },
-      }
-    }
-  }
-
   async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
     try {
       const cleanedOpHash = opHash.startsWith('0x') ? opHash.substring(2) : opHash
@@ -181,10 +158,10 @@ export class RpcRelayer implements Relayer {
         case ETHTxnStatus.SENT:
           return { status: 'pending' }
         case ETHTxnStatus.SUCCEEDED:
-          return { status: 'confirmed', transactionHash: Hex.fromString(receipt.txnReceipt) }
+          return { status: 'confirmed', transactionHash: Hex.fromString(receipt.txnReceipt), receipt: result }
         case ETHTxnStatus.FAILED:
         case ETHTxnStatus.PARTIALLY_FAILED:
-          return { status: 'failed', reason: receipt.revertReason || 'Relayer reported failure' }
+          return { status: 'failed', reason: receipt.revertReason || 'Relayer reported failure', receipt: result }
         case ETHTxnStatus.DROPPED:
           return { status: 'failed', reason: 'Transaction dropped' }
         case ETHTxnStatus.UNKNOWN:

@@ -8,9 +8,9 @@ interface SectionHeaderProps {
   isCollapsible?: boolean
   statusPill?: ReactNode
   noFrame?: boolean
-  className?: string // For the root div
-  titleContainerClassName?: string // For the div housing title & pill/chevron
-  contentContainerClassName?: string // For the div housing children content
+  className?: string
+  titleContainerClassName?: string
+  contentContainerClassName?: string
   actionSubtitle?: ReactNode
   subtitle?: ReactNode
 }
@@ -23,8 +23,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   statusPill,
   noFrame = false,
   className = '',
-  titleContainerClassName = '', // Default to empty, caller must provide for padding/bg
-  contentContainerClassName = '', // Default to empty, caller must provide for padding/bg
+  titleContainerClassName = '',
+  contentContainerClassName = '',
   actionSubtitle,
   subtitle,
 }) => {
@@ -40,15 +40,12 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   let titleEffectiveClasses = `w-full flex items-center justify-between ${titleContainerClassName}`
   if (isCollapsible) {
-    titleEffectiveClasses += ' cursor-pointer transition-colors duration-200' // Basic interaction
-    // Add hover effect only if it's not a noFrame component (noFrame usually means part of a larger styled area)
-    // Or if titleContainerClassName explicitly adds one. For now, let titleContainerClassName handle hover for noFrame.
+    titleEffectiveClasses += ' cursor-pointer transition-colors duration-200'
     if (!noFrame) {
-      titleEffectiveClasses += ' hover:bg-gray-700/90' // Default hover for framed accordions
+      titleEffectiveClasses += ' hover:bg-gray-700/90'
     }
   }
 
-  // Dynamic rounding for the title container if it's part of a frame
   if (!noFrame) {
     if (isCollapsible && isOpen) {
       titleEffectiveClasses += ' rounded-t-lg'
@@ -57,7 +54,6 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     }
   }
 
-  // Dynamic rounding for the content container if it's part of a frame
   const contentEffectiveClasses = `${contentContainerClassName} ${!noFrame && isCollapsible && isOpen ? 'rounded-b-lg' : ''}`
 
   return (
@@ -86,8 +82,6 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       </div>
 
       {isCollapsible && isOpen && children && <div className={contentEffectiveClasses}>{children}</div>}
-      {/* If not collapsible, but has children, render them directly. */}
-      {/* The contentContainerClassName will provide styling like padding. */}
       {!isCollapsible && children && <div className={contentContainerClassName}>{children}</div>}
     </div>
   )

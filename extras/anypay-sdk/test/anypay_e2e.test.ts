@@ -8,7 +8,7 @@ import {
   sendOriginTransaction,
   getERC20TransferData,
   relayerSendMetaTx,
-  getMetaTxStatus,
+  getMetaTxnReceipt,
   type GetIntentCallsPayloadsReturn,
 } from '../src/index.js'
 import { privateKeyToAccount } from 'viem/accounts'
@@ -117,9 +117,9 @@ async function prepareSend(options: SendOptions) {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx.id as `0x${string}`, BigInt(metaTx.chainId))
-        const status = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
-        console.log('status', status)
-        if (status.status === 'confirmed') {
+        const receipt = await getMetaTxnReceipt(originRelayer, metaTx.id, Number(metaTx.chainId))
+        console.log('status', receipt)
+        if (receipt.receipt.status === 'confirmed') {
           break
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -135,9 +135,9 @@ async function prepareSend(options: SendOptions) {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
-        const status = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
-        console.log('status', status)
-        if (status.status === 'confirmed') {
+        const receipt = await getMetaTxnReceipt(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
+        console.log('status', receipt)
+        if (receipt.receipt.status === 'confirmed') {
           break
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))

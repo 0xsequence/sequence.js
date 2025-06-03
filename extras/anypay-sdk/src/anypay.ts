@@ -9,9 +9,11 @@ import {
   GetIntentCallsPayloadsArgs,
   SequenceAPIClient,
 } from '@0xsequence/api'
+import { Relayer } from '@0xsequence/wallet-core'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Address } from 'ox'
+import { getMetaTxStatus } from './metaTxnMonitor.js'
 import {
   createPublicClient,
   createWalletClient,
@@ -25,7 +27,7 @@ import {
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
-import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus } from './metaTxnMonitor.js'
+import { useMetaTxnsMonitor, MetaTxn } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
 import { useRelayers, getRelayer } from './relayer.js'
 import { findPreconditionAddress } from './preconditions.js'
@@ -37,7 +39,6 @@ import {
   sendOriginTransaction,
 } from './intents.js'
 import { getERC20TransferData } from './encoders.js'
-import { RelayerOperationStatus } from './relayer.js'
 
 export type Account = {
   address: `0x${string}`
@@ -119,7 +120,7 @@ export type UseAnypayReturn = {
   sendMetaTxnError: Error | null
   sendMetaTxnArgs: { selectedId: string | null } | undefined
   clearIntent: () => void
-  metaTxnMonitorStatuses: { [key: string]: RelayerOperationStatus }
+  metaTxnMonitorStatuses: { [key: string]: Relayer.OperationStatus }
   createIntent: (args: any) => void // TODO: Add proper type
   createIntentPending: boolean
   createIntentSuccess: boolean
@@ -594,42 +595,55 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       return
     }
 
-    // Don't update status if it's already set for this hash
-    if (originCallStatus?.txnHash === txnHash) {
+    if (
+      originCallStatus?.txnHash === txnHash &&
+      (originCallStatus?.status === 'Success' || originCallStatus?.status === 'Failed') &&
+      !isWaitingForReceipt
+    ) {
       return
     }
 
     if (isWaitingForReceipt) {
-      setOriginCallStatus({
+      setOriginCallStatus((prevStatus) => ({
+        ...(prevStatus?.txnHash === txnHash
+          ? prevStatus
+          : { gasUsed: undefined, effectiveGasPrice: undefined, revertReason: undefined }),
         txnHash,
         status: 'Pending',
+      }))
+      return
+    }
+
+    if (receiptIsSuccess && receipt) {
+      const newStatus = receipt.status === 'success' ? 'Success' : 'Failed'
+      setOriginCallStatus({
+        txnHash: receipt.transactionHash,
+        status: newStatus,
+        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
+        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+        revertReason:
+          receipt.status === 'reverted'
+            ? ((receiptError as any)?.message as string | undefined) || 'Transaction reverted by receipt'
+            : undefined,
       })
+
       if (
+        newStatus === 'Success' &&
         metaTxns &&
         metaTxns.length > 0 &&
         isAutoExecute &&
         !metaTxns.some((tx) => sentMetaTxns[`${tx.chainId}-${tx.id}`])
       ) {
         console.log('Origin transaction successful, auto-sending all meta transactions...')
-        // Send all meta transactions at once (pass null to send all)
         sendMetaTxnMutation.mutate({ selectedId: null })
       }
-
-      return
-    }
-
-    if (receiptIsSuccess && receipt) {
-      setOriginCallStatus({
-        txnHash: receipt.transactionHash,
-        status: receipt.status === 'success' ? 'Success' : 'Failed',
-        gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : undefined,
-        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
-      })
     } else if (receiptIsError) {
       setOriginCallStatus({
         txnHash,
         status: 'Failed',
-        revertReason: receiptError?.message || 'Failed to get receipt',
+        revertReason: ((receiptError as any)?.message as string | undefined) || 'Failed to get receipt',
+        gasUsed: undefined,
+        effectiveGasPrice: undefined,
       })
     }
   }, [
@@ -642,7 +656,6 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
     metaTxns,
     sentMetaTxns,
     isAutoExecute,
-    originCallStatus?.txnHash,
   ])
 
   // Modify the auto-execute effect
@@ -955,6 +968,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
   // }, [intentPreconditions, checkPreconditionStatuses])
 
   // Add monitoring for each meta transaction
+  console.log('[useAnypay] About to call useMetaTxnsMonitor with metaTxns:', JSON.stringify(metaTxns)) // Log before calling useMetaTxnsMonitor
   const metaTxnMonitorStatuses = useMetaTxnsMonitor(metaTxns as unknown as MetaTxn[] | undefined, getRelayer)
 
   const updateAutoExecute = (enabled: boolean) => {
@@ -1199,9 +1213,9 @@ export async function prepareSend(options: SendOptions) {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx.id as `0x${string}`, BigInt(metaTx.chainId))
-        const status = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
-        console.log('status', status)
-        if (status.status === 'confirmed') {
+        const receipt = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
+        console.log('status', receipt)
+        if (receipt.status === 'confirmed') {
           break
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -1217,9 +1231,9 @@ export async function prepareSend(options: SendOptions) {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
-        const status = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
-        console.log('status', status)
-        if (status.status === 'confirmed') {
+        const receipt = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
+        console.log('receipt', receipt)
+        if (receipt.status === 'confirmed') {
           break
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
