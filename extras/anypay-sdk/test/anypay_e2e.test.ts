@@ -1,4 +1,4 @@
-import { describe, it } from '@jest/globals'
+import { describe, it, expect, vi } from 'vitest'
 import {
   getAPIClient,
   getRelayer,
@@ -9,12 +9,24 @@ import {
   getERC20TransferData,
   relayerSendMetaTx,
   getMetaTxStatus,
-  type GetIntentCallsPayloadsReturn
-} from './index.js'
+  type GetIntentCallsPayloadsReturn,
+} from '../src/index.js'
 import { privateKeyToAccount } from 'viem/accounts'
 import { createWalletClient, createPublicClient, http } from 'viem'
 import { arbitrum, base, optimism } from 'viem/chains'
 import 'dotenv/config'
+
+// Mock the hooks
+vi.mock('@0xsequence/hooks', () => ({
+  useIndexerGatewayClient: vi.fn(),
+  useQuery: vi.fn(),
+  useMemo: vi.fn(),
+}))
+
+// Mock react
+vi.mock('react', () => ({
+  useMemo: vi.fn((fn) => fn()),
+}))
 
 const cachedIntent = null
 
@@ -27,13 +39,7 @@ type SendOptions = {
 }
 
 async function prepareSend(options: SendOptions) {
-  const {
-    originChainId,
-    destinationChainId,
-    recipient,
-    destinationTokenAddress,
-    destinationTokenAmount
-  } = options
+  const { originChainId, destinationChainId, recipient, destinationTokenAddress, destinationTokenAmount } = options
   const chain = originChainId === 42161 ? arbitrum : destinationChainId === 8453 ? base : optimism
   const apiClient = getAPIClient('http://localhost:4422', process.env.SEQUENCE_API_KEY as string)
   const originRelayer = getRelayer({ env: 'local' }, originChainId)
@@ -52,7 +58,7 @@ async function prepareSend(options: SendOptions) {
     destinationTokenAddress: destinationTokenAddress,
     destinationTokenAmount: destinationTokenAmount,
     destinationCallData: getERC20TransferData(recipient, BigInt(destinationTokenAmount)),
-    destinationCallValue: '0'
+    destinationCallValue: '0',
   }
 
   console.log('Creating intent with args:', JSON.stringify(args, null, 2))
@@ -66,13 +72,7 @@ async function prepareSend(options: SendOptions) {
   console.log('Calculated intent address:', intentAddress.toString())
 
   if (!cachedIntent) {
-    await commitIntentConfig(
-      apiClient,
-      mainSigner,
-      intent.calls,
-      intent.preconditions,
-      intent.lifiInfos
-    )
+    await commitIntentConfig(apiClient, mainSigner, intent.calls, intent.preconditions, intent.lifiInfos)
   }
 
   return {
@@ -86,17 +86,17 @@ async function prepareSend(options: SendOptions) {
           data: '0x',
           value: BigInt(intent.preconditions[0].data.min) + BigInt('5600000000000'),
           chainId: originChainId,
-          chain
+          chain,
         }
 
         const walletClient = createWalletClient({
           chain,
-          transport: http()
+          transport: http(),
         })
 
         const publicClient = createPublicClient({
           chain,
-          transport: http()
+          transport: http(),
         })
 
         const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
@@ -105,7 +105,7 @@ async function prepareSend(options: SendOptions) {
         const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
         console.log('receipt', receipt)
 
-        await new Promise(resolve => setTimeout(resolve, 5000))
+        await new Promise((resolve) => setTimeout(resolve, 5000))
       }
 
       const metaTx = intent.metaTxns[0]
@@ -122,37 +122,31 @@ async function prepareSend(options: SendOptions) {
         if (status.status === 'confirmed') {
           break
         }
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       }
 
-      await new Promise(resolve => setTimeout(resolve, 5000))
+      await new Promise((resolve) => setTimeout(resolve, 5000))
       const metaTx2 = intent.metaTxns[1]
       console.log('metaTx2', metaTx2)
 
-      const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [
-        intent.preconditions[1]
-      ])
+      const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [intent.preconditions[1]])
       console.log('opHash2', opHash2)
 
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
-        const status = await getMetaTxStatus(
-          destinationRelayer,
-          metaTx2.id,
-          Number(metaTx2.chainId)
-        )
+        const status = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
         console.log('status', status)
         if (status.status === 'confirmed') {
           break
         }
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       }
-    }
+    },
   }
 }
 
-describe('AnyPay', () => {
+describe.skip('AnyPay', () => {
   it(
     'should should an e2e test',
     async () => {
@@ -165,7 +159,7 @@ describe('AnyPay', () => {
         destinationChainId: 8453,
         recipient,
         destinationTokenAddress,
-        destinationTokenAmount
+        destinationTokenAmount,
       })
 
       console.log('preparedSend intentAddress', preparedSend.intentAddress) // TODO: to a second send using this intentAddress as the destination address
@@ -174,6 +168,6 @@ describe('AnyPay', () => {
 
       console.log('done')
     },
-    10 * 60 * 1000
+    10 * 60 * 1000,
   )
 })

@@ -1,14 +1,4 @@
-import {
-  Address,
-  Bytes,
-  Provider,
-  Hex,
-  RpcTransport,
-  Secp256k1,
-  AbiFunction,
-  AbiParameters,
-  Hash
-} from 'ox'
+import { Address, Bytes, Provider, Hex, RpcTransport, Secp256k1, AbiFunction, AbiParameters, Hash } from 'ox'
 import { Context, Payload } from '@0xsequence/wallet-primitives'
 import { Relayer } from '@0xsequence/wallet-core'
 import { describe, it, expect, vi } from 'vitest'
@@ -19,8 +9,8 @@ import {
   hashIntentParams,
   IntentCallsPayload,
   AnypayLifiInfo,
-  getAnypayLifiInfoHash
-} from './intents.js'
+  getAnypayLifiInfoHash,
+} from '../src/intents.js'
 import 'dotenv/config'
 
 const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL || 'http://localhost:8545'
@@ -35,7 +25,7 @@ const {
   Erc721OwnershipPrecondition,
   Erc721ApprovalPrecondition,
   Erc1155BalancePrecondition,
-  Erc1155ApprovalPrecondition
+  Erc1155ApprovalPrecondition,
 } = Preconditions
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
@@ -58,7 +48,7 @@ describe('AnyPay Preconditions', () => {
         removeListener: vi.fn(),
         call: vi.fn(),
         sendTransaction: vi.fn(),
-        getBalance: vi.fn()
+        getBalance: vi.fn(),
       } as unknown as Provider.Provider
     }
 
@@ -68,10 +58,7 @@ describe('AnyPay Preconditions', () => {
   const testWalletAddress = randomAddress()
   const testIdentityAddress = randomAddress()
 
-  const requireContractDeployed = async (
-    provider: Provider.Provider,
-    contract: Address.Address
-  ) => {
+  const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Address) => {
     const code = await provider.request({ method: 'eth_getCode', params: [contract, 'latest'] })
     if (code === '0x') {
       throw new Error(`Contract ${contract} not deployed`)
@@ -85,7 +72,7 @@ describe('AnyPay Preconditions', () => {
     const precondition = new NativeBalancePrecondition(
       testWalletAddress,
       1000000000000000000n, // 1 ETH min
-      2000000000000000000n // 2 ETH max
+      2000000000000000000n, // 2 ETH max
     )
 
     const intentPrecondition = {
@@ -94,8 +81,8 @@ describe('AnyPay Preconditions', () => {
       data: JSON.stringify({
         address: precondition.address.toString(),
         min: precondition.min?.toString(),
-        max: precondition.max?.toString()
-      })
+        max: precondition.max?.toString(),
+      }),
     }
 
     if (!CAN_RUN_LIVE) {
@@ -116,7 +103,7 @@ describe('AnyPay Preconditions', () => {
       testWalletAddress,
       ERC20_IMPLICIT_MINT_CONTRACT,
       1000000n, // 1 token min
-      2000000n // 2 tokens max
+      2000000n, // 2 tokens max
     )
 
     const intentPrecondition = {
@@ -126,8 +113,8 @@ describe('AnyPay Preconditions', () => {
         address: precondition.address.toString(),
         token: precondition.token.toString(),
         min: precondition.min?.toString(),
-        max: precondition.max?.toString()
-      })
+        max: precondition.max?.toString(),
+      }),
     }
 
     if (!CAN_RUN_LIVE) {
@@ -149,7 +136,7 @@ describe('AnyPay Preconditions', () => {
       testWalletAddress,
       ERC20_IMPLICIT_MINT_CONTRACT,
       operator,
-      1000000n // 1 token min approval
+      1000000n, // 1 token min approval
     )
 
     const intentPrecondition = {
@@ -159,8 +146,8 @@ describe('AnyPay Preconditions', () => {
         address: precondition.address.toString(),
         token: precondition.token.toString(),
         operator: precondition.operator.toString(),
-        min: precondition.min.toString()
-      })
+        min: precondition.min.toString(),
+      }),
     }
 
     if (!CAN_RUN_LIVE) {
@@ -181,7 +168,7 @@ describe('AnyPay Preconditions', () => {
       testWalletAddress,
       ERC20_IMPLICIT_MINT_CONTRACT,
       1n, // tokenId
-      true // must own
+      true, // must own
     )
 
     const intentPrecondition = {
@@ -191,14 +178,14 @@ describe('AnyPay Preconditions', () => {
         address: precondition.address.toString(),
         token: precondition.token.toString(),
         tokenId: precondition.tokenId.toString(),
-        owned: precondition.owned
-      })
+        owned: precondition.owned,
+      }),
     }
 
     if (!CAN_RUN_LIVE) {
       // Mock the ownerOf call
       ;(provider as any).call.mockResolvedValue(
-        '0x000000000000000000000000' + testWalletAddress.toString().slice(2).toLowerCase()
+        '0x000000000000000000000000' + testWalletAddress.toString().slice(2).toLowerCase(),
       )
     }
 
@@ -216,7 +203,7 @@ describe('AnyPay Preconditions', () => {
       testWalletAddress,
       ERC20_IMPLICIT_MINT_CONTRACT,
       1n, // tokenId
-      operator
+      operator,
     )
 
     const intentPrecondition = {
@@ -226,14 +213,14 @@ describe('AnyPay Preconditions', () => {
         address: precondition.address.toString(),
         token: precondition.token.toString(),
         tokenId: precondition.tokenId.toString(),
-        operator: precondition.operator.toString()
-      })
+        operator: precondition.operator.toString(),
+      }),
     }
 
     if (!CAN_RUN_LIVE) {
       // Mock the getApproved call
       ;(provider as any).call.mockResolvedValue(
-        '0x000000000000000000000000' + operator.toString().slice(2).toLowerCase()
+        '0x000000000000000000000000' + operator.toString().slice(2).toLowerCase(),
       )
     }
 
@@ -251,7 +238,7 @@ describe('AnyPay Preconditions', () => {
       ERC20_IMPLICIT_MINT_CONTRACT,
       1n, // tokenId
       1000000n, // 1 token min
-      2000000n // 2 tokens max
+      2000000n, // 2 tokens max
     )
 
     const intentPrecondition = {
@@ -262,8 +249,8 @@ describe('AnyPay Preconditions', () => {
         token: precondition.token.toString(),
         tokenId: precondition.tokenId.toString(),
         min: precondition.min?.toString(),
-        max: precondition.max?.toString()
-      })
+        max: precondition.max?.toString(),
+      }),
     }
 
     if (!CAN_RUN_LIVE) {
@@ -286,7 +273,7 @@ describe('AnyPay Preconditions', () => {
       ERC20_IMPLICIT_MINT_CONTRACT,
       1n, // tokenId
       operator,
-      1000000n // 1 token min approval
+      1000000n, // 1 token min approval
     )
 
     const intentPrecondition = {
@@ -297,8 +284,8 @@ describe('AnyPay Preconditions', () => {
         token: precondition.token.toString(),
         tokenId: precondition.tokenId.toString(),
         operator: precondition.operator.toString(),
-        min: precondition.min.toString()
-      })
+        min: precondition.min.toString(),
+      }),
     }
 
     if (!CAN_RUN_LIVE) {
@@ -319,7 +306,7 @@ describe('AnyPay Preconditions', () => {
     const precondition = new Erc20BalancePrecondition(
       testWalletAddress,
       ERC20_IMPLICIT_MINT_CONTRACT,
-      1000000n // 1 token min
+      1000000n, // 1 token min
     )
 
     const intentPrecondition = {
@@ -328,8 +315,8 @@ describe('AnyPay Preconditions', () => {
       data: JSON.stringify({
         address: precondition.address.toString(),
         token: precondition.token.toString(),
-        min: precondition.min?.toString()
-      })
+        min: precondition.min?.toString(),
+      }),
     }
 
     // Mock initial balance check to fail
@@ -354,9 +341,9 @@ describe('AnyPay Preconditions', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore'
-        }
-      ]
+          behaviorOnError: 'ignore',
+        },
+      ],
     }
 
     // Create context
@@ -364,7 +351,7 @@ describe('AnyPay Preconditions', () => {
       factory: randomAddress(),
       creationCode: '0x' as Hex.Hex,
       stage1: '0x' as Hex.Hex,
-      stage2: '0x' as Hex.Hex
+      stage2: '0x' as Hex.Hex,
     }
 
     // Calculate intent configuration address
@@ -383,15 +370,15 @@ describe('AnyPay Preconditions', () => {
               gasLimit: 0n,
               delegateCall: false,
               onlyFallback: false,
-              behaviorOnError: 'ignore'
-            }
-          ])
-        )
+              behaviorOnError: 'ignore',
+            },
+          ]),
+        ),
       ),
       chainId,
       undefined,
       [intentPrecondition],
-      100 // Short check interval for testing
+      100, // Short check interval for testing
     )
 
     // Simulate ERC20 transfer by updating the mock balance
@@ -403,16 +390,16 @@ describe('AnyPay Preconditions', () => {
       const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
       const transferData = AbiFunction.encodeData(erc20Transfer, [
         testWalletAddress.toString() as Hex.Hex,
-        transferAmount
+        transferAmount,
       ]) as Hex.Hex
       await provider.request({
         method: 'eth_sendTransaction',
         params: [
           {
             to: ERC20_IMPLICIT_MINT_CONTRACT,
-            data: transferData
-          }
-        ]
+            data: transferData,
+          },
+        ],
       })
     }
 
@@ -437,13 +424,13 @@ describe('AnyPay Preconditions', () => {
                   gasLimit: 0n,
                   delegateCall: false,
                   onlyFallback: false,
-                  behaviorOnError: 'ignore'
-                }
-              ])
-            )
-          )
+                  behaviorOnError: 'ignore',
+                },
+              ]),
+            ),
+          ),
         },
-        1n
+        1n,
       )
     }
   })
@@ -468,21 +455,21 @@ describe('AnyPay Preconditions', () => {
             gasLimit: 0n,
             delegateCall: false,
             onlyFallback: false,
-            behaviorOnError: 'ignore'
-          }
-        ]
+            behaviorOnError: 'ignore',
+          },
+        ],
       }
 
       // Create preconditions
       const nativePrecondition = new NativeBalancePrecondition(
         testWalletAddress,
-        1000000000000000000n // 1 ETH min
+        1000000000000000000n, // 1 ETH min
       )
 
       const erc20Precondition = new Erc20BalancePrecondition(
         testWalletAddress,
         ERC20_IMPLICIT_MINT_CONTRACT,
-        1000000n // 1 token min
+        1000000n, // 1 token min
       )
 
       const intentPreconditions = [
@@ -491,8 +478,8 @@ describe('AnyPay Preconditions', () => {
           chainId: chainId.toString(),
           data: JSON.stringify({
             address: nativePrecondition.address.toString(),
-            min: nativePrecondition.min?.toString()
-          })
+            min: nativePrecondition.min?.toString(),
+          }),
         },
         {
           type: erc20Precondition.type(),
@@ -500,9 +487,9 @@ describe('AnyPay Preconditions', () => {
           data: JSON.stringify({
             address: erc20Precondition.address.toString(),
             token: erc20Precondition.token.toString(),
-            min: erc20Precondition.min?.toString()
-          })
-        }
+            min: erc20Precondition.min?.toString(),
+          }),
+        },
       ]
 
       // Create context
@@ -510,15 +497,11 @@ describe('AnyPay Preconditions', () => {
         factory: randomAddress(),
         creationCode: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
         stage1: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
-        stage2: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex
+        stage2: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(
-        testWalletAddress,
-        [payload],
-        context
-      )
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
       expect(configAddress).toBeDefined()
       expect(configAddress).not.toBe(testWalletAddress)
@@ -538,13 +521,13 @@ describe('AnyPay Preconditions', () => {
       // Create preconditions
       const nativePrecondition = new NativeBalancePrecondition(
         testWalletAddress,
-        1000000000000000000n // 1 ETH min
+        1000000000000000000n, // 1 ETH min
       )
 
       const erc20Precondition = new Erc20BalancePrecondition(
         testWalletAddress,
         ERC20_IMPLICIT_MINT_CONTRACT,
-        1000000n // 1 token min
+        1000000n, // 1 token min
       )
 
       const intentPreconditions = [
@@ -553,8 +536,8 @@ describe('AnyPay Preconditions', () => {
           chainId: chainId.toString(),
           data: JSON.stringify({
             address: nativePrecondition.address.toString(),
-            min: nativePrecondition.min?.toString()
-          })
+            min: nativePrecondition.min?.toString(),
+          }),
         },
         {
           type: erc20Precondition.type(),
@@ -562,9 +545,9 @@ describe('AnyPay Preconditions', () => {
           data: JSON.stringify({
             address: erc20Precondition.address.toString(),
             token: erc20Precondition.token.toString(),
-            min: erc20Precondition.min?.toString()
-          })
-        }
+            min: erc20Precondition.min?.toString(),
+          }),
+        },
       ]
 
       // Create a test operation
@@ -581,9 +564,9 @@ describe('AnyPay Preconditions', () => {
             gasLimit: 0n,
             delegateCall: false,
             onlyFallback: false,
-            behaviorOnError: 'ignore'
-          }
-        ]
+            behaviorOnError: 'ignore',
+          },
+        ],
       }
 
       // Create context
@@ -591,15 +574,11 @@ describe('AnyPay Preconditions', () => {
         factory: randomAddress(),
         creationCode: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
         stage1: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
-        stage2: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex
+        stage2: Bytes.toHex(Bytes.fromHex('0x')) as Hex.Hex,
       }
 
       // Calculate intent configuration address
-      const configAddress = calculateIntentConfigurationAddress(
-        testWalletAddress,
-        [payload],
-        context
-      )
+      const configAddress = calculateIntentConfigurationAddress(testWalletAddress, [payload], context)
 
       // Mock the provider responses
       if (!CAN_RUN_LIVE) {
@@ -616,7 +595,7 @@ describe('AnyPay Preconditions', () => {
         chainId,
         undefined, // fee quote
         intentPreconditions,
-        1000 // check interval in ms
+        1000, // check interval in ms
       )
 
       expect(opHash).toBeDefined()
@@ -626,7 +605,7 @@ describe('AnyPay Preconditions', () => {
       if (!CAN_RUN_LIVE) {
         expect((provider as any).sendTransaction).toHaveBeenCalledWith({
           to: configAddress,
-          data: '0x' as Hex.Hex
+          data: '0x' as Hex.Hex,
         })
       }
     })
@@ -639,7 +618,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
     stage1: '0x0000000000000000000000000000000000000000' as Hex.Hex, // MainModuleAddress
     stage2: '0x0000000000000000000000000000000000000000' as Hex.Hex, // guestModule
     creationCode:
-      '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex
+      '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex,
   }
 
   const mainSigner = Address.from('0x1111111111111111111111111111111111111111')
@@ -650,8 +629,8 @@ describe('Intent Configuration Address with LifiInfo', () => {
       originToken: Address.from('0x1111111111111111111111111111111111111111'),
       amount: 100n,
       originChainId: 1n,
-      destinationChainId: 10n
-    }
+      destinationChainId: 10n,
+    },
   ]
 
   it('should calculate address for single operation with lifiInfo', () => {
@@ -668,9 +647,9 @@ describe('Intent Configuration Address with LifiInfo', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert' as const
-        }
-      ]
+          behaviorOnError: 'revert' as const,
+        },
+      ],
     }
 
     const address = calculateIntentConfigurationAddress(
@@ -678,7 +657,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
       [payload],
       testContext,
       attestationSigner,
-      lifiInfos
+      lifiInfos,
     )
 
     console.log('Single Operation with LifiInfo Test Address:', address)
@@ -699,9 +678,9 @@ describe('Intent Configuration Address with LifiInfo', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert' as const
-        }
-      ]
+          behaviorOnError: 'revert' as const,
+        },
+      ],
     }
 
     const payload2: IntentCallsPayload = {
@@ -717,9 +696,9 @@ describe('Intent Configuration Address with LifiInfo', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'revert' as const
-        }
-      ]
+          behaviorOnError: 'revert' as const,
+        },
+      ],
     }
 
     const address = calculateIntentConfigurationAddress(
@@ -727,7 +706,7 @@ describe('Intent Configuration Address with LifiInfo', () => {
       [payload1, payload2],
       testContext,
       attestationSigner,
-      lifiInfos
+      lifiInfos,
     )
 
     console.log('Multiple Operations with LifiInfo Test Address:', address)
@@ -743,7 +722,7 @@ describe('Intent Configuration Address', () => {
       stage1: '0x0000000000000000000000000000000000000000' as Hex.Hex,
       stage2: '0x0000000000000000000000000000000000000000' as Hex.Hex,
       creationCode:
-        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex
+        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex,
     }
 
     // Main signer matching Go test
@@ -763,9 +742,9 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore' as const
-        }
-      ]
+          behaviorOnError: 'ignore' as const,
+        },
+      ],
     }
 
     // Calculate intent configuration address
@@ -784,7 +763,7 @@ describe('Intent Configuration Address', () => {
       stage1: '0x0000000000000000000000000000000000000000' as Hex.Hex,
       stage2: '0x0000000000000000000000000000000000000000' as Hex.Hex,
       creationCode:
-        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex
+        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as Hex.Hex,
     }
 
     // Main signer matching Go test
@@ -804,9 +783,9 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore' as const
-        }
-      ]
+          behaviorOnError: 'ignore' as const,
+        },
+      ],
     }
 
     const payload2: IntentCallsPayload = {
@@ -822,9 +801,9 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore' as const
-        }
-      ]
+          behaviorOnError: 'ignore' as const,
+        },
+      ],
     }
 
     // Calculate intent configuration address
@@ -843,7 +822,7 @@ describe('Intent Configuration Address', () => {
       stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
       stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
       creationCode:
-        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`
+        '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
     }
 
     // Main signer
@@ -863,9 +842,9 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore' as const
-        }
-      ]
+          behaviorOnError: 'ignore' as const,
+        },
+      ],
     }
 
     const basePayload: IntentCallsPayload = {
@@ -881,17 +860,13 @@ describe('Intent Configuration Address', () => {
           gasLimit: 0n,
           delegateCall: false,
           onlyFallback: false,
-          behaviorOnError: 'ignore' as const
-        }
-      ]
+          behaviorOnError: 'ignore' as const,
+        },
+      ],
     }
 
     // Calculate intent configuration address
-    const address = calculateIntentConfigurationAddress(
-      mainSigner,
-      [arbitrumPayload, basePayload],
-      context
-    )
+    const address = calculateIntentConfigurationAddress(mainSigner, [arbitrumPayload, basePayload], context)
 
     // Log the address
     console.log('address', address)
@@ -909,8 +884,8 @@ describe('HashIntentParams', () => {
         nonce: 0n,
         originTokens: [],
         destinationCalls: [],
-        destinationTokens: []
-      })
+        destinationTokens: [],
+      }),
     ).toThrow()
   })
 
@@ -922,35 +897,31 @@ describe('HashIntentParams', () => {
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
-      behaviorOnError: 'ignore' as const
+      behaviorOnError: 'ignore' as const,
     }
     const payload: IntentCallsPayload = {
       chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
-      calls: [call]
+      calls: [call],
     }
     const params = {
       userAddress: Address.from('0x3333333333333333333333333333333333333333'),
       nonce: 0n,
-      originTokens: [
-        { address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }
-      ],
+      originTokens: [{ address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }],
       destinationCalls: [payload],
       destinationTokens: [
         {
           address: Address.from('0x4444444444444444444444444444444444444444'),
           chainId: 1n,
-          amount: 123n
-        }
-      ]
+          amount: 123n,
+        },
+      ],
     }
     const hash = hashIntentParams(params)
 
-    expect(hash.toLowerCase()).toBe(
-      '0x4479e1ed63b1cf70ed13228bec79f2a1d2ffa0e9372e2afc7d82263cd8107451'
-    )
+    expect(hash.toLowerCase()).toBe('0x4479e1ed63b1cf70ed13228bec79f2a1d2ffa0e9372e2afc7d82263cd8107451')
   })
 
   it('should match hash for multiple calls', () => {
@@ -961,7 +932,7 @@ describe('HashIntentParams', () => {
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
-      behaviorOnError: 'ignore' as const
+      behaviorOnError: 'ignore' as const,
     }
     const call2 = {
       to: Address.from('0x5555555555555555555555555555555555555555'),
@@ -970,41 +941,37 @@ describe('HashIntentParams', () => {
       gasLimit: 0n,
       delegateCall: false,
       onlyFallback: false,
-      behaviorOnError: 'ignore' as const
+      behaviorOnError: 'ignore' as const,
     }
     const payload1: IntentCallsPayload = {
       chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
-      calls: [call1]
+      calls: [call1],
     }
     const payload2: IntentCallsPayload = {
       chainId: 1n,
       type: 'call',
       space: 0n,
       nonce: 0n,
-      calls: [call2]
+      calls: [call2],
     }
     const params = {
       userAddress: Address.from('0x3333333333333333333333333333333333333333'),
       nonce: 0n,
-      originTokens: [
-        { address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }
-      ],
+      originTokens: [{ address: Address.from('0x4444444444444444444444444444444444444444'), chainId: 1n }],
       destinationCalls: [payload1, payload2],
       destinationTokens: [
         {
           address: Address.from('0x4444444444444444444444444444444444444444'),
           chainId: 1n,
-          amount: 123n
-        }
-      ]
+          amount: 123n,
+        },
+      ],
     }
     const hash = hashIntentParams(params)
-    expect(hash.toLowerCase()).toBe(
-      '0x64631a48bc218cd8196dca22437223d90dc9caa8208284cdcea4b7f32bfc7cec'
-    )
+    expect(hash.toLowerCase()).toBe('0x64631a48bc218cd8196dca22437223d90dc9caa8208284cdcea4b7f32bfc7cec')
   })
 })
 
@@ -1015,15 +982,13 @@ describe('GetAnypayLifiInfoHash', () => {
         originToken: Address.from('0x1111111111111111111111111111111111111111'),
         amount: 100n,
         originChainId: 1n,
-        destinationChainId: 10n
-      }
+        destinationChainId: 10n,
+      },
     ]
     const attestationAddress = Address.from('0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa')
 
     const hash = getAnypayLifiInfoHash(lifiInfos, attestationAddress)
-    expect(hash.toLowerCase()).toBe(
-      '0x21872bd6b64711c4a5aecba95829c612f0b50c63f1a26991c2f76cf4a754aede'
-    )
+    expect(hash.toLowerCase()).toBe('0x21872bd6b64711c4a5aecba95829c612f0b50c63f1a26991c2f76cf4a754aede')
   })
 
   it('should match hash for multiple AnypayLifiInfo', () => {
@@ -1032,21 +997,19 @@ describe('GetAnypayLifiInfoHash', () => {
         originToken: Address.from('0x1111111111111111111111111111111111111111'),
         amount: 100n,
         originChainId: 1n,
-        destinationChainId: 10n
+        destinationChainId: 10n,
       },
       {
         originToken: Address.from('0x2222222222222222222222222222222222222222'),
         amount: 200n,
         originChainId: 137n,
-        destinationChainId: 42161n
-      }
+        destinationChainId: 42161n,
+      },
     ]
     const attestationAddress = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
 
     const hash = getAnypayLifiInfoHash(lifiInfos, attestationAddress)
-    expect(hash.toLowerCase()).toBe(
-      '0xd18e54455db64ba31b9f9a447e181f83977cb70b136228d64ac85d64a6aefe71'
-    )
+    expect(hash.toLowerCase()).toBe('0xd18e54455db64ba31b9f9a447e181f83977cb70b136228d64ac85d64a6aefe71')
   })
 
   it('should error on empty lifiInfos', () => {
@@ -1060,12 +1023,10 @@ describe('GetAnypayLifiInfoHash', () => {
         originToken: Address.from('0x1111111111111111111111111111111111111111'),
         amount: 100n,
         originChainId: 1n,
-        destinationChainId: 10n
-      }
+        destinationChainId: 10n,
+      },
     ]
     const attestationAddress = Address.from('0x0000000000000000000000000000000000000000')
-    expect(() => getAnypayLifiInfoHash(lifiInfos, attestationAddress)).toThrow(
-      'attestationAddress is zero'
-    )
+    expect(() => getAnypayLifiInfoHash(lifiInfos, attestationAddress)).toThrow('attestationAddress is zero')
   })
 })
