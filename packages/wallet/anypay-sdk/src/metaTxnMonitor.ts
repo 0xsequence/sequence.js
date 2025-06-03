@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Relayer } from '@0xsequence/wallet-core'
 import { Hex } from 'viem'
 import { ETHTxnStatus, MetaTxnReceipt } from './gen/relayer.gen.js'
@@ -38,12 +39,11 @@ export function useMetaTxnsMonitor(
 ): MetaTxnStatus {
   const results = useQueries({
     queries: (metaTxns || []).map((metaTxn) => {
-      // const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
       const opHashToPoll = metaTxn.id as Hex
 
       return {
         queryKey: ['metaTxnStatus', metaTxn.chainId, metaTxn.id],
-        queryFn: async () => {
+        queryFn: async (): Promise<MetaTxnStatusValue> => {
           const relayer = getRelayer(parseInt(metaTxn.chainId))
 
           if (!opHashToPoll) {
@@ -148,25 +148,34 @@ export function useMetaTxnsMonitor(
     }),
   })
 
-  const statuses: MetaTxnStatus = {}
-  ;(metaTxns || []).forEach((metaTxn, index) => {
-    const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
-    const queryResult = results[index]!
+  const statuses: MetaTxnStatus = useMemo(() => {
+    const newStatuses: MetaTxnStatus = {}
+    ;(metaTxns || []).forEach((metaTxn, index) => {
+      const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
+      const queryResult = results[index]
 
-    if (queryResult.isLoading && queryResult.fetchStatus !== 'idle' && !queryResult.data) {
-      statuses[operationKey] = { status: 'loading' }
-    } else if (queryResult.isError) {
-      statuses[operationKey] = {
-        status: 'failed',
-        reason: (queryResult.error as Error)?.message || 'An unknown error occurred',
+      if (queryResult) {
+        if (queryResult.isLoading && queryResult.fetchStatus !== 'idle' && !queryResult.data) {
+          newStatuses[operationKey] = { status: 'pending' } as Relayer.OperationPendingStatus
+        } else if (queryResult.isError) {
+          newStatuses[operationKey] = {
+            status: 'failed',
+            reason: (queryResult.error as Error)?.message || 'An unknown error occurred',
+          } as Relayer.OperationFailedStatus
+        } else if (queryResult.data) {
+          newStatuses[operationKey] = queryResult.data as Relayer.OperationStatus
+        } else {
+          newStatuses[operationKey] = { status: 'unknown' } as Relayer.OperationUnknownStatus
+        }
+      } else {
+        newStatuses[operationKey] = {
+          status: 'failed',
+          reason: 'Query result unexpectedly missing',
+        } as Relayer.OperationFailedStatus
       }
-    } else if (queryResult.data) {
-      statuses[operationKey] = queryResult.data as MetaTxnStatusValue
-    } else {
-      // Default or initial state before first fetch attempt if not loading and no data/error
-      statuses[operationKey] = { status: 'unknown' }
-    }
-  })
+    })
+    return newStatuses
+  }, [metaTxns, results])
 
   return statuses
 }
