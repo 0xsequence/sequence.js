@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { NetworkImage } from '@0xsequence/design-system'
+import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
 import { ChevronDown, Loader2 } from 'lucide-react'
@@ -41,8 +41,16 @@ const SUPPORTED_CHAINS = [
 
 // Available tokens
 const SUPPORTED_TOKENS = [
-  { symbol: 'ETH', name: 'Ethereum', icon: '⟠' },
-  { symbol: 'USDC', name: 'USD Coin', icon: '$' },
+  {
+    symbol: 'ETH',
+    name: 'Ethereum',
+    imageUrl: `https://assets.sequence.info/images/tokens/small/1/0x0000000000000000000000000000000000000000.webp`,
+  },
+  {
+    symbol: 'USDC',
+    name: 'USD Coin',
+    imageUrl: `https://assets.sequence.info/images/tokens/small/1/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.webp`,
+  },
 ]
 
 // Helper to get chain info
@@ -160,7 +168,7 @@ export const SendForm: React.FC<SendFormProps> = ({
             : getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
         destinationTokenAmount: parsedAmount,
         sequenceApiKey,
-        fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(),
+        fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(), // TOOD: fees
         client,
       }
 
@@ -193,7 +201,11 @@ export const SendForm: React.FC<SendFormProps> = ({
       <div className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg">
         <div className="relative">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-            <span className="text-2xl font-medium text-gray-600">{selectedToken.symbol[0]}</span>
+            {selectedToken.contractAddress ? (
+              <TokenImage symbol={selectedToken.symbol} src={selectedToken.imageUrl} />
+            ) : (
+              <span className="text-2xl font-medium text-gray-600">{selectedToken.symbol[0]}</span>
+            )}
           </div>
           <div className="absolute -bottom-1 -right-1">
             <NetworkImage chainId={selectedToken.chainId} size="sm" className="w-6 h-6" />
@@ -258,7 +270,7 @@ export const SendForm: React.FC<SendFormProps> = ({
               className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                {selectedDestToken.icon}
+                <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
               </div>
               <span className="ml-2 flex-1 text-left text-gray-900">{selectedDestToken.name}</span>
               <ChevronDown
@@ -281,7 +293,7 @@ export const SendForm: React.FC<SendFormProps> = ({
                     }`}
                   >
                     <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                      {token.icon}
+                      <TokenImage symbol={token.symbol} src={token.imageUrl} size="sm" />
                     </div>
                     <span className="ml-2">{token.name}</span>
                     {selectedDestToken.symbol === token.symbol && <span className="ml-auto text-blue-600">•</span>}
@@ -298,7 +310,6 @@ export const SendForm: React.FC<SendFormProps> = ({
             <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
               Amount to Receive
             </label>
-            <span className="text-sm text-gray-500">Using {selectedToken.symbol}</span>
           </div>
           <div className="relative rounded-lg">
             <input

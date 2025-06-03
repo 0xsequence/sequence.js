@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi'
 import { useTokenBalances } from '../../tokenBalances.js'
 import { Address } from 'ox'
 import { formatUnits, isAddressEqual, zeroAddress } from 'viem'
-import { NetworkImage } from '@0xsequence/design-system'
+import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { Search, ArrowLeft } from 'lucide-react'
 
@@ -58,6 +58,8 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
   const handleTokenSelect = (token: any) => {
     const isNative = !('contractAddress' in token)
     const chainInfo = getChainInfo(token.chainId) as any // TODO: Add proper type
+    const contractAddress = isNative ? zeroAddress : token.contractAddress
+    const imageUrl = `https://assets.sequence.info/images/tokens/small/${token.chainId}/${contractAddress}.webp`
 
     let formattedToken: Token
     if (isNative) {
@@ -66,7 +68,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
         name: chainInfo?.nativeCurrency.name || 'Native Token',
         symbol: chainInfo?.nativeCurrency.symbol || 'ETH',
         balance: token.balance,
-        imageUrl: '', // TODO: Add native token images
+        imageUrl,
         chainId: token.chainId,
         contractAddress: zeroAddress,
         contractInfo: {
@@ -81,7 +83,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
         name: token.contractInfo?.name || 'Unknown Token',
         symbol: token.contractInfo?.symbol || '???',
         balance: token.balance,
-        imageUrl: '', // TODO: Add token images
+        imageUrl,
         chainId: token.chainId,
         contractAddress: token.contractAddress,
         contractInfo: token.contractInfo,
@@ -171,12 +173,14 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
         </div>
       )}
 
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-gray-200 max-h-[40vh] overflow-y-auto rounded-lg">
         {filteredTokens.map((token: any) => {
           const isNative = !('contractAddress' in token)
           const chainInfo = getChainInfo(token.chainId) as any // TODO: Add proper type
           const nativeSymbol = chainInfo?.nativeCurrency.symbol || 'ETH'
           const tokenSymbol = isNative ? nativeSymbol : token.contractInfo?.symbol || '???'
+          const contractAddress = isNative ? zeroAddress : token.contractAddress
+          const imageUrl = `https://assets.sequence.info/images/tokens/small/${token.chainId}/${contractAddress}.webp`
           const tokenName = isNative
             ? `${nativeSymbol} (${chainInfo?.name || 'Unknown Chain'})`
             : token.contractInfo?.name || 'Unknown Token'
@@ -186,25 +190,29 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
             <div
               key={isNative ? `${token.chainId}-native` : `${token.chainId}-${token.contractAddress}`}
               onClick={() => handleTokenSelect(token)}
-              className={`py-4 px-4 -mx-4 flex items-center space-x-4 cursor-pointer transition-colors ${
+              className={`py-4 px-4 flex items-center space-x-4 cursor-pointer transition-colors ${
                 isTokenSelected(token) ? 'bg-blue-50' : 'hover:bg-gray-50'
               }`}
             >
-              <div className="relative">
+              <div className="relative flex-shrink-0">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-lg font-medium text-gray-600">{tokenSymbol[0]}</span>
+                  {contractAddress ? (
+                    <TokenImage symbol={tokenSymbol} src={imageUrl} />
+                  ) : (
+                    <span className="text-lg font-medium text-gray-600">{tokenSymbol[0]}</span>
+                  )}
                 </div>
                 <div className="absolute -bottom-1 -right-1">
                   <NetworkImage chainId={token.chainId} size="sm" className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">{tokenName}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-medium text-gray-900 truncate">{tokenName}</h3>
                 <p className="text-sm text-gray-500">{tokenSymbol}</p>
               </div>
 
-              <div className="text-right">
+              <div className="text-right flex-shrink-0">
                 <p className="text-lg font-medium text-gray-900">{formattedBalance}</p>
                 <p className="text-sm text-gray-500">{tokenSymbol}</p>
               </div>
