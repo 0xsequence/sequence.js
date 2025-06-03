@@ -152,16 +152,31 @@ export class RpcRelayer implements Relayer {
       const result = await this.client.getMetaTxnReceipt({ metaTxID: cleanedOpHash })
       const receipt = result.receipt
 
+      if (!receipt) {
+        console.warn(`RpcRelayer.status: receipt not found for opHash ${opHash}`)
+        return { status: 'unknown' }
+      }
+
+      if (!receipt.status) {
+        console.warn(`RpcRelayer.status: receipt status not found for opHash ${opHash}`)
+        return { status: 'unknown' }
+      }
+
       switch (receipt.status as ETHTxnStatus) {
         case ETHTxnStatus.QUEUED:
         case ETHTxnStatus.PENDING_PRECONDITION:
         case ETHTxnStatus.SENT:
           return { status: 'pending' }
         case ETHTxnStatus.SUCCEEDED:
-          return { status: 'confirmed', transactionHash: Hex.fromString(receipt.txnReceipt), receipt: result }
+          return { status: 'confirmed', transactionHash: receipt.txnHash as Hex.Hex, data: result }
         case ETHTxnStatus.FAILED:
         case ETHTxnStatus.PARTIALLY_FAILED:
-          return { status: 'failed', reason: receipt.revertReason || 'Relayer reported failure', receipt: result }
+          return {
+            status: 'failed',
+            transactionHash: receipt.txnHash ? (receipt.txnHash as Hex.Hex) : undefined,
+            reason: receipt.revertReason || 'Relayer reported failure',
+            data: result,
+          }
         case ETHTxnStatus.DROPPED:
           return { status: 'failed', reason: 'Transaction dropped' }
         case ETHTxnStatus.UNKNOWN:

@@ -13,7 +13,6 @@ import { Relayer } from '@0xsequence/wallet-core'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Address } from 'ox'
-import { getMetaTxStatus } from './metaTxnMonitor.js'
 import {
   createPublicClient,
   createWalletClient,
@@ -27,7 +26,7 @@ import {
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
-import { useMetaTxnsMonitor, MetaTxn } from './metaTxnMonitor.js'
+import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
 import { useRelayers, getRelayer } from './relayer.js'
 import { findPreconditionAddress } from './preconditions.js'

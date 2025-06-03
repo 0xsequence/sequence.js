@@ -20,6 +20,7 @@
     "test": {
       "dependsOn": ["^build"],
       "inputs": [
+        "extras/**/*.tsx",
         "packages/**/*.tsx",
         "packages/**/*.ts",
         "repo/**/*.ts",

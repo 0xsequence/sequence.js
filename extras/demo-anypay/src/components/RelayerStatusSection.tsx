@@ -1,7 +1,7 @@
 import { Text, NetworkImage } from '@0xsequence/design-system'
 import { Box, Layers } from 'lucide-react'
 import { SectionHeader } from '@/components/SectionHeader'
-import { MetaTxn, MonitoredOperationsStatuses } from '@anypay/sdk'
+import { MetaTxn, MetaTxnStatus } from '@anypay/sdk'
 import { getChainInfo, getExplorerUrlForTransaction } from '@/utils/formatting'
 
 interface OriginCallStatusData {
@@ -16,7 +16,7 @@ interface RelayerStatusSectionProps {
   originCallStatus: OriginCallStatusData | null
   isWaitingForReceipt: boolean
   metaTxns: MetaTxn[] | null
-  metaTxnMonitorStatuses: MonitoredOperationsStatuses
+  metaTxnMonitorStatuses: MetaTxnStatus
 }
 
 export const RelayerStatusSection = ({
@@ -108,6 +108,8 @@ export const RelayerStatusSection = ({
             {metaTxns?.map((metaTxn: MetaTxn, index: number) => {
               const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
               const monitorStatus = metaTxnMonitorStatuses[operationKey]
+
+              console.log('monitorStatus', monitorStatus)
 
               const getStatusDisplay = () => {
                 if (!monitorStatus) return 'Pending'

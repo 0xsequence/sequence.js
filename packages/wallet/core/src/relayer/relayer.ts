@@ -16,30 +16,35 @@ export interface FeeQuote {
 
 export type OperationUnknownStatus = {
   status: 'unknown'
+  reason?: string
 }
 
 export type OperationQueuedStatus = {
   status: 'queued'
+  reason?: string
 }
 
 export type OperationPendingStatus = {
   status: 'pending'
+  reason?: string
 }
 
 export type OperationPendingPreconditionStatus = {
   status: 'pending-precondition'
+  reason?: string
 }
 
 export type OperationConfirmedStatus = {
   status: 'confirmed'
   transactionHash: Hex.Hex
-  receipt?: GetMetaTxnReceiptReturn
+  data?: GetMetaTxnReceiptReturn
 }
 
 export type OperationFailedStatus = {
   status: 'failed'
+  transactionHash?: Hex.Hex
   reason: string
-  receipt?: GetMetaTxnReceiptReturn
+  data?: GetMetaTxnReceiptReturn
 }
 
 export type OperationStatus =

@@ -3,6 +3,9 @@
   "extends": ["//"],
   "ui": "tui",
   "tasks": {
+    "build": {
+      "dependsOn": ["^build"]
+    },
     "lint": {
       "dependsOn": ["^lint"]
     },
