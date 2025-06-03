@@ -27,7 +27,6 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { SectionHeader } from '@/components/SectionHeader'
-import { createPublicClient, http } from 'viem'
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
@@ -38,14 +37,6 @@ const getExplorerUrl = (chainId: number, address: string): string | null => {
   const chainInfo = getChainInfo(chainId)
   if (chainInfo && chainInfo.blockExplorers?.default?.url) {
     return `${chainInfo.blockExplorers.default.url}/address/${address}`
-  }
-  return null
-}
-
-export const getExplorerTransactionUrl = (chainId: number, transactionHash: string): string | null => {
-  const chainInfo = getChainInfo(chainId)
-  if (chainInfo && chainInfo.blockExplorers?.default?.url) {
-    return `${chainInfo.blockExplorers.default.url}/tx/${transactionHash}`
   }
   return null
 }
@@ -1685,19 +1676,19 @@ export const HomeIndexRoute = () => {
               {/* Preview calculated address */}
               <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 shadow-inner space-y-3">
                 <Text variant="small" color="secondary">
-                  <strong className="text-blue-300">Calculated Intent Address: </strong>
+                  <strong className="text-blue-300">
+                    Calculated Intent Address (used as recipient for origin call):{' '}
+                  </strong>
                   <span className="font-mono text-xs break-all bg-gray-800/70 p-1 rounded block mt-1">
-                    {(intentCallsPayloads && account.address && lifiInfos
-                      ? calculateIntentAddress(account.address, intentCallsPayloads, lifiInfos)?.toString()
-                      : null) || 'N/A'}
+                    {originCallParams?.to?.toString() || 'N/A'}
                   </span>
                 </Text>
-                {intentCallsPayloads && account.address && lifiInfos && metaTxns && metaTxns.length > 0 && (
+                {originCallParams?.to && metaTxns && metaTxns.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-gray-700/50 space-y-2">
                     {' '}
                     {/* Added space-y-2 for link items */}
                     <Text variant="small" color="secondary" className="mb-1 text-blue-300 font-semibold">
-                      Open Intent Address in Explorer:
+                      Open in explorer (Calculated Intent Address):
                     </Text>
                     <div className="flex flex-col space-y-1">
                       {[...new Set(metaTxns.map((tx: any) => tx.chainId))]
@@ -1707,12 +1698,12 @@ export const HomeIndexRoute = () => {
                           const chainInfo = getChainInfo(chainId)
                           if (!explorerUrl) return null
                           return (
-                            <div key={`${chainId}-explorer-link-intent`} className="bg-gray-800/70 p-2 rounded-md">
+                            <div key={`${chainId}-explorer-link`} className="bg-gray-800/70 p-2 rounded-md">
                               <a
                                 href={explorerUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                title={`Open ${actualIntentConfigAddress} on ${chainInfo?.name || 'explorer'}`}
+                                title={`Open ${originCallParams.to} on ${chainInfo?.name || 'explorer'}`}
                                 className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
                               >
                                 <NetworkImage chainId={chainId} size="xs" className="w-3 h-3" />
@@ -1917,22 +1908,6 @@ export const HomeIndexRoute = () => {
                     <span className="text-yellow-300 break-all font-mono">
                       {originCallStatus?.txnHash || 'Not sent yet'}
                     </span>
-                    {originCallStatus?.txnHash && originCallParams?.chainId && (
-                      <div className="mt-1">
-                        <a
-                          href={getExplorerTransactionUrl(originCallParams.chainId, originCallStatus.txnHash) || '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`View transaction ${originCallStatus.txnHash} on ${
-                            getChainInfo(originCallParams.chainId)?.name || 'explorer'
-                          }`}
-                          className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
-                        >
-                          <NetworkImage chainId={originCallParams.chainId} size="xs" className="w-3 h-3" />
-                          <span>{getExplorerTransactionUrl(originCallParams.chainId, originCallStatus.txnHash)}</span>
-                        </a>
-                      </div>
-                    )}
                   </Text>
                 </div>
                 <div className="bg-gray-800/70 p-3 rounded-md">
@@ -1974,18 +1949,45 @@ export const HomeIndexRoute = () => {
                     <span className="font-mono">{originCallStatus?.effectiveGasPrice || '0'}</span>
                   </Text>
                 </div>
-                {originBlockTimestamp !== null && (
+              </div>
+            </div>
+            {/* Preconditions Status */}
+            {/* <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
+              <Text
+                variant="medium"
+                color="primary"
+                className="mb-4 pb-2 border-b border-gray-700/50 flex items-center"
+              >
+                <Clipboard className="h-4 w-4 mr-2" />
+                Preconditions Status
+              </Text>
+              <div className="space-y-3">
+                {intentPreconditions && intentPreconditions.length > 0 ? (
+                  intentPreconditions.map((precondition, index) => (
+                    <div key={index} className="bg-gray-800/70 p-3 rounded-md">
+                      <Text variant="small" color="secondary">
+                        <strong className="text-blue-300">
+                          Precondition {index + 1} ({precondition.type}):{' '}
+                        </strong>
+                        <span className="font-mono">
+                          {preconditionStatuses[index] ? (
+                            <span className="text-green-400">Met</span>
+                          ) : (
+                            <span className="text-red-400">Not Met</span>
+                          )}
+                        </span>
+                      </Text>
+                    </div>
+                  ))
+                ) : (
                   <div className="bg-gray-800/70 p-3 rounded-md">
-                    <Text variant="small" color="secondary">
-                      <strong className="text-blue-300">Block Timestamp: </strong>
-                      <span className="font-mono">
-                        {new Date(originBlockTimestamp * 1000).toLocaleString()} (Epoch: {originBlockTimestamp})
-                      </span>
+                    <Text variant="small" color="secondary" className="text-center">
+                      No preconditions available yet. Select a token and action first.
                     </Text>
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
             {/* Meta Transactions Status */}
             <div className="bg-gray-900/90 p-4 rounded-lg border border-gray-700/70 overflow-x-auto shadow-inner">
               <Text
@@ -2072,57 +2074,22 @@ export const HomeIndexRoute = () => {
                             <span className="font-mono text-yellow-300 break-all">{String(monitorStatus.txHash)}</span>
                           </Text>
                         )}
-                        {metaTxnBlockTimestamps[operationKey]?.timestamp && (
-                          <Text variant="small" color="secondary">
-                            <strong className="text-blue-300">Block Timestamp: </strong>
-                            <span className="font-mono">
-                              {new Date((metaTxnBlockTimestamps[operationKey]?.timestamp || 0) * 1000).toLocaleString()}
-                            </span>
-                            <br />
-                            <span className="font-mono text-purple-300">
-                              (Executed:{' '}
-                              {formatTimeSinceOrigin(
-                                metaTxnBlockTimestamps[operationKey]?.timestamp || null,
-                                originBlockTimestamp,
-                              )}
-                              )
-                            </span>
-                          </Text>
-                        )}
-                        {/* {metaTxnBlockTimestamps[operationKey]?.error && (
-                          <Text variant="small" color="error">
-                            <strong className="text-red-300">Timestamp Error: </strong>
-                            <span className="font-mono break-all">{metaTxnBlockTimestamps[operationKey]?.error}</span>
-                          </Text>
-                        )} */}
                         {monitorStatus?.status === 'confirmed' &&
                           monitorStatus &&
-                          monitorStatus.receipt &&
-                          'txnHash' in monitorStatus.receipt &&
-                          typeof monitorStatus.receipt.txnHash === 'string' &&
-                          monitorStatus.receipt.txnHash && (
-                            <div className="bg-gray-800/70 p-2 rounded-md">
+                          'txHash' in monitorStatus &&
+                          typeof monitorStatus.txHash === 'string' &&
+                          monitorStatus.txHash && (
+                            <Text variant="small" color="secondary">
+                              <strong className="text-blue-300">Explorer: </strong>
                               <a
-                                href={
-                                  getExplorerTransactionUrl(
-                                    parseInt(typedMetaTxn.chainId),
-                                    monitorStatus.receipt.txnHash,
-                                  ) || '#'
-                                }
+                                href={getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash) || '#'}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                title={`View transaction ${monitorStatus.receipt.txnHash} on ${getChainInfo(parseInt(typedMetaTxn.chainId))?.name || 'explorer'}`}
-                                className="text-gray-300 flex items-center space-x-1 hover:underline text-xs break-all"
+                                className="font-mono text-purple-400 hover:underline break-all"
                               >
-                                <NetworkImage chainId={parseInt(typedMetaTxn.chainId)} size="xs" className="w-3 h-3" />
-                                <span>
-                                  {getExplorerTransactionUrl(
-                                    parseInt(typedMetaTxn.chainId),
-                                    monitorStatus.receipt.txnHash,
-                                  )}
-                                </span>
+                                {getExplorerUrl(parseInt(typedMetaTxn.chainId), monitorStatus.txHash)}
                               </a>
-                            </div>
+                            </Text>
                           )}
                         {monitorStatus?.status === 'failed' && monitorStatus && 'reason' in monitorStatus && (
                           <Text variant="small" color="negative">
@@ -2130,16 +2097,12 @@ export const HomeIndexRoute = () => {
                             <span className="font-mono break-all">{String(monitorStatus.reason)}</span>
                           </Text>
                         )}
-                        {monitorStatus?.status === 'confirmed' &&
-                          monitorStatus &&
-                          monitorStatus.receipt &&
-                          'gasUsed' in monitorStatus.receipt &&
-                          typeof monitorStatus.receipt.gasUsed === 'bigint' && (
-                            <Text variant="small" color="secondary">
-                              <strong className="text-blue-300">Gas Used: </strong>
-                              <span className="font-mono">{monitorStatus.receipt.gasUsed}</span>
-                            </Text>
-                          )}
+                        {hasGasUsed(monitorStatus) && (
+                          <Text variant="small" color="secondary">
+                            <strong className="text-blue-300">Gas Used: </strong>
+                            <span className="font-mono">{monitorStatus.gasUsed.toString()}</span>
+                          </Text>
+                        )}
                         {(monitorStatus?.status === 'confirmed' || monitorStatus?.status === 'failed') &&
                           monitorStatus && (
                             <div className="mt-2 bg-gray-900/50 p-2 rounded border border-gray-700/50">
