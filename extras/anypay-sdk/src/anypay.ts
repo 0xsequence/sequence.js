@@ -1087,6 +1087,7 @@ type SendOptions = {
   sequenceApiKey: string
   fee: string
   client?: WalletClient
+  dryMode?: boolean
 }
 
 // TODO: fix up this one-click
@@ -1103,6 +1104,7 @@ export async function prepareSend(options: SendOptions) {
     sequenceApiKey,
     fee,
     client,
+    dryMode = false,
   } = options
   const chain = getChainConfig(originChainId)
   const apiClient = getAPIClient('http://localhost:4422', sequenceApiKey)
@@ -1174,11 +1176,13 @@ export async function prepareSend(options: SendOptions) {
         transport: http(),
       })
 
-      const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
-      console.log('origin tx', tx)
-      // Wait for transaction receipt
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
-      console.log('receipt', receipt)
+      if (!dryMode) {
+        const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
+        console.log('origin tx', tx)
+        // Wait for transaction receipt
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
+        console.log('receipt', receipt)
+      }
 
       await new Promise((resolve) => setTimeout(resolve, 5000))
 

@@ -170,6 +170,7 @@ export const SendForm: React.FC<SendFormProps> = ({
         sequenceApiKey,
         fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(), // TOOD: fees
         client,
+        dryMode: false, // Set to true to skip the metamask transaction, for testing purposes
       }
 
       console.log('options', options)
