@@ -3,7 +3,7 @@ import {
   IntentPrecondition,
   GetIntentCallsPayloadsArgs,
   GetIntentCallsPayloadsReturn,
-  CommitIntentConfigReturn
+  CommitIntentConfigReturn,
 } from '@0xsequence/api'
 import { Context as ContextLike } from '@0xsequence/wallet-primitives'
 import { AbiParameters, Address, Bytes, ContractAddress, Hash, Hex } from 'ox'
@@ -42,7 +42,7 @@ export type SendOriginCallTxArgs = {
 
 export async function getIntentCallsPayloads(
   apiClient: SequenceAPIClient,
-  args: GetIntentCallsPayloadsArgs
+  args: GetIntentCallsPayloadsArgs,
 ): Promise<GetIntentCallsPayloadsReturn> {
   return apiClient.getIntentCallsPayloads(args as any) // TODO: Add proper type
 }
@@ -50,12 +50,12 @@ export async function getIntentCallsPayloads(
 export function calculateIntentAddress(
   mainSigner: string,
   calls: IntentCallsPayload[],
-  lifiInfosArg: AnypayLifiInfo[] | null | undefined
+  lifiInfosArg: AnypayLifiInfo[] | null | undefined,
 ): `0x${string}` {
   console.log('calculateIntentAddress inputs:', {
     mainSigner,
     calls: JSON.stringify(calls, null, 2),
-    lifiInfosArg: JSON.stringify(lifiInfosArg, null, 2)
+    lifiInfosArg: JSON.stringify(lifiInfosArg, null, 2),
   })
 
   const context: ContextLike.Context = {
@@ -63,15 +63,15 @@ export function calculateIntentAddress(
     stage1: '0x53bA242E7C2501839DF2972c75075dc693176Cd0' as `0x${string}`,
     stage2: '0xa29874c88b8Fd557e42219B04b0CeC693e1712f5' as `0x${string}`,
     creationCode:
-      '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`
+      '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3' as `0x${string}`,
   }
 
-  const coreCalls = calls.map(call => ({
+  const coreCalls = calls.map((call) => ({
     type: 'call' as const,
     chainId: BigInt(call.chainId),
     space: call.space ? BigInt(call.space) : 0n,
     nonce: call.nonce ? BigInt(call.nonce) : 0n,
-    calls: call.calls.map(call => ({
+    calls: call.calls.map((call) => ({
       to: Address.from(call.to),
       value: BigInt(call.value || '0'),
       data: Bytes.toHex(Bytes.from((call.data as Hex.Hex) || '0x')),
@@ -82,8 +82,8 @@ export function calculateIntentAddress(
         ? 'ignore'
         : Number(call.behaviorOnError) === 1
           ? 'revert'
-          : 'abort') as 'ignore' | 'revert' | 'abort'
-    }))
+          : 'abort') as 'ignore' | 'revert' | 'abort',
+    })),
   }))
 
   //console.log('Transformed coreCalls:', JSON.stringify(coreCalls, null, 2))
@@ -92,12 +92,12 @@ export function calculateIntentAddress(
     originToken: Address.from(info.originToken),
     amount: BigInt(info.amount),
     originChainId: BigInt(info.originChainId),
-    destinationChainId: BigInt(info.destinationChainId)
+    destinationChainId: BigInt(info.destinationChainId),
   }))
 
   console.log(
     'Transformed coreLifiInfos:',
-    JSON.stringify(coreLifiInfos, (_, v) => (typeof v === 'bigint' ? v.toString() : v), 2)
+    JSON.stringify(coreLifiInfos, (_, v) => (typeof v === 'bigint' ? v.toString() : v), 2),
   )
 
   const calculatedAddress = calculateIntentConfigurationAddress(
@@ -106,7 +106,7 @@ export function calculateIntentAddress(
     context,
     // AnyPay.ANYPAY_LIFI_ATTESATION_SIGNER_ADDRESS,
     Address.from('0x0000000000000000000000000000000000000001'),
-    coreLifiInfos
+    coreLifiInfos,
   )
 
   console.log('Final calculated address:', calculatedAddress.toString())
@@ -118,13 +118,13 @@ export function commitIntentConfig(
   mainSigner: string,
   calls: IntentCallsPayload[],
   preconditions: IntentPrecondition[],
-  lifiInfos: AnypayLifiInfo[]
+  lifiInfos: AnypayLifiInfo[],
 ): Promise<CommitIntentConfigReturn> {
   console.log('commitIntentConfig inputs:', {
     mainSigner,
     calls: JSON.stringify(calls, null, 2),
     preconditions: JSON.stringify(preconditions, null, 2),
-    lifiInfos: JSON.stringify(lifiInfos, null, 2)
+    lifiInfos: JSON.stringify(lifiInfos, null, 2),
   })
 
   const calculatedAddress = calculateIntentAddress(mainSigner, calls, lifiInfos)
@@ -132,7 +132,7 @@ export function commitIntentConfig(
   console.log('Address comparison:', {
     receivedAddress,
     calculatedAddress: calculatedAddress.toString(),
-    match: isAddressEqual(Address.from(receivedAddress), calculatedAddress)
+    match: isAddressEqual(Address.from(receivedAddress), calculatedAddress),
   })
 
   const args = {
@@ -140,7 +140,7 @@ export function commitIntentConfig(
     mainSigner: mainSigner,
     calls: calls,
     preconditions: preconditions,
-    lifiInfos: lifiInfos
+    lifiInfos: lifiInfos,
   }
   console.log('args', args)
   return apiClient.commitIntentConfig(args as any) // TODO: Add proper type
@@ -149,14 +149,14 @@ export function commitIntentConfig(
 export async function sendOriginTransaction(
   wallet: Account,
   client: WalletClient,
-  originParams: SendOriginCallTxArgs
+  originParams: SendOriginCallTxArgs,
 ): Promise<`0x${string}`> {
   const hash = await client.sendTransaction({
     account: wallet,
     to: originParams.to as `0x${string}`,
     data: originParams.data as `0x${string}`,
     value: BigInt(originParams.value),
-    chain: originParams.chain
+    chain: originParams.chain,
   })
   return hash
 }
@@ -183,12 +183,9 @@ export function hashIntentParams(params: {
   if (!params.userAddress || params.userAddress === '0x0000000000000000000000000000000000000000')
     throw new Error('UserAddress is zero')
   if (typeof params.nonce !== 'bigint') throw new Error('Nonce is not a bigint')
-  if (!params.originTokens || params.originTokens.length === 0)
-    throw new Error('OriginTokens is empty')
-  if (!params.destinationCalls || params.destinationCalls.length === 0)
-    throw new Error('DestinationCalls is empty')
-  if (!params.destinationTokens || params.destinationTokens.length === 0)
-    throw new Error('DestinationTokens is empty')
+  if (!params.originTokens || params.originTokens.length === 0) throw new Error('OriginTokens is empty')
+  if (!params.destinationCalls || params.destinationCalls.length === 0) throw new Error('DestinationCalls is empty')
+  if (!params.destinationTokens || params.destinationTokens.length === 0) throw new Error('DestinationTokens is empty')
   for (let i = 0; i < params.destinationCalls.length; i++) {
     const currentCall = params.destinationCalls[i]
     if (!currentCall) throw new Error(`DestinationCalls[${i}] is nil`)
@@ -197,9 +194,9 @@ export function hashIntentParams(params: {
     }
   }
 
-  const originTokensForAbi = params.originTokens.map(token => ({
+  const originTokensForAbi = params.originTokens.map((token) => ({
     address: token.address,
-    chainId: token.chainId
+    chainId: token.chainId,
   }))
 
   let cumulativeCallsHashBytes: Bytes.Bytes = Bytes.from(new Uint8Array(32))
@@ -210,22 +207,19 @@ export function hashIntentParams(params: {
     const currentDestCallPayloadHashBytes = Payload.hash(
       Address.from('0x0000000000000000000000000000000000000000'),
       callPayload.chainId,
-      callPayload
+      callPayload,
     )
 
-    cumulativeCallsHashBytes = Hash.keccak256(
-      Bytes.concat(cumulativeCallsHashBytes, currentDestCallPayloadHashBytes),
-      {
-        as: 'Bytes'
-      }
-    )
+    cumulativeCallsHashBytes = Hash.keccak256(Bytes.concat(cumulativeCallsHashBytes, currentDestCallPayloadHashBytes), {
+      as: 'Bytes',
+    })
   }
   const cumulativeCallsHashHex = Bytes.toHex(cumulativeCallsHashBytes)
 
-  const destinationTokensForAbi = params.destinationTokens.map(token => ({
+  const destinationTokensForAbi = params.destinationTokens.map((token) => ({
     address: token.address,
     chainId: token.chainId,
-    amount: token.amount
+    amount: token.amount,
   }))
 
   const abiSchema = [
@@ -235,18 +229,18 @@ export function hashIntentParams(params: {
       type: 'tuple[]',
       components: [
         { name: 'address', type: 'address' },
-        { name: 'chainId', type: 'uint256' }
-      ]
+        { name: 'chainId', type: 'uint256' },
+      ],
     },
     {
       type: 'tuple[]',
       components: [
         { name: 'address', type: 'address' },
         { name: 'chainId', type: 'uint256' },
-        { name: 'amount', type: 'uint256' }
-      ]
+        { name: 'amount', type: 'uint256' },
+      ],
     },
-    { type: 'bytes32' }
+    { type: 'bytes32' },
   ]
 
   const encodedHex = AbiParameters.encode(abiSchema, [
@@ -254,10 +248,11 @@ export function hashIntentParams(params: {
     params.nonce,
     originTokensForAbi,
     destinationTokensForAbi,
-    cumulativeCallsHashHex
+    cumulativeCallsHashHex,
   ]) as Hex.Hex
 
   function bigintReplacer(_key: string, value: any) {
+    // TODO: Add proper type
     return typeof value === 'bigint' ? value.toString() : value
   }
 
@@ -268,10 +263,7 @@ export function hashIntentParams(params: {
   return hashHex
 }
 
-export function getAnypayLifiInfoHash(
-  lifiInfos: AnypayLifiInfo[],
-  attestationAddress: Address.Address
-): Hex.Hex {
+export function getAnypayLifiInfoHash(lifiInfos: AnypayLifiInfo[], attestationAddress: Address.Address): Hex.Hex {
   if (!lifiInfos || lifiInfos.length === 0) {
     throw new Error('lifiInfos is empty')
   }
@@ -283,29 +275,26 @@ export function getAnypayLifiInfoHash(
     { name: 'originToken', type: 'address' },
     { name: 'amount', type: 'uint256' },
     { name: 'originChainId', type: 'uint256' },
-    { name: 'destinationChainId', type: 'uint256' }
+    { name: 'destinationChainId', type: 'uint256' },
   ]
 
-  const lifiInfosForAbi = lifiInfos.map(info => ({
+  const lifiInfosForAbi = lifiInfos.map((info) => ({
     originToken: info.originToken,
     amount: info.amount,
     originChainId: info.originChainId,
-    destinationChainId: info.destinationChainId
+    destinationChainId: info.destinationChainId,
   }))
 
   const abiSchema = [
     {
       type: 'tuple[]',
       name: 'lifiInfos',
-      components: anypayLifiInfoComponents
+      components: anypayLifiInfoComponents,
     },
-    { type: 'address', name: 'attestationAddress' }
+    { type: 'address', name: 'attestationAddress' },
   ]
 
-  const encodedHex = AbiParameters.encode(abiSchema, [
-    lifiInfosForAbi,
-    attestationAddress
-  ]) as Hex.Hex
+  const encodedHex = AbiParameters.encode(abiSchema, [lifiInfosForAbi, attestationAddress]) as Hex.Hex
   const encodedBytes = Bytes.fromHex(encodedHex)
   const hashBytes = Hash.keccak256(encodedBytes)
   return Bytes.toHex(hashBytes)
@@ -316,7 +305,7 @@ export function calculateIntentConfigurationAddress(
   calls: IntentCallsPayload[],
   context: Context.Context,
   attestationSigner?: Address.Address,
-  lifiInfos?: AnypayLifiInfo[]
+  lifiInfos?: AnypayLifiInfo[],
 ): Address.Address {
   const config = createIntentConfiguration(mainSigner, calls, attestationSigner, lifiInfos)
 
@@ -328,9 +317,9 @@ export function calculateIntentConfigurationAddress(
     from: context.factory,
     bytecodeHash: Hash.keccak256(
       Bytes.concat(Bytes.from(context.creationCode), Bytes.padLeft(Bytes.from(context.stage1), 32)),
-      { as: 'Bytes' }
+      { as: 'Bytes' },
     ),
-    salt: imageHash
+    salt: imageHash,
   })
 }
 
@@ -338,24 +327,20 @@ function createIntentConfiguration(
   mainSigner: Address.Address,
   calls: IntentCallsPayload[],
   attestationSigner?: Address.Address,
-  lifiInfos?: AnypayLifiInfo[]
+  lifiInfos?: AnypayLifiInfo[],
 ): Config.Config {
   const mainSignerLeaf: Config.SignerLeaf = {
     type: 'signer',
     address: mainSigner,
-    weight: 1n
+    weight: 1n,
   }
 
-  const subdigestLeaves: Config.AnyAddressSubdigestLeaf[] = calls.map(call => {
-    const digest = Payload.hash(
-      Address.from('0x0000000000000000000000000000000000000000'),
-      call.chainId,
-      call
-    )
+  const subdigestLeaves: Config.AnyAddressSubdigestLeaf[] = calls.map((call) => {
+    const digest = Payload.hash(Address.from('0x0000000000000000000000000000000000000000'), call.chainId, call)
     console.log('digest:', Bytes.toHex(digest))
     return {
       type: 'any-address-subdigest',
-      digest: Bytes.toHex(digest)
+      digest: Bytes.toHex(digest),
     } as Config.AnyAddressSubdigestLeaf
   })
 
@@ -368,7 +353,7 @@ function createIntentConfiguration(
         // address: ANYPAY_LIFI_SAPIENT_SIGNER_ADDRESS,
         address: ANYPAY_LIFI_SAPIENT_SIGNER_LITE_ADDRESS,
         weight: 1n,
-        imageHash: getAnypayLifiInfoHash(lifiInfos, attestationSigner)
+        imageHash: getAnypayLifiInfoHash(lifiInfos, attestationSigner),
       }
       otherLeaves.push(lifiConditionLeaf)
     }
@@ -389,7 +374,7 @@ function createIntentConfiguration(
   return {
     threshold: 1n,
     checkpoint: 0n,
-    topology: [mainSignerLeaf, secondaryTopologyNode] as Config.Node
+    topology: [mainSignerLeaf, secondaryTopologyNode] as Config.Node,
   }
 }
 

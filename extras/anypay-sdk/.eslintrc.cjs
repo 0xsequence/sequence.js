@@ -1,29 +1,47 @@
-module.exports = {
-  parser: '@typescript-eslint/parser',
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'prettier'
-  ],
-  plugins: ['@typescript-eslint', 'react', 'prettier'],
-  env: {
-    browser: true,
-    es2021: true,
-    node: true
+import js from '@eslint/js'
+import eslintConfigPrettier from 'eslint-config-prettier'
+import turboPlugin from 'eslint-plugin-turbo'
+import tseslint from 'typescript-eslint'
+import onlyWarn from 'eslint-plugin-only-warn'
+
+export const config = [
+  js.configs.recommended,
+  eslintConfigPrettier,
+  ...tseslint.configs.recommended,
+  {
+    plugins: {
+      turbo: turboPlugin,
+    },
+    rules: {
+      'turbo/no-undeclared-env-vars': 'warn',
+    },
   },
-  settings: {
-    react: {
-      version: 'detect'
-    }
+  {
+    plugins: {
+      onlyWarn,
+    },
   },
-  rules: {
-    'prettier/prettier': 'error',
-    'react/react-in-jsx-scope': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
+  {
+    rules: {
+      // Disallow semicolons
+      semi: ['error', 'never'],
+
+      // Turn off the base ESLint version of no-unused-vars
+      'no-unused-vars': 'off',
+
+      // Use @typescript-eslint/no-unused-vars
+      // Allow unused vars prefixed with _
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
+    },
   },
-  ignorePatterns: ['dist/', 'node_modules/', '*.js']
-} 
+  {
+    ignores: ['dist/**'],
+  },
+]
