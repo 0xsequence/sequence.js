@@ -1,5 +1,6 @@
 import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
+import { GetMetaTxnReceiptReturn } from './rpc/index.js'
 
 export interface FeeOption {
   token: Address.Address
@@ -15,28 +16,35 @@ export interface FeeQuote {
 
 export type OperationUnknownStatus = {
   status: 'unknown'
+  reason?: string
 }
 
 export type OperationQueuedStatus = {
   status: 'queued'
+  reason?: string
 }
 
 export type OperationPendingStatus = {
   status: 'pending'
+  reason?: string
 }
 
 export type OperationPendingPreconditionStatus = {
   status: 'pending-precondition'
+  reason?: string
 }
 
 export type OperationConfirmedStatus = {
   status: 'confirmed'
   transactionHash: Hex.Hex
+  data?: GetMetaTxnReceiptReturn
 }
 
 export type OperationFailedStatus = {
   status: 'failed'
+  transactionHash?: Hex.Hex
   reason: string
+  data?: GetMetaTxnReceiptReturn
 }
 
 export type OperationStatus =

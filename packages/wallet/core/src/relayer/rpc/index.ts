@@ -146,34 +146,21 @@ export class RpcRelayer implements Relayer {
     return { opHash: Hex.fromString(result.txnHash) }
   }
 
-  async receipt(opHash: Hex.Hex, chainId: bigint): Promise<GetMetaTxnReceiptReturn> {
-    try {
-      const cleanedOpHash = opHash.startsWith('0x') ? opHash.substring(2) : opHash
-      const result = await this.client.getMetaTxnReceipt({ metaTxID: cleanedOpHash })
-      return result
-    } catch (error) {
-      console.error(`RpcRelayer.receipt failed for opHash ${opHash}:`, error)
-      return {
-        receipt: {
-          status: ETHTxnStatus.UNKNOWN,
-          txnReceipt: '',
-          revertReason: 'Failed to fetch receipt',
-          logs: [],
-          id: opHash,
-          index: 0,
-          receipts: [],
-          blockNumber: '0x0',
-          txnHash: '',
-        },
-      }
-    }
-  }
-
   async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
     try {
       const cleanedOpHash = opHash.startsWith('0x') ? opHash.substring(2) : opHash
       const result = await this.client.getMetaTxnReceipt({ metaTxID: cleanedOpHash })
       const receipt = result.receipt
+
+      if (!receipt) {
+        console.warn(`RpcRelayer.status: receipt not found for opHash ${opHash}`)
+        return { status: 'unknown' }
+      }
+
+      if (!receipt.status) {
+        console.warn(`RpcRelayer.status: receipt status not found for opHash ${opHash}`)
+        return { status: 'unknown' }
+      }
 
       switch (receipt.status as ETHTxnStatus) {
         case ETHTxnStatus.QUEUED:
@@ -181,10 +168,15 @@ export class RpcRelayer implements Relayer {
         case ETHTxnStatus.SENT:
           return { status: 'pending' }
         case ETHTxnStatus.SUCCEEDED:
-          return { status: 'confirmed', transactionHash: Hex.fromString(receipt.txnReceipt) }
+          return { status: 'confirmed', transactionHash: receipt.txnHash as Hex.Hex, data: result }
         case ETHTxnStatus.FAILED:
         case ETHTxnStatus.PARTIALLY_FAILED:
-          return { status: 'failed', reason: receipt.revertReason || 'Relayer reported failure' }
+          return {
+            status: 'failed',
+            transactionHash: receipt.txnHash ? (receipt.txnHash as Hex.Hex) : undefined,
+            reason: receipt.revertReason || 'Relayer reported failure',
+            data: result,
+          }
         case ETHTxnStatus.DROPPED:
           return { status: 'failed', reason: 'Transaction dropped' }
         case ETHTxnStatus.UNKNOWN:
