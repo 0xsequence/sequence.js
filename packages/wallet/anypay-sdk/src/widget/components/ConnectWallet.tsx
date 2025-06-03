@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
-import MetaMaskFox from '../assets/MetaMask_Fox.svg'
+// import MetaMaskFox from '../assets/MetaMask_Fox.svg'
 
 interface ConnectWalletProps {
   onConnect: () => void
@@ -55,7 +55,7 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
           onClick={handleConnect}
           className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
         >
-          <img src={MetaMaskFox} alt="MetaMask" className="w-6 h-6" />
+          {/* <img src={MetaMaskFox} alt="MetaMask" className="w-6 h-6" /> */}
           <span>MetaMask</span>
         </button>
       )}

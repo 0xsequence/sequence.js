@@ -1,6 +1,8 @@
 # @anypay/sdk
 
-Anypay SDK for sending any token from any chain.
+> Anypay SDK for sending any token from any chain.
+
+⚠️ This is a work in progress!
 
 ## Installation
 
@@ -10,7 +12,29 @@ npm install @anypay/sdk
 
 ## Usage
 
-### Basic Example
+### React Widget Component
+
+The easiest way to integrate Anypay is using our pre-built React widget:
+
+```typescript
+import { AnyPayWidget } from '@anypay/sdk/widget'
+
+export const App = () => {
+  const sequenceApiKey = import.meta.env.VITE_SEQUENCE_API_KEY
+
+  return (
+    <AnyPayWidget
+      sequenceApiKey={sequenceApiKey}
+    />
+  )
+}
+```
+
+### Low-level API Usage
+
+If you need more control, you can use the low-level APIs directly:
+
+#### Basic Example
 
 ```typescript
 import { prepareSend } from '@anypay/sdk'
@@ -45,7 +69,7 @@ console.log('Intent address:', intentAddress.toString())
 await send()
 ```
 
-### Example
+#### Advanced Example
 
 ```typescript
 import {

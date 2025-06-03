@@ -27,6 +27,16 @@ export type RelayerEnvConfig = {
   useV3Relayers?: boolean
 }
 
+export function getBackupRelayer(chainId: number): Relayer.Rpc.RpcRelayer | undefined {
+  if (chainId === 42161) {
+    return new Relayer.Rpc.RpcRelayer('https://a1b4a8c5d856.ngrok.app/', chainId, 'https://nodes.sequence.app/arbitrum')
+  } else if (chainId === 8453) {
+    return new Relayer.Rpc.RpcRelayer('https://644a6aeb891e.ngrok.app/', chainId, 'https://nodes.sequence.app/base')
+  }
+
+  return undefined
+}
+
 // TODO: add relayer url to config
 function getRelayerUrl(config: RelayerEnvConfig, chainId: number): string {
   let relayerUrl
@@ -136,6 +146,7 @@ export function getRelayer(config: RelayerEnvConfig, chainId: number): Relayer.R
 export function useRelayers(config: RelayerEnvConfig): {
   relayers: Map<number, Relayer.Rpc.RpcRelayer>
   getRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer
+  getBackupRelayer: (chainId: number) => Relayer.Rpc.RpcRelayer | undefined
 } {
   const relayers = useMemo(() => {
     const relayerMap = new Map<number, Relayer.Rpc.RpcRelayer>()
@@ -156,6 +167,7 @@ export function useRelayers(config: RelayerEnvConfig): {
   return {
     relayers,
     getRelayer: getCachedRelayer,
+    getBackupRelayer,
   }
 }
 

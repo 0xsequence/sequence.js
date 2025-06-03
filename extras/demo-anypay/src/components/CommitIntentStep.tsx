@@ -144,7 +144,7 @@ export const CommitIntentStep: React.FC<CommitIntentStepProps> = ({
                 )}
                 {committedIntentConfigData && !isLoadingCommittedConfig && !committedConfigError && (
                   <pre className="font-mono text-xs overflow-x-auto whitespace-pre-wrap bg-gray-800/70 p-3 text-gray-300 rounded-md max-h-60 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                    {JSON.stringify(committedIntentConfigData, (k, v) => (typeof v === 'bigint' ? v.toString() : v), 2)}
+                    {JSON.stringify(committedIntentConfigData, (_, v) => (typeof v === 'bigint' ? v.toString() : v), 2)}
                   </pre>
                 )}
               </div>

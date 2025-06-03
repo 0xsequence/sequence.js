@@ -9,7 +9,6 @@ import {
   GetIntentCallsPayloadsArgs,
   SequenceAPIClient,
 } from '@0xsequence/api'
-import { Relayer } from '@0xsequence/wallet-core'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useWaitForTransactionReceipt } from 'wagmi'
 import { Address } from 'ox'
@@ -27,9 +26,9 @@ import {
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
-import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, getMetaTxStatus } from './metaTxnMonitor.js'
+import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, MetaTxnStatusValue, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
-import { useRelayers, getRelayer } from './relayer.js'
+import { useRelayers, getRelayer, getBackupRelayer } from './relayer.js'
 import { findPreconditionAddress } from './preconditions.js'
 import {
   calculateIntentAddress,
@@ -46,14 +45,14 @@ export type Account = {
   chainId: number
 }
 
-export type UseAnypayConfig = {
+export type UseAnyPayConfig = {
   account: Account
   disableAutoExecute?: boolean
   env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
   useV3Relayers?: boolean
 }
 
-export type UseAnypayReturn = {
+export type UseAnyPayReturn = {
   apiClient: SequenceAPIClient
   metaTxns: GetIntentCallsPayloadsReturn['metaTxns'] | null
   intentCallsPayloads: GetIntentCallsPayloadsReturn['calls'] | null
@@ -120,7 +119,7 @@ export type UseAnypayReturn = {
   sendMetaTxnError: Error | null
   sendMetaTxnArgs: { selectedId: string | null } | undefined
   clearIntent: () => void
-  metaTxnMonitorStatuses: { [key: string]: Relayer.OperationStatus }
+  metaTxnMonitorStatuses: { [key: string]: MetaTxnStatusValue }
   createIntent: (args: any) => void // TODO: Add proper type
   createIntentPending: boolean
   createIntentSuccess: boolean
@@ -152,7 +151,7 @@ export const getChainConfig = (chainId: number): Chain => {
   }
 }
 
-export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
+export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
   const { account, disableAutoExecute = false, env, useV3Relayers } = config
   const apiClient = useAPIClient()
 
@@ -851,6 +850,23 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             relevantPreconditions,
           )
 
+          try {
+            // Fire and forget send tx to backup relayer
+            const backupRelayer = getBackupRelayer(chainId)
+
+            backupRelayer
+              ?.sendMetaTxn(
+                metaTxn.walletAddress as Address.Address,
+                metaTxn.contract as Address.Address,
+                metaTxn.input as Hex,
+                BigInt(metaTxn.chainId),
+                undefined,
+                relevantPreconditions,
+              )
+              .then(() => {})
+              .catch(() => {})
+          } catch {}
+
           results.push({
             operationKey,
             opHash,
@@ -1243,6 +1259,7 @@ type SendOptions = {
   sequenceApiKey: string
   fee: string
   client?: WalletClient
+  dryMode?: boolean
 }
 
 // TODO: fix up this one-click
@@ -1259,6 +1276,7 @@ export async function prepareSend(options: SendOptions) {
     sequenceApiKey,
     fee,
     client,
+    dryMode,
   } = options
   const chain = getChainConfig(originChainId)
   const apiClient = getAPIClient('http://localhost:4422', sequenceApiKey)
@@ -1291,14 +1309,6 @@ export async function prepareSend(options: SendOptions) {
 
   if (!intent.preconditions?.length || !intent.calls?.length || !intent.lifiInfos?.length) {
     throw new Error('Invalid intent')
-  }
-
-  if (intent.preconditions.length !== intent.calls.length) {
-    throw new Error('Preconditions and calls length mismatch')
-  }
-
-  if (intent.calls.length < 2) {
-    throw new Error('At least 2 calls are required')
   }
 
   const intentAddress = calculateIntentAddress(mainSigner, intent.calls as any[], intent.lifiInfos as any[]) // TODO: Add proper type
@@ -1338,11 +1348,13 @@ export async function prepareSend(options: SendOptions) {
         transport: http(),
       })
 
-      const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
-      console.log('origin tx', tx)
-      // Wait for transaction receipt
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
-      console.log('receipt', receipt)
+      if (!dryMode) {
+        const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
+        console.log('origin tx', tx)
+        // Wait for transaction receipt
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
+        console.log('receipt', receipt)
+      }
 
       await new Promise((resolve) => setTimeout(resolve, 5000))
 
