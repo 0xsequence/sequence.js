@@ -33,13 +33,6 @@ export const RelayerStatusSection = ({
   metaTxnBlockTimestamps,
   originCallParams,
 }: RelayerStatusSectionProps) => {
-  console.log('[RelayerStatusSection] Props received - originBlockTimestamp:', originBlockTimestamp)
-  console.log(
-    '[RelayerStatusSection] Props received - metaTxnBlockTimestamps:',
-    JSON.stringify(metaTxnBlockTimestamps, null, 2),
-  )
-  // console.log('[RelayerStatusSection] Props received - metaTxns:', JSON.stringify(metaTxns, null, 2)); // Can be verbose
-
   return (
     <SectionHeader
       className="bg-gray-800/80 rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-900/20 mb-6"

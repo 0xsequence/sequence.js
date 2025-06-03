@@ -640,12 +640,6 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
       if (newStatus === 'Success' && receipt.blockNumber) {
         const fetchTimestamp = async () => {
           try {
-            console.log(
-              '[AnyPay] Attempting to fetch origin block timestamp. Receipt blockNumber:',
-              String(receipt.blockNumber),
-              'OriginCallParams chainId:',
-              originCallParams?.chainId,
-            )
             if (!originCallParams?.chainId) {
               console.error('[AnyPay] Origin chainId not available for fetching origin block timestamp.')
               setOriginBlockTimestamp(null)
@@ -656,9 +650,7 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
               chain: chainConfig,
               transport: http(),
             })
-            // Ensure receipt.blockNumber is BigInt for the getBlock call
             const block = await client.getBlock({ blockNumber: BigInt(receipt.blockNumber) })
-            console.log('[AnyPay] Fetched origin block. Timestamp:', String(block.timestamp))
             setOriginBlockTimestamp(Number(block.timestamp))
           } catch (error) {
             console.error('[AnyPay] Error fetching origin block timestamp:', error)
@@ -1034,31 +1026,12 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
   // Effect to fetch meta-transaction block timestamps
   useEffect(() => {
-    console.log(
-      '[AnyPay] Meta timestamp effect triggered. metaTxns count:',
-      metaTxns?.length,
-      'Monitor statuses keys:',
-      Object.keys(metaTxnMonitorStatuses || {}).length,
-    )
     if (metaTxns && Object.keys(metaTxnMonitorStatuses).length > 0) {
       metaTxns.forEach(async (metaTxn) => {
         const operationKey = `${metaTxn.chainId}-${metaTxn.id}`
         const monitorStatus = metaTxnMonitorStatuses[operationKey]
 
-        console.log(
-          `[AnyPay] Processing metaTxn ${operationKey}. Monitor status available:`,
-          !!monitorStatus,
-          'Status:',
-          monitorStatus?.status,
-        )
-
         if (metaTxnBlockTimestamps[operationKey]?.timestamp || metaTxnBlockTimestamps[operationKey]?.error) {
-          console.log(
-            `[AnyPay] MetaTxn ${operationKey}: Timestamp/error already exists or being fetched. Timestamp:`,
-            metaTxnBlockTimestamps[operationKey]?.timestamp,
-            'Error:',
-            metaTxnBlockTimestamps[operationKey]?.error,
-          )
           return // Already fetched or error recorded
         }
 
@@ -1067,26 +1040,17 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
 
         if (monitorStatus?.status === 'confirmed') {
           transactionHashForReceipt = monitorStatus.transactionHash as Hex
-          console.log(
-            `[AnyPay] MetaTxn ${operationKey} is confirmed. Transaction hash for receipt: ${transactionHashForReceipt}`,
-          )
-          // The blockNumber is not directly in monitorStatus.data.receipt as previously assumed.
-          // We will use transactionHashForReceipt to get the full receipt and then the blockNumber.
         } else if (monitorStatus) {
-          console.log(`[AnyPay] MetaTxn ${operationKey} status is not 'confirmed':`, monitorStatus.status)
+          // Potential place for a log if status is neither confirmed nor undefined, but usually not needed
         }
 
         if (transactionHashForReceipt) {
-          console.log(
-            `[AnyPay] MetaTxn ${operationKey}: Attempting to fetch transaction receipt with hash: ${transactionHashForReceipt}`,
-          )
           try {
             const chainId = parseInt(metaTxn.chainId)
             if (isNaN(chainId) || chainId <= 0) {
               console.error(`[AnyPay] MetaTxn ${operationKey}: Invalid chainId:`, metaTxn.chainId)
               throw new Error(`Invalid chainId for meta transaction: ${metaTxn.chainId}`)
             }
-            console.log(`[AnyPay] MetaTxn ${operationKey}: Using chainId:`, chainId)
 
             const chainConfig = getChainConfig(chainId)
             const client = createPublicClient({
@@ -1095,9 +1059,6 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             })
 
             const receipt = await client.getTransactionReceipt({ hash: transactionHashForReceipt })
-            console.log(
-              `[AnyPay] MetaTxn ${operationKey}: Fetched transaction receipt. Block number: ${receipt?.blockNumber}`,
-            )
 
             if (receipt && typeof receipt.blockNumber === 'bigint') {
               validBlockNumberForApi = receipt.blockNumber
@@ -1110,16 +1071,11 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
                 ...prev,
                 [operationKey]: { timestamp: null, error: 'Block number not found in receipt' },
               }))
-              return // Skip fetching block if blockNumber is not valid
+              return
             }
 
             if (validBlockNumberForApi !== undefined) {
-              console.log(
-                `[AnyPay] MetaTxn ${operationKey}: Attempting to fetch block timestamp with blockNumber:`,
-                String(validBlockNumberForApi),
-              )
               const block = await client.getBlock({ blockNumber: validBlockNumberForApi })
-              console.log(`[AnyPay] MetaTxn ${operationKey}: Fetched block. Timestamp:`, String(block.timestamp))
               setMetaTxnBlockTimestamps((prev) => ({
                 ...prev,
                 [operationKey]: { timestamp: Number(block.timestamp), error: undefined },
@@ -1136,7 +1092,6 @@ export function useAnyPay(config: UseAnypayConfig): UseAnypayReturn {
             }))
           }
         } else if (monitorStatus?.status === 'confirmed') {
-          // This case should ideally not be hit if transactionHashForReceipt is always set for confirmed status
           console.log(
             `[AnyPay] MetaTxn ${operationKey}: Status is confirmed, but transactionHashForReceipt is undefined. Not fetching timestamp.`,
           )
