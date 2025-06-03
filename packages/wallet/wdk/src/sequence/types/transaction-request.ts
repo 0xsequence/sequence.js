@@ -22,6 +22,7 @@ type TransactionBase = {
   requests: TransactionRequest[]
   source: string
   envelope: Envelope.Envelope<Payload.Calls>
+  timestamp: number
 }
 
 export type TransactionRequested = TransactionBase & {
