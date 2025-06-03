@@ -10,13 +10,10 @@ export * from './intents.js'
 export * from './preconditions.js'
 export * from './metaTxns.js'
 export * from './constants.js'
+export * from './widget/index.js'
 export type { MetaTxn } from './metaTxnMonitor.js'
 export type { RelayerConfig, Relayer } from './relayer.js'
 export type { NativeTokenBalance, TokenBalance } from './tokenBalances.js'
 export type { UseAnypayConfig, Account } from './anypay.js'
-export type {
-  OriginCallParams,
-  SendOriginCallTxArgs,
-  GetIntentCallsPayloadsReturn
-} from './intents.js'
+export type { OriginCallParams, SendOriginCallTxArgs, GetIntentCallsPayloadsReturn } from './intents.js'
 export type { RelayerOperationStatus } from './relayer.js'

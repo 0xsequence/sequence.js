@@ -1,3 +1,6 @@
-import Widget from './widget'
+import AnyPayWidget from '@anypay/sdk/widget'
 
-export default Widget
+// import Widget from './widget'
+
+// export default Widget
+export default () => <AnyPayWidget />

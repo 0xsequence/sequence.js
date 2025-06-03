@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { ErrorRoute } from './routes/error'
 import { RootLayout } from './routes/root-layout'
 import { HomeIndexRoute } from './routes/home/home-index-route'
-import { Widget } from './routes/widget/widget'
+import Widget from './routes/widget'
 
 export const router = createBrowserRouter([
   {
