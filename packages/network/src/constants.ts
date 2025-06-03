@@ -140,9 +140,7 @@ export enum ChainId {
   //SOMNIA_TESTNET
   SOMNIA_TESTNET = 50312,
 
-  //FREQUENCY_TESTNET
-  FREQUENCY_TESTNET = 53716,
-
+  // INCENTIV TESTNET
   INCENTIV_TESTNET = 11690
 }
 
@@ -1119,23 +1117,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     }
   },
 
-  [ChainId.FREQUENCY_TESTNET]: {
-    chainId: ChainId.FREQUENCY_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'frequency-testnet',
-    title: 'Frequency Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.FREQUENCY_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Frequency Testnet Explorer',
-      rootUrl: 'https://explorer.frequency.zeeve.net/'
-    },
-    nativeToken: {
-      symbol: 'BERA',
-      name: 'BERA',
-      decimals: 18
-    }
-  },
   [ChainId.INCENTIV_TESTNET]: {
     chainId: ChainId.INCENTIV_TESTNET,
     type: NetworkType.TESTNET,
