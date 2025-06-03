@@ -2,6 +2,7 @@ import { Address, Bytes, Hash, Hex } from 'ox'
 import {
   isRawConfig,
   isRawNestedLeaf,
+  isRawNode,
   isRawSignerLeaf,
   isSignedSapientSignerLeaf,
   isSignedSignerLeaf,
@@ -444,6 +445,103 @@ export function mergeTopology(a: Topology, b: Topology): Topology {
   }
 
   return mergeLeaf(a as Leaf, b as Leaf)
+}
+
+/**
+ * Checks if a wallet topology or config has any values that are too large.
+ *
+ * Recursively checks:
+ * - threshold (max 65535)
+ * - checkpoint (max 72057594037927935)
+ * - weight (max 255)
+ * If any value is too large, or a nested part is invalid, returns true.
+ *
+ * @param topology - The wallet topology or config to check.
+ * @returns True if any value is invalid, otherwise false.
+ */
+export function hasInvalidValues(topology: Topology | Config): boolean {
+  if (isConfig(topology)) {
+    return (
+      topology.threshold > 65535n || topology.checkpoint > 72057594037927935n || hasInvalidValues(topology.topology)
+    )
+  }
+
+  if (isNode(topology)) {
+    return hasInvalidValues(topology[0]) || hasInvalidValues(topology[1])
+  }
+
+  if (isNestedLeaf(topology)) {
+    return hasInvalidValues(topology.tree) || topology.weight > 255n || topology.threshold > 65535n
+  }
+
+  if (isSignerLeaf(topology) || isSapientSignerLeaf(topology)) {
+    return topology.weight > 255n
+  }
+
+  return false
+}
+
+/**
+ * Calculates the maximum depth of a wallet topology tree.
+ *
+ * The depth is defined as the longest path from the root node to any leaf node.
+ *
+ * @param topology - The wallet topology to evaluate.
+ * @returns The maximum depth of the topology tree.
+ */
+export function maximumDepth(topology: Topology): number {
+  if (isNode(topology)) {
+    return Math.max(maximumDepth(topology[0]), maximumDepth(topology[1])) + 1
+  }
+
+  if (isNestedLeaf(topology)) {
+    return maximumDepth(topology.tree) + 1
+  }
+
+  return 0
+}
+
+/**
+ * Evaluates the safety of a wallet configuration.
+ *
+ * This function checks for several potential security issues:
+ * 1. Zero threshold - would allow anyone to send transactions
+ * 2. Excessive tree depth - could cause issues with contract execution
+ * 3. Unreachable threshold - would make it impossible to sign transactions
+ * 4. Invalid values - would make it impossible to encode in a signature
+ *
+ * @param config The wallet configuration to evaluate
+ * @throws {Error} With code 'unsafe-threshold-0' if the threshold is zero
+ * @throws {Error} With code 'unsafe-depth' if the tree depth exceeds 32
+ * @throws {Error} With code 'unsafe-threshold' if the threshold is higher than the maximum possible weight
+ * @throws {Error} With code 'unsafe-invalid-values' if the configuration has invalid values
+ */
+export function evaluateConfigurationSafety(config: Config) {
+  // If the configuration has a threshold of zero then anyone
+  // and send a transaction on the wallet
+  if (config.threshold === 0n) {
+    throw new Error('unsafe-threshold-0')
+  }
+
+  // The configuration may have invalid values, that are not possible
+  // to encode in a signature
+  if (hasInvalidValues(config)) {
+    throw new Error('unsafe-invalid-values')
+  }
+
+  // The contracts can safely handle trees up to a depth of 54
+  // but we use 32 as a maximum depth to leave some safety margning
+  // as 32 should be more than enough for all use cases
+  if (maximumDepth(config.topology) > 32) {
+    throw new Error('unsafe-depth')
+  }
+
+  // The threshold must be reachable, otherwise it would be
+  // impossible to sign any signatures using this configuration
+  const { maxWeight } = getWeight(config.topology, () => true)
+  if (maxWeight < config.threshold) {
+    throw new Error('unsafe-threshold')
+  }
 }
 
 function mergeLeaf(a: Leaf, b: Leaf): Leaf {
