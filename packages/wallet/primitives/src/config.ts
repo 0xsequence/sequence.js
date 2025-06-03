@@ -511,7 +511,7 @@ export function maximumDepth(topology: Topology): number {
  * 4. Invalid values - would make it impossible to encode in a signature
  *
  * @param config The wallet configuration to evaluate
- * @throws {Error} With code 'threshold-0' if the threshold is zero
+ * @throws {Error} With code 'unsafe-threshold-0' if the threshold is zero
  * @throws {Error} With code 'unsafe-depth' if the tree depth exceeds 32
  * @throws {Error} With code 'unsafe-threshold' if the threshold is higher than the maximum possible weight
  * @throws {Error} With code 'unsafe-invalid-values' if the configuration has invalid values
@@ -520,7 +520,7 @@ export function evaluateConfigurationSafety(config: Config) {
   // If the configuration has a threshold of zero then anyone
   // and send a transaction on the wallet
   if (config.threshold === 0n) {
-    throw new Error('threshold-0')
+    throw new Error('unsafe-threshold-0')
   }
 
   // The configuration may have invalid values, that are not possible

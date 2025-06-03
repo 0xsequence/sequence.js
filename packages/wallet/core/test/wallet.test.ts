@@ -210,7 +210,7 @@ describe('Wallet', async () => {
       topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
     })
 
-    await expect(walletUpdatePromise1).rejects.toThrow('threshold-0')
+    await expect(walletUpdatePromise1).rejects.toThrow('unsafe-threshold-0')
 
     // Weight too high
     const walletUpdatePromise2 = wallet.prepareUpdate({
@@ -219,7 +219,7 @@ describe('Wallet', async () => {
       topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 256n },
     })
 
-    await expect(walletUpdatePromise2).rejects.toThrow('invalid-values')
+    await expect(walletUpdatePromise2).rejects.toThrow('unsafe-invalid-values')
 
     // Threshold too high
     const walletUpdatePromise3 = wallet.prepareUpdate({
