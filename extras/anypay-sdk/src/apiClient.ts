@@ -4,11 +4,8 @@ import { useConfig } from '@0xsequence/hooks'
 
 export { type SequenceAPIClient }
 
-export function getAPIClient(
-  apiUrl: string,
-  projectAccessKey: string,
-  jwt?: string
-): SequenceAPIClient {
+export function getAPIClient(apiUrl: string, projectAccessKey: string, jwt?: string): SequenceAPIClient {
+  console.log('here000', SequenceAPIClient)
   return new SequenceAPIClient(apiUrl, projectAccessKey, jwt)
 }
 

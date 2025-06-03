@@ -1137,14 +1137,6 @@ export async function prepareSend(options: SendOptions) {
     throw new Error('Invalid intent')
   }
 
-  if (intent.preconditions.length !== intent.calls.length) {
-    throw new Error('Preconditions and calls length mismatch')
-  }
-
-  if (intent.calls.length < 2) {
-    throw new Error('At least 2 calls are required')
-  }
-
   const intentAddress = calculateIntentAddress(mainSigner, intent.calls as any[], intent.lifiInfos as any[]) // TODO: Add proper type
   console.log('Calculated intent address:', intentAddress.toString())
 
