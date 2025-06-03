@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useAccount } from 'wagmi'
-import { useTokenBalances } from '@anypay/sdk'
+import { useTokenBalances } from '../../tokenBalances.js'
 import { Address } from 'ox'
 import { formatUnits, isAddressEqual, zeroAddress } from 'viem'
 import { NetworkImage } from '@0xsequence/design-system'
@@ -29,7 +29,8 @@ interface TokenListProps {
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
-  return Object.values(chains).find((chain) => chain.id === chainId) || null
+  // TODO: Add proper type
+  return Object.values(chains).find((chain: any) => chain.id === chainId) || null
 }
 
 // Helper to format balance
@@ -56,7 +57,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
 
   const handleTokenSelect = (token: any) => {
     const isNative = !('contractAddress' in token)
-    const chainInfo = getChainInfo(token.chainId)
+    const chainInfo = getChainInfo(token.chainId) as any // TODO: Add proper type
 
     let formattedToken: Token
     if (isNative) {
@@ -108,7 +109,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
     const query = searchQuery.toLowerCase().trim()
     return sortedTokens.filter((token: any) => {
       const isNative = !('contractAddress' in token)
-      const chainInfo = getChainInfo(token.chainId)
+      const chainInfo = getChainInfo(token.chainId) as any // TODO: Add proper type
       const chainName = chainInfo?.name || ''
 
       if (isNative) {
@@ -173,7 +174,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
       <div className="divide-y divide-gray-200">
         {filteredTokens.map((token: any) => {
           const isNative = !('contractAddress' in token)
-          const chainInfo = getChainInfo(token.chainId)
+          const chainInfo = getChainInfo(token.chainId) as any // TODO: Add proper type
           const nativeSymbol = chainInfo?.nativeCurrency.symbol || 'ETH'
           const tokenSymbol = isNative ? nativeSymbol : token.contractInfo?.symbol || '???'
           const tokenName = isNative

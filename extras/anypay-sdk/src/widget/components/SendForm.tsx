@@ -3,7 +3,7 @@ import { NetworkImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
 import { ChevronDown, Loader2 } from 'lucide-react'
-import { prepareSend, getChainConfig } from '@anypay/sdk'
+import { prepareSend, getChainConfig } from '../../anypay.js'
 import { zeroAddress } from 'viem'
 
 interface Token {
@@ -28,6 +28,7 @@ interface SendFormProps {
   onConfirm: () => void
   onComplete: () => void
   account: Account
+  sequenceApiKey: string
 }
 
 // Available chains
@@ -46,7 +47,8 @@ const SUPPORTED_TOKENS = [
 
 // Helper to get chain info
 const getChainInfo = (chainId: number) => {
-  return Object.values(chains).find((chain) => chain.id === chainId) || null
+  // TODO: Add proper type
+  return Object.values(chains).find((chain: any) => chain.id === chainId) || null
 }
 
 // Helper to format balance
@@ -98,18 +100,19 @@ export const SendForm: React.FC<SendFormProps> = ({
   onConfirm,
   onComplete,
   account,
+  sequenceApiKey,
 }) => {
   const [amount, setAmount] = useState('')
   const [recipient, setRecipient] = useState('')
   const [selectedChain, setSelectedChain] = useState(
-    () => SUPPORTED_CHAINS.find((chain) => chain.id === selectedToken.chainId) || SUPPORTED_CHAINS[0],
+    () => (SUPPORTED_CHAINS.find((chain) => chain.id === selectedToken.chainId) || SUPPORTED_CHAINS[0])!,
   )
   const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false)
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false)
-  const [selectedDestToken, setSelectedDestToken] = useState(SUPPORTED_TOKENS[0])
+  const [selectedDestToken, setSelectedDestToken] = useState(SUPPORTED_TOKENS[0]!)
   const chainDropdownRef = useRef<HTMLDivElement>(null)
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
-  const chainInfo = getChainInfo(selectedToken.chainId)
+  const chainInfo = getChainInfo(selectedToken.chainId) as any // TODO: Add proper type
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const formattedBalance = formatBalance(selectedToken.balance, selectedToken.contractInfo?.decimals)
@@ -156,7 +159,7 @@ export const SendForm: React.FC<SendFormProps> = ({
             ? zeroAddress
             : getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
         destinationTokenAmount: parsedAmount,
-        sequenceApiKey: import.meta.env.VITE_SEQUENCE_API_KEY as string,
+        sequenceApiKey,
         fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(),
         client,
       }

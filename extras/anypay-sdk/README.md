@@ -1,6 +1,8 @@
 # @anypay/sdk
 
-Anypay SDK for sending any token from any chain.
+> Anypay SDK for sending any token from any chain.
+
+⚠️ This is a work in progress!
 
 ## Installation
 
@@ -10,7 +12,29 @@ npm install @anypay/sdk
 
 ## Usage
 
-### Basic Example
+### React Widget Component
+
+The easiest way to integrate Anypay is using our pre-built React widget:
+
+```typescript
+import { AnyPayWidget } from '@anypay/sdk/widget'
+
+export const App = () => {
+  const sequenceApiKey = import.meta.env.VITE_SEQUENCE_API_KEY
+
+  return (
+    <AnyPayWidget
+      sequenceApiKey={sequenceApiKey}
+    />
+  )
+}
+```
+
+### Low-level API Usage
+
+If you need more control, you can use the low-level APIs directly:
+
+#### Basic Example
 
 ```typescript
 import { prepareSend } from '@anypay/sdk'
@@ -20,7 +44,7 @@ import { createWalletClient, custom } from 'viem'
 const client = createWalletClient({
   account,
   chain: getChainConfig(chainId),
-  transport: custom(window.ethereum)
+  transport: custom(window.ethereum),
 })
 
 // Prepare and send a transaction
@@ -35,7 +59,7 @@ const options = {
   destinationTokenAmount: '300003', // Amount in USDC decimals (6)
   sequenceApiKey: 'your-api-key',
   fee: '5600000000000',
-  client
+  client,
 }
 
 const { intentAddress, send } = await prepareSend(options)
@@ -45,7 +69,7 @@ console.log('Intent address:', intentAddress.toString())
 await send()
 ```
 
-### Example
+#### Advanced Example
 
 ```typescript
 import {
@@ -55,7 +79,7 @@ import {
   calculateIntentAddress,
   commitIntentConfig,
   sendOriginTransaction,
-  getERC20TransferData
+  getERC20TransferData,
 } from '@anypay/sdk'
 import { createWalletClient, http } from 'viem'
 import { arbitrum } from 'viem/chains'
@@ -77,20 +101,14 @@ async function sendCrossChainToken() {
     destinationTokenAddress: destinationTokenAddress,
     destinationTokenAmount: destinationTokenAmount,
     destinationCallData: getERC20TransferData(recipient, BigInt(destinationTokenAmount)),
-    destinationCallValue: '0'
+    destinationCallValue: '0',
   }
 
   const intent = await getIntentCallsPayloads(apiClient, args)
 
   // Calculate and commit intent
   const intentAddress = calculateIntentAddress(account.address, intent.calls, intent.lifiInfos)
-  await commitIntentConfig(
-    apiClient,
-    account.address,
-    intent.calls,
-    intent.preconditions,
-    intent.lifiInfos
-  )
+  await commitIntentConfig(apiClient, account.address, intent.calls, intent.preconditions, intent.lifiInfos)
 
   // Monitor transaction status
   const status = await getMetaTxStatus(relayer, metaTxId, chainId)
