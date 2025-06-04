@@ -812,8 +812,8 @@ packages:
     peerDependencies:
       ethers: '>=6'
 
-  '@0xsequence/tee-verifier@0.1.0':
-    resolution: {integrity: sha512-uSN5MHfxCfFL6Ig5IRF88G/xK189IYz2zi1DZeTcRykBIGgtSQJMXmCrdQS3tZXYJCOFd1Q+ew5nWoRuB0RhFg==}
+  '@0xsequence/tee-verifier@0.1.1':
+    resolution: {integrity: sha512-tBWy/P4reDHzw1dUHL7ydCKI1FKMLVBgLi6gi3b1bTl5zTaV6IZkOzTBCEsOGarfjQ4TQtXqhmoWIlvli0AMqQ==}
 
   '@0xsequence/utils@2.3.8':
     resolution: {integrity: sha512-iXAZju8GouEqFbKgG/TsPIdd/omu8xSUSuY5nQIcmgQcX9v2brRXmwXp2a2kVvHXSbcrKErhsSf5GMFYwNLrrQ==}
@@ -6517,7 +6517,7 @@ snapshots:
       '@0xsequence/core': 2.3.8(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       ethers: 6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
-  '@0xsequence/tee-verifier@0.1.0':
+  '@0xsequence/tee-verifier@0.1.1':
     dependencies:
       cbor2: 1.12.0
       pkijs: 3.2.5
@@ -11535,7 +11535,7 @@ snapshots:
 
   pkijs@3.2.5:
     dependencies:
-      '@noble/hashes': 1.7.1
+      '@noble/hashes': 1.7.2
       asn1js: 3.0.6
       bytestreamjs: 2.0.1
       pvtsutils: 1.3.6
