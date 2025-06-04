@@ -376,8 +376,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@0xsequence/wallet-primitives':
-        specifier: 0.0.0-anypay-20250527101311
-        version: 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
+        specifier: workspace:*
+        version: link:../primitives
       '@tanstack/react-query':
         specifier: ^5.69.0
         version: 5.74.3(react@19.0.0)
@@ -838,9 +838,6 @@ packages:
       ethers: '>= 6.13.0'
       viem: '>= 2.0.0'
       wagmi: '>= 2.0.0'
-
-  '@0xsequence/wallet-primitives@0.0.0-anypay-20250527101311':
-    resolution: {integrity: sha512-uy+q2xGfHKTMMRtW2VGPHB2MCIem3SP72+/IOc606ccSLWtwPtdC70QcTujJzkLVJfAsZ/l6nFNclz8KOEeMoA==}
 
   '@0xsequence/wallet@2.3.8':
     resolution: {integrity: sha512-HH4KiO4VYGsmQDc/thtXLrIiYtjHGOKQ+ms/u5F/SZDa8hBw+VwYElli7FEgsbg+tpUYmMlaPeKZz67Buqe9zQ==}
@@ -6662,13 +6659,6 @@ snapshots:
       ethers: 6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       wagmi: 2.15.0(@tanstack/query-core@5.74.3)(@tanstack/react-query@5.74.3(react@19.0.0))(@types/react@19.1.2)(bufferutil@4.0.9)(react@19.0.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
-
-  '@0xsequence/wallet-primitives@0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)':
-    dependencies:
-      ox: 0.7.0(typescript@5.7.3)(zod@3.24.2)
-    transitivePeerDependencies:
-      - typescript
-      - zod
 
   '@0xsequence/wallet@2.3.8(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
     dependencies:
