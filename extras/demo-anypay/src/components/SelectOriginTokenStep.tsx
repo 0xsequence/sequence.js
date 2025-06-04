@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text, NetworkImage } from '@0xsequence/design-system'
 import { Hex, zeroAddress } from 'viem'
-import { TokenBalance, NativeTokenBalance } from '@anypay/sdk'
+import { TokenBalance, NativeTokenBalance } from '@0xsequence/anypay-sdk'
 import { SectionHeader } from '@/components/SectionHeader'
 import { getChainInfo, formatBalance } from '@/utils/formatting'
 

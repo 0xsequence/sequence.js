@@ -4,7 +4,7 @@ import { Layers, Info, Loader2 } from 'lucide-react'
 import { getChainInfo, getExplorerUrl } from '@/utils/formatting'
 import { IntentAction } from '@/types'
 import { IntentCallsPayload } from '@0xsequence/api'
-import { MetaTxn } from '@anypay/sdk'
+import { MetaTxn } from '@0xsequence/anypay-sdk'
 import * as chains from 'viem/chains'
 
 const BASE_USDC_DESTINATION_CHAIN_ID = chains.base.id
