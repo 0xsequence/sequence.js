@@ -26,7 +26,7 @@
     "@0xsequence/network": "^2.3.9",
     "@0xsequence/wagmi-connector": "^4.0.1",
     "@0xsequence/wallet-core": "github:0xsequence/sequence.js#dists/wallet/core",
-    "@0xsequence/wallet-primitives": "workspace:*",
+    "@0xsequence/wallet-primitives": "github:0xsequence/sequence.js#dists/wallet/primitives",
     "@0xsequence/wallet-wdk": "github:0xsequence/sequence.js#dists/wallet/wdk",
     "@radix-ui/react-popover": "^1.1.6",
     "@repo/eslint-config": "workspace:*",

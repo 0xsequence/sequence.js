@@ -54,8 +54,8 @@ importers:
         specifier: github:0xsequence/sequence.js#dists/wallet/core
         version: https://codeload.github.com/0xsequence/sequence.js/tar.gz/bf8352bb5476ebf6505fae27e69cd1893aba88c0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@0xsequence/wallet-primitives':
-        specifier: workspace:*
-        version: link:../../packages/wallet/primitives
+        specifier: github:0xsequence/sequence.js#dists/wallet/primitives
+        version: https://codeload.github.com/0xsequence/sequence.js/tar.gz/8947035242e2cb2974d01414b60e4fd8a8109c2a(typescript@5.7.3)(zod@3.24.2)
       '@0xsequence/wallet-wdk':
         specifier: github:0xsequence/sequence.js#dists/wallet/wdk
         version: https://codeload.github.com/0xsequence/sequence.js/tar.gz/a670c692eca440eecba30ee08e8f8c6183f4322d(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
@@ -376,8 +376,8 @@ importers:
         specifier: github:0xsequence/sequence.js#dists/wallet/core
         version: https://codeload.github.com/0xsequence/sequence.js/tar.gz/bf8352bb5476ebf6505fae27e69cd1893aba88c0(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@0xsequence/wallet-primitives':
-        specifier: 0.0.0-anypay-20250527101311
-        version: 0.0.0-anypay-20250527101311(typescript@5.7.3)(zod@3.24.2)
+        specifier: github:0xsequence/sequence.js#dists/wallet/primitives
+        version: https://codeload.github.com/0xsequence/sequence.js/tar.gz/8947035242e2cb2974d01414b60e4fd8a8109c2a(typescript@5.7.3)(zod@3.24.2)
       '@tanstack/react-query':
         specifier: ^5.69.0
         version: 5.74.3(react@19.0.0)
