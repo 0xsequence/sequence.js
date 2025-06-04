@@ -215,7 +215,7 @@ export const ChooseActionStep: React.FC<ChooseActionStepProps> = ({
             </div>
             <div className="flex justify-end space-x-2">
               <Button
-                variant="secondary"
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowCustomCallForm(false)} // This assumes setShowCustomCallForm is passed as a prop
                 className="px-4 py-2"
