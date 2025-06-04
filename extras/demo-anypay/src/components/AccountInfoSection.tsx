@@ -102,7 +102,7 @@ export const AccountInfoSection = ({
               </span>
             </Text>
             {connectError && (
-              <Text variant="small" color="error" className="flex items-center">
+              <Text variant="small" color="negative" className="flex items-center">
                 <AlertTriangle className="h-4 w-4 mr-1" />
                 {connectError.message}
               </Text>
