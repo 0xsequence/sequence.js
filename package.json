@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build:all": "turbo build",
-    "build:packages": "turbo build --filter=\"./packages/**/*\"",
+    "build:packages": "turbo build --filter=\"./packages/**/*\" --filter=\"./extras/demo-anypay\"",
     "build": "pnpm build:packages",
     "dev": "turbo dev",
     "test": "turbo test --concurrency=1",
