@@ -138,6 +138,8 @@ export class Sessions {
       throw new Error('Unsupported signature type')
     }
 
+    await this.shared.modules.signatures.complete(requestId)
+
     return {
       attestation: signatureRequest.envelope.payload.attestation,
       signature: signature.signature,
