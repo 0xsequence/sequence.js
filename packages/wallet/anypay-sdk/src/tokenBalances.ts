@@ -1,4 +1,3 @@
-import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import {
   ContractVerificationStatus,
   NativeTokenBalance,
@@ -6,10 +5,12 @@ import {
   GatewayNativeTokenBalances,
   GatewayTokenBalance,
   GetTokenBalancesSummaryReturn,
+  SequenceIndexerGateway,
 } from '@0xsequence/indexer'
 import { useQuery } from '@tanstack/react-query'
 import { Address } from 'ox'
 import { useMemo } from 'react'
+import { useIndexerGatewayClient } from './indexerClient.js'
 
 export { type NativeTokenBalance, type TokenBalance }
 
@@ -24,13 +25,16 @@ function isNativeToken(token: TokenBalance | NativeTokenBalance): token is Nativ
   return true
 }
 
-export function useTokenBalances(address: Address.Address): {
+export function useTokenBalances(
+  address: Address.Address,
+  indexerGatewayClient?: SequenceIndexerGateway,
+): {
   tokenBalancesData: GetTokenBalancesSummaryReturn | undefined
   isLoadingBalances: boolean
   balanceError: Error | null
   sortedTokens: (TokenBalance | NativeTokenBalance)[]
 } {
-  const indexerClient = useIndexerGatewayClient()
+  const indexerClient = indexerGatewayClient ?? useIndexerGatewayClient()
 
   // Fetch token balances
   const {
