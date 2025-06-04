@@ -1,5 +1,6 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
+import { GetMetaTxnReceiptReturn } from './rpc/index.js'
 
 export interface FeeOption {
   token: Address.Address
@@ -13,27 +14,44 @@ export interface FeeQuote {
   _quote: unknown
 }
 
-export type OperationUknownStatus = {
+export type OperationUnknownStatus = {
   status: 'unknown'
+  reason?: string
+}
+
+export type OperationQueuedStatus = {
+  status: 'queued'
+  reason?: string
 }
 
 export type OperationPendingStatus = {
   status: 'pending'
+  reason?: string
+}
+
+export type OperationPendingPreconditionStatus = {
+  status: 'pending-precondition'
+  reason?: string
 }
 
 export type OperationConfirmedStatus = {
   status: 'confirmed'
   transactionHash: Hex.Hex
+  data?: GetMetaTxnReceiptReturn
 }
 
 export type OperationFailedStatus = {
   status: 'failed'
+  transactionHash?: Hex.Hex
   reason: string
+  data?: GetMetaTxnReceiptReturn
 }
 
 export type OperationStatus =
-  | OperationUknownStatus
+  | OperationUnknownStatus
+  | OperationQueuedStatus
   | OperationPendingStatus
+  | OperationPendingPreconditionStatus
   | OperationConfirmedStatus
   | OperationFailedStatus
 
@@ -49,4 +67,6 @@ export interface Relayer {
   relay(to: Address.Address, data: Hex.Hex, chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }>
 
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
+
+  checkPrecondition(precondition: Precondition.Precondition): Promise<boolean>
 }
