@@ -39,7 +39,7 @@ export function useTokenBalances(address: Address.Address): {
     error: balanceError,
   } = useQuery<GetTokenBalancesSummaryReturn>({
     queryKey: ['tokenBalances', address],
-    queryFn: async () => {
+    queryFn: async (): Promise<GetTokenBalancesSummaryReturn> => {
       if (!address) {
         console.warn('No account address or indexer client')
         return {
@@ -49,7 +49,7 @@ export function useTokenBalances(address: Address.Address): {
         } as GetTokenBalancesSummaryReturn
       }
       try {
-        const summary = await indexerClient.getTokenBalancesSummary({
+        const summaryFromGateway = await indexerClient.getTokenBalancesSummary({
           filter: {
             accountAddresses: [address],
             contractStatus: ContractVerificationStatus.VERIFIED,
@@ -58,7 +58,12 @@ export function useTokenBalances(address: Address.Address): {
           },
         })
 
-        return summary
+        // Transform the raw gateway response to match GetTokenBalancesSummaryReturn
+        return {
+          page: summaryFromGateway.page,
+          balances: summaryFromGateway.balances.flatMap((b: any) => b.results),
+          nativeBalances: summaryFromGateway.nativeBalances.flatMap((b: any) => b.results),
+        }
       } catch (error) {
         console.error('Failed to fetch token balances:', error)
         return {

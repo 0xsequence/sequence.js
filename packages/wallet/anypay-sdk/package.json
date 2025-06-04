@@ -29,7 +29,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@0xsequence/api": "0.0.0-anypay-20250527101311",
+    "@0xsequence/api": "workspace:*",
     "@0xsequence/design-system": "^2.1.6",
     "@0xsequence/hooks": "^5.1.0",
     "@0xsequence/indexer": "^2.3.9",
