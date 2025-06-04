@@ -118,33 +118,7 @@ export const AnyPayWidget = ({ sequenceApiKey, indexerUrl, apiUrl }: AnyPayWidge
   }
 
   const handleSend = async (amount: string, recipient: string) => {
-    if (!address || !isConnected || !chainId || !selectedToken || !window.ethereum || !walletClient?.account) return
-
-    try {
-      const options = {
-        account: walletClient.account,
-        originTokenAddress: selectedToken.contractAddress,
-        originChainId: selectedToken.chainId,
-        originTokenAmount: selectedToken.balance,
-        destinationChainId: chainId,
-        recipient,
-        destinationTokenAddress: selectedToken.contractAddress,
-        destinationTokenAmount: amount,
-        sequenceApiKey,
-        fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(),
-        client: walletClient,
-      }
-
-      const { intentAddress, send } = await prepareSend(options)
-      console.log('Intent address:', intentAddress.toString())
-      await send()
-
-      setTxHash('0x123...')
-      setCurrentScreen('receipt')
-    } catch (error) {
-      console.error('Error in prepareSend:', error)
-      setCurrentScreen('send')
-    }
+    console.log('handleSend', amount, recipient)
   }
 
   const handleTransferComplete = () => {
@@ -225,7 +199,7 @@ export const AnyPayWidget = ({ sequenceApiKey, indexerUrl, apiUrl }: AnyPayWidge
             <div className="flex flex-col items-center justify-center space-y-8 py-12">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-blue-500 text-white hover:bg-blue-600 font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
+                className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
               >
                 Pay
               </button>
