@@ -26,10 +26,11 @@ import {
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
-import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, MetaTxnStatusValue, getMetaTxStatus } from './metaTxnMonitor.js'
+import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
 import { useRelayers, getRelayer, getBackupRelayer } from './relayer.js'
 import { findPreconditionAddress } from './preconditions.js'
+import { Relayer } from '@0xsequence/wallet-core'
 import {
   calculateIntentAddress,
   OriginCallParams,
@@ -119,7 +120,7 @@ export type UseAnyPayReturn = {
   sendMetaTxnError: Error | null
   sendMetaTxnArgs: { selectedId: string | null } | undefined
   clearIntent: () => void
-  metaTxnMonitorStatuses: { [key: string]: MetaTxnStatusValue }
+  metaTxnMonitorStatuses: { [key: string]: Relayer.OperationStatus }
   createIntent: (args: any) => void // TODO: Add proper type
   createIntentPending: boolean
   createIntentSuccess: boolean
