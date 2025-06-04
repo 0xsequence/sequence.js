@@ -86,9 +86,9 @@
       "types": "./dist/index.d.ts"
     },
     "./widget": {
-      "import": "./dist/widget/index.js",
-      "require": "./dist/widget/index.js",
-      "types": "./dist/widget/index.d.ts"
+      "import": "./dist/widget/widget/index.js",
+      "require": "./dist/widget/widget/index.js",
+      "types": "./dist/widget/widget/index.d.ts"
     }
   }
 }
