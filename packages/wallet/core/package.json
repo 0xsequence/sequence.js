@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "license": "Apache-2.0",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -25,6 +29,7 @@
   "dependencies": {
     "@0xsequence/relayer": "workspace:^",
     "@0xsequence/wallet-primitives": "workspace:^",
-    "ox": "^0.7.0"
+    "ox": "^0.7.0",
+    "viem": "^2.27.2"
   }
 }
