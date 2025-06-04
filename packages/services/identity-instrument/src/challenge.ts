@@ -1,12 +1,12 @@
 import { Bytes, Hash, Hex } from 'ox'
 import { jwtDecode } from 'jwt-decode'
-import { IdentityType, AuthMode } from './identity-instrument.gen.js'
+import { IdentityType, AuthMode, Key } from './identity-instrument.gen.js'
 
 interface CommitChallengeParams {
   authMode: AuthMode
   identityType: IdentityType
   handle?: string
-  signer?: string
+  signer?: Key
   metadata: { [key: string]: string }
 }
 
@@ -63,7 +63,7 @@ export class IdTokenChallenge extends Challenge {
 
 export class AuthCodeChallenge extends Challenge {
   private handle = ''
-  private signer?: string
+  private signer?: Key
 
   constructor(
     readonly issuer: string,
@@ -99,7 +99,7 @@ export class AuthCodeChallenge extends Challenge {
     }
   }
 
-  public withSigner(signer: string): AuthCodeChallenge {
+  public withSigner(signer: Key): AuthCodeChallenge {
     const challenge = new AuthCodeChallenge(this.issuer, this.audience, this.redirectUri, this.authCode)
     challenge.handle = this.handle
     challenge.signer = signer
@@ -110,7 +110,7 @@ export class AuthCodeChallenge extends Challenge {
 export class AuthCodePkceChallenge extends Challenge {
   private verifier?: string
   private authCode?: string
-  private signer?: string
+  private signer?: Key
 
   constructor(
     readonly issuer: string,
@@ -146,7 +146,7 @@ export class AuthCodePkceChallenge extends Challenge {
     }
   }
 
-  public withSigner(signer: string): AuthCodePkceChallenge {
+  public withSigner(signer: Key): AuthCodePkceChallenge {
     const challenge = new AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
     challenge.verifier = this.verifier
     challenge.signer = signer
@@ -165,7 +165,7 @@ export class AuthCodePkceChallenge extends Challenge {
 export class OtpChallenge extends Challenge {
   private answer?: string
   private recipient?: string
-  private signer?: string
+  private signer?: Key
 
   private constructor(readonly identityType: IdentityType) {
     super()
@@ -177,14 +177,14 @@ export class OtpChallenge extends Challenge {
     return challenge
   }
 
-  public static fromSigner(identityType: IdentityType, signer: string): OtpChallenge {
+  public static fromSigner(identityType: IdentityType, signer: Key): OtpChallenge {
     const challenge = new OtpChallenge(identityType)
     challenge.signer = signer
     return challenge
   }
 
   public getCommitParams(): CommitChallengeParams {
-    if (!this.recipient && !this.signer) {
+    if (!this.recipient && (!this.signer || !this.signer.address || !this.signer.keyType)) {
       throw new Error('OtpChallenge is not complete')
     }
 
@@ -205,7 +205,7 @@ export class OtpChallenge extends Challenge {
     return {
       authMode: AuthMode.OTP,
       identityType: this.identityType,
-      verifier: this.recipient ?? this.signer ?? '',
+      verifier: this.recipient ?? (this.signer ? `${this.signer.keyType}:${this.signer.address}` : ''),
       answer: this.answer,
     }
   }

@@ -72,6 +72,7 @@ export class Transactions {
       envelope,
       source: options?.source ?? 'unknown',
       status: 'requested',
+      timestamp: Date.now(),
     })
 
     return id

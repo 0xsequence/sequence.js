@@ -490,6 +490,9 @@ importers:
 
   packages/wallet/core:
     dependencies:
+      '@0xsequence/relayer':
+        specifier: workspace:^
+        version: link:../../services/relayer
       '@0xsequence/wallet-primitives':
         specifier: workspace:^
         version: link:../primitives
@@ -575,8 +578,8 @@ importers:
         specifier: workspace:^
         version: link:../../services/identity-instrument
       '@0xsequence/tee-verifier':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       '@0xsequence/wallet-core':
         specifier: workspace:^
         version: link:../core

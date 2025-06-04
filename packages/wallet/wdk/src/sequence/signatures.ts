@@ -217,7 +217,18 @@ export class Signatures {
         envelope.wallet,
         pendingConfigUpdatesToClear.map((pc) => pc.id),
       )
-      await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.cancel(sig.id)))
+      const cancellationResults = await Promise.allSettled(
+        pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.cancel(sig.id)),
+      )
+      cancellationResults.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const failedSigId = pendingConfigUpdatesToClear[index]?.id
+          console.error(
+            `Failed to cancel conflicting signature request ${failedSigId || 'unknown ID'} during logout preparation:`,
+            result.reason,
+          )
+        }
+      })
     }
 
     const id = uuidv7()

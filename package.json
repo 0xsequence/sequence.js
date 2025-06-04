@@ -7,7 +7,7 @@
     "build:packages": "turbo build --filter=\"./packages/**/*\"",
     "build": "pnpm build:packages",
     "dev": "turbo dev",
-    "test": "turbo test",
+    "test": "turbo test --concurrency=1",
     "lint": "turbo lint",
     "format": "prettier --list-different --write \"**/*.{ts,tsx,md}\"",
     "typecheck": "turbo typecheck",
