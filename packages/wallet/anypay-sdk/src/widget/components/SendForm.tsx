@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
+import { createWalletClient, custom, formatUnits, parseUnits, type Account, isAddress } from 'viem'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
 import { getAPIClient } from '../../apiClient.js'
@@ -121,10 +121,11 @@ export const SendForm: React.FC<SendFormProps> = ({
   const [amount, setAmount] = useState('')
   const [recipientInput, setRecipientInput] = useState('')
   const [recipient, setRecipient] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const {
     data: ensAddress,
     isLoading,
-    error,
+    error: ensError,
   } = useEnsAddress({
     name: recipientInput.endsWith('.eth') ? recipientInput : undefined,
     chainId: mainnet.id,
@@ -158,6 +159,8 @@ export const SendForm: React.FC<SendFormProps> = ({
 
   const formattedBalance = formatBalance(selectedToken.balance, selectedToken.contractInfo?.decimals)
 
+  const isValidRecipient = recipient && isAddress(recipient)
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (chainDropdownRef.current && !chainDropdownRef.current.contains(event.target as Node)) {
@@ -174,6 +177,7 @@ export const SendForm: React.FC<SendFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
 
     try {
       setIsSubmitting(true)
@@ -233,6 +237,7 @@ export const SendForm: React.FC<SendFormProps> = ({
       }, 10_000)
     } catch (error) {
       console.error('Error in prepareSend:', error)
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
       setIsSubmitting(false)
     }
   }
@@ -384,9 +389,14 @@ export const SendForm: React.FC<SendFormProps> = ({
         </div>
 
         <div className="flex flex-col space-y-3">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
           <button
             type="submit"
-            disabled={!amount || !recipient || isSubmitting}
+            disabled={!amount || !isValidRecipient || isSubmitting}
             className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 cursor-pointer disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors relative"
             onClick={handleSubmit}
           >
