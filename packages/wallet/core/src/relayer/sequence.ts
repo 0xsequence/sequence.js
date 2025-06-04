@@ -1,4 +1,4 @@
-import { ETHTxnStatus, Relayer as Service } from '@0xsequence/relayer'
+import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequence/relayer'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
@@ -39,6 +39,11 @@ export class SequenceRelayer implements Relayer {
       }),
       quote: quote ? { _tag: 'FeeQuote', _quote: quote } : undefined,
     }
+  }
+
+  async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+    // TODO: implement
+    return false
   }
 
   async relay(to: Address.Address, data: Hex.Hex, _chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }> {

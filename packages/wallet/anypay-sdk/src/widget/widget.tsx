@@ -17,6 +17,7 @@ import { parseUnits } from 'viem'
 import * as chains from 'viem/chains'
 import '@0xsequence/design-system/preset'
 import './index.css'
+import React from 'react'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
 
