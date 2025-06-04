@@ -29,6 +29,9 @@ importers:
 
   extras/demo-anypay:
     dependencies:
+      '@0xsequence/anypay-sdk':
+        specifier: workspace:*
+        version: link:../../packages/wallet/anypay-sdk
       '@0xsequence/api':
         specifier: workspace:*
         version: link:../../packages/services/api
@@ -56,9 +59,6 @@ importers:
       '@0xsequence/wallet-wdk':
         specifier: workspace:*
         version: link:../../packages/wallet/wdk
-      '@anypay/sdk':
-        specifier: workspace:*
-        version: link:../../packages/wallet/anypay-sdk
       '@radix-ui/react-popover':
         specifier: ^1.1.6
         version: 1.1.11(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
