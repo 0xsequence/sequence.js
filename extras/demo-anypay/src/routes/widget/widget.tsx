@@ -3,7 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 export const Widget = () => {
-  const sequenceApiKey = import.meta.env.VITE_SEQUENCE_API_KEY
+  const sequenceApiKey = import.meta.env.VITE_SEQUENCE_API_KEY || import.meta.env.VITE_PROJECT_ACCESS_KEY
   const apiUrl = import.meta.env.VITE_API_URL || 'https://api.sequence.app'
   const indexerUrl = import.meta.env.VITE_INDEXER_URL || 'https://indexer.sequence.app'
 
