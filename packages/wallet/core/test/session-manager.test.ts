@@ -5,6 +5,7 @@ import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig
 import { Envelope, Signers, State, Wallet } from '../src/index.js'
 
 import { EMITTER_FUNCTIONS, EMITTER_ADDRESS, EMITTER_EVENT_TOPICS, LOCAL_RPC_URL } from './constants'
+import { Extensions } from '@0xsequence/wallet-primitives'
 
 function randomAddress(): Address.Address {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
@@ -69,7 +70,7 @@ describe('SessionManager', () => {
         {
           threshold: 1n,
           checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+          topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
         },
         {
           stateProvider,
@@ -79,6 +80,7 @@ describe('SessionManager', () => {
       // Create the session manager using the storage
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
       })
 
       // Check config is correct
@@ -135,7 +137,7 @@ describe('SessionManager', () => {
         {
           threshold: 1n,
           checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+          topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
         },
         {
           stateProvider,
@@ -143,6 +145,7 @@ describe('SessionManager', () => {
       )
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
       }).withImplicitSigner(implicitSigner)
 
       // Create a test transaction
@@ -208,7 +211,7 @@ describe('SessionManager', () => {
         {
           threshold: 1n,
           checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+          topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
         },
         {
           stateProvider,
@@ -217,6 +220,7 @@ describe('SessionManager', () => {
       // Create the session manager
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
       }).withExplicitSigner(explicitSigner)
 
       // Create a test transaction within permissions
@@ -353,7 +357,7 @@ describe('SessionManager', () => {
           threshold: 1n,
           checkpoint: 0n,
           topology: [
-            { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+            { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
             // Include a random node leaf (bytes32) to prevent image hash collision
             Hex.random(32),
           ],
@@ -364,6 +368,7 @@ describe('SessionManager', () => {
       )
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
         implicitSigners: [implicitSigner],
       })
 
@@ -415,7 +420,7 @@ describe('SessionManager', () => {
             // Random explicit signer will randomise the image hash
             {
               type: 'sapient-signer',
-              address: Constants.DefaultSessionManager,
+              address: Extensions.Dev1.sessions,
               weight: 1n,
               imageHash,
             },
@@ -430,6 +435,7 @@ describe('SessionManager', () => {
       // Create the session manager
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
         explicitSigners: [explicitSigner],
       })
 
@@ -494,7 +500,7 @@ describe('SessionManager', () => {
             // Random explicit signer will randomise the image hash
             {
               type: 'sapient-signer',
-              address: Constants.DefaultSessionManager,
+              address: Extensions.Dev1.sessions,
               weight: 1n,
               imageHash,
             },
@@ -509,6 +515,7 @@ describe('SessionManager', () => {
       // Create the session manager
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
         explicitSigners: [explicitSigner],
       })
 
@@ -591,7 +598,7 @@ describe('SessionManager', () => {
             // Random explicit signer will randomise the image hash
             {
               type: 'sapient-signer',
-              address: Constants.DefaultSessionManager,
+              address: Extensions.Dev1.sessions,
               weight: 1n,
               imageHash,
             },
@@ -611,6 +618,7 @@ describe('SessionManager', () => {
       // Create the session manager
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
         explicitSigners: [explicitSigner],
       })
 
@@ -705,7 +713,7 @@ describe('SessionManager', () => {
           topology: [
             {
               type: 'sapient-signer',
-              address: Constants.DefaultSessionManager,
+              address: Extensions.Dev1.sessions,
               weight: 1n,
               imageHash,
             },
@@ -725,6 +733,7 @@ describe('SessionManager', () => {
       // Create the session manager
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
         explicitSigners: [explicitSigner],
       })
 
