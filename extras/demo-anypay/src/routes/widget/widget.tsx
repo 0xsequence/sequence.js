@@ -45,7 +45,7 @@ export const App = () => {
         </div>
       </div>
 
-      <AnyPayWidget sequenceApiKey={sequenceApiKey} apiUrl={apiUrl} indexerUrl={indexerUrl} />
+      <AnyPayWidget sequenceApiKey={sequenceApiKey} apiUrl={apiUrl} indexerUrl={indexerUrl} env={env} />
     </div>
   )
 }
