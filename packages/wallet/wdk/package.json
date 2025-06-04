@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "clean": "rimraf dist"
   },
   "exports": {
     ".": {

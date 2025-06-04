@@ -28,6 +28,9 @@
         "test/**/*.tsx"
       ],
       "outputs": []
+    },
+    "clean": {
+      "cache": false
     }
   }
 }

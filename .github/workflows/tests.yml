@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
+      - run: pnpm clean
       - run: pnpm build
 
   tests:

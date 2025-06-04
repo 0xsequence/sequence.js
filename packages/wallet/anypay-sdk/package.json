@@ -18,7 +18,7 @@
     "build": "vite build && tsc -p tsconfig.build.json && tsc",
     "dev": "tsc --watch",
     "test": "vitest",
-    "clean": "rm -rf dist",
+    "clean": "rimraf dist",
     "prepare": "pnpm run clean && pnpm run build",
     "lint": "turbo lint"
   },

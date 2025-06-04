@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint --max-warnings 0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf .next"
   },
   "dependencies": {
     "@repo/ui": "workspace:*",

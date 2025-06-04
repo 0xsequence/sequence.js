@@ -15,7 +15,8 @@
     "prepare": "husky",
     "test": "echo tests are not implemented.",
     "typecheck": "tsc --noEmit",
-    "reinstall": "rimraf -g ./node_modules && pnpm install"
+    "reinstall": "rimraf -g ./node_modules && pnpm install",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@0xsequence/api": "workspace:*",

@@ -14,7 +14,8 @@
     "postinstall": "lefthook install",
     "dev:server": "node packages/wallet/primitives-cli/dist/index.js server",
     "reinstall": "rimraf -g ./**/node_modules && pnpm install",
-    "test:anvil": "anvil --fork-url https://nodes.sequence.app/arbitrum"
+    "test:anvil": "anvil --fork-url https://nodes.sequence.app/arbitrum",
+    "clean": "turbo clean"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.0",

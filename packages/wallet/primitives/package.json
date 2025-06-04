@@ -9,7 +9,8 @@
   "private": false,
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "clean": "rimraf dist"
   },
   "exports": {
     ".": {
