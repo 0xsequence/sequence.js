@@ -6,7 +6,7 @@ import { formatUnits, isAddressEqual, zeroAddress } from 'viem'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { Search, ArrowLeft } from 'lucide-react'
-
+import { SequenceIndexerGateway } from '@0xsequence/indexer'
 interface Token {
   id: number
   name: string
@@ -22,9 +22,12 @@ interface Token {
   }
 }
 
+const allowedTokens = ['ETH', 'WETH', 'USDC', 'USDT', 'DAI', 'OP', 'ARB', 'MATIC', 'XDAI', 'AVAX', 'BNB', 'OKB']
+
 interface TokenListProps {
   onContinue: (selectedToken: Token) => void
   onBack: () => void
+  indexerGatewayClient: SequenceIndexerGateway
 }
 
 // Helper to get chain info
@@ -49,11 +52,21 @@ const formatBalance = (balance: string, decimals: number = 18) => {
   }
 }
 
-export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
+export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexerGatewayClient }) => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const { address } = useAccount()
-  const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(address as Address.Address)
+  const {
+    sortedTokens: allSortedTokens,
+    isLoadingBalances,
+    balanceError,
+  } = useTokenBalances(address as Address.Address, indexerGatewayClient)
+
+  const sortedTokens = useMemo(() => {
+    return allSortedTokens.filter((token: any) => {
+      return !token.contractAddress || allowedTokens.includes(token.contractInfo?.symbol || '')
+    })
+  }, [allSortedTokens])
 
   const handleTokenSelect = (token: any) => {
     const isNative = !('contractAddress' in token)
@@ -106,7 +119,9 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
   }
 
   const filteredTokens = useMemo(() => {
-    if (!searchQuery.trim()) return sortedTokens
+    if (!searchQuery.trim()) {
+      return sortedTokens
+    }
 
     const query = searchQuery.toLowerCase().trim()
     return sortedTokens.filter((token: any) => {
@@ -225,13 +240,13 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
         <button
           onClick={() => selectedToken && onContinue(selectedToken)}
           disabled={!selectedToken}
-          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-semibold py-3 px-4 rounded-lg transition-colors"
         >
           Continue
         </button>
         <button
           onClick={onBack}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back
