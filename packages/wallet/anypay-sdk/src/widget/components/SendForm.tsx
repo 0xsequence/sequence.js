@@ -4,6 +4,8 @@ import * as chains from 'viem/chains'
 import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
+import { getAPIClient } from '../../apiClient.js'
+import { getRelayer } from '../../relayer.js'
 import { zeroAddress } from 'viem'
 import { useEnsAddress } from 'wagmi'
 
@@ -30,6 +32,8 @@ interface SendFormProps {
   onComplete: () => void
   account: Account
   sequenceApiKey: string
+  apiUrl: string
+  env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
 }
 
 // Available chains
@@ -110,6 +114,8 @@ export const SendForm: React.FC<SendFormProps> = ({
   onComplete,
   account,
   sequenceApiKey,
+  apiUrl,
+  env,
 }) => {
   const [amount, setAmount] = useState('')
   const [recipientInput, setRecipientInput] = useState('')
@@ -128,8 +134,10 @@ export const SendForm: React.FC<SendFormProps> = ({
   useEffect(() => {
     if (ensAddress) {
       setRecipient(ensAddress)
+    } else {
+      setRecipient(recipientInput)
     }
-  }, [ensAddress])
+  }, [ensAddress, recipientInput])
 
   const handleRecipientInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRecipientInput(e.target.value.trim())
@@ -178,6 +186,10 @@ export const SendForm: React.FC<SendFormProps> = ({
 
       console.log('selectedDestToken.symbol', selectedDestToken)
 
+      const apiClient = getAPIClient({ apiUrl, projectAccessKey: sequenceApiKey })
+      const originRelayer = getRelayer({ env, useV3Relayers: true }, selectedToken.chainId)
+      const destinationRelayer = getRelayer({ env, useV3Relayers: true }, selectedChain.id)
+
       const options = {
         account,
         originTokenAddress: selectedToken.contractAddress,
@@ -193,6 +205,9 @@ export const SendForm: React.FC<SendFormProps> = ({
         sequenceApiKey,
         fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(), // TOOD: fees
         client,
+        apiClient,
+        originRelayer,
+        destinationRelayer,
         dryMode: false, // Set to true to skip the metamask transaction, for testing purposes
       }
 

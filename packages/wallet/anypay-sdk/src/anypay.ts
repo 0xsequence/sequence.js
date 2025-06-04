@@ -1262,6 +1262,9 @@ type SendOptions = {
   fee: string
   client?: WalletClient
   dryMode?: boolean
+  apiClient: SequenceAPIClient
+  originRelayer: Relayer.Rpc.RpcRelayer
+  destinationRelayer: Relayer.Rpc.RpcRelayer
 }
 
 // TODO: fix up this one-click
@@ -1279,11 +1282,11 @@ export async function prepareSend(options: SendOptions) {
     fee,
     client,
     dryMode,
+    apiClient,
+    originRelayer,
+    destinationRelayer,
   } = options
   const chain = getChainConfig(originChainId)
-  const apiClient = getAPIClient({ apiUrl: 'http://localhost:4422', projectAccessKey: sequenceApiKey })
-  const originRelayer = getRelayer({ env: 'local' }, originChainId)
-  const destinationRelayer = getRelayer({ env: 'local' }, destinationChainId)
 
   const mainSigner = account.address
 

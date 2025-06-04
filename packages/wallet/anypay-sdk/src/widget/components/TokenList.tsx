@@ -6,7 +6,7 @@ import { formatUnits, isAddressEqual, zeroAddress } from 'viem'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { Search, ArrowLeft } from 'lucide-react'
-
+import { SequenceIndexerGateway } from '@0xsequence/indexer'
 interface Token {
   id: number
   name: string
@@ -27,6 +27,7 @@ const allowedTokens = ['ETH', 'WETH', 'USDC', 'USDT', 'DAI', 'OP', 'ARB', 'MATIC
 interface TokenListProps {
   onContinue: (selectedToken: Token) => void
   onBack: () => void
+  indexerGatewayClient: SequenceIndexerGateway
 }
 
 // Helper to get chain info
@@ -51,7 +52,7 @@ const formatBalance = (balance: string, decimals: number = 18) => {
   }
 }
 
-export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
+export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexerGatewayClient }) => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const { address } = useAccount()
@@ -59,7 +60,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack }) => {
     sortedTokens: allSortedTokens,
     isLoadingBalances,
     balanceError,
-  } = useTokenBalances(address as Address.Address)
+  } = useTokenBalances(address as Address.Address, indexerGatewayClient)
 
   const sortedTokens = useMemo(() => {
     return allSortedTokens.filter((token: any) => {

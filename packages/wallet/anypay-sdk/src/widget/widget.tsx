@@ -18,6 +18,8 @@ import * as chains from 'viem/chains'
 import '@0xsequence/design-system/preset'
 import './index.css'
 import React from 'react'
+import { DEFAULT_INDEXER_GATEWAY_URL, DEFAULT_API_URL, DEFAULT_ENV } from '../constants.js'
+import { useIndexerGatewayClient } from '../indexerClient.js'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
 
@@ -78,17 +80,30 @@ export type AnyPayWidgetProps = {
   sequenceApiKey: string
   indexerUrl?: string
   apiUrl?: string
+  env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
 }
 
 const queryClient = new QueryClient()
 
-export const AnyPayWidget = ({ sequenceApiKey, indexerUrl, apiUrl }: AnyPayWidgetProps) => {
+interface WidgetContentProps {
+  sequenceApiKey: string
+  indexerUrl: string
+  apiUrl: string
+  env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
+}
+
+const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetContentProps) => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentScreen, setCurrentScreen] = useState<Screen>('connect')
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [txHash, setTxHash] = useState('')
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
+
+  const indexerGatewayClient = useIndexerGatewayClient({
+    indexerGatewayUrl: indexerUrl,
+    projectAccessKey: sequenceApiKey,
+  })
 
   const handleConnect = () => {
     if (window.ethereum && address && chainId) {
@@ -160,7 +175,9 @@ export const AnyPayWidget = ({ sequenceApiKey, indexerUrl, apiUrl }: AnyPayWidge
       case 'connect':
         return <ConnectWallet onConnect={handleConnect} />
       case 'tokens':
-        return <TokenList onContinue={handleTokenSelect} onBack={handleBack} />
+        return (
+          <TokenList onContinue={handleTokenSelect} onBack={handleBack} indexerGatewayClient={indexerGatewayClient} />
+        )
       case 'send':
         return selectedToken && walletClient?.account ? (
           <SendForm
@@ -171,6 +188,8 @@ export const AnyPayWidget = ({ sequenceApiKey, indexerUrl, apiUrl }: AnyPayWidge
             selectedToken={selectedToken}
             account={walletClient.account}
             sequenceApiKey={sequenceApiKey}
+            apiUrl={apiUrl}
+            env={env}
           />
         ) : null
       case 'pending':
@@ -182,6 +201,28 @@ export const AnyPayWidget = ({ sequenceApiKey, indexerUrl, apiUrl }: AnyPayWidge
     }
   }
 
+  return (
+    <div className="flex flex-col items-center justify-center space-y-8 py-12">
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
+      >
+        Pay
+      </button>
+
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        {renderScreen()}
+      </Modal>
+    </div>
+  )
+}
+
+export const AnyPayWidget = ({
+  sequenceApiKey,
+  indexerUrl = DEFAULT_INDEXER_GATEWAY_URL,
+  apiUrl = DEFAULT_API_URL,
+  env = DEFAULT_ENV,
+}: AnyPayWidgetProps) => {
   return (
     <StrictMode>
       <WagmiProvider config={wagmiConfig}>
@@ -196,18 +237,7 @@ export const AnyPayWidget = ({ sequenceApiKey, indexerUrl, apiUrl }: AnyPayWidge
               },
             }}
           >
-            <div className="flex flex-col items-center justify-center space-y-8 py-12">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
-              >
-                Pay
-              </button>
-
-              <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-                {renderScreen()}
-              </Modal>
-            </div>
+            <WidgetContent sequenceApiKey={sequenceApiKey} indexerUrl={indexerUrl} apiUrl={apiUrl} env={env} />
           </SequenceHooksProvider>
         </QueryClientProvider>
       </WagmiProvider>

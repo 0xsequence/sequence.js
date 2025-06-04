@@ -23,7 +23,7 @@ export type RelayerConfig = {
 }
 
 export type RelayerEnvConfig = {
-  env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
+  env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
   useV3Relayers?: boolean
 }
 
