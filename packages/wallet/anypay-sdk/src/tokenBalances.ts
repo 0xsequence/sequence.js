@@ -17,7 +17,7 @@ export { type NativeTokenBalance, type TokenBalance }
 const defaultPage = { page: 1, pageSize: 10, more: false }
 
 // Type guard for native token balance
-function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
+function isNativeToken(token: TokenBalance | NativeTokenBalance): token is NativeTokenBalance {
   if ('contractAddress' in token) {
     return false
   }
@@ -25,10 +25,10 @@ function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
 }
 
 export function useTokenBalances(address: Address.Address): {
-  tokenBalancesData: any // TODO: Add proper type
+  tokenBalancesData: GetTokenBalancesSummaryReturn | undefined
   isLoadingBalances: boolean
   balanceError: Error | null
-  sortedTokens: any[] // TODO: Add proper type
+  sortedTokens: (TokenBalance | NativeTokenBalance)[]
 } {
   const indexerClient = useIndexerGatewayClient()
 
@@ -58,11 +58,10 @@ export function useTokenBalances(address: Address.Address): {
           },
         })
 
-        // Transform the raw gateway response to match GetTokenBalancesSummaryReturn
         return {
           page: summaryFromGateway.page,
-          balances: summaryFromGateway.balances.flatMap((b: any) => b.results),
-          nativeBalances: summaryFromGateway.nativeBalances.flatMap((b: any) => b.results),
+          balances: summaryFromGateway.balances.flatMap((b) => b.results),
+          nativeBalances: summaryFromGateway.nativeBalances.flatMap((b) => b.results),
         }
       } catch (error) {
         console.error('Failed to fetch token balances:', error)
@@ -79,14 +78,11 @@ export function useTokenBalances(address: Address.Address): {
   })
 
   const sortedTokens = useMemo(() => {
-    if (!tokenBalancesData?.balances) {
+    if (!tokenBalancesData) {
       return []
     }
 
-    // Flatten both native and token balances
-    const nativeBalances = tokenBalancesData.nativeBalances
-    const tokenBalances = tokenBalancesData.balances
-    const balances = [...nativeBalances, ...tokenBalances]
+    const balances = [...tokenBalancesData.nativeBalances, ...tokenBalancesData.balances]
 
     return [...balances]
       .filter((token) => {
