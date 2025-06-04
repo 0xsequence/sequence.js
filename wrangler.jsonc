@@ -1,5 +1,5 @@
 {
-    "name": "demo-anypay",
+    "name": "anypay",
     "compatibility_date": "2025-06-05",
     "assets": {
         "directory": "./extras/demo-anypay/dist"
