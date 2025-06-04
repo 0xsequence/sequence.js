@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build:all": "turbo build",
-    "build:packages": "turbo build --filter=\"./packages/**/*\"",
+    "build:packages": "turbo build --filter=\"./packages/**/*\" --filter=\"./extras/demo-anypay\"",
     "build": "pnpm build:packages",
     "dev": "turbo dev",
     "test": "turbo test --concurrency=1",
@@ -18,11 +18,11 @@
     "clean": "turbo clean"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.0",
-    "lefthook": "^1.11.10",
+    "@changesets/cli": "^2.29.4",
+    "lefthook": "^1.11.13",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
-    "turbo": "^2.5.0",
+    "turbo": "^2.5.4",
     "typescript": "5.8.3"
   },
   "packageManager": "pnpm@10.11.0",
