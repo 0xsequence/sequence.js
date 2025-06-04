@@ -21,12 +21,12 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
-    "@types/node": "^22.13.9",
-    "dotenv": "^16.4.7",
-    "fake-indexeddb": "^6.0.0",
-    "happy-dom": "^13.2.0",
-    "typescript": "^5.7.3",
-    "vitest": "^3.1.2"
+    "@types/node": "^22.15.29",
+    "dotenv": "^16.5.0",
+    "fake-indexeddb": "^6.0.1",
+    "happy-dom": "^13.10.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
   },
   "dependencies": {
     "@0xsequence/identity-instrument": "workspace:^",
@@ -35,7 +35,7 @@
     "@0xsequence/wallet-primitives": "workspace:^",
     "idb": "^7.1.1",
     "jwt-decode": "^4.0.0",
-    "ox": "^0.7.0",
+    "ox": "^0.7.2",
     "uuid": "^11.1.0"
   }
 }

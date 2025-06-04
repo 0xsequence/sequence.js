@@ -21,16 +21,16 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
-    "@types/node": "^22.13.9",
-    "dotenv": "^16.4.7",
-    "fake-indexeddb": "^6.0.0",
-    "typescript": "^5.7.3",
-    "vitest": "^3.1.2"
+    "@types/node": "^22.15.29",
+    "dotenv": "^16.5.0",
+    "fake-indexeddb": "^6.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
   },
   "dependencies": {
     "@0xsequence/relayer": "workspace:^",
     "@0xsequence/wallet-primitives": "workspace:^",
-    "ox": "^0.7.0",
-    "viem": "^2.27.2"
+    "ox": "^0.7.2",
+    "viem": "^2.30.6"
   }
 }
