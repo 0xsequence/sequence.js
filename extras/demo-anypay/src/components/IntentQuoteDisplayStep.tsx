@@ -1,6 +1,6 @@
 import React from 'react'
 import { Text, NetworkImage } from '@0xsequence/design-system'
-import { Account, TokenBalance, MetaTxn } from '@anypay/sdk'
+import { Account, TokenBalance, MetaTxn } from '@0xsequence/anypay-sdk'
 import { IntentPrecondition, AnypayLifiInfo, IntentCallsPayload } from '@0xsequence/api'
 import {
   Loader2,

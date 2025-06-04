@@ -3,7 +3,7 @@ import { Button, Text, NetworkImage } from '@0xsequence/design-system'
 import { AlertTriangle, Zap, PenSquare } from 'lucide-react'
 import * as chains from 'viem/chains'
 import { SectionHeader } from '@/components/SectionHeader'
-import { TokenBalance } from '@anypay/sdk'
+import { TokenBalance } from '@0xsequence/anypay-sdk'
 import { IntentAction } from '@/types'
 
 interface ChooseActionStepProps {

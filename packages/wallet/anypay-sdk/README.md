@@ -1,4 +1,4 @@
-# @anypay/sdk
+# @0xsequence/anypay-sdk
 
 > Anypay SDK for sending any token from any chain.
 
@@ -7,7 +7,7 @@
 ## Installation
 
 ```bash
-npm install @anypay/sdk
+npm install @0xsequence/anypay-sdk
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ npm install @anypay/sdk
 The easiest way to integrate Anypay is using our pre-built React widget:
 
 ```typescript
-import { AnyPayWidget } from '@anypay/sdk/widget'
+import { AnyPayWidget } from '@0xsequence/anypay-sdk/widget'
 
 export const App = () => {
   const sequenceApiKey = import.meta.env.VITE_SEQUENCE_API_KEY
@@ -37,7 +37,7 @@ If you need more control, you can use the low-level APIs directly:
 #### Basic Example
 
 ```typescript
-import { prepareSend } from '@anypay/sdk'
+import { prepareSend } from '@0xsequence/anypay-sdk'
 import { createWalletClient, custom } from 'viem'
 
 // Initialize a wallet client
@@ -80,7 +80,7 @@ import {
   commitIntentConfig,
   sendOriginTransaction,
   getERC20TransferData,
-} from '@anypay/sdk'
+} from '@0xsequence/anypay-sdk'
 import { createWalletClient, http } from 'viem'
 import { arbitrum } from 'viem/chains'
 
