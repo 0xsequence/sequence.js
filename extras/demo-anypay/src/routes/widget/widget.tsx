@@ -6,7 +6,7 @@ export const Widget = () => {
   const sequenceApiKey = import.meta.env.VITE_PROJECT_ACCESS_KEY
   const apiUrl = import.meta.env.VITE_API_URL
   const indexerUrl = import.meta.env.VITE_INDEXER_URL
-  const env = import.meta.env.VITE_ENV
+  // const env = import.meta.env.VITE_ENV
 
   const codeExample = `import { AnyPayWidget } from '@0xsequence/anypay-sdk/widget'
 
