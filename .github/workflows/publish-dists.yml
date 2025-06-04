@@ -52,8 +52,10 @@ jobs:
               const versions = {
                 "@0xsequence/identity-instrument": `${repo}#dists/services/identity-instrument`,
                 "@0xsequence/relayer": `${repo}#dists/services/relayer`,
+                "@0xsequence/anypay-sdk": `${repo}#dists/wallet/anypay-sdk`,
                 "@0xsequence/wallet-core": `${repo}#dists/wallet/core`,
                 "@0xsequence/wallet-primitives": `${repo}#dists/wallet/primitives`,
+                "@0xsequence/wallet-primitives-cli": `${repo}#dists/wallet/primitives-cli`,
                 "@0xsequence/wallet-wdk": `${repo}#dists/wallet/wdk`,
               };
 

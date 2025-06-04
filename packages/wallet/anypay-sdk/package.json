@@ -1,5 +1,5 @@
 {
-  "name": "@anypay/sdk",
+  "name": "@0xsequence/anypay-sdk",
   "version": "0.0.0",
   "description": "SDK for Anypay functionality",
   "type": "module",
