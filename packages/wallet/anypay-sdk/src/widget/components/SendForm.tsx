@@ -8,6 +8,7 @@ import { getAPIClient } from '../../apiClient.js'
 import { getRelayer } from '../../relayer.js'
 import { zeroAddress } from 'viem'
 import { useEnsAddress } from 'wagmi'
+import { mainnet } from 'viem/chains'
 
 interface Token {
   id: number
@@ -126,6 +127,7 @@ export const SendForm: React.FC<SendFormProps> = ({
     error,
   } = useEnsAddress({
     name: recipientInput.endsWith('.eth') ? recipientInput : undefined,
+    chainId: mainnet.id,
     query: {
       enabled: !!recipientInput && recipientInput.endsWith('.eth'),
     },
