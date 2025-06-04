@@ -12,7 +12,6 @@
     "prettier:fix": "prettier --list-different --write './src/**/*.{ts,tsx}'",
     "format": "pnpm run lint:fix && pnpm run prettier:fix",
     "preview": "vite preview",
-    "prepare": "husky",
     "test": "echo tests are not implemented.",
     "typecheck": "tsc --noEmit",
     "reinstall": "rimraf -g ./node_modules && pnpm install",

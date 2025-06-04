@@ -19,7 +19,6 @@
     "dev": "tsc --watch",
     "test": "vitest",
     "clean": "rimraf dist",
-    "prepare": "pnpm run clean && pnpm run build",
     "lint": "turbo lint"
   },
   "keywords": [
