@@ -36,10 +36,10 @@ importers:
         specifier: 0.0.0-anypay-20250527101311
         version: 0.0.0-anypay-20250527101311
       '@0xsequence/design-system':
-        specifier: ^2.1.6
+        specifier: ^2.1.14
         version: 2.1.14(@types/react-dom@19.1.6(@types/react@19.1.6))(@types/react@19.1.6)(motion@12.16.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@0xsequence/hooks':
-        specifier: ^5.1.0
+        specifier: ^5.3.4
         version: 5.3.4(@0xsequence/api@0.0.0-anypay-20250527101311)(@0xsequence/indexer@2.3.17)(@0xsequence/metadata@2.3.8)(@0xsequence/network@2.3.17(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(@tanstack/react-query@5.80.5(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(viem@2.30.6(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.25.51))
       '@0xsequence/indexer':
         specifier: ^2.3.17
@@ -60,7 +60,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/wallet/wdk
       '@radix-ui/react-popover':
-        specifier: ^1.1.14
+        specifier: ^1.1.6
         version: 1.1.14(@types/react-dom@19.1.6(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@repo/eslint-config':
         specifier: workspace:*
@@ -69,7 +69,7 @@ importers:
         specifier: workspace:*
         version: link:../../repo/typescript-config
       '@tanstack/react-query':
-        specifier: ^5.69.0
+        specifier: ^5.80.5
         version: 5.80.5(react@19.1.0)
       '@types/react-syntax-highlighter':
         specifier: ^15.5.13
@@ -117,7 +117,7 @@ importers:
         specifier: ^2.30.6
         version: 2.30.6(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.25.51)
       wagmi:
-        specifier: ^2.14.16
+        specifier: ^2.15.5
         version: 2.15.5(@tanstack/query-core@5.80.5)(@tanstack/react-query@5.80.5(react@19.1.0))(@types/react@19.1.6)(bufferutil@4.0.9)(react@19.1.0)(typescript@5.7.3)(utf-8-validate@5.0.10)(viem@2.30.6(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.25.51))(zod@3.25.51)
     devDependencies:
       '@eslint/js':
@@ -367,7 +367,7 @@ importers:
         specifier: ^5.1.0
         version: 5.3.4(@0xsequence/api@0.0.0-anypay-20250527101311)(@0xsequence/indexer@2.3.17)(@0xsequence/metadata@2.3.8)(@0xsequence/network@2.3.17(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)))(@tanstack/react-query@5.80.5(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(viem@2.30.6(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.51))
       '@0xsequence/indexer':
-        specifier: ^2.3.17
+        specifier: ^2.3.9
         version: 2.3.17
       '@0xsequence/wagmi-connector':
         specifier: ^4.0.1
@@ -379,7 +379,7 @@ importers:
         specifier: workspace:*
         version: link:../primitives
       '@tanstack/react-query':
-        specifier: ^5.69.0
+        specifier: ^5.80.5
         version: 5.80.5(react@19.1.0)
       buffer:
         specifier: ^6.0.3
@@ -400,7 +400,7 @@ importers:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
       wagmi:
-        specifier: ^2.14.16
+        specifier: ^2.15.5
         version: 2.15.5(@tanstack/query-core@5.80.5)(@tanstack/react-query@5.80.5(react@19.1.0))(@types/react@19.1.6)(bufferutil@4.0.9)(react@19.1.0)(typescript@5.8.3)(utf-8-validate@5.0.10)(viem@2.30.6(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.51))(zod@3.25.51)
     devDependencies:
       '@eslint/js':
@@ -12207,10 +12207,10 @@ snapshots:
   ox@0.6.7(typescript@5.7.3)(zod@3.25.51):
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
-      '@scure/bip32': 1.6.2
-      '@scure/bip39': 1.5.4
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
       abitype: 1.0.8(typescript@5.7.3)(zod@3.25.51)
       eventemitter3: 5.0.1
     optionalDependencies:
@@ -12221,10 +12221,10 @@ snapshots:
   ox@0.6.7(typescript@5.8.3)(zod@3.25.51):
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
-      '@scure/bip32': 1.6.2
-      '@scure/bip39': 1.5.4
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
       abitype: 1.0.8(typescript@5.8.3)(zod@3.25.51)
       eventemitter3: 5.0.1
     optionalDependencies:
