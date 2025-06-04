@@ -20,19 +20,12 @@ export type AuthorizeImplicitSessionArgs = {
   applicationData?: Hex.Hex
 }
 
-const DefaultSessionManagerAddresses = [Constants.DefaultSessionManager]
-
 export class Sessions {
-  constructor(
-    private readonly shared: Shared,
-    private readonly sessionManagerAddresses: Address.Address[] = DefaultSessionManagerAddresses,
-  ) {}
+  constructor(private readonly shared: Shared) {}
 
   async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
     const { modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
-    const managerLeaf = modules.find((leaf) =>
-      this.sessionManagerAddresses.some((addr) => Address.isEqual(addr, leaf.address)),
-    )
+    const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
     if (!managerLeaf) {
       throw new Error('Session manager not found')
     }
@@ -205,9 +198,7 @@ export class Sessions {
 
     // Find the session manager in the old configuration
     const { modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
-    const managerLeaf = modules.find((leaf) =>
-      this.sessionManagerAddresses.some((addr) => Address.isEqual(addr, leaf.address)),
-    )
+    const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
     if (!managerLeaf) {
       // Missing. Add it
       modules.push({
