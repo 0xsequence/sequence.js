@@ -29,7 +29,7 @@ import { useAPIClient, getAPIClient } from './apiClient.js'
 import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
 import { useRelayers, getRelayer, getBackupRelayer } from './relayer.js'
-import { findPreconditionAddress } from './preconditions.js'
+import { findFirstPreconditionForChainId, findPreconditionAddress } from './preconditions.js'
 import { Relayer } from '@0xsequence/wallet-core'
 import {
   calculateIntentAddress,
@@ -1333,10 +1333,20 @@ export async function prepareSend(options: SendOptions) {
     intentAddress,
     send: async () => {
       console.log('sending origin transaction')
+
+      const firstPrecondition = findFirstPreconditionForChainId(intent.preconditions, originChainId)
+
+      if (!firstPrecondition) {
+        throw new Error('No precondition found for origin chain')
+      }
+
+      const firstPreconditionAddress = firstPrecondition?.data?.address
+      const firstPreconditionMin = firstPrecondition?.data?.min
+
       const originCallParams = {
-        to: intent.preconditions[0]!.data!.address,
+        to: firstPreconditionAddress,
         data: '0x',
-        value: BigInt(intent.preconditions[0]!.data!.min) + BigInt(fee),
+        value: BigInt(firstPreconditionMin) + BigInt(fee),
         chainId: originChainId,
         chain,
       }

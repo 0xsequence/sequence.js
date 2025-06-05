@@ -33,8 +33,12 @@ interface SendFormProps {
   onComplete: () => void
   account: Account
   sequenceApiKey: string
-  apiUrl: string
+  apiUrl?: string
   env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
+  toRecipient?: string
+  toAmount?: string
+  toChainId?: number
+  toToken?: 'USDC' | 'ETH'
 }
 
 // Available chains
@@ -117,17 +121,21 @@ export const SendForm: React.FC<SendFormProps> = ({
   sequenceApiKey,
   apiUrl,
   env,
+  toAmount,
+  toRecipient,
+  toChainId,
+  toToken,
 }) => {
-  const [amount, setAmount] = useState('')
-  const [recipientInput, setRecipientInput] = useState('')
-  const [recipient, setRecipient] = useState('')
+  const [amount, setAmount] = useState(toAmount ?? '')
+  const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
+  const [recipient, setRecipient] = useState(toRecipient ?? '')
   const [error, setError] = useState<string | null>(null)
   const {
     data: ensAddress,
     isLoading,
     error: ensError,
   } = useEnsAddress({
-    name: recipientInput.endsWith('.eth') ? recipientInput : undefined,
+    name: recipientInput?.endsWith('.eth') ? recipientInput : undefined,
     chainId: mainnet.id,
     query: {
       enabled: !!recipientInput && recipientInput.endsWith('.eth'),
@@ -147,11 +155,13 @@ export const SendForm: React.FC<SendFormProps> = ({
   }
 
   const [selectedChain, setSelectedChain] = useState(
-    () => (SUPPORTED_CHAINS.find((chain) => chain.id === selectedToken.chainId) || SUPPORTED_CHAINS[0])!,
+    () => (SUPPORTED_CHAINS.find((chain) => chain.id === (toChainId ?? selectedToken.chainId)) || SUPPORTED_CHAINS[0])!,
   )
   const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false)
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false)
-  const [selectedDestToken, setSelectedDestToken] = useState(SUPPORTED_TOKENS[0]!)
+  const [selectedDestToken, setSelectedDestToken] = useState(() =>
+    toToken ? SUPPORTED_TOKENS.find((token) => token.symbol === toToken) || SUPPORTED_TOKENS[0]! : SUPPORTED_TOKENS[0]!,
+  )
   const chainDropdownRef = useRef<HTMLDivElement>(null)
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
   const chainInfo = getChainInfo(selectedToken.chainId) as any // TODO: Add proper type
@@ -269,107 +279,131 @@ export const SendForm: React.FC<SendFormProps> = ({
         {/* Chain Selection */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Destination Chain</label>
-          <div className="relative" ref={chainDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
-              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
+          {toChainId ? (
+            <div className="flex items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
               <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
-              <span className="ml-2 flex-1 text-left text-gray-900">{selectedChain.name}</span>
-              <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform ${isChainDropdownOpen ? 'transform rotate-180' : ''}`}
-              />
-            </button>
+              <span className="ml-2 text-gray-900">{selectedChain.name}</span>
+            </div>
+          ) : (
+            <div className="relative" ref={chainDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
+                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
+                <span className="ml-2 flex-1 text-left text-gray-900">{selectedChain.name}</span>
+                <ChevronDown
+                  className={`h-5 w-5 text-gray-400 transition-transform ${isChainDropdownOpen ? 'transform rotate-180' : ''}`}
+                />
+              </button>
 
-            {isChainDropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                {SUPPORTED_CHAINS.map((chain) => (
-                  <button
-                    key={chain.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedChain(chain)
-                      setIsChainDropdownOpen(false)
-                    }}
-                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 ${
-                      selectedChain.id === chain.id ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
-                    }`}
-                  >
-                    <NetworkImage chainId={chain.icon} size="sm" className="w-5 h-5" />
-                    <span className="ml-2">{chain.name}</span>
-                    {selectedChain.id === chain.id && <span className="ml-auto text-blue-600">•</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              {isChainDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                  {SUPPORTED_CHAINS.map((chain) => (
+                    <button
+                      key={chain.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedChain(chain)
+                        setIsChainDropdownOpen(false)
+                      }}
+                      className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 ${
+                        selectedChain.id === chain.id ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                      }`}
+                    >
+                      <NetworkImage chainId={chain.icon} size="sm" className="w-5 h-5" />
+                      <span className="ml-2">{chain.name}</span>
+                      {selectedChain.id === chain.id && <span className="ml-auto text-blue-600">•</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Token Selection */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Receive Token</label>
-          <div className="relative" ref={tokenDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
-              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
+          {toToken ? (
+            <div className="flex items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
                 <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
               </div>
-              <span className="ml-2 flex-1 text-left text-gray-900">{selectedDestToken.name}</span>
-              <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform ${isTokenDropdownOpen ? 'transform rotate-180' : ''}`}
-              />
-            </button>
+              <span className="ml-2 text-gray-900">{selectedDestToken.name}</span>
+            </div>
+          ) : (
+            <div className="relative" ref={tokenDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
+                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                  <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
+                </div>
+                <span className="ml-2 flex-1 text-left text-gray-900">{selectedDestToken.name}</span>
+                <ChevronDown
+                  className={`h-5 w-5 text-gray-400 transition-transform ${isTokenDropdownOpen ? 'transform rotate-180' : ''}`}
+                />
+              </button>
 
-            {isTokenDropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                {SUPPORTED_TOKENS.map((token) => (
-                  <button
-                    key={token.symbol}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDestToken(token)
-                      setIsTokenDropdownOpen(false)
-                    }}
-                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer ${
-                      selectedDestToken.symbol === token.symbol ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
-                    }`}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                      <TokenImage symbol={token.symbol} src={token.imageUrl} size="sm" />
-                    </div>
-                    <span className="ml-2">{token.name}</span>
-                    {selectedDestToken.symbol === token.symbol && <span className="ml-auto text-blue-600">•</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              {isTokenDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                  {SUPPORTED_TOKENS.map((token) => (
+                    <button
+                      key={token.symbol}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDestToken(token)
+                        setIsTokenDropdownOpen(false)
+                      }}
+                      className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer ${
+                        selectedDestToken.symbol === token.symbol ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                      }`}
+                    >
+                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                        <TokenImage symbol={token.symbol} src={token.imageUrl} size="sm" />
+                      </div>
+                      <span className="ml-2">{token.name}</span>
+                      {selectedDestToken.symbol === token.symbol && <span className="ml-auto text-blue-600">•</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Amount Input */}
+        {/* Amount Input - Only show if toAmount is not provided */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
               Amount to Receive
             </label>
           </div>
-          <div className="relative rounded-lg">
-            <input
-              id="amount"
-              type="text"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-lg"
-            />
-            <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-              <span className="text-gray-500">{selectedDestToken.symbol}</span>
+          {toAmount ? (
+            <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <span className="text-gray-900">
+                {toAmount} {selectedDestToken.symbol}
+              </span>
             </div>
-          </div>
+          ) : (
+            <div className="relative rounded-lg">
+              <input
+                id="amount"
+                type="text"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-lg"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                <span className="text-gray-500">{selectedDestToken.symbol}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recipient Input */}
@@ -377,15 +411,23 @@ export const SendForm: React.FC<SendFormProps> = ({
           <label htmlFor="recipient" className="block text-sm font-medium text-gray-700">
             Recipient Address
           </label>
-          <input
-            id="recipient"
-            type="text"
-            value={recipientInput}
-            onChange={handleRecipientInputChange}
-            placeholder="0x..."
-            className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
-          />
-          {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
+          {toRecipient ? (
+            <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm">
+              <span className="text-gray-900">{recipient}</span>
+            </div>
+          ) : (
+            <>
+              <input
+                id="recipient"
+                type="text"
+                value={recipientInput}
+                onChange={handleRecipientInputChange}
+                placeholder="0x..."
+                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
+              />
+              {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
+            </>
+          )}
         </div>
 
         <div className="flex flex-col space-y-3">

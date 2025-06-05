@@ -81,18 +81,24 @@ export type AnyPayWidgetProps = {
   indexerUrl?: string
   apiUrl?: string
   env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
+  toRecipient?: string
+  toAmount?: string
+  toChainId?: number | string
+  toToken?: 'USDC' | 'ETH'
 }
 
 const queryClient = new QueryClient()
 
-interface WidgetContentProps {
-  sequenceApiKey: string
-  indexerUrl: string
-  apiUrl: string
-  env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
-}
-
-const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetContentProps) => {
+const WidgetContent = ({
+  sequenceApiKey,
+  indexerUrl,
+  apiUrl,
+  env,
+  toRecipient,
+  toAmount,
+  toChainId,
+  toToken,
+}: AnyPayWidgetProps) => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentScreen, setCurrentScreen] = useState<Screen>('connect')
@@ -190,6 +196,10 @@ const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetConten
             sequenceApiKey={sequenceApiKey}
             apiUrl={apiUrl}
             env={env}
+            toRecipient={toRecipient}
+            toAmount={toAmount}
+            toChainId={toChainId ? Number(toChainId) : undefined}
+            toToken={toToken}
           />
         ) : null
       case 'pending':
@@ -222,6 +232,10 @@ export const AnyPayWidget = ({
   indexerUrl = DEFAULT_INDEXER_GATEWAY_URL,
   apiUrl = DEFAULT_API_URL,
   env = DEFAULT_ENV,
+  toRecipient,
+  toAmount,
+  toChainId,
+  toToken,
 }: AnyPayWidgetProps) => {
   return (
     <StrictMode>
@@ -237,7 +251,16 @@ export const AnyPayWidget = ({
               },
             }}
           >
-            <WidgetContent sequenceApiKey={sequenceApiKey} indexerUrl={indexerUrl} apiUrl={apiUrl} env={env} />
+            <WidgetContent
+              sequenceApiKey={sequenceApiKey}
+              indexerUrl={indexerUrl}
+              apiUrl={apiUrl}
+              env={env}
+              toRecipient={toRecipient}
+              toAmount={toAmount}
+              toChainId={toChainId}
+              toToken={toToken}
+            />
           </SequenceHooksProvider>
         </QueryClientProvider>
       </WagmiProvider>
