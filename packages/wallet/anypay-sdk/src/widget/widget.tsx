@@ -11,7 +11,7 @@ import SendForm from './components/SendForm.js'
 import TransferPending from './components/TransferPending.js'
 import Receipt from './components/Receipt.js'
 import { prepareSend } from '../anypay.js'
-import { createWalletClient, custom, type WalletClient } from 'viem'
+import { createWalletClient, custom, TransactionReceipt, type WalletClient } from 'viem'
 import { mainnet, base, optimism, arbitrum } from 'viem/chains'
 import { parseUnits } from 'viem'
 import * as chains from 'viem/chains'
@@ -103,7 +103,8 @@ const WidgetContent = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentScreen, setCurrentScreen] = useState<Screen>('connect')
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
-  const [txHash, setTxHash] = useState('')
+  const [destinationTxHash, setDestinationTxHash] = useState('')
+  const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
 
   const indexerGatewayClient = useIndexerGatewayClient({
@@ -142,10 +143,6 @@ const WidgetContent = ({
     console.log('handleSend', amount, recipient)
   }
 
-  const handleTransferComplete = () => {
-    setCurrentScreen('receipt')
-  }
-
   const handleSendAnother = () => {
     setCurrentScreen('tokens')
   }
@@ -154,7 +151,8 @@ const WidgetContent = ({
     setIsModalOpen(false)
     setCurrentScreen('connect')
     setSelectedToken(null)
-    setTxHash('')
+    setDestinationTxHash('')
+    setDestinationChainId(null)
   }
 
   const handleBack = () => {
@@ -169,10 +167,25 @@ const WidgetContent = ({
       case 'receipt':
         setCurrentScreen('tokens')
         setSelectedToken(null)
-        setTxHash('')
+        setDestinationTxHash('')
+        setDestinationChainId(null)
         break
       default:
         break
+    }
+  }
+
+  function handleTransferComplete(data?: {
+    originChainId: number
+    destinationChainId: number
+    originUserTxReceipt: TransactionReceipt
+    originMetaTxnReceipt: any
+    destinationMetaTxnReceipt: any
+  }) {
+    if (data) {
+      setDestinationTxHash(data.destinationMetaTxnReceipt?.txnHash || data.originUserTxReceipt.transactionHash)
+      setDestinationChainId(data.destinationChainId)
+      setCurrentScreen('receipt')
     }
   }
 
@@ -190,7 +203,7 @@ const WidgetContent = ({
             onSend={handleSend}
             onBack={handleBack}
             onConfirm={() => setCurrentScreen('pending')}
-            onComplete={() => setCurrentScreen('receipt')}
+            onComplete={handleTransferComplete}
             selectedToken={selectedToken}
             account={walletClient.account}
             sequenceApiKey={sequenceApiKey}
@@ -205,7 +218,14 @@ const WidgetContent = ({
       case 'pending':
         return <TransferPending onComplete={handleTransferComplete} />
       case 'receipt':
-        return <Receipt onSendAnother={handleSendAnother} onClose={handleCloseModal} txHash={txHash} />
+        return (
+          <Receipt
+            onSendAnother={handleSendAnother}
+            onClose={handleCloseModal}
+            txHash={destinationTxHash}
+            chainId={destinationChainId!}
+          />
+        )
       default:
         return null
     }

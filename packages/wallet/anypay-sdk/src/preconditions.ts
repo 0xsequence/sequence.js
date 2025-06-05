@@ -22,9 +22,8 @@ export function findFirstPreconditionForChainId(
   preconditions: IntentPrecondition[],
   chainId: number,
 ): IntentPrecondition | null {
-  console.log('HERE00000', chainId, preconditions)
   const precondition = preconditions.find(
-    (p) => (p.type === 'erc20-balance' || p.type === 'native-balance') && p.data?.chainId === chainId?.toString(),
+    (p) => (p.type === 'erc20-balance' || p.type === 'native-balance') && p.chainId === chainId?.toString(),
   )
   return precondition ?? null
 }

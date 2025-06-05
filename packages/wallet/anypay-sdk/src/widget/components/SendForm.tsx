@@ -30,7 +30,7 @@ interface SendFormProps {
   onSend: (amount: string, recipient: string) => void
   onBack: () => void
   onConfirm: () => void
-  onComplete: () => void
+  onComplete: (data: any) => void // TODO: Add proper type
   account: Account
   sequenceApiKey: string
   apiUrl?: string
@@ -230,21 +230,24 @@ export const SendForm: React.FC<SendFormProps> = ({
       console.log('options', options)
 
       const { intentAddress, send } = await prepareSend(options)
-      console.log('Intent address:', intentAddress.toString())
+      console.log('Intent address:', intentAddress?.toString())
 
-      // Start the send process
-      onSend(amount, recipient)
-
-      // Wait for send to complete
-      send().then(() => {
-        // Move to receipt screen
-        onComplete()
-      })
-
-      // Move to confirmation screen after 5 seconds
-      setTimeout(() => {
+      function onOriginSend() {
         onConfirm()
-      }, 10_000)
+        onSend(amount, recipient)
+      }
+
+      // Wait for full send to complete
+      const { originUserTxReceipt, originMetaTxnReceipt, destinationMetaTxnReceipt } = await send(onOriginSend)
+
+      // Move to receipt screen
+      onComplete({
+        originChainId: selectedToken.chainId,
+        destinationChainId: selectedChain.id,
+        originUserTxReceipt,
+        originMetaTxnReceipt,
+        destinationMetaTxnReceipt,
+      })
     } catch (error) {
       console.error('Error in prepareSend:', error)
       setError(error instanceof Error ? error.message : 'An unexpected error occurred')
@@ -422,7 +425,7 @@ export const SendForm: React.FC<SendFormProps> = ({
                 type="text"
                 value={recipientInput}
                 onChange={handleRecipientInputChange}
-                placeholder="0x..."
+                placeholder="0x... or vitalik.eth"
                 className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
               />
               {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
