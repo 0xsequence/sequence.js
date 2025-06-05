@@ -14,6 +14,7 @@ import { useIndexerGatewayClient } from './indexerClient.js'
 import { useTokenPrices } from './prices.js'
 import { SequenceAPIClient, Price, Page } from '@0xsequence/api'
 import { useAPIClient } from './apiClient.js'
+import { zeroAddress } from 'viem'
 
 export { type NativeTokenBalance, type TokenBalance }
 
@@ -30,7 +31,7 @@ function isNativeToken(token: TokenBalance | NativeTokenBalance): token is Nativ
 
 export interface GetTokenBalancesWithPrice {
   page: Page
-  nativeBalances: Array<NativeTokenBalance & { price?: Price }>
+  nativeBalances: Array<NativeTokenBalance & { price?: Price; symbol?: string }>
   balances: Array<TokenBalance & { price?: Price }>
 }
 
@@ -93,13 +94,19 @@ export function useTokenBalances(
   })
 
   const { data: tokenPrices } = useTokenPrices(
-    tokenBalancesData?.balances.map((b) => {
-      return {
-        tokenId: b.contractInfo?.symbol,
-        contractAddress: b.contractAddress,
-        chainId: b.contractInfo?.chainId!,
-      }
-    }) ?? [],
+    tokenBalancesData?.balances
+      .map((b) => {
+        return {
+          tokenId: b.contractInfo?.symbol,
+          contractAddress: b.contractAddress,
+          chainId: b.contractInfo?.chainId!,
+        }
+      })
+      .concat({
+        tokenId: 'ETH',
+        contractAddress: zeroAddress,
+        chainId: 1,
+      }) ?? [],
     apiClient,
   )
 
@@ -110,6 +117,13 @@ export function useTokenBalances(
 
     for (const balance of tokenBalancesData.balances) {
       const price = tokenPrices?.find((p) => p.token.contractAddress === balance.contractAddress)
+      if (price) {
+        balance.price = price.price
+      }
+    }
+
+    for (const balance of tokenBalancesData.nativeBalances) {
+      const price = tokenPrices?.find((p) => p.token.contractAddress === zeroAddress && balance.symbol === 'ETH')
       if (price) {
         balance.price = price.price
       }

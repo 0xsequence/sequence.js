@@ -224,6 +224,13 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
             ? `${nativeSymbol} (${chainInfo?.name || 'Unknown Chain'})`
             : token.contractInfo?.name || 'Unknown Token'
           const formattedBalance = formatBalance(token.balance, isNative ? 18 : token.contractInfo?.decimals)
+          const priceUsd = Number(token.price?.value) ?? 0
+          const balanceUsd = Number(formattedBalance) * priceUsd
+
+          const formattedBalanceUsd = Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+          }).format(balanceUsd)
 
           return (
             <div
@@ -253,7 +260,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
 
               <div className="text-right flex-shrink-0">
                 <p className="text-lg font-medium text-gray-900">{formattedBalance}</p>
-                <p className="text-sm text-gray-500">{tokenSymbol}</p>
+                {priceUsd > 0 && <p className="text-sm text-gray-500">{formattedBalanceUsd}</p>}
               </div>
             </div>
           )
