@@ -36,7 +36,7 @@ export const Widget = () => {
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
-      <div className="text-center space-y-6 max-w-4xl px-4">
+      <div className="text-center space-y-6 max-w-6xl px-4">
         <h1 className="text-4xl font-extrabold text-gray-200">AnyPay Widget Demo</h1>
         <p className="text-xl text-gray-200">
           This demo showcases a multi-step transfer flow using the Anypay SDK. Connect your wallet, select a token,
@@ -44,7 +44,7 @@ export const Widget = () => {
         </p>
       </div>
 
-      <div className="w-full max-w-4xl px-4">
+      <div className="w-full max-w-6xl px-4">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Left Column - Config Form */}
           <div className="w-full md:w-1/2">
@@ -67,7 +67,7 @@ export const Widget = () => {
         </div>
       </div>
 
-      <div className="w-full max-w-4xl px-4">
+      <div className="w-full max-w-6xl px-4">
         <AnyPayWidget
           sequenceApiKey={sequenceApiKey}
           apiUrl={apiUrl}

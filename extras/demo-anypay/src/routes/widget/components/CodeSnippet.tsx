@@ -28,7 +28,7 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = ({ toRecipient, toAmount,
 export const App = () => {
   return (
     <AnyPayWidget
-      sequenceApiKey={'key_123...'}${toRecipient ? `\n      toRecipient="${toRecipient}"` : ''}${toAmount ? `\n      toAmount="${toAmount}"` : ''}${toChainId ? `\n      toChainId={${toChainId}}` : ''}${toToken ? `\n      toToken="${toToken}"` : ''}
+      sequenceApiKey={'key_123...'}${toRecipient ? `\n      toRecipient="${toRecipient}"` : ''}${toAmount ? `\n      toAmount="${toAmount}"` : ''}${toToken ? `\n      toToken="${toToken}"` : ''}${toChainId ? `\n      toChainId={${toChainId}}` : ''}
     />
   )
 }`

@@ -88,55 +88,6 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
           />
         </div>
 
-        <div className="space-y-2" ref={chainDropdownRef}>
-          <label className="block text-sm font-medium text-gray-200 mb-2">Chain ID</label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
-              className="w-full flex items-center px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg hover:border-gray-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {toChainId ? (
-                <>
-                  <NetworkImage chainId={toChainId} size="sm" className="w-5 h-5" />
-                  <span className="ml-2 flex-1 text-left text-gray-200">
-                    {SUPPORTED_CHAINS.find((chain) => chain.id === toChainId)?.name} ({toChainId})
-                  </span>
-                </>
-              ) : (
-                <span className="flex-1 text-left text-gray-400">Select Chain</span>
-              )}
-              <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform ${isChainDropdownOpen ? 'transform rotate-180' : ''}`}
-              />
-            </button>
-
-            {isChainDropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg">
-                {SUPPORTED_CHAINS.map((chain) => (
-                  <button
-                    key={chain.id}
-                    type="button"
-                    onClick={() => {
-                      setToChainId(chain.id)
-                      setIsChainDropdownOpen(false)
-                    }}
-                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-600 ${
-                      toChainId === chain.id ? 'bg-gray-600 text-blue-400' : 'text-gray-200'
-                    }`}
-                  >
-                    <NetworkImage chainId={chain.icon} size="sm" className="w-5 h-5" />
-                    <span className="ml-2">
-                      {chain.name} ({chain.id})
-                    </span>
-                    {toChainId === chain.id && <span className="ml-auto text-blue-400">•</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
         <div className="space-y-2" ref={tokenDropdownRef}>
           <label className="block text-sm font-medium text-gray-200 mb-2">Token</label>
           <div className="relative">
@@ -183,6 +134,55 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
                       {token.name} ({token.symbol})
                     </span>
                     {toToken === token.symbol && <span className="ml-auto text-blue-400">•</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2" ref={chainDropdownRef}>
+          <label className="block text-sm font-medium text-gray-200 mb-2">Chain ID</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
+              className="w-full flex items-center px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg hover:border-gray-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {toChainId ? (
+                <>
+                  <NetworkImage chainId={toChainId} size="sm" className="w-5 h-5" />
+                  <span className="ml-2 flex-1 text-left text-gray-200">
+                    {SUPPORTED_CHAINS.find((chain) => chain.id === toChainId)?.name} ({toChainId})
+                  </span>
+                </>
+              ) : (
+                <span className="flex-1 text-left text-gray-400">Select Chain</span>
+              )}
+              <ChevronDown
+                className={`h-5 w-5 text-gray-400 transition-transform ${isChainDropdownOpen ? 'transform rotate-180' : ''}`}
+              />
+            </button>
+
+            {isChainDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg">
+                {SUPPORTED_CHAINS.map((chain) => (
+                  <button
+                    key={chain.id}
+                    type="button"
+                    onClick={() => {
+                      setToChainId(chain.id)
+                      setIsChainDropdownOpen(false)
+                    }}
+                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-600 ${
+                      toChainId === chain.id ? 'bg-gray-600 text-blue-400' : 'text-gray-200'
+                    }`}
+                  >
+                    <NetworkImage chainId={chain.icon} size="sm" className="w-5 h-5" />
+                    <span className="ml-2">
+                      {chain.name} ({chain.id})
+                    </span>
+                    {toChainId === chain.id && <span className="ml-auto text-blue-400">•</span>}
                   </button>
                 ))}
               </div>
