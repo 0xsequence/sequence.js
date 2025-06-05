@@ -14,7 +14,7 @@ import { config } from './wagmi.config'
 import { WagmiProvider } from 'wagmi'
 
 const queryClient = new QueryClient()
-const apiUrl = import.meta.env.VITE_API_URL || 'https://api.sequence.app'
+const apiUrl = import.meta.env.VITE_API_URL || 'https://v3-api.sequence.app'
 const indexerUrl = import.meta.env.VITE_INDEXER_URL || 'https://indexer.sequence.app'
 
 createRoot(document.getElementById('root')!).render(
