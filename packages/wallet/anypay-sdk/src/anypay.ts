@@ -1316,9 +1316,9 @@ export async function prepareSend(options: SendOptions) {
     return {
       send: async (onOriginSend: () => void): Promise<SendReturn> => {
         const originCallParams = {
-          to: recipient,
+          to: originTokenAddress === zeroAddress ? recipient : originTokenAddress,
           data:
-            originTokenAddress !== zeroAddress ? getERC20TransferData(recipient, BigInt(destinationTokenAmount)) : '0x',
+            originTokenAddress === zeroAddress ? '0x' : getERC20TransferData(recipient, BigInt(destinationTokenAmount)),
           value: originTokenAddress == zeroAddress ? BigInt(destinationTokenAmount) : '0',
           chainId: originChainId,
           chain,
@@ -1402,8 +1402,11 @@ export async function prepareSend(options: SendOptions) {
       const firstPreconditionMin = firstPrecondition?.data?.min
 
       const originCallParams = {
-        to: firstPreconditionAddress,
-        data: originTokenAddress !== zeroAddress ? getERC20TransferData(recipient, BigInt(originTokenAmount)) : '0x',
+        to: originTokenAddress === zeroAddress ? firstPreconditionAddress : originTokenAddress,
+        data:
+          originTokenAddress === zeroAddress
+            ? '0x'
+            : getERC20TransferData(firstPreconditionAddress, BigInt(firstPreconditionMin)),
         value: originTokenAddress === zeroAddress ? BigInt(firstPreconditionMin) + BigInt(fee) : '0',
         chainId: originChainId,
         chain,
