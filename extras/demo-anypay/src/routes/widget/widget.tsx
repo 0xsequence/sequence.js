@@ -3,26 +3,6 @@ import { AnyPayWidget } from '@0xsequence/anypay-sdk/widget'
 import { CustomizationForm } from './components/CustomizationForm'
 import { CodeSnippet } from './components/CodeSnippet'
 
-const SUPPORTED_TOKENS = [
-  {
-    symbol: 'ETH',
-    name: 'Ethereum',
-    imageUrl: 'https://assets.sequence.info/images/tokens/small/1/0x0000000000000000000000000000000000000000.webp',
-  },
-  {
-    symbol: 'USDC',
-    name: 'USD Coin',
-    imageUrl: 'https://assets.sequence.info/images/tokens/small/1/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.webp',
-  },
-] as const
-
-const SUPPORTED_CHAINS = [
-  { id: 1, name: 'Ethereum', icon: 1 },
-  { id: 8453, name: 'Base', icon: 8453 },
-  { id: 10, name: 'Optimism', icon: 10 },
-  { id: 42161, name: 'Arbitrum', icon: 42161 },
-]
-
 export const Widget = () => {
   const sequenceApiKey = import.meta.env.VITE_PROJECT_ACCESS_KEY
   const apiUrl = import.meta.env.VITE_API_URL
