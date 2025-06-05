@@ -11,6 +11,9 @@ import { useQuery } from '@tanstack/react-query'
 import { Address } from 'ox'
 import { useMemo } from 'react'
 import { useIndexerGatewayClient } from './indexerClient.js'
+import { useTokenPrices } from './prices.js'
+import { SequenceAPIClient, Price, Page } from '@0xsequence/api'
+import { useAPIClient } from './apiClient.js'
 
 export { type NativeTokenBalance, type TokenBalance }
 
@@ -25,9 +28,16 @@ function isNativeToken(token: TokenBalance | NativeTokenBalance): token is Nativ
   return true
 }
 
+export interface GetTokenBalancesWithPrice {
+  page: Page
+  nativeBalances: Array<NativeTokenBalance & { price?: Price }>
+  balances: Array<TokenBalance & { price?: Price }>
+}
+
 export function useTokenBalances(
   address: Address.Address,
   indexerGatewayClient?: SequenceIndexerGateway,
+  sequenceApiClient?: SequenceAPIClient,
 ): {
   tokenBalancesData: GetTokenBalancesSummaryReturn | undefined
   isLoadingBalances: boolean
@@ -35,22 +45,23 @@ export function useTokenBalances(
   sortedTokens: (TokenBalance | NativeTokenBalance)[]
 } {
   const indexerClient = indexerGatewayClient ?? useIndexerGatewayClient()
+  const apiClient = sequenceApiClient ?? useAPIClient()
 
   // Fetch token balances
   const {
     data: tokenBalancesData,
     isLoading: isLoadingBalances,
     error: balanceError,
-  } = useQuery<GetTokenBalancesSummaryReturn>({
+  } = useQuery<GetTokenBalancesWithPrice>({
     queryKey: ['tokenBalances', address],
-    queryFn: async (): Promise<GetTokenBalancesSummaryReturn> => {
+    queryFn: async (): Promise<GetTokenBalancesWithPrice> => {
       if (!address) {
         console.warn('No account address or indexer client')
         return {
           balances: [],
           nativeBalances: [],
           page: defaultPage,
-        } as GetTokenBalancesSummaryReturn
+        } as GetTokenBalancesWithPrice
       }
       try {
         const summaryFromGateway = await indexerClient.getTokenBalancesSummary({
@@ -81,9 +92,27 @@ export function useTokenBalances(
     retry: 1,
   })
 
+  const { data: tokenPrices } = useTokenPrices(
+    tokenBalancesData?.balances.map((b) => {
+      return {
+        tokenId: b.contractInfo?.symbol,
+        contractAddress: b.contractAddress,
+        chainId: b.contractInfo?.chainId!,
+      }
+    }) ?? [],
+    apiClient,
+  )
+
   const sortedTokens = useMemo(() => {
     if (!tokenBalancesData) {
       return []
+    }
+
+    for (const balance of tokenBalancesData.balances) {
+      const price = tokenPrices?.find((p) => p.token.contractAddress === balance.contractAddress)
+      if (price) {
+        balance.price = price.price
+      }
     }
 
     const balances = [...tokenBalancesData.nativeBalances, ...tokenBalancesData.balances]
@@ -109,7 +138,7 @@ export function useTokenBalances(
           return 0
         }
       })
-  }, [tokenBalancesData])
+  }, [tokenBalancesData, tokenPrices])
 
   return {
     tokenBalancesData,
