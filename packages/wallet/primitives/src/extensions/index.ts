@@ -12,5 +12,11 @@ export const Dev1: Extensions = {
   sessions: '0x81Fa4b986f958CB02A3A6c10aa38056dCd701941',
 }
 
+export const Dev2: Extensions = {
+  passkeys: '0x4491845806B757D67BE05BbD877Cab101B9bee5C',
+  recovery: '0xdED857b9b5142832634129aFfc1D67cD106b927c',
+  sessions: '0x81Fa4b986f958CB02A3A6c10aa38056dCd701941',
+}
+
 export * as Passkeys from './passkeys.js'
 export * as Recovery from './recovery.js'
