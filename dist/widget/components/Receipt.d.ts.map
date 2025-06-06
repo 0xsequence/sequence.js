@@ -1,0 +1,1 @@
+{"version":3,"file":"Receipt.d.ts","sourceRoot":"","sources":["../../../src/widget/components/Receipt.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAA;AAEzB,UAAU,YAAY;IACpB,MAAM,EAAE,MAAM,CAAA;IACd,aAAa,EAAE,MAAM,IAAI,CAAA;IACzB,OAAO,EAAE,MAAM,IAAI,CAAA;CACpB;AAED,eAAO,MAAM,OAAO,EAAE,KAAK,CAAC,EAAE,CAAC,YAAY,CAuC1C,CAAA;AAED,eAAe,OAAO,CAAA"}
