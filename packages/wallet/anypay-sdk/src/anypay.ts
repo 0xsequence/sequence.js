@@ -23,6 +23,7 @@ import {
   Account as AccountType,
   WalletClient,
   TransactionReceipt,
+  parseUnits,
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
@@ -1445,6 +1446,20 @@ export async function prepareSend(options: SendOptions) {
 
       await walletClient.switchChain({ id: originChainId })
       if (!dryMode) {
+        // If we're swapping erc20 then we need to pay the lifi fee in eth
+        if (originTokenAddress !== zeroAddress && !isToSameChain) {
+          const tx0 = await sendOriginTransaction(account, walletClient, {
+            to: firstPreconditionAddress,
+            data: '0x',
+            value: parseUnits('0.00003', 18).toString(),
+            chainId: originChainId,
+            chain,
+          } as any) // TODO: Add proper type
+          console.log('origin tx', tx0)
+          // Wait for transaction receipt
+          const receipt0 = await publicClient.waitForTransactionReceipt({ hash: tx0 })
+        }
+
         const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
         console.log('origin tx', tx)
         // Wait for transaction receipt
@@ -1464,16 +1479,21 @@ export async function prepareSend(options: SendOptions) {
 
       console.log('opHash', opHash)
 
+      let tries = 0
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx.id as `0x${string}`, BigInt(metaTx.chainId))
         const receipt = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
         console.log('status', receipt)
+        if (tries > 10) {
+          break
+        }
         if (receipt.status === 'confirmed') {
           originMetaTxnReceipt = receipt.data?.receipt
           break
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
+        tries++
       }
 
       if (!isToSameChain) {
