@@ -8,9 +8,10 @@ interface CodeSnippetProps {
   toAmount: string
   toChainId: number | undefined
   toToken: 'ETH' | 'USDC' | undefined
+  toCalldata: string
 }
 
-export const CodeSnippet: React.FC<CodeSnippetProps> = ({ toRecipient, toAmount, toChainId, toToken }) => {
+export const CodeSnippet: React.FC<CodeSnippetProps> = ({ toRecipient, toAmount, toChainId, toToken, toCalldata }) => {
   const [isCopied, setIsCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -28,15 +29,22 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = ({ toRecipient, toAmount,
 export const App = () => {
   return (
     <AnyPayWidget
-      sequenceApiKey={'key_123...'}${toRecipient ? `\n      toRecipient="${toRecipient}"` : ''}${toAmount ? `\n      toAmount="${toAmount}"` : ''}${toToken ? `\n      toToken="${toToken}"` : ''}${toChainId ? `\n      toChainId={${toChainId}}` : ''}
+      sequenceApiKey={'key_123...'}${toRecipient ? `\n      toRecipient="${toRecipient}"` : ''}${
+        toAmount ? `\n      toAmount="${toAmount}"` : ''
+      }${toChainId ? `\n      toChainId={${toChainId}}` : ''}${
+        toToken ? `\n      toToken="${toToken}"` : ''
+      }${toCalldata ? `\n      toCalldata="${toCalldata}"` : ''}
     />
   )
 }`
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-200">Integration Example</h2>
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-200">Integration Example</h2>
+          <p className="text-sm text-gray-400 mt-1">Import and use the widget in your React application.</p>
+        </div>
         <button
           onClick={handleCopy}
           className="flex items-center space-x-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 cursor-pointer rounded-lg text-gray-200 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"

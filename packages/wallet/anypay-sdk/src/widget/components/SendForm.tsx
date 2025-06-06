@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import { createWalletClient, custom, formatUnits, parseUnits, type Account, isAddress } from 'viem'
+import { createWalletClient, custom, formatUnits, parseUnits, type Account, isAddress, getAddress } from 'viem'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
 import { getAPIClient } from '../../apiClient.js'
@@ -39,6 +39,7 @@ interface SendFormProps {
   toAmount?: string
   toChainId?: number
   toToken?: 'USDC' | 'ETH'
+  toCalldata?: string
 }
 
 // Available chains
@@ -125,6 +126,7 @@ export const SendForm: React.FC<SendFormProps> = ({
   toRecipient,
   toChainId,
   toToken,
+  toCalldata,
 }) => {
   const [amount, setAmount] = useState(toAmount ?? '')
   const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
@@ -219,11 +221,12 @@ export const SendForm: React.FC<SendFormProps> = ({
             : getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
         destinationTokenAmount: parsedAmount,
         sequenceApiKey,
-        fee: '0',
+        fee: selectedToken.symbol === 'ETH' ? '0' : parseUnits('0.1', selectedToken.contractInfo?.decimals!).toString(),
         client,
         apiClient,
         originRelayer,
         destinationRelayer,
+        destinationCalldata: toCalldata,
         dryMode: false, // Set to true to skip the metamask transaction, for testing purposes
       }
 
@@ -252,6 +255,27 @@ export const SendForm: React.FC<SendFormProps> = ({
       console.error('Error in prepareSend:', error)
       setError(error instanceof Error ? error.message : 'An unexpected error occurred')
       setIsSubmitting(false)
+    }
+  }
+
+  // Get button text based on recipient and calldata
+  const getButtonText = () => {
+    if (!amount) return 'Enter amount'
+    if (!isValidRecipient) return 'Enter recipient'
+
+    try {
+      const checksummedRecipient = getAddress(recipient)
+      const checksummedAccount = getAddress(account.address)
+
+      if (checksummedRecipient === checksummedAccount) {
+        return `Receive ${amount} ${selectedDestToken.symbol}`
+      } else if (toCalldata) {
+        return `Spend ${amount} ${selectedDestToken.symbol}`
+      } else {
+        return `Pay ${amount} ${selectedDestToken.symbol}`
+      }
+    } catch {
+      return `Send ${amount} ${selectedDestToken.symbol}`
     }
   }
 
@@ -433,6 +457,13 @@ export const SendForm: React.FC<SendFormProps> = ({
           )}
         </div>
 
+        {/* Custom Calldata Message */}
+        {toCalldata && (
+          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-sm text-gray-600">This transaction includes custom calldata for contract interaction</p>
+          </div>
+        )}
+
         <div className="flex flex-col space-y-3">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -451,7 +482,7 @@ export const SendForm: React.FC<SendFormProps> = ({
                 <span>Processing...</span>
               </div>
             ) : (
-              `Receive ${amount ? `${amount} ${selectedDestToken.symbol}` : ''}`
+              getButtonText()
             )}
           </button>
 

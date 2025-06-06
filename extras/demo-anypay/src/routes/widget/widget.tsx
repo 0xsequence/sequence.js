@@ -13,6 +13,7 @@ export const Widget = () => {
   const [toAmount, setToAmount] = useState('')
   const [toChainId, setToChainId] = useState<number | undefined>()
   const [toToken, setToToken] = useState<'ETH' | 'USDC' | undefined>()
+  const [toCalldata, setToCalldata] = useState('')
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
@@ -37,12 +38,20 @@ export const Widget = () => {
               setToChainId={setToChainId}
               toToken={toToken}
               setToToken={setToToken}
+              toCalldata={toCalldata}
+              setToCalldata={setToCalldata}
             />
           </div>
 
           {/* Right Column - Code Snippet */}
           <div className="w-full md:w-1/2">
-            <CodeSnippet toRecipient={toRecipient} toAmount={toAmount} toChainId={toChainId} toToken={toToken} />
+            <CodeSnippet
+              toRecipient={toRecipient}
+              toAmount={toAmount}
+              toChainId={toChainId}
+              toToken={toToken}
+              toCalldata={toCalldata}
+            />
           </div>
         </div>
       </div>
@@ -57,6 +66,7 @@ export const Widget = () => {
           toAmount={toAmount || undefined}
           toChainId={toChainId}
           toToken={toToken}
+          toCalldata={toCalldata || undefined}
         />
       </div>
     </div>

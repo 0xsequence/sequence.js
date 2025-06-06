@@ -1265,6 +1265,7 @@ type SendOptions = {
   apiClient: SequenceAPIClient
   originRelayer: Relayer.Rpc.RpcRelayer
   destinationRelayer: Relayer.Rpc.RpcRelayer
+  destinationCalldata?: string
 }
 
 type SendReturn = {
@@ -1291,6 +1292,7 @@ export async function prepareSend(options: SendOptions) {
     apiClient,
     originRelayer,
     destinationRelayer,
+    destinationCalldata,
   } = options
   const chain = getChainConfig(originChainId)
   const isToSameChain = originChainId === destinationChainId
@@ -1298,27 +1300,39 @@ export async function prepareSend(options: SendOptions) {
 
   const mainSigner = account.address
 
-  const args = {
+  const _destinationCalldata =
+    destinationCalldata ||
+    (destinationTokenAddress === zeroAddress ? '0x' : getERC20TransferData(recipient, BigInt(destinationTokenAmount)))
+  const _destinationToAddress = destinationCalldata
+    ? recipient
+    : destinationTokenAddress === zeroAddress
+      ? recipient
+      : destinationTokenAddress
+  const _destinationCallValue = destinationTokenAddress === zeroAddress ? destinationTokenAmount : '0'
+
+  const intentArgs = {
     userAddress: mainSigner,
     originChainId,
     originTokenAddress,
     originTokenAmount, // max amount
     destinationChainId,
-    destinationToAddress: destinationTokenAddress == zeroAddress ? recipient : destinationTokenAddress,
+    destinationToAddress: _destinationToAddress,
     destinationTokenAddress: destinationTokenAddress,
     destinationTokenAmount: destinationTokenAmount,
-    destinationCallData:
-      destinationTokenAddress !== zeroAddress ? getERC20TransferData(recipient, BigInt(destinationTokenAmount)) : '0x',
-    destinationCallValue: destinationTokenAddress === zeroAddress ? destinationTokenAmount : '0',
+    destinationCallData: _destinationCalldata,
+    destinationCallValue: _destinationCallValue,
   }
 
   if (isToSameToken && isToSameChain) {
     return {
       send: async (onOriginSend: () => void): Promise<SendReturn> => {
         const originCallParams = {
-          to: originTokenAddress === zeroAddress ? recipient : originTokenAddress,
+          to: destinationCalldata ? recipient : originTokenAddress === zeroAddress ? recipient : originTokenAddress,
           data:
-            originTokenAddress === zeroAddress ? '0x' : getERC20TransferData(recipient, BigInt(destinationTokenAmount)),
+            destinationCalldata ||
+            (originTokenAddress === zeroAddress
+              ? '0x'
+              : getERC20TransferData(recipient, BigInt(destinationTokenAmount))),
           value: originTokenAddress == zeroAddress ? BigInt(destinationTokenAmount) : '0',
           chainId: originChainId,
           chain,
@@ -1342,6 +1356,7 @@ export async function prepareSend(options: SendOptions) {
 
         await walletClient.switchChain({ id: originChainId })
         if (!dryMode) {
+          console.log('origin call params', originCallParams)
           const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
           console.log('origin tx', tx)
           // Wait for transaction receipt
@@ -1362,8 +1377,8 @@ export async function prepareSend(options: SendOptions) {
     }
   }
 
-  console.log('Creating intent with args:', args)
-  const intent = await getIntentCallsPayloads(apiClient, args as any) // TODO: Add proper type
+  console.log('Creating intent with args:', intentArgs)
+  const intent = await getIntentCallsPayloads(apiClient, intentArgs as any) // TODO: Add proper type
   console.log('Got intent:', intent)
 
   if (!intent) {
@@ -1406,7 +1421,7 @@ export async function prepareSend(options: SendOptions) {
         data:
           originTokenAddress === zeroAddress
             ? '0x'
-            : getERC20TransferData(firstPreconditionAddress, BigInt(firstPreconditionMin)),
+            : getERC20TransferData(firstPreconditionAddress, BigInt(firstPreconditionMin) + BigInt(fee)),
         value: originTokenAddress === zeroAddress ? BigInt(firstPreconditionMin) + BigInt(fee) : '0',
         chainId: originChainId,
         chain,

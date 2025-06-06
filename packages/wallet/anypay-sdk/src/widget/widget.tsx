@@ -85,6 +85,7 @@ export type AnyPayWidgetProps = {
   toAmount?: string
   toChainId?: number | string
   toToken?: 'USDC' | 'ETH'
+  toCalldata?: string
 }
 
 const queryClient = new QueryClient()
@@ -98,6 +99,7 @@ const WidgetContent = ({
   toAmount,
   toChainId,
   toToken,
+  toCalldata,
 }: AnyPayWidgetProps) => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -213,6 +215,7 @@ const WidgetContent = ({
             toAmount={toAmount}
             toChainId={toChainId ? Number(toChainId) : undefined}
             toToken={toToken}
+            toCalldata={toCalldata}
           />
         ) : null
       case 'pending':
@@ -256,6 +259,7 @@ export const AnyPayWidget = ({
   toAmount,
   toChainId,
   toToken,
+  toCalldata,
 }: AnyPayWidgetProps) => {
   return (
     <StrictMode>
@@ -280,6 +284,7 @@ export const AnyPayWidget = ({
               toAmount={toAmount}
               toChainId={toChainId}
               toToken={toToken}
+              toCalldata={toCalldata}
             />
           </SequenceHooksProvider>
         </QueryClientProvider>
