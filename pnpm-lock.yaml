@@ -584,8 +584,8 @@ importers:
         specifier: workspace:^
         version: link:../../services/identity-instrument
       '@0xsequence/tee-verifier':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.1.2
+        version: 0.1.2
       '@0xsequence/wallet-core':
         specifier: workspace:^
         version: link:../core
@@ -818,8 +818,8 @@ packages:
     peerDependencies:
       ethers: '>=6'
 
-  '@0xsequence/tee-verifier@0.1.1':
-    resolution: {integrity: sha512-tBWy/P4reDHzw1dUHL7ydCKI1FKMLVBgLi6gi3b1bTl5zTaV6IZkOzTBCEsOGarfjQ4TQtXqhmoWIlvli0AMqQ==}
+  '@0xsequence/tee-verifier@0.1.2':
+    resolution: {integrity: sha512-7sKr8/T4newknx6LAukjlRI3siGiGhBnZohz2Z3jX0zb0EBQdKUq0L//A7CPSckHFPxTg/QvQU2v8e9x9GfkDw==}
 
   '@0xsequence/utils@2.3.17':
     resolution: {integrity: sha512-oTHNHoeV6uvlLUQMSp+4gK67g/eMYPhpv1p2OHFdrWcOi/+TPRCLNinOh2zuIu16iPrhyhq4yzsFR8y3lYpmTw==}
@@ -6417,7 +6417,7 @@ snapshots:
       '@0xsequence/core': 2.3.8(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       ethers: 6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
-  '@0xsequence/tee-verifier@0.1.1':
+  '@0xsequence/tee-verifier@0.1.2':
     dependencies:
       cbor2: 1.12.0
       pkijs: 3.2.5
