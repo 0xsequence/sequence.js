@@ -453,8 +453,10 @@ export class Wallets {
       // Prepare the configuration leaf
       const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
       modules.push({
-        ...this.shared.sequence.defaultSessionsTopology,
+        type: 'sapient-signer',
+        address: this.shared.sequence.extensions.sessions,
         imageHash: sessionsImageHash,
+        weight: 255n,
       })
     }
 
