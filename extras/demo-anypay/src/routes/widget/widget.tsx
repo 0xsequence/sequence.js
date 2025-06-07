@@ -15,6 +15,7 @@ export const Widget = () => {
   const [toChainId, setToChainId] = useState<number | undefined>()
   const [toToken, setToToken] = useState<'ETH' | 'USDC' | undefined>()
   const [toCalldata, setToCalldata] = useState('')
+  const [useCustomButton, setUseCustomButton] = useState(false)
   const [provider, setProvider] = useState<any>(null)
 
   const handleConnect = useCallback((provider: any) => {
@@ -52,6 +53,8 @@ export const Widget = () => {
               setToToken={setToToken}
               toCalldata={toCalldata}
               setToCalldata={setToCalldata}
+              useCustomButton={useCustomButton}
+              setUseCustomButton={setUseCustomButton}
             />
           </div>
 
@@ -63,6 +66,7 @@ export const Widget = () => {
               toChainId={toChainId}
               toToken={toToken}
               toCalldata={toCalldata}
+              useCustomButton={useCustomButton}
             >
               <div className="mt-6">
                 <AnyPayWidget
@@ -76,7 +80,13 @@ export const Widget = () => {
                   toToken={toToken}
                   toCalldata={toCalldata || undefined}
                   provider={provider}
-                />
+                >
+                  {useCustomButton ? (
+                    <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-full shadow-lg hover:from-green-600 hover:to-emerald-600 transition duration-300">
+                      Pay with AnyPay
+                    </button>
+                  ) : null}
+                </AnyPayWidget>
               </div>
             </CodeSnippet>
           </div>

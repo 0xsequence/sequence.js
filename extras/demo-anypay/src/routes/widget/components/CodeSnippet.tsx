@@ -9,6 +9,7 @@ interface CodeSnippetProps {
   toChainId: number | undefined
   toToken: 'ETH' | 'USDC' | undefined
   toCalldata: string
+  useCustomButton: boolean
   children?: ReactNode
 }
 
@@ -18,6 +19,7 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = ({
   toChainId,
   toToken,
   toCalldata,
+  useCustomButton,
   children,
 }) => {
   const [isCopied, setIsCopied] = useState(false)
@@ -35,14 +37,29 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = ({
   const codeExample = `import { AnyPayWidget } from '@0xsequence/anypay-sdk/widget'
 
 export const App = () => {
-  return (
+  return (${
+    useCustomButton
+      ? `
     <AnyPayWidget
       sequenceApiKey={'key_123...'}${toRecipient ? `\n      toRecipient="${toRecipient}"` : ''}${
         toAmount ? `\n      toAmount="${toAmount}"` : ''
       }${toChainId ? `\n      toChainId={${toChainId}}` : ''}${
         toToken ? `\n      toToken="${toToken}"` : ''
       }${toCalldata ? `\n      toCalldata="${toCalldata}"` : ''}
-    />
+    >
+      <button className="custom-button-styles">
+        Pay with AnyPay
+      </button>
+    </AnyPayWidget>`
+      : `
+    <AnyPayWidget
+      sequenceApiKey={'key_123...'}${toRecipient ? `\n      toRecipient="${toRecipient}"` : ''}${
+        toAmount ? `\n      toAmount="${toAmount}"` : ''
+      }${toChainId ? `\n      toChainId={${toChainId}}` : ''}${
+        toToken ? `\n      toToken="${toToken}"` : ''
+      }${toCalldata ? `\n      toCalldata="${toCalldata}"` : ''}
+    />`
+  }
   )
 }`
 

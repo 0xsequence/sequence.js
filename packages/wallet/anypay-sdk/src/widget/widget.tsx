@@ -92,6 +92,7 @@ export type AnyPayWidgetProps = {
   toToken?: 'USDC' | 'ETH'
   toCalldata?: string
   provider?: any
+  children?: React.ReactNode
 }
 
 const queryClient = new QueryClient()
@@ -107,6 +108,7 @@ const WidgetInner = ({
   toToken,
   toCalldata,
   provider,
+  children,
 }: AnyPayWidgetProps) => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -260,15 +262,26 @@ const WidgetInner = ({
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
-      >
-        Pay
-      </button>
+      {!children ? (
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
+        >
+          Pay
+        </button>
+      ) : (
+        <div className="flex flex-col items-center justify-center" onClick={() => setIsModalOpen(true)}>
+          {children}
+        </div>
+      )}
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        {renderScreen()}
+        <div className="flex flex-col min-h-[400px]">
+          {renderScreen()}
+          <div className="mt-auto pt-4 text-center text-sm text-gray-500">
+            Powered by <span className="font-medium text-black-500">AnyPay</span>
+          </div>
+        </div>
       </Modal>
     </div>
   )

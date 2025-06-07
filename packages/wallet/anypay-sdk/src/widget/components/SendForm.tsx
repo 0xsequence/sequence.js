@@ -11,7 +11,7 @@ import {
   getAddress,
   WalletClient,
 } from 'viem'
-import { ChevronDown, Loader2 } from 'lucide-react'
+import { ChevronDown, Loader2, ArrowLeft } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
 import { getAPIClient } from '../../apiClient.js'
 import { getRelayer } from '../../relayer.js'
@@ -495,8 +495,9 @@ export const SendForm: React.FC<SendFormProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className="w-full border border-gray-300 hover:border-gray-400 cursor-pointer text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
           >
+            <ArrowLeft className="h-5 w-5 mr-2" />
             Back
           </button>
         </div>

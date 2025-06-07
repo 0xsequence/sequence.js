@@ -90,7 +90,7 @@ export type UseAnyPayReturn = {
   switchChainError: Error | null
   isTransactionInProgress: boolean
   isChainSwitchRequired: boolean
-  sendTransaction: any // Update type to match the actual sendTransaction function
+  sendTransaction: any // TODO: Add proper type
   isSendingTransaction: boolean
   originCallStatus: {
     txnHash?: string
@@ -155,7 +155,7 @@ export const getChainConfig = (chainId: number): Chain => {
 }
 
 export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
-  const { account, disableAutoExecute = false, env, useV3Relayers, sequenceApiKey } = config
+  const { account, disableAutoExecute = false, env, useV3Relayers = true, sequenceApiKey } = config
   const apiClient = useAPIClient({ projectAccessKey: sequenceApiKey })
 
   const [isAutoExecute, setIsAutoExecute] = useState(!disableAutoExecute)
