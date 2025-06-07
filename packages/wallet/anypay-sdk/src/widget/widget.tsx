@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useAccount, http, createConfig, WagmiProvider } from 'wagmi'
+import { useState, useEffect, useContext } from 'react'
+import { useAccount, http, createConfig, WagmiProvider, useConnect, Config } from 'wagmi'
 import { SequenceHooksProvider } from '@0xsequence/hooks'
 import { injected, metaMask } from 'wagmi/connectors'
 import { StrictMode } from 'react'
@@ -12,7 +12,7 @@ import TransferPending from './components/TransferPending.js'
 import Receipt from './components/Receipt.js'
 import { prepareSend } from '../anypay.js'
 import { createWalletClient, custom, TransactionReceipt, type WalletClient } from 'viem'
-import { mainnet, base, optimism, arbitrum } from 'viem/chains'
+import { mainnet, base, optimism, arbitrum, Chain } from 'viem/chains'
 import { parseUnits } from 'viem'
 import * as chains from 'viem/chains'
 import '@0xsequence/design-system/preset'
@@ -20,10 +20,15 @@ import './index.css'
 import React from 'react'
 import { DEFAULT_INDEXER_GATEWAY_URL, DEFAULT_API_URL, DEFAULT_ENV } from '../constants.js'
 import { useIndexerGatewayClient } from '../indexerClient.js'
+import { createConnector } from 'wagmi'
+import { ConnectorNotFoundError } from 'wagmi'
+import { getAddress } from 'viem'
+import { WagmiContext } from 'wagmi'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
 
-const wagmiConfig = createConfig({
+const wagmiConfig1 = createConfig({
+  autoConnect: true,
   // @ts-expect-error
   chains: Object.values(chains),
   connectors: [
@@ -86,11 +91,12 @@ export type AnyPayWidgetProps = {
   toChainId?: number | string
   toToken?: 'USDC' | 'ETH'
   toCalldata?: string
+  provider?: any
 }
 
 const queryClient = new QueryClient()
 
-const WidgetContent = ({
+const WidgetInner = ({
   sequenceApiKey,
   indexerUrl,
   apiUrl,
@@ -100,14 +106,35 @@ const WidgetContent = ({
   toChainId,
   toToken,
   toCalldata,
+  provider,
 }: AnyPayWidgetProps) => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [currentScreen, setCurrentScreen] = useState<Screen>('connect')
+  const [currentScreen, setCurrentScreen] = useState<Screen>(isConnected ? 'tokens' : 'connect')
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [destinationTxHash, setDestinationTxHash] = useState('')
   const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
+
+  // Set up wallet client when connected
+  useEffect(() => {
+    if (provider && address && chainId) {
+      const chain = getChainConfig(chainId)
+      const client = createWalletClient({
+        account: address,
+        chain,
+        transport: custom(provider),
+      })
+      setWalletClient(client)
+    }
+  }, [provider, address, chainId])
+
+  // Update screen based on connection state
+  useEffect(() => {
+    if (isConnected) {
+      setCurrentScreen('tokens')
+    }
+  }, [isConnected])
 
   const indexerGatewayClient = useIndexerGatewayClient({
     indexerGatewayUrl: indexerUrl,
@@ -115,16 +142,12 @@ const WidgetContent = ({
   })
 
   const handleConnect = () => {
-    if (window.ethereum && address && chainId) {
-      const chain = getChainConfig(chainId)
-      const client = createWalletClient({
-        account: address,
-        chain,
-        transport: custom(window.ethereum),
-      })
-      setWalletClient(client)
+    if (provider && !isConnected) {
+      const connect = async () => {
+        await provider.request({ method: 'eth_requestAccounts' })
+      }
+      connect()
     }
-    setCurrentScreen('tokens')
   }
 
   const handleTokenSelect = (token: Token) => {
@@ -216,6 +239,7 @@ const WidgetContent = ({
             toChainId={toChainId ? Number(toChainId) : undefined}
             toToken={toToken}
             toCalldata={toCalldata}
+            provider={provider}
           />
         ) : null
       case 'pending':
@@ -250,47 +274,55 @@ const WidgetContent = ({
   )
 }
 
-export const AnyPayWidget = ({
-  sequenceApiKey,
-  indexerUrl = DEFAULT_INDEXER_GATEWAY_URL,
-  apiUrl = DEFAULT_API_URL,
-  env = DEFAULT_ENV,
-  toRecipient,
-  toAmount,
-  toChainId,
-  toToken,
-  toCalldata,
-}: AnyPayWidgetProps) => {
-  return (
-    <StrictMode>
-      <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          <SequenceHooksProvider
-            config={{
-              projectAccessKey: sequenceApiKey,
-              env: {
-                indexerUrl: indexerUrl,
-                indexerGatewayUrl: indexerUrl,
-                apiUrl: apiUrl,
-              },
-            }}
-          >
-            <WidgetContent
-              sequenceApiKey={sequenceApiKey}
-              indexerUrl={indexerUrl}
-              apiUrl={apiUrl}
-              env={env}
-              toRecipient={toRecipient}
-              toAmount={toAmount}
-              toChainId={toChainId}
-              toToken={toToken}
-              toCalldata={toCalldata}
-            />
-          </SequenceHooksProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </StrictMode>
+export const AnyPayWidget = (props: AnyPayWidgetProps) => {
+  const wagmiContext = useContext(WagmiContext)
+  const config = React.useMemo(
+    () =>
+      createConfig({
+        chains: [mainnet, base, optimism, arbitrum],
+        transports: {
+          [mainnet.id]: custom(props.provider),
+          [base.id]: custom(props.provider),
+          [optimism.id]: custom(props.provider),
+          [arbitrum.id]: custom(props.provider),
+        },
+        connectors: [
+          injected({
+            target: () => props.provider,
+          }),
+        ],
+      }),
+    [props.provider],
   )
+
+  const content = (
+    <QueryClientProvider client={queryClient}>
+      <SequenceHooksProvider
+        config={{
+          projectAccessKey: props.sequenceApiKey,
+          env: {
+            indexerUrl: props.indexerUrl,
+            indexerGatewayUrl: props.indexerUrl,
+            apiUrl: props.apiUrl,
+          },
+        }}
+      >
+        <WidgetInner {...props} />
+      </SequenceHooksProvider>
+    </QueryClientProvider>
+  )
+
+  // If no parent Wagmi context, provide our own
+  if (!wagmiContext) {
+    return (
+      <StrictMode>
+        <WagmiProvider config={config}>{content}</WagmiProvider>
+      </StrictMode>
+    )
+  }
+
+  // Otherwise use parent context
+  return <StrictMode>{content}</StrictMode>
 }
 
 export default AnyPayWidget

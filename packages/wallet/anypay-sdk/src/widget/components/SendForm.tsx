@@ -40,6 +40,7 @@ interface SendFormProps {
   toChainId?: number
   toToken?: 'USDC' | 'ETH'
   toCalldata?: string
+  provider?: any
 }
 
 // Available chains
@@ -127,6 +128,7 @@ export const SendForm: React.FC<SendFormProps> = ({
   toChainId,
   toToken,
   toCalldata,
+  provider,
 }) => {
   const [amount, setAmount] = useState(toAmount ?? '')
   const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
@@ -199,7 +201,7 @@ export const SendForm: React.FC<SendFormProps> = ({
       const client = createWalletClient({
         account,
         chain: getChainConfig(selectedToken.chainId),
-        transport: custom(window.ethereum),
+        transport: custom(provider),
       })
 
       console.log('selectedDestToken.symbol', selectedDestToken)
@@ -221,7 +223,8 @@ export const SendForm: React.FC<SendFormProps> = ({
             : getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
         destinationTokenAmount: parsedAmount,
         sequenceApiKey,
-        fee: '0',
+        fee:
+          selectedToken.symbol === 'ETH' ? '0' : parseUnits('0.01', selectedToken.contractInfo?.decimals!).toString(), // TODO: fees
         client,
         apiClient,
         originRelayer,

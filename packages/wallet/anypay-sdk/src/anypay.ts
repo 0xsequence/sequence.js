@@ -1332,7 +1332,7 @@ export async function prepareSend(options: SendOptions) {
           data:
             destinationCalldata ||
             (originTokenAddress === zeroAddress
-              ? '0x'
+              ? '0x00'
               : getERC20TransferData(recipient, BigInt(destinationTokenAmount))),
           value: originTokenAddress == zeroAddress ? BigInt(destinationTokenAmount) : '0',
           chainId: originChainId,
@@ -1445,29 +1445,113 @@ export async function prepareSend(options: SendOptions) {
       let destinationMetaTxnReceipt: any = null // TODO: Add proper type
 
       await walletClient.switchChain({ id: originChainId })
-      if (!dryMode) {
-        // If we're swapping erc20 then we need to pay the lifi fee in eth
-        if (originTokenAddress !== zeroAddress && !isToSameChain) {
-          const tx0 = await sendOriginTransaction(account, walletClient, {
-            to: firstPreconditionAddress,
-            data: '0x',
-            value: parseUnits('0.00003', 18).toString(),
-            chainId: originChainId,
-            chain,
-          } as any) // TODO: Add proper type
-          console.log('origin tx', tx0)
-          // Wait for transaction receipt
-          const receipt0 = await publicClient.waitForTransactionReceipt({ hash: tx0 })
-        }
+      const useSendCalls = true
+      if (useSendCalls) {
+        const capabilities = await walletClient.request({
+          method: 'wallet_getCapabilities',
+          params: [account.address],
+        })
 
-        const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
-        console.log('origin tx', tx)
-        // Wait for transaction receipt
-        const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
-        console.log('receipt', receipt)
-        originUserTxReceipt = receipt
-        if (onOriginSend) {
-          onOriginSend()
+        console.log('capabilities', capabilities)
+
+        if (!dryMode) {
+          const calls: Array<{
+            to: `0x${string}`
+            data: `0x${string}`
+            value?: `0x${string}`
+          }> = []
+
+          // If we're swapping ERC20 and it's a cross-chain transfer, add ETH fee call
+          if (originTokenAddress !== zeroAddress) {
+            calls.push({
+              to: firstPreconditionAddress as `0x${string}`,
+              data: '0x00',
+              value: `0x${parseUnits('0.00005', 18).toString(16)}`,
+            })
+          }
+
+          // Add the origin call
+          calls.push({
+            to: originCallParams.to as `0x${string}`,
+            data: originCallParams.data as `0x${string}`,
+            value: originCallParams.value ? `0x${BigInt(originCallParams.value).toString(16)}` : '0x0',
+          })
+
+          // Send the batched call via EIP-7702
+          const result = (await walletClient.request({
+            method: 'wallet_sendCalls',
+            params: [
+              {
+                version: '2.0.0',
+                chainId: `0x${originChainId.toString(16)}`,
+                atomicRequired: true,
+                calls,
+              },
+            ],
+          })) as { requestId: `0x${string}` }
+
+          console.log('sendCalls result', result)
+          const requestId = result.requestId || (result as any).id
+
+          // Poll to check if the tx has been submitted
+          let txHash: `0x${string}` | undefined
+          while (!txHash) {
+            const status = (await walletClient.request({
+              method: 'wallet_getCallsStatus',
+              params: [requestId],
+            })) as {
+              status: 'pending' | 'submitted' | 'failed'
+              transactionHash?: `0x${string}`
+              error?: string
+            }
+
+            console.log('getCallsStatus result', status)
+            const receipt = (status as any)?.receipts?.[0]
+
+            if ((status as any).status === 200 && receipt?.transactionHash) {
+              txHash = receipt.transactionHash
+              break
+            } else if ((status as any).status === 500) {
+              throw new Error(`Transaction failed: ${status.error}`)
+            }
+
+            // wait a bit before polling again
+            await new Promise((r) => setTimeout(r, 2000))
+          }
+
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}` })
+          console.log('receipt', receipt)
+          originUserTxReceipt = receipt
+
+          if (onOriginSend) {
+            onOriginSend()
+          }
+        }
+      } else {
+        if (!dryMode) {
+          // If we're swapping erc20 then we need to pay the lifi fee in eth
+          if (originTokenAddress !== zeroAddress) {
+            const tx0 = await sendOriginTransaction(account, walletClient, {
+              to: firstPreconditionAddress,
+              data: '0x00',
+              value: parseUnits('0.00005', 18).toString(),
+              chainId: originChainId,
+              chain,
+            } as any) // TODO: Add proper type
+            console.log('origin tx', tx0)
+            // Wait for transaction receipt
+            const receipt0 = await publicClient.waitForTransactionReceipt({ hash: tx0 })
+          }
+
+          const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
+          console.log('origin tx', tx)
+          // Wait for transaction receipt
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
+          console.log('receipt', receipt)
+          originUserTxReceipt = receipt
+          if (onOriginSend) {
+            onOriginSend()
+          }
         }
       }
 

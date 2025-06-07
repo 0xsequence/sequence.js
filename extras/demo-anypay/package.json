@@ -29,6 +29,8 @@
     "@0xsequence/wallet-primitives": "workspace:*",
     "@0xsequence/wallet-wdk": "workspace:*",
     "@radix-ui/react-popover": "^1.1.6",
+    "@reown/appkit": "^1.7.8",
+    "@reown/appkit-adapter-wagmi": "^1.7.8",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tanstack/react-query": "^5.80.5",

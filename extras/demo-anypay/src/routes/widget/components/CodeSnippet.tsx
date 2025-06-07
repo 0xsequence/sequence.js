@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, ReactNode } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Copy, Check } from 'lucide-react'
@@ -9,9 +9,17 @@ interface CodeSnippetProps {
   toChainId: number | undefined
   toToken: 'ETH' | 'USDC' | undefined
   toCalldata: string
+  children?: ReactNode
 }
 
-export const CodeSnippet: React.FC<CodeSnippetProps> = ({ toRecipient, toAmount, toChainId, toToken, toCalldata }) => {
+export const CodeSnippet: React.FC<CodeSnippetProps> = ({
+  toRecipient,
+  toAmount,
+  toChainId,
+  toToken,
+  toCalldata,
+  children,
+}) => {
   const [isCopied, setIsCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -76,6 +84,7 @@ export const App = () => {
           {codeExample}
         </SyntaxHighlighter>
       </div>
+      {children}
     </div>
   )
 }
