@@ -239,7 +239,7 @@ const WidgetInner = ({
             toChainId={toChainId ? Number(toChainId) : undefined}
             toToken={toToken}
             toCalldata={toCalldata}
-            provider={provider}
+            walletClient={walletClient}
           />
         ) : null
       case 'pending':
@@ -279,18 +279,14 @@ export const AnyPayWidget = (props: AnyPayWidgetProps) => {
   const config = React.useMemo(
     () =>
       createConfig({
-        chains: [mainnet, base, optimism, arbitrum],
-        transports: {
-          [mainnet.id]: custom(props.provider),
-          [base.id]: custom(props.provider),
-          [optimism.id]: custom(props.provider),
-          [arbitrum.id]: custom(props.provider),
-        },
-        connectors: [
-          injected({
-            target: () => props.provider,
+        chains: [mainnet],
+        transports: Object.values(chains as unknown as any[]).reduce(
+          (acc, chain) => ({
+            ...acc,
+            [chain.id]: custom(props.provider),
           }),
-        ],
+          {},
+        ) as Record<number, ReturnType<typeof http>>,
       }),
     [props.provider],
   )

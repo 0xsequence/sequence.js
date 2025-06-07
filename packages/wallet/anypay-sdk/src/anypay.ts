@@ -1261,7 +1261,7 @@ type SendOptions = {
   destinationTokenAmount: string
   sequenceApiKey: string
   fee: string
-  client?: WalletClient
+  client: WalletClient
   dryMode?: boolean
   apiClient: SequenceAPIClient
   originRelayer: Relayer.Rpc.RpcRelayer
@@ -1288,7 +1288,7 @@ export async function prepareSend(options: SendOptions) {
     destinationTokenAmount,
     sequenceApiKey,
     fee,
-    client,
+    client: walletClient,
     dryMode,
     apiClient,
     originRelayer,
@@ -1298,6 +1298,11 @@ export async function prepareSend(options: SendOptions) {
   const chain = getChainConfig(originChainId)
   const isToSameChain = originChainId === destinationChainId
   const isToSameToken = originTokenAddress === destinationTokenAddress
+
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(),
+  })
 
   const mainSigner = account.address
 
@@ -1338,18 +1343,6 @@ export async function prepareSend(options: SendOptions) {
           chainId: originChainId,
           chain,
         }
-
-        const walletClient =
-          client ??
-          createWalletClient({
-            chain,
-            transport: http(),
-          })
-
-        const publicClient = createPublicClient({
-          chain,
-          transport: http(),
-        })
 
         let originUserTxReceipt: TransactionReceipt | null = null
         let originMetaTxnReceipt: any = null // TODO: Add proper type
@@ -1427,18 +1420,6 @@ export async function prepareSend(options: SendOptions) {
         chainId: originChainId,
         chain,
       }
-
-      const walletClient =
-        client ??
-        createWalletClient({
-          chain,
-          transport: http(),
-        })
-
-      const publicClient = createPublicClient({
-        chain,
-        transport: http(),
-      })
 
       let originUserTxReceipt: TransactionReceipt | null = null
       let originMetaTxnReceipt: any = null // TODO: Add proper type

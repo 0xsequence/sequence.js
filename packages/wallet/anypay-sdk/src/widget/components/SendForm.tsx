@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import { createWalletClient, custom, formatUnits, parseUnits, type Account, isAddress, getAddress } from 'viem'
+import {
+  createWalletClient,
+  custom,
+  formatUnits,
+  parseUnits,
+  type Account,
+  isAddress,
+  getAddress,
+  WalletClient,
+} from 'viem'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
 import { getAPIClient } from '../../apiClient.js'
@@ -40,7 +49,7 @@ interface SendFormProps {
   toChainId?: number
   toToken?: 'USDC' | 'ETH'
   toCalldata?: string
-  provider?: any
+  walletClient?: WalletClient
 }
 
 // Available chains
@@ -128,7 +137,7 @@ export const SendForm: React.FC<SendFormProps> = ({
   toChainId,
   toToken,
   toCalldata,
-  provider,
+  walletClient,
 }) => {
   const [amount, setAmount] = useState(toAmount ?? '')
   const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
@@ -198,12 +207,6 @@ export const SendForm: React.FC<SendFormProps> = ({
       const decimals = selectedDestToken.symbol === 'ETH' ? 18 : 6
       const parsedAmount = parseUnits(amount, decimals).toString()
 
-      const client = createWalletClient({
-        account,
-        chain: getChainConfig(selectedToken.chainId),
-        transport: custom(provider),
-      })
-
       console.log('selectedDestToken.symbol', selectedDestToken)
 
       const apiClient = getAPIClient({ apiUrl, projectAccessKey: sequenceApiKey })
@@ -225,7 +228,7 @@ export const SendForm: React.FC<SendFormProps> = ({
         sequenceApiKey,
         fee:
           selectedToken.symbol === 'ETH' ? '0' : parseUnits('0.01', selectedToken.contractInfo?.decimals!).toString(), // TODO: fees
-        client,
+        client: walletClient!,
         apiClient,
         originRelayer,
         destinationRelayer,
