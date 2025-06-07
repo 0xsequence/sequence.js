@@ -1426,15 +1426,20 @@ export async function prepareSend(options: SendOptions) {
       let destinationMetaTxnReceipt: any = null // TODO: Add proper type
 
       await walletClient.switchChain({ id: originChainId })
-      const useSendCalls = true
+
+      const capabilities = await walletClient.request({
+        method: 'wallet_getCapabilities',
+        params: [account.address],
+      })
+
+      console.log('capabilities', capabilities)
+
+      // Check if the chain supports atomic transactions
+      const chainHex = `0x${originChainId.toString(16)}` as const
+      const chainCapabilities = capabilities[chainHex]
+      const useSendCalls = chainCapabilities?.atomic?.status === 'supported'
+
       if (useSendCalls) {
-        const capabilities = await walletClient.request({
-          method: 'wallet_getCapabilities',
-          params: [account.address],
-        })
-
-        console.log('capabilities', capabilities)
-
         if (!dryMode) {
           const calls: Array<{
             to: `0x${string}`
@@ -1443,13 +1448,13 @@ export async function prepareSend(options: SendOptions) {
           }> = []
 
           // If we're swapping ERC20 and it's a cross-chain transfer, add ETH fee call
-          if (originTokenAddress !== zeroAddress) {
-            calls.push({
-              to: firstPreconditionAddress as `0x${string}`,
-              data: '0x00',
-              value: `0x${parseUnits('0.00005', 18).toString(16)}`,
-            })
-          }
+          // if (originTokenAddress !== zeroAddress) {
+          //   calls.push({
+          //     to: firstPreconditionAddress as `0x${string}`,
+          //     data: '0x00',
+          //     value: `0x${parseUnits('0.00005', 18).toString(16)}`,
+          //   })
+          // }
 
           // Add the origin call
           calls.push({
@@ -1511,18 +1516,18 @@ export async function prepareSend(options: SendOptions) {
       } else {
         if (!dryMode) {
           // If we're swapping erc20 then we need to pay the lifi fee in eth
-          if (originTokenAddress !== zeroAddress) {
-            const tx0 = await sendOriginTransaction(account, walletClient, {
-              to: firstPreconditionAddress,
-              data: '0x00',
-              value: parseUnits('0.00005', 18).toString(),
-              chainId: originChainId,
-              chain,
-            } as any) // TODO: Add proper type
-            console.log('origin tx', tx0)
-            // Wait for transaction receipt
-            const receipt0 = await publicClient.waitForTransactionReceipt({ hash: tx0 })
-          }
+          // if (originTokenAddress !== zeroAddress) {
+          //   const tx0 = await sendOriginTransaction(account, walletClient, {
+          //     to: firstPreconditionAddress,
+          //     data: '0x00',
+          //     value: parseUnits('0.00005', 18).toString(),
+          //     chainId: originChainId,
+          //     chain,
+          //   } as any) // TODO: Add proper type
+          //   console.log('origin tx', tx0)
+          //   // Wait for transaction receipt
+          //   const receipt0 = await publicClient.waitForTransactionReceipt({ hash: tx0 })
+          // }
 
           const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
           console.log('origin tx', tx)

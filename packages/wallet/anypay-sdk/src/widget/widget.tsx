@@ -118,6 +118,20 @@ const WidgetInner = ({
   const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
 
+  // Add escape key handler
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isModalOpen) {
+        handleCloseModal()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscapeKey)
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isModalOpen])
+
   // Set up wallet client when connected
   useEffect(() => {
     if (provider && address && chainId) {
@@ -144,11 +158,13 @@ const WidgetInner = ({
   })
 
   const handleConnect = () => {
-    if (provider && !isConnected) {
+    if (walletClient && !isConnected) {
       const connect = async () => {
-        await provider.request({ method: 'eth_requestAccounts' })
+        await walletClient.request({ method: 'eth_requestAccounts' })
       }
       connect()
+    } else if (isConnected) {
+      setCurrentScreen('tokens')
     }
   }
 
