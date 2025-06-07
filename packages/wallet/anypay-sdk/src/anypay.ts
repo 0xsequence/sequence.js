@@ -23,13 +23,14 @@ import {
   Account as AccountType,
   WalletClient,
   TransactionReceipt,
+  parseUnits,
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
 import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
 import { useRelayers, getRelayer, getBackupRelayer } from './relayer.js'
-import { findPreconditionAddress } from './preconditions.js'
+import { findFirstPreconditionForChainId, findPreconditionAddress } from './preconditions.js'
 import { Relayer } from '@0xsequence/wallet-core'
 import {
   calculateIntentAddress,
@@ -89,7 +90,7 @@ export type UseAnyPayReturn = {
   switchChainError: Error | null
   isTransactionInProgress: boolean
   isChainSwitchRequired: boolean
-  sendTransaction: any // Update type to match the actual sendTransaction function
+  sendTransaction: any // TODO: Add proper type
   isSendingTransaction: boolean
   originCallStatus: {
     txnHash?: string
@@ -154,7 +155,7 @@ export const getChainConfig = (chainId: number): Chain => {
 }
 
 export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
-  const { account, disableAutoExecute = false, env, useV3Relayers, sequenceApiKey } = config
+  const { account, disableAutoExecute = false, env, useV3Relayers = true, sequenceApiKey } = config
   const apiClient = useAPIClient({ projectAccessKey: sequenceApiKey })
 
   const [isAutoExecute, setIsAutoExecute] = useState(!disableAutoExecute)
@@ -1260,14 +1261,21 @@ type SendOptions = {
   destinationTokenAmount: string
   sequenceApiKey: string
   fee: string
-  client?: WalletClient
+  client: WalletClient
   dryMode?: boolean
   apiClient: SequenceAPIClient
   originRelayer: Relayer.Rpc.RpcRelayer
   destinationRelayer: Relayer.Rpc.RpcRelayer
+  destinationCalldata?: string
 }
 
-// TODO: fix up this one-click
+type SendReturn = {
+  originUserTxReceipt: TransactionReceipt | null
+  originMetaTxnReceipt: any // TODO: Add proper type
+  destinationMetaTxnReceipt: any // TODO: Add proper type
+}
+
+// TODO: fix up this one-click send
 export async function prepareSend(options: SendOptions) {
   const {
     account,
@@ -1280,32 +1288,91 @@ export async function prepareSend(options: SendOptions) {
     destinationTokenAmount,
     sequenceApiKey,
     fee,
-    client,
+    client: walletClient,
     dryMode,
     apiClient,
     originRelayer,
     destinationRelayer,
+    destinationCalldata,
   } = options
   const chain = getChainConfig(originChainId)
+  const isToSameChain = originChainId === destinationChainId
+  const isToSameToken = originTokenAddress === destinationTokenAddress
+
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(),
+  })
 
   const mainSigner = account.address
 
-  const args = {
+  const _destinationCalldata =
+    destinationCalldata ||
+    (destinationTokenAddress === zeroAddress ? '0x' : getERC20TransferData(recipient, BigInt(destinationTokenAmount)))
+  const _destinationToAddress = destinationCalldata
+    ? recipient
+    : destinationTokenAddress === zeroAddress
+      ? recipient
+      : destinationTokenAddress
+  const _destinationCallValue = destinationTokenAddress === zeroAddress ? destinationTokenAmount : '0'
+
+  const intentArgs = {
     userAddress: mainSigner,
     originChainId,
     originTokenAddress,
     originTokenAmount, // max amount
     destinationChainId,
-    destinationToAddress: destinationTokenAddress == zeroAddress ? recipient : destinationTokenAddress,
+    destinationToAddress: _destinationToAddress,
     destinationTokenAddress: destinationTokenAddress,
     destinationTokenAmount: destinationTokenAmount,
-    destinationCallData:
-      destinationTokenAddress !== zeroAddress ? getERC20TransferData(recipient, BigInt(destinationTokenAmount)) : '0x',
-    destinationCallValue: destinationTokenAddress === zeroAddress ? destinationTokenAmount : '0',
+    destinationCallData: _destinationCalldata,
+    destinationCallValue: _destinationCallValue,
   }
 
-  console.log('Creating intent with args:', args)
-  const intent = await getIntentCallsPayloads(apiClient, args as any) // TODO: Add proper type
+  if (isToSameToken && isToSameChain) {
+    return {
+      send: async (onOriginSend: () => void): Promise<SendReturn> => {
+        const originCallParams = {
+          to: destinationCalldata ? recipient : originTokenAddress === zeroAddress ? recipient : originTokenAddress,
+          data:
+            destinationCalldata ||
+            (originTokenAddress === zeroAddress
+              ? '0x00'
+              : getERC20TransferData(recipient, BigInt(destinationTokenAmount))),
+          value: originTokenAddress == zeroAddress ? BigInt(destinationTokenAmount) : '0',
+          chainId: originChainId,
+          chain,
+        }
+
+        let originUserTxReceipt: TransactionReceipt | null = null
+        let originMetaTxnReceipt: any = null // TODO: Add proper type
+        let destinationMetaTxnReceipt: any = null // TODO: Add proper type
+
+        await walletClient.switchChain({ id: originChainId })
+        if (!dryMode) {
+          console.log('origin call params', originCallParams)
+          const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
+          console.log('origin tx', tx)
+          // Wait for transaction receipt
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
+          console.log('receipt', receipt)
+          originUserTxReceipt = receipt
+          if (onOriginSend) {
+            onOriginSend()
+          }
+        }
+
+        return {
+          originUserTxReceipt,
+          originMetaTxnReceipt,
+          destinationMetaTxnReceipt,
+        }
+      },
+    }
+  }
+
+  console.log('Creating intent with args:', intentArgs)
+  const intent = await getIntentCallsPayloads(apiClient, intentArgs as any) // TODO: Add proper type
   console.log('Got intent:', intent)
 
   if (!intent) {
@@ -1331,37 +1398,150 @@ export async function prepareSend(options: SendOptions) {
 
   return {
     intentAddress,
-    send: async () => {
+    send: async (onOriginSend: () => void): Promise<SendReturn> => {
       console.log('sending origin transaction')
+
+      const firstPrecondition = findFirstPreconditionForChainId(intent.preconditions, originChainId)
+
+      if (!firstPrecondition) {
+        throw new Error('No precondition found for origin chain')
+      }
+
+      const firstPreconditionAddress = firstPrecondition?.data?.address
+      const firstPreconditionMin = firstPrecondition?.data?.min
+
       const originCallParams = {
-        to: intent.preconditions[0]!.data!.address,
-        data: '0x',
-        value: BigInt(intent.preconditions[0]!.data!.min) + BigInt(fee),
+        to: originTokenAddress === zeroAddress ? firstPreconditionAddress : originTokenAddress,
+        data:
+          originTokenAddress === zeroAddress
+            ? '0x'
+            : getERC20TransferData(firstPreconditionAddress, BigInt(firstPreconditionMin) + BigInt(fee)),
+        value: originTokenAddress === zeroAddress ? BigInt(firstPreconditionMin) + BigInt(fee) : '0',
         chainId: originChainId,
         chain,
       }
 
-      const walletClient =
-        client ??
-        createWalletClient({
-          chain,
-          transport: http(),
-        })
+      let originUserTxReceipt: TransactionReceipt | null = null
+      let originMetaTxnReceipt: any = null // TODO: Add proper type
+      let destinationMetaTxnReceipt: any = null // TODO: Add proper type
 
-      const publicClient = createPublicClient({
-        chain,
-        transport: http(),
+      await walletClient.switchChain({ id: originChainId })
+
+      const capabilities = await walletClient.request({
+        method: 'wallet_getCapabilities',
+        params: [account.address],
       })
 
-      if (!dryMode) {
-        const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
-        console.log('origin tx', tx)
-        // Wait for transaction receipt
-        const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
-        console.log('receipt', receipt)
+      console.log('capabilities', capabilities)
+
+      // Check if the chain supports atomic transactions
+      const chainHex = `0x${originChainId.toString(16)}` as const
+      const chainCapabilities = capabilities[chainHex]
+      const useSendCalls = chainCapabilities?.atomic?.status === 'supported'
+
+      if (useSendCalls) {
+        if (!dryMode) {
+          const calls: Array<{
+            to: `0x${string}`
+            data: `0x${string}`
+            value?: `0x${string}`
+          }> = []
+
+          // If we're swapping ERC20 and it's a cross-chain transfer, add ETH fee call
+          // if (originTokenAddress !== zeroAddress) {
+          //   calls.push({
+          //     to: firstPreconditionAddress as `0x${string}`,
+          //     data: '0x00',
+          //     value: `0x${parseUnits('0.00005', 18).toString(16)}`,
+          //   })
+          // }
+
+          // Add the origin call
+          calls.push({
+            to: originCallParams.to as `0x${string}`,
+            data: originCallParams.data as `0x${string}`,
+            value: originCallParams.value ? `0x${BigInt(originCallParams.value).toString(16)}` : '0x0',
+          })
+
+          // Send the batched call via EIP-7702
+          const result = (await walletClient.request({
+            method: 'wallet_sendCalls',
+            params: [
+              {
+                version: '2.0.0',
+                chainId: `0x${originChainId.toString(16)}`,
+                atomicRequired: true,
+                calls,
+              },
+            ],
+          })) as { requestId: `0x${string}` }
+
+          console.log('sendCalls result', result)
+          const requestId = result.requestId || (result as any).id
+
+          // Poll to check if the tx has been submitted
+          let txHash: `0x${string}` | undefined
+          while (!txHash) {
+            const status = (await walletClient.request({
+              method: 'wallet_getCallsStatus',
+              params: [requestId],
+            })) as {
+              status: 'pending' | 'submitted' | 'failed'
+              transactionHash?: `0x${string}`
+              error?: string
+            }
+
+            console.log('getCallsStatus result', status)
+            const receipt = (status as any)?.receipts?.[0]
+
+            if ((status as any).status === 200 && receipt?.transactionHash) {
+              txHash = receipt.transactionHash
+              break
+            } else if ((status as any).status === 500) {
+              throw new Error(`Transaction failed: ${status.error}`)
+            }
+
+            // wait a bit before polling again
+            await new Promise((r) => setTimeout(r, 2000))
+          }
+
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}` })
+          console.log('receipt', receipt)
+          originUserTxReceipt = receipt
+
+          if (onOriginSend) {
+            onOriginSend()
+          }
+        }
+      } else {
+        if (!dryMode) {
+          // If we're swapping erc20 then we need to pay the lifi fee in eth
+          // if (originTokenAddress !== zeroAddress) {
+          //   const tx0 = await sendOriginTransaction(account, walletClient, {
+          //     to: firstPreconditionAddress,
+          //     data: '0x00',
+          //     value: parseUnits('0.00005', 18).toString(),
+          //     chainId: originChainId,
+          //     chain,
+          //   } as any) // TODO: Add proper type
+          //   console.log('origin tx', tx0)
+          //   // Wait for transaction receipt
+          //   const receipt0 = await publicClient.waitForTransactionReceipt({ hash: tx0 })
+          // }
+
+          const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
+          console.log('origin tx', tx)
+          // Wait for transaction receipt
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
+          console.log('receipt', receipt)
+          originUserTxReceipt = receipt
+          if (onOriginSend) {
+            onOriginSend()
+          }
+        }
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 5000))
+      await new Promise((resolve) => setTimeout(resolve, 5000)) // TODO: make sure relayer is ready with a better check
 
       const metaTx = intent.metaTxns[0]!
       console.log('metaTx', metaTx)
@@ -1369,33 +1549,48 @@ export async function prepareSend(options: SendOptions) {
 
       console.log('opHash', opHash)
 
+      let tries = 0
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx.id as `0x${string}`, BigInt(metaTx.chainId))
         const receipt = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
         console.log('status', receipt)
+        if (tries > 10) {
+          break
+        }
         if (receipt.status === 'confirmed') {
+          originMetaTxnReceipt = receipt.data?.receipt
           break
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
+        tries++
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 5000))
-      const metaTx2 = intent.metaTxns[1]!
-      console.log('metaTx2', metaTx2)
+      if (!isToSameChain) {
+        await new Promise((resolve) => setTimeout(resolve, 5000)) // TODO: make sure relayer is ready with a better check
+        const metaTx2 = intent.metaTxns[1]!
+        console.log('metaTx2', metaTx2)
 
-      const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [intent.preconditions[1]!])
-      console.log('opHash2', opHash2)
+        const opHash2 = await relayerSendMetaTx(destinationRelayer, metaTx2, [intent.preconditions[1]!])
+        console.log('opHash2', opHash2)
 
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
-        const receipt = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
-        console.log('receipt', receipt)
-        if (receipt.status === 'confirmed') {
-          break
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
+          const receipt = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
+          console.log('receipt', receipt)
+          if (receipt.status === 'confirmed') {
+            destinationMetaTxnReceipt = receipt.data?.receipt
+            break
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000))
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+
+      return {
+        originUserTxReceipt,
+        originMetaTxnReceipt,
+        destinationMetaTxnReceipt,
       }
     },
   }

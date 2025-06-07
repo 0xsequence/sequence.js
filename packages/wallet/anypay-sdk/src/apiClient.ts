@@ -1,6 +1,7 @@
 import { SequenceAPIClient } from '@0xsequence/api'
 import { useMemo } from 'react'
 import { useConfig } from '@0xsequence/hooks'
+import { DEFAULT_API_URL } from './constants.js'
 
 export type APIClientConfig = {
   apiUrl?: string
@@ -8,8 +9,8 @@ export type APIClientConfig = {
   jwt?: string
 }
 
-export function getAPIClient(config: APIClientConfig): SequenceAPIClient {
-  return new SequenceAPIClient(config.apiUrl as string, config.projectAccessKey, config.jwt)
+export function getAPIClient({ apiUrl = DEFAULT_API_URL, projectAccessKey, jwt }: APIClientConfig): SequenceAPIClient {
+  return new SequenceAPIClient(apiUrl as string, projectAccessKey, jwt)
 }
 
 export const useAPIClient = (config?: APIClientConfig) => {

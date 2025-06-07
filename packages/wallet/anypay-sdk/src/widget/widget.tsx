@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useAccount, http, createConfig, WagmiProvider } from 'wagmi'
+import { useState, useEffect, useContext } from 'react'
+import { useAccount, http, createConfig, WagmiProvider, useConnect, Config } from 'wagmi'
 import { SequenceHooksProvider } from '@0xsequence/hooks'
 import { injected, metaMask } from 'wagmi/connectors'
 import { StrictMode } from 'react'
@@ -11,8 +11,8 @@ import SendForm from './components/SendForm.js'
 import TransferPending from './components/TransferPending.js'
 import Receipt from './components/Receipt.js'
 import { prepareSend } from '../anypay.js'
-import { createWalletClient, custom, type WalletClient } from 'viem'
-import { mainnet, base, optimism, arbitrum } from 'viem/chains'
+import { createWalletClient, custom, TransactionReceipt, type WalletClient } from 'viem'
+import { mainnet, base, optimism, arbitrum, Chain } from 'viem/chains'
 import { parseUnits } from 'viem'
 import * as chains from 'viem/chains'
 import '@0xsequence/design-system/preset'
@@ -20,10 +20,15 @@ import './index.css'
 import React from 'react'
 import { DEFAULT_INDEXER_GATEWAY_URL, DEFAULT_API_URL, DEFAULT_ENV } from '../constants.js'
 import { useIndexerGatewayClient } from '../indexerClient.js'
+import { createConnector } from 'wagmi'
+import { ConnectorNotFoundError } from 'wagmi'
+import { getAddress } from 'viem'
+import { WagmiContext } from 'wagmi'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
 
-const wagmiConfig = createConfig({
+const wagmiConfig1 = createConfig({
+  autoConnect: true,
   // @ts-expect-error
   chains: Object.values(chains),
   connectors: [
@@ -81,24 +86,59 @@ export type AnyPayWidgetProps = {
   indexerUrl?: string
   apiUrl?: string
   env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
+  toRecipient?: string
+  toAmount?: string
+  toChainId?: number | string
+  toToken?: 'USDC' | 'ETH'
+  toCalldata?: string
+  provider?: any
+  children?: React.ReactNode
+  renderInline?: boolean
 }
 
 const queryClient = new QueryClient()
 
-interface WidgetContentProps {
-  sequenceApiKey: string
-  indexerUrl: string
-  apiUrl: string
-  env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
-}
-
-const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetContentProps) => {
+const WidgetInner = ({
+  sequenceApiKey,
+  indexerUrl,
+  apiUrl,
+  env,
+  toRecipient,
+  toAmount,
+  toChainId,
+  toToken,
+  toCalldata,
+  provider,
+  children,
+  renderInline,
+}: AnyPayWidgetProps) => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [currentScreen, setCurrentScreen] = useState<Screen>('connect')
+  const [currentScreen, setCurrentScreen] = useState<Screen>(isConnected ? 'tokens' : 'connect')
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
-  const [txHash, setTxHash] = useState('')
+  const [destinationTxHash, setDestinationTxHash] = useState('')
+  const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
+
+  // Set up wallet client when connected
+  useEffect(() => {
+    if (provider && address && chainId) {
+      const chain = getChainConfig(chainId)
+      const client = createWalletClient({
+        account: address,
+        chain,
+        transport: custom(provider),
+      })
+      setWalletClient(client)
+    }
+  }, [provider, address, chainId])
+
+  // Update screen based on connection state
+  useEffect(() => {
+    if (isConnected) {
+      setCurrentScreen('tokens')
+    }
+  }, [isConnected])
 
   const indexerGatewayClient = useIndexerGatewayClient({
     indexerGatewayUrl: indexerUrl,
@@ -106,16 +146,14 @@ const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetConten
   })
 
   const handleConnect = () => {
-    if (window.ethereum && address && chainId) {
-      const chain = getChainConfig(chainId)
-      const client = createWalletClient({
-        account: address,
-        chain,
-        transport: custom(window.ethereum),
-      })
-      setWalletClient(client)
+    if (walletClient && !isConnected) {
+      const connect = async () => {
+        await walletClient.request({ method: 'eth_requestAccounts' })
+      }
+      connect()
+    } else if (isConnected) {
+      setCurrentScreen('tokens')
     }
-    setCurrentScreen('tokens')
   }
 
   const handleTokenSelect = (token: Token) => {
@@ -136,10 +174,6 @@ const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetConten
     console.log('handleSend', amount, recipient)
   }
 
-  const handleTransferComplete = () => {
-    setCurrentScreen('receipt')
-  }
-
   const handleSendAnother = () => {
     setCurrentScreen('tokens')
   }
@@ -148,7 +182,8 @@ const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetConten
     setIsModalOpen(false)
     setCurrentScreen('connect')
     setSelectedToken(null)
-    setTxHash('')
+    setDestinationTxHash('')
+    setDestinationChainId(null)
   }
 
   const handleBack = () => {
@@ -163,14 +198,40 @@ const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetConten
       case 'receipt':
         setCurrentScreen('tokens')
         setSelectedToken(null)
-        setTxHash('')
+        setDestinationTxHash('')
+        setDestinationChainId(null)
         break
       default:
         break
     }
   }
 
+  function handleTransferComplete(data?: {
+    originChainId: number
+    destinationChainId: number
+    originUserTxReceipt: TransactionReceipt
+    originMetaTxnReceipt: any
+    destinationMetaTxnReceipt: any
+  }) {
+    if (data) {
+      setDestinationTxHash(data.destinationMetaTxnReceipt?.txnHash || data.originUserTxReceipt.transactionHash)
+      setDestinationChainId(data.destinationChainId)
+      setCurrentScreen('receipt')
+    }
+  }
+
   const renderScreen = () => {
+    return (
+      <div className="flex flex-col min-h-[400px] bg-white rounded-2xl shadow-xl p-6 relative w-full max-w-md">
+        {renderScreenInner()}
+        <div className="mt-auto pt-4 text-center text-sm text-gray-500">
+          Powered by <span className="font-medium text-black-500">AnyPay</span>
+        </div>
+      </div>
+    )
+  }
+
+  const renderScreenInner = () => {
     switch (currentScreen) {
       case 'connect':
         return <ConnectWallet onConnect={handleConnect} />
@@ -184,65 +245,107 @@ const WidgetContent = ({ sequenceApiKey, indexerUrl, apiUrl, env }: WidgetConten
             onSend={handleSend}
             onBack={handleBack}
             onConfirm={() => setCurrentScreen('pending')}
-            onComplete={() => setCurrentScreen('receipt')}
+            onComplete={handleTransferComplete}
             selectedToken={selectedToken}
             account={walletClient.account}
             sequenceApiKey={sequenceApiKey}
             apiUrl={apiUrl}
             env={env}
+            toRecipient={toRecipient}
+            toAmount={toAmount}
+            toChainId={toChainId ? Number(toChainId) : undefined}
+            toToken={toToken}
+            toCalldata={toCalldata}
+            walletClient={walletClient}
           />
         ) : null
       case 'pending':
         return <TransferPending onComplete={handleTransferComplete} />
       case 'receipt':
-        return <Receipt onSendAnother={handleSendAnother} onClose={handleCloseModal} txHash={txHash} />
+        return (
+          <Receipt
+            onSendAnother={handleSendAnother}
+            onClose={handleCloseModal}
+            txHash={destinationTxHash}
+            chainId={destinationChainId!}
+          />
+        )
       default:
         return null
     }
   }
 
+  if (renderInline) {
+    return renderScreen()
+  }
+
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
-      >
-        Pay
-      </button>
+      {!children ? (
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
+        >
+          Pay
+        </button>
+      ) : (
+        <div className="flex flex-col items-center justify-center" onClick={() => setIsModalOpen(true)}>
+          {children}
+        </div>
+      )}
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        {renderScreen()}
+        {renderScreenInner()}
       </Modal>
     </div>
   )
 }
 
-export const AnyPayWidget = ({
-  sequenceApiKey,
-  indexerUrl = DEFAULT_INDEXER_GATEWAY_URL,
-  apiUrl = DEFAULT_API_URL,
-  env = DEFAULT_ENV,
-}: AnyPayWidgetProps) => {
-  return (
-    <StrictMode>
-      <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          <SequenceHooksProvider
-            config={{
-              projectAccessKey: sequenceApiKey,
-              env: {
-                indexerUrl: indexerUrl,
-                indexerGatewayUrl: indexerUrl,
-                apiUrl: apiUrl,
-              },
-            }}
-          >
-            <WidgetContent sequenceApiKey={sequenceApiKey} indexerUrl={indexerUrl} apiUrl={apiUrl} env={env} />
-          </SequenceHooksProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </StrictMode>
+export const AnyPayWidget = (props: AnyPayWidgetProps) => {
+  const wagmiContext = useContext(WagmiContext)
+  const config = React.useMemo(
+    () =>
+      createConfig({
+        chains: [mainnet],
+        transports: Object.values(chains as unknown as any[]).reduce(
+          (acc, chain) => ({
+            ...acc,
+            [chain.id]: custom(props.provider),
+          }),
+          {},
+        ) as Record<number, ReturnType<typeof http>>,
+      }),
+    [props.provider],
   )
+
+  const content = (
+    <QueryClientProvider client={queryClient}>
+      <SequenceHooksProvider
+        config={{
+          projectAccessKey: props.sequenceApiKey,
+          env: {
+            indexerUrl: props.indexerUrl,
+            indexerGatewayUrl: props.indexerUrl,
+            apiUrl: props.apiUrl,
+          },
+        }}
+      >
+        <WidgetInner {...props} />
+      </SequenceHooksProvider>
+    </QueryClientProvider>
+  )
+
+  // If no parent Wagmi context, provide our own
+  if (!wagmiContext) {
+    return (
+      <StrictMode>
+        <WagmiProvider config={config}>{content}</WagmiProvider>
+      </StrictMode>
+    )
+  }
+
+  // Otherwise use parent context
+  return <StrictMode>{content}</StrictMode>
 }
 
 export default AnyPayWidget

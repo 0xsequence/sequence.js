@@ -96,7 +96,6 @@ function useHook() {
   } = useAnyPay({
     account: account as Account,
     env: import.meta.env.VITE_ENV,
-    useV3Relayers: import.meta.env.VITE_USE_V3_RELAYERS,
   })
 
   const { sortedTokens, isLoadingBalances, balanceError } = useTokenBalances(account.address as Address.Address)

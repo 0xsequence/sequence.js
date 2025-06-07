@@ -1,14 +1,7 @@
-import {
-  ContractVerificationStatus,
-  NativeTokenBalance,
-  TokenBalance,
-  GatewayNativeTokenBalances,
-  GatewayTokenBalance,
-  GetTokenBalancesSummaryReturn,
-  SequenceIndexerGateway,
-} from '@0xsequence/indexer'
+import { SequenceIndexerGateway } from '@0xsequence/indexer'
 import { useMemo } from 'react'
 import { useConfig } from '@0xsequence/hooks'
+import { DEFAULT_INDEXER_GATEWAY_URL } from './constants.js'
 
 export type IndexerGatewayConfig = {
   indexerGatewayUrl?: string
@@ -16,8 +9,12 @@ export type IndexerGatewayConfig = {
   jwt?: string
 }
 
-export function getIndexerGatewayClient(config: IndexerGatewayConfig): SequenceIndexerGateway {
-  return new SequenceIndexerGateway(config.indexerGatewayUrl as string, config.projectAccessKey, config.jwt)
+export function getIndexerGatewayClient({
+  indexerGatewayUrl = DEFAULT_INDEXER_GATEWAY_URL,
+  projectAccessKey,
+  jwt,
+}: IndexerGatewayConfig): SequenceIndexerGateway {
+  return new SequenceIndexerGateway(indexerGatewayUrl as string, projectAccessKey, jwt)
 }
 
 export const useIndexerGatewayClient = (config?: IndexerGatewayConfig) => {

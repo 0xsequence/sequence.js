@@ -1,8 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
-import { ChevronDown, Loader2 } from 'lucide-react'
+import {
+  createWalletClient,
+  custom,
+  formatUnits,
+  parseUnits,
+  type Account,
+  isAddress,
+  getAddress,
+  WalletClient,
+} from 'viem'
+import { ChevronDown, Loader2, ArrowLeft } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
 import { getAPIClient } from '../../apiClient.js'
 import { getRelayer } from '../../relayer.js'
@@ -30,11 +39,17 @@ interface SendFormProps {
   onSend: (amount: string, recipient: string) => void
   onBack: () => void
   onConfirm: () => void
-  onComplete: () => void
+  onComplete: (data: any) => void // TODO: Add proper type
   account: Account
   sequenceApiKey: string
-  apiUrl: string
+  apiUrl?: string
   env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
+  toRecipient?: string
+  toAmount?: string
+  toChainId?: number
+  toToken?: 'USDC' | 'ETH'
+  toCalldata?: string
+  walletClient?: WalletClient
 }
 
 // Available chains
@@ -117,16 +132,23 @@ export const SendForm: React.FC<SendFormProps> = ({
   sequenceApiKey,
   apiUrl,
   env,
+  toAmount,
+  toRecipient,
+  toChainId,
+  toToken,
+  toCalldata,
+  walletClient,
 }) => {
-  const [amount, setAmount] = useState('')
-  const [recipientInput, setRecipientInput] = useState('')
-  const [recipient, setRecipient] = useState('')
+  const [amount, setAmount] = useState(toAmount ?? '')
+  const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
+  const [recipient, setRecipient] = useState(toRecipient ?? '')
+  const [error, setError] = useState<string | null>(null)
   const {
     data: ensAddress,
     isLoading,
-    error,
+    error: ensError,
   } = useEnsAddress({
-    name: recipientInput.endsWith('.eth') ? recipientInput : undefined,
+    name: recipientInput?.endsWith('.eth') ? recipientInput : undefined,
     chainId: mainnet.id,
     query: {
       enabled: !!recipientInput && recipientInput.endsWith('.eth'),
@@ -146,17 +168,21 @@ export const SendForm: React.FC<SendFormProps> = ({
   }
 
   const [selectedChain, setSelectedChain] = useState(
-    () => (SUPPORTED_CHAINS.find((chain) => chain.id === selectedToken.chainId) || SUPPORTED_CHAINS[0])!,
+    () => (SUPPORTED_CHAINS.find((chain) => chain.id === (toChainId ?? selectedToken.chainId)) || SUPPORTED_CHAINS[0])!,
   )
   const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false)
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false)
-  const [selectedDestToken, setSelectedDestToken] = useState(SUPPORTED_TOKENS[0]!)
+  const [selectedDestToken, setSelectedDestToken] = useState(() =>
+    toToken ? SUPPORTED_TOKENS.find((token) => token.symbol === toToken) || SUPPORTED_TOKENS[0]! : SUPPORTED_TOKENS[0]!,
+  )
   const chainDropdownRef = useRef<HTMLDivElement>(null)
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
   const chainInfo = getChainInfo(selectedToken.chainId) as any // TODO: Add proper type
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const formattedBalance = formatBalance(selectedToken.balance, selectedToken.contractInfo?.decimals)
+
+  const isValidRecipient = recipient && isAddress(recipient)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -174,17 +200,12 @@ export const SendForm: React.FC<SendFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
 
     try {
       setIsSubmitting(true)
       const decimals = selectedDestToken.symbol === 'ETH' ? 18 : 6
       const parsedAmount = parseUnits(amount, decimals).toString()
-
-      const client = createWalletClient({
-        account,
-        chain: getChainConfig(selectedToken.chainId),
-        transport: custom(window.ethereum),
-      })
 
       console.log('selectedDestToken.symbol', selectedDestToken)
 
@@ -205,35 +226,61 @@ export const SendForm: React.FC<SendFormProps> = ({
             : getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
         destinationTokenAmount: parsedAmount,
         sequenceApiKey,
-        fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(), // TOOD: fees
-        client,
+        fee: '0',
+        client: walletClient!,
         apiClient,
         originRelayer,
         destinationRelayer,
+        destinationCalldata: toCalldata,
         dryMode: false, // Set to true to skip the metamask transaction, for testing purposes
       }
 
       console.log('options', options)
 
       const { intentAddress, send } = await prepareSend(options)
-      console.log('Intent address:', intentAddress.toString())
+      console.log('Intent address:', intentAddress?.toString())
 
-      // Start the send process
-      onSend(amount, recipient)
-
-      // Wait for send to complete
-      send().then(() => {
-        // Move to receipt screen
-        onComplete()
-      })
-
-      // Move to confirmation screen after 5 seconds
-      setTimeout(() => {
+      function onOriginSend() {
         onConfirm()
-      }, 10_000)
+        onSend(amount, recipient)
+      }
+
+      // Wait for full send to complete
+      const { originUserTxReceipt, originMetaTxnReceipt, destinationMetaTxnReceipt } = await send(onOriginSend)
+
+      // Move to receipt screen
+      onComplete({
+        originChainId: selectedToken.chainId,
+        destinationChainId: selectedChain.id,
+        originUserTxReceipt,
+        originMetaTxnReceipt,
+        destinationMetaTxnReceipt,
+      })
     } catch (error) {
       console.error('Error in prepareSend:', error)
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
       setIsSubmitting(false)
+    }
+  }
+
+  // Get button text based on recipient and calldata
+  const getButtonText = () => {
+    if (!amount) return 'Enter amount'
+    if (!isValidRecipient) return 'Enter recipient'
+
+    try {
+      const checksummedRecipient = getAddress(recipient)
+      const checksummedAccount = getAddress(account.address)
+
+      if (checksummedRecipient === checksummedAccount) {
+        return `Receive ${amount} ${selectedDestToken.symbol}`
+      } else if (toCalldata) {
+        return `Spend ${amount} ${selectedDestToken.symbol}`
+      } else {
+        return `Pay ${amount} ${selectedDestToken.symbol}`
+      }
+    } catch {
+      return `Send ${amount} ${selectedDestToken.symbol}`
     }
   }
 
@@ -264,107 +311,131 @@ export const SendForm: React.FC<SendFormProps> = ({
         {/* Chain Selection */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Destination Chain</label>
-          <div className="relative" ref={chainDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
-              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
+          {toChainId ? (
+            <div className="flex items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
               <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
-              <span className="ml-2 flex-1 text-left text-gray-900">{selectedChain.name}</span>
-              <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform ${isChainDropdownOpen ? 'transform rotate-180' : ''}`}
-              />
-            </button>
+              <span className="ml-2 text-gray-900">{selectedChain.name}</span>
+            </div>
+          ) : (
+            <div className="relative" ref={chainDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
+                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
+                <span className="ml-2 flex-1 text-left text-gray-900">{selectedChain.name}</span>
+                <ChevronDown
+                  className={`h-5 w-5 text-gray-400 transition-transform ${isChainDropdownOpen ? 'transform rotate-180' : ''}`}
+                />
+              </button>
 
-            {isChainDropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                {SUPPORTED_CHAINS.map((chain) => (
-                  <button
-                    key={chain.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedChain(chain)
-                      setIsChainDropdownOpen(false)
-                    }}
-                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 ${
-                      selectedChain.id === chain.id ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
-                    }`}
-                  >
-                    <NetworkImage chainId={chain.icon} size="sm" className="w-5 h-5" />
-                    <span className="ml-2">{chain.name}</span>
-                    {selectedChain.id === chain.id && <span className="ml-auto text-blue-600">•</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              {isChainDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                  {SUPPORTED_CHAINS.map((chain) => (
+                    <button
+                      key={chain.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedChain(chain)
+                        setIsChainDropdownOpen(false)
+                      }}
+                      className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 ${
+                        selectedChain.id === chain.id ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                      }`}
+                    >
+                      <NetworkImage chainId={chain.icon} size="sm" className="w-5 h-5" />
+                      <span className="ml-2">{chain.name}</span>
+                      {selectedChain.id === chain.id && <span className="ml-auto text-blue-600">•</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Token Selection */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Receive Token</label>
-          <div className="relative" ref={tokenDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
-              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
+          {toToken ? (
+            <div className="flex items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
                 <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
               </div>
-              <span className="ml-2 flex-1 text-left text-gray-900">{selectedDestToken.name}</span>
-              <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform ${isTokenDropdownOpen ? 'transform rotate-180' : ''}`}
-              />
-            </button>
+              <span className="ml-2 text-gray-900">{selectedDestToken.name}</span>
+            </div>
+          ) : (
+            <div className="relative" ref={tokenDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
+                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                  <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
+                </div>
+                <span className="ml-2 flex-1 text-left text-gray-900">{selectedDestToken.name}</span>
+                <ChevronDown
+                  className={`h-5 w-5 text-gray-400 transition-transform ${isTokenDropdownOpen ? 'transform rotate-180' : ''}`}
+                />
+              </button>
 
-            {isTokenDropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                {SUPPORTED_TOKENS.map((token) => (
-                  <button
-                    key={token.symbol}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDestToken(token)
-                      setIsTokenDropdownOpen(false)
-                    }}
-                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer ${
-                      selectedDestToken.symbol === token.symbol ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
-                    }`}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                      <TokenImage symbol={token.symbol} src={token.imageUrl} size="sm" />
-                    </div>
-                    <span className="ml-2">{token.name}</span>
-                    {selectedDestToken.symbol === token.symbol && <span className="ml-auto text-blue-600">•</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              {isTokenDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                  {SUPPORTED_TOKENS.map((token) => (
+                    <button
+                      key={token.symbol}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDestToken(token)
+                        setIsTokenDropdownOpen(false)
+                      }}
+                      className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer ${
+                        selectedDestToken.symbol === token.symbol ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                      }`}
+                    >
+                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                        <TokenImage symbol={token.symbol} src={token.imageUrl} size="sm" />
+                      </div>
+                      <span className="ml-2">{token.name}</span>
+                      {selectedDestToken.symbol === token.symbol && <span className="ml-auto text-blue-600">•</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Amount Input */}
+        {/* Amount Input - Only show if toAmount is not provided */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
               Amount to Receive
             </label>
           </div>
-          <div className="relative rounded-lg">
-            <input
-              id="amount"
-              type="text"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-lg"
-            />
-            <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-              <span className="text-gray-500">{selectedDestToken.symbol}</span>
+          {toAmount ? (
+            <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <span className="text-gray-900">
+                {toAmount} {selectedDestToken.symbol}
+              </span>
             </div>
-          </div>
+          ) : (
+            <div className="relative rounded-lg">
+              <input
+                id="amount"
+                type="text"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-lg"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                <span className="text-gray-500">{selectedDestToken.symbol}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recipient Input */}
@@ -372,21 +443,41 @@ export const SendForm: React.FC<SendFormProps> = ({
           <label htmlFor="recipient" className="block text-sm font-medium text-gray-700">
             Recipient Address
           </label>
-          <input
-            id="recipient"
-            type="text"
-            value={recipientInput}
-            onChange={handleRecipientInputChange}
-            placeholder="0x..."
-            className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
-          />
-          {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
+          {toRecipient ? (
+            <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm">
+              <span className="text-gray-900">{recipient}</span>
+            </div>
+          ) : (
+            <>
+              <input
+                id="recipient"
+                type="text"
+                value={recipientInput}
+                onChange={handleRecipientInputChange}
+                placeholder="0x... or vitalik.eth"
+                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
+              />
+              {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
+            </>
+          )}
         </div>
 
+        {/* Custom Calldata Message */}
+        {toCalldata && (
+          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-sm text-gray-600">This transaction includes custom calldata for contract interaction</p>
+          </div>
+        )}
+
         <div className="flex flex-col space-y-3">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
           <button
             type="submit"
-            disabled={!amount || !recipient || isSubmitting}
+            disabled={!amount || !isValidRecipient || isSubmitting}
             className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 cursor-pointer disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors relative"
             onClick={handleSubmit}
           >
@@ -396,15 +487,16 @@ export const SendForm: React.FC<SendFormProps> = ({
                 <span>Processing...</span>
               </div>
             ) : (
-              `Receive ${amount ? `${amount} ${selectedDestToken.symbol}` : ''}`
+              getButtonText()
             )}
           </button>
 
           <button
             type="button"
             onClick={onBack}
-            className="w-full border border-gray-300 hover:border-gray-400 cursor-pointer text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
           >
+            <ArrowLeft className="h-5 w-5 mr-2" />
             Back
           </button>
         </div>

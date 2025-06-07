@@ -17,3 +17,13 @@ export function findPreconditionAddress(preconditions: IntentPrecondition[]): st
   console.log(msg)
   return msg
 }
+
+export function findFirstPreconditionForChainId(
+  preconditions: IntentPrecondition[],
+  chainId: number,
+): IntentPrecondition | null {
+  const precondition = preconditions.find(
+    (p) => (p.type === 'erc20-balance' || p.type === 'native-balance') && p.chainId === chainId?.toString(),
+  )
+  return precondition ?? null
+}
