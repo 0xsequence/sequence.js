@@ -35,6 +35,8 @@ interface CustomizationFormProps {
   setToCalldata: (value: string) => void
   useCustomButton: boolean
   setUseCustomButton: (value: boolean) => void
+  renderInline: boolean
+  setRenderInline: (value: boolean) => void
 }
 
 // Local storage keys
@@ -45,6 +47,7 @@ const STORAGE_KEYS = {
   TOKEN: 'anypay_token',
   CALLDATA: 'anypay_calldata',
   CUSTOM_BUTTON: 'anypay_custom_button',
+  RENDER_INLINE: 'anypay_render_inline',
 } as const
 
 export const CustomizationForm: React.FC<CustomizationFormProps> = ({
@@ -60,6 +63,8 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
   setToCalldata,
   useCustomButton,
   setUseCustomButton,
+  renderInline,
+  setRenderInline,
 }) => {
   const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false)
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false)
@@ -74,13 +79,14 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
     const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN) as 'ETH' | 'USDC' | undefined
     const savedCalldata = localStorage.getItem(STORAGE_KEYS.CALLDATA)
     const savedCustomButton = localStorage.getItem(STORAGE_KEYS.CUSTOM_BUTTON)
-
+    const savedRenderInline = localStorage.getItem(STORAGE_KEYS.RENDER_INLINE)
     if (savedRecipient) setToRecipient(savedRecipient)
     if (savedAmount) setToAmount(savedAmount)
     if (savedChainId) setToChainId(Number(savedChainId))
     if (savedToken) setToToken(savedToken)
     if (savedCalldata) setToCalldata(savedCalldata)
     if (savedCustomButton) setUseCustomButton(savedCustomButton === 'true')
+    if (savedRenderInline) setRenderInline(savedRenderInline === 'true')
   }, [])
 
   // Save values to localStorage whenever they change
@@ -115,6 +121,11 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
   }, [useCustomButton])
 
   useEffect(() => {
+    if (renderInline) localStorage.setItem(STORAGE_KEYS.RENDER_INLINE, renderInline.toString())
+    else localStorage.removeItem(STORAGE_KEYS.RENDER_INLINE)
+  }, [renderInline])
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (chainDropdownRef.current && !chainDropdownRef.current.contains(event.target as Node)) {
         setIsChainDropdownOpen(false)
@@ -136,7 +147,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
     setToToken(undefined)
     setToCalldata('')
     setUseCustomButton(false)
-
+    setRenderInline(false)
     // Clear localStorage
     Object.values(STORAGE_KEYS).forEach((key) => {
       localStorage.removeItem(key)
@@ -297,6 +308,22 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   useCustomButton ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between py-2">
+            <label className="block text-sm font-medium text-gray-200">Render Inline</label>
+            <button
+              onClick={() => setRenderInline(!renderInline)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                renderInline ? 'bg-blue-500' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  renderInline ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>

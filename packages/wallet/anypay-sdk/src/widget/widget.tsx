@@ -93,6 +93,7 @@ export type AnyPayWidgetProps = {
   toCalldata?: string
   provider?: any
   children?: React.ReactNode
+  renderInline?: boolean
 }
 
 const queryClient = new QueryClient()
@@ -109,6 +110,7 @@ const WidgetInner = ({
   toCalldata,
   provider,
   children,
+  renderInline,
 }: AnyPayWidgetProps) => {
   const { address, isConnected, chainId } = useAccount()
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -117,20 +119,6 @@ const WidgetInner = ({
   const [destinationTxHash, setDestinationTxHash] = useState('')
   const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
-
-  // Add escape key handler
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isModalOpen) {
-        handleCloseModal()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscapeKey)
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey)
-    }
-  }, [isModalOpen])
 
   // Set up wallet client when connected
   useEffect(() => {
@@ -233,6 +221,17 @@ const WidgetInner = ({
   }
 
   const renderScreen = () => {
+    return (
+      <div className="flex flex-col min-h-[400px] bg-white rounded-2xl shadow-xl p-6 relative w-full max-w-md">
+        {renderScreenInner()}
+        <div className="mt-auto pt-4 text-center text-sm text-gray-500">
+          Powered by <span className="font-medium text-black-500">AnyPay</span>
+        </div>
+      </div>
+    )
+  }
+
+  const renderScreenInner = () => {
     switch (currentScreen) {
       case 'connect':
         return <ConnectWallet onConnect={handleConnect} />
@@ -276,6 +275,10 @@ const WidgetInner = ({
     }
   }
 
+  if (renderInline) {
+    return renderScreen()
+  }
+
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
       {!children ? (
@@ -292,12 +295,7 @@ const WidgetInner = ({
       )}
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div className="flex flex-col min-h-[400px]">
-          {renderScreen()}
-          <div className="mt-auto pt-4 text-center text-sm text-gray-500">
-            Powered by <span className="font-medium text-black-500">AnyPay</span>
-          </div>
-        </div>
+        {renderScreenInner()}
       </Modal>
     </div>
   )

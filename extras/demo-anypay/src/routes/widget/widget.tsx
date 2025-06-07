@@ -15,6 +15,7 @@ export const Widget = () => {
   const [toChainId, setToChainId] = useState<number | undefined>()
   const [toToken, setToToken] = useState<'ETH' | 'USDC' | undefined>()
   const [toCalldata, setToCalldata] = useState('')
+  const [renderInline, setRenderInline] = useState(false)
   const [useCustomButton, setUseCustomButton] = useState(false)
   const [provider, setProvider] = useState<any>(null)
 
@@ -55,6 +56,8 @@ export const Widget = () => {
               setToCalldata={setToCalldata}
               useCustomButton={useCustomButton}
               setUseCustomButton={setUseCustomButton}
+              setRenderInline={setRenderInline}
+              renderInline={renderInline}
             />
           </div>
 
@@ -67,6 +70,7 @@ export const Widget = () => {
               toToken={toToken}
               toCalldata={toCalldata}
               useCustomButton={useCustomButton}
+              renderInline={renderInline}
             >
               <div className="mt-6">
                 <AnyPayWidget
@@ -80,6 +84,7 @@ export const Widget = () => {
                   toToken={toToken}
                   toCalldata={toCalldata || undefined}
                   provider={provider}
+                  renderInline={renderInline}
                 >
                   {useCustomButton ? (
                     <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-full shadow-lg hover:from-green-600 hover:to-emerald-600 transition duration-300">
