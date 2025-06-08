@@ -321,7 +321,7 @@ export const SendForm: React.FC<SendFormProps> = ({
               <button
                 type="button"
                 onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
-                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-[24px] hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
                 <span className="ml-2 flex-1 text-left text-gray-900">{selectedChain.name}</span>
@@ -331,7 +331,7 @@ export const SendForm: React.FC<SendFormProps> = ({
               </button>
 
               {isChainDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-[24px] shadow-lg">
                   {SUPPORTED_CHAINS.map((chain) => (
                     <button
                       key={chain.id}
@@ -370,7 +370,7 @@ export const SendForm: React.FC<SendFormProps> = ({
               <button
                 type="button"
                 onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
-                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-[24px] hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
                   <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
@@ -382,7 +382,7 @@ export const SendForm: React.FC<SendFormProps> = ({
               </button>
 
               {isTokenDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-[24px] shadow-lg">
                   {SUPPORTED_TOKENS.map((token) => (
                     <button
                       key={token.symbol}
@@ -429,7 +429,7 @@ export const SendForm: React.FC<SendFormProps> = ({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-lg"
+                className="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-lg"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                 <span className="text-gray-500">{selectedDestToken.symbol}</span>
@@ -455,7 +455,7 @@ export const SendForm: React.FC<SendFormProps> = ({
                 value={recipientInput}
                 onChange={handleRecipientInputChange}
                 placeholder="0x... or vitalik.eth"
-                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
+                className="block w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
               />
               {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
             </>
@@ -481,7 +481,7 @@ export const SendForm: React.FC<SendFormProps> = ({
           <button
             type="submit"
             disabled={!amount || !isValidRecipient || isSubmitting}
-            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 cursor-pointer disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors relative"
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors relative"
             onClick={handleSubmit}
           >
             {isSubmitting ? (
@@ -497,7 +497,7 @@ export const SendForm: React.FC<SendFormProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-[24px] transition-colors flex items-center justify-center"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             Back

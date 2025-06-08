@@ -161,7 +161,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by token name, symbol, or chain..."
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
+          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-[24px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
         />
       </div>
 
@@ -212,7 +212,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
         </div>
       )}
 
-      <div className="divide-y divide-gray-200 max-h-[40vh] overflow-y-auto rounded-lg">
+      <div className="divide-y divide-gray-200 max-h-[40vh] overflow-y-auto rounded-[24px]">
         {filteredTokens.map((token: any) => {
           const isNative = !('contractAddress' in token)
           const chainInfo = getChainInfo(token.chainId) as any // TODO: Add proper type
@@ -271,13 +271,13 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
         <button
           onClick={() => selectedToken && onContinue(selectedToken)}
           disabled={!selectedToken}
-          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
         >
           Continue
         </button>
         <button
           onClick={onBack}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-[24px] transition-colors flex items-center justify-center"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back

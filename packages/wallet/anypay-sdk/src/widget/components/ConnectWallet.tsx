@@ -31,20 +31,20 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
 
       {isConnected ? (
         <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-gray-50 rounded-2xl">
             <p className="text-sm text-gray-500">Connected with {connector?.name}</p>
             <p className="text-gray-900 font-medium break-all">{address}</p>
           </div>
           <div className="flex flex-col gap-3">
             <button
               onClick={onConnect}
-              className="w-full bg-blue-500 hover:bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+              className="w-full bg-blue-500 hover:bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
             >
               Continue
             </button>
             <button
               onClick={handleDisconnect}
-              className="w-full bg-white hover:bg-gray-50 cursor-pointer text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors border border-gray-200"
+              className="w-full bg-white hover:bg-gray-50 cursor-pointer text-gray-900 font-semibold py-3 px-4 rounded-[24px] transition-colors border border-gray-200"
             >
               Disconnect
             </button>
@@ -53,7 +53,7 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
       ) : (
         <button
           onClick={handleConnect}
-          className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 cursor-pointer text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
         >
           {/* <img src={MetaMaskFox} alt="MetaMask" className="w-6 h-6" /> */}
           <span>MetaMask</span>

@@ -247,7 +247,7 @@ const WidgetInner = ({
           damping: 30,
           mass: 1,
         }}
-        className="flex flex-col min-h-[400px] bg-white rounded-2xl shadow-xl p-6 relative w-[400px] mx-auto"
+        className="flex flex-col min-h-[400px] bg-white rounded-[32px] shadow-xl p-6 relative w-[400px] mx-auto"
         layout
         layoutId="modal-container"
       >
