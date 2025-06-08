@@ -39,8 +39,10 @@
     "@reown/appkit-common": "^1.7.8",
     "@tanstack/react-query": "^5.80.5",
     "buffer": "^6.0.3",
+    "framer-motion": "^12.16.0",
     "isomorphic-fetch": "^3.0.0",
     "lucide-react": "^0.493.0",
+    "motion": "^12.16.0",
     "ox": "^0.7.2",
     "wagmi": "^2.15.5"
   },

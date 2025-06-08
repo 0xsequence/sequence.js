@@ -72,7 +72,7 @@ export const Widget = () => {
               useCustomButton={useCustomButton}
               renderInline={renderInline}
             >
-              <div className="mt-6">
+              <div className="mt-6 w-full max-w-md mx-auto">
                 <AnyPayWidget
                   sequenceApiKey={sequenceApiKey}
                   apiUrl={apiUrl}

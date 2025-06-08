@@ -417,7 +417,7 @@ export const SendForm: React.FC<SendFormProps> = ({
           </div>
           {toAmount ? (
             <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <span className="text-gray-900">
+              <span className="text-gray-900 break-all">
                 {toAmount} {selectedDestToken.symbol}
               </span>
             </div>
@@ -445,7 +445,7 @@ export const SendForm: React.FC<SendFormProps> = ({
           </label>
           {toRecipient ? (
             <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm">
-              <span className="text-gray-900">{recipient}</span>
+              <span className="text-gray-900 break-all overflow-hidden text-ellipsis">{recipient}</span>
             </div>
           ) : (
             <>
@@ -465,14 +465,17 @@ export const SendForm: React.FC<SendFormProps> = ({
         {/* Custom Calldata Message */}
         {toCalldata && (
           <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-sm text-gray-600">This transaction includes custom calldata for contract interaction</p>
+            <p className="text-sm text-gray-600 break-words">{toCalldata}</p>
+            <p className="text-sm text-gray-600 break-words">
+              This transaction includes custom calldata for contract interaction
+            </p>
           </div>
         )}
 
         <div className="flex flex-col space-y-3">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-600 text-sm">{error}</p>
+              <p className="text-red-600 text-sm break-words">{error}</p>
             </div>
           )}
           <button

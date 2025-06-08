@@ -396,12 +396,18 @@ importers:
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
+      framer-motion:
+        specifier: ^12.16.0
+        version: 12.16.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       isomorphic-fetch:
         specifier: ^3.0.0
         version: 3.0.0
       lucide-react:
         specifier: ^0.493.0
         version: 0.493.0(react@19.1.0)
+      motion:
+        specifier: ^12.16.0
+        version: 12.16.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       ox:
         specifier: ^0.7.2
         version: 0.7.2(typescript@5.8.3)(zod@3.25.51)

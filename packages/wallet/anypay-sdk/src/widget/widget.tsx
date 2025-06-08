@@ -4,6 +4,7 @@ import { SequenceHooksProvider } from '@0xsequence/hooks'
 import { injected, metaMask } from 'wagmi/connectors'
 import { StrictMode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'motion/react'
 import Modal from './components/Modal.js'
 import ConnectWallet from './components/ConnectWallet.js'
 import TokenList from './components/TokenList.js'
@@ -190,18 +191,7 @@ const WidgetInner = ({
     }
   }
 
-  const renderScreen = () => {
-    return (
-      <div className="flex flex-col min-h-[400px] bg-white rounded-2xl shadow-xl p-6 relative w-full max-w-md">
-        {renderScreenInner()}
-        <div className="mt-auto pt-4 text-center text-sm text-gray-500">
-          Powered by <span className="font-medium text-black-500">AnyPay</span>
-        </div>
-      </div>
-    )
-  }
-
-  const renderScreenInner = () => {
+  const renderScreenContent = () => {
     switch (currentScreen) {
       case 'connect':
         return <ConnectWallet onConnect={handleConnect} />
@@ -245,6 +235,53 @@ const WidgetInner = ({
     }
   }
 
+  const renderScreen = () => {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{
+          type: 'spring',
+          stiffness: 200,
+          damping: 30,
+          mass: 1,
+        }}
+        className="flex flex-col min-h-[400px] bg-white rounded-2xl shadow-xl p-6 relative w-[400px] mx-auto"
+        layout
+        layoutId="modal-container"
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentScreen}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{
+              type: 'spring',
+              stiffness: 500,
+              damping: 30,
+              mass: 0.6,
+            }}
+            className="flex-1 flex flex-col w-full"
+            layout
+          >
+            {renderScreenContent()}
+          </motion.div>
+        </AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15 }}
+          className="mt-auto pt-4 text-center text-sm text-gray-500"
+          layout
+        >
+          Powered by <span className="font-medium text-black-500">AnyPay</span>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
   if (renderInline) {
     return renderScreen()
   }
@@ -252,21 +289,32 @@ const WidgetInner = ({
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
       {!children ? (
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setIsModalOpen(true)}
           className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors"
         >
           Pay
-        </button>
+        </motion.button>
       ) : (
-        <div className="flex flex-col items-center justify-center" onClick={() => setIsModalOpen(true)}>
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex flex-col items-center justify-center"
+          onClick={() => setIsModalOpen(true)}
+        >
           {children}
-        </div>
+        </motion.div>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        {renderScreenInner()}
-      </Modal>
+      <AnimatePresence>
+        {isModalOpen && (
+          <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+            {renderScreen()}
+          </Modal>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
