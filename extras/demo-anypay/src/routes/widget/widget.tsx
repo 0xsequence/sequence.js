@@ -87,7 +87,7 @@ export const Widget = () => {
                   renderInline={renderInline}
                 >
                   {useCustomButton ? (
-                    <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-full shadow-lg hover:from-green-600 hover:to-emerald-600 transition duration-300">
+                    <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg hover:from-green-600 hover:to-emerald-600 transition duration-300">
                       Pay with AnyPay
                     </button>
                   ) : null}
