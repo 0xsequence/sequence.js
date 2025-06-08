@@ -1,6 +1,7 @@
 import React from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
+import { ChevronLeft } from 'lucide-react'
 // import MetaMaskFox from '../assets/MetaMask_Fox.svg'
 
 interface ConnectWalletProps {
@@ -27,7 +28,9 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Connect a Wallet</h2>
+      <div className="flex items-center relative">
+        <h2 className="text-lg font-semibold text-gray-900 w-full text-center">Connect a Wallet</h2>
+      </div>
 
       {isConnected ? (
         <div className="space-y-4">

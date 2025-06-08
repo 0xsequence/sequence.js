@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import { X } from 'lucide-react'
 
 interface ModalProps {
   isOpen: boolean
@@ -48,10 +49,16 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
                 damping: 25,
                 mass: 0.8,
               }}
-              className="pointer-events-auto"
+              className="pointer-events-auto relative"
               layoutId="modal-content"
               layout="preserve-aspect"
             >
+              <button
+                onClick={onClose}
+                className="absolute right-2 top-2 p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer z-10"
+              >
+                <X className="h-6 w-6 text-gray-600" />
+              </button>
               {children}
             </motion.div>
           </div>

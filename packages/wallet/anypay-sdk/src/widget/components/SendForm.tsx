@@ -11,7 +11,7 @@ import {
   getAddress,
   WalletClient,
 } from 'viem'
-import { ChevronDown, Loader2, ArrowLeft } from 'lucide-react'
+import { ChevronDown, Loader2, ArrowLeft, ChevronLeft } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
 import { getAPIClient } from '../../apiClient.js'
 import { getRelayer } from '../../relayer.js'
@@ -286,6 +286,16 @@ export const SendForm: React.FC<SendFormProps> = ({
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center relative">
+        <button
+          onClick={onBack}
+          className="absolute -left-2 p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+        >
+          <ChevronLeft className="h-6 w-6 text-gray-600" />
+        </button>
+        <h2 className="text-lg font-semibold text-gray-900 w-full text-center">Send Payment</h2>
+      </div>
+
       <div className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg">
         <div className="relative">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
@@ -492,15 +502,6 @@ export const SendForm: React.FC<SendFormProps> = ({
             ) : (
               getButtonText()
             )}
-          </button>
-
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-[24px] transition-colors flex items-center justify-center"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back
           </button>
         </div>
       </form>

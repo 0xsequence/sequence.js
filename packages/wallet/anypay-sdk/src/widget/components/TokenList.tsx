@@ -5,7 +5,7 @@ import { Address } from 'ox'
 import { formatUnits, isAddressEqual, zeroAddress } from 'viem'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import { Search, ArrowLeft } from 'lucide-react'
+import { Search, ChevronLeft } from 'lucide-react'
 import { SequenceIndexerGateway } from '@0xsequence/indexer'
 interface Token {
   id: number
@@ -149,7 +149,15 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Select Token</h2>
+      <div className="flex items-center relative">
+        <button
+          onClick={onBack}
+          className="absolute -left-2 p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+        >
+          <ChevronLeft className="h-6 w-6 text-gray-600" />
+        </button>
+        <h2 className="text-lg font-semibold text-gray-900 w-full text-center">Select Token</h2>
+      </div>
 
       {/* Search Field */}
       <div className="relative">
@@ -274,13 +282,6 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
           className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
         >
           Continue
-        </button>
-        <button
-          onClick={onBack}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer font-semibold py-3 px-4 rounded-[24px] transition-colors flex items-center justify-center"
-        >
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          Back
         </button>
       </div>
     </div>
