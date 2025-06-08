@@ -37,8 +37,8 @@ interface CustomizationFormProps {
   setUseCustomButton: (value: boolean) => void
   renderInline: boolean
   setRenderInline: (value: boolean) => void
-  theme: 'light' | 'dark'
-  setTheme: (value: 'light' | 'dark') => void
+  theme: 'light' | 'dark' | 'auto'
+  setTheme: (value: 'light' | 'dark' | 'auto') => void
 }
 
 // Local storage keys
@@ -337,19 +337,20 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
           </div>
 
           <div className="flex items-center justify-between py-2">
-            <label className="block text-sm font-medium text-gray-200">Theme (Light/Dark)</label>
-            <button
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                theme === 'dark' ? 'bg-blue-500' : 'bg-gray-600'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+            <label className="block text-sm font-medium text-gray-200">Theme Mode</label>
+            <div className="flex rounded-lg overflow-hidden border border-gray-600">
+              {(['auto', 'light', 'dark'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setTheme(mode)}
+                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                    theme === mode ? 'bg-blue-500 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="pt-2">

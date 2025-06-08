@@ -21,6 +21,8 @@ import { useIndexerGatewayClient } from '../indexerClient.js'
 import { WagmiContext } from 'wagmi'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
+type Theme = 'light' | 'dark' | 'auto'
+type ActiveTheme = 'light' | 'dark'
 
 interface Token {
   id: number
@@ -65,12 +67,26 @@ export type AnyPayWidgetProps = {
   provider?: any
   children?: React.ReactNode
   renderInline?: boolean
-  theme?: 'light' | 'dark'
+  theme?: Theme
 }
 
 const queryClient = new QueryClient()
 
-const WidgetInner = ({
+// Function to get system theme preference
+const getSystemTheme = (): ActiveTheme => {
+  if (typeof window === 'undefined') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+// Function to get initial theme based on mode
+const getInitialTheme = (mode: Theme): ActiveTheme => {
+  if (mode === 'auto') {
+    return getSystemTheme()
+  }
+  return mode as ActiveTheme
+}
+
+const WidgetInner: React.FC<AnyPayWidgetProps> = ({
   sequenceApiKey,
   indexerUrl,
   apiUrl,
@@ -83,16 +99,40 @@ const WidgetInner = ({
   provider,
   children,
   renderInline,
-  theme: initialTheme = 'light',
-}: AnyPayWidgetProps) => {
+  theme: initialTheme = 'auto',
+}) => {
   const { address, isConnected, chainId } = useAccount()
-  const [theme, setTheme] = useState<'light' | 'dark'>(initialTheme)
+  const [theme, setTheme] = useState<ActiveTheme>(getInitialTheme(initialTheme))
+  const [themeMode, setThemeMode] = useState<Theme>(initialTheme)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentScreen, setCurrentScreen] = useState<Screen>(isConnected ? 'tokens' : 'connect')
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [destinationTxHash, setDestinationTxHash] = useState('')
   const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
+
+  // Update theme when system preference changes
+  useEffect(() => {
+    if (themeMode !== 'auto') return
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? 'dark' : 'light')
+    }
+
+    // Set initial value
+    setTheme(mediaQuery.matches ? 'dark' : 'light')
+
+    // Add listener for changes
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [themeMode])
+
+  // Update theme when prop changes
+  useEffect(() => {
+    setThemeMode(initialTheme)
+    setTheme(getInitialTheme(initialTheme))
+  }, [initialTheme])
 
   // Set up wallet client when connected
   useEffect(() => {
@@ -113,13 +153,6 @@ const WidgetInner = ({
       setCurrentScreen('tokens')
     }
   }, [isConnected])
-
-  // Update theme when prop changes
-  useEffect(() => {
-    if (initialTheme) {
-      setTheme(initialTheme)
-    }
-  }, [initialTheme])
 
   const indexerGatewayClient = useIndexerGatewayClient({
     indexerGatewayUrl: indexerUrl,
@@ -202,7 +235,20 @@ const WidgetInner = ({
   }
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+    if (themeMode === 'auto') {
+      // When in auto mode, switching should go to explicit light/dark mode
+      const newTheme: Theme = theme === 'light' ? 'dark' : 'light'
+      setThemeMode(newTheme)
+      setTheme(newTheme)
+    } else {
+      // When in explicit mode, cycle through light -> dark -> auto
+      const modes: Theme[] = ['light', 'dark', 'auto']
+      const currentIndex = modes.indexOf(themeMode)
+      // Since we're using modulo and the array is fixed, this is guaranteed to be a valid Theme
+      const nextMode = modes[(currentIndex + 1) % modes.length] as Theme
+      setThemeMode(nextMode)
+      setTheme(getInitialTheme(nextMode))
+    }
   }
 
   const renderScreenContent = () => {
