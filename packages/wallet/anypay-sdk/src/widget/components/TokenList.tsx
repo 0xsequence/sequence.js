@@ -169,13 +169,13 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by token name, symbol, or chain..."
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-[24px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
+          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-[24px] focus:ring-2 focus:ring-black focus:border-black bg-white text-gray-900 placeholder-gray-500"
         />
       </div>
 
       {isLoadingBalances && (
         <div className="text-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
           <p className="mt-2 text-gray-500">Loading your token balances...</p>
         </div>
       )}
@@ -245,7 +245,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
               key={isNative ? `${token.chainId}-native` : `${token.chainId}-${token.contractAddress}`}
               onClick={() => handleTokenSelect(token)}
               className={`py-4 px-4 flex items-center space-x-4 cursor-pointer transition-colors ${
-                isTokenSelected(token) ? 'bg-blue-50' : 'hover:bg-gray-50'
+                isTokenSelected(token) ? 'bg-gray-100' : 'hover:bg-gray-50'
               }`}
             >
               <div className="relative flex-shrink-0">

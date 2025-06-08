@@ -27,13 +27,11 @@ export const Widget = () => {
   const content = (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
       <div className="text-center space-y-6 max-w-6xl px-4">
-        <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-400 mb-4">
-          AnyPay Widget Demo
-        </h1>
-        <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto font-light tracking-wide">
-          This demo showcases a multi-step transfer flow using the{' '}
-          <span className="font-medium text-purple-400">AnyPay SDK</span>. Connect your wallet, select a token, specify
-          the amount and recipient, and see the transaction confirmation process in action.
+        <h1 className="text-3xl font-extrabold text-white mb-4">AnyPay Widget Demo</h1>
+        <p className="text-sm text-white leading-relaxed max-w-3xl mx-auto font-light">
+          This demo showcases a multi-step transfer flow using the <span className="font-medium">AnyPay SDK</span>.
+          Connect your wallet, select a token, specify the amount and recipient, and see the transaction confirmation
+          process in action.
         </p>
 
         <ConnectButton onConnect={handleConnect} />

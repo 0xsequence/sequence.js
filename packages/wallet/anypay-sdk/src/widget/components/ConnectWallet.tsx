@@ -41,7 +41,7 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
           <div className="flex flex-col gap-3">
             <button
               onClick={onConnect}
-              className="w-full bg-blue-500 hover:bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
+              className="w-full bg-blue-500 hover:bg-gray-900 cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
             >
               Continue
             </button>
