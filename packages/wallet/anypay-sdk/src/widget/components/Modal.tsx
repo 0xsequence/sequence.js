@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X } from 'lucide-react'
 
@@ -10,6 +10,8 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, theme = 'light' }) => {
+  const modalRef = useRef<HTMLDivElement>(null)
+
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -27,6 +29,13 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, theme = 'light
     }
   }, [isOpen, onClose])
 
+  // Handle click outside
+  const handleClickOutside = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose()
+    }
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -41,8 +50,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, theme = 'light
           />
           <div
             className={`fixed inset-0 flex items-center justify-center z-50 p-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+            onClick={handleClickOutside}
           >
             <motion.div
+              ref={modalRef}
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -58,9 +69,11 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, theme = 'light
             >
               <button
                 onClick={onClose}
-                className="absolute right-2 top-2 p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer z-10"
+                className={`absolute right-2 top-2 p-2 rounded-full transition-colors cursor-pointer z-10 ${
+                  theme === 'dark' ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                }`}
               >
-                <X className="h-6 w-6 text-gray-600" />
+                <X className="h-6 w-6" />
               </button>
               {children}
             </motion.div>

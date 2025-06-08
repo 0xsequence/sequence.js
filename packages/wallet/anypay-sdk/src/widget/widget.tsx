@@ -273,6 +273,7 @@ const WidgetInner = ({
         }`}
         layout
         layoutId="modal-container"
+        onClick={(e) => e.stopPropagation()}
       >
         <AnimatePresence mode="wait">
           <motion.div
