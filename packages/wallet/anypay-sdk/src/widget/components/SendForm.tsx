@@ -1,18 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
-import {
-  createWalletClient,
-  custom,
-  formatUnits,
-  parseUnits,
-  type Account,
-  isAddress,
-  getAddress,
-  WalletClient,
-} from 'viem'
-import { ChevronDown, Loader2, ArrowLeft, ChevronLeft } from 'lucide-react'
-import { prepareSend, getChainConfig } from '../../anypay.js'
+import { formatUnits, parseUnits, type Account, isAddress, getAddress, WalletClient } from 'viem'
+import { ChevronDown, Loader2, ChevronLeft } from 'lucide-react'
+import { prepareSend } from '../../anypay.js'
 import { getAPIClient } from '../../apiClient.js'
 import { getRelayer } from '../../relayer.js'
 import { zeroAddress } from 'viem'
@@ -145,11 +136,7 @@ export const SendForm: React.FC<SendFormProps> = ({
   const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
   const [recipient, setRecipient] = useState(toRecipient ?? '')
   const [error, setError] = useState<string | null>(null)
-  const {
-    data: ensAddress,
-    isLoading,
-    error: ensError,
-  } = useEnsAddress({
+  const { data: ensAddress } = useEnsAddress({
     name: recipientInput?.endsWith('.eth') ? recipientInput : undefined,
     chainId: mainnet.id,
     query: {

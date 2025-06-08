@@ -1,6 +1,5 @@
 import { SequenceAPIClient, Token } from '@0xsequence/api'
 import { useQuery } from '@tanstack/react-query'
-import { getAPIClient } from './apiClient.js'
 
 export const getTokenPrices = async (apiClient: SequenceAPIClient, tokens: Token[]) => {
   if (tokens.length === 0) {

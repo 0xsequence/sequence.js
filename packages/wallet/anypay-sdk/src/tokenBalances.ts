@@ -2,8 +2,6 @@ import {
   ContractVerificationStatus,
   NativeTokenBalance,
   TokenBalance,
-  GatewayNativeTokenBalances,
-  GatewayTokenBalance,
   GetTokenBalancesSummaryReturn,
   SequenceIndexerGateway,
 } from '@0xsequence/indexer'

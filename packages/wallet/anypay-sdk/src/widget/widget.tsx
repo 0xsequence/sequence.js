@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from 'react'
-import { useAccount, http, createConfig, WagmiProvider, useConnect, Config } from 'wagmi'
+import { useAccount, http, createConfig, WagmiProvider } from 'wagmi'
 import { SequenceHooksProvider } from '@0xsequence/hooks'
-import { injected, metaMask } from 'wagmi/connectors'
 import { StrictMode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'motion/react'
@@ -12,7 +11,7 @@ import SendForm from './components/SendForm.js'
 import TransferPending from './components/TransferPending.js'
 import Receipt from './components/Receipt.js'
 import { createWalletClient, custom, TransactionReceipt, type WalletClient } from 'viem'
-import { mainnet, base, optimism, arbitrum, Chain } from 'viem/chains'
+import { mainnet, base, optimism, arbitrum } from 'viem/chains'
 import * as chains from 'viem/chains'
 import '@0xsequence/design-system/preset'
 import './index.css'
@@ -231,23 +230,6 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
       setDestinationTxHash(data.destinationMetaTxnReceipt?.txnHash || data.originUserTxReceipt.transactionHash)
       setDestinationChainId(data.destinationChainId)
       setCurrentScreen('receipt')
-    }
-  }
-
-  const toggleTheme = () => {
-    if (themeMode === 'auto') {
-      // When in auto mode, switching should go to explicit light/dark mode
-      const newTheme: Theme = theme === 'light' ? 'dark' : 'light'
-      setThemeMode(newTheme)
-      setTheme(newTheme)
-    } else {
-      // When in explicit mode, cycle through light -> dark -> auto
-      const modes: Theme[] = ['light', 'dark', 'auto']
-      const currentIndex = modes.indexOf(themeMode)
-      // Since we're using modulo and the array is fixed, this is guaranteed to be a valid Theme
-      const nextMode = modes[(currentIndex + 1) % modes.length] as Theme
-      setThemeMode(nextMode)
-      setTheme(getInitialTheme(nextMode))
     }
   }
 

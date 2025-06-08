@@ -14,7 +14,6 @@ import { useWaitForTransactionReceipt } from 'wagmi'
 import { Address } from 'ox'
 import {
   createPublicClient,
-  createWalletClient,
   Hex,
   http,
   isAddressEqual,
@@ -23,13 +22,12 @@ import {
   Account as AccountType,
   WalletClient,
   TransactionReceipt,
-  parseUnits,
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
-import { useAPIClient, getAPIClient } from './apiClient.js'
-import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, getMetaTxStatus } from './metaTxnMonitor.js'
+import { useAPIClient } from './apiClient.js'
+import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
-import { useRelayers, getRelayer, getBackupRelayer } from './relayer.js'
+import { useRelayers, getBackupRelayer } from './relayer.js'
 import { findFirstPreconditionForChainId, findPreconditionAddress } from './preconditions.js'
 import { Relayer } from '@0xsequence/wallet-core'
 import {
@@ -1286,7 +1284,6 @@ export async function prepareSend(options: SendOptions) {
     recipient,
     destinationTokenAddress,
     destinationTokenAmount,
-    sequenceApiKey,
     fee,
     client: walletClient,
     dryMode,

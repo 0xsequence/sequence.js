@@ -1,7 +1,6 @@
 import React from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
-import { ChevronLeft } from 'lucide-react'
 // import MetaMaskFox from '../assets/MetaMask_Fox.svg'
 
 interface ConnectWalletProps {

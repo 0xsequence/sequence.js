@@ -15,7 +15,10 @@
     "src"
   ],
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json && tsc",
+    "build": "npm run build:react && npm run build:umd && npm run build:ts",
+    "build:react": "vite build --config vite.config.ts && tsc -p tsconfig.build.json",
+    "build:umd": "BUILD_MODE=umd vite build --config vite.umd.config.ts",
+    "build:ts": "tsc -p tsconfig.json",
     "dev": "tsc --watch",
     "test": "vitest",
     "clean": "rimraf dist",
@@ -44,6 +47,7 @@
     "lucide-react": "^0.493.0",
     "motion": "^12.16.0",
     "ox": "^0.7.2",
+    "vite-plugin-dts": "^4.5.4",
     "wagmi": "^2.15.5"
   },
   "peerDependencies": {

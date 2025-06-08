@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnyPay Widget Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #anypay {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a1a1a;
+            }
+            #anypay {
+                background: #242424;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="anypay"></div>
+    <script src="../dist/umd/anypay.min.js"></script>
+    <script>
+        AnyPayWidget.render(document.getElementById('anypay'), {
+            sequenceApiKey: '',
+            theme: 'light',
+            renderInline: true
+        });
+    </script>
+</body>
+</html>
