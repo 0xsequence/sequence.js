@@ -1437,7 +1437,8 @@ export async function prepareSend(options: SendOptions) {
       // Check if the chain supports atomic transactions
       const chainHex = `0x${originChainId.toString(16)}` as const
       const chainCapabilities = capabilities[chainHex]
-      const useSendCalls = chainCapabilities?.atomic?.status === 'supported'
+      const moreThan1Tx = false // TODO: check if we need to do more than 1 tx
+      const useSendCalls = chainCapabilities?.atomic?.status === 'supported' && moreThan1Tx
 
       if (useSendCalls) {
         if (!dryMode) {
@@ -1541,7 +1542,7 @@ export async function prepareSend(options: SendOptions) {
         }
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 5000)) // TODO: make sure relayer is ready with a better check
+      await new Promise((resolve) => setTimeout(resolve, 2000)) // TODO: make sure relayer is ready with a better check
 
       const metaTx = intent.metaTxns[0]!
       console.log('metaTx', metaTx)
@@ -1553,12 +1554,12 @@ export async function prepareSend(options: SendOptions) {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         console.log('polling status', metaTx.id as `0x${string}`, BigInt(metaTx.chainId))
-        const receipt = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
+        const receipt: any = await getMetaTxStatus(originRelayer, metaTx.id, Number(metaTx.chainId))
         console.log('status', receipt)
         if (tries > 10) {
           break
         }
-        if (receipt.status === 'confirmed') {
+        if (receipt.transactionHash) {
           originMetaTxnReceipt = receipt.data?.receipt
           break
         }
@@ -1567,7 +1568,7 @@ export async function prepareSend(options: SendOptions) {
       }
 
       if (!isToSameChain) {
-        await new Promise((resolve) => setTimeout(resolve, 5000)) // TODO: make sure relayer is ready with a better check
+        await new Promise((resolve) => setTimeout(resolve, 2000)) // TODO: make sure relayer is ready with a better check
         const metaTx2 = intent.metaTxns[1]!
         console.log('metaTx2', metaTx2)
 
@@ -1577,9 +1578,9 @@ export async function prepareSend(options: SendOptions) {
         // eslint-disable-next-line no-constant-condition
         while (true) {
           console.log('polling status', metaTx2.id as `0x${string}`, BigInt(metaTx2.chainId))
-          const receipt = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
+          const receipt: any = await getMetaTxStatus(destinationRelayer, metaTx2.id, Number(metaTx2.chainId))
           console.log('receipt', receipt)
-          if (receipt.status === 'confirmed') {
+          if (receipt?.transactionHash) {
             destinationMetaTxnReceipt = receipt.data?.receipt
             break
           }

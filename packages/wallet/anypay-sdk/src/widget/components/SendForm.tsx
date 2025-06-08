@@ -603,9 +603,6 @@ export const SendForm: React.FC<SendFormProps> = ({
             }`}
           >
             <p className={`text-sm break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-              {toCalldata}
-            </p>
-            <p className={`text-sm break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               This transaction includes custom calldata for contract interaction
             </p>
           </div>
