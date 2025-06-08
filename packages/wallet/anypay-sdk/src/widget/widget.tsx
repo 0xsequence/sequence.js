@@ -10,46 +10,16 @@ import TokenList from './components/TokenList.js'
 import SendForm from './components/SendForm.js'
 import TransferPending from './components/TransferPending.js'
 import Receipt from './components/Receipt.js'
-import { prepareSend } from '../anypay.js'
 import { createWalletClient, custom, TransactionReceipt, type WalletClient } from 'viem'
 import { mainnet, base, optimism, arbitrum, Chain } from 'viem/chains'
-import { parseUnits } from 'viem'
 import * as chains from 'viem/chains'
 import '@0xsequence/design-system/preset'
 import './index.css'
 import React from 'react'
-import { DEFAULT_INDEXER_GATEWAY_URL, DEFAULT_API_URL, DEFAULT_ENV } from '../constants.js'
 import { useIndexerGatewayClient } from '../indexerClient.js'
-import { createConnector } from 'wagmi'
-import { ConnectorNotFoundError } from 'wagmi'
-import { getAddress } from 'viem'
 import { WagmiContext } from 'wagmi'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
-
-const wagmiConfig1 = createConfig({
-  autoConnect: true,
-  // @ts-expect-error
-  chains: Object.values(chains),
-  connectors: [
-    // sequenceWallet({
-    //   connectOptions: {
-    //     app: 'Demo Anypay',
-    //     projectAccessKey: projectAccessKey,
-    //   },
-    //   defaultNetwork: chains.mainnet.id,
-    // }),
-    injected(),
-    metaMask(),
-  ],
-  transports: Object.values(chains as unknown as any[]).reduce(
-    (acc, chain) => ({
-      ...acc,
-      [chain.id]: http(),
-    }),
-    {},
-  ) as Record<number, ReturnType<typeof http>>,
-})
 
 interface Token {
   id: number

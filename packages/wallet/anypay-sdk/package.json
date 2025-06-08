@@ -36,6 +36,7 @@
     "@0xsequence/wagmi-connector": "^4.0.1",
     "@0xsequence/wallet-core": "workspace:*",
     "@0xsequence/wallet-primitives": "workspace:*",
+    "@reown/appkit-common": "^1.7.8",
     "@tanstack/react-query": "^5.80.5",
     "buffer": "^6.0.3",
     "isomorphic-fetch": "^3.0.0",

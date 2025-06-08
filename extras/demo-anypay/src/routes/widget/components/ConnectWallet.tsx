@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
-import { createAppKit } from '@reown/appkit/react'
-import { WagmiProvider } from 'wagmi'
+import { createAppKit, useAppKitAccount, useWalletInfo } from '@reown/appkit/react'
+import { WagmiProvider, injected, useConnect } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import type { Chain } from 'viem'
 import * as chains from 'viem/chains'
+import { useAppKitEvents } from '@reown/appkit/react'
+import { reconnect } from '@wagmi/core'
 
 // Setup queryClient
 const queryClient = new QueryClient()
@@ -30,14 +32,14 @@ const wagmiAdapter = new WagmiAdapter({
   ssr: true,
 })
 
-// Create modal
-createAppKit({
+// Create AppKit instance
+const appKit = createAppKit({
   adapters: [wagmiAdapter],
   networks,
   projectId,
   metadata,
   features: {
-    analytics: true,
+    analytics: false,
   },
 })
 
@@ -56,25 +58,57 @@ interface ConnectButtonProps {
 
 // Export ConnectButton component
 export function ConnectButton({ onConnect }: ConnectButtonProps) {
+  const events = useAppKitEvents()
+  const { connectors } = useConnect()
+  const account = useAppKitAccount()
+  const { walletInfo } = useWalletInfo()
+
   useEffect(() => {
-    // Listen for the appkit:connected event
-    const handleAppKitConnected = (event: any) => {
-      const { provider } = event.detail
-      if (provider) {
-        onConnect(provider)
+    // Check if already connected on mount
+    if (events.data?.event === 'INITIALIZE') {
+      const checkConnection = async () => {
+        console.log('account', account)
+
+        try {
+          const connectedType = localStorage.getItem('anypay-connected')
+          console.log('connectedType', connectedType)
+          if (connectedType) {
+            console.log('anypay-connected')
+            const provider = await appKit.getProvider('eip155')
+
+            const accounts = await (provider as any).request({ method: 'eth_accounts' })
+            console.log('accounts', accounts)
+
+            console.log('provider', provider)
+            console.log('connectors', connectors)
+            if (connectedType === 'injected') {
+              reconnect(wagmiAdapter.wagmiConfig, { connectors: [injected()] })
+            }
+            if (provider) {
+              onConnect(provider)
+            }
+          }
+        } catch (error) {
+          console.log('No existing connection found:', error)
+          localStorage.removeItem('anypay-connected')
+        }
       }
+      checkConnection()
+    }
+    if (events.data?.event === 'CONNECT_SUCCESS') {
+      console.log('connect', walletInfo)
+      localStorage.setItem('anypay-connected', walletInfo?.type?.toLocaleLowerCase() || 'unknown')
     }
 
-    window.addEventListener('appkit:connected', handleAppKitConnected)
-
-    return () => {
-      window.removeEventListener('appkit:connected', handleAppKitConnected)
+    if (events.data?.event === 'DISCONNECT_SUCCESS') {
+      console.log('disconnect')
+      localStorage.removeItem('anypay-connected')
     }
-  }, [onConnect])
+  }, [onConnect, events.data, walletInfo])
 
   return (
     <div className="flex justify-center">
-      <appkit-button />
+      <appkit-button balance="hide" />
     </div>
   )
 }

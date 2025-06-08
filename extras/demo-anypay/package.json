@@ -35,6 +35,7 @@
     "@repo/typescript-config": "workspace:*",
     "@tanstack/react-query": "^5.80.5",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@wagmi/core": "^2.17.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "copy-to-clipboard": "^3.3.3",

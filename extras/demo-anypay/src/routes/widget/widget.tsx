@@ -32,7 +32,7 @@ export const Widget = () => {
         </h1>
         <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto font-light tracking-wide">
           This demo showcases a multi-step transfer flow using the{' '}
-          <span className="font-medium text-purple-400">Anypay SDK</span>. Connect your wallet, select a token, specify
+          <span className="font-medium text-purple-400">AnyPay SDK</span>. Connect your wallet, select a token, specify
           the amount and recipient, and see the transaction confirmation process in action.
         </p>
 
