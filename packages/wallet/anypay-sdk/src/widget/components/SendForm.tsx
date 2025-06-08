@@ -50,6 +50,7 @@ interface SendFormProps {
   toToken?: 'USDC' | 'ETH'
   toCalldata?: string
   walletClient?: WalletClient
+  theme?: 'light' | 'dark'
 }
 
 // Available chains
@@ -138,6 +139,7 @@ export const SendForm: React.FC<SendFormProps> = ({
   toToken,
   toCalldata,
   walletClient,
+  theme = 'light',
 }) => {
   const [amount, setAmount] = useState(toAmount ?? '')
   const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
@@ -310,20 +312,30 @@ export const SendForm: React.FC<SendFormProps> = ({
       <div className="flex items-center relative">
         <button
           onClick={onBack}
-          className="absolute -left-2 p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+          className={`absolute -left-2 p-2 rounded-full transition-colors cursor-pointer ${
+            theme === 'dark' ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+          }`}
         >
-          <ChevronLeft className="h-6 w-6 text-gray-600" />
+          <ChevronLeft className="h-6 w-6" />
         </button>
-        <h2 className="text-lg font-semibold text-gray-900 w-full text-center">Send Payment</h2>
+        <h2 className={`text-lg font-semibold w-full text-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          Send Payment
+        </h2>
       </div>
 
-      <div className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg">
+      <div className={`flex items-center space-x-4 p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <div className="relative">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+            }`}
+          >
             {selectedToken.contractAddress ? (
               <TokenImage symbol={selectedToken.symbol} src={selectedToken.imageUrl} />
             ) : (
-              <span className="text-2xl font-medium text-gray-600">{selectedToken.symbol[0]}</span>
+              <span className={`text-2xl font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                {selectedToken.symbol[0]}
+              </span>
             )}
           </div>
           <div className="absolute -bottom-1 -right-1">
@@ -331,8 +343,10 @@ export const SendForm: React.FC<SendFormProps> = ({
           </div>
         </div>
         <div>
-          <h3 className="text-lg font-medium text-gray-900">From: {selectedToken.name}</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            From: {selectedToken.name}
+          </h3>
+          <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
             on {chainInfo?.name || 'Unknown Chain'} • Balance: {formattedBalance} {selectedToken.symbol}
           </p>
         </div>
@@ -341,28 +355,42 @@ export const SendForm: React.FC<SendFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Chain Selection */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Destination Chain</label>
+          <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            Destination Chain
+          </label>
           {toChainId ? (
-            <div className="flex items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <div
+              className={`flex items-center px-4 py-3 border rounded-lg ${
+                theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}
+            >
               <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
-              <span className="ml-2 text-gray-900">{selectedChain.name}</span>
+              <span className={`ml-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedChain.name}</span>
             </div>
           ) : (
             <div className="relative" ref={chainDropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
-                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-[24px] hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                className={`w-full flex items-center px-4 py-3 border rounded-[24px] hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
-                <span className="ml-2 flex-1 text-left text-gray-900">{selectedChain.name}</span>
+                <span className="ml-2 flex-1 text-left">{selectedChain.name}</span>
                 <ChevronDown
-                  className={`h-5 w-5 text-gray-400 transition-transform ${isChainDropdownOpen ? 'transform rotate-180' : ''}`}
+                  className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'} transition-transform ${
+                    isChainDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
                 />
               </button>
 
               {isChainDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-[24px] shadow-lg">
+                <div
+                  className={`absolute z-10 w-full mt-1 border rounded-[24px] shadow-lg ${
+                    theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                  }`}
+                >
                   {SUPPORTED_CHAINS.map((chain) => (
                     <button
                       key={chain.id}
@@ -371,13 +399,21 @@ export const SendForm: React.FC<SendFormProps> = ({
                         setSelectedChain(chain)
                         setIsChainDropdownOpen(false)
                       }}
-                      className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 ${
-                        selectedChain.id === chain.id ? 'bg-gray-100 text-gray-900' : 'text-gray-900'
+                      className={`w-full flex items-center px-4 py-3 ${
+                        theme === 'dark'
+                          ? selectedChain.id === chain.id
+                            ? 'bg-gray-700 text-white'
+                            : 'text-white hover:bg-gray-700'
+                          : selectedChain.id === chain.id
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'text-gray-900 hover:bg-gray-50'
                       }`}
                     >
                       <NetworkImage chainId={chain.icon} size="sm" className="w-5 h-5" />
                       <span className="ml-2">{chain.name}</span>
-                      {selectedChain.id === chain.id && <span className="ml-auto text-gray-900">•</span>}
+                      {selectedChain.id === chain.id && (
+                        <span className={`ml-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>•</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -388,32 +424,56 @@ export const SendForm: React.FC<SendFormProps> = ({
 
         {/* Token Selection */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Receive Token</label>
+          <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            Receive Token
+          </label>
           {toToken ? (
-            <div className="flex items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+            <div
+              className={`flex items-center px-4 py-3 border rounded-lg ${
+                theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-sm ${
+                  theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                }`}
+              >
                 <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
               </div>
-              <span className="ml-2 text-gray-900">{selectedDestToken.name}</span>
+              <span className={`ml-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {selectedDestToken.name}
+              </span>
             </div>
           ) : (
             <div className="relative" ref={tokenDropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
-                className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-[24px] hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                className={`w-full flex items-center px-4 py-3 border rounded-[24px] hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
-                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-sm ${
+                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}
+                >
                   <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
                 </div>
-                <span className="ml-2 flex-1 text-left text-gray-900">{selectedDestToken.name}</span>
+                <span className="ml-2 flex-1 text-left">{selectedDestToken.name}</span>
                 <ChevronDown
-                  className={`h-5 w-5 text-gray-400 transition-transform ${isTokenDropdownOpen ? 'transform rotate-180' : ''}`}
+                  className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'} transition-transform ${
+                    isTokenDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
                 />
               </button>
 
               {isTokenDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-[24px] shadow-lg">
+                <div
+                  className={`absolute z-10 w-full mt-1 border rounded-[24px] shadow-lg ${
+                    theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                  }`}
+                >
                   {SUPPORTED_TOKENS.map((token) => (
                     <button
                       key={token.symbol}
@@ -422,15 +482,27 @@ export const SendForm: React.FC<SendFormProps> = ({
                         setSelectedDestToken(token)
                         setIsTokenDropdownOpen(false)
                       }}
-                      className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer ${
-                        selectedDestToken.symbol === token.symbol ? 'bg-gray-100 text-gray-900' : 'text-gray-900'
+                      className={`w-full flex items-center px-4 py-3 cursor-pointer ${
+                        theme === 'dark'
+                          ? selectedDestToken.symbol === token.symbol
+                            ? 'bg-gray-700 text-white'
+                            : 'text-white hover:bg-gray-700'
+                          : selectedDestToken.symbol === token.symbol
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'text-gray-900 hover:bg-gray-50'
                       }`}
                     >
-                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center text-sm ${
+                          theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                        }`}
+                      >
                         <TokenImage symbol={token.symbol} src={token.imageUrl} size="sm" />
                       </div>
                       <span className="ml-2">{token.name}</span>
-                      {selectedDestToken.symbol === token.symbol && <span className="ml-auto text-gray-900">•</span>}
+                      {selectedDestToken.symbol === token.symbol && (
+                        <span className={`ml-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>•</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -439,16 +511,23 @@ export const SendForm: React.FC<SendFormProps> = ({
           )}
         </div>
 
-        {/* Amount Input - Only show if toAmount is not provided */}
+        {/* Amount Input */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="amount"
+              className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+            >
               Amount to Receive
             </label>
           </div>
           {toAmount ? (
-            <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <span className="text-gray-900 break-all">
+            <div
+              className={`px-4 py-3 border rounded-lg ${
+                theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <span className={`break-all ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {toAmount} {selectedDestToken.symbol}
               </span>
             </div>
@@ -460,10 +539,14 @@ export const SendForm: React.FC<SendFormProps> = ({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-black focus:border-black bg-white text-gray-900 placeholder-gray-400 text-lg"
+                className={`block w-full pl-4 pr-12 py-3 border rounded-[24px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg ${
+                  theme === 'dark'
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                }`}
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-                <span className="text-gray-500">{selectedDestToken.symbol}</span>
+                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>{selectedDestToken.symbol}</span>
               </div>
             </div>
           )}
@@ -471,12 +554,25 @@ export const SendForm: React.FC<SendFormProps> = ({
 
         {/* Recipient Input */}
         <div className="space-y-2">
-          <label htmlFor="recipient" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="recipient"
+            className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+          >
             Recipient Address
           </label>
           {toRecipient ? (
-            <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-              <span className="text-gray-900 break-all overflow-hidden text-ellipsis">{recipient}</span>
+            <div
+              className={`px-4 py-3 border rounded-lg font-mono text-sm ${
+                theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <span
+                className={`break-all overflow-hidden text-ellipsis ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}
+              >
+                {recipient}
+              </span>
             </div>
           ) : (
             <>
@@ -486,17 +582,30 @@ export const SendForm: React.FC<SendFormProps> = ({
                 value={recipientInput}
                 onChange={handleRecipientInputChange}
                 placeholder="0x... or vitalik.eth"
-                className="block w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-black focus:border-black bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
+                className={`block w-full px-4 py-3 border rounded-[24px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm ${
+                  theme === 'dark'
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                }`}
               />
-              {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
+              {ensAddress && (
+                <p className={theme === 'dark' ? 'text-sm text-gray-400' : 'text-sm text-gray-500'}>{recipient}</p>
+              )}
             </>
           )}
         </div>
 
         {/* Custom Calldata Message */}
         {toCalldata && (
-          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-sm text-gray-600 break-words">
+          <div
+            className={`px-4 py-3 border rounded-lg ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+            }`}
+          >
+            <p className={`text-sm break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              {toCalldata}
+            </p>
+            <p className={`text-sm break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               This transaction includes custom calldata for contract interaction
             </p>
           </div>
@@ -504,18 +613,26 @@ export const SendForm: React.FC<SendFormProps> = ({
 
         <div className="flex flex-col space-y-3">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-600 text-sm break-words">{error}</p>
+            <div
+              className={`border rounded-lg p-4 ${
+                theme === 'dark' ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'
+              }`}
+            >
+              <p className={`text-sm break-words ${theme === 'dark' ? 'text-red-200' : 'text-red-600'}`}>{error}</p>
             </div>
           )}
           <button
             type="submit"
             disabled={!amount || !isValidRecipient || isSubmitting}
-            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors relative"
+            className={`w-full font-semibold py-3 px-4 rounded-[24px] transition-colors relative ${
+              theme === 'dark'
+                ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white disabled:text-gray-400'
+                : 'bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white disabled:text-gray-500'
+            } disabled:cursor-not-allowed cursor-pointer`}
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <Loader2 className={`w-5 h-5 animate-spin mr-2 ${theme === 'dark' ? 'text-gray-400' : 'text-white'}`} />
                 <span>Processing...</span>
               </div>
             ) : (

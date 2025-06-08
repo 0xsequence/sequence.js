@@ -65,6 +65,7 @@ export type AnyPayWidgetProps = {
   provider?: any
   children?: React.ReactNode
   renderInline?: boolean
+  theme?: 'light' | 'dark'
 }
 
 const queryClient = new QueryClient()
@@ -82,8 +83,10 @@ const WidgetInner = ({
   provider,
   children,
   renderInline,
+  theme: initialTheme = 'light',
 }: AnyPayWidgetProps) => {
   const { address, isConnected, chainId } = useAccount()
+  const [theme, setTheme] = useState<'light' | 'dark'>(initialTheme)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentScreen, setCurrentScreen] = useState<Screen>(isConnected ? 'tokens' : 'connect')
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
@@ -110,6 +113,13 @@ const WidgetInner = ({
       setCurrentScreen('tokens')
     }
   }, [isConnected])
+
+  // Update theme when prop changes
+  useEffect(() => {
+    if (initialTheme) {
+      setTheme(initialTheme)
+    }
+  }, [initialTheme])
 
   const indexerGatewayClient = useIndexerGatewayClient({
     indexerGatewayUrl: indexerUrl,
@@ -191,13 +201,22 @@ const WidgetInner = ({
     }
   }
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+  }
+
   const renderScreenContent = () => {
     switch (currentScreen) {
       case 'connect':
-        return <ConnectWallet onConnect={handleConnect} />
+        return <ConnectWallet onConnect={handleConnect} theme={theme} />
       case 'tokens':
         return (
-          <TokenList onContinue={handleTokenSelect} onBack={handleBack} indexerGatewayClient={indexerGatewayClient} />
+          <TokenList
+            onContinue={handleTokenSelect}
+            onBack={handleBack}
+            indexerGatewayClient={indexerGatewayClient}
+            theme={theme}
+          />
         )
       case 'send':
         return selectedToken && walletClient?.account ? (
@@ -217,10 +236,11 @@ const WidgetInner = ({
             toToken={toToken}
             toCalldata={toCalldata}
             walletClient={walletClient}
+            theme={theme}
           />
         ) : null
       case 'pending':
-        return <TransferPending onComplete={handleTransferComplete} />
+        return <TransferPending onComplete={handleTransferComplete} theme={theme} />
       case 'receipt':
         return (
           <Receipt
@@ -228,6 +248,7 @@ const WidgetInner = ({
             onClose={handleCloseModal}
             txHash={destinationTxHash}
             chainId={destinationChainId!}
+            theme={theme}
           />
         )
       default:
@@ -247,7 +268,9 @@ const WidgetInner = ({
           damping: 30,
           mass: 1,
         }}
-        className="flex flex-col min-h-[400px] bg-white rounded-[32px] shadow-xl p-6 relative w-[400px] mx-auto"
+        className={`flex flex-col min-h-[400px] rounded-[32px] shadow-xl p-6 relative w-[400px] mx-auto ${
+          theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+        }`}
         layout
         layoutId="modal-container"
       >
@@ -273,7 +296,7 @@ const WidgetInner = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }}
-          className="mt-auto pt-4 text-center text-sm text-gray-500"
+          className={`mt-auto pt-4 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}
           layout
         >
           Powered by{' '}
@@ -281,7 +304,9 @@ const WidgetInner = ({
             href="https://anypay.pages.dev/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-gray-500 hover:text-black transition-colors"
+            className={`font-medium transition-colors ${
+              theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'
+            }`}
           >
             AnyPay
           </a>
@@ -301,7 +326,9 @@ const WidgetInner = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 text-white hover:bg-blue-600 cursor-pointer font-semibold py-3 px-6 rounded-[24px] shadow-sm transition-colors"
+          className={`${
+            theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'
+          } text-white cursor-pointer font-semibold py-3 px-6 rounded-[24px] shadow-sm transition-colors`}
         >
           Pay
         </motion.button>
@@ -318,7 +345,7 @@ const WidgetInner = ({
 
       <AnimatePresence>
         {isModalOpen && (
-          <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+          <Modal isOpen={isModalOpen} onClose={handleCloseModal} theme={theme}>
             {renderScreen()}
           </Modal>
         )}

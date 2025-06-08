@@ -6,9 +6,10 @@ interface ModalProps {
   isOpen: boolean
   onClose: () => void
   children: React.ReactNode
+  theme?: 'light' | 'dark'
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, theme = 'light' }) => {
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -35,10 +36,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             onClick={onClose}
           />
-          <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+          <div
+            className={`fixed inset-0 flex items-center justify-center z-50 p-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

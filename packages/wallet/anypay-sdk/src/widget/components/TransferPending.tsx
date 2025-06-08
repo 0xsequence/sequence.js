@@ -2,9 +2,10 @@ import React, { useEffect } from 'react'
 
 interface TransferPendingProps {
   onComplete: () => void
+  theme?: 'light' | 'dark'
 }
 
-export const TransferPending: React.FC<TransferPendingProps> = ({ onComplete }) => {
+export const TransferPending: React.FC<TransferPendingProps> = ({ onComplete, theme = 'light' }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete()
@@ -15,9 +16,13 @@ export const TransferPending: React.FC<TransferPendingProps> = ({ onComplete }) 
 
   return (
     <div className="space-y-6 flex flex-col items-center justify-center py-8">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
-      <h2 className="text-2xl font-bold text-gray-900">Transfer Pending</h2>
-      <p className="text-gray-500">Waiting for confirmation...</p>
+      <div
+        className={`animate-spin rounded-full h-16 w-16 border-b-2 ${
+          theme === 'dark' ? 'border-blue-400' : 'border-blue-500'
+        }`}
+      ></div>
+      <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Transfer Pending</h2>
+      <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Waiting for confirmation...</p>
     </div>
   )
 }

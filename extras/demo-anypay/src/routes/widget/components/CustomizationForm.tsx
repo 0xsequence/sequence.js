@@ -37,6 +37,8 @@ interface CustomizationFormProps {
   setUseCustomButton: (value: boolean) => void
   renderInline: boolean
   setRenderInline: (value: boolean) => void
+  theme: 'light' | 'dark'
+  setTheme: (value: 'light' | 'dark') => void
 }
 
 // Local storage keys
@@ -65,11 +67,14 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
   setUseCustomButton,
   renderInline,
   setRenderInline,
+  theme,
+  setTheme,
 }) => {
-  const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false)
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false)
-  const chainDropdownRef = useRef<HTMLDivElement>(null)
+  const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false)
+
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
+  const chainDropdownRef = useRef<HTMLDivElement>(null)
 
   // Load saved values from localStorage on mount
   useEffect(() => {
@@ -127,16 +132,18 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (chainDropdownRef.current && !chainDropdownRef.current.contains(event.target as Node)) {
-        setIsChainDropdownOpen(false)
-      }
       if (tokenDropdownRef.current && !tokenDropdownRef.current.contains(event.target as Node)) {
         setIsTokenDropdownOpen(false)
+      }
+      if (chainDropdownRef.current && !chainDropdownRef.current.contains(event.target as Node)) {
+        setIsChainDropdownOpen(false)
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
   const handleReset = () => {
@@ -324,6 +331,22 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   renderInline ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between py-2">
+            <label className="block text-sm font-medium text-gray-200">Theme (Light/Dark)</label>
+            <button
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                theme === 'dark' ? 'bg-blue-500' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>

@@ -6,9 +6,10 @@ import { ChevronLeft } from 'lucide-react'
 
 interface ConnectWalletProps {
   onConnect: () => void
+  theme?: 'light' | 'dark'
 }
 
-export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
+export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect, theme = 'light' }) => {
   const { connect } = useConnect()
   const { disconnect } = useDisconnect()
   const { isConnected, address, connector } = useAccount()
@@ -29,25 +30,37 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center relative">
-        <h2 className="text-lg font-semibold text-gray-900 w-full text-center">Connect a Wallet</h2>
+        <h2 className={`text-lg font-semibold w-full text-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          Connect a Wallet
+        </h2>
       </div>
 
       {isConnected ? (
         <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-2xl">
-            <p className="text-sm text-gray-500">Connected with {connector?.name}</p>
-            <p className="text-gray-900 font-medium break-all">{address}</p>
+          <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Connected with {connector?.name}</p>
+            <p className={theme === 'dark' ? 'text-white' : 'text-gray-900'} style={{ wordBreak: 'break-all' }}>
+              {address}
+            </p>
           </div>
           <div className="flex flex-col gap-3">
             <button
               onClick={onConnect}
-              className="w-full bg-blue-500 hover:bg-gray-900 cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
+              className={`w-full cursor-pointer font-semibold py-3 px-4 rounded-[24px] transition-colors ${
+                theme === 'dark'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
             >
               Continue
             </button>
             <button
               onClick={handleDisconnect}
-              className="w-full bg-white hover:bg-gray-50 cursor-pointer text-gray-900 font-semibold py-3 px-4 rounded-[24px] transition-colors border border-gray-200"
+              className={`w-full cursor-pointer font-semibold py-3 px-4 rounded-[24px] transition-colors border ${
+                theme === 'dark'
+                  ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-700'
+                  : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200'
+              }`}
             >
               Disconnect
             </button>
@@ -56,7 +69,11 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({ onConnect }) => {
       ) : (
         <button
           onClick={handleConnect}
-          className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 cursor-pointer text-white font-semibold py-3 px-4 rounded-[24px] transition-colors"
+          className={`w-full flex items-center justify-center space-x-2 cursor-pointer font-semibold py-3 px-4 rounded-[24px] transition-colors ${
+            theme === 'dark'
+              ? 'bg-orange-500 hover:bg-orange-600 text-white'
+              : 'bg-orange-500 hover:bg-orange-600 text-white'
+          }`}
         >
           {/* <img src={MetaMaskFox} alt="MetaMask" className="w-6 h-6" /> */}
           <span>MetaMask</span>

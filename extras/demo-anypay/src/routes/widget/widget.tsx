@@ -18,6 +18,7 @@ export const Widget = () => {
   const [renderInline, setRenderInline] = useState(false)
   const [useCustomButton, setUseCustomButton] = useState(false)
   const [provider, setProvider] = useState<any>(null)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   const handleConnect = useCallback((provider: any) => {
     console.log('provider', provider)
@@ -56,6 +57,8 @@ export const Widget = () => {
               setUseCustomButton={setUseCustomButton}
               setRenderInline={setRenderInline}
               renderInline={renderInline}
+              theme={theme}
+              setTheme={setTheme}
             />
           </div>
 
@@ -69,6 +72,7 @@ export const Widget = () => {
               toCalldata={toCalldata}
               useCustomButton={useCustomButton}
               renderInline={renderInline}
+              theme={theme}
             >
               <div className="mt-6 w-full max-w-md mx-auto">
                 <AnyPayWidget
@@ -83,9 +87,10 @@ export const Widget = () => {
                   toCalldata={toCalldata || undefined}
                   provider={provider}
                   renderInline={renderInline}
+                  theme={theme}
                 >
                   {useCustomButton ? (
-                    <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg hover:from-green-600 hover:to-emerald-600 transition duration-300">
+                    <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow-lg hover:from-green-600 hover:to-emerald-600 cursor-pointer transition duration-300">
                       Pay with AnyPay
                     </button>
                   ) : null}

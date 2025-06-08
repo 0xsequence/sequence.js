@@ -12,6 +12,7 @@ interface CodeSnippetProps {
   useCustomButton: boolean
   children?: ReactNode
   renderInline?: boolean
+  theme: 'light' | 'dark'
 }
 
 export const CodeSnippet: React.FC<CodeSnippetProps> = ({
@@ -23,6 +24,7 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = ({
   useCustomButton,
   children,
   renderInline,
+  theme,
 }) => {
   const [isCopied, setIsCopied] = useState(false)
 
@@ -47,7 +49,9 @@ export const App = () => {
         toAmount ? `\n      toAmount="${toAmount}"` : ''
       }${toChainId ? `\n      toChainId={${toChainId}}` : ''}${
         toToken ? `\n      toToken="${toToken}"` : ''
-      }${toCalldata ? `\n      toCalldata="${toCalldata}"` : ''}${renderInline ? `\n      renderInline={true}` : ''}
+      }${toCalldata ? `\n      toCalldata="${toCalldata}"` : ''}${renderInline ? `\n      renderInline={true}` : ''}${
+        theme ? `\n      theme="${theme}"` : ''
+      }
     >
       <button className="custom-button-styles">
         Pay with AnyPay
@@ -59,7 +63,9 @@ export const App = () => {
         toAmount ? `\n      toAmount="${toAmount}"` : ''
       }${toChainId ? `\n      toChainId={${toChainId}}` : ''}${
         toToken ? `\n      toToken="${toToken}"` : ''
-      }${toCalldata ? `\n      toCalldata="${toCalldata}"` : ''}${renderInline ? `\n      renderInline={true}` : ''}
+      }${toCalldata ? `\n      toCalldata="${toCalldata}"` : ''}${renderInline ? `\n      renderInline={true}` : ''}${
+        theme ? `\n      theme="${theme}"` : ''
+      }
     />`
   }
   )
