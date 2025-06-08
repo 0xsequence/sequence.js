@@ -175,6 +175,27 @@ export const SendForm: React.FC<SendFormProps> = ({
   const [selectedDestToken, setSelectedDestToken] = useState(() =>
     toToken ? SUPPORTED_TOKENS.find((token) => token.symbol === toToken) || SUPPORTED_TOKENS[0]! : SUPPORTED_TOKENS[0]!,
   )
+
+  // Update selectedChain when toChainId prop changes
+  useEffect(() => {
+    if (toChainId) {
+      const newChain = SUPPORTED_CHAINS.find((chain) => chain.id === toChainId)
+      if (newChain) {
+        setSelectedChain(newChain)
+      }
+    }
+  }, [toChainId])
+
+  // Update selectedDestToken when toToken prop changes
+  useEffect(() => {
+    if (toToken) {
+      const newToken = SUPPORTED_TOKENS.find((token) => token.symbol === toToken)
+      if (newToken) {
+        setSelectedDestToken(newToken)
+      }
+    }
+  }, [toToken])
+
   const chainDropdownRef = useRef<HTMLDivElement>(null)
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
   const chainInfo = getChainInfo(selectedToken.chainId) as any // TODO: Add proper type

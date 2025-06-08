@@ -276,7 +276,15 @@ const WidgetInner = ({
           className="mt-auto pt-4 text-center text-sm text-gray-500"
           layout
         >
-          Powered by <span className="font-medium text-black-500">AnyPay</span>
+          Powered by{' '}
+          <a
+            href="https://anypay.pages.dev/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gray-500 hover:text-black transition-colors"
+          >
+            AnyPay
+          </a>
         </motion.div>
       </motion.div>
     )
