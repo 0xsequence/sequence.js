@@ -1,8 +1,9 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex } from 'ox'
 import { getSignPayload } from 'ox/TypedData'
-import { RECOVER_SAPIENT_SIGNATURE } from './constants.js'
+import { EXECUTE_USER_OP, RECOVER_SAPIENT_SIGNATURE } from './constants.js'
 import { Attestation } from './index.js'
 import { minBytesFor } from './utils.js'
+import { UserOperation } from 'ox/erc4337'
 
 export const KIND_TRANSACTIONS = 0x00
 export const KIND_MESSAGE = 0x01
@@ -77,6 +78,25 @@ export type Parent = {
   parentWallets?: Address.Address[]
 }
 
+export type Calls4337_07 = {
+  type: 'call_4337_07'
+  calls: Call[]
+  entrypoint: Address.Address
+  callGasLimit: bigint
+  maxFeePerGas: bigint
+  maxPriorityFeePerGas: bigint
+  space: bigint
+  nonce: bigint
+  paymaster?: Address.Address | undefined
+  paymasterData?: Hex.Hex | undefined
+  paymasterPostOpGasLimit?: bigint | undefined
+  paymasterVerificationGasLimit?: bigint | undefined
+  preVerificationGas: bigint
+  verificationGasLimit: bigint
+  factory?: Address.Address | undefined
+  factoryData?: Hex.Hex | undefined
+}
+
 export type Recovery<T extends Calls | Message | ConfigUpdate | Digest> = T & {
   recovery: true
 }
@@ -90,6 +110,7 @@ export type Payload =
   | Digest
   | Recovery<Calls | Message | ConfigUpdate | Digest>
   | SessionImplicitAuthorize
+  | Calls4337_07
 
 export type Parented = Payload & Parent
 
@@ -410,6 +431,12 @@ function domainFor(
   }
 }
 
+export function encode4337Nonce(key: bigint, seq: bigint): bigint {
+  if (key > 18446744073709551615n) throw new RangeError('key exceeds 192 bits')
+  if (seq > 6277101735386680763835789423207666416102355444464034512895n) throw new RangeError('seq exceeds 64 bits')
+  return (key << 64n) | seq
+}
+
 export function toTyped(wallet: Address.Address, chainId: bigint, payload: Parented): TypedDataToSign {
   const domain = domainFor(payload, wallet, chainId)
 
@@ -507,7 +534,95 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
     case 'session-implicit-authorize': {
       throw new Error('Payload does not support typed data')
     }
+
+    case 'call_4337_07': {
+      const subPayload: Message = {
+        type: 'message',
+        message: to4337Message(payload, wallet, chainId),
+      }
+
+      return toTyped(wallet, chainId, subPayload)
+    }
   }
+}
+
+export function to4337UserOperation(
+  payload: Calls4337_07,
+  wallet: Address.Address,
+  chainId: bigint,
+): UserOperation.UserOperation<'0.7'> {
+  const callsPayload: Calls = {
+    type: 'call',
+    space: 0n,
+    nonce: 0n,
+    calls: payload.calls,
+  }
+  const packedCalls = Hex.fromBytes(encode(callsPayload))
+  const operation: UserOperation.UserOperation<'0.7', false> = {
+    sender: wallet,
+    nonce: encode4337Nonce(payload.nonce, payload.nonce),
+    callData: AbiFunction.encodeData(EXECUTE_USER_OP, [packedCalls]),
+    callGasLimit: payload.callGasLimit,
+    maxFeePerGas: payload.maxFeePerGas,
+    maxPriorityFeePerGas: payload.maxPriorityFeePerGas,
+    preVerificationGas: payload.preVerificationGas,
+    verificationGasLimit: payload.verificationGasLimit,
+  }
+
+  return operation
+}
+
+export function to4337Message(payload: Calls4337_07, wallet: Address.Address, chainId: bigint): Hex.Hex {
+  const operation = to4337UserOperation(payload, wallet, chainId)
+  const accountGasLimits = Hex.concat(
+    Hex.padLeft(Hex.fromNumber(operation.verificationGasLimit), 16),
+    Hex.padLeft(Hex.fromNumber(operation.callGasLimit), 16),
+  )
+  const gasFees = Hex.concat(
+    Hex.padLeft(Hex.fromNumber(operation.maxPriorityFeePerGas), 16),
+    Hex.padLeft(Hex.fromNumber(operation.maxFeePerGas), 16),
+  )
+  const initCode_hashed = Hash.keccak256(
+    operation.factory && operation.factoryData ? Hex.concat(operation.factory, operation.factoryData) : '0x',
+  )
+  const paymasterAndData_hashed = Hash.keccak256(
+    operation.paymaster
+      ? Hex.concat(
+          operation.paymaster,
+          Hex.padLeft(Hex.fromNumber(operation.paymasterVerificationGasLimit || 0), 16),
+          Hex.padLeft(Hex.fromNumber(operation.paymasterPostOpGasLimit || 0), 16),
+          operation.paymasterData || '0x',
+        )
+      : '0x',
+  )
+
+  const packedUserOp = AbiParameters.encode(
+    [
+      { type: 'address' },
+      { type: 'uint256' },
+      { type: 'bytes32' },
+      { type: 'bytes32' },
+      { type: 'bytes32' },
+      { type: 'uint256' },
+      { type: 'bytes32' },
+      { type: 'bytes32' },
+    ],
+    [
+      operation.sender,
+      operation.nonce,
+      initCode_hashed,
+      Hash.keccak256(operation.callData),
+      accountGasLimits,
+      operation.preVerificationGas,
+      gasFees,
+      paymasterAndData_hashed,
+    ],
+  )
+
+  return AbiParameters.encode(
+    [{ type: 'bytes32' }, { type: 'address' }, { type: 'uint256' }],
+    [Hash.keccak256(packedUserOp), payload.entrypoint, chainId],
+  )
 }
 
 export function encodeBehaviorOnError(behaviorOnError: Call['behaviorOnError']): number {

@@ -31,6 +31,9 @@ export const RECOVER_SAPIENT_SIGNATURE_COMPACT = Abi.from([
   'function recoverSapientSignatureCompact(bytes32 _digest, bytes calldata _signature) external view returns (bytes32)',
 ])[0]
 
+// ERC4337
+export const EXECUTE_USER_OP = Abi.from(['function executeUserOp(bytes calldata _userOp) external'])[0]
+
 // SessionManager
 export const INCREMENT_USAGE_LIMIT = Abi.from([
   {
