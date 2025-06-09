@@ -28,6 +28,47 @@ function isNativeToken(token: TokenBalance | NativeTokenBalance): token is Nativ
   return true
 }
 
+export interface TokenBalanceWithPrice extends TokenBalance {
+  price?: Price
+  balanceUsd?: number
+  balanceUsdFormatted?: string
+}
+
+export interface NativeTokenBalanceWithPrice extends NativeTokenBalance {
+  price?: Price
+  balanceUsd?: number
+  balanceUsdFormatted?: string
+  symbol?: string
+}
+
+export type TokenBalanceExtended = TokenBalanceWithPrice | NativeTokenBalanceWithPrice
+
+export function sortTokensByPriority(a: TokenBalanceExtended, b: TokenBalanceExtended): number {
+  // First sort by USD balance if available
+  const aUsdBalance = a.balanceUsd ?? 0
+  const bUsdBalance = b.balanceUsd ?? 0
+  if (aUsdBalance !== bUsdBalance) {
+    return bUsdBalance - aUsdBalance // Higher USD balance first
+  }
+
+  // Then sort by native token status
+  if (isNativeToken(a) && !isNativeToken(b)) return -1
+  if (!isNativeToken(a) && isNativeToken(b)) return 1
+
+  // Finally sort by token balance
+  try {
+    const balanceA = BigInt(a.balance)
+    const balanceB = BigInt(b.balance)
+    if (balanceA > balanceB) return -1
+    if (balanceA < balanceB) return 1
+  } catch {
+    // If balance comparison fails, maintain current order
+    return 0
+  }
+
+  return 0
+}
+
 export interface GetTokenBalancesWithPrice {
   page: Page
   nativeBalances: Array<
@@ -44,7 +85,7 @@ export function useTokenBalances(
   tokenBalancesData: GetTokenBalancesSummaryReturn | undefined
   isLoadingBalances: boolean
   balanceError: Error | null
-  sortedTokens: (TokenBalance | NativeTokenBalance)[]
+  sortedTokens: TokenBalanceExtended[]
 } {
   const indexerClient = indexerGatewayClient ?? useIndexerGatewayClient()
   const apiClient = sequenceApiClient ?? useAPIClient()
@@ -153,19 +194,7 @@ export function useTokenBalances(
         }
         return token
       })
-      .sort((a, b) => {
-        if (isNativeToken(a)) return -1
-        if (isNativeToken(b)) return 1
-        try {
-          const balanceA = BigInt(a.balance)
-          const balanceB = BigInt(b.balance)
-          if (balanceA > balanceB) return -1
-          if (balanceA < balanceB) return 1
-          return 0
-        } catch {
-          return 0
-        }
-      })
+      .sort(sortTokensByPriority)
   }, [tokenBalancesData, tokenPrices])
 
   return {
