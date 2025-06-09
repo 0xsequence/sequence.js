@@ -26,10 +26,11 @@ import {
 } from 'viem'
 import { arbitrum, base, mainnet, optimism } from 'viem/chains'
 import { useAPIClient, getAPIClient } from './apiClient.js'
-import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, MetaTxnStatusValue, getMetaTxStatus } from './metaTxnMonitor.js'
+import { useMetaTxnsMonitor, MetaTxn, MetaTxnStatus, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
 import { useRelayers, getRelayer, getBackupRelayer } from './relayer.js'
 import { findPreconditionAddress } from './preconditions.js'
+import { Relayer } from '@0xsequence/wallet-core'
 import {
   calculateIntentAddress,
   OriginCallParams,
@@ -50,6 +51,7 @@ export type UseAnyPayConfig = {
   disableAutoExecute?: boolean
   env: 'local' | 'cors-anywhere' | 'dev' | 'prod'
   useV3Relayers?: boolean
+  sequenceApiKey?: string
 }
 
 export type UseAnyPayReturn = {
@@ -119,7 +121,7 @@ export type UseAnyPayReturn = {
   sendMetaTxnError: Error | null
   sendMetaTxnArgs: { selectedId: string | null } | undefined
   clearIntent: () => void
-  metaTxnMonitorStatuses: { [key: string]: MetaTxnStatusValue }
+  metaTxnMonitorStatuses: { [key: string]: Relayer.OperationStatus }
   createIntent: (args: any) => void // TODO: Add proper type
   createIntentPending: boolean
   createIntentSuccess: boolean
@@ -152,8 +154,8 @@ export const getChainConfig = (chainId: number): Chain => {
 }
 
 export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
-  const { account, disableAutoExecute = false, env, useV3Relayers } = config
-  const apiClient = useAPIClient()
+  const { account, disableAutoExecute = false, env, useV3Relayers, sequenceApiKey } = config
+  const apiClient = useAPIClient({ projectAccessKey: sequenceApiKey })
 
   const [isAutoExecute, setIsAutoExecute] = useState(!disableAutoExecute)
   const [hasAutoExecuted, setHasAutoExecuted] = useState(false)
@@ -1260,6 +1262,9 @@ type SendOptions = {
   fee: string
   client?: WalletClient
   dryMode?: boolean
+  apiClient: SequenceAPIClient
+  originRelayer: Relayer.Rpc.RpcRelayer
+  destinationRelayer: Relayer.Rpc.RpcRelayer
 }
 
 // TODO: fix up this one-click
@@ -1277,11 +1282,11 @@ export async function prepareSend(options: SendOptions) {
     fee,
     client,
     dryMode,
+    apiClient,
+    originRelayer,
+    destinationRelayer,
   } = options
   const chain = getChainConfig(originChainId)
-  const apiClient = getAPIClient('http://localhost:4422', sequenceApiKey)
-  const originRelayer = getRelayer({ env: 'local' }, originChainId)
-  const destinationRelayer = getRelayer({ env: 'local' }, destinationChainId)
 
   const mainSigner = account.address
 

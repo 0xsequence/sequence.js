@@ -1,6 +1,6 @@
 import { formatUnits } from 'viem'
 import * as chains from 'viem/chains'
-import { TokenBalance, NativeTokenBalance } from '@anypay/sdk'
+import { TokenBalance, NativeTokenBalance } from '@0xsequence/anypay-sdk'
 
 // Helper to get chain info
 export const getChainInfo = (chainId: number) => {

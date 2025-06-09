@@ -1,20 +1,19 @@
-import { AnyPayWidget } from '@anypay/sdk/widget'
+import { AnyPayWidget } from '@0xsequence/anypay-sdk/widget'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 export const Widget = () => {
-  const sequenceApiKey = import.meta.env.VITE_SEQUENCE_API_KEY
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.sequence.app'
-  const indexerUrl = import.meta.env.VITE_INDEXER_URL || 'https://indexer.sequence.app'
+  const sequenceApiKey = import.meta.env.VITE_PROJECT_ACCESS_KEY
+  const apiUrl = import.meta.env.VITE_API_URL
+  const indexerUrl = import.meta.env.VITE_INDEXER_URL
+  const env = import.meta.env.VITE_ENV
 
-  const codeExample = `import { AnyPayWidget } from '@anypay/sdk/widget'
+  const codeExample = `import { AnyPayWidget } from '@0xsequence/anypay-sdk/widget'
 
 export const App = () => {
-  const sequenceApiKey = import.meta.env.VITE_SEQUENCE_API_KEY
-
   return (
     <AnyPayWidget
-      sequenceApiKey={sequenceApiKey}
+      sequenceApiKey={'key_123...'}
     />
   )
 }`
@@ -46,7 +45,7 @@ export const App = () => {
         </div>
       </div>
 
-      <AnyPayWidget sequenceApiKey={sequenceApiKey} apiUrl={apiUrl} indexerUrl={indexerUrl} />
+      <AnyPayWidget sequenceApiKey={sequenceApiKey} apiUrl={apiUrl} indexerUrl={indexerUrl} env={env} />
     </div>
   )
 }

@@ -4,7 +4,11 @@ import * as chains from 'viem/chains'
 import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { prepareSend, getChainConfig } from '../../anypay.js'
+import { getAPIClient } from '../../apiClient.js'
+import { getRelayer } from '../../relayer.js'
 import { zeroAddress } from 'viem'
+import { useEnsAddress } from 'wagmi'
+import { mainnet } from 'viem/chains'
 
 interface Token {
   id: number
@@ -29,6 +33,8 @@ interface SendFormProps {
   onComplete: () => void
   account: Account
   sequenceApiKey: string
+  apiUrl: string
+  env?: 'local' | 'cors-anywhere' | 'dev' | 'prod'
 }
 
 // Available chains
@@ -109,9 +115,36 @@ export const SendForm: React.FC<SendFormProps> = ({
   onComplete,
   account,
   sequenceApiKey,
+  apiUrl,
+  env,
 }) => {
   const [amount, setAmount] = useState('')
+  const [recipientInput, setRecipientInput] = useState('')
   const [recipient, setRecipient] = useState('')
+  const {
+    data: ensAddress,
+    isLoading,
+    error,
+  } = useEnsAddress({
+    name: recipientInput.endsWith('.eth') ? recipientInput : undefined,
+    chainId: mainnet.id,
+    query: {
+      enabled: !!recipientInput && recipientInput.endsWith('.eth'),
+    },
+  })
+
+  useEffect(() => {
+    if (ensAddress) {
+      setRecipient(ensAddress)
+    } else {
+      setRecipient(recipientInput)
+    }
+  }, [ensAddress, recipientInput])
+
+  const handleRecipientInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRecipientInput(e.target.value.trim())
+  }
+
   const [selectedChain, setSelectedChain] = useState(
     () => (SUPPORTED_CHAINS.find((chain) => chain.id === selectedToken.chainId) || SUPPORTED_CHAINS[0])!,
   )
@@ -155,6 +188,10 @@ export const SendForm: React.FC<SendFormProps> = ({
 
       console.log('selectedDestToken.symbol', selectedDestToken)
 
+      const apiClient = getAPIClient({ apiUrl, projectAccessKey: sequenceApiKey })
+      const originRelayer = getRelayer({ env, useV3Relayers: true }, selectedToken.chainId)
+      const destinationRelayer = getRelayer({ env, useV3Relayers: true }, selectedChain.id)
+
       const options = {
         account,
         originTokenAddress: selectedToken.contractAddress,
@@ -170,6 +207,9 @@ export const SendForm: React.FC<SendFormProps> = ({
         sequenceApiKey,
         fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(), // TOOD: fees
         client,
+        apiClient,
+        originRelayer,
+        destinationRelayer,
         dryMode: false, // Set to true to skip the metamask transaction, for testing purposes
       }
 
@@ -228,7 +268,7 @@ export const SendForm: React.FC<SendFormProps> = ({
             <button
               type="button"
               onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
-              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <NetworkImage chainId={selectedChain.icon} size="sm" className="w-5 h-5" />
               <span className="ml-2 flex-1 text-left text-gray-900">{selectedChain.name}</span>
@@ -268,7 +308,7 @@ export const SendForm: React.FC<SendFormProps> = ({
             <button
               type="button"
               onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
-              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full flex items-center px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
                 <TokenImage symbol={selectedDestToken.symbol} src={selectedDestToken.imageUrl} size="sm" />
@@ -289,7 +329,7 @@ export const SendForm: React.FC<SendFormProps> = ({
                       setSelectedDestToken(token)
                       setIsTokenDropdownOpen(false)
                     }}
-                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 ${
+                    className={`w-full flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer ${
                       selectedDestToken.symbol === token.symbol ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
                     }`}
                   >
@@ -335,18 +375,19 @@ export const SendForm: React.FC<SendFormProps> = ({
           <input
             id="recipient"
             type="text"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
+            value={recipientInput}
+            onChange={handleRecipientInputChange}
             placeholder="0x..."
             className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 font-mono text-sm"
           />
+          {ensAddress ? <p className="text-sm text-gray-500">{recipient}</p> : null}
         </div>
 
         <div className="flex flex-col space-y-3">
           <button
             type="submit"
             disabled={!amount || !recipient || isSubmitting}
-            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors relative"
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 cursor-pointer disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors relative"
             onClick={handleSubmit}
           >
             {isSubmitting ? (
@@ -362,7 +403,7 @@ export const SendForm: React.FC<SendFormProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+            className="w-full border border-gray-300 hover:border-gray-400 cursor-pointer text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
           >
             Back
           </button>

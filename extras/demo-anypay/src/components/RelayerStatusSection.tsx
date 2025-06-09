@@ -1,7 +1,7 @@
 import { Text, NetworkImage } from '@0xsequence/design-system'
 import { Box, Layers } from 'lucide-react'
 import { SectionHeader } from '@/components/SectionHeader'
-import { MetaTxn, MetaTxnStatus, OriginCallParams } from '@anypay/sdk'
+import { MetaTxn, MetaTxnStatus, OriginCallParams } from '@0xsequence/anypay-sdk'
 import { getChainInfo, getExplorerUrlForTransaction, formatTimeSinceOrigin } from '@/utils/formatting'
 
 interface OriginCallStatusData {

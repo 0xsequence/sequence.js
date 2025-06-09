@@ -9,7 +9,8 @@
   "private": false,
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "clean": "rimraf dist"
   },
   "exports": {
     ".": {
@@ -19,9 +20,9 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
-    "ox": "^0.7.0"
+    "ox": "^0.7.2"
   }
 }

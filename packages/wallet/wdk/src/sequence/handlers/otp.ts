@@ -57,16 +57,6 @@ export class OtpHandler extends IdentityHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    const onPromptOtp = this.onPromptOtp
-    if (!onPromptOtp) {
-      return {
-        address,
-        handler: this,
-        reason: 'ui-not-registered',
-        status: 'unavailable',
-      }
-    }
-
     const signer = await this.getAuthKeySigner(address)
     if (signer) {
       return {
@@ -77,6 +67,16 @@ export class OtpHandler extends IdentityHandler implements Handler {
           await this.sign(signer, request)
           return true
         },
+      }
+    }
+
+    const onPromptOtp = this.onPromptOtp
+    if (!onPromptOtp) {
+      return {
+        address,
+        handler: this,
+        reason: 'ui-not-registered',
+        status: 'unavailable',
       }
     }
 

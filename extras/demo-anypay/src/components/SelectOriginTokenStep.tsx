@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text, NetworkImage } from '@0xsequence/design-system'
 import { Hex, zeroAddress } from 'viem'
-import { TokenBalance, NativeTokenBalance } from '@anypay/sdk'
+import { TokenBalance, NativeTokenBalance } from '@0xsequence/anypay-sdk'
 import { SectionHeader } from '@/components/SectionHeader'
 import { getChainInfo, formatBalance } from '@/utils/formatting'
 
@@ -51,7 +51,7 @@ export const SelectOriginTokenStep: React.FC<SelectOriginTokenStepProps> = ({
         </Text>
       )}
       {balanceError && (
-        <Text variant="small" color="error">
+        <Text variant="small" color="negative">
           Error loading balances: {balanceError.message}
         </Text>
       )}
@@ -144,7 +144,7 @@ export const SelectOriginTokenStep: React.FC<SelectOriginTokenStepProps> = ({
       </div>
       {selectedToken && (
         <div className="mt-3 bg-green-900/20 border border-green-700/30 rounded-lg p-2 animate-fadeIn">
-          <Text variant="small" color="success" className="flex flex-wrap items-center">
+          <Text variant="small" color="positive" className="flex flex-wrap items-center">
             <span className="bg-green-800 text-green-100 px-2 py-0.5 rounded-full text-xs mr-2">Selected</span>
             <span className="text-gray-300 font-semibold mr-1">
               {selectedToken.contractInfo?.symbol || 'Native Token'}

@@ -1,4 +1,3 @@
-import { useIndexerGatewayClient } from '@0xsequence/hooks'
 import {
   ContractVerificationStatus,
   NativeTokenBalance,
@@ -6,10 +5,12 @@ import {
   GatewayNativeTokenBalances,
   GatewayTokenBalance,
   GetTokenBalancesSummaryReturn,
+  SequenceIndexerGateway,
 } from '@0xsequence/indexer'
 import { useQuery } from '@tanstack/react-query'
 import { Address } from 'ox'
 import { useMemo } from 'react'
+import { useIndexerGatewayClient } from './indexerClient.js'
 
 export { type NativeTokenBalance, type TokenBalance }
 
@@ -17,20 +18,23 @@ export { type NativeTokenBalance, type TokenBalance }
 const defaultPage = { page: 1, pageSize: 10, more: false }
 
 // Type guard for native token balance
-function isNativeToken(token: TokenBalance | NativeTokenBalance): boolean {
+function isNativeToken(token: TokenBalance | NativeTokenBalance): token is NativeTokenBalance {
   if ('contractAddress' in token) {
     return false
   }
   return true
 }
 
-export function useTokenBalances(address: Address.Address): {
-  tokenBalancesData: any // TODO: Add proper type
+export function useTokenBalances(
+  address: Address.Address,
+  indexerGatewayClient?: SequenceIndexerGateway,
+): {
+  tokenBalancesData: GetTokenBalancesSummaryReturn | undefined
   isLoadingBalances: boolean
   balanceError: Error | null
-  sortedTokens: any[] // TODO: Add proper type
+  sortedTokens: (TokenBalance | NativeTokenBalance)[]
 } {
-  const indexerClient = useIndexerGatewayClient()
+  const indexerClient = indexerGatewayClient ?? useIndexerGatewayClient()
 
   // Fetch token balances
   const {
@@ -39,7 +43,7 @@ export function useTokenBalances(address: Address.Address): {
     error: balanceError,
   } = useQuery<GetTokenBalancesSummaryReturn>({
     queryKey: ['tokenBalances', address],
-    queryFn: async () => {
+    queryFn: async (): Promise<GetTokenBalancesSummaryReturn> => {
       if (!address) {
         console.warn('No account address or indexer client')
         return {
@@ -49,7 +53,7 @@ export function useTokenBalances(address: Address.Address): {
         } as GetTokenBalancesSummaryReturn
       }
       try {
-        const summary = await indexerClient.getTokenBalancesSummary({
+        const summaryFromGateway = await indexerClient.getTokenBalancesSummary({
           filter: {
             accountAddresses: [address],
             contractStatus: ContractVerificationStatus.VERIFIED,
@@ -58,7 +62,11 @@ export function useTokenBalances(address: Address.Address): {
           },
         })
 
-        return summary
+        return {
+          page: summaryFromGateway.page,
+          balances: summaryFromGateway.balances.flatMap((b) => b.results),
+          nativeBalances: summaryFromGateway.nativeBalances.flatMap((b) => b.results),
+        }
       } catch (error) {
         console.error('Failed to fetch token balances:', error)
         return {
@@ -74,16 +82,11 @@ export function useTokenBalances(address: Address.Address): {
   })
 
   const sortedTokens = useMemo(() => {
-    if (!tokenBalancesData?.balances) {
+    if (!tokenBalancesData) {
       return []
     }
 
-    // Flatten both native and token balances
-    const nativeBalances = tokenBalancesData.nativeBalances.flatMap(
-      (b: any) => b.results, // TODO: Add proper type
-    )
-    const tokenBalances = tokenBalancesData.balances.flatMap((b: any) => b.results) // TODO: Add proper type
-    const balances = [...nativeBalances, ...tokenBalances]
+    const balances = [...tokenBalancesData.nativeBalances, ...tokenBalancesData.balances]
 
     return [...balances]
       .filter((token) => {

@@ -1,4 +1,4 @@
-import { SequenceAPIClient } from './apiClient.js'
+import { SequenceAPIClient } from '@0xsequence/api'
 import {
   IntentPrecondition,
   GetIntentCallsPayloadsArgs,

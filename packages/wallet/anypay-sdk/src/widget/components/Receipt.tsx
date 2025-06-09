@@ -32,13 +32,13 @@ export const Receipt: React.FC<ReceiptProps> = ({ txHash, onSendAnother, onClose
       <div className="space-y-3">
         <button
           onClick={onSendAnother}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full bg-blue-500 hover:bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 rounded-lg transition-colors"
         >
           Start Another Transaction
         </button>
         <button
           onClick={onClose}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full bg-gray-100 hover:bg-gray-200 cursor-pointer text-gray-600 hover:text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors"
         >
           Close
         </button>
