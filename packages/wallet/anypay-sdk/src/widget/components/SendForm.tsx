@@ -570,7 +570,7 @@ export const SendForm: React.FC<SendFormProps> = ({
                 type="text"
                 value={recipientInput}
                 onChange={handleRecipientInputChange}
-                placeholder="0x... or vitalik.eth"
+                placeholder="0x... or name.eth"
                 className={`block w-full px-4 py-3 border rounded-[24px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm ${
                   theme === 'dark'
                     ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'

@@ -76,6 +76,10 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
   const chainDropdownRef = useRef<HTMLDivElement>(null)
 
+  // Add state for NFT mint form
+  const [isNftMintFormOpen, setIsNftMintFormOpen] = useState(false)
+  const [nftRecipient, setNftRecipient] = useState('')
+
   // Load saved values from localStorage on mount
   useEffect(() => {
     const savedRecipient = localStorage.getItem(STORAGE_KEYS.RECIPIENT)
@@ -146,6 +150,12 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
     }
   }, [])
 
+  // Add helper to format address for calldata
+  const formatAddressForCalldata = (address: string) => {
+    // Remove 0x prefix if present and pad to 40 characters
+    return address.toLowerCase().replace('0x', '').padStart(40, '0')
+  }
+
   const handleReset = () => {
     // Clear form state
     setToRecipient('')
@@ -170,7 +180,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">Recipient Address</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">To Address</label>
             <input
               type="text"
               value={toRecipient}
@@ -181,7 +191,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">Amount</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">To Amount</label>
             <input
               type="text"
               value={toAmount}
@@ -192,7 +202,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
           </div>
 
           <div className="space-y-2" ref={tokenDropdownRef}>
-            <label className="block text-sm font-medium text-gray-200 mb-2">Token</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">To Token</label>
             <div className="relative">
               <button
                 type="button"
@@ -245,7 +255,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
           </div>
 
           <div className="space-y-2" ref={chainDropdownRef}>
-            <label className="block text-sm font-medium text-gray-200 mb-2">Chain ID</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">To Chain ID</label>
             <div className="relative">
               <button
                 type="button"
@@ -294,7 +304,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">Calldata</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">To Calldata</label>
             <textarea
               value={toCalldata}
               onChange={(e) => setToCalldata(e.target.value.trim())}
@@ -360,6 +370,57 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
             >
               Reset
             </button>
+          </div>
+
+          <div className="pt-6 space-y-3">
+            <h3 className="text-lg font-medium text-gray-200">Examples</h3>
+            <div className="space-y-2">
+              <div className="rounded-lg border border-gray-600 overflow-hidden">
+                <button
+                  onClick={() => setIsNftMintFormOpen(!isNftMintFormOpen)}
+                  className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors duration-200 text-sm font-medium cursor-pointer text-left flex justify-between items-center"
+                >
+                  <div>
+                    <div>Cross-chain NFT Mint</div>
+                    <div className="text-xs text-gray-400 mt-1">Mint an NFT on another chain</div>
+                  </div>
+                  <ChevronDown
+                    className={`h-5 w-5 text-gray-400 transition-transform ${
+                      isNftMintFormOpen ? 'transform rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {isNftMintFormOpen && (
+                  <div className="p-4 bg-gray-800 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">NFT Recipient</label>
+                      <input
+                        type="text"
+                        value={nftRecipient}
+                        onChange={(e) => setNftRecipient(e.target.value.trim())}
+                        placeholder="0x..."
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        const formattedAddress = nftRecipient ? formatAddressForCalldata(nftRecipient) : ''
+                        setToRecipient('0xAA3df3c86EdB6aA4D03b75092b4dd0b99515EC83')
+                        setToCalldata(`0x6a627842000000000000000000000000${formattedAddress}`)
+                        setToAmount('0.00002')
+                        setToToken('ETH')
+                        setToChainId(42161)
+                      }}
+                      disabled={!nftRecipient}
+                      className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white rounded-lg transition-colors duration-200 text-sm font-medium disabled:cursor-not-allowed"
+                    >
+                      Apply Example
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
