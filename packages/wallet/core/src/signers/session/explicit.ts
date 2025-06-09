@@ -251,28 +251,28 @@ export class Explicit implements ExplicitSessionSigner {
       const perm = await this.findSupportedPermission(wallet, chainId, call, sessionManagerAddress, provider)
       if (!perm) continue
 
-      const cumulativeRules = perm.rules.filter((r) => r.cumulative)
-      if (cumulativeRules.length > 0) {
-        for (const [ruleIndex, rule] of cumulativeRules.entries()) {
-          // Extract the masked value
-          const callDataValue = Bytes.padRight(
-            Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
-            32,
-          )
-          let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
-          if (Bytes.toBigInt(value) === 0n) continue
+      for (const [ruleIndex, rule] of perm.rules.entries()) {
+        if (!rule.cumulative) {
+          continue
+        }
+        // Extract the masked value
+        const callDataValue = Bytes.padRight(
+          Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
+          32,
+        )
+        let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
+        if (Bytes.toBigInt(value) === 0n) continue
 
-          // Add to list
-          const usageHash = this.getPermissionUsageHash(perm, ruleIndex)
-          const existingIncrement = increments.find((i) => Hex.isEqual(i.usageHash, usageHash))
-          if (existingIncrement) {
-            existingIncrement.increment += Bytes.toBigInt(value)
-          } else {
-            increments.push({
-              usageHash,
-              increment: Bytes.toBigInt(value),
-            })
-          }
+        // Add to list
+        const usageHash = this.getPermissionUsageHash(perm, ruleIndex)
+        const existingIncrement = increments.find((i) => Hex.isEqual(i.usageHash, usageHash))
+        if (existingIncrement) {
+          existingIncrement.increment += Bytes.toBigInt(value)
+        } else {
+          increments.push({
+            usageHash,
+            increment: Bytes.toBigInt(value),
+          })
         }
       }
 

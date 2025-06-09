@@ -31,6 +31,10 @@ export const MAX_PERMISSIONS_COUNT = 2 ** 7 - 1
 export const MAX_RULES_COUNT = 2 ** 8 - 1
 
 export const SELECTOR_MASK = Bytes.fromHex('0xffffffff', { size: 32 })
+export const ADDRESS_MASK = Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffff', { size: 32 })
+export const UINT256_MASK = Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', {
+  size: 32,
+})
 
 // Encoding
 
