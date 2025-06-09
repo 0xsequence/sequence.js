@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react'
 import { useAccount } from 'wagmi'
-import { useTokenBalances } from '../../tokenBalances.js'
+import { useSourceTokenList, useTokenBalances } from '../../tokenBalances.js'
 import { Address } from 'ox'
 import { formatUnits, isAddressEqual, zeroAddress } from 'viem'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { Search, ChevronLeft } from 'lucide-react'
 import { SequenceIndexerGateway } from '@0xsequence/indexer'
+
 interface Token {
   id: number
   name: string
@@ -15,14 +16,14 @@ interface Token {
   imageUrl: string
   chainId: number
   contractAddress: string
+  balanceUsdFormatted: string
+  tokenPriceUsd: number
   contractInfo?: {
     decimals: number
     symbol: string
     name: string
   }
 }
-
-const allowedTokens = ['ETH', 'WETH', 'USDC', 'USDT', 'DAI', 'OP', 'ARB', 'MATIC', 'XDAI', 'AVAX', 'BNB', 'OKB']
 
 interface TokenListProps {
   onContinue: (selectedToken: Token) => void
@@ -63,11 +64,13 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
     balanceError,
   } = useTokenBalances(address as Address.Address, indexerGatewayClient)
 
+  const sourceTokenList = useSourceTokenList()
+
   const sortedTokens = useMemo(() => {
     return allSortedTokens.filter((token: any) => {
-      return !token.contractAddress || allowedTokens.includes(token.contractInfo?.symbol || '')
+      return !token.contractAddress || sourceTokenList.includes(token.contractInfo?.symbol || '')
     })
-  }, [allSortedTokens])
+  }, [allSortedTokens, sourceTokenList])
 
   const handleTokenSelect = (token: any) => {
     const isNative = !('contractAddress' in token)
@@ -85,6 +88,8 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
         imageUrl,
         chainId: token.chainId,
         contractAddress: zeroAddress,
+        balanceUsdFormatted: token.balanceUsdFormatted,
+        tokenPriceUsd: token.price?.value ?? 0,
         contractInfo: {
           decimals: 18,
           symbol: chainInfo?.nativeCurrency.symbol || 'ETH',
@@ -101,10 +106,13 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
         chainId: token.chainId,
         contractAddress: token.contractAddress,
         contractInfo: token.contractInfo,
+        balanceUsdFormatted: token.balanceUsdFormatted,
+        tokenPriceUsd: token.price?.value ?? 0,
       }
     }
 
     setSelectedToken(formattedToken)
+    onContinue(formattedToken)
   }
 
   const isTokenSelected = (token: any): boolean => {
@@ -259,18 +267,17 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
           const nativeSymbol = chainInfo?.nativeCurrency.symbol || 'ETH'
           const tokenSymbol = isNative ? nativeSymbol : token.contractInfo?.symbol || '???'
           const contractAddress = isNative ? zeroAddress : token.contractAddress
-          const imageUrl = `https://assets.sequence.info/images/tokens/small/${token.chainId}/${contractAddress}.webp`
+          let imageContractAddress = contractAddress
+          if (tokenSymbol === 'WETH') {
+            imageContractAddress = zeroAddress
+          }
+          const imageUrl = `https://assets.sequence.info/images/tokens/small/${token.chainId}/${imageContractAddress}.webp`
           const tokenName = isNative
             ? `${nativeSymbol} (${chainInfo?.name || 'Unknown Chain'})`
             : token.contractInfo?.name || 'Unknown Token'
           const formattedBalance = formatBalance(token.balance, isNative ? 18 : token.contractInfo?.decimals)
           const priceUsd = Number(token.price?.value) ?? 0
-          const balanceUsd = Number(formattedBalance) * priceUsd
-
-          const formattedBalanceUsd = Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-          }).format(balanceUsd)
+          const balanceUsdFormatted = token.balanceUsdFormatted ?? ''
 
           return (
             <div
@@ -318,7 +325,7 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
                 </p>
                 {priceUsd > 0 && (
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {formattedBalanceUsd}
+                    {balanceUsdFormatted}
                   </p>
                 )}
               </div>

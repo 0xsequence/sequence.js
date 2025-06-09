@@ -9,7 +9,7 @@ import { getRelayer } from '../../relayer.js'
 import { zeroAddress } from 'viem'
 import { useEnsAddress } from 'wagmi'
 import { mainnet } from 'viem/chains'
-
+import { formatBalance } from '../../tokenBalances.js'
 interface Token {
   id: number
   name: string
@@ -50,6 +50,7 @@ const SUPPORTED_CHAINS = [
   { id: 8453, name: 'Base', icon: chains.base.id },
   { id: 10, name: 'Optimism', icon: chains.optimism.id },
   { id: 42161, name: 'Arbitrum', icon: chains.arbitrum.id },
+  { id: 137, name: 'Polygon', icon: chains.polygon.id },
 ]
 
 // Available tokens
@@ -72,22 +73,6 @@ const getChainInfo = (chainId: number) => {
   return Object.values(chains).find((chain: any) => chain.id === chainId) || null
 }
 
-// Helper to format balance
-const formatBalance = (balance: string, decimals: number = 18) => {
-  try {
-    const formatted = formatUnits(BigInt(balance), decimals)
-    const num = parseFloat(formatted)
-    if (num === 0) return '0'
-    if (num < 0.0001) return num.toExponential(2)
-    if (num < 1) return num.toFixed(6)
-    if (num < 1000) return num.toFixed(4)
-    return num.toLocaleString(undefined, { maximumFractionDigits: 2 })
-  } catch (e) {
-    console.error('Error formatting balance:', e)
-    return balance
-  }
-}
-
 function getDestTokenAddress(chainId: number, tokenSymbol: string) {
   if (tokenSymbol === 'ETH') {
     return zeroAddress
@@ -108,6 +93,12 @@ function getDestTokenAddress(chainId: number, tokenSymbol: string) {
   if (chainId === 8453) {
     if (tokenSymbol === 'USDC') {
       return '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    }
+  }
+
+  if (chainId === 137) {
+    if (tokenSymbol === 'USDC') {
+      return '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
     }
   }
 
@@ -191,8 +182,11 @@ export const SendForm: React.FC<SendFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const formattedBalance = formatBalance(selectedToken.balance, selectedToken.contractInfo?.decimals)
+  const balanceUsdFormatted = (selectedToken as any).balanceUsdFormatted ?? '' // TODO: Add proper type
 
   const isValidRecipient = recipient && isAddress(recipient)
+
+  console.log('selectedToken', selectedToken)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -334,7 +328,15 @@ export const SendForm: React.FC<SendFormProps> = ({
             From: {selectedToken.name}
           </h3>
           <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
-            on {chainInfo?.name || 'Unknown Chain'} • Balance: {formattedBalance} {selectedToken.symbol}
+            on {chainInfo?.name || 'Unknown Chain'}
+          </p>
+          <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
+            Balance: {formattedBalance} {selectedToken.symbol}
+            {balanceUsdFormatted && (
+              <span className={`ml-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                ({balanceUsdFormatted})
+              </span>
+            )}
           </p>
         </div>
       </div>

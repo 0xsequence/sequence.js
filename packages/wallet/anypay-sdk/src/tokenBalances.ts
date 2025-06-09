@@ -7,12 +7,13 @@ import {
 } from '@0xsequence/indexer'
 import { useQuery } from '@tanstack/react-query'
 import { Address } from 'ox'
-import { useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useIndexerGatewayClient } from './indexerClient.js'
 import { useTokenPrices } from './prices.js'
 import { SequenceAPIClient, Price, Page } from '@0xsequence/api'
 import { useAPIClient } from './apiClient.js'
-import { zeroAddress } from 'viem'
+import { Chain, formatUnits, zeroAddress } from 'viem'
+import * as chains from 'viem/chains'
 
 export { type NativeTokenBalance, type TokenBalance }
 
@@ -29,8 +30,10 @@ function isNativeToken(token: TokenBalance | NativeTokenBalance): token is Nativ
 
 export interface GetTokenBalancesWithPrice {
   page: Page
-  nativeBalances: Array<NativeTokenBalance & { price?: Price; symbol?: string }>
-  balances: Array<TokenBalance & { price?: Price }>
+  nativeBalances: Array<
+    NativeTokenBalance & { price?: Price; symbol?: string; balanceUsd?: number; balanceUsdFormatted?: string }
+  >
+  balances: Array<TokenBalance & { price?: Price; balanceUsd?: number; balanceUsdFormatted?: string }>
 }
 
 export function useTokenBalances(
@@ -92,7 +95,7 @@ export function useTokenBalances(
   })
 
   const { data: tokenPrices } = useTokenPrices(
-    tokenBalancesData?.balances
+    (tokenBalancesData?.balances ?? [])
       .map((b) => {
         return {
           tokenId: b.contractInfo?.symbol,
@@ -100,11 +103,15 @@ export function useTokenBalances(
           chainId: b.contractInfo?.chainId!,
         }
       })
-      .concat({
-        tokenId: 'ETH',
-        contractAddress: zeroAddress,
-        chainId: 1,
-      }) ?? [],
+      .concat(
+        (tokenBalancesData?.nativeBalances ?? []).map((b) => {
+          return {
+            tokenId: b.symbol,
+            contractAddress: zeroAddress,
+            chainId: b.chainId,
+          }
+        }),
+      ) ?? [],
     apiClient,
   )
 
@@ -121,7 +128,9 @@ export function useTokenBalances(
     }
 
     for (const balance of tokenBalancesData.nativeBalances) {
-      const price = tokenPrices?.find((p) => p.token.contractAddress === zeroAddress && balance.symbol === 'ETH')
+      const price = tokenPrices?.find(
+        (p) => p.token.contractAddress === zeroAddress && p.token.chainId === balance.chainId,
+      )
       if (price) {
         balance.price = price.price
       }
@@ -136,6 +145,13 @@ export function useTokenBalances(
         } catch {
           return false
         }
+      })
+      .map((token) => {
+        if (token.price) {
+          token.balanceUsd = getTokenBalanceUsd(token, token.price)
+          token.balanceUsdFormatted = getTokenBalanceUsdFormatted(token, token.price)
+        }
+        return token
       })
       .sort((a, b) => {
         if (isNativeToken(a)) return -1
@@ -158,4 +174,63 @@ export function useTokenBalances(
     balanceError,
     sortedTokens,
   }
+}
+
+export async function getSourceTokenList(): Promise<string[]> {
+  const allowedTokens = ['ETH', 'WETH', 'USDC', 'USDT', 'DAI', 'OP', 'ARB', 'MATIC', 'XDAI', 'AVAX', 'BNB', 'OKB']
+  return allowedTokens
+}
+
+export function useSourceTokenList(): string[] {
+  const [list, setList] = useState<string[]>([])
+  useEffect(() => {
+    getSourceTokenList().then(setList)
+  }, [])
+  return list
+}
+
+// Helper to format balance
+export function formatBalance(balance: string, decimals: number = 18) {
+  try {
+    const formatted = formatUnits(BigInt(balance), decimals)
+    const num = parseFloat(formatted)
+    if (num === 0) return '0'
+    if (num < 0.0001) return num.toExponential(2)
+    if (num < 1) return num.toFixed(6)
+    if (num < 1000) return num.toFixed(4)
+    return num.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  } catch (e) {
+    console.error('Error formatting balance:', e)
+    return balance
+  }
+}
+
+// Helper to get chain info
+export function getChainInfo(chainId: number): Chain | null {
+  // TODO: Add proper type
+  return (Object.values(chains).find((chain: any) => chain.id === chainId) as Chain | undefined) || null
+}
+
+export function getTokenBalanceUsd(token: TokenBalance | NativeTokenBalance, tokenPrice: Price): number {
+  const isNative = isNativeToken(token)
+  const formattedBalance = formatBalance(token.balance, isNative ? 18 : token.contractInfo?.decimals)
+  const priceUsd = Number(tokenPrice.value) ?? 0
+  return Number(formattedBalance) * priceUsd
+}
+
+export function getTokenBalanceUsdFormatted(token: TokenBalance | NativeTokenBalance, tokenPrice: Price): string {
+  const balanceUsd = getTokenBalanceUsd(token, tokenPrice)
+  return Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(balanceUsd)
+}
+
+export function useTokenBalanceUsdFormat(token: TokenBalance | NativeTokenBalance, tokenPrice: Price): string {
+  const [format, setFormat] = useState<string>('')
+  useEffect(() => {
+    const formattedBalance = getTokenBalanceUsdFormatted(token, tokenPrice)
+    setFormat(formattedBalance)
+  }, [token])
+  return format
 }

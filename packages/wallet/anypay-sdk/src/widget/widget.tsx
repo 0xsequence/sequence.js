@@ -39,18 +39,13 @@ interface Token {
 }
 
 const getChainConfig = (chainId: number) => {
-  switch (chainId) {
-    case 1:
-      return mainnet
-    case 8453:
-      return base
-    case 10:
-      return optimism
-    case 42161:
-      return arbitrum
-    default:
-      throw new Error(`Unsupported chain ID: ${chainId}`)
+  for (const chain of Object.values(chains) as any[]) {
+    // TODO: add proper types
+    if (chain.id === chainId) {
+      return chain
+    }
   }
+  throw new Error(`Unsupported chain ID: ${chainId}`)
 }
 
 export type AnyPayWidgetProps = {
@@ -109,6 +104,7 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
   const [destinationTxHash, setDestinationTxHash] = useState('')
   const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Update theme when system preference changes
   useEffect(() => {
@@ -170,17 +166,22 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
   }
 
   const handleTokenSelect = (token: Token) => {
-    if (window.ethereum && address) {
-      const chain = getChainConfig(token.chainId)
-      const client = createWalletClient({
-        account: address,
-        chain,
-        transport: custom(window.ethereum),
-      })
-      setWalletClient(client)
+    try {
+      setError(null)
+      if (window.ethereum && address) {
+        const chain = getChainConfig(token.chainId)
+        const client = createWalletClient({
+          account: address,
+          chain,
+          transport: custom(window.ethereum),
+        })
+        setWalletClient(client)
+      }
+      setSelectedToken(token)
+      setCurrentScreen('send')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
     }
-    setSelectedToken(token)
-    setCurrentScreen('send')
   }
 
   const handleSend = async (amount: string, recipient: string) => {
@@ -319,6 +320,15 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
             layout
           >
             {renderScreenContent()}
+            {error && (
+              <div
+                className={`border rounded-lg p-4 mt-4 ${
+                  theme === 'dark' ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'
+                }`}
+              >
+                <p className={`text-sm break-words ${theme === 'dark' ? 'text-red-200' : 'text-red-600'}`}>{error}</p>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
         <motion.div
