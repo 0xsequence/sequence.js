@@ -1,7 +1,7 @@
 import { vi, beforeEach, describe, it, expect } from 'vitest'
 import { Wallet } from '../src/wallet.js'
-import { AbiFunction, AbiParameters, Address, Hash, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
-import { UserOperation } from 'ox/erc4337'
+import { Abi, AbiFunction, AbiParameters, Address, Hash, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { EntryPoint, UserOperation } from 'ox/erc4337'
 import { ADD_HOOK, EXECUTE_USER_OP } from '../../primitives/dist/constants.js'
 import { Pk } from '../src/signers/pk/index.js'
 import { Envelope, Relayer } from '../src/index.js'
@@ -12,7 +12,7 @@ describe('demo4337', () => {
   it(
     'demo1',
     async () => {
-      const signerPk = Hex.random(32)
+      const signerPk = '0x57f8ae37a6d0b76123b9a78dbbb82930c0c2f50d559292581cb55cdedfc4a8f8'
       const signer = new Pk(signerPk)
 
       const wallet = await Wallet.fromConfiguration({
@@ -25,7 +25,7 @@ describe('demo4337', () => {
         },
       })
 
-      console.log(wallet.address)
+      console.log('WALLET ADDRESS', wallet.address)
 
       // Arbitrum provider
       const arbitrumProvider = Provider.from(RpcTransport.fromHttp('https://nodes.sequence.app/arbitrum'))
@@ -37,7 +37,7 @@ describe('demo4337', () => {
           {
             to: wallet.address,
             value: 0n,
-            data: AbiFunction.encodeData(ADD_HOOK, ['0x9c145aed', '0x9dc19C4AC9B26FdFFb0668Bc7ac098f240c74C87']),
+            data: AbiFunction.encodeData(ADD_HOOK, ['0x9c145aed', '0x21b1315475650399E21AD9Ed704d21Fa2d0640bd']),
             gasLimit: 0n,
             delegateCall: false,
             onlyFallback: false,
@@ -46,7 +46,7 @@ describe('demo4337', () => {
           {
             to: wallet.address,
             value: 0n,
-            data: AbiFunction.encodeData(ADD_HOOK, ['0x19822f7c', '0x9dc19C4AC9B26FdFFb0668Bc7ac098f240c74C87']),
+            data: AbiFunction.encodeData(ADD_HOOK, ['0x19822f7c', '0x21b1315475650399E21AD9Ed704d21Fa2d0640bd']),
             gasLimit: 0n,
             delegateCall: false,
             onlyFallback: false,
@@ -88,7 +88,7 @@ describe('demo4337', () => {
         calls: [
           {
             to: '0x750EF1D7a0b4Ab1c97B7A623D7917CcEb5ea779C',
-            value: 100000000000000n,
+            value: 1300000000000000n,
             data: '0x',
             gasLimit: 50_000n,
             delegateCall: false,
@@ -99,17 +99,38 @@ describe('demo4337', () => {
       }
 
       const packedPayload = Hex.fromBytes(Payload.encode(randomUserOperation))
-      const operation: UserOperation.UserOperation<'0.6', false> = {
+      const operation: UserOperation.UserOperation<'0.7', false> = {
         sender: wallet.address,
-        nonce: 0n,
-        initCode: '0x',
+        nonce: 3n,
         callData: AbiFunction.encodeData(EXECUTE_USER_OP, [packedPayload]),
         callGasLimit: 200_000n,
-        maxFeePerGas: 1000000000n,
-        maxPriorityFeePerGas: 1000000000n,
-        preVerificationGas: 50_000n,
-        verificationGasLimit: 50_000n,
+        maxFeePerGas: 100000000n,
+        maxPriorityFeePerGas: 10000000n,
+        preVerificationGas: 150_000n,
+        verificationGasLimit: 100_000n,
       }
+
+      const accountGasLimits = Hex.concat(
+        Hex.padLeft(Hex.fromNumber(operation.verificationGasLimit), 16),
+        Hex.padLeft(Hex.fromNumber(operation.callGasLimit), 16),
+      )
+      const gasFees = Hex.concat(
+        Hex.padLeft(Hex.fromNumber(operation.maxPriorityFeePerGas), 16),
+        Hex.padLeft(Hex.fromNumber(operation.maxFeePerGas), 16),
+      )
+      const initCode_hashed = Hash.keccak256(
+        operation.factory && operation.factoryData ? Hex.concat(operation.factory, operation.factoryData) : '0x',
+      )
+      const paymasterAndData_hashed = Hash.keccak256(
+        operation.paymaster
+          ? Hex.concat(
+              operation.paymaster,
+              Hex.padLeft(Hex.fromNumber(operation.paymasterVerificationGasLimit || 0), 16),
+              Hex.padLeft(Hex.fromNumber(operation.paymasterPostOpGasLimit || 0), 16),
+              operation.paymasterData || '0x',
+            )
+          : '0x',
+      )
 
       const packedUserOp = AbiParameters.encode(
         [
@@ -117,34 +138,39 @@ describe('demo4337', () => {
           { type: 'uint256' },
           { type: 'bytes32' },
           { type: 'bytes32' },
+          { type: 'bytes32' },
           { type: 'uint256' },
-          { type: 'uint256' },
-          { type: 'uint256' },
-          { type: 'uint256' },
-          { type: 'uint256' },
+          { type: 'bytes32' },
           { type: 'bytes32' },
         ],
         [
           operation.sender,
           operation.nonce,
-          Hash.keccak256(operation.initCode ?? '0x'),
+          initCode_hashed,
           Hash.keccak256(operation.callData),
-          operation.callGasLimit,
-          operation.verificationGasLimit,
+          accountGasLimits,
           operation.preVerificationGas,
-          operation.maxFeePerGas,
-          operation.maxPriorityFeePerGas,
-          Hash.keccak256(operation.paymasterAndData ?? '0x'),
+          gasFees,
+          paymasterAndData_hashed,
         ],
       )
 
+      const entrypoint = '0x0000000071727De22E5E9d8BAf0edAc6f37da032'
+
       const signMessage = AbiParameters.encode(
         [{ type: 'bytes32' }, { type: 'address' }, { type: 'uint256' }],
-        [Hash.keccak256(packedUserOp), '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789', 42161n],
+        [Hash.keccak256(packedUserOp), entrypoint, 42161n],
       )
 
       const signPayload = Payload.fromMessage(signMessage)
       console.log(signPayload)
+
+      const opHash = UserOperation.hash(operation, {
+        chainId: 42161,
+        entryPointAddress: entrypoint,
+        entryPointVersion: '0.7',
+      })
+      console.log('opHash', opHash)
 
       const blankEnvelope2 = await wallet.prepareBlankEnvelope(42161n)
       const envelope2: Envelope.Envelope<Payload.Message> = {
@@ -174,15 +200,32 @@ describe('demo4337', () => {
 
       console.log(rpcSignedUserOperation)
 
+      // Encoded for manual call
+      const encodedUserOp = UserOperation.toPacked(signedUserOperation)
+      console.log('packed user op', encodedUserOp)
+
       // const envelope2
 
-      // const bundler = 'https://api.pimlico.io/v2/arbitrum/rpc';
-      // const provider = Provider.from(RpcTransport.fromHttp(bundler))
+      // pack exactly as the contract expects
+      const packed = UserOperation.toPacked(signedUserOperation)
+      const beneficiary = signer.address
 
-      // const status = await provider.request({
-      //   method: 'eth_getTransactionReceipt',
-      //   params: [opHash],
-      // })
+      const data = AbiFunction.encodeData(AbiFunction.fromAbi(EntryPoint.abiV07, 'handleOps'), [[packed], beneficiary])
+
+      // send or just simulate with callStatic
+      console.log('entrypoint data', data)
+      // const { hash } = await signer.({ to: entrypoint, data })
+      // console.log('handleOps tx', hash)
+
+      const bundler = 'https://api.pimlico.io/v2/42161/rpc?apikey=pim_XuUPRNzR5t5XUpAiZ2yQVQ'
+      const provider = Provider.from(RpcTransport.fromHttp(bundler))
+
+      const status = await provider.request({
+        method: 'eth_sendUserOperation',
+        params: [rpcSignedUserOperation, entrypoint],
+      })
+
+      console.log(status)
     },
     { timeout: 1000000 },
   )
