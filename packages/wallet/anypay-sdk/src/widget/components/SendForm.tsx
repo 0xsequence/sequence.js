@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
+
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { createWalletClient, custom, formatUnits, parseUnits, type Account } from 'viem'
@@ -124,7 +125,7 @@ export const SendForm: React.FC<SendFormProps> = ({
   const {
     data: ensAddress,
     isLoading,
-    error,
+    error: ensError,
   } = useEnsAddress({
     name: recipientInput.endsWith('.eth') ? recipientInput : undefined,
     chainId: mainnet.id,
@@ -183,7 +184,7 @@ export const SendForm: React.FC<SendFormProps> = ({
       const client = createWalletClient({
         account,
         chain: getChainConfig(selectedToken.chainId),
-        transport: custom(window.ethereum),
+        transport: custom((window as any).ethereum),
       })
 
       console.log('selectedDestToken.symbol', selectedDestToken)

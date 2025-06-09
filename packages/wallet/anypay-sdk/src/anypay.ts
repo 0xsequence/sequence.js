@@ -1134,6 +1134,12 @@ export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
   }
 
   function createIntent(args: GetIntentCallsPayloadsArgs) {
+    if (
+      args.originChainId === args.destinationChainId &&
+      isAddressEqual(Address.from(args.originTokenAddress), Address.from(args.destinationTokenAddress))
+    ) {
+      throw new Error('The same token cannot be used as both the source and destination token.')
+    }
     createIntentMutation.mutate(args)
   }
 

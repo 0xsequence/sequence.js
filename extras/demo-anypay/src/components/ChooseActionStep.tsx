@@ -104,7 +104,7 @@ export const ChooseActionStep: React.FC<ChooseActionStepProps> = ({
               <span>
                 Pay Action{' '}
                 <Text variant="small" color="secondary">
-                  (Donate 0.03 $USDC)
+                  (Donate $0.03 USDC)
                 </Text>
               </span>
             </>
