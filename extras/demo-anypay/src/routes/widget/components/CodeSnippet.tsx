@@ -12,7 +12,7 @@ interface CodeSnippetProps {
   useCustomButton: boolean
   children?: ReactNode
   renderInline?: boolean
-  theme: 'light' | 'dark'
+  theme: 'light' | 'dark' | 'auto' | null
 }
 
 export const CodeSnippet: React.FC<CodeSnippetProps> = ({

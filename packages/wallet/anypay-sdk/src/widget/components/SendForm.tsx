@@ -1,15 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { NetworkImage, TokenImage } from '@0xsequence/design-system'
 import * as chains from 'viem/chains'
 import { formatUnits, parseUnits, type Account, isAddress, getAddress, WalletClient } from 'viem'
 import { ChevronDown, Loader2, ChevronLeft } from 'lucide-react'
-import { prepareSend } from '../../anypay.js'
-import { getAPIClient } from '../../apiClient.js'
+import { prepareSend, TransactionState } from '../../anypay.js'
+import { getAPIClient, useAPIClient } from '../../apiClient.js'
 import { getRelayer } from '../../relayer.js'
 import { zeroAddress } from 'viem'
 import { useEnsAddress } from 'wagmi'
 import { mainnet } from 'viem/chains'
 import { formatBalance } from '../../tokenBalances.js'
+import { useTokenPrices } from '../../prices.js'
 
 interface Token {
   id: number
@@ -44,6 +45,7 @@ interface SendFormProps {
   toCalldata?: string
   walletClient?: WalletClient
   theme?: 'light' | 'dark'
+  onTransactionStateChange: (transactionStates: TransactionState[]) => void
 }
 
 // Available chains
@@ -61,11 +63,13 @@ const SUPPORTED_TOKENS = [
     symbol: 'ETH',
     name: 'Ethereum',
     imageUrl: `https://assets.sequence.info/images/tokens/small/1/0x0000000000000000000000000000000000000000.webp`,
+    decimals: 18,
   },
   {
     symbol: 'USDC',
     name: 'USD Coin',
     imageUrl: `https://assets.sequence.info/images/tokens/small/1/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.webp`,
+    decimals: 6,
   },
 ]
 
@@ -124,6 +128,7 @@ export const SendForm: React.FC<SendFormProps> = ({
   toCalldata,
   walletClient,
   theme = 'light',
+  onTransactionStateChange,
 }) => {
   const [amount, setAmount] = useState(toAmount ?? '')
   const [recipientInput, setRecipientInput] = useState(toRecipient ?? '')
@@ -158,6 +163,21 @@ export const SendForm: React.FC<SendFormProps> = ({
     toToken ? SUPPORTED_TOKENS.find((token) => token.symbol === toToken) || SUPPORTED_TOKENS[0]! : SUPPORTED_TOKENS[0]!,
   )
 
+  const apiClient = useAPIClient({ apiUrl, projectAccessKey: sequenceApiKey })
+
+  const { data: destTokenPrices } = useTokenPrices(
+    selectedDestToken
+      ? [
+          {
+            tokenId: selectedDestToken.symbol,
+            contractAddress: getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
+            chainId: selectedChain.id,
+          },
+        ]
+      : [],
+    apiClient,
+  )
+
   // Update selectedChain when toChainId prop changes
   useEffect(() => {
     if (toChainId) {
@@ -187,13 +207,12 @@ export const SendForm: React.FC<SendFormProps> = ({
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
   const chainInfo = getChainInfo(selectedToken.chainId) as any // TODO: Add proper type
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isWaitingForWalletConfirm, setIsWaitingForWalletConfirm] = useState(false)
 
   const formattedBalance = formatBalance(selectedToken.balance, selectedToken.contractInfo?.decimals)
   const balanceUsdFormatted = (selectedToken as any).balanceUsdFormatted ?? '' // TODO: Add proper type
 
   const isValidRecipient = recipient && isAddress(recipient)
-
-  console.log('selectedToken', selectedToken)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -210,10 +229,13 @@ export const SendForm: React.FC<SendFormProps> = ({
   }, [])
 
   // Calculate USD value
-  const amountUsdValue =
-    amount && selectedDestToken.symbol === 'ETH'
-      ? `≈ $${(parseFloat(amount) * (selectedToken.tokenPriceUsd || 0)).toFixed(2)} USD`
-      : null
+  const amountUsdValue = useMemo(() => {
+    const amountUsd = parseFloat(amount) * (destTokenPrices?.[0]?.price?.value ?? 0)
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amountUsd)
+  }, [amount, destTokenPrices])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -221,12 +243,9 @@ export const SendForm: React.FC<SendFormProps> = ({
 
     try {
       setIsSubmitting(true)
-      const decimals = selectedDestToken.symbol === 'ETH' ? 18 : 6
+      const decimals = selectedDestToken?.decimals
       const parsedAmount = parseUnits(amount, decimals).toString()
 
-      console.log('selectedDestToken.symbol', selectedDestToken)
-
-      const apiClient = getAPIClient({ apiUrl, projectAccessKey: sequenceApiKey })
       const originRelayer = getRelayer({ env, useV3Relayers: true }, selectedToken.chainId)
       const destinationRelayer = getRelayer({ env, useV3Relayers: true }, selectedChain.id)
 
@@ -250,6 +269,9 @@ export const SendForm: React.FC<SendFormProps> = ({
         destinationRelayer,
         destinationCalldata: toCalldata,
         dryMode: false, // Set to true to skip the metamask transaction, for testing purposes
+        onTransactionStateChange: (transactionStates: TransactionState[]) => {
+          onTransactionStateChange(transactionStates)
+        },
       }
 
       console.log('options', options)
@@ -259,9 +281,11 @@ export const SendForm: React.FC<SendFormProps> = ({
 
       function onOriginSend() {
         onConfirm()
+        setIsWaitingForWalletConfirm(false)
         onSend(amount, recipient)
       }
 
+      setIsWaitingForWalletConfirm(true)
       // Wait for full send to complete
       const { originUserTxReceipt, originMetaTxnReceipt, destinationMetaTxnReceipt } = await send(onOriginSend)
 
@@ -276,12 +300,16 @@ export const SendForm: React.FC<SendFormProps> = ({
     } catch (error) {
       console.error('Error in prepareSend:', error)
       setError(error instanceof Error ? error.message : 'An unexpected error occurred')
-      setIsSubmitting(false)
     }
+
+    setIsSubmitting(false)
+    setIsWaitingForWalletConfirm(false)
   }
 
   // Get button text based on recipient and calldata
-  const getButtonText = () => {
+  const buttonText = useMemo(() => {
+    if (isWaitingForWalletConfirm) return 'Waiting for wallet...'
+    if (isSubmitting) return 'Processing...'
     if (!amount) return 'Enter amount'
     if (!isValidRecipient) return 'Enter recipient'
 
@@ -299,7 +327,16 @@ export const SendForm: React.FC<SendFormProps> = ({
     } catch {
       return `Send ${amount} ${selectedDestToken.symbol}`
     }
-  }
+  }, [
+    amount,
+    isValidRecipient,
+    recipient,
+    account.address,
+    selectedDestToken.symbol,
+    toCalldata,
+    isWaitingForWalletConfirm,
+    isSubmitting,
+  ])
 
   return (
     <div className="space-y-6">
@@ -552,8 +589,8 @@ export const SendForm: React.FC<SendFormProps> = ({
               </div>
             </div>
           )}
-          {amount && selectedDestToken.symbol === 'ETH' && (
-            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{amountUsdValue}</div>
+          {amount && selectedDestToken.symbol && (
+            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>≈ {amountUsdValue}</div>
           )}
         </div>
 
@@ -628,17 +665,17 @@ export const SendForm: React.FC<SendFormProps> = ({
             disabled={!amount || !isValidRecipient || isSubmitting}
             className={`w-full font-semibold py-3 px-4 rounded-[24px] transition-colors relative ${
               theme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white disabled:text-gray-400'
-                : 'bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white disabled:text-gray-500'
+                ? 'bg-blue-600 disabled:bg-gray-700 text-white disabled:text-gray-400 enabled:hover:bg-blue-700'
+                : 'bg-blue-500 disabled:bg-gray-300 text-white disabled:text-gray-500 enabled:hover:bg-blue-600'
             } disabled:cursor-not-allowed cursor-pointer`}
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
                 <Loader2 className={`w-5 h-5 animate-spin mr-2 ${theme === 'dark' ? 'text-gray-400' : 'text-white'}`} />
-                <span>Processing...</span>
+                <span>{buttonText}</span>
               </div>
             ) : (
-              getButtonText()
+              buttonText
             )}
           </button>
         </div>

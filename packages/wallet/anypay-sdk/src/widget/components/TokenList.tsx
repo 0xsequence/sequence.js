@@ -340,8 +340,8 @@ export const TokenList: React.FC<TokenListProps> = ({ onContinue, onBack, indexe
           disabled={!selectedToken}
           className={`w-full font-semibold py-3 px-4 rounded-[24px] transition-colors ${
             theme === 'dark'
-              ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white disabled:text-gray-400'
-              : 'bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white disabled:text-gray-500'
+              ? 'bg-blue-600 disabled:bg-gray-700 text-white disabled:text-gray-400 enabled:hover:bg-blue-700'
+              : 'bg-blue-500 disabled:bg-gray-300 text-white disabled:text-gray-500 enabled:hover:bg-blue-600'
           } disabled:cursor-not-allowed cursor-pointer`}
         >
           Continue

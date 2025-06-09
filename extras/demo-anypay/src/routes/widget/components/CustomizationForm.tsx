@@ -37,8 +37,8 @@ interface CustomizationFormProps {
   setUseCustomButton: (value: boolean) => void
   renderInline: boolean
   setRenderInline: (value: boolean) => void
-  theme: 'light' | 'dark' | 'auto'
-  setTheme: (value: 'light' | 'dark' | 'auto') => void
+  theme: 'light' | 'dark' | 'auto' | null
+  setTheme: (value: 'light' | 'dark' | 'auto' | null) => void
 }
 
 // Local storage keys
@@ -50,6 +50,7 @@ const STORAGE_KEYS = {
   CALLDATA: 'anypay_calldata',
   CUSTOM_BUTTON: 'anypay_custom_button',
   RENDER_INLINE: 'anypay_render_inline',
+  THEME: 'anypay_theme',
 } as const
 
 export const CustomizationForm: React.FC<CustomizationFormProps> = ({
@@ -89,6 +90,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
     const savedCalldata = localStorage.getItem(STORAGE_KEYS.CALLDATA)
     const savedCustomButton = localStorage.getItem(STORAGE_KEYS.CUSTOM_BUTTON)
     const savedRenderInline = localStorage.getItem(STORAGE_KEYS.RENDER_INLINE)
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as 'light' | 'dark' | 'auto' | null
     if (savedRecipient) setToRecipient(savedRecipient)
     if (savedAmount) setToAmount(savedAmount)
     if (savedChainId) setToChainId(Number(savedChainId))
@@ -96,7 +98,17 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
     if (savedCalldata) setToCalldata(savedCalldata)
     if (savedCustomButton) setUseCustomButton(savedCustomButton === 'true')
     if (savedRenderInline) setRenderInline(savedRenderInline === 'true')
-  }, [])
+    if (savedTheme) setTheme(savedTheme)
+  }, [
+    setToRecipient,
+    setToAmount,
+    setToChainId,
+    setToToken,
+    setToCalldata,
+    setUseCustomButton,
+    setRenderInline,
+    setTheme,
+  ])
 
   // Save values to localStorage whenever they change
   useEffect(() => {
@@ -126,11 +138,18 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
 
   // Save custom button state to localStorage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CUSTOM_BUTTON, useCustomButton.toString())
+    if (useCustomButton) localStorage.setItem(STORAGE_KEYS.CUSTOM_BUTTON, 'true')
+    else localStorage.removeItem(STORAGE_KEYS.CUSTOM_BUTTON)
   }, [useCustomButton])
 
+  // Save theme to localStorage
   useEffect(() => {
-    if (renderInline) localStorage.setItem(STORAGE_KEYS.RENDER_INLINE, renderInline.toString())
+    if (theme) localStorage.setItem(STORAGE_KEYS.THEME, theme)
+    else localStorage.removeItem(STORAGE_KEYS.THEME)
+  }, [theme])
+
+  useEffect(() => {
+    if (renderInline) localStorage.setItem(STORAGE_KEYS.RENDER_INLINE, 'true')
     else localStorage.removeItem(STORAGE_KEYS.RENDER_INLINE)
   }, [renderInline])
 
@@ -165,6 +184,7 @@ export const CustomizationForm: React.FC<CustomizationFormProps> = ({
     setToCalldata('')
     setUseCustomButton(false)
     setRenderInline(false)
+    setTheme('light')
     // Clear localStorage
     Object.values(STORAGE_KEYS).forEach((key) => {
       localStorage.removeItem(key)

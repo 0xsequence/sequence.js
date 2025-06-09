@@ -23,11 +23,12 @@ import {
   WalletClient,
   TransactionReceipt,
 } from 'viem'
-import { arbitrum, base, mainnet, optimism } from 'viem/chains'
+import * as chains from 'viem/chains'
 import { useAPIClient } from './apiClient.js'
 import { useMetaTxnsMonitor, MetaTxn, getMetaTxStatus } from './metaTxnMonitor.js'
 import { relayerSendMetaTx } from './metaTxns.js'
 import { useRelayers, getBackupRelayer } from './relayer.js'
+import { getChainInfo } from './tokenBalances.js'
 import { findFirstPreconditionForChainId, findPreconditionAddress } from './preconditions.js'
 import { Relayer } from '@0xsequence/wallet-core'
 import {
@@ -136,21 +137,6 @@ export type UseAnyPayReturn = {
 }
 
 const RETRY_WINDOW_MS = 10_000
-
-export const getChainConfig = (chainId: number): Chain => {
-  switch (chainId) {
-    case 1:
-      return mainnet
-    case 10:
-      return optimism
-    case 42161:
-      return arbitrum
-    case 8453:
-      return base
-    default:
-      throw new Error(`Unsupported chain ID: ${chainId}`)
-  }
-}
 
 export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
   const { account, disableAutoExecute = false, env, useV3Relayers = true, sequenceApiKey } = config
@@ -645,7 +631,7 @@ export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
               setOriginBlockTimestamp(null)
               return
             }
-            const chainConfig = getChainConfig(originCallParams.chainId)
+            const chainConfig = getChainInfo(originCallParams.chainId)!
             const client = createPublicClient({
               chain: chainConfig,
               transport: http(),
@@ -1069,7 +1055,7 @@ export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
               throw new Error(`Invalid chainId for meta transaction: ${metaTxn.chainId}`)
             }
 
-            const chainConfig = getChainConfig(chainId)
+            const chainConfig = getChainInfo(chainId)!
             const client = createPublicClient({
               chain: chainConfig,
               transport: http(),
@@ -1248,7 +1234,14 @@ export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
   }
 }
 
-type SendOptions = {
+export type TransactionState = {
+  transactionHash: string
+  explorerUrl: string
+  chainId: number
+  state: 'pending' | 'failed' | 'confirmed'
+}
+
+export type SendOptions = {
   account: AccountType
   originTokenAddress: string
   originChainId: number
@@ -1265,9 +1258,10 @@ type SendOptions = {
   originRelayer: Relayer.Rpc.RpcRelayer
   destinationRelayer: Relayer.Rpc.RpcRelayer
   destinationCalldata?: string
+  onTransactionStateChange: (transactionStates: TransactionState[]) => void
 }
 
-type SendReturn = {
+export type SendReturn = {
   originUserTxReceipt: TransactionReceipt | null
   originMetaTxnReceipt: any // TODO: Add proper type
   destinationMetaTxnReceipt: any // TODO: Add proper type
@@ -1291,8 +1285,9 @@ export async function prepareSend(options: SendOptions) {
     originRelayer,
     destinationRelayer,
     destinationCalldata,
+    onTransactionStateChange,
   } = options
-  const chain = getChainConfig(originChainId)
+  const chain = getChainInfo(originChainId)!
   const isToSameChain = originChainId === destinationChainId
   const isToSameToken = originTokenAddress === destinationTokenAddress
 
@@ -1326,6 +1321,36 @@ export async function prepareSend(options: SendOptions) {
     destinationCallValue: _destinationCallValue,
   }
 
+  const transactionStates: TransactionState[] = []
+
+  // origin tx
+  transactionStates.push({
+    transactionHash: '',
+    explorerUrl: '',
+    chainId: originChainId,
+    state: 'pending',
+  })
+
+  if (!isToSameToken) {
+    // swap + bridge tx
+    transactionStates.push({
+      transactionHash: '',
+      explorerUrl: '',
+      chainId: originChainId,
+      state: 'pending',
+    })
+
+    if (!isToSameChain) {
+      // destination tx
+      transactionStates.push({
+        transactionHash: '',
+        explorerUrl: '',
+        chainId: destinationChainId,
+        state: 'pending',
+      })
+    }
+  }
+
   if (isToSameToken && isToSameChain) {
     return {
       send: async (onOriginSend: () => void): Promise<SendReturn> => {
@@ -1334,12 +1359,14 @@ export async function prepareSend(options: SendOptions) {
           data:
             destinationCalldata ||
             (originTokenAddress === zeroAddress
-              ? '0x00'
+              ? '0x'
               : getERC20TransferData(recipient, BigInt(destinationTokenAmount))),
           value: originTokenAddress == zeroAddress ? BigInt(destinationTokenAmount) : '0',
           chainId: originChainId,
           chain,
         }
+
+        console.log('origin call params', originCallParams)
 
         let originUserTxReceipt: TransactionReceipt | null = null
         let originMetaTxnReceipt: any = null // TODO: Add proper type
@@ -1347,16 +1374,35 @@ export async function prepareSend(options: SendOptions) {
 
         await walletClient.switchChain({ id: originChainId })
         if (!dryMode) {
+          onTransactionStateChange([
+            {
+              transactionHash: '',
+              explorerUrl: '',
+              chainId: originChainId,
+              state: 'pending',
+            },
+          ])
           console.log('origin call params', originCallParams)
-          const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
-          console.log('origin tx', tx)
-          // Wait for transaction receipt
-          const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
-          console.log('receipt', receipt)
-          originUserTxReceipt = receipt
+          const txHash = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
+          console.log('origin tx', txHash)
+
           if (onOriginSend) {
             onOriginSend()
           }
+
+          // Wait for transaction receipt
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash })
+          console.log('receipt', receipt)
+          originUserTxReceipt = receipt
+
+          onTransactionStateChange([
+            {
+              transactionHash: originUserTxReceipt?.transactionHash!,
+              explorerUrl: getExplorerUrl(originUserTxReceipt?.transactionHash!, originChainId),
+              chainId: originChainId,
+              state: originUserTxReceipt?.status === 'success' ? 'confirmed' : 'failed',
+            },
+          ])
         }
 
         return {
@@ -1422,6 +1468,7 @@ export async function prepareSend(options: SendOptions) {
       let originMetaTxnReceipt: any = null // TODO: Add proper type
       let destinationMetaTxnReceipt: any = null // TODO: Add proper type
 
+      onTransactionStateChange(transactionStates)
       await walletClient.switchChain({ id: originChainId })
 
       const capabilities = await walletClient.request({
@@ -1503,13 +1550,13 @@ export async function prepareSend(options: SendOptions) {
             await new Promise((r) => setTimeout(r, 2000))
           }
 
-          const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}` })
-          console.log('receipt', receipt)
-          originUserTxReceipt = receipt
-
           if (onOriginSend) {
             onOriginSend()
           }
+
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}` })
+          console.log('receipt', receipt)
+          originUserTxReceipt = receipt
         }
       } else {
         if (!dryMode) {
@@ -1529,15 +1576,26 @@ export async function prepareSend(options: SendOptions) {
 
           const tx = await sendOriginTransaction(account, walletClient, originCallParams as any) // TODO: Add proper type
           console.log('origin tx', tx)
+
+          if (onOriginSend) {
+            onOriginSend()
+          }
+
           // Wait for transaction receipt
           const receipt = await publicClient.waitForTransactionReceipt({ hash: tx })
           console.log('receipt', receipt)
           originUserTxReceipt = receipt
-          if (onOriginSend) {
-            onOriginSend()
-          }
         }
       }
+
+      transactionStates[0] = {
+        transactionHash: originUserTxReceipt?.transactionHash!,
+        explorerUrl: getExplorerUrl(originUserTxReceipt?.transactionHash!, originChainId),
+        chainId: originChainId,
+        state: originUserTxReceipt?.status === 'success' ? 'confirmed' : 'failed',
+      }
+
+      onTransactionStateChange(transactionStates)
 
       await new Promise((resolve) => setTimeout(resolve, 2000)) // TODO: make sure relayer is ready with a better check
 
@@ -1564,6 +1622,15 @@ export async function prepareSend(options: SendOptions) {
         tries++
       }
 
+      transactionStates[1] = {
+        transactionHash: originMetaTxnReceipt?.txnHash!,
+        explorerUrl: getExplorerUrl(originMetaTxnReceipt?.txnHash!, originChainId),
+        chainId: originChainId,
+        state: originMetaTxnReceipt?.status === 'SUCCEEDED' ? 'confirmed' : 'failed',
+      }
+
+      onTransactionStateChange(transactionStates)
+
       if (!isToSameChain) {
         await new Promise((resolve) => setTimeout(resolve, 2000)) // TODO: make sure relayer is ready with a better check
         const metaTx2 = intent.metaTxns[1]!
@@ -1583,6 +1650,15 @@ export async function prepareSend(options: SendOptions) {
           }
           await new Promise((resolve) => setTimeout(resolve, 1000))
         }
+
+        transactionStates[2] = {
+          transactionHash: destinationMetaTxnReceipt?.txnHash!,
+          explorerUrl: getExplorerUrl(destinationMetaTxnReceipt?.txnHash!, destinationChainId),
+          chainId: destinationChainId,
+          state: destinationMetaTxnReceipt?.status === 'SUCCEEDED' ? 'confirmed' : 'failed',
+        }
+
+        onTransactionStateChange(transactionStates)
       }
 
       return {
@@ -1592,4 +1668,14 @@ export async function prepareSend(options: SendOptions) {
       }
     },
   }
+}
+
+export function getExplorerUrl(txHash: string, chainId: number) {
+  const chainsArray = Object.values(chains) as Array<{ id: number; blockExplorers: { default: { url: string } } }>
+  for (const chain of chainsArray) {
+    if (chain.id === chainId) {
+      return `${chain.blockExplorers?.default?.url}/tx/${txHash}`
+    }
+  }
+  return ''
 }

@@ -18,6 +18,7 @@ import './index.css'
 import React from 'react'
 import { useIndexerGatewayClient } from '../indexerClient.js'
 import { WagmiContext } from 'wagmi'
+import { TransactionState } from '../anypay.js'
 
 type Screen = 'connect' | 'tokens' | 'send' | 'pending' | 'receipt'
 type Theme = 'light' | 'dark' | 'auto'
@@ -105,6 +106,7 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
   const [destinationChainId, setDestinationChainId] = useState<number | null>(null)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [transactionStates, setTransactionStates] = useState<TransactionState[]>([])
 
   // Update theme when system preference changes
   useEffect(() => {
@@ -184,20 +186,26 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
     }
   }
 
-  const handleSend = async (amount: string, recipient: string) => {
-    console.log('handleSend', amount, recipient)
+  const handleOnSend = async (amount: string, recipient: string) => {
+    console.log('handleOnSend', amount, recipient)
   }
 
   const handleSendAnother = () => {
     setCurrentScreen('tokens')
+    resetState()
   }
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false)
+  function resetState() {
     setCurrentScreen('connect')
     setSelectedToken(null)
     setDestinationTxHash('')
     setDestinationChainId(null)
+    setTransactionStates([])
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    resetState()
   }
 
   const handleBack = () => {
@@ -234,6 +242,11 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
     }
   }
 
+  function handleTransactionStateChange(_transactionStates: TransactionState[]) {
+    console.log('transactionStates from widget', _transactionStates)
+    setTransactionStates([..._transactionStates])
+  }
+
   const renderScreenContent = () => {
     switch (currentScreen) {
       case 'connect':
@@ -250,7 +263,7 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
       case 'send':
         return selectedToken && walletClient?.account ? (
           <SendForm
-            onSend={handleSend}
+            onSend={handleOnSend}
             onBack={handleBack}
             onConfirm={() => setCurrentScreen('pending')}
             onComplete={handleTransferComplete}
@@ -266,10 +279,13 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
             toCalldata={toCalldata}
             walletClient={walletClient}
             theme={theme}
+            onTransactionStateChange={handleTransactionStateChange}
           />
         ) : null
       case 'pending':
-        return <TransferPending onComplete={handleTransferComplete} theme={theme} />
+        return (
+          <TransferPending onComplete={handleTransferComplete} theme={theme} transactionStates={transactionStates} />
+        )
       case 'receipt':
         return (
           <Receipt
@@ -343,7 +359,7 @@ const WidgetInner: React.FC<AnyPayWidgetProps> = ({
             href="https://anypay.pages.dev/"
             target="_blank"
             rel="noopener noreferrer"
-            className={`font-medium transition-colors ${
+            className={`font-medium transition-colors hover:underline ${
               theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'
             }`}
           >

@@ -18,7 +18,7 @@ export const Widget = () => {
   const [renderInline, setRenderInline] = useState(false)
   const [useCustomButton, setUseCustomButton] = useState(false)
   const [provider, setProvider] = useState<any>(null)
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<'light' | 'dark' | 'auto' | null>(null)
 
   const handleConnect = useCallback((provider: any) => {
     console.log('provider', provider)
