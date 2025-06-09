@@ -25,7 +25,7 @@ export class IdentityInstrument {
       params: {
         ...challenge.getCommitParams(),
         authKey: {
-          publicKey: authKey.address,
+          address: authKey.address,
           keyType: authKey.keyType,
         },
       },
@@ -36,8 +36,9 @@ export class IdentityInstrument {
     return this.rpc.completeAuth({
       params: {
         ...challenge.getCompleteParams(),
+        signerType: KeyType.Secp256k1,
         authKey: {
-          publicKey: authKey.address,
+          address: authKey.address,
           keyType: authKey.keyType,
         },
       },
@@ -47,10 +48,13 @@ export class IdentityInstrument {
   async sign(authKey: AuthKey, digest: Bytes.Bytes) {
     const res = await this.rpc.sign({
       params: {
-        signer: authKey.signer,
+        signer: {
+          address: authKey.signer,
+          keyType: KeyType.Secp256k1,
+        },
         digest: Hex.fromBytes(digest),
         authKey: {
-          publicKey: authKey.address,
+          address: authKey.address,
           keyType: authKey.keyType,
         },
         signature: await authKey.sign(digest),

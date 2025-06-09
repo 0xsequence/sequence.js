@@ -83,11 +83,12 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
 
   // DEV TOOLS
   async devTools_randomConfig(params) {
-    const { maxDepth = 3, seed, minThresholdOnNested = 0, checkpointer = 'no' } = params
+    const { maxDepth = 3, seed, minThresholdOnNested = 0, checkpointer = 'no', skewed } = params
     const options: devTools.RandomOptions = {
       seededRandom: seed ? devTools.createSeededRandom(seed) : undefined,
       minThresholdOnNested,
       checkpointerMode: checkpointer as 'no' | 'random' | 'yes',
+      skewed: skewed as 'left' | 'right' | 'none',
     }
     const result = await devTools.doRandomConfig(maxDepth, options)
     return result

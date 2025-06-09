@@ -22,7 +22,7 @@ jobs:
 
       - name: Prepare dist branch
         run: |
-          PACKAGES=("services/identity-instrument" "wallet/core" "wallet/primitives" "wallet/wdk")
+          PACKAGES=("services/identity-instrument" "services/relayer" "wallet/anypay-sdk" "wallet/core" "wallet/primitives" "wallet/wdk")
 
           for PACKAGE in "${PACKAGES[@]}"; do
             BRANCH="dists/$PACKAGE"
@@ -47,24 +47,33 @@ jobs:
               const path = require("path");
               const pkgPath = path.resolve("package.json");
               const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-              const repo = "0xsequence/sequence.js";
-              const prefix = "dists/";
+              const repo = "github:0xsequence/sequence.js";
 
-              const branches = {
-                "@0xsequence/identity-instrument": "dists/services/identity-instrument",
-                "@0xsequence/wallet-core": "dists/wallet/core",
-                "@0xsequence/wallet-primitives": "dists/wallet/primitives",
-                "@0xsequence/wallet-wdk": "dists/wallet/wdk",
+              const versions = {
+                "@0xsequence/identity-instrument": `${repo}#dists/services/identity-instrument`,
+                "@0xsequence/relayer": `${repo}#dists/services/relayer`,
+                "@0xsequence/anypay-sdk": `${repo}#dists/wallet/anypay-sdk`,
+                "@0xsequence/wallet-core": `${repo}#dists/wallet/core`,
+                "@0xsequence/wallet-primitives": `${repo}#dists/wallet/primitives`,
+                "@0xsequence/wallet-wdk": `${repo}#dists/wallet/wdk`,
               };
 
               const rewrite = (deps = {}) => {
                 for (const k in deps) {
                   if (deps[k].startsWith("workspace:")) {
-                    deps[k] = `github:${repo}#${branches[k]}`;
+                    const version = versions[k];
+                    
+                    if (!version) {
+                      console.warn(`No version found for ${k}, skipping...`);
+                      continue;
+                    }
+
+                    deps[k] = version;
                     console.log(`→ ${k} → ${deps[k]}`);
                   }
                 }
               };
+
               rewrite(pkg.dependencies);
               fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
             '

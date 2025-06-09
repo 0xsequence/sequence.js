@@ -1,3 +1,5 @@
+import { openDB, IDBPDatabase, IDBPTransaction } from 'idb'
+
 export type DbUpdateType = 'added' | 'updated' | 'removed'
 
 export type DbUpdateListener<T, K extends keyof T> = (
@@ -7,7 +9,11 @@ export type DbUpdateListener<T, K extends keyof T> = (
   newItem?: T,
 ) => void
 
-export type Migration = (db: IDBDatabase, transaction: IDBTransaction, event: IDBVersionChangeEvent) => void
+export type Migration = (
+  db: IDBPDatabase<unknown>,
+  transaction: IDBPTransaction<unknown, string[], 'versionchange'>,
+  event: IDBVersionChangeEvent,
+) => void
 
 function deepEqual(a: any, b: any): boolean {
   if (a === b) {
@@ -31,7 +37,7 @@ function deepEqual(a: any, b: any): boolean {
 }
 
 export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
-  private _db: IDBDatabase | null = null
+  private _db: IDBPDatabase<unknown> | null = null
   private listeners: DbUpdateListener<T, K>[] = []
   private broadcastChannel?: BroadcastChannel
 
@@ -59,37 +65,53 @@ export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
     }
   }
 
-  private async openDB(): Promise<IDBDatabase> {
+  private async openDB(): Promise<IDBPDatabase<unknown>> {
     if (this._db) return this._db
 
-    return new Promise((resolve, reject) => {
-      const version = this.migrations.length + 1
-      const request = indexedDB.open(this.dbName, version)
+    const targetDbVersion = this.migrations.length + 1
 
-      request.onupgradeneeded = (event) => {
-        const db = request.result
-        const tx = request.transaction!
-        const oldVersion = (event.oldVersion as number) || 0
-        for (let i = oldVersion; i < this.migrations.length; i++) {
-          const migration = this.migrations[i]
-          if (!migration) throw new Error(`Migration ${i} not found`)
-          migration(db, tx, event)
+    this._db = await openDB<unknown>(this.dbName, targetDbVersion, {
+      upgrade: (db, oldVersion, newVersion, tx, event) => {
+        if (newVersion !== null) {
+          for (let targetSchemaToBuild = oldVersion + 1; targetSchemaToBuild <= newVersion; targetSchemaToBuild++) {
+            const migrationIndex = targetSchemaToBuild - 2
+
+            if (migrationIndex >= 0 && migrationIndex < this.migrations.length) {
+              const migrationFunc = this.migrations[migrationIndex]
+              if (migrationFunc) {
+                migrationFunc(db, tx, event)
+              } else {
+                throw new Error(
+                  `Migration for schema version ${targetSchemaToBuild} (using migrations[${migrationIndex}]) not found but expected.`,
+                )
+              }
+            }
+          }
         }
-      }
-
-      request.onsuccess = () => {
-        this._db = request.result
-        this.handleOpenDB().then(() => resolve(this._db!))
-      }
-
-      request.onerror = () => reject(request.error)
-      request.onblocked = () => console.error('Database upgrade blocked')
+      },
+      blocked: () => {
+        console.error(`IndexedDB ${this.dbName} upgrade blocked.`)
+      },
+      blocking: () => {
+        console.warn(`IndexedDB ${this.dbName} upgrade is being blocked by other connections. Closing this connection.`)
+        if (this._db) {
+          this._db.close()
+          this._db = null
+        }
+      },
+      terminated: () => {
+        console.warn(`IndexedDB ${this.dbName} connection terminated.`)
+        this._db = null
+      },
     })
+
+    await this.handleOpenDB()
+    return this._db
   }
 
   protected async handleOpenDB(): Promise<void> {}
 
-  protected async getStore(mode: IDBTransactionMode): Promise<IDBObjectStore> {
+  protected async getStore(mode: IDBTransactionMode) {
     const db = await this.openDB()
     const tx = db.transaction(this.storeName, mode)
     return tx.objectStore(this.storeName)
@@ -97,72 +119,51 @@ export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
 
   async get(keyValue: T[K]): Promise<T | undefined> {
     const store = await this.getStore('readonly')
-    return new Promise((resolve, reject) => {
-      const req = store.get(keyValue)
-      req.onsuccess = () => resolve(req.result as T)
-      req.onerror = () => reject(req.error)
-    })
+    return store.get(keyValue)
   }
 
   async list(): Promise<T[]> {
     const store = await this.getStore('readonly')
-    return new Promise((resolve, reject) => {
-      const req = store.getAll()
-      req.onsuccess = () => resolve(req.result as T[])
-      req.onerror = () => reject(req.error)
-    })
+    return store.getAll()
   }
 
   async set(item: T): Promise<T[K]> {
     const db = await this.openDB()
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(this.storeName, 'readwrite')
-      const store = tx.objectStore(this.storeName)
-      const keyValue = item[this.key]
+    const keyValue = item[this.key]
 
-      const getReq = store.get(keyValue)
-      getReq.onsuccess = () => {
-        const oldItem = getReq.result
-        const putReq = store.put(item, keyValue)
-        putReq.onsuccess = () => {
-          let updateType: DbUpdateType | null = null
-          if (!oldItem) {
-            updateType = 'added'
-          } else if (!deepEqual(oldItem, item)) {
-            updateType = 'updated'
-          }
-          if (updateType) {
-            try {
-              this.notifyUpdate(keyValue, updateType, oldItem, item)
-            } catch (err) {
-              console.error('notifyUpdate failed', err)
-            }
-          }
-          resolve(keyValue)
-        }
-        putReq.onerror = () => reject(putReq.error)
-      }
-      getReq.onerror = () => reject(getReq.error)
-    })
+    const tx = db.transaction(this.storeName, 'readwrite')
+    const store = tx.objectStore(this.storeName)
+
+    const oldItem = (await store.get(keyValue)) as T | undefined
+    await store.put(item, keyValue)
+    await tx.done
+
+    let updateType: DbUpdateType | null = null
+    if (!oldItem) {
+      updateType = 'added'
+    } else if (!deepEqual(oldItem, item)) {
+      updateType = 'updated'
+    }
+
+    if (updateType) {
+      this.notifyUpdate(keyValue, updateType, oldItem, item)
+    }
+    return keyValue
   }
 
   async del(keyValue: T[K]): Promise<void> {
     const oldItem = await this.get(keyValue)
-    const store = await this.getStore('readwrite')
-    return new Promise((resolve, reject) => {
-      const req = store.delete(keyValue)
-      req.onsuccess = () => {
-        if (oldItem) {
-          try {
-            this.notifyUpdate(keyValue, 'removed', oldItem, undefined)
-          } catch (err) {
-            console.error('notifyUpdate failed', err)
-          }
-        }
-        resolve()
-      }
-      req.onerror = () => reject(req.error)
-    })
+
+    const db = await this.openDB()
+    const tx = db.transaction(this.storeName, 'readwrite')
+    const store = tx.objectStore(this.storeName)
+
+    await store.delete(keyValue)
+    await tx.done
+
+    if (oldItem) {
+      this.notifyUpdate(keyValue, 'removed', oldItem, undefined)
+    }
   }
 
   private notifyUpdate(keyValue: T[K], updateType: DbUpdateType, oldItem?: T, newItem?: T): void {

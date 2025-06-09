@@ -87,4 +87,240 @@ describe('Wallet', async () => {
       }, 30000)
     })
   }
+
+  it('Should reject unsafe wallet creation', async () => {
+    // Threshold 0
+    const walletPromise1 = Wallet.fromConfiguration(
+      {
+        threshold: 0n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    await expect(walletPromise1).rejects.toThrow('threshold-0')
+
+    // Weight too high
+    const walletPromise2 = Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 256n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    await expect(walletPromise2).rejects.toThrow('invalid-values')
+
+    // Threshold too high
+    const walletPromise3 = Wallet.fromConfiguration(
+      {
+        threshold: 65536n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    await expect(walletPromise3).rejects.toThrow('unsafe-invalid-values')
+
+    // Checkpoint too high
+    const walletPromise4 = Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 72057594037927936n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    await expect(walletPromise4).rejects.toThrow('unsafe-invalid-values')
+
+    // Unreachable threshold
+    const walletPromise5 = Wallet.fromConfiguration(
+      {
+        threshold: 2n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    await expect(walletPromise5).rejects.toThrow('unsafe-threshold')
+
+    // Topology too deep (more than 32 levels)
+    let topology: Config.Topology = {
+      type: 'signer',
+      address: '0x0000000000000000000000000000000000000000',
+      weight: 1n,
+    }
+
+    for (let i = 0; i < 33; i++) {
+      topology = [
+        topology,
+        {
+          type: 'signer',
+          address: '0x0000000000000000000000000000000000000000',
+          weight: 1n,
+        },
+      ]
+    }
+
+    const walletPromise6 = Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology,
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    await expect(walletPromise6).rejects.toThrow('unsafe-depth')
+  })
+
+  it('Should reject unsafe wallet update', async () => {
+    const wallet = await Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    // Threshold 0
+    const walletUpdatePromise1 = wallet.prepareUpdate({
+      threshold: 0n,
+      checkpoint: 0n,
+      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+    })
+
+    await expect(walletUpdatePromise1).rejects.toThrow('unsafe-threshold-0')
+
+    // Weight too high
+    const walletUpdatePromise2 = wallet.prepareUpdate({
+      threshold: 1n,
+      checkpoint: 0n,
+      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 256n },
+    })
+
+    await expect(walletUpdatePromise2).rejects.toThrow('unsafe-invalid-values')
+
+    // Threshold too high
+    const walletUpdatePromise3 = wallet.prepareUpdate({
+      threshold: 65536n,
+      checkpoint: 0n,
+      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+    })
+
+    await expect(walletUpdatePromise3).rejects.toThrow('unsafe-invalid-values')
+
+    // Checkpoint too high
+    const walletUpdatePromise4 = wallet.prepareUpdate({
+      threshold: 1n,
+      checkpoint: 72057594037927936n,
+      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+    })
+
+    await expect(walletUpdatePromise4).rejects.toThrow('unsafe-invalid-values')
+
+    // Unreachable threshold
+    const walletPromise5 = Wallet.fromConfiguration(
+      {
+        threshold: 2n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    await expect(walletPromise5).rejects.toThrow('unsafe-threshold')
+
+    // Topology too deep (more than 32 levels)
+    let topology: Config.Topology = {
+      type: 'signer',
+      address: '0x0000000000000000000000000000000000000000',
+      weight: 1n,
+    }
+
+    for (let i = 0; i < 33; i++) {
+      topology = [
+        topology,
+        {
+          type: 'signer',
+          address: '0x0000000000000000000000000000000000000000',
+          weight: 1n,
+        },
+      ]
+    }
+
+    const walletUpdatePromise6 = wallet.prepareUpdate({
+      threshold: 1n,
+      checkpoint: 0n,
+      topology,
+    })
+
+    await expect(walletUpdatePromise6).rejects.toThrow('unsafe-depth')
+  })
+
+  it('Should accept unsafe wallet creation in unsafe mode', async () => {
+    const wallet = await Wallet.fromConfiguration(
+      {
+        threshold: 0n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+        unsafe: true,
+      },
+    )
+
+    expect(wallet).toBeDefined()
+  })
+
+  it('Should accept unsafe wallet update in unsafe mode', async () => {
+    const wallet = await Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        stateProvider,
+      },
+    )
+
+    expect(wallet).toBeDefined()
+
+    const walletUpdate = await wallet.prepareUpdate(
+      {
+        threshold: 0n,
+        checkpoint: 0n,
+        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      },
+      {
+        unsafe: true,
+      },
+    )
+
+    expect(walletUpdate).toBeDefined()
+  })
 })

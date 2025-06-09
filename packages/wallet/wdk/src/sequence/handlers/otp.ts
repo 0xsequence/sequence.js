@@ -57,16 +57,6 @@ export class OtpHandler extends IdentityHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    const onPromptOtp = this.onPromptOtp
-    if (!onPromptOtp) {
-      return {
-        address,
-        handler: this,
-        reason: 'ui-not-registered',
-        status: 'unavailable',
-      }
-    }
-
     const signer = await this.getAuthKeySigner(address)
     if (signer) {
       return {
@@ -80,6 +70,16 @@ export class OtpHandler extends IdentityHandler implements Handler {
       }
     }
 
+    const onPromptOtp = this.onPromptOtp
+    if (!onPromptOtp) {
+      return {
+        address,
+        handler: this,
+        reason: 'ui-not-registered',
+        status: 'unavailable',
+      }
+    }
+
     return {
       address,
       handler: this,
@@ -87,7 +87,10 @@ export class OtpHandler extends IdentityHandler implements Handler {
       message: 'request-otp',
       handle: () =>
         new Promise(async (resolve, reject) => {
-          const challenge = Identity.OtpChallenge.fromSigner(this.identityType, address)
+          const challenge = Identity.OtpChallenge.fromSigner(this.identityType, {
+            address,
+            keyType: Identity.KeyType.Secp256k1,
+          })
           const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
 
           const respond = async (otp: string) => {

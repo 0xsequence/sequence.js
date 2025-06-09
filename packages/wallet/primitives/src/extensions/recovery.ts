@@ -1,7 +1,6 @@
-import { Abi, AbiFunction, Address, Bytes, Hash, Hex, Provider } from 'ox'
+import { Abi, AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
 import * as Payload from '../payload.js'
 import * as GenericTree from '../generic-tree.js'
-import { getSelector } from 'ox/AbiFunction'
 import { Signature } from '../index.js'
 import { packRSY } from '../utils.js'
 
@@ -478,6 +477,9 @@ export async function totalQueuedPayloads(
     ],
   })
 
+  if (total === '0x') {
+    return 0n
+  }
   return Hex.toBigInt(total)
 }
 

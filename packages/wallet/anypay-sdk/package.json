@@ -1,0 +1,95 @@
+{
+  "name": "@0xsequence/anypay-sdk",
+  "version": "0.0.0",
+  "description": "SDK for Anypay functionality",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json && tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:dev": "vitest",
+    "clean": "rimraf dist",
+    "lint": "turbo lint"
+  },
+  "keywords": [
+    "anypay",
+    "sdk",
+    "wallet"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@0xsequence/api": "0.0.0-anypay-20250527101311",
+    "@0xsequence/design-system": "^2.1.6",
+    "@0xsequence/hooks": "^5.1.0",
+    "@0xsequence/indexer": "^2.3.9",
+    "@0xsequence/wagmi-connector": "^4.0.1",
+    "@0xsequence/wallet-core": "workspace:*",
+    "@0xsequence/wallet-primitives": "workspace:*",
+    "@tanstack/react-query": "^5.80.5",
+    "buffer": "^6.0.3",
+    "isomorphic-fetch": "^3.0.0",
+    "lucide-react": "^0.493.0",
+    "ox": "^0.7.2",
+    "wagmi": "^2.15.5"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@next/eslint-plugin-next": "^15.3.3",
+    "@tailwindcss/postcss": "^4.1.8",
+    "@types/isomorphic-fetch": "^0.0.39",
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vitejs/plugin-react": "^4.5.1",
+    "autoprefixer": "^10.4.21",
+    "dotenv": "^16.5.0",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-only-warn": "^1.1.0",
+    "eslint-plugin-prettier": "^5.4.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-turbo": "^2.5.4",
+    "globals": "^15.15.0",
+    "postcss": "^8.5.4",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4.1.8",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.1",
+    "viem": "^2.30.6",
+    "vite": "^5.4.19",
+    "vite-plugin-css-injected-by-js": "^3.5.2",
+    "vitest": "^3.2.1"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./widget": {
+      "import": "./dist/widget/widget/index.js",
+      "require": "./dist/widget/widget/index.js",
+      "types": "./dist/widget/widget/index.d.ts"
+    }
+  }
+}

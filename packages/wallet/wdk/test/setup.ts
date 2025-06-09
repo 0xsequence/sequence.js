@@ -1,11 +1,34 @@
-import { indexedDB, IDBFactory } from 'fake-indexeddb'
-import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
+import {
+  indexedDB,
+  IDBFactory,
+  IDBKeyRange,
+  IDBDatabase,
+  IDBObjectStore,
+  IDBIndex,
+  IDBCursor,
+  IDBCursorWithValue,
+  IDBTransaction,
+  IDBRequest,
+  IDBOpenDBRequest,
+  IDBVersionChangeEvent,
+} from 'fake-indexeddb'
+import { Provider, RpcTransport } from 'ox'
 import { vi } from 'vitest'
 import { LOCAL_RPC_URL } from './constants'
 
-// Add IndexedDB support to the test environment
+// Add IndexedDB support to the test environment using fake-indexeddb
 global.indexedDB = indexedDB
-global.IDBFactory = IDBFactory
+global.IDBFactory = IDBFactory as unknown as typeof global.IDBFactory
+global.IDBKeyRange = IDBKeyRange as unknown as typeof global.IDBKeyRange
+global.IDBDatabase = IDBDatabase as unknown as typeof global.IDBDatabase
+global.IDBObjectStore = IDBObjectStore as unknown as typeof global.IDBObjectStore
+global.IDBIndex = IDBIndex as unknown as typeof global.IDBIndex
+global.IDBCursor = IDBCursor as unknown as typeof global.IDBCursor
+global.IDBCursorWithValue = IDBCursorWithValue as unknown as typeof global.IDBCursorWithValue
+global.IDBTransaction = IDBTransaction as unknown as typeof global.IDBTransaction
+global.IDBRequest = IDBRequest as unknown as typeof global.IDBRequest
+global.IDBOpenDBRequest = IDBOpenDBRequest as unknown as typeof global.IDBOpenDBRequest
+global.IDBVersionChangeEvent = IDBVersionChangeEvent as unknown as typeof global.IDBVersionChangeEvent
 
 // Mock navigator.locks API for Node.js environment ---
 

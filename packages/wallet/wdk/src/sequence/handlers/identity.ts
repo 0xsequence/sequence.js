@@ -51,9 +51,10 @@ export class IdentityHandler {
 
     const res = await this.nitro.completeAuth(toIdentityAuthKey(authKey), challenge)
 
-    authKey.identitySigner = res.signer
+    authKey.identitySigner = res.signer.address
     authKey.expiresAt = new Date(Date.now() + 1000 * 60 * 3) // 3 minutes
     await this.authKeys.delBySigner('')
+    await this.authKeys.delBySigner(authKey.identitySigner)
     await this.authKeys.set(authKey)
 
     const signer = new IdentitySigner(this.nitro, authKey)

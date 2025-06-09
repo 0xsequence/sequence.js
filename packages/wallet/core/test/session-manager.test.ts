@@ -5,6 +5,7 @@ import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig
 import { Envelope, Signers, State, Wallet } from '../src/index.js'
 
 import { EMITTER_FUNCTIONS, EMITTER_ADDRESS, EMITTER_EVENT_TOPICS, LOCAL_RPC_URL } from './constants'
+import { Extensions } from '@0xsequence/wallet-primitives'
 
 function randomAddress(): Address.Address {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
@@ -69,7 +70,7 @@ describe('SessionManager', () => {
         {
           threshold: 1n,
           checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+          topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
         },
         {
           stateProvider,
@@ -79,6 +80,7 @@ describe('SessionManager', () => {
       // Create the session manager using the storage
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
       })
 
       // Check config is correct
@@ -135,7 +137,7 @@ describe('SessionManager', () => {
         {
           threshold: 1n,
           checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+          topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
         },
         {
           stateProvider,
@@ -143,6 +145,7 @@ describe('SessionManager', () => {
       )
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
       }).withImplicitSigner(implicitSigner)
 
       // Create a test transaction
@@ -208,7 +211,7 @@ describe('SessionManager', () => {
         {
           threshold: 1n,
           checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+          topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
         },
         {
           stateProvider,
@@ -217,6 +220,7 @@ describe('SessionManager', () => {
       // Create the session manager
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
       }).withExplicitSigner(explicitSigner)
 
       // Create a test transaction within permissions
@@ -253,12 +257,12 @@ describe('SessionManager', () => {
   const buildAndSignCall = async (
     wallet: Wallet,
     sessionManager: Signers.SessionManager,
-    call: Payload.Call,
+    calls: Payload.Call[],
     provider: Provider.Provider,
     chainId: bigint,
   ) => {
     // Prepare the transaction
-    const envelope = await wallet.prepareTransaction(provider, [call])
+    const envelope = await wallet.prepareTransaction(provider, calls)
     const parentedEnvelope: Payload.Parented = {
       ...envelope.payload,
       parentWallets: [wallet.address],
@@ -281,7 +285,7 @@ describe('SessionManager', () => {
   const simulateTransaction = async (
     provider: Provider.Provider,
     transaction: { to: Address.Address; data: Hex.Hex },
-    expectedEventTopic: Hex.Hex,
+    expectedEventTopic?: Hex.Hex,
   ) => {
     console.log('Simulating transaction', transaction)
     const txHash = await provider.request({
@@ -300,20 +304,21 @@ describe('SessionManager', () => {
       throw new Error('Transaction receipt not found')
     }
 
-    // Check for event
-    if (!receipt.logs) {
-      throw new Error('No events emitted')
-    }
-    if (!receipt.logs.some((log) => log.topics.includes(expectedEventTopic))) {
-      throw new Error(`Expected topic ${expectedEventTopic} not found in event`)
+    if (expectedEventTopic) {
+      // Check for event
+      if (!receipt.logs) {
+        throw new Error('No events emitted')
+      }
+      if (!receipt.logs.some((log) => log.topics.includes(expectedEventTopic))) {
+        throw new Error(`Expected topic ${expectedEventTopic} not found in event`)
+      }
     }
 
     return receipt
   }
 
-  // Submit a real transaction with a wallet that has a SessionManager using implicit session
   it(
-    'Submits a real transaction with a wallet that has a SessionManager using implicit session',
+    'signs a payload using an implicit session',
     async () => {
       // Check the contracts have been deployed
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
@@ -352,7 +357,7 @@ describe('SessionManager', () => {
           threshold: 1n,
           checkpoint: 0n,
           topology: [
-            { type: 'sapient-signer', address: Constants.DefaultSessionManager, weight: 1n, imageHash },
+            { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
             // Include a random node leaf (bytes32) to prevent image hash collision
             Hex.random(32),
           ],
@@ -363,6 +368,7 @@ describe('SessionManager', () => {
       )
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
         implicitSigners: [implicitSigner],
       })
 
@@ -377,14 +383,14 @@ describe('SessionManager', () => {
       }
 
       // Build, sign and send the transaction
-      const transaction = await buildAndSignCall(wallet, sessionManager, call, provider, chainId)
+      const transaction = await buildAndSignCall(wallet, sessionManager, [call], provider, chainId)
       await simulateTransaction(provider, transaction, EMITTER_EVENT_TOPICS[1])
     },
     timeout,
   )
 
   it(
-    'Submits a real transaction with a wallet that has a SessionManager using explicit session',
+    'signs a payload using an explicit session',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
       const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
@@ -414,7 +420,7 @@ describe('SessionManager', () => {
             // Random explicit signer will randomise the image hash
             {
               type: 'sapient-signer',
-              address: Constants.DefaultSessionManager,
+              address: Extensions.Dev1.sessions,
               weight: 1n,
               imageHash,
             },
@@ -429,6 +435,7 @@ describe('SessionManager', () => {
       // Create the session manager
       const sessionManager = new Signers.SessionManager(wallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
         explicitSigners: [explicitSigner],
       })
 
@@ -443,8 +450,336 @@ describe('SessionManager', () => {
       }
 
       // Build, sign and send the transaction
-      const transaction = await buildAndSignCall(wallet, sessionManager, call, provider, chainId)
+      const transaction = await buildAndSignCall(wallet, sessionManager, [call], provider, chainId)
       await simulateTransaction(provider, transaction, EMITTER_EVENT_TOPICS[0])
+    },
+    timeout,
+  )
+
+  it(
+    'signs a payload using an explicit session',
+    async () => {
+      const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+
+      // Create explicit signer
+      const explicitPrivateKey = Secp256k1.randomPrivateKey()
+      const sessionPermission: Signers.Session.ExplicitParams = {
+        valueLimit: 0n,
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: EMITTER_ADDRESS,
+            rules: [
+              {
+                cumulative: true,
+                operation: Permission.ParameterOperation.EQUAL,
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0]), { size: 32 }),
+                offset: 0n,
+                mask: Permission.SELECTOR_MASK,
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, sessionPermission)
+      // Test manually building the session topology
+      const sessionTopology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+        ...sessionPermission,
+        signer: explicitSigner.address,
+      })
+      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+      // Create the wallet
+      const wallet = await Wallet.fromConfiguration(
+        {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: [
+            // Random explicit signer will randomise the image hash
+            {
+              type: 'sapient-signer',
+              address: Extensions.Dev1.sessions,
+              weight: 1n,
+              imageHash,
+            },
+            // Include a random node leaf (bytes32) to prevent image hash collision
+            Hex.random(32),
+          ],
+        },
+        {
+          stateProvider,
+        },
+      )
+      // Create the session manager
+      const sessionManager = new Signers.SessionManager(wallet, {
+        provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
+        explicitSigners: [explicitSigner],
+      })
+
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+
+      const increment = await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+      expect(increment).not.toBeNull()
+      expect(increment).toBeDefined()
+
+      if (!increment) {
+        return
+      }
+
+      // Build, sign and send the transaction
+      const transaction = await buildAndSignCall(wallet, sessionManager, [call, increment], provider, chainId)
+      await simulateTransaction(provider, transaction, EMITTER_EVENT_TOPICS[0])
+
+      // Repeat call fails because the usage limit has been reached
+      try {
+        await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+        throw new Error('Expected call as no signer supported to fail')
+      } catch (error) {
+        expect(error).toBeDefined()
+        expect(error.message).toContain('No signer supported')
+      }
+    },
+    timeout,
+  )
+
+  it(
+    'signs a payload sending value using an explicit session',
+    async () => {
+      const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+
+      // Create explicit signer
+      const explicitPrivateKey = Secp256k1.randomPrivateKey()
+      const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
+      const sessionPermission: Signers.Session.ExplicitParams = {
+        valueLimit: 1000000000000000000n, // 1 ETH
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: explicitAddress,
+            rules: [
+              {
+                cumulative: true,
+                operation: Permission.ParameterOperation.EQUAL,
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0]), { size: 32 }),
+                offset: 0n,
+                mask: Permission.SELECTOR_MASK,
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, sessionPermission)
+      // Test manually building the session topology
+      const sessionTopology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+        ...sessionPermission,
+        signer: explicitSigner.address,
+      })
+      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+      // Create the wallet
+      const wallet = await Wallet.fromConfiguration(
+        {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: [
+            // Random explicit signer will randomise the image hash
+            {
+              type: 'sapient-signer',
+              address: Extensions.Dev1.sessions,
+              weight: 1n,
+              imageHash,
+            },
+            // Include a random node leaf (bytes32) to prevent image hash collision
+            Hex.random(32),
+          ],
+        },
+        {
+          stateProvider,
+        },
+      )
+      // Force 1 ETH to the wallet
+      await provider.request({
+        method: 'anvil_setBalance',
+        params: [wallet.address, Hex.fromNumber(1000000000000000000n)],
+      })
+      // Create the session manager
+      const sessionManager = new Signers.SessionManager(wallet, {
+        provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
+        explicitSigners: [explicitSigner],
+      })
+
+      const call: Payload.Call = {
+        to: explicitAddress,
+        value: 1000000000000000000n, // 1 ETH
+        data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+
+      const increment = await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+      expect(increment).not.toBeNull()
+      expect(increment).toBeDefined()
+
+      if (!increment) {
+        return
+      }
+
+      // Build, sign and send the transaction
+      const transaction = await buildAndSignCall(wallet, sessionManager, [call, increment], provider, chainId)
+      await simulateTransaction(provider, transaction)
+
+      // Check the balances
+      const walletBalance = await provider.request({
+        method: 'eth_getBalance',
+        params: [wallet.address, 'latest'],
+      })
+      expect(BigInt(walletBalance)).toBe(0n)
+      const explicitAddressBalance = await provider.request({
+        method: 'eth_getBalance',
+        params: [explicitAddress, 'latest'],
+      })
+      expect(BigInt(explicitAddressBalance)).toBe(1000000000000000000n)
+
+      // Repeat call fails because the usage limit has been reached
+      try {
+        await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+        throw new Error('Expected call as no signer supported to fail')
+      } catch (error) {
+        expect(error).toBeDefined()
+        expect(error.message).toContain('No signer supported')
+      }
+    },
+    timeout,
+  )
+
+  it(
+    'signs a payload sending two transactions with cumulative rules using an explicit session',
+    async () => {
+      const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+
+      // Create explicit signer
+      const explicitPrivateKey = Secp256k1.randomPrivateKey()
+      const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
+      const sessionPermission: Signers.Session.ExplicitParams = {
+        valueLimit: 1000000000000000000n, // 1 ETH
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: explicitAddress,
+            rules: [
+              // This rule is a hack. The selector "usage" will increment for testing. As we check for greater than or equal,
+              // we can use this to test that the usage is cumulative.
+              {
+                cumulative: true,
+                operation: Permission.ParameterOperation.GREATER_THAN_OR_EQUAL,
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_FUNCTIONS[0]), { size: 32 }),
+                offset: 0n,
+                mask: Permission.SELECTOR_MASK,
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, sessionPermission)
+      const sessionTopology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+        ...sessionPermission,
+        signer: explicitSigner.address,
+      })
+      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+      // Create the wallet
+      const wallet = await Wallet.fromConfiguration(
+        {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: [
+            {
+              type: 'sapient-signer',
+              address: Extensions.Dev1.sessions,
+              weight: 1n,
+              imageHash,
+            },
+            // Include a random node leaf (bytes32) to prevent image hash collision
+            Hex.random(32),
+          ],
+        },
+        {
+          stateProvider,
+        },
+      )
+      // Force 1 ETH to the wallet
+      await provider.request({
+        method: 'anvil_setBalance',
+        params: [wallet.address, Hex.fromNumber(1000000000000000000n)],
+      })
+      // Create the session manager
+      const sessionManager = new Signers.SessionManager(wallet, {
+        provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
+        explicitSigners: [explicitSigner],
+      })
+
+      const call: Payload.Call = {
+        to: explicitAddress,
+        value: 500000000000000000n, // 0.5 ETH
+        data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+
+      // Do it twice to test cumulative rules
+      const increment = await sessionManager.prepareIncrement(wallet.address, chainId, [call, call])
+      expect(increment).not.toBeNull()
+      expect(increment).toBeDefined()
+
+      if (!increment) {
+        return
+      }
+
+      // Build, sign and send the transaction
+      const transaction = await buildAndSignCall(wallet, sessionManager, [call, call, increment], provider, chainId)
+      await simulateTransaction(provider, transaction)
+
+      // Check the balances
+      const walletBalance = await provider.request({
+        method: 'eth_getBalance',
+        params: [wallet.address, 'latest'],
+      })
+      expect(BigInt(walletBalance)).toBe(0n)
+      const explicitAddressBalance = await provider.request({
+        method: 'eth_getBalance',
+        params: [explicitAddress, 'latest'],
+      })
+      expect(BigInt(explicitAddressBalance)).toBe(1000000000000000000n)
+
+      // Repeat call fails because the usage limit has been reached
+      try {
+        await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+        throw new Error('Expected call as no signer supported to fail')
+      } catch (error) {
+        expect(error).toBeDefined()
+        expect(error.message).toContain('No signer supported')
+      }
     },
     timeout,
   )

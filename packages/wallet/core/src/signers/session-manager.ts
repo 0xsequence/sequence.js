@@ -1,6 +1,7 @@
 import {
   Config,
   Constants,
+  Context,
   Payload,
   SessionConfig,
   SessionSignature,
@@ -10,20 +11,14 @@ import { AbiFunction, Address, Hex, Provider } from 'ox'
 import * as State from '../state/index.js'
 import { Wallet } from '../wallet.js'
 import { SapientSigner } from './index.js'
-import { Explicit, Implicit } from './session/index.js'
+import { Explicit, Implicit, isExplicitSessionSigner, SessionSigner, UsageLimit } from './session/index.js'
 
 export type SessionManagerOptions = {
   sessionManagerAddress: Address.Address
   stateProvider?: State.Provider
-  implicitSigners: Implicit[]
-  explicitSigners: Explicit[]
+  implicitSigners?: Implicit[]
+  explicitSigners?: Explicit[]
   provider?: Provider.Provider
-}
-
-export const DefaultSessionManagerOptions: SessionManagerOptions = {
-  sessionManagerAddress: Constants.DefaultSessionManager,
-  implicitSigners: [],
-  explicitSigners: [],
 }
 
 export class SessionManager implements SapientSigner {
@@ -36,14 +31,13 @@ export class SessionManager implements SapientSigner {
 
   constructor(
     readonly wallet: Wallet,
-    options?: Partial<SessionManagerOptions>,
+    options: SessionManagerOptions,
   ) {
-    const combinedOptions = { ...DefaultSessionManagerOptions, ...options }
-    this.stateProvider = combinedOptions.stateProvider ?? wallet.stateProvider
-    this.address = combinedOptions.sessionManagerAddress
-    this._implicitSigners = combinedOptions.implicitSigners
-    this._explicitSigners = combinedOptions.explicitSigners
-    this._provider = combinedOptions.provider
+    this.stateProvider = options.stateProvider ?? wallet.stateProvider
+    this.address = options.sessionManagerAddress
+    this._implicitSigners = options.implicitSigners ?? []
+    this._explicitSigners = options.explicitSigners ?? []
+    this._provider = options.provider
   }
 
   get imageHash(): Promise<Hex.Hex | undefined> {
@@ -108,6 +102,111 @@ export class SessionManager implements SapientSigner {
     })
   }
 
+  async findSignersForCalls(wallet: Address.Address, chainId: bigint, calls: Payload.Call[]): Promise<SessionSigner[]> {
+    // Only use signers that match the topology
+    const topology = await this.topology
+    const identitySigner = SessionConfig.getIdentitySigner(topology)
+    if (!identitySigner) {
+      throw new Error('Identity signer not found')
+    }
+    const blacklist = SessionConfig.getImplicitBlacklist(topology)
+    const validImplicitSigners = this._implicitSigners.filter(
+      (signer) =>
+        Address.isEqual(signer.identitySigner, identitySigner) &&
+        // Blacklist must exist for implicit signers to be used
+        blacklist &&
+        !blacklist.some((b) => Address.isEqual(b, signer.address)),
+    )
+    const topologyExplicitSigners = SessionConfig.getExplicitSigners(topology)
+    const validExplicitSigners = this._explicitSigners.filter((signer) =>
+      topologyExplicitSigners.some((s) => Address.isEqual(s, signer.address)),
+    )
+
+    // Prioritize implicit signers
+    const availableSigners = [...validImplicitSigners, ...validExplicitSigners]
+    if (availableSigners.length === 0) {
+      throw new Error('No signers match the topology')
+    }
+
+    // Find supported signers for each call
+    const signers: SessionSigner[] = []
+    for (const call of calls) {
+      let supported = false
+      for (const signer of availableSigners) {
+        try {
+          supported = await signer.supportedCall(wallet, chainId, call, this.address, this._provider)
+        } catch (error) {
+          console.error('findSignersForCalls error', error)
+          continue
+        }
+        if (supported) {
+          signers.push(signer)
+          break
+        }
+      }
+      if (!supported) {
+        console.error('No signer supported for call', call)
+        throw new Error('No signer supported for call')
+      }
+    }
+    return signers
+  }
+
+  async prepareIncrement(
+    wallet: Address.Address,
+    chainId: bigint,
+    calls: Payload.Call[],
+  ): Promise<Payload.Call | null> {
+    if (calls.length === 0) {
+      throw new Error('No calls provided')
+    }
+    const signers = await this.findSignersForCalls(wallet, chainId, calls)
+
+    // Create a map of signers to their associated calls
+    const signerToCalls = new Map<SessionSigner, Payload.Call[]>()
+    signers.forEach((signer, index) => {
+      const call = calls[index]!
+      const existingCalls = signerToCalls.get(signer) || []
+      signerToCalls.set(signer, [...existingCalls, call])
+    })
+
+    // Prepare increments for each explicit signer with their associated calls
+    const increments: UsageLimit[] = (
+      await Promise.all(
+        Array.from(signerToCalls.entries()).map(async ([signer, associatedCalls]) => {
+          if (isExplicitSessionSigner(signer)) {
+            return signer.prepareIncrements(wallet, chainId, associatedCalls, this.address, this._provider!)
+          }
+          return []
+        }),
+      )
+    ).flat()
+
+    if (increments.length === 0) {
+      return null
+    }
+
+    // Error if there are repeated usage hashes
+    const uniqueIncrements = increments.filter(
+      (increment, index, self) => index === self.findIndex((t) => t.usageHash === increment.usageHash),
+    )
+    if (uniqueIncrements.length !== increments.length) {
+      throw new Error('Repeated usage hashes')
+    }
+
+    const data = AbiFunction.encodeData(Constants.INCREMENT_USAGE_LIMIT, [uniqueIncrements])
+
+    return {
+      to: this.address,
+      data,
+      value: 0n,
+      delegateCall: false,
+      onlyFallback: false,
+      behaviorOnError: 'revert',
+      gasLimit: 0n,
+    }
+  }
+
   async signSapient(
     wallet: Address.Address,
     chainId: bigint,
@@ -129,69 +228,59 @@ export class SessionManager implements SapientSigner {
     //     throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
     //   }
     // }
-    if (!Payload.isCalls(payload)) {
+    if (!Payload.isCalls(payload) || payload.calls.length === 0) {
       throw new Error('Only calls are supported')
     }
 
-    // Only use signers that match the topology
-    const topology = await this.topology
-    const identitySigner = SessionConfig.getIdentitySigner(topology)
-    if (!identitySigner) {
-      throw new Error('Identity signer not found')
+    const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
+    if (signers.length !== payload.calls.length) {
+      throw new Error('No signer supported for call')
     }
-    const blacklist = SessionConfig.getImplicitBlacklist(topology)
-    const validImplicitSigners = this._implicitSigners.filter(
-      (signer) =>
-        Address.isEqual(signer.identitySigner, identitySigner) &&
-        // Blacklist must exist for implicit signers to be used
-        blacklist &&
-        !blacklist.some((b) => Address.isEqual(b, signer.address)),
-    )
-    const topologyExplicitSigners = SessionConfig.getExplicitSigners(topology)
-    const validExplicitSigners = this._explicitSigners.filter((signer) =>
-      topologyExplicitSigners.some((s) => Address.isEqual(s, signer.address)),
-    )
-
-    // Try to sign with each signer, prioritizing implicit signers
-    const signers = [...validImplicitSigners, ...validExplicitSigners]
-    if (signers.length === 0) {
-      throw new Error('No signers match the topology')
-    }
-
     const signatures = await Promise.all(
-      //FIXME Run sync to support cumulative rules within a payload
-      payload.calls.map(async (call) => {
-        for (const signer of signers) {
-          try {
-            if (await signer.supportedCall(wallet, chainId, call, this._provider)) {
-              const signature = await signer.signCall(wallet, chainId, call, payload, this._provider)
-              return {
-                ...signature,
-                signer: signer.address,
-              }
-            }
-          } catch (error) {
-            console.error('signSapient error', error)
-          }
+      signers.map(async (signer, i) => {
+        const call = payload.calls[i]!
+        try {
+          return signer.signCall(wallet, chainId, call, payload, this.address, this._provider)
+        } catch (error) {
+          console.error('signSapient error', error)
+          throw error
         }
-        throw new Error('No signer supported')
       }),
     )
 
-    const explicitSigners = signatures
-      .filter((sig) => SessionSignature.isExplicitSessionCallSignature(sig))
-      .map((sig) => sig.signer)
+    // Check if the last call is an increment usage call
+    const expectedIncrement = await this.prepareIncrement(wallet, chainId, payload.calls)
+    if (expectedIncrement) {
+      // This should equal the last call
+      const lastCall = payload.calls[payload.calls.length - 1]!
+      if (!Address.isEqual(expectedIncrement.to, lastCall.to) || !Hex.isEqual(expectedIncrement.data, lastCall.data)) {
+        throw new Error('Expected increment mismatch')
+      }
+    }
 
-    const implicitSigners = signatures
-      .filter((sig) => SessionSignature.isImplicitSessionCallSignature(sig))
-      .map((sig) => sig.signer)
+    // Encode the signature
+    const explicitSigners: Address.Address[] = []
+    const implicitSigners: Address.Address[] = []
+    await Promise.all(
+      signers.map(async (signer) => {
+        if (isExplicitSessionSigner(signer)) {
+          explicitSigners.push(await signer.address)
+        } else {
+          implicitSigners.push(await signer.address)
+        }
+      }),
+    )
+    const encodedSignature = SessionSignature.encodeSessionCallSignatures(
+      signatures,
+      await this.topology,
+      explicitSigners,
+      implicitSigners,
+    )
 
     return {
       type: 'sapient',
       address: this.address,
-      data: Hex.from(
-        SessionSignature.encodeSessionCallSignatures(signatures, topology, explicitSigners, implicitSigners),
-      ),
+      data: Hex.from(encodedSignature),
     }
   }
 

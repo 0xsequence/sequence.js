@@ -9,6 +9,7 @@ export interface RandomOptions {
   maxPermissions?: number
   maxRules?: number
   checkpointerMode?: 'no' | 'random' | 'yes'
+  skewed?: 'left' | 'right' | 'none'
 }
 
 export function createSeededRandom(seed: string) {
@@ -98,7 +99,13 @@ function generateRandomTopology(depth: number, options?: RandomOptions): Config.
   }
 
   // Generate a node with two random subtrees
-  return [generateRandomTopology(depth - 1, options), generateRandomTopology(depth - 1, options)]
+  if (options?.skewed === 'left') {
+    return [generateRandomTopology(0, options), generateRandomTopology(depth - 1, options)]
+  } else if (options?.skewed === 'right') {
+    return [generateRandomTopology(depth - 1, options), generateRandomTopology(0, options)]
+  } else {
+    return [generateRandomTopology(depth - 1, options), generateRandomTopology(depth - 1, options)]
+  }
 }
 
 async function generateSessionsTopology(
@@ -198,12 +205,19 @@ const command: CommandModule = {
               description: 'Checkpointer mode: no (never add), random (50% chance), yes (always add)',
               default: 'no',
             })
+            .option('skewed', {
+              type: 'string',
+              choices: ['left', 'right', 'none'],
+              description: 'Skewed topology: left (left-heavy), right (right-heavy), none (balanced)',
+              default: 'none',
+            })
         },
         async (argv) => {
           const options: RandomOptions = {
             seededRandom: argv.seed ? createSeededRandom(argv.seed) : undefined,
             minThresholdOnNested: argv.minThresholdOnNested,
             checkpointerMode: argv.checkpointer as 'no' | 'random' | 'yes',
+            skewed: argv.skewed as 'left' | 'right' | undefined,
           }
           const result = await doRandomConfig(argv.maxDepth as number, options)
           console.log(result)
@@ -240,6 +254,7 @@ const command: CommandModule = {
             seededRandom: argv.seed ? createSeededRandom(argv.seed) : undefined,
             maxPermissions: argv.maxPermissions,
             maxRules: argv.maxRules,
+            skewed: argv.skewed as 'left' | 'right' | undefined,
           }
           const result = await doRandomSessionTopology(argv.maxDepth as number, options)
           console.log(result)

@@ -15,6 +15,7 @@ export type WalletOptions = {
   context: Context.Context
   stateProvider: State.Provider
   guest: Address.Address
+  unsafe?: boolean
 }
 
 export const DefaultWalletOptions: WalletOptions = {
@@ -54,9 +55,22 @@ export class Wallet {
     this.stateProvider = combinedOptions.stateProvider
   }
 
+  /**
+   * Creates a new counter-factual wallet using the provided configuration.
+   * Saves the wallet in the state provider, so you can get its imageHash from its address,
+   * and its configuration from its imageHash.
+   *
+   * @param configuration - The wallet configuration to use.
+   * @param options - Optional wallet options.
+   * @returns A Promise that resolves to the new Wallet instance.
+   */
   static async fromConfiguration(configuration: Config.Config, options?: Partial<WalletOptions>): Promise<Wallet> {
     const merged = { ...DefaultWalletOptions, ...options }
-    //FIXME Validate configuration (weights not too large, total weights above threshold, etc)
+
+    if (!merged.unsafe) {
+      Config.evaluateConfigurationSafety(configuration)
+    }
+
     await merged.stateProvider.saveWallet(configuration, merged.context)
     return new Wallet(SequenceAddress.from(configuration, merged.context), merged)
   }
@@ -73,18 +87,41 @@ export class Wallet {
     return Erc6492.deploy(deployInformation.imageHash, deployInformation.context)
   }
 
-  async prepareUpdate(configuration: Config.Config): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
+  /**
+   * Prepares an envelope for updating the wallet's configuration.
+   *
+   * This function creates the necessary envelope that must be signed in order to update
+   * the configuration of a wallet. If the `unsafe` option is set to true, no sanity checks
+   * will be performed on the provided configuration. Otherwise, the configuration will be
+   * validated for safety (e.g., weights, thresholds).
+   *
+   * Note: This function does not directly update the wallet's configuration. The returned
+   * envelope must be signed and then submitted using the `submitUpdate` method to apply
+   * the configuration change.
+   *
+   * @param configuration - The new wallet configuration to be proposed.
+   * @param options - Options for preparing the update. If `unsafe` is true, skips safety checks.
+   * @returns A promise that resolves to an unsigned envelope for the configuration update.
+   */
+  async prepareUpdate(
+    configuration: Config.Config,
+    options?: { unsafe?: boolean },
+  ): Promise<Envelope.Envelope<Payload.ConfigUpdate>> {
+    if (!options?.unsafe) {
+      Config.evaluateConfigurationSafety(configuration)
+    }
+
     const imageHash = Config.hashConfiguration(configuration)
-    const blankEvelope = (
+    const blankEnvelope = (
       await Promise.all([
         this.prepareBlankEnvelope(0n),
-        // TODO: Add save configuration
         this.stateProvider.saveWallet(configuration, this.context),
+        this.stateProvider.saveConfiguration(configuration),
       ])
     )[0]
 
     return {
-      ...blankEvelope,
+      ...blankEnvelope,
       payload: Payload.fromConfigUpdate(Bytes.toHex(imageHash)),
     }
   }
