@@ -19,7 +19,6 @@ import { getChainInfo } from '@/utils/formatting'
 import { IntentAction } from '@/types'
 import { Hex, formatUnits, isAddressEqual, zeroAddress } from 'viem'
 import { Address as OxAddress } from 'ox'
-import * as chains from 'viem/chains'
 import {
   MOCK_CHAIN_ID,
   MOCK_CONTRACT_ADDRESS,
