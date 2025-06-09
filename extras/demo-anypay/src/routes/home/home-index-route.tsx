@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Hex } from 'viem'
 import { AbiFunction, Address } from 'ox'
-import * as chains from 'viem/chains'
 import { useAnyPay, useTokenBalances, TokenBalance, Account } from '@0xsequence/anypay-sdk'
 import { Loader2 } from 'lucide-react'
 import { AccountInfoSection } from '@/components/AccountInfoSection'
@@ -25,9 +24,6 @@ import {
   PAY_RECIPIENT_ADDRESS,
   PAY_AMOUNT,
 } from '@/config'
-
-// USDC Address for interaction on destination chain (base)
-const BASE_USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
 
 function useHook() {
   const account = useAccount()
@@ -135,7 +131,7 @@ function useHook() {
 
       destinationCall = {
         chainId: destinationChainId,
-        to: BASE_USDC_ADDRESS,
+        to: PAY_TOKEN_ADDRESS,
         transactionData,
         transactionValue: '0',
       }
