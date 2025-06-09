@@ -17,7 +17,8 @@
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json && tsc",
     "dev": "tsc --watch",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:dev": "vitest",
     "clean": "rimraf dist",
     "lint": "turbo lint"
   },

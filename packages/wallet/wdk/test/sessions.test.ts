@@ -1,7 +1,7 @@
 import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { beforeEach, describe, it, vi } from 'vitest'
 import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State } from '../../core/src/index.js'
-import { Attestation, Constants, Payload, Permission } from '../../primitives/src/index.js'
+import { Attestation, Constants, Extensions, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
@@ -110,6 +110,7 @@ describe('Sessions (via Manager)', () => {
       wallet: coreWallet,
       sessionManager: new CoreSigners.SessionManager(coreWallet, {
         provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
       }),
     }
   })

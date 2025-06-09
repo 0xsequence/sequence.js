@@ -1,6 +1,7 @@
 import {
   Config,
   Constants,
+  Context,
   Payload,
   SessionConfig,
   SessionSignature,
@@ -15,15 +16,9 @@ import { Explicit, Implicit, isExplicitSessionSigner, SessionSigner, UsageLimit 
 export type SessionManagerOptions = {
   sessionManagerAddress: Address.Address
   stateProvider?: State.Provider
-  implicitSigners: Implicit[]
-  explicitSigners: Explicit[]
+  implicitSigners?: Implicit[]
+  explicitSigners?: Explicit[]
   provider?: Provider.Provider
-}
-
-export const DefaultSessionManagerOptions: SessionManagerOptions = {
-  sessionManagerAddress: Constants.DefaultSessionManager,
-  implicitSigners: [],
-  explicitSigners: [],
 }
 
 export class SessionManager implements SapientSigner {
@@ -36,14 +31,13 @@ export class SessionManager implements SapientSigner {
 
   constructor(
     readonly wallet: Wallet,
-    options?: Partial<SessionManagerOptions>,
+    options: SessionManagerOptions,
   ) {
-    const combinedOptions = { ...DefaultSessionManagerOptions, ...options }
-    this.stateProvider = combinedOptions.stateProvider ?? wallet.stateProvider
-    this.address = combinedOptions.sessionManagerAddress
-    this._implicitSigners = combinedOptions.implicitSigners
-    this._explicitSigners = combinedOptions.explicitSigners
-    this._provider = combinedOptions.provider
+    this.stateProvider = options.stateProvider ?? wallet.stateProvider
+    this.address = options.sessionManagerAddress
+    this._implicitSigners = options.implicitSigners ?? []
+    this._explicitSigners = options.explicitSigners ?? []
+    this._provider = options.provider
   }
 
   get imageHash(): Promise<Hex.Hex | undefined> {
