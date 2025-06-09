@@ -1,5 +1,5 @@
 import type { CommandModule } from 'yargs'
-import { Address, Bytes, Hex } from 'ox'
+import { Address, Hex } from 'ox'
 import { fromPosOrStdin } from '../utils.js'
 import { Signature, Config } from '@0xsequence/wallet-primitives'
 

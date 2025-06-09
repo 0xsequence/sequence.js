@@ -1,6 +1,6 @@
 import { Address, Bytes } from 'ox'
 import type { CommandModule } from 'yargs'
-import { Constants, Address as SequenceAddress, Context } from '@0xsequence/wallet-primitives'
+import { Address as SequenceAddress, Context } from '@0xsequence/wallet-primitives'
 
 export async function doCalculateAddress(options: {
   imageHash: string
