@@ -14,26 +14,20 @@ import { CommitIntentStep } from '@/components/CommitIntentStep'
 import { OriginCallStep } from '@/components/OriginCallStep'
 import { AdvancedControlsSection } from '@/components/AdvancedControlsSection'
 import { RelayerStatusSection } from '@/components/RelayerStatusSection'
+import {
+  MOCK_CONTRACT_ADDRESS,
+  MOCK_TRANSFER_DATA,
+  MOCK_CHAIN_ID,
+  MOCK_TOKEN_ADDRESS,
+  MOCK_TOKEN_AMOUNT,
+  PAY_CHAIN_ID,
+  PAY_TOKEN_ADDRESS,
+  PAY_RECIPIENT_ADDRESS,
+  PAY_AMOUNT,
+} from '@/config'
 
-// Mock Data
-const MOCK_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'
-// Mock Calldata for interaction
-const MOCK_TRANSFER_DATA: Hex = `0xabcdef`
-// Mock Chain ID for interaction
-const MOCK_CHAIN_ID = chains.arbitrum.id
-// Mock Token Address for interaction on destination chain
-const MOCK_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
-// Mock Token Amount for interaction on destination chain
-const MOCK_TOKEN_AMOUNT = '3000000'
-
-// Chain ID for destination chain (base)
-const BASE_USDC_DESTINATION_CHAIN_ID = chains.base.id
 // USDC Address for interaction on destination chain (base)
 const BASE_USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
-// Give Directly - recipient Address for interaction on destination chain (base)
-const RECIPIENT_ADDRESS = '0x750EF1D7a0b4Ab1c97B7A623D7917CcEb5ea779C'
-// Amount of USDC to transfer on destination chain (base)
-const AMOUNT = 30000n // 0.03 USDC (6 decimals)
 
 function useHook() {
   const account = useAccount()
@@ -46,9 +40,9 @@ function useHook() {
     to: '',
     data: '',
     value: '0',
-    chainId: BASE_USDC_DESTINATION_CHAIN_ID.toString(),
+    chainId: PAY_CHAIN_ID.toString(),
     tokenAmount: '0',
-    tokenAddress: BASE_USDC_ADDRESS,
+    tokenAddress: PAY_TOKEN_ADDRESS,
   })
 
   const {
@@ -115,14 +109,14 @@ function useHook() {
     if (action === 'pay') {
       // ERC20 ABI functions
       const erc20Transfer = AbiFunction.from('function transfer(address,uint256) returns (bool)')
-      const encodedData = AbiFunction.encodeData(erc20Transfer, [RECIPIENT_ADDRESS, AMOUNT]) as Hex
+      const encodedData = AbiFunction.encodeData(erc20Transfer, [PAY_RECIPIENT_ADDRESS, PAY_AMOUNT]) as Hex
 
       // Ensure calldata is prefixed with 0x
       const transactionData = encodedData.startsWith('0x') ? encodedData : `0x${encodedData}`
 
       destinationCall = {
-        chainId: BASE_USDC_DESTINATION_CHAIN_ID,
-        to: BASE_USDC_ADDRESS,
+        chainId: PAY_CHAIN_ID,
+        to: PAY_TOKEN_ADDRESS,
         transactionData,
         transactionValue: '0',
       }
@@ -171,13 +165,13 @@ function useHook() {
           ? customCallData.tokenAddress
           : action === 'mock_interaction'
             ? MOCK_TOKEN_ADDRESS
-            : BASE_USDC_ADDRESS,
+            : PAY_TOKEN_ADDRESS,
       destinationTokenAmount:
         action === 'custom_call'
           ? customCallData.tokenAmount
           : action === 'mock_interaction'
             ? MOCK_TOKEN_AMOUNT
-            : AMOUNT.toString(),
+            : PAY_AMOUNT.toString(),
       destinationCallData:
         action === 'custom_call'
           ? customCallData.data.startsWith('0x')

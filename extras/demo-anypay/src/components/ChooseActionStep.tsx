@@ -5,6 +5,7 @@ import * as chains from 'viem/chains'
 import { SectionHeader } from '@/components/SectionHeader'
 import { TokenBalance } from '@0xsequence/anypay-sdk'
 import { IntentAction } from '@/types'
+import { PAY_CHAIN_ID, PAY_DISPLAY_TEXT } from '@/config'
 
 interface ChooseActionStepProps {
   isAutoExecuteEnabled: boolean
@@ -100,11 +101,11 @@ export const ChooseActionStep: React.FC<ChooseActionStepProps> = ({
             'Processing...'
           ) : (
             <>
-              <NetworkImage chainId={8453} size="sm" className="w-5 h-5" />
+              <NetworkImage chainId={PAY_CHAIN_ID} size="sm" className="w-5 h-5" />
               <span>
                 Pay Action{' '}
                 <Text variant="small" color="secondary">
-                  (Donate $0.03 USDC)
+                  {PAY_DISPLAY_TEXT}
                 </Text>
               </span>
             </>

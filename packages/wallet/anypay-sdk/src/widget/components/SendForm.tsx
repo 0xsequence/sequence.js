@@ -205,8 +205,9 @@ export const SendForm: React.FC<SendFormProps> = ({
             ? zeroAddress
             : getDestTokenAddress(selectedChain.id, selectedDestToken.symbol),
         destinationTokenAmount: parsedAmount,
+        destinationTokenSymbol: selectedDestToken.symbol,
         sequenceApiKey,
-        fee: selectedToken.symbol === 'ETH' ? parseUnits('0.0001', 18).toString() : parseUnits('0.02', 6).toString(), // TOOD: fees
+        fee: '0',
         client,
         apiClient,
         originRelayer,

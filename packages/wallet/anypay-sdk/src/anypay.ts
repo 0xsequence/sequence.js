@@ -1264,6 +1264,7 @@ type SendOptions = {
   recipient: string
   destinationTokenAddress: string
   destinationTokenAmount: string
+  destinationTokenSymbol: string
   sequenceApiKey: string
   fee: string
   client?: WalletClient
@@ -1284,6 +1285,7 @@ export async function prepareSend(options: SendOptions) {
     recipient,
     destinationTokenAddress,
     destinationTokenAmount,
+    destinationTokenSymbol,
     sequenceApiKey,
     fee,
     client,
@@ -1300,7 +1302,7 @@ export async function prepareSend(options: SendOptions) {
     userAddress: mainSigner,
     originChainId,
     originTokenAddress,
-    originTokenAmount, // max amount
+    originTokenAmount: originTokenAddress === destinationTokenAddress ? destinationTokenAmount : originTokenAmount,
     destinationChainId,
     destinationToAddress: destinationTokenAddress == zeroAddress ? recipient : destinationTokenAddress,
     destinationTokenAddress: destinationTokenAddress,
