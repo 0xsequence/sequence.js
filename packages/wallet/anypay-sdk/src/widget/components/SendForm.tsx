@@ -10,6 +10,7 @@ import { zeroAddress } from 'viem'
 import { useEnsAddress } from 'wagmi'
 import { mainnet } from 'viem/chains'
 import { formatBalance } from '../../tokenBalances.js'
+
 interface Token {
   id: number
   name: string
@@ -18,6 +19,7 @@ interface Token {
   imageUrl: string
   chainId: number
   contractAddress: string
+  tokenPriceUsd?: number
   contractInfo?: {
     decimals: number
     symbol: string
@@ -176,6 +178,11 @@ export const SendForm: React.FC<SendFormProps> = ({
     }
   }, [toToken])
 
+  // Update amount when toAmount prop changes
+  useEffect(() => {
+    setAmount(toAmount ?? '')
+  }, [toAmount])
+
   const chainDropdownRef = useRef<HTMLDivElement>(null)
   const tokenDropdownRef = useRef<HTMLDivElement>(null)
   const chainInfo = getChainInfo(selectedToken.chainId) as any // TODO: Add proper type
@@ -201,6 +208,12 @@ export const SendForm: React.FC<SendFormProps> = ({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Calculate USD value
+  const amountUsdValue =
+    amount && selectedDestToken.symbol === 'ETH'
+      ? `≈ $${(parseFloat(amount) * (selectedToken.tokenPriceUsd || 0)).toFixed(2)} USD`
+      : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -538,6 +551,9 @@ export const SendForm: React.FC<SendFormProps> = ({
                 <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>{selectedDestToken.symbol}</span>
               </div>
             </div>
+          )}
+          {amount && selectedDestToken.symbol === 'ETH' && (
+            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{amountUsdValue}</div>
           )}
         </div>
 
