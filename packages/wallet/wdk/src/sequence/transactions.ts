@@ -1,5 +1,5 @@
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Envelope, Wallet } from '@0xsequence/wallet-core'
+import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
 import { Address, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
@@ -112,25 +112,30 @@ export class Transactions {
 
     // Get relayer options
     const allRelayerOptions = await Promise.all(
-      this.shared.sequence.relayers.map(async (relayer): Promise<RelayerOption[]> => {
-        const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
+      this.shared.sequence.relayers
+        // Filter relayers based on the chainId of the transaction
+        .filter((relayer) =>
+          relayer instanceof Relayer.Rpc.RpcRelayer ? BigInt(relayer.chainId) === tx.envelope.chainId : true,
+        )
+        .map(async (relayer): Promise<RelayerOption[]> => {
+          const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
-        if (feeOptions.options.length === 0) {
-          return [
-            {
-              id: uuidv7(),
-              relayerId: relayer.id,
-            } as RelayerOption,
-          ]
-        }
+          if (feeOptions.options.length === 0) {
+            return [
+              {
+                id: uuidv7(),
+                relayerId: relayer.id,
+              } as RelayerOption,
+            ]
+          }
 
-        return feeOptions.options.map((feeOption) => ({
-          id: uuidv7(),
-          feeOption: feeOption,
-          relayerId: relayer.id,
-          quote: feeOptions.quote,
-        }))
-      }),
+          return feeOptions.options.map((feeOption) => ({
+            id: uuidv7(),
+            feeOption: feeOption,
+            relayerId: relayer.id,
+            quote: feeOptions.quote,
+          }))
+        }),
     )
 
     await this.shared.databases.transactions.set({
