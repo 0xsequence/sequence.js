@@ -81,7 +81,7 @@ export class RpcRelayer implements Relayer {
         data: Bytes.toHex(data),
       })
 
-      const options = result.options.map(this.mapRpcFeeOptionToFeeOption)
+      const options = result.options.map((feeOption) => this.mapRpcFeeOptionToFeeOption(feeOption))
       const quote = result.quote ? ({ _tag: 'FeeQuote', _quote: result.quote } as FeeQuote) : undefined
 
       return { options, quote }
