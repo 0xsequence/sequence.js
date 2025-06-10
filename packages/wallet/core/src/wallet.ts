@@ -262,7 +262,7 @@ export class Wallet {
   async getNonce(provider: Provider.Provider, space: bigint): Promise<bigint> {
     const result = await provider.request({
       method: 'eth_call',
-      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }],
+      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE, [space]) }, 'latest'],
     })
 
     if (result === '0x' || result.length === 0) {
