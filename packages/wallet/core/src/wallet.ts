@@ -10,6 +10,7 @@ import {
 import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
+import { UserOperation } from 'ox/erc4337'
 
 export type WalletOptions = {
   context: Context.Context
@@ -270,6 +271,145 @@ export class Wallet {
     }
 
     return BigInt(result)
+  }
+
+  async get4337Nonce(provider: Provider.Provider, space: bigint): Promise<bigint> {
+    const result = await provider.request({
+      method: 'eth_call',
+      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE_4337, [this.address, space]) }],
+    })
+
+    if (result === '0x' || result.length === 0) {
+      return 0n
+    }
+
+    // Mask lower 64 bits
+    return BigInt(result) & 0xffffffffffffffffn
+  }
+
+  async get4337Entrypoint(provider: Provider.Provider): Promise<Address.Address> {
+    const result = await provider.request({
+      method: 'eth_call',
+      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_ENTRYPOINT) }],
+    })
+
+    const address = `0x${result.slice(-40)}`
+    Address.assert(address, { strict: false })
+    return address
+  }
+
+  async prepare4337Transaction(
+    provider: Provider.Provider,
+    calls: Payload.Call[],
+    options: {
+      space?: bigint
+      noConfigUpdate?: boolean
+      unsafe?: boolean
+    },
+  ): Promise<Envelope.Envelope<Payload.Calls4337_07>> {
+    const space = options.space ?? 0n
+
+    // If safe mode is set, then we check that the transaction
+    // is not "dangerous", aka it does not have any delegate calls
+    // or calls to the wallet contract itself
+    if (!options?.unsafe) {
+      const lowerCaseSelf = this.address.toLowerCase()
+      for (const call of calls) {
+        if (call.delegateCall) {
+          throw new Error('delegate calls are not allowed in safe mode')
+        }
+        if (call.to.toLowerCase() === lowerCaseSelf) {
+          throw new Error('calls to the wallet contract itself are not allowed in safe mode')
+        }
+      }
+    }
+
+    const [chainId, nonce, entrypoint, status] = await Promise.all([
+      provider.request({ method: 'eth_chainId' }),
+      this.get4337Nonce(provider, space),
+      this.get4337Entrypoint(provider),
+      this.getStatus(provider),
+    ])
+
+    // If entrypoint is address(0) then 4337 is not enabled in this wallet
+    if (Address.isEqual(entrypoint, '0x0000000000000000000000000000000000000000')) {
+      throw new Error('4337 is not enabled in this wallet')
+    }
+
+    // If the wallet is not deployed, then we need to include the initCode on
+    // the 4337 transaction
+    let factory: Address.Address | undefined
+    let factoryData: Hex.Hex | undefined
+
+    if (!status.isDeployed) {
+      const deploy = await this.buildDeployTransaction()
+      factory = deploy.to
+      factoryData = deploy.data
+    }
+
+    // If the latest configuration does not match the onchain configuration
+    // then we bundle the update into the transaction envelope
+    if (!options?.noConfigUpdate) {
+      const status = await this.getStatus(provider)
+      if (status.imageHash !== status.onChainImageHash) {
+        calls.push({
+          to: this.address,
+          value: 0n,
+          data: AbiFunction.encodeData(Constants.UPDATE_IMAGE_HASH, [status.imageHash]),
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        })
+      }
+    }
+
+    return {
+      payload: {
+        type: 'call_4337_07',
+        nonce,
+        space,
+        calls,
+        entrypoint,
+        callGasLimit: 0n,
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 0n,
+        paymaster: '0x0000000000000000000000000000000000000000',
+        paymasterData: '0x',
+        preVerificationGas: 0n,
+        verificationGasLimit: 0n,
+        factory,
+        factoryData,
+      },
+      ...(await this.prepareBlankEnvelope(BigInt(chainId))),
+    }
+  }
+
+  async build4337Transaction(
+    provider: Provider.Provider,
+    envelope: Envelope.Signed<Payload.Calls4337_07>,
+  ): Promise<UserOperation.RpcV07> {
+    const status = await this.getStatus(provider)
+
+    const updatedEnvelope = { ...envelope, configuration: status.configuration }
+    const { weight, threshold } = Envelope.weightOf(updatedEnvelope)
+    if (weight < threshold) {
+      throw new Error('insufficient weight in envelope')
+    }
+
+    const signature = Envelope.encodeSignature(updatedEnvelope)
+    const operation = Payload.to4337UserOperation(
+      envelope.payload,
+      this.address,
+      Bytes.toHex(
+        SequenceSignature.encodeSignature({
+          ...signature,
+          suffix: status.pendingUpdates.map(({ signature }) => signature),
+        }),
+      ),
+    )
+
+    return UserOperation.toRpc(operation)
   }
 
   async prepareTransaction(

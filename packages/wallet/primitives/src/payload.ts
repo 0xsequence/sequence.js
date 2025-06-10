@@ -549,7 +549,7 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
 export function to4337UserOperation(
   payload: Calls4337_07,
   wallet: Address.Address,
-  chainId: bigint,
+  signature?: Hex.Hex,
 ): UserOperation.UserOperation<'0.7'> {
   const callsPayload: Calls = {
     type: 'call',
@@ -567,13 +567,20 @@ export function to4337UserOperation(
     maxPriorityFeePerGas: payload.maxPriorityFeePerGas,
     preVerificationGas: payload.preVerificationGas,
     verificationGasLimit: payload.verificationGasLimit,
+    factory: payload.factory,
+    factoryData: payload.factoryData,
+    paymaster: payload.paymaster,
+    paymasterData: payload.paymasterData,
+    paymasterPostOpGasLimit: payload.paymasterPostOpGasLimit,
+    paymasterVerificationGasLimit: payload.paymasterVerificationGasLimit,
+    signature,
   }
 
   return operation
 }
 
 export function to4337Message(payload: Calls4337_07, wallet: Address.Address, chainId: bigint): Hex.Hex {
-  const operation = to4337UserOperation(payload, wallet, chainId)
+  const operation = to4337UserOperation(payload, wallet)
   const accountGasLimits = Hex.concat(
     Hex.padLeft(Hex.fromNumber(operation.verificationGasLimit), 16),
     Hex.padLeft(Hex.fromNumber(operation.callGasLimit), 16),

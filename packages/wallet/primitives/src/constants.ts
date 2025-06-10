@@ -33,6 +33,10 @@ export const RECOVER_SAPIENT_SIGNATURE_COMPACT = Abi.from([
 
 // ERC4337
 export const EXECUTE_USER_OP = Abi.from(['function executeUserOp(bytes calldata _userOp) external'])[0]
+export const READ_NONCE_4337 = Abi.from([
+  'function getNonce(address _account, uint192 _key) public view returns (uint256)',
+])[0]
+export const READ_ENTRYPOINT = Abi.from(['function entryPoint() public view returns (address)'])[0]
 
 // SessionManager
 export const INCREMENT_USAGE_LIMIT = Abi.from([
