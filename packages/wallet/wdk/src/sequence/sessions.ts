@@ -75,6 +75,7 @@ export class Sessions {
       applicationData: Bytes.fromHex(args.applicationData ?? '0x'),
       authData: {
         redirectUrl: args.target,
+        issuedAt: BigInt(Math.floor(Date.now() / 1000)),
       },
     }
     // Fake the configuration with the single required signer

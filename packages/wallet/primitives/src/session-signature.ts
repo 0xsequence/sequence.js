@@ -1,5 +1,5 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
-import { Attestation, encode, encodeForJson, fromParsed } from './attestation.js'
+import { Attestation, encode, encodeForJson, fromParsed, toJson } from './attestation.js'
 import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {
   encodeSessionsTopology,
@@ -134,7 +134,7 @@ export function encodeSessionCallSignatures(
   // Map each call signature to its attestation index
   callSignatures.filter(isImplicitSessionCallSignature).forEach((callSig) => {
     if (callSig.attestation) {
-      const attestationStr = JSON.stringify(callSig.attestation)
+      const attestationStr = toJson(callSig.attestation)
       if (!attestationMap.has(attestationStr)) {
         attestationMap.set(attestationStr, encodedAttestations.length)
         encodedAttestations.push(Bytes.concat(encode(callSig.attestation), packRSY(callSig.identitySignature)))
@@ -152,7 +152,7 @@ export function encodeSessionCallSignatures(
   for (const callSignature of callSignatures) {
     if (isImplicitSessionCallSignature(callSignature)) {
       // Implicit
-      const attestationStr = JSON.stringify(callSignature.attestation)
+      const attestationStr = toJson(callSignature.attestation)
       const attestationIndex = attestationMap.get(attestationStr)
       if (attestationIndex === undefined) {
         // Unreachable

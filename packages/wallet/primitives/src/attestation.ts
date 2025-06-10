@@ -11,6 +11,7 @@ export type Attestation = {
 
 export type AuthData = {
   redirectUrl: string // bytes
+  issuedAt: bigint // uint64
 }
 
 // Encoding and decoding
@@ -33,6 +34,7 @@ export function encodeAuthData(authData: AuthData): Bytes.Bytes {
   return Bytes.concat(
     Bytes.fromNumber(authData.redirectUrl.length, { size: 3 }),
     Bytes.fromString(authData.redirectUrl),
+    Bytes.fromNumber(authData.issuedAt, { size: 8 }),
   )
 }
 
@@ -58,9 +60,11 @@ export function decode(bytes: Bytes.Bytes): Attestation {
 export function decodeAuthData(bytes: Bytes.Bytes): AuthData {
   const redirectUrlLength = Bytes.toNumber(bytes.slice(0, 3))
   const redirectUrl = Bytes.toString(bytes.slice(3, 3 + redirectUrlLength))
+  const issuedAt = Bytes.toBigInt(bytes.slice(3 + redirectUrlLength, 3 + redirectUrlLength + 8))
 
   return {
     redirectUrl,
+    issuedAt,
   }
 }
 
@@ -79,7 +83,10 @@ export function encodeForJson(attestation: Attestation): any {
     issuerHash: Bytes.toHex(attestation.issuerHash),
     audienceHash: Bytes.toHex(attestation.audienceHash),
     applicationData: Bytes.toHex(attestation.applicationData),
-    authData: attestation.authData,
+    authData: {
+      redirectUrl: attestation.authData.redirectUrl,
+      issuedAt: attestation.authData.issuedAt.toString(),
+    },
   }
 }
 
@@ -94,7 +101,10 @@ export function fromParsed(parsed: any): Attestation {
     issuerHash: Bytes.fromHex(parsed.issuerHash),
     audienceHash: Bytes.fromHex(parsed.audienceHash),
     applicationData: Bytes.fromHex(parsed.applicationData),
-    authData: parsed.authData,
+    authData: {
+      redirectUrl: parsed.authData.redirectUrl,
+      issuedAt: BigInt(parsed.authData.issuedAt),
+    },
   }
 }
 

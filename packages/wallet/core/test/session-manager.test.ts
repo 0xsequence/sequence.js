@@ -117,6 +117,7 @@ describe('SessionManager', () => {
         applicationData: new Uint8Array(),
         authData: {
           redirectUrl: 'https://example.com',
+          issuedAt: BigInt(Math.floor(Date.now() / 1000)),
         },
       }
       const identitySignature = Secp256k1.sign({
@@ -336,6 +337,7 @@ describe('SessionManager', () => {
         applicationData: new Uint8Array(),
         authData: {
           redirectUrl: 'https://example.com',
+          issuedAt: BigInt(Math.floor(Date.now() / 1000)),
         },
       }
       const identitySignature = Secp256k1.sign({

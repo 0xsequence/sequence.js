@@ -23,7 +23,7 @@ export type Permission = {
 export type SessionPermissions = {
   signer: Address.Address
   valueLimit: bigint
-  deadline: bigint
+  deadline: bigint // uint64
   permissions: [Permission, ...Permission[]]
 }
 
@@ -48,7 +48,7 @@ export function encodeSessionPermissions(sessionPermissions: SessionPermissions)
   return Bytes.concat(
     Bytes.padLeft(Bytes.fromHex(sessionPermissions.signer), 20),
     Bytes.padLeft(Bytes.fromNumber(sessionPermissions.valueLimit), 32),
-    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.deadline), 32),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.deadline, { size: 8 }), 8),
     Bytes.fromNumber(sessionPermissions.permissions.length, { size: 1 }),
     Bytes.concat(...encodedPermissions),
   )
@@ -85,10 +85,10 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions {
   const signer = Bytes.toHex(bytes.slice(0, 20))
   const valueLimit = Bytes.toBigInt(bytes.slice(20, 52))
-  const deadline = Bytes.toBigInt(bytes.slice(52, 84))
-  const permissionsLength = Number(bytes[84]!)
+  const deadline = Bytes.toBigInt(bytes.slice(52, 60))
+  const permissionsLength = Number(bytes[60]!)
   const permissions = []
-  let pointer = 85
+  let pointer = 61
   for (let i = 0; i < permissionsLength; i++) {
     // Pass the remaining bytes instead of a fixed slice length
     const { permission, consumed } = decodePermission(bytes.slice(pointer))

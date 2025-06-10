@@ -4,7 +4,7 @@ import { Abi, AbiEvent, Address } from 'ox'
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
 
-export const EMITTER_ADDRESS: Address.Address = '0x7F6e420Ed3017A36bE6e1DA8e3AFE61569eb4840'
+export const EMITTER_ADDRESS: Address.Address = '0x363147Ff23385FAEbC689C450477fD4e07F427A6'
 export const EMITTER_FUNCTIONS = Abi.from(['function explicitEmit()', 'function implicitEmit()'])
 export const EMITTER_EVENT_TOPICS = [
   AbiEvent.encode(AbiEvent.from('event Explicit(address sender)')).topics[0],

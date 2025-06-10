@@ -21,6 +21,9 @@ export class Implicit implements SessionSigner {
     if (this._attestation.approvedSigner !== this.address) {
       throw new Error('Invalid attestation')
     }
+    if (this._attestation.authData.issuedAt > BigInt(Math.floor(Date.now() / 1000))) {
+      throw new Error('Attestation issued in the future')
+    }
     this._identitySignature =
       typeof identitySignature === 'string' ? Signature.fromHex(identitySignature) : identitySignature
   }
@@ -123,7 +126,10 @@ const acceptImplicitRequestFunctionAbi = {
           internalType: 'struct AuthData',
           name: 'authData',
           type: 'tuple',
-          components: [{ internalType: 'string', name: 'redirectUrl', type: 'string' }],
+          components: [
+            { internalType: 'string', name: 'redirectUrl', type: 'string' },
+            { internalType: 'uint64', name: 'issuedAt', type: 'uint64' },
+          ],
         },
       ],
     },
