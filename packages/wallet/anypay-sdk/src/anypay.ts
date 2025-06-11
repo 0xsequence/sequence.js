@@ -329,6 +329,12 @@ export function useAnyPay(config: UseAnyPayConfig): UseAnyPayReturn {
   // TODO: Add type for args
   const createIntentMutation = useMutation<GetIntentCallsPayloadsReturn, Error, GetIntentCallsPayloadsArgs>({
     mutationFn: async (args: GetIntentCallsPayloadsArgs) => {
+      if (
+        args.originChainId === args.destinationChainId &&
+        isAddressEqual(Address.from(args.originTokenAddress), Address.from(args.destinationTokenAddress))
+      ) {
+        throw new Error('The same token cannot be used as both the source and destination token.')
+      }
       if (!account.address) {
         throw new Error('Missing selected token or account address')
       }
@@ -1258,6 +1264,7 @@ type SendOptions = {
   recipient: string
   destinationTokenAddress: string
   destinationTokenAmount: string
+  destinationTokenSymbol: string
   sequenceApiKey: string
   fee: string
   client?: WalletClient
@@ -1278,6 +1285,7 @@ export async function prepareSend(options: SendOptions) {
     recipient,
     destinationTokenAddress,
     destinationTokenAmount,
+    destinationTokenSymbol,
     sequenceApiKey,
     fee,
     client,
@@ -1294,7 +1302,7 @@ export async function prepareSend(options: SendOptions) {
     userAddress: mainSigner,
     originChainId,
     originTokenAddress,
-    originTokenAmount, // max amount
+    originTokenAmount: originTokenAddress === destinationTokenAddress ? destinationTokenAmount : originTokenAmount,
     destinationChainId,
     destinationToAddress: destinationTokenAddress == zeroAddress ? recipient : destinationTokenAddress,
     destinationTokenAddress: destinationTokenAddress,

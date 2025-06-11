@@ -151,6 +151,11 @@ export async function sendOriginTransaction(
   client: WalletClient,
   originParams: SendOriginCallTxArgs,
 ): Promise<`0x${string}`> {
+  const chainId = await client.getChainId()
+  if (chainId !== originParams.chain.id) {
+    await client.switchChain({ id: originParams.chain.id })
+  }
+
   const hash = await client.sendTransaction({
     account: wallet,
     to: originParams.to as `0x${string}`,
