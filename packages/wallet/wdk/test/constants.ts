@@ -8,7 +8,7 @@ import * as Db from '../src/dbs'
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
 
-export const EMITTER_ADDRESS: Address.Address = '0x363147Ff23385FAEbC689C450477fD4e07F427A6'
+export const EMITTER_ADDRESS: Address.Address = '0xb7bE532959236170064cf099e1a3395aEf228F44'
 export const EMITTER_ABI = Abi.from(['function explicitEmit()', 'function implicitEmit()'])
 
 // Environment variables
