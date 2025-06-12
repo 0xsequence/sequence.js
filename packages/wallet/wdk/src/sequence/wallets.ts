@@ -725,8 +725,6 @@ export class Wallets {
 
     await this.completeConfigurationUpdate(requestId)
 
-    console.log('walletEntry in completeLogin', walletEntry)
-
     await this.shared.databases.manager.set({
       ...walletEntry,
       status: 'ready',
