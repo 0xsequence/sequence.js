@@ -325,13 +325,14 @@ export class Wallets {
           throw new Error('email-otp-handler-not-registered')
         }
 
-        const signer = await handler.getSigner(args.email)
-        this.shared.modules.logger.log('Created new email otp signer:', signer.address)
+        const { signer: otpSigner, email: returnedEmail } = await handler.getSigner(args.email)
+        this.shared.modules.logger.log('Created new email otp signer:', otpSigner.address, 'Email:', returnedEmail)
 
         return {
-          signer,
+          signer: otpSigner,
           extra: {
             signerKind: Kinds.LoginEmailOtp,
+            email: returnedEmail,
           },
         }
       }
@@ -343,13 +344,14 @@ export class Wallets {
           throw new Error('handler-not-registered')
         }
 
-        const [signer, metadata] = await handler.completeAuth(args.commitment, args.code)
+        const [signer, metadata, { email }] = await handler.completeAuth(args.commitment, args.code)
         this.shared.modules.logger.log('Created new auth code pkce signer:', signer.address)
 
         return {
           signer,
           extra: {
             signerKind: 'login-' + args.kind,
+            email: email,
           },
         }
       }
@@ -385,7 +387,23 @@ export class Wallets {
         throw new Error('handler-not-registered')
       }
 
-      await handler.completeAuth(commitment, args.code)
+      const [_signer, _metadata, { email: loginEmailFromAuth }] = await handler.completeAuth(commitment, args.code)
+
+      if (loginEmailFromAuth && commitment.target) {
+        const walletAddress = commitment.target as Address.Address
+        const walletEntry = await this.shared.databases.manager.get(walletAddress)
+        console.log('[Wallets/completeRedirect] Existing walletEntry before update:', walletEntry)
+        if (walletEntry) {
+          const updatedWalletEntry = {
+            ...walletEntry,
+            loginEmail: loginEmailFromAuth,
+            loginType: ('login-' + commitment.kind) as Wallet['loginType'],
+            loginDate: new Date().toISOString(),
+          }
+          console.log('[Wallets/completeRedirect] Updating existing wallet entry:', updatedWalletEntry)
+          await this.shared.databases.manager.set(updatedWalletEntry)
+        }
+      }
     }
     return commitment.target
   }
@@ -411,7 +429,27 @@ export class Wallets {
         })
 
         if (result) {
-          // A wallet was selected, we can exit early
+          const selectedWalletAddress = result as Address.Address
+          const existingWalletEntry = await this.shared.databases.manager.get(selectedWalletAddress)
+
+          if (existingWalletEntry) {
+            const updatedWalletEntry = {
+              ...existingWalletEntry,
+              loginEmail: loginSigner.extra.email,
+              loginType: loginSigner.extra.signerKind as Wallet['loginType'],
+              loginDate: new Date().toISOString(),
+            }
+            console.log('[Wallets/signUp] Updating existing wallet entry due to UI selection:', updatedWalletEntry)
+            await this.shared.databases.manager.set(updatedWalletEntry)
+          } else {
+            // This case might indicate an inconsistency if the UI handler found a wallet
+            // that isn't in the primary manager DB, or if 'result' isn't the address.
+            console.warn(
+              '[Wallets/signUp] Wallet selected via UI handler not found in manager DB, or result format unexpected. Selected:',
+              selectedWalletAddress,
+            )
+          }
+          // Now we can exit early.
           return
         }
       }
@@ -483,15 +521,30 @@ export class Wallets {
     // Sign witness using the passkey signer
     await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, loginSigner.extra)
 
+    console.log('[Wallets/signUp] loginEmail from loginSigner.extra:', loginSigner.extra.email)
+
     // Save entry in the manager db
-    await this.shared.databases.manager.set({
+    const newWalletEntry = {
       address: wallet.address,
-      status: 'ready',
+      status: 'ready' as const,
       loginDate: new Date().toISOString(),
       device: device.address,
       loginType: loginSigner.extra.signerKind,
       useGuard: !args.noGuard,
-    })
+      loginEmail: loginSigner.extra.email,
+    }
+    console.log('[Wallets/signUp] Attempting to save new wallet entry:', newWalletEntry)
+    try {
+      await this.shared.databases.manager.set(newWalletEntry)
+      console.log('[Wallets/signUp] Successfully saved new wallet entry for address:', newWalletEntry.address)
+      // Optionally, verify by immediately trying to get it
+      const savedEntry = await this.shared.databases.manager.get(newWalletEntry.address)
+      console.log('[Wallets/signUp] Verification get after set:', savedEntry)
+    } catch (error) {
+      console.error('[Wallets/signUp] Error saving new wallet entry:', error, 'Entry was:', newWalletEntry)
+      // Re-throw the error if you want the operation to fail loudly, or handle it
+      throw error
+    }
 
     return wallet.address
   }
@@ -599,14 +652,20 @@ export class Wallets {
         await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
       }
 
-      await this.shared.databases.manager.set({
+      const existingEntry = await this.shared.databases.manager.get(args.wallet)
+      console.log('[Wallets/login] Existing wallet entry in isLoginToWalletArgs:', existingEntry)
+      const walletEntryToUpdate = {
+        ...(existingEntry ?? {}), // Spread existing entry or empty object if none
         address: args.wallet,
-        status: 'logging-in',
+        status: 'logging-in' as const,
         loginDate: new Date().toISOString(),
         device: device.address,
-        loginType: 'wallet',
+        loginType: 'wallet' as const, // This specific login type does not provide an email
         useGuard: guardTopology !== undefined,
-      })
+        // loginEmail will be preserved if existingEntry had it
+      }
+
+      await this.shared.databases.manager.set(walletEntryToUpdate)
 
       return this.requestConfigurationUpdate(
         args.wallet,
@@ -673,7 +732,8 @@ export class Wallets {
 
     await this.completeConfigurationUpdate(requestId)
 
-    // Save entry in the manager db
+    console.log('walletEntry in completeLogin', walletEntry)
+
     await this.shared.databases.manager.set({
       ...walletEntry,
       status: 'ready',

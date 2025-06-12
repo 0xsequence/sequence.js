@@ -57,14 +57,15 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
   public async completeAuth(
     commitment: Db.AuthCommitment,
     code: string,
-  ): Promise<[IdentitySigner, { [key: string]: string }]> {
+  ): Promise<[IdentitySigner, { [key: string]: string }, { email?: string }]> {
     const challenge = new Identity.AuthCodePkceChallenge('', '', '')
     if (!commitment.verifier) {
       throw new Error('Missing verifier in commitment')
     }
-    const signer = await this.nitroCompleteAuth(challenge.withAnswer(commitment.verifier, code))
+    const { signer, email } = await this.nitroCompleteAuth(challenge.withAnswer(commitment.verifier, code))
+
     await this.commitments.del(commitment.id)
 
-    return [signer, commitment.metadata]
+    return [signer, commitment.metadata, { email }]
   }
 }
