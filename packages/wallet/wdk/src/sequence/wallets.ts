@@ -392,7 +392,7 @@ export class Wallets {
       if (loginEmailFromAuth && commitment.target) {
         const walletAddress = commitment.target as Address.Address
         const walletEntry = await this.shared.databases.manager.get(walletAddress)
-        console.log('[Wallets/completeRedirect] Existing walletEntry before update:', walletEntry)
+
         if (walletEntry) {
           const updatedWalletEntry = {
             ...walletEntry,
@@ -400,7 +400,7 @@ export class Wallets {
             loginType: ('login-' + commitment.kind) as Wallet['loginType'],
             loginDate: new Date().toISOString(),
           }
-          console.log('[Wallets/completeRedirect] Updating existing wallet entry:', updatedWalletEntry)
+
           await this.shared.databases.manager.set(updatedWalletEntry)
         }
       }
@@ -439,7 +439,7 @@ export class Wallets {
               loginType: loginSigner.extra.signerKind as Wallet['loginType'],
               loginDate: new Date().toISOString(),
             }
-            console.log('[Wallets/signUp] Updating existing wallet entry due to UI selection:', updatedWalletEntry)
+
             await this.shared.databases.manager.set(updatedWalletEntry)
           } else {
             // This case might indicate an inconsistency if the UI handler found a wallet
@@ -521,8 +521,6 @@ export class Wallets {
     // Sign witness using the passkey signer
     await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, loginSigner.extra)
 
-    console.log('[Wallets/signUp] loginEmail from loginSigner.extra:', loginSigner.extra.email)
-
     // Save entry in the manager db
     const newWalletEntry = {
       address: wallet.address,
@@ -533,13 +531,9 @@ export class Wallets {
       useGuard: !args.noGuard,
       loginEmail: loginSigner.extra.email,
     }
-    console.log('[Wallets/signUp] Attempting to save new wallet entry:', newWalletEntry)
+
     try {
       await this.shared.databases.manager.set(newWalletEntry)
-      console.log('[Wallets/signUp] Successfully saved new wallet entry for address:', newWalletEntry.address)
-      // Optionally, verify by immediately trying to get it
-      const savedEntry = await this.shared.databases.manager.get(newWalletEntry.address)
-      console.log('[Wallets/signUp] Verification get after set:', savedEntry)
     } catch (error) {
       console.error('[Wallets/signUp] Error saving new wallet entry:', error, 'Entry was:', newWalletEntry)
       // Re-throw the error if you want the operation to fail loudly, or handle it
@@ -653,16 +647,15 @@ export class Wallets {
       }
 
       const existingEntry = await this.shared.databases.manager.get(args.wallet)
-      console.log('[Wallets/login] Existing wallet entry in isLoginToWalletArgs:', existingEntry)
+
       const walletEntryToUpdate = {
-        ...(existingEntry ?? {}), // Spread existing entry or empty object if none
+        ...(existingEntry ?? {}),
         address: args.wallet,
         status: 'logging-in' as const,
         loginDate: new Date().toISOString(),
         device: device.address,
-        loginType: 'wallet' as const, // This specific login type does not provide an email
+        loginType: 'wallet' as const,
         useGuard: guardTopology !== undefined,
-        // loginEmail will be preserved if existingEntry had it
       }
 
       await this.shared.databases.manager.set(walletEntryToUpdate)
