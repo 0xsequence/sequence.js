@@ -1,4 +1,5 @@
-export const ERC721_SALE_ITEMS_ABI = [
+//An ERC 721 token contract with batchMint support, to make it compatible with Sequence Sales contracts (../sale/erc721Sale.ts)
+export const ERC721_ITEMS_ABI = [
   { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
   {
     type: 'function',
