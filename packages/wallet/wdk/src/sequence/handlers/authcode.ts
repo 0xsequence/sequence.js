@@ -65,9 +65,9 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       challenge = challenge.withSigner({ address: commitment.signer, keyType: Identity.KeyType.Secp256k1 })
     }
     await this.nitroCommitVerifier(challenge)
-    const signer = await this.nitroCompleteAuth(challenge)
+    const { signer, email } = await this.nitroCompleteAuth(challenge)
 
-    return [signer, {}]
+    return [signer, { email }]
   }
 
   async status(

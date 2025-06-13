@@ -58,7 +58,7 @@ export class IdentityHandler {
     await this.authKeys.set(authKey)
 
     const signer = new IdentitySigner(this.nitro, authKey)
-    return signer
+    return { signer, email: res.identity.email }
   }
 
   protected async sign(signer: IdentitySigner, request: BaseSignatureRequest) {

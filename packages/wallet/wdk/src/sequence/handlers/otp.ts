@@ -30,7 +30,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
     this.onPromptOtp = undefined
   }
 
-  public async getSigner(email: string): Promise<Signers.Signer & Signers.Witnessable> {
+  public async getSigner(email: string): Promise<{ signer: Signers.Signer & Signers.Witnessable; email: string }> {
     const onPromptOtp = this.onPromptOtp
     if (!onPromptOtp) {
       throw new Error('otp-handler-ui-not-registered')
@@ -42,8 +42,10 @@ export class OtpHandler extends IdentityHandler implements Handler {
     return new Promise(async (resolve, reject) => {
       const respond = async (otp: string) => {
         try {
-          const signer = await this.nitroCompleteAuth(challenge.withAnswer(codeChallenge, otp))
-          resolve(signer)
+          const { signer, email: returnedEmail } = await this.nitroCompleteAuth(
+            challenge.withAnswer(codeChallenge, otp),
+          )
+          resolve({ signer, email: returnedEmail })
         } catch (e) {
           reject(e)
         }

@@ -289,6 +289,7 @@ export class Wallets {
   private async prepareSignUp(args: SignupArgs): Promise<{
     signer: (Signers.Signer | Signers.SapientSigner) & Signers.Witnessable
     extra: WitnessExtraSignerKind
+    loginEmail?: string
   }> {
     switch (args.kind) {
       case 'passkey':
@@ -325,14 +326,15 @@ export class Wallets {
           throw new Error('email-otp-handler-not-registered')
         }
 
-        const signer = await handler.getSigner(args.email)
-        this.shared.modules.logger.log('Created new email otp signer:', signer.address)
+        const { signer: otpSigner, email: returnedEmail } = await handler.getSigner(args.email)
+        this.shared.modules.logger.log('Created new email otp signer:', otpSigner.address, 'Email:', returnedEmail)
 
         return {
-          signer,
+          signer: otpSigner,
           extra: {
             signerKind: Kinds.LoginEmailOtp,
           },
+          loginEmail: returnedEmail,
         }
       }
 
@@ -344,6 +346,7 @@ export class Wallets {
         }
 
         const [signer, metadata] = await handler.completeAuth(args.commitment, args.code)
+        const loginEmail = metadata.email
         this.shared.modules.logger.log('Created new auth code pkce signer:', signer.address)
 
         return {
@@ -351,6 +354,7 @@ export class Wallets {
           extra: {
             signerKind: 'login-' + args.kind,
           },
+          loginEmail,
         }
       }
     }
@@ -385,7 +389,25 @@ export class Wallets {
         throw new Error('handler-not-registered')
       }
 
-      await handler.completeAuth(commitment, args.code)
+      const [_signer, metadata] = await handler.completeAuth(commitment, args.code)
+
+      const loginEmail = metadata.email
+
+      if (loginEmail && commitment.target) {
+        const walletAddress = commitment.target as Address.Address
+        const walletEntry = await this.shared.databases.manager.get(walletAddress)
+
+        if (walletEntry) {
+          const updatedWalletEntry = {
+            ...walletEntry,
+            loginEmail,
+            loginType: ('login-' + commitment.kind) as Wallet['loginType'],
+            loginDate: new Date().toISOString(),
+          }
+
+          await this.shared.databases.manager.set(updatedWalletEntry)
+        }
+      }
     }
     return commitment.target
   }
@@ -411,7 +433,27 @@ export class Wallets {
         })
 
         if (result) {
-          // A wallet was selected, we can exit early
+          const selectedWalletAddress = result as Address.Address
+          const existingWalletEntry = await this.shared.databases.manager.get(selectedWalletAddress)
+
+          if (existingWalletEntry) {
+            const updatedWalletEntry = {
+              ...existingWalletEntry,
+              loginEmail: loginSigner.loginEmail,
+              loginType: loginSigner.extra.signerKind as Wallet['loginType'],
+              loginDate: new Date().toISOString(),
+            }
+
+            await this.shared.databases.manager.set(updatedWalletEntry)
+          } else {
+            // This case might indicate an inconsistency if the UI handler found a wallet
+            // that isn't in the primary manager DB, or if 'result' isn't the address.
+            console.warn(
+              '[Wallets/signUp] Wallet selected via UI handler not found in manager DB, or result format unexpected. Selected:',
+              selectedWalletAddress,
+            )
+          }
+          // Now we can exit early.
           return
         }
       }
@@ -484,14 +526,23 @@ export class Wallets {
     await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, loginSigner.extra)
 
     // Save entry in the manager db
-    await this.shared.databases.manager.set({
+    const newWalletEntry = {
       address: wallet.address,
-      status: 'ready',
+      status: 'ready' as const,
       loginDate: new Date().toISOString(),
       device: device.address,
       loginType: loginSigner.extra.signerKind,
       useGuard: !args.noGuard,
-    })
+      loginEmail: loginSigner.loginEmail,
+    }
+
+    try {
+      await this.shared.databases.manager.set(newWalletEntry)
+    } catch (error) {
+      console.error('[Wallets/signUp] Error saving new wallet entry:', error, 'Entry was:', newWalletEntry)
+      // Re-throw the error if you want the operation to fail loudly, or handle it
+      throw error
+    }
 
     return wallet.address
   }
@@ -599,14 +650,19 @@ export class Wallets {
         await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
       }
 
-      await this.shared.databases.manager.set({
+      const existingEntry = await this.shared.databases.manager.get(args.wallet)
+
+      const walletEntryToUpdate = {
+        ...(existingEntry ?? {}),
         address: args.wallet,
-        status: 'logging-in',
+        status: 'logging-in' as const,
         loginDate: new Date().toISOString(),
         device: device.address,
-        loginType: 'wallet',
+        loginType: 'wallet' as const,
         useGuard: guardTopology !== undefined,
-      })
+      }
+
+      await this.shared.databases.manager.set(walletEntryToUpdate)
 
       return this.requestConfigurationUpdate(
         args.wallet,
@@ -673,7 +729,6 @@ export class Wallets {
 
     await this.completeConfigurationUpdate(requestId)
 
-    // Save entry in the manager db
     await this.shared.databases.manager.set({
       ...walletEntry,
       status: 'ready',
