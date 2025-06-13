@@ -15,7 +15,6 @@ export type Kind = (typeof Kinds)[keyof typeof Kinds]
 
 export type WitnessExtraSignerKind = {
   signerKind: string
-  email?: string
 }
 
 export type SignerWithKind = {

@@ -57,7 +57,7 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
   public async completeAuth(
     commitment: Db.AuthCommitment,
     code: string,
-  ): Promise<[IdentitySigner, { [key: string]: string }, { email?: string }]> {
+  ): Promise<[IdentitySigner, { [key: string]: string }]> {
     const challenge = new Identity.AuthCodePkceChallenge('', '', '')
     if (!commitment.verifier) {
       throw new Error('Missing verifier in commitment')
@@ -66,6 +66,6 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
 
     await this.commitments.del(commitment.id)
 
-    return [signer, commitment.metadata, { email }]
+    return [signer, { ...commitment.metadata, email }]
   }
 }

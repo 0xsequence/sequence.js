@@ -59,7 +59,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
   public async completeAuth(
     commitment: Db.AuthCommitment,
     code: string,
-  ): Promise<[IdentitySigner, { [key: string]: string }, { email?: string }]> {
+  ): Promise<[IdentitySigner, { [key: string]: string }]> {
     let challenge = new Identity.AuthCodeChallenge(this.issuer, this.audience, this.redirectUri, code)
     if (commitment.signer) {
       challenge = challenge.withSigner({ address: commitment.signer, keyType: Identity.KeyType.Secp256k1 })
@@ -67,7 +67,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     await this.nitroCommitVerifier(challenge)
     const { signer, email } = await this.nitroCompleteAuth(challenge)
 
-    return [signer, {}, { email }]
+    return [signer, { email }]
   }
 
   async status(

@@ -289,6 +289,7 @@ export class Wallets {
   private async prepareSignUp(args: SignupArgs): Promise<{
     signer: (Signers.Signer | Signers.SapientSigner) & Signers.Witnessable
     extra: WitnessExtraSignerKind
+    loginEmail?: string
   }> {
     switch (args.kind) {
       case 'passkey':
@@ -332,8 +333,8 @@ export class Wallets {
           signer: otpSigner,
           extra: {
             signerKind: Kinds.LoginEmailOtp,
-            email: returnedEmail,
           },
+          loginEmail: returnedEmail,
         }
       }
 
@@ -344,15 +345,16 @@ export class Wallets {
           throw new Error('handler-not-registered')
         }
 
-        const [signer, metadata, { email }] = await handler.completeAuth(args.commitment, args.code)
+        const [signer, metadata] = await handler.completeAuth(args.commitment, args.code)
+        const loginEmail = metadata.email
         this.shared.modules.logger.log('Created new auth code pkce signer:', signer.address)
 
         return {
           signer,
           extra: {
             signerKind: 'login-' + args.kind,
-            email: email,
           },
+          loginEmail,
         }
       }
     }
@@ -387,16 +389,18 @@ export class Wallets {
         throw new Error('handler-not-registered')
       }
 
-      const [_signer, _metadata, { email: loginEmailFromAuth }] = await handler.completeAuth(commitment, args.code)
+      const [_signer, metadata] = await handler.completeAuth(commitment, args.code)
 
-      if (loginEmailFromAuth && commitment.target) {
+      const loginEmail = metadata.email
+
+      if (loginEmail && commitment.target) {
         const walletAddress = commitment.target as Address.Address
         const walletEntry = await this.shared.databases.manager.get(walletAddress)
 
         if (walletEntry) {
           const updatedWalletEntry = {
             ...walletEntry,
-            loginEmail: loginEmailFromAuth,
+            loginEmail,
             loginType: ('login-' + commitment.kind) as Wallet['loginType'],
             loginDate: new Date().toISOString(),
           }
@@ -435,7 +439,7 @@ export class Wallets {
           if (existingWalletEntry) {
             const updatedWalletEntry = {
               ...existingWalletEntry,
-              loginEmail: loginSigner.extra.email,
+              loginEmail: loginSigner.loginEmail,
               loginType: loginSigner.extra.signerKind as Wallet['loginType'],
               loginDate: new Date().toISOString(),
             }
@@ -529,7 +533,7 @@ export class Wallets {
       device: device.address,
       loginType: loginSigner.extra.signerKind,
       useGuard: !args.noGuard,
-      loginEmail: loginSigner.extra.email,
+      loginEmail: loginSigner.loginEmail,
     }
 
     try {
