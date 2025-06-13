@@ -1,6 +1,6 @@
-import { Abi, Address, Hex } from 'ox'
+import { Abi, Address } from 'ox'
 
-export const DefaultGuest: Address.Address = '0x75e19AA6241D84C290658131857824B4eeF10dfF'
+export const DefaultGuest: Address.Address = '0xf3c7175460BeD3340A1c4dc700fD6C8Cd3F56250'
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([

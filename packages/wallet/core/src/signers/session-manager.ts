@@ -316,7 +316,7 @@ export class SessionManager implements SapientSigner {
     try {
       const recoverSapientSignatureResult = await this._provider.request({
         method: 'eth_call',
-        params: [{ from: wallet, to: this.address, data: encodedCallData }],
+        params: [{ from: wallet, to: this.address, data: encodedCallData }, 'pending'],
       })
       const resultImageHash = Hex.from(
         AbiFunction.decodeResult(Constants.RECOVER_SAPIENT_SIGNATURE, recoverSapientSignatureResult),

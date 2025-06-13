@@ -41,12 +41,14 @@ export const getChain = (chainId: number): Chain => {
 
 export class RpcRelayer implements Relayer {
   public readonly id: string
+  public readonly chainId: number
   private client: GenRelayer
   private fetch: Fetch
   private provider: PublicClient
 
   constructor(hostname: string, chainId: number, rpcUrl: string, fetchImpl?: Fetch) {
     this.id = `rpc:${hostname}`
+    this.chainId = chainId
     const effectiveFetch = fetchImpl || (typeof window !== 'undefined' ? window.fetch.bind(window) : undefined)
     if (!effectiveFetch) {
       throw new Error('Fetch implementation is required but not available in this environment.')
@@ -79,7 +81,7 @@ export class RpcRelayer implements Relayer {
         data: Bytes.toHex(data),
       })
 
-      const options = result.options.map(this.mapRpcFeeOptionToFeeOption)
+      const options = result.options.map((feeOption) => this.mapRpcFeeOptionToFeeOption(feeOption))
       const quote = result.quote ? ({ _tag: 'FeeQuote', _quote: result.quote } as FeeQuote) : undefined
 
       return { options, quote }

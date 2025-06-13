@@ -1,7 +1,7 @@
 import { AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Attestation, Constants, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'
+import { Attestation, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'
 import { Envelope, Signers, State, Wallet } from '../src/index.js'
 
 import { EMITTER_FUNCTIONS, EMITTER_ADDRESS, EMITTER_EVENT_TOPICS, LOCAL_RPC_URL } from './constants'
@@ -117,6 +117,7 @@ describe('SessionManager', () => {
         applicationData: new Uint8Array(),
         authData: {
           redirectUrl: 'https://example.com',
+          issuedAt: BigInt(Math.floor(Date.now() / 1000)),
         },
       }
       const identitySignature = Secp256k1.sign({
@@ -336,6 +337,7 @@ describe('SessionManager', () => {
         applicationData: new Uint8Array(),
         authData: {
           redirectUrl: 'https://example.com',
+          issuedAt: BigInt(Math.floor(Date.now() / 1000)),
         },
       }
       const identitySignature = Secp256k1.sign({
