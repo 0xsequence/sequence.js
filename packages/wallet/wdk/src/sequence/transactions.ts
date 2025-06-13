@@ -274,10 +274,13 @@ export class Transactions {
       tx.relayerOption.quote,
     )
 
+    const opStatus = await relayer.status(opHash, tx.envelope.chainId)
+
     await this.shared.databases.transactions.set({
       ...tx,
       status: 'relayed',
       opHash,
+      opStatus,
     } as TransactionRelayed)
 
     await this.shared.modules.signatures.complete(signature.id)
