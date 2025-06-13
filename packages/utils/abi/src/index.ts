@@ -12,12 +12,11 @@ export { abi as walletProxyHookAbi } from './wallet/walletProxyHook'
 export { walletContracts } from './wallet'
 
 export { ERC1155_ABI } from './tokens/erc1155'
+export { ERC1155_ITEMS_ABI } from './tokens/erc1155Items'
 export { ERC20_ABI } from './tokens/erc20'
 export { ERC6909_ABI } from './tokens/erc6909'
 export { ERC721_ABI } from './tokens/erc721'
+export { ERC721_ITEMS_ABI } from './tokens/erc721Items'
 
 export { ERC1155_SALE_ABI } from './sale/erc1155Sale'
 export { ERC721_SALE_ABI } from './sale/erc721Sale'
-
-export { ERC1155_SALE_ITEMS_ABI } from './saleItems/erc1155SaleItems'
-export { ERC721_SALE_ITEMS_ABI } from './saleItems/erc721SaleItems'

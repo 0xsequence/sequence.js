@@ -1,4 +1,5 @@
-export const ERC1155_SALE_ITEMS_ABI = [
+//An ERC 1155 token contract with batchMint support, to make it compatible with Sequence Sales contracts (../sale/erc1155Sale.ts)
+export const ERC1155_ITEMS_ABI = [
   { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
   {
     type: 'function',
