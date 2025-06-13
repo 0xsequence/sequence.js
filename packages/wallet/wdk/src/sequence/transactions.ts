@@ -114,10 +114,12 @@ export class Transactions {
     const allRelayerOptions = await Promise.all(
       this.shared.sequence.relayers
         // Filter relayers based on the chainId of the transaction
-        .filter((relayer) =>
-          relayer instanceof Relayer.Rpc.RpcRelayer ? BigInt(relayer.chainId) === tx.envelope.chainId : true,
-        )
         .map(async (relayer): Promise<RelayerOption[]> => {
+          const ifAvailable = await relayer.isAvailable(tx.wallet, tx.envelope.chainId)
+          if (!ifAvailable) {
+            return []
+          }
+
           const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
           if (feeOptions.options.length === 0) {

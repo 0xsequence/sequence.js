@@ -99,6 +99,11 @@ export class PkRelayer implements Relayer {
     })
   }
 
+  async isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
+    const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+    return providerChainId === chainId
+  }
+
   feeOptions(
     wallet: Address.Address,
     chainId: bigint,

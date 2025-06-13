@@ -66,6 +66,10 @@ export class RpcRelayer implements Relayer {
     })
   }
 
+  isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
+    return Promise.resolve(BigInt(this.chainId) === chainId)
+  }
+
   async feeOptions(
     wallet: Address.Address,
     chainId: bigint,

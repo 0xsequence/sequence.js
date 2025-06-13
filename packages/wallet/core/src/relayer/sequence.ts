@@ -12,6 +12,10 @@ export class SequenceRelayer implements Relayer {
     this.service = new Service(host, fetch)
   }
 
+  async isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+    return true
+  }
+
   async feeOptions(
     wallet: Address.Address,
     _chainId: bigint,

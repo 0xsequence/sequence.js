@@ -26,6 +26,10 @@ export class LocalRelayer implements Relayer {
 
   constructor(public readonly provider: GenericProvider) {}
 
+  isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+    return Promise.resolve(true)
+  }
+
   static createFromWindow(window: Window): LocalRelayer | undefined {
     const eth = (window as any).ethereum
     if (!eth) {
