@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.3.18
+
+### Patch Changes
+
+- Marketplace API update
+- Updated dependencies
+  - @0xsequence/core@2.3.18
+
 ## 2.3.17
 
 ### Patch Changes

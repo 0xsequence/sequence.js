@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.18
+
+### Patch Changes
+
+- Marketplace API update
+- Updated dependencies
+  - @0xsequence/migration@2.3.18
+  - @0xsequence/replacer@2.3.18
+  - @0xsequence/utils@2.3.18
+  - @0xsequence/core@2.3.18
+
 ## 2.3.17
 
 ### Patch Changes

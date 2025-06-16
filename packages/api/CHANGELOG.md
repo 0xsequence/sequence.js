@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.3.18
+
+### Patch Changes
+
+- Marketplace API update
+
 ## 2.3.17
 
 ### Patch Changes

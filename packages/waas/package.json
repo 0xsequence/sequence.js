@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/waas",
-  "version": "2.3.17",
+  "version": "2.3.18",
   "description": "waas session client",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/waas",
   "source": "src/index.ts",
