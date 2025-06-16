@@ -182,9 +182,10 @@ export class Signatures {
         (sig) =>
           Address.isEqual(sig.wallet, request.wallet) &&
           sig.envelope.payload.type === 'config-update' &&
-          sig.envelope.configuration.checkpoint <= request.envelope.configuration.checkpoint,
+          sig.status === 'pending' &&
+          sig.envelope.configuration.checkpoint <= request.envelope.configuration.checkpoint &&
+          sig.id !== requestId,
       )
-      // This also deletes the requested id
       await Promise.all(pendingConfigUpdatesToClear.map((sig) => this.shared.modules.signatures.cancel(sig.id)))
     }
 
