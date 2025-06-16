@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.3.19
+
+### Patch Changes
+
+- Downgrade pnpm to 10.11.0
+
 ## 2.3.18
 
 ### Patch Changes

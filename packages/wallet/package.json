@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/wallet",
-  "version": "2.3.18",
+  "version": "2.3.19",
   "description": "wallet sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/wallet",
   "source": "src/index.ts",
