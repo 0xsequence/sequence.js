@@ -732,7 +732,6 @@ export interface UpdateCurrencyReturn {
 export interface ListCurrenciesArgs {
   chainId: string
 }
-export interface ListCurrenciesArgs {}
 
 export interface ListCurrenciesReturn {
   currencies: Array<Currency>
@@ -1342,7 +1341,6 @@ export interface CheckoutOptionsSalesContractReturn {
 export interface SupportedMarketplacesArgs {
   chainId: string
 }
-export interface SupportedMarketplacesArgs {}
 
 export interface SupportedMarketplacesReturn {
   marketplaces: Array<MarketplaceKind>
