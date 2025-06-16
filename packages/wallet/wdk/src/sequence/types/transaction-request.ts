@@ -9,12 +9,22 @@ export type TransactionRequest = {
   gasLimit?: bigint
 }
 
-export type RelayerOption = {
+export type BaseRelayerOption = {
   id: string
   relayerId: string
+}
+
+export type LegacyRelayerOption = BaseRelayerOption & {
+  kind: 'legacy'
   feeOption?: Relayer.FeeOption
   quote?: Relayer.FeeQuote
 }
+
+export type ERC4337RelayerOption = BaseRelayerOption & {
+  kind: 'erc4337'
+}
+
+export type RelayerOption = LegacyRelayerOption | ERC4337RelayerOption
 
 type TransactionBase = {
   id: string

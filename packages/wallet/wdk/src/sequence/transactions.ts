@@ -125,6 +125,7 @@ export class Transactions {
           if (feeOptions.options.length === 0) {
             return [
               {
+                kind: 'legacy',
                 id: uuidv7(),
                 relayerId: relayer.id,
               } as RelayerOption,
@@ -132,6 +133,7 @@ export class Transactions {
           }
 
           return feeOptions.options.map((feeOption) => ({
+            kind: 'legacy',
             id: uuidv7(),
             feeOption: feeOption,
             relayerId: relayer.id,
@@ -159,7 +161,7 @@ export class Transactions {
     }
 
     // if we have a fee option on the selected relayer option
-    if (selection.feeOption) {
+    if (selection.kind === 'legacy' && selection.feeOption) {
       // then we need to prepend the transaction payload with the fee
       const { token, to, value, gasLimit } = selection.feeOption
 
@@ -267,6 +269,10 @@ export class Transactions {
 
     if (!relayer) {
       throw new Error(`Relayer ${tx.relayerOption.relayerId} not found for transaction ${transactionId}`)
+    }
+
+    if (tx.relayerOption.kind !== 'legacy') {
+      throw new Error(`Not implemented`)
     }
 
     const { opHash } = await relayer.relay(
