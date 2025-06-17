@@ -84,7 +84,7 @@ Authorization on https://www.npmjs.com/ to push to the 0xsequence organization's
    c. update all packages with either a minor or patch bump according to semver
    d. add a summary of the form: `package: description of a single change`
    e. repeat a-d until all changes are accounted for
-4. `pnpm changeset:version && pnpm i && pnpm build && pnpm i`
+4. `pnpm changeset:version && pnpm i && pnpm build`
 5. `git diff` and copy the newest version according to the changelogs
 6. `git commit -a -m <new version here>`
 7. `git push`

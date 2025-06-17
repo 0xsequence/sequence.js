@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 2.3.20
+
+### Patch Changes
+
+- Release fix
+- Updated dependencies
+  - @0xsequence/migration@2.3.20
+  - @0xsequence/account@2.3.20
+  - @0xsequence/network@2.3.20
+  - @0xsequence/relayer@2.3.20
+  - @0xsequence/wallet@2.3.20
+  - @0xsequence/utils@2.3.20
+  - @0xsequence/auth@2.3.20
+  - @0xsequence/core@2.3.20
+  - @0xsequence/abi@2.3.20
+
 ## 2.3.19
 
 ### Patch Changes

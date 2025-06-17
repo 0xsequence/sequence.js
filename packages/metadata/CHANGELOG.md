@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.3.20
+
+### Patch Changes
+
+- Release fix
+
 ## 2.3.19
 
 ### Patch Changes
