@@ -1,4 +1,5 @@
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { EIP1193Provider } from 'mipd'
 import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
 import { IntentPrecondition } from './rpc/relayer.gen.js'
@@ -15,10 +16,10 @@ import {
 type GenericProviderTransactionReceipt = 'success' | 'failed' | 'unknown'
 
 export interface GenericProvider {
-  sendTransaction(args: { to: string; data: string }, chainId: bigint): Promise<string>
-  getBalance(address: string): Promise<bigint>
-  call(args: { to: string; data: string }): Promise<string>
-  getTransactionReceipt(txHash: string, chainId: bigint): Promise<GenericProviderTransactionReceipt>
+  sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: bigint): Promise<string | undefined>
+  getBalance(address: Address.Address): Promise<bigint>
+  call(args: { to: Address.Address; data: Hex.Hex }): Promise<string>
+  getTransactionReceipt(txHash: Hex.Hex, chainId: bigint): Promise<GenericProviderTransactionReceipt>
 }
 
 export class LocalRelayer implements Relayer {
@@ -33,73 +34,11 @@ export class LocalRelayer implements Relayer {
       return undefined
     }
 
-    const trySwitchChain = async (chainId: bigint) => {
-      try {
-        await eth.request({
-          method: 'wallet_switchEthereumChain',
-          params: [
-            {
-              chainId: `0x${chainId.toString(16)}`,
-            },
-          ],
-        })
-      } catch (error) {
-        // Log and continue
-        console.error('Error switching chain', error)
-      }
-    }
+    return new LocalRelayer(new EIP1193ProviderAdapter(eth))
+  }
 
-    return new LocalRelayer({
-      sendTransaction: async (args, chainId) => {
-        const accounts: string[] = await eth.request({ method: 'eth_requestAccounts' })
-        const from = accounts[0]
-        if (!from) {
-          console.warn('No account selected, skipping local relayer')
-          return undefined
-        }
-
-        await trySwitchChain(chainId)
-
-        const tx = await eth.request({
-          method: 'eth_sendTransaction',
-          params: [
-            {
-              from,
-              to: args.to,
-              data: args.data,
-            },
-          ],
-        })
-        return tx
-      },
-      getBalance: async (address) => {
-        const balance = await eth.request({
-          method: 'eth_getBalance',
-          params: [address, 'latest'],
-        })
-        return BigInt(balance)
-      },
-      call: async (args) => {
-        return await eth.request({
-          method: 'eth_call',
-          params: [args, 'latest'],
-        })
-      },
-      getTransactionReceipt: async (txHash, chainId) => {
-        await trySwitchChain(chainId)
-
-        const rpcReceipt = await eth.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
-        if (rpcReceipt) {
-          const receipt = TransactionReceipt.fromRpc(rpcReceipt)
-          if (receipt?.status === 'success') {
-            return 'success'
-          } else if (receipt?.status === 'reverted') {
-            return 'failed'
-          }
-        }
-        return 'unknown'
-      },
-    })
+  static createFromProvider(provider: EIP1193Provider): LocalRelayer {
+    return new LocalRelayer(new EIP1193ProviderAdapter(provider))
   }
 
   feeOptions(
@@ -321,5 +260,82 @@ export class LocalRelayer implements Relayer {
       default:
         return false
     }
+  }
+}
+
+export class EIP1193ProviderAdapter implements GenericProvider {
+  constructor(private readonly provider: EIP1193Provider) {}
+
+  private async trySwitchChain(chainId: bigint) {
+    try {
+      await this.provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [
+          {
+            chainId: `0x${chainId.toString(16)}`,
+          },
+        ],
+      })
+    } catch (error) {
+      // Log and continue
+      console.error('Error switching chain', error)
+    }
+  }
+
+  async sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: bigint) {
+    const accounts: Address.Address[] = await this.provider.request({ method: 'eth_requestAccounts' })
+    const from = accounts[0]
+
+    if (!from) {
+      console.warn('No account selected, skipping local relayer')
+      return undefined
+    }
+
+    await this.trySwitchChain(chainId)
+
+    const tx = await this.provider.request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from,
+          to: args.to,
+          data: args.data,
+        },
+      ],
+    })
+
+    return tx
+  }
+
+  async getBalance(address: Address.Address) {
+    const balance = await this.provider.request({
+      method: 'eth_getBalance',
+      params: [address, 'latest'],
+    })
+    return BigInt(balance)
+  }
+
+  async call(args: { to: Address.Address; data: Hex.Hex }) {
+    return await this.provider.request({
+      method: 'eth_call',
+      params: [args, 'latest'],
+    })
+  }
+
+  async getTransactionReceipt(txHash: Hex.Hex, chainId: bigint) {
+    await this.trySwitchChain(chainId)
+
+    const rpcReceipt = await this.provider.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
+
+    if (rpcReceipt) {
+      const receipt = TransactionReceipt.fromRpc(rpcReceipt as any)
+      if (receipt?.status === 'success') {
+        return 'success'
+      } else if (receipt?.status === 'reverted') {
+        return 'failed'
+      }
+    }
+
+    return 'unknown'
   }
 }
