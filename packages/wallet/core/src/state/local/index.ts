@@ -68,8 +68,17 @@ export class Provider implements ProviderInterface {
     public readonly extensions: Extensions.Extensions = Extensions.Dev1,
   ) {}
 
-  getConfiguration(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
-    return this.store.loadConfig(imageHash)
+  async getConfiguration(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
+    const config = await this.store.loadConfig(imageHash)
+    if (config === undefined) {
+      return undefined
+    }
+    const computed = Config.hashConfiguration(config)
+    const computedHex = Bytes.toHex(computed)
+    if (computedHex !== imageHash) {
+      throw new Error(`ERROR: computed image hash ${computedHex} != requested image hash ${imageHash}`)
+    }
+    return config
   }
 
   async saveWallet(deployConfiguration: Config.Config, context: Context.Context): Promise<void> {
