@@ -195,7 +195,9 @@ describe('Sessions (via Manager)', () => {
 
       // Sign and complete the request
       const sigRequest = await wdk.manager.getSignatureRequest(requestId)
-      const identitySigner = sigRequest.signers.find((s) => s.address === wdk.identitySignerAddress)
+      const identitySigner = sigRequest.signers.find(
+        (s) => s.address.toLowerCase() === wdk.identitySignerAddress.toLowerCase(),
+      )
       if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
         throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
       }
