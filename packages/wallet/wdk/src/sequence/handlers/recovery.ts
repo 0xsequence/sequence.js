@@ -32,7 +32,7 @@ export class RecoveryHandler implements Handler {
     const found = queued.find((p) => p.payloadHash === requestHash)
     if (!found) {
       return {
-        address: request.wallet,
+        address,
         handler: this,
         status: 'unavailable',
         reason: 'no-recovery-payload-queued',
@@ -41,7 +41,7 @@ export class RecoveryHandler implements Handler {
 
     if (!imageHash) {
       return {
-        address: request.wallet,
+        address,
         handler: this,
         status: 'unavailable',
         reason: 'no-image-hash',
@@ -50,7 +50,7 @@ export class RecoveryHandler implements Handler {
 
     if (found.endTimestamp > Date.now() / 1000) {
       return {
-        address: request.wallet,
+        address,
         handler: this,
         status: 'unavailable',
         reason: 'timelock-not-met',
@@ -61,7 +61,7 @@ export class RecoveryHandler implements Handler {
       const signature = await this.recovery.encodeRecoverySignature(imageHash, found.signer)
 
       return {
-        address: request.wallet,
+        address,
         handler: this,
         status: 'ready',
         handle: async () => {
@@ -78,7 +78,7 @@ export class RecoveryHandler implements Handler {
       }
     } catch (e) {
       return {
-        address: request.wallet,
+        address,
         handler: this,
         status: 'unavailable',
         reason: 'failed-to-encode-recovery-signature',
