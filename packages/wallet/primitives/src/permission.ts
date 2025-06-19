@@ -30,11 +30,32 @@ export type SessionPermissions = {
 export const MAX_PERMISSIONS_COUNT = 2 ** 7 - 1
 export const MAX_RULES_COUNT = 2 ** 8 - 1
 
-export const SELECTOR_MASK = Bytes.padRight(Bytes.fromHex('0xffffffff'), 32) // Select intentionally pads right. Other values should pad left
-export const ADDRESS_MASK = Bytes.padLeft(Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffff'), 32)
-export const UINT256_MASK = Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', {
-  size: 32,
-})
+export const MASK = {
+  SELECTOR: Bytes.padRight(Bytes.fromHex('0xffffffff'), 32), // Select intentionally pads right. Other values should pad left
+  ADDRESS: Bytes.padLeft(Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffff'), 32),
+  BOOL: Bytes.padLeft(Bytes.fromHex('0x01'), 32),
+  // Bytes
+  BYTES1: Bytes.padLeft(Bytes.from(Array(1).fill(0xff)), 32),
+  BYTES2: Bytes.padLeft(Bytes.from(Array(2).fill(0xff)), 32),
+  BYTES4: Bytes.padLeft(Bytes.from(Array(4).fill(0xff)), 32),
+  BYTES8: Bytes.padLeft(Bytes.from(Array(8).fill(0xff)), 32),
+  BYTES16: Bytes.padLeft(Bytes.from(Array(16).fill(0xff)), 32),
+  BYTES32: Bytes.padLeft(Bytes.from(Array(32).fill(0xff)), 32),
+  // Ints
+  INT8: Bytes.padLeft(Bytes.from(Array(1).fill(0xff)), 32),
+  INT16: Bytes.padLeft(Bytes.from(Array(2).fill(0xff)), 32),
+  INT32: Bytes.padLeft(Bytes.from(Array(4).fill(0xff)), 32),
+  INT64: Bytes.padLeft(Bytes.from(Array(8).fill(0xff)), 32),
+  INT128: Bytes.padLeft(Bytes.from(Array(16).fill(0xff)), 32),
+  INT256: Bytes.padLeft(Bytes.from(Array(32).fill(0xff)), 32),
+  // Uints
+  UINT8: Bytes.padLeft(Bytes.from(Array(1).fill(0xff)), 32),
+  UINT16: Bytes.padLeft(Bytes.from(Array(2).fill(0xff)), 32),
+  UINT32: Bytes.padLeft(Bytes.from(Array(4).fill(0xff)), 32),
+  UINT64: Bytes.padLeft(Bytes.from(Array(8).fill(0xff)), 32),
+  UINT128: Bytes.padLeft(Bytes.from(Array(16).fill(0xff)), 32),
+  UINT256: Bytes.padLeft(Bytes.from(Array(32).fill(0xff)), 32),
+}
 
 // Encoding
 
