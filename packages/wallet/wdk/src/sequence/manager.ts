@@ -106,6 +106,7 @@ export const ManagerOptionsDefaults = {
   stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
   networks: Network.All,
   relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  bundlers: [],
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -183,6 +184,7 @@ export type Sequence = {
 
   readonly networks: Network.Network[]
   readonly relayers: Relayer.Relayer[]
+  readonly bundlers: Relayer.Bundler[]
 
   readonly defaultGuardTopology: Config.Topology
   readonly defaultRecoverySettings: RecoverySettings
@@ -236,6 +238,7 @@ export class Manager {
         stateProvider: ops.stateProvider,
         networks: ops.networks,
         relayers: typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers,
+        bundlers: ops.bundlers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultRecoverySettings: ops.defaultRecoverySettings,
