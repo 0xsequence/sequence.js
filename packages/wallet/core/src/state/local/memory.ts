@@ -14,6 +14,30 @@ export class MemoryStore implements Store {
 
   private trees = new Map<`0x${string}`, GenericTree.Tree>()
 
+  private deepCopy<T>(value: T): T {
+    // modern runtime → fast native path
+    if (typeof structuredClone === 'function') {
+      return structuredClone(value)
+    }
+
+    // very small poly-fill for old environments
+    if (value === null || typeof value !== 'object') return value
+    if (value instanceof Date) return new Date(value.getTime()) as unknown as T
+    if (Array.isArray(value)) return value.map((v) => this.deepCopy(v)) as unknown as T
+    if (value instanceof Map) {
+      return new Map(Array.from(value, ([k, v]) => [this.deepCopy(k), this.deepCopy(v)])) as unknown as T
+    }
+    if (value instanceof Set) {
+      return new Set(Array.from(value, (v) => this.deepCopy(v))) as unknown as T
+    }
+
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = this.deepCopy(v)
+    }
+    return out as T
+  }
+
   private getSignatureKey(signer: Address.Address, subdigest: Hex.Hex): string {
     return `${signer.toLowerCase()}-${subdigest.toLowerCase()}`
   }
@@ -23,34 +47,37 @@ export class MemoryStore implements Store {
   }
 
   async loadConfig(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
-    return this.configs.get(imageHash.toLowerCase() as `0x${string}`)
+    const config = this.configs.get(imageHash.toLowerCase() as `0x${string}`)
+    return config ? this.deepCopy(config) : undefined
   }
 
   async saveConfig(imageHash: Hex.Hex, config: Config.Config): Promise<void> {
-    this.configs.set(imageHash.toLowerCase() as `0x${string}`, config)
+    this.configs.set(imageHash.toLowerCase() as `0x${string}`, this.deepCopy(config))
   }
 
   async loadCounterfactualWallet(
     wallet: Address.Address,
   ): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
-    return this.counterfactualWallets.get(wallet.toLowerCase() as `0x${string}`)
+    const counterfactualWallet = this.counterfactualWallets.get(wallet.toLowerCase() as `0x${string}`)
+    return counterfactualWallet ? this.deepCopy(counterfactualWallet) : undefined
   }
 
   async saveCounterfactualWallet(wallet: Address.Address, imageHash: Hex.Hex, context: Context.Context): Promise<void> {
-    this.counterfactualWallets.set(wallet.toLowerCase() as `0x${string}`, { imageHash, context })
+    this.counterfactualWallets.set(wallet.toLowerCase() as `0x${string}`, this.deepCopy({ imageHash, context }))
   }
 
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
   ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Address } | undefined> {
-    return this.payloads.get(subdigest.toLowerCase() as `0x${string}`)
+    const payload = this.payloads.get(subdigest.toLowerCase() as `0x${string}`)
+    return payload ? this.deepCopy(payload) : undefined
   }
 
   async savePayloadOfSubdigest(
     subdigest: Hex.Hex,
     payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Address },
   ): Promise<void> {
-    this.payloads.set(subdigest.toLowerCase() as `0x${string}`, payload)
+    this.payloads.set(subdigest.toLowerCase() as `0x${string}`, this.deepCopy(payload))
   }
 
   async loadSubdigestsOfSigner(signer: Address.Address): Promise<Hex.Hex[]> {
@@ -63,7 +90,8 @@ export class MemoryStore implements Store {
     subdigest: Hex.Hex,
   ): Promise<Signature.SignatureOfSignerLeaf | undefined> {
     const key = this.getSignatureKey(signer, subdigest)
-    return this.signatures.get(key as `0x${string}`)
+    const signature = this.signatures.get(key as `0x${string}`)
+    return signature ? this.deepCopy(signature) : undefined
   }
 
   async saveSignatureOfSubdigest(
@@ -72,7 +100,7 @@ export class MemoryStore implements Store {
     signature: Signature.SignatureOfSignerLeaf,
   ): Promise<void> {
     const key = this.getSignatureKey(signer, subdigest)
-    this.signatures.set(key as `0x${string}`, signature)
+    this.signatures.set(key as `0x${string}`, this.deepCopy(signature))
 
     const signerKey = signer.toLowerCase()
     const subdigestKey = subdigest.toLowerCase()
@@ -95,7 +123,8 @@ export class MemoryStore implements Store {
     imageHash: Hex.Hex,
   ): Promise<Signature.SignatureOfSapientSignerLeaf | undefined> {
     const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
-    return this.sapientSignatures.get(key as `0x${string}`)
+    const signature = this.sapientSignatures.get(key as `0x${string}`)
+    return signature ? this.deepCopy(signature) : undefined
   }
 
   async saveSapientSignatureOfSubdigest(
@@ -105,7 +134,7 @@ export class MemoryStore implements Store {
     signature: Signature.SignatureOfSapientSignerLeaf,
   ): Promise<void> {
     const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
-    this.sapientSignatures.set(key as `0x${string}`, signature)
+    this.sapientSignatures.set(key as `0x${string}`, this.deepCopy(signature))
 
     const signerKey = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
     const subdigestKey = subdigest.toLowerCase()
@@ -117,10 +146,11 @@ export class MemoryStore implements Store {
   }
 
   async loadTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
-    return this.trees.get(rootHash.toLowerCase() as `0x${string}`)
+    const tree = this.trees.get(rootHash.toLowerCase() as `0x${string}`)
+    return tree ? this.deepCopy(tree) : undefined
   }
 
   async saveTree(rootHash: Hex.Hex, tree: GenericTree.Tree): Promise<void> {
-    this.trees.set(rootHash.toLowerCase() as `0x${string}`, tree)
+    this.trees.set(rootHash.toLowerCase() as `0x${string}`, this.deepCopy(tree))
   }
 }
