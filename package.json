@@ -1,0 +1,28 @@
+{
+  "name": "@0xsequence/wallet-primitives",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:^",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "ox": "^0.7.2"
+  }
+}
