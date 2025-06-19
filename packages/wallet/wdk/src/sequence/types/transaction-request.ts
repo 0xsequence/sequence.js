@@ -14,6 +14,8 @@ export type RelayerOption = {
   relayerId: string
   feeOption?: Relayer.FeeOption
   quote?: Relayer.FeeQuote
+  name?: string
+  icon?: string
 }
 
 type TransactionBase = {
