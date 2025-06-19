@@ -13,12 +13,12 @@ export class Guard {
   ): Promise<SequenceSignature.SignatureOfSignerLeafHash> {
     const digest = Payload.hash(wallet, chainId, payload)
     const typedData = Payload.toTyped(wallet, chainId, payload)
-    const signPayload = TypedData.encode(typedData)
+    const serialized = Hex.fromString(TypedData.serialize(typedData))
 
     const auxData = AbiParameters.encode(AbiParameters.from(['address', 'uint256', 'bytes', 'bytes']), [
       Address.from(wallet),
       chainId,
-      signPayload,
+      serialized,
       '0x',
     ])
 
