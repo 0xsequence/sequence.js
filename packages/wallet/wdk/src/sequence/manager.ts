@@ -40,6 +40,8 @@ import { Kinds, RecoverySigner } from './types/signer.js'
 import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { WalletSelectionUiHandler } from './types/wallet.js'
 import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
+import { Guard } from './guard.js'
+import { GuardHandler } from './handlers/guard.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -62,6 +64,7 @@ export type ManagerOptions = {
   stateProvider?: State.Provider
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
+  guardUrl?: string
 
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
@@ -107,10 +110,12 @@ export const ManagerOptionsDefaults = {
   networks: Network.All,
   relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
+  guardUrl: 'https://dev-guard.sequence.app',
+
   defaultGuardTopology: {
     // TODO: Move this somewhere else
     type: 'signer',
-    address: '0xf71eC72C8C03a0857DD7601ACeF1e42b85983e99',
+    address: Extensions.Dev1.guard,
     weight: 1n,
   } as Config.SignerLeaf,
 
@@ -186,11 +191,14 @@ export type Sequence = {
 
   readonly defaultGuardTopology: Config.Topology
   readonly defaultRecoverySettings: RecoverySettings
+
+  readonly guardUrl: string
 }
 
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
+  readonly guard: Guard
   readonly wallets: Wallets
   readonly sessions: Sessions
   readonly signers: Signers
@@ -219,6 +227,7 @@ export class Manager {
   private readonly devicesHandler: DevicesHandler
   private readonly passkeysHandler: PasskeysHandler
   private readonly recoveryHandler: RecoveryHandler
+  private readonly guardHandler: GuardHandler
 
   private readonly otpHandler?: OtpHandler
 
@@ -239,6 +248,8 @@ export class Manager {
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultRecoverySettings: ops.defaultRecoverySettings,
+
+        guardUrl: ops.guardUrl,
       },
 
       databases: {
@@ -262,6 +273,7 @@ export class Manager {
       cron: new Cron(shared),
       logger: new Logger(shared),
       devices: new Devices(shared),
+      guard: new Guard(shared),
       wallets: new Wallets(shared),
       sessions: new Sessions(shared),
       signers: new Signers(shared),
@@ -286,6 +298,9 @@ export class Manager {
 
     this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
     shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
+
+    this.guardHandler = new GuardHandler(modules.signatures, modules.guard)
+    shared.handlers.set(Kinds.Guard, this.guardHandler)
 
     const verifyingFetch = ops.identity.verifyAttestation
       ? createAttestationVerifyingFetch({
