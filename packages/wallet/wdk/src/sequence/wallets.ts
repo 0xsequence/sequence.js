@@ -767,7 +767,9 @@ export class Wallets {
     const { devicesTopology, modules } = await this.getConfigurationParts(wallet)
     const nextDevicesTopology = buildCappedTree([
       ...Config.getSigners(devicesTopology)
-        .signers.filter((x) => x !== '0x0000000000000000000000000000000000000000' && x !== device.address)
+        .signers.filter(
+          (x) => x !== '0x0000000000000000000000000000000000000000' && x.toLowerCase() !== device.address.toLowerCase(),
+        )
         .map((x) => ({ address: x })),
       ...Config.getSigners(devicesTopology).sapientSigners,
     ])
