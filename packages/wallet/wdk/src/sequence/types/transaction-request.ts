@@ -18,6 +18,8 @@ export type LegacyRelayerOption = BaseRelayerOption & {
   kind: 'legacy'
   feeOption?: Relayer.FeeOption
   quote?: Relayer.FeeQuote
+  name?: string
+  icon?: string
 }
 
 export type ERC4337RelayerOption = BaseRelayerOption & {
@@ -53,6 +55,7 @@ export type TransactionFormed = TransactionBase & {
 export type TransactionRelayed = TransactionBase & {
   status: 'relayed'
   opHash: string
+  opStatus?: Relayer.OperationStatus
 }
 
 export type Transaction = TransactionRequested | TransactionDefined | TransactionFormed | TransactionRelayed

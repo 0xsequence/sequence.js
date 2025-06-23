@@ -7,6 +7,7 @@ export interface Wallet {
   device: Address.Address
   loginType: string
   useGuard: boolean
+  loginEmail?: string
 }
 
 export type WalletSelectionContext = {

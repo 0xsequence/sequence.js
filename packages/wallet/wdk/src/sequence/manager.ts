@@ -66,6 +66,9 @@ export type ManagerOptions = {
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
 
+  // EIP-6963 support
+  multiInjectedProviderDiscovery?: boolean
+
   identity?: {
     url?: string
     fetch?: typeof window.fetch
@@ -125,6 +128,8 @@ export const ManagerOptionsDefaults = {
     requiredDeltaTime: 2592000n, // 30 days (in seconds)
     minTimestamp: 0n,
   },
+
+  multiInjectedProviderDiscovery: true,
 
   identity: {
     // TODO: change to prod url once deployed
@@ -227,6 +232,22 @@ export class Manager {
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
 
+    // Build relayers list
+    let relayers: Relayer.Relayer[] = []
+
+    // Add EIP-6963 relayers if enabled
+    if (ops.multiInjectedProviderDiscovery) {
+      try {
+        relayers.push(...Relayer.EIP6963.getRelayers())
+      } catch (error) {
+        console.warn('Failed to initialize EIP-6963 relayers:', error)
+      }
+    }
+
+    // Add configured relayers
+    const configuredRelayers = typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers
+    relayers.push(...configuredRelayers)
+
     const shared: Shared = {
       verbose: ops.verbose,
 
@@ -237,7 +258,7 @@ export class Manager {
 
         stateProvider: ops.stateProvider,
         networks: ops.networks,
-        relayers: typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers,
+        relayers,
         bundlers: ops.bundlers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
@@ -615,6 +636,14 @@ export class Manager {
 
   public async updateQueuedRecoveryPayloads() {
     return this.shared.modules.recovery.updateQueuedRecoveryPayloads()
+  }
+
+  public getNetworks(): Network.Network[] {
+    return this.shared.sequence.networks
+  }
+
+  public getNetwork(chainId: bigint): Network.Network | undefined {
+    return this.shared.sequence.networks.find((n) => n.chainId === chainId)
   }
 
   // DBs

@@ -21,6 +21,10 @@ export class EncryptedPksDb {
     this.tableName = tableName
   }
 
+  private computeDbKey(address: Address.Address): string {
+    return `pk_${address.toLowerCase()}`
+  }
+
   private openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion)
@@ -96,13 +100,13 @@ export class EncryptedPksDb {
       publicKey,
     }
 
-    const dbKey = `pk_${address}`
+    const dbKey = this.computeDbKey(address)
     await this.putData(dbKey, encrypted)
     return encrypted
   }
 
   async getEncryptedEntry(address: Address.Address): Promise<EncryptedData | undefined> {
-    const dbKey = `pk_${address}`
+    const dbKey = this.computeDbKey(address)
     return this.getData<EncryptedData>(dbKey)
   }
 
@@ -118,7 +122,7 @@ export class EncryptedPksDb {
   }
 
   async remove(address: Address.Address) {
-    const dbKey = `pk_${address}`
+    const dbKey = this.computeDbKey(address)
     await this.putData(dbKey, undefined)
     const keyPointer = this.localStorageKeyPrefix + address
     window.localStorage.removeItem(keyPointer)

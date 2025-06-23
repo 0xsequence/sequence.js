@@ -123,11 +123,17 @@ export class Transactions {
           const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
           if (feeOptions.options.length === 0) {
+            console.log('manual relayer', relayer)
+
+            const { name, icon } = relayer instanceof Relayer.EIP6963.EIP6963Relayer ? relayer.info : {}
+
             return [
               {
                 kind: 'legacy',
                 id: uuidv7(),
                 relayerId: relayer.id,
+                name,
+                icon,
               } as RelayerOption,
             ]
           }
@@ -135,7 +141,7 @@ export class Transactions {
           return feeOptions.options.map((feeOption) => ({
             kind: 'legacy',
             id: uuidv7(),
-            feeOption: feeOption,
+            feeOption,
             relayerId: relayer.id,
             quote: feeOptions.quote,
           }))
@@ -287,6 +293,15 @@ export class Transactions {
       status: 'relayed',
       opHash,
     } as TransactionRelayed)
+
+    relayer.status(opHash, tx.envelope.chainId).then((opStatus) => {
+      this.shared.databases.transactions.set({
+        ...tx,
+        status: 'relayed',
+        opHash,
+        opStatus,
+      } as TransactionRelayed)
+    })
 
     await this.shared.modules.signatures.complete(signature.id)
 

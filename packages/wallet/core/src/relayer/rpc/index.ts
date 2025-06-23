@@ -149,7 +149,7 @@ export class RpcRelayer implements Relayer {
       throw new Error(`Relay failed: TxnHash ${result.txnHash}`)
     }
 
-    return { opHash: Hex.fromString(result.txnHash) }
+    return { opHash: `0x${result.txnHash}` }
   }
 
   async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
