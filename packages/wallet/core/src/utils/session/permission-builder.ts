@@ -259,7 +259,7 @@ export class ERC20PermissionBuilder {
   static buildTransfer(target: Address.Address, limit: bigint): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function transfer(address to, uint256 value)')
-      .withUintNParam('value', limit)
+      .withUintNParam('value', limit, 256, Permission.ParameterOperation.LESS_THAN_OR_EQUAL)
       .build()
   }
 
@@ -267,7 +267,7 @@ export class ERC20PermissionBuilder {
     return PermissionBuilder.for(target)
       .forFunction('function approve(address spender, uint256 value)')
       .withAddressParam('spender', spender)
-      .withUintNParam('value', limit)
+      .withUintNParam('value', limit, 256, Permission.ParameterOperation.LESS_THAN_OR_EQUAL)
       .build()
   }
 }
@@ -296,11 +296,11 @@ export class ERC721PermissionBuilder {
  * Builds permissions for an ERC1155 token.
  */
 export class ERC1155PermissionBuilder {
-  static buildTransfer(target: Address.Address, tokenId: bigint, amount: bigint): Permission.Permission {
+  static buildTransfer(target: Address.Address, tokenId: bigint, limit: bigint): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data)')
       .withUintNParam('tokenId', tokenId)
-      .withUintNParam('amount', amount)
+      .withUintNParam('amount', limit, 256, Permission.ParameterOperation.LESS_THAN_OR_EQUAL)
       .build()
   }
 
