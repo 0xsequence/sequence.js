@@ -89,7 +89,6 @@ export class PermissionBuilder {
     if (expectedType && this.fnTypes[idx] !== expectedType) {
       throw new Error(`type "${this.fnTypes[idx]}" is not ${expectedType}; cannot apply parameter rule`)
     }
-    //FIXME Does this work when there are dynamic types?
     return 4n + 32n * BigInt(idx)
   }
 
