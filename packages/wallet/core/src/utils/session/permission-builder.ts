@@ -252,3 +252,63 @@ export class PermissionBuilder {
     }
   }
 }
+
+/**
+ * Builds permissions for an ERC20 token.
+ */
+export class ERC20PermissionBuilder {
+  static buildTransfer(target: Address.Address, limit: bigint): Permission.Permission {
+    return PermissionBuilder.for(target)
+      .forFunction('function transfer(address to, uint256 value)')
+      .withUintNParam('value', limit)
+      .build()
+  }
+
+  static buildApprove(target: Address.Address, spender: Address.Address, limit: bigint): Permission.Permission {
+    return PermissionBuilder.for(target)
+      .forFunction('function approve(address spender, uint256 value)')
+      .withAddressParam('spender', spender)
+      .withUintNParam('value', limit)
+      .build()
+  }
+}
+
+/**
+ * Builds permissions for an ERC721 token.
+ */
+export class ERC721PermissionBuilder {
+  static buildTransfer(target: Address.Address, tokenId: bigint): Permission.Permission {
+    return PermissionBuilder.for(target)
+      .forFunction('function transferFrom(address from, address to, uint256 tokenId)')
+      .withUintNParam('tokenId', tokenId)
+      .build()
+  }
+
+  static buildApprove(target: Address.Address, spender: Address.Address, tokenId: bigint): Permission.Permission {
+    return PermissionBuilder.for(target)
+      .forFunction('function approve(address spender, uint256 tokenId)')
+      .withAddressParam('spender', spender)
+      .withUintNParam('tokenId', tokenId)
+      .build()
+  }
+}
+
+/**
+ * Builds permissions for an ERC1155 token.
+ */
+export class ERC1155PermissionBuilder {
+  static buildTransfer(target: Address.Address, tokenId: bigint, amount: bigint): Permission.Permission {
+    return PermissionBuilder.for(target)
+      .forFunction('function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data)')
+      .withUintNParam('tokenId', tokenId)
+      .withUintNParam('amount', amount)
+      .build()
+  }
+
+  static buildApproveAll(target: Address.Address, operator: Address.Address): Permission.Permission {
+    return PermissionBuilder.for(target)
+      .forFunction('function setApprovalForAll(address operator, bool approved)')
+      .withAddressParam('operator', operator)
+      .build()
+  }
+}
