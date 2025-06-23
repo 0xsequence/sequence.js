@@ -10,6 +10,8 @@ const TARGET = Address.from('0x1234567890123456789012345678901234567890')
 const TARGET2 = Address.from('0x1234567890123456789012345678901234567891')
 const UINT256_VALUE = 1000000000000000000n
 const BYTES32_MAX = Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+const STRING_VALUE =
+  'Chur bro, pack your togs and sunnies, we’re heading to Taupō’s hot pools for a mean soak and a yarn, keen as'
 
 describe('PermissionBuilder', () => {
   it('should build an unrestricted permission', () => {
@@ -130,7 +132,7 @@ describe('PermissionBuilder', () => {
     expect(Bytes.toHex(maskedHex)).toEqual('0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff')
   })
 
-  it('should build a permission on a signature with a dynamic param', () => {
+  it('should build a permission on a signature with a bool param', () => {
     const permission = PermissionBuilder.for(TARGET)
       .forFunction('function foo(bytes data, bool flag)')
       .withBoolParam('flag', true)
@@ -169,6 +171,66 @@ describe('PermissionBuilder', () => {
       .slice(Number(permission.rules[1].offset), Number(permission.rules[1].offset) + 32)
       .map((b, i) => b & permission.rules[1].mask[i]!)
     expect(Bytes.toBoolean(maskedHex2, { size: 32 })).toEqual(false)
+  })
+
+  it('should build a permission on a signature with a dynamic string param', () => {
+    const strLen = Bytes.fromString(STRING_VALUE).length
+    const permission = PermissionBuilder.for(TARGET)
+      .forFunction('function foo(string data, bool flag)')
+      .withStringParam('data', STRING_VALUE)
+      .build()
+
+    // Selector
+    expect(permission.target).toEqual(TARGET)
+    expect(permission.rules.length).toEqual(Math.ceil(strLen / 32) + 3) // Selector, pointer, data size, data chunks
+    expect(permission.rules[0]).toEqual({
+      cumulative: false,
+      operation: Permission.ParameterOperation.EQUAL,
+      value: Bytes.padRight(Bytes.fromHex('0xb91c339f'), 32),
+      offset: 0n,
+      mask: Permission.MASK.SELECTOR,
+    })
+    // Pointer
+    expect(permission.rules[1]).toEqual({
+      cumulative: false,
+      operation: Permission.ParameterOperation.EQUAL,
+      value: Bytes.fromNumber(32n + 32n, { size: 32 }), // Pointer value excludes selector
+      offset: 4n,
+      mask: Permission.MASK.UINT256,
+    })
+    // Data size
+    expect(permission.rules[2]).toEqual({
+      cumulative: false,
+      operation: Permission.ParameterOperation.EQUAL,
+      value: Bytes.fromNumber(BigInt(strLen), { size: 32 }),
+      offset: 4n + 32n + 32n, // Pointer offset includes selector
+      mask: Permission.MASK.UINT256,
+    })
+    // We should be able to decode the required string from the rules
+    const dataSize = Bytes.toBigInt(permission.rules[2].value)
+    const ruleBytes = Bytes.concat(...permission.rules.slice(3).map((r) => r.value)).slice(0, Number(dataSize))
+    const decoded = Bytes.toString(ruleBytes)
+    expect(decoded).toEqual(STRING_VALUE)
+
+    // Check the offset matches the encoding by ox
+    const abi = AbiFunction.from('function foo(string data, bool flag)')
+    const encodedData = AbiFunction.encodeData(abi, [STRING_VALUE, true])
+    const encodedDataBytes = Bytes.fromHex(encodedData)
+    for (let i = 0; i < permission.rules.length; i++) {
+      const maskedHex = encodedDataBytes
+        .slice(Number(permission.rules[i].offset), Number(permission.rules[i].offset) + 32)
+        .map((b, j) => b & permission.rules[i].mask[j]!)
+      expect(Bytes.toHex(maskedHex)).toEqual(Bytes.toHex(permission.rules[i].value))
+    }
+  })
+
+  it('should not support encoding dynamic params with multiple in signature', () => {
+    expect(() =>
+      PermissionBuilder.for(TARGET)
+        .forFunction('function foo(string data, bool flag, string data2)')
+        .withStringParam('data2', STRING_VALUE)
+        .build(),
+    ).toThrow()
   })
 
   it('should error when the param name or index is invalid', () => {

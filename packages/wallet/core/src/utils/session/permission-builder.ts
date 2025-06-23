@@ -26,6 +26,10 @@ function parseSignature(sig: string): { types: string[]; names: (string | undefi
   return { types, names }
 }
 
+function isDynamicType(type: string): boolean {
+  return type === 'bytes' || type === 'string' || type.endsWith('[]') || type.includes('(')
+}
+
 export class PermissionBuilder {
   private target: Address.Address
   private rules: Permission.ParameterRule[] = []
@@ -167,6 +171,62 @@ export class PermissionBuilder {
   ): this {
     // solidity bool is encoded as 0 or 1, 32-bytes left-padded
     return this.addRule(param, 'bool', Permission.MASK.BOOL, operation, value ? 1n : 0n, cumulative)
+  }
+
+  private withDynamicAtOffset(pointerOffset: bigint, value: Bytes.Bytes): this {
+    // FIXME We can't predict the offset of the dynamic part if there are multiple dynamic params
+    if (this.fnTypes!.filter(isDynamicType).length !== 1) {
+      throw new Error(`multiple dynamic params are not supported`)
+    }
+
+    // compute where this dynamic block will actually live
+    const dynStart = 32n * BigInt(this.fnTypes!.length)
+
+    // Pointer rule
+    this.rules.push({
+      cumulative: false,
+      operation: Permission.ParameterOperation.EQUAL,
+      mask: Permission.MASK.UINT256,
+      offset: pointerOffset,
+      value: Bytes.fromNumber(dynStart, { size: 32 }),
+    })
+
+    // Length rule
+    this.rules.push({
+      cumulative: false,
+      operation: Permission.ParameterOperation.EQUAL,
+      mask: Permission.MASK.UINT256,
+      offset: 4n + dynStart,
+      value: Bytes.fromNumber(BigInt(value.length), { size: 32 }),
+    })
+
+    // Chunks
+    const chunks: Bytes.Bytes[] = []
+    for (let i = 0; i < value.length; i += 32) {
+      const slice = value.slice(i, i + 32)
+      chunks.push(Bytes.padRight(slice, 32))
+    }
+    chunks.forEach((chunk, i) => {
+      this.rules.push({
+        cumulative: false,
+        operation: Permission.ParameterOperation.EQUAL,
+        mask: Permission.MASK.BYTES32,
+        offset: 4n + dynStart + 32n + 32n * BigInt(i),
+        value: chunk,
+      })
+    })
+
+    return this
+  }
+
+  withBytesParam(param: string | number, value: Bytes.Bytes): this {
+    const offset = this.findOffset(param, 'bytes')
+    return this.withDynamicAtOffset(offset, value)
+  }
+
+  withStringParam(param: string | number, text: string): this {
+    const offset = this.findOffset(param, 'string')
+    return this.withDynamicAtOffset(offset, Bytes.fromString(text))
   }
 
   onlyOnce(): this {
