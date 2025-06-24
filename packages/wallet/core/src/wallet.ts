@@ -374,7 +374,7 @@ export class Wallet {
         callGasLimit: 0n,
         maxFeePerGas: 0n,
         maxPriorityFeePerGas: 0n,
-        paymaster: '0x0000000000000000000000000000000000000000',
+        paymaster: undefined,
         paymasterData: '0x',
         preVerificationGas: 0n,
         verificationGasLimit: 0n,
@@ -388,7 +388,7 @@ export class Wallet {
   async build4337Transaction(
     provider: Provider.Provider,
     envelope: Envelope.Signed<Payload.Calls4337_07>,
-  ): Promise<UserOperation.RpcV07> {
+  ): Promise<{ operation: UserOperation.RpcV07; entrypoint: Address.Address }> {
     const status = await this.getStatus(provider)
 
     const updatedEnvelope = { ...envelope, configuration: status.configuration }
@@ -409,7 +409,10 @@ export class Wallet {
       ),
     )
 
-    return UserOperation.toRpc(operation)
+    return {
+      operation: UserOperation.toRpc(operation),
+      entrypoint: envelope.payload.entrypoint,
+    }
   }
 
   async prepareTransaction(

@@ -56,6 +56,8 @@ export type OperationStatus =
   | OperationFailedStatus
 
 export interface Relayer {
+  kind: 'relayer'
+
   id: string
 
   isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean>
@@ -71,4 +73,14 @@ export interface Relayer {
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
 
   checkPrecondition(precondition: Precondition.Precondition): Promise<boolean>
+}
+
+export function isRelayer(relayer: any): relayer is Relayer {
+  return (
+    'isAvailable' in relayer &&
+    'feeOptions' in relayer &&
+    'relay' in relayer &&
+    'status' in relayer &&
+    'checkPrecondition' in relayer
+  )
 }

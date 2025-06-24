@@ -4,6 +4,7 @@ import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
 
 export class SequenceRelayer implements Relayer {
+  public readonly kind: 'relayer' = 'relayer'
   readonly id = 'sequence'
 
   private readonly service: Service

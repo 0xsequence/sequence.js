@@ -17,6 +17,7 @@ export type StartSignUpWithRedirectArgs = {
 }
 
 export type CommonSignupArgs = {
+  use4337?: boolean
   noGuard?: boolean
   noSessionManager?: boolean
   noRecovery?: boolean
@@ -382,6 +383,7 @@ export class Wallets {
         noGuard: args.noGuard,
         target: commitment.target,
         isRedirect: true,
+        use4337: args.use4337,
       })
     } else {
       const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodeHandler
@@ -512,7 +514,7 @@ export class Wallets {
 
     // Create wallet
     const wallet = await CoreWallet.fromConfiguration(initialConfiguration, {
-      context: this.shared.sequence.context,
+      context: args.use4337 ? this.shared.sequence.context4337 : this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })

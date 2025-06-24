@@ -88,7 +88,7 @@ export function newRemoteManager(
 
   if (remoteManagerOptions.network.bundlerUrl) {
     bundlers.push(
-      new Relayer.Erc4337.ERC4337Bundler(
+      new Relayer.Erc4337.PimlicoBundler(
         remoteManagerOptions.network.bundlerUrl,
         Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl)),
       ),

@@ -93,6 +93,7 @@ export const ManagerOptionsDefaults = {
 
   extensions: Extensions.Dev1,
   context: Context.Dev1,
+  context4337: Context.Dev2_4337,
   guest: Constants.DefaultGuest,
 
   encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
@@ -182,6 +183,7 @@ export type Databases = {
 
 export type Sequence = {
   readonly context: Context.Context
+  readonly context4337: Context.Context
   readonly extensions: Extensions.Extensions
   readonly guest: Address.Address
 
@@ -253,6 +255,7 @@ export class Manager {
 
       sequence: {
         context: ops.context,
+        context4337: ops.context4337,
         extensions: ops.extensions,
         guest: ops.guest,
 

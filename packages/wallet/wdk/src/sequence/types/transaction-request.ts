@@ -24,16 +24,25 @@ export type LegacyRelayerOption = BaseRelayerOption & {
 
 export type ERC4337RelayerOption = BaseRelayerOption & {
   kind: 'erc4337'
+  alternativePayload: Payload.Calls4337_07
 }
 
 export type RelayerOption = LegacyRelayerOption | ERC4337RelayerOption
+
+export function isLegacyRelayerOption(relayerOption: RelayerOption): relayerOption is LegacyRelayerOption {
+  return relayerOption.kind === 'legacy'
+}
+
+export function isERC4337RelayerOption(relayerOption: RelayerOption): relayerOption is ERC4337RelayerOption {
+  return relayerOption.kind === 'erc4337'
+}
 
 type TransactionBase = {
   id: string
   wallet: Address.Address
   requests: TransactionRequest[]
   source: string
-  envelope: Envelope.Envelope<Payload.Calls>
+  envelope: Envelope.Envelope<Payload.Calls | Payload.Calls4337_07>
   timestamp: number
 }
 
