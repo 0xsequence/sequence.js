@@ -115,7 +115,7 @@ export const ManagerOptionsDefaults = {
   defaultGuardTopology: {
     // TODO: Move this somewhere else
     type: 'signer',
-    address: Extensions.Dev1.guard,
+    address: '0x0AB3c096F3b2FD017413266Dfb29524A21df556f', // TODO: change to the actual guard address
     weight: 1n,
   } as Config.SignerLeaf,
 

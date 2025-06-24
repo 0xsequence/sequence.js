@@ -163,7 +163,6 @@ function toConfig(
       topology: [[loginTopology, devicesTopology], toModulesTopology(modules)],
     }
   } else {
-    console.log('with guard topology', guardTopology)
     return {
       checkpoint: checkpoint,
       threshold: 2n,

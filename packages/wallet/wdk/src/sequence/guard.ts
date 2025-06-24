@@ -22,27 +22,32 @@ export class Guard {
       '0x',
     ])
 
-    const res = await fetch(`${this.shared.sequence.guardUrl}/rpc/Guard/SignWith`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        signer: this.shared.sequence.extensions.guard,
-        request: {
-          chainId: 0,
-          msg: Hex.fromBytes(digest),
-          auxData,
+    try {
+      const res = await fetch(`${this.shared.sequence.guardUrl}/rpc/Guard/SignWith`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }),
-    })
+        body: JSON.stringify({
+          signer: this.shared.sequence.extensions.guard,
+          request: {
+            chainId,
+            msg: Hex.fromBytes(digest),
+            auxData,
+          },
+        }),
+      })
 
-    const { sig } = await res.json()
-    const signature = Signature.fromHex(sig)
+      const { sig } = await res.json()
+      const signature = Signature.fromHex(sig)
 
-    return {
-      type: 'hash',
-      ...signature,
+      return {
+        type: 'hash',
+        ...signature,
+      }
+    } catch (error) {
+      console.error('Error signing with guard:', error)
+      throw new Error('Error signing with guard')
     }
   }
 
