@@ -65,6 +65,7 @@ export type ManagerOptions = {
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
   guardUrl?: string
+  guardAddress?: Address.Address
 
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
@@ -111,6 +112,7 @@ export const ManagerOptionsDefaults = {
   relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
   guardUrl: 'https://dev-guard.sequence.app',
+  guardAddress: '0x0AB3c096F3b2FD017413266Dfb29524A21df556f' as Address.Address, // TODO: change to the actual guard address
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -193,6 +195,7 @@ export type Sequence = {
   readonly defaultRecoverySettings: RecoverySettings
 
   readonly guardUrl: string
+  readonly guardAddress: Address.Address
 }
 
 export type Modules = {
@@ -250,6 +253,7 @@ export class Manager {
         defaultRecoverySettings: ops.defaultRecoverySettings,
 
         guardUrl: ops.guardUrl,
+        guardAddress: ops.guardAddress,
       },
 
       databases: {

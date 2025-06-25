@@ -29,7 +29,7 @@ export class Guard {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          signer: this.shared.sequence.extensions.guard,
+          signer: this.shared.sequence.guardAddress,
           request: {
             chainId,
             msg: Hex.fromBytes(digest),
@@ -57,7 +57,7 @@ export class Guard {
         JSON.stringify({
           action: 'consent-to-be-part-of-wallet',
           wallet,
-          signer: this.shared.sequence.extensions.guard,
+          signer: this.shared.sequence.guardAddress,
           timestamp: Date.now(),
           extra: {
             signerKind: Kinds.Guard,
