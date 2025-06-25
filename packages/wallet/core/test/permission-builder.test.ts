@@ -24,6 +24,28 @@ describe('PermissionBuilder', () => {
     })
   })
 
+  it('should build an exact match permission', () => {
+    for (let i = 0; i < 10; i++) {
+      const calldata = Bytes.random(Math.floor(Math.random() * 100)) // Random calldata
+      console.log('random calldata', Bytes.toHex(calldata))
+      const permission = PermissionBuilder.for(TARGET).exactCalldata(calldata).build()
+      for (let i = 0; i < permission.rules.length; i++) {
+        const rule = permission.rules[i]
+        expect(rule.cumulative).toEqual(false)
+        expect(rule.operation).toEqual(Permission.ParameterOperation.EQUAL)
+        expect(rule.offset).toEqual(BigInt(i * 32))
+        if (i < permission.rules.length - 1) {
+          // Don't check the last rule as the mask may be different
+          expect(rule.mask).toEqual(Permission.MASK.BYTES32)
+          expect(rule.value).toEqual(calldata.slice(i * 32, (i + 1) * 32))
+        }
+      }
+      // We should be able to decode the calldata from the rules
+      const decoded = Bytes.concat(...permission.rules.map((r) => r.value.map((b, i) => b & r.mask[i]!)))
+      expect(decoded).toEqual(Bytes.padRight(calldata, permission.rules.length * 32))
+    }
+  })
+
   it('should build a permission for transfer', () => {
     const permission = PermissionBuilder.for(TARGET).forFunction('transfer(address to, uint256 value)').build()
     expect(permission).toEqual({
