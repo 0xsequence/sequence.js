@@ -39,3 +39,18 @@ export const Dev2_4337: Context = {
     },
   },
 }
+
+export type KnownContext = Context & {
+  name: string
+  development: boolean
+}
+
+export const KnownContexts: KnownContext[] = [
+  { name: 'Dev1', development: true, ...Dev1 },
+  { name: 'Dev2', development: true, ...Dev2 },
+  { name: 'Dev2_4337', development: true, ...Dev2_4337 },
+]
+
+export function isKnownContext(context: Context): context is KnownContext {
+  return (context as KnownContext).name !== undefined && (context as KnownContext).development !== undefined
+}

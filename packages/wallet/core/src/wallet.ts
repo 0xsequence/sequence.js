@@ -13,14 +13,14 @@ import * as State from './state/index.js'
 import { UserOperation } from 'ox/erc4337'
 
 export type WalletOptions = {
-  context: Context.Context
+  knownContexts: Context.KnownContext[]
   stateProvider: State.Provider
   guest: Address.Address
   unsafe?: boolean
 }
 
 export const DefaultWalletOptions: WalletOptions = {
-  context: Context.Dev1,
+  knownContexts: Context.KnownContexts,
   stateProvider: new State.Local.Provider(),
   guest: Constants.DefaultGuest,
 }
@@ -29,31 +29,37 @@ export type WalletStatus = {
   address: Address.Address
   isDeployed: boolean
   implementation?: Address.Address
-  stage?: 'stage1' | 'stage2'
   configuration: Config.Config
   imageHash: Hex.Hex
   /** Pending updates in reverse chronological order (newest first) */
   pendingUpdates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>
   chainId?: bigint
+  counterFactual: {
+    context: Context.KnownContext | Context.Context
+    imageHash: Hex.Hex
+  }
 }
 
 export type WalletStatusWithOnchain = WalletStatus & {
   onChainImageHash: Hex.Hex
+  stage: 'stage1' | 'stage2'
+  context: Context.KnownContext | Context.Context
 }
 
 export class Wallet {
-  public readonly context: Context.Context
   public readonly guest: Address.Address
   public readonly stateProvider: State.Provider
+  public readonly knownContexts: Context.KnownContext[]
 
   constructor(
     readonly address: Address.Address,
     options?: Partial<WalletOptions>,
   ) {
-    const combinedOptions = { ...DefaultWalletOptions, ...options }
-    this.context = combinedOptions.context
+    const combinedContexts = [...DefaultWalletOptions.knownContexts, ...(options?.knownContexts ?? [])]
+    const combinedOptions = { ...DefaultWalletOptions, ...options, knownContexts: combinedContexts }
     this.guest = combinedOptions.guest
     this.stateProvider = combinedOptions.stateProvider
+    this.knownContexts = combinedOptions.knownContexts
   }
 
   /**
@@ -65,15 +71,19 @@ export class Wallet {
    * @param options - Optional wallet options.
    * @returns A Promise that resolves to the new Wallet instance.
    */
-  static async fromConfiguration(configuration: Config.Config, options?: Partial<WalletOptions>): Promise<Wallet> {
+  static async fromConfiguration(
+    configuration: Config.Config,
+    context: Context.Context = Context.Dev2,
+    options?: Partial<WalletOptions>,
+  ): Promise<Wallet> {
     const merged = { ...DefaultWalletOptions, ...options }
 
     if (!merged.unsafe) {
       Config.evaluateConfigurationSafety(configuration)
     }
 
-    await merged.stateProvider.saveWallet(configuration, merged.context)
-    return new Wallet(SequenceAddress.from(configuration, merged.context), merged)
+    await merged.stateProvider.saveWallet(configuration, context)
+    return new Wallet(SequenceAddress.from(configuration, context), merged)
   }
 
   async isDeployed(provider: Provider.Provider): Promise<boolean> {
@@ -114,11 +124,7 @@ export class Wallet {
 
     const imageHash = Config.hashConfiguration(configuration)
     const blankEnvelope = (
-      await Promise.all([
-        this.prepareBlankEnvelope(0n),
-        this.stateProvider.saveWallet(configuration, this.context),
-        this.stateProvider.saveConfiguration(configuration),
-      ])
+      await Promise.all([this.prepareBlankEnvelope(0n), this.stateProvider.saveConfiguration(configuration)])
     )[0]
 
     return {
@@ -157,16 +163,31 @@ export class Wallet {
       }
     }
   }
+
   async getStatus<T extends Provider.Provider | undefined = undefined>(
     provider?: T,
   ): Promise<T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus> {
     let isDeployed = false
     let implementation: Address.Address | undefined
-    let stage: 'stage1' | 'stage2' | undefined
     let chainId: bigint | undefined
     let imageHash: Hex.Hex
     let updates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }> = []
     let onChainImageHash: Hex.Hex | undefined
+    let stage: 'stage1' | 'stage2' | undefined
+
+    const deployInformation = await this.stateProvider.getDeploy(this.address)
+    if (!deployInformation) {
+      throw new Error(`cannot find deploy information for ${this.address}`)
+    }
+
+    // Try to use a context from the known contexts, so we populate
+    // the capabilities of the context
+    const counterFactualContext =
+      this.knownContexts.find(
+        (kc) =>
+          Address.isEqual(deployInformation.context.factory, kc.factory) &&
+          Address.isEqual(deployInformation.context.stage1, kc.stage1),
+      ) ?? deployInformation.context
 
     if (provider) {
       // Get chain ID, deployment status, and implementation
@@ -190,14 +211,19 @@ export class Wallet {
       isDeployed = requests[1]
       implementation = requests[2]
 
-      // Determine stage based on implementation address
-      if (implementation) {
-        if (Address.isEqual(implementation, this.context.stage1)) {
-          stage = 'stage1'
-        } else if (Address.isEqual(implementation, this.context.stage2)) {
-          stage = 'stage2'
-        }
+      // Try to find the context from the known contexts (or use the counterfactual context)
+      const context = implementation
+        ? [...this.knownContexts, counterFactualContext].find(
+            (kc) => Address.isEqual(implementation!, kc.stage1) || Address.isEqual(implementation!, kc.stage2),
+          )
+        : counterFactualContext
+
+      if (!context) {
+        throw new Error(`cannot find context for ${this.address}`)
       }
+
+      // Determine stage based on implementation address
+      stage = implementation && Address.isEqual(implementation, context.stage2) ? 'stage2' : 'stage1'
 
       // Get image hash and updates
       if (isDeployed && stage === 'stage2') {
@@ -220,10 +246,6 @@ export class Wallet {
       imageHash = updates[updates.length - 1]?.imageHash ?? onChainImageHash
     } else {
       // Without a provider, we can only get information from the state provider
-      const deployInformation = await this.stateProvider.getDeploy(this.address)
-      if (!deployInformation) {
-        throw new Error(`cannot find deploy information for ${this.address}`)
-      }
       updates = await this.stateProvider.getConfigurationUpdates(this.address, deployInformation.imageHash)
       imageHash = updates[updates.length - 1]?.imageHash ?? deployInformation.imageHash
     }
@@ -251,11 +273,14 @@ export class Wallet {
         address: this.address,
         isDeployed,
         implementation,
-        stage,
         configuration,
         imageHash,
         pendingUpdates: [...updates].reverse(),
         chainId,
+        counterFactual: {
+          context: counterFactualContext,
+          imageHash: deployInformation.imageHash,
+        },
       } as T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus
     }
   }
@@ -287,15 +312,9 @@ export class Wallet {
     return BigInt(result) & 0xffffffffffffffffn
   }
 
-  async get4337Entrypoint(provider: Provider.Provider): Promise<Address.Address> {
-    const result = await provider.request({
-      method: 'eth_call',
-      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_ENTRYPOINT) }],
-    })
-
-    const address = `0x${result.slice(-40)}`
-    Address.assert(address, { strict: false })
-    return address
+  async supports4337(provider: Provider.Provider): Promise<boolean> {
+    const status = await this.getStatus(provider)
+    return !!status.context.capabilities?.erc4337?.entrypoint
   }
 
   async prepare4337Transaction(
@@ -324,15 +343,14 @@ export class Wallet {
       }
     }
 
-    const [chainId, nonce, entrypoint, status] = await Promise.all([
+    const [chainId, nonce, status] = await Promise.all([
       provider.request({ method: 'eth_chainId' }),
       this.get4337Nonce(provider, space),
-      this.get4337Entrypoint(provider),
       this.getStatus(provider),
     ])
 
     // If entrypoint is address(0) then 4337 is not enabled in this wallet
-    if (Address.isEqual(entrypoint, '0x0000000000000000000000000000000000000000')) {
+    if (!status.context.capabilities?.erc4337?.entrypoint) {
       throw new Error('4337 is not enabled in this wallet')
     }
 
@@ -370,7 +388,7 @@ export class Wallet {
         nonce,
         space,
         calls,
-        entrypoint,
+        entrypoint: status.context.capabilities?.erc4337?.entrypoint,
         callGasLimit: 0n,
         maxFeePerGas: 0n,
         maxPriorityFeePerGas: 0n,
