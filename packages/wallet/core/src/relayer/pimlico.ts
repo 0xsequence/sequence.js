@@ -60,8 +60,8 @@ export class PimlicoBundler implements Bundler {
   }
 
   async relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }> {
-    const status = await this.bundlerRpc<any>('eth_sendUserOperation', [userOperation, entrypoint])
-    return { opHash: status.opHash }
+    const status = await this.bundlerRpc<Hex.Hex>('eth_sendUserOperation', [userOperation, entrypoint])
+    return { opHash: status }
   }
 
   async estimateLimits(wallet: Address.Address, payload: Payload.Calls4337_07): Promise<Payload.Calls4337_07> {
