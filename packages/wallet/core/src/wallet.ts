@@ -20,7 +20,7 @@ export type WalletOptions = {
 
 export const DefaultWalletOptions: WalletOptions = {
   context: Context.Dev1,
-  stateProvider: new State.Local.Provider(),
+  stateProvider: new State.Sequence.Provider(),
   guest: Constants.DefaultGuest,
 }
 

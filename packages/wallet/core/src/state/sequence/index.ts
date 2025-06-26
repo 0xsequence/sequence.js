@@ -6,7 +6,7 @@ import { Sessions, SignatureType } from './sessions.gen.js'
 export class Provider implements ProviderInterface {
   private readonly service: Sessions
 
-  constructor(host: string) {
+  constructor(host = 'https://v3-keymachine.sequence-dev.app') {
     this.service = new Sessions(host, fetch)
   }
 
