@@ -36,6 +36,7 @@ export class PermissionBuilder {
   private fnTypes?: string[]
   private fnNames?: (string | undefined)[]
   private allowAllSet: boolean = false
+  private exactCalldataSet: boolean = false
 
   private constructor(target: Address.Address) {
     this.target = target
@@ -53,9 +54,32 @@ export class PermissionBuilder {
     return this
   }
 
+  exactCalldata(calldata: Bytes.Bytes): this {
+    if (this.allowAllSet || this.rules.length > 0) {
+      throw new Error(`cannot call exactCalldata() after calling allowAll() or adding rules`)
+    }
+    for (let offset = 0; offset < calldata.length; offset += 32) {
+      let value = calldata.slice(offset, offset + 32)
+      let mask = Permission.MASK.BYTES32
+      if (value.length < 32) {
+        mask = Bytes.fromHex(`0x${'ff'.repeat(value.length)}${'00'.repeat(32 - value.length)}`)
+        value = Bytes.padRight(value, 32)
+      }
+      this.rules.push({
+        cumulative: false,
+        operation: Permission.ParameterOperation.EQUAL,
+        value,
+        offset: BigInt(offset),
+        mask,
+      })
+    }
+    this.exactCalldataSet = true
+    return this
+  }
+
   forFunction(sig: string | AbiFunction.AbiFunction): this {
-    if (this.allowAllSet) {
-      throw new Error(`cannot call forFunction(...) after calling allowAll()`)
+    if (this.allowAllSet || this.exactCalldataSet) {
+      throw new Error(`cannot call forFunction(...) after calling allowAll() or exactCalldata()`)
     }
     const selector = AbiFunction.getSelector(sig)
     this.rules.push({
