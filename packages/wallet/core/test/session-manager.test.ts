@@ -19,7 +19,7 @@ describe('SessionManager', () => {
   const identityPrivateKey = Secp256k1.randomPrivateKey()
   const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
 
-  const stateProvider = new State.Local.Provider()
+  const stateProvider = new State.Sequence.Provider()
 
   it(
     'should load from state',

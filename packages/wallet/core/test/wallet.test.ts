@@ -6,7 +6,7 @@ import { Envelope, State, Wallet } from '../src/index.js'
 import { LOCAL_RPC_URL } from './constants.js'
 
 describe('Wallet', async () => {
-  const stateProvider = new State.Local.Provider()
+  const stateProvider = new State.Sequence.Provider()
 
   const createRandomSigner = () => {
     const privateKey = Secp256k1.randomPrivateKey()
