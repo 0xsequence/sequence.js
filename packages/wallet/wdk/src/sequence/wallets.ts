@@ -525,6 +525,11 @@ export class Wallets {
     // Sign witness using the passkey signer
     await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, loginSigner.extra)
 
+    // Sign witness using the guard signer
+    if (guardTopology) {
+      await this.shared.modules.guard.witness(wallet.address)
+    }
+
     // Save entry in the manager db
     const newWalletEntry = {
       address: wallet.address,
@@ -826,6 +831,8 @@ export class Wallets {
     const deviceSigners = Config.getSigners(raw.devicesTopology)
     const loginSigners = Config.getSigners(raw.loginTopology)
 
+    const guardSigners = raw.guardTopology ? Config.getSigners(raw.guardTopology) : undefined
+
     return {
       devices: await this.shared.modules.signers.resolveKinds(wallet, [
         ...deviceSigners.signers,
@@ -835,6 +842,12 @@ export class Wallets {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
+      guard: guardSigners
+        ? await this.shared.modules.signers.resolveKinds(wallet, [
+            ...guardSigners.signers,
+            ...guardSigners.sapientSigners,
+          ])
+        : [],
       raw,
     }
   }
@@ -880,6 +893,8 @@ export class Wallets {
     const deviceSigners = Config.getSigners(raw.devicesTopology)
     const loginSigners = Config.getSigners(raw.loginTopology)
 
+    const guardSigners = raw.guardTopology ? Config.getSigners(raw.guardTopology) : undefined
+
     return {
       devices: await this.shared.modules.signers.resolveKinds(wallet, [
         ...deviceSigners.signers,
@@ -889,6 +904,12 @@ export class Wallets {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
+      guard: guardSigners
+        ? await this.shared.modules.signers.resolveKinds(wallet, [
+            ...guardSigners.signers,
+            ...guardSigners.sapientSigners,
+          ])
+        : [],
       raw,
     }
   }

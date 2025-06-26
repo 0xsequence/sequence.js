@@ -12,7 +12,11 @@ describe('Wallets', () => {
 
   it('Should create a new wallet using a mnemonic', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({ mnemonic: Mnemonic.random(Mnemonic.english), kind: 'mnemonic' })
+    const wallet = await manager.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
     expect(wallet).toBeDefined()
     await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
   })

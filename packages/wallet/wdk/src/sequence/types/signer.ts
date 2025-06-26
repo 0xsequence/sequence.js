@@ -8,6 +8,7 @@ export const Kinds = {
   LoginGooglePkce: 'login-google-pkce',
   LoginApple: 'login-apple',
   Recovery: 'recovery-extension',
+  Guard: 'guard-extension',
   Unknown: 'unknown',
 } as const
 
