@@ -47,7 +47,7 @@ describe('Sessions (via Manager)', () => {
     }
 
     // Create state provider
-    stateProvider = new State.Sequence.Provider()
+    stateProvider = new State.Local.Provider()
 
     // Create manager
     const opts = Sequence.applyManagerOptionsDefaults({
