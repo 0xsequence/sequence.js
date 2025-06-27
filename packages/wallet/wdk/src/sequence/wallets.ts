@@ -514,9 +514,10 @@ export class Wallets {
 
     // Create wallet
     const context = args.use4337 ? this.shared.sequence.context4337 : this.shared.sequence.context
-    const wallet = await CoreWallet.fromConfiguration(initialConfiguration, context, {
+    const wallet = await CoreWallet.fromConfiguration(initialConfiguration, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
+      context,
     })
 
     this.shared.modules.logger.log('Created new sequence wallet:', wallet.address)

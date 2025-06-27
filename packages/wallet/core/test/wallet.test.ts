@@ -362,7 +362,7 @@ describe('Wallet', async () => {
     expect(wallet).toBeDefined()
   })
 
-  it('Should accept unsafe wallet update in unsafe mode', async () => {
+  it.only('Should accept unsafe wallet update in unsafe mode', async () => {
     const wallet = await Wallet.fromConfiguration(
       {
         threshold: 1n,

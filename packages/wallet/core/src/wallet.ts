@@ -73,9 +73,9 @@ export class Wallet {
    */
   static async fromConfiguration(
     configuration: Config.Config,
-    context: Context.Context = Context.Dev2,
-    options?: Partial<WalletOptions>,
+    options?: Partial<WalletOptions> & { context?: Context.Context },
   ): Promise<Wallet> {
+    const context = options?.context ?? Context.Dev2
     const merged = { ...DefaultWalletOptions, ...options }
 
     if (!merged.unsafe) {
