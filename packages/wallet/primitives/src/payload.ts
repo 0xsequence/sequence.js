@@ -564,7 +564,7 @@ export function to4337UserOperation(
   const packedCalls = Hex.fromBytes(encode(callsPayload))
   const operation: UserOperation.UserOperation<'0.7', false> = {
     sender: wallet,
-    nonce: encode4337Nonce(payload.nonce, payload.nonce),
+    nonce: encode4337Nonce(payload.space, payload.nonce),
     callData: AbiFunction.encodeData(EXECUTE_USER_OP, [packedCalls]),
     callGasLimit: payload.callGasLimit,
     maxFeePerGas: payload.maxFeePerGas,

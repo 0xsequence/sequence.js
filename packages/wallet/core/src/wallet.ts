@@ -301,10 +301,10 @@ export class Wallet {
     return BigInt(result)
   }
 
-  async get4337Nonce(provider: Provider.Provider, space: bigint): Promise<bigint> {
+  async get4337Nonce(provider: Provider.Provider, entrypoint: Address.Address, space: bigint): Promise<bigint> {
     const result = await provider.request({
       method: 'eth_call',
-      params: [{ to: this.address, data: AbiFunction.encodeData(Constants.READ_NONCE_4337, [this.address, space]) }],
+      params: [{ to: entrypoint, data: AbiFunction.encodeData(Constants.READ_NONCE_4337, [this.address, space]) }],
     })
 
     if (result === '0x' || result.length === 0) {
@@ -346,16 +346,14 @@ export class Wallet {
       }
     }
 
-    const [chainId, nonce, status] = await Promise.all([
-      provider.request({ method: 'eth_chainId' }),
-      this.get4337Nonce(provider, space),
-      this.getStatus(provider),
-    ])
+    const [chainId, status] = await Promise.all([provider.request({ method: 'eth_chainId' }), this.getStatus(provider)])
 
     // If entrypoint is address(0) then 4337 is not enabled in this wallet
     if (!status.context.capabilities?.erc4337?.entrypoint) {
       throw new Error('4337 is not enabled in this wallet')
     }
+
+    const noncePromise = this.get4337Nonce(provider, status.context.capabilities?.erc4337?.entrypoint!, space)
 
     // If the wallet is not deployed, then we need to include the initCode on
     // the 4337 transaction
@@ -388,7 +386,7 @@ export class Wallet {
     return {
       payload: {
         type: 'call_4337_07',
-        nonce,
+        nonce: await noncePromise,
         space,
         calls,
         entrypoint: status.context.capabilities?.erc4337?.entrypoint,

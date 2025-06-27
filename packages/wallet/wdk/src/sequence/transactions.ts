@@ -132,8 +132,6 @@ export class Transactions {
             const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
             if (feeOptions.options.length === 0) {
-              console.log('manual relayer', relayer)
-
               const { name, icon } = relayer instanceof Relayer.EIP6963.EIP6963Relayer ? relayer.info : {}
 
               return [
