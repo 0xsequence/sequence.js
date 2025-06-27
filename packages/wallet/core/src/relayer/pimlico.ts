@@ -31,32 +31,17 @@ export class PimlicoBundler implements Bundler {
     this.bundlerRpcUrl = bundlerRpcUrl
   }
 
-  async isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean> {
-    // TODO: This should not check if the wallet supports 4337, it should only check
-    // if the bundler supports the same version the wallet announces
-    const [result, providerChainId, code] = await Promise.all([
-      this.provider.request({
-        method: 'eth_call',
-        params: [{ to: wallet, data: AbiFunction.encodeData(Constants.READ_ENTRYPOINT) }],
-      }),
-      this.provider.request({
-        method: 'eth_chainId',
-      }),
-      this.provider.request({
-        method: 'eth_getCode',
-        params: [wallet, 'pending'],
-      }),
+  async isAvailable(entrypoint: Address.Address, chainId: bigint): Promise<boolean> {
+    const [bundlerChainId, supportedEntryPoints] = await Promise.all([
+      this.bundlerRpc<string>('eth_chainId', []),
+      this.bundlerRpc<Address.Address[]>('eth_supportedEntryPoints', []),
     ])
 
-    if (chainId !== BigInt(providerChainId)) {
+    if (chainId !== BigInt(bundlerChainId)) {
       return false
     }
 
-    if (result === '0x' || result === '0x0000000000000000000000000000000000000000') {
-      return false
-    }
-
-    return true
+    return supportedEntryPoints.some((ep) => Address.isEqual(ep, entrypoint))
   }
 
   async relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }> {

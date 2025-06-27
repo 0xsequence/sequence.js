@@ -156,34 +156,41 @@ export class Transactions {
             }))
           }),
       ),
-      Promise.all(
-        this.shared.sequence.bundlers.map(async (bundler): Promise<ERC4337RelayerOption[]> => {
-          const ifAvailable = await bundler.isAvailable(tx.wallet, tx.envelope.chainId)
-          if (!ifAvailable) {
-            return []
-          }
+      (async () => {
+        const entrypoint = await wallet.get4337Entrypoint(provider)
+        if (!entrypoint) {
+          return []
+        }
 
-          try {
-            const erc4337Op = await wallet.prepare4337Transaction(provider, tx.envelope.payload.calls, {
-              space: tx.envelope.payload.space,
-            })
+        return Promise.all(
+          this.shared.sequence.bundlers.map(async (bundler): Promise<ERC4337RelayerOption[]> => {
+            const ifAvailable = await bundler.isAvailable(entrypoint, tx.envelope.chainId)
+            if (!ifAvailable) {
+              return []
+            }
 
-            const erc4337OpWithEstimatedLimits = await bundler.estimateLimits(tx.wallet, erc4337Op.payload)
+            try {
+              const erc4337Op = await wallet.prepare4337Transaction(provider, tx.envelope.payload.calls, {
+                space: tx.envelope.payload.space,
+              })
 
-            return [
-              {
-                kind: 'erc4337',
-                id: uuidv7(),
-                relayerId: bundler.id,
-                alternativePayload: erc4337OpWithEstimatedLimits,
-              },
-            ]
-          } catch (e) {
-            console.error('error estimating limits 4337', e)
-            return []
-          }
-        }),
-      ),
+              const erc4337OpWithEstimatedLimits = await bundler.estimateLimits(tx.wallet, erc4337Op.payload)
+
+              return [
+                {
+                  kind: 'erc4337',
+                  id: uuidv7(),
+                  relayerId: bundler.id,
+                  alternativePayload: erc4337OpWithEstimatedLimits,
+                },
+              ]
+            } catch (e) {
+              console.error('error estimating limits 4337', e)
+              return []
+            }
+          }),
+        )
+      })(),
     ])
 
     await this.shared.databases.transactions.set({

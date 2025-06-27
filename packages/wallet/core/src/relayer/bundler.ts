@@ -10,7 +10,7 @@ export interface Bundler {
   estimateLimits(wallet: Address.Address, payload: Payload.Calls4337_07): Promise<Payload.Calls4337_07>
   relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }>
 
-  isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean>
+  isAvailable(entrypoint: Address.Address, chainId: bigint): Promise<boolean>
 }
 
 export function isBundler(relayer: any): relayer is Bundler {

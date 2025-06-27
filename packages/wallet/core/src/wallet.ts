@@ -189,6 +189,8 @@ export class Wallet {
           Address.isEqual(deployInformation.context.stage1, kc.stage1),
       ) ?? deployInformation.context
 
+    let context: Context.KnownContext | Context.Context | undefined
+
     if (provider) {
       // Get chain ID, deployment status, and implementation
       const requests = await Promise.all([
@@ -212,7 +214,7 @@ export class Wallet {
       implementation = requests[2]
 
       // Try to find the context from the known contexts (or use the counterfactual context)
-      const context = implementation
+      context = implementation
         ? [...this.knownContexts, counterFactualContext].find(
             (kc) => Address.isEqual(implementation!, kc.stage1) || Address.isEqual(implementation!, kc.stage2),
           )
@@ -267,6 +269,7 @@ export class Wallet {
         pendingUpdates: [...updates].reverse(),
         chainId,
         onChainImageHash: onChainImageHash!,
+        context,
       } as T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus
     } else {
       return {
@@ -312,9 +315,9 @@ export class Wallet {
     return BigInt(result) & 0xffffffffffffffffn
   }
 
-  async supports4337(provider: Provider.Provider): Promise<boolean> {
+  async get4337Entrypoint(provider: Provider.Provider): Promise<Address.Address | undefined> {
     const status = await this.getStatus(provider)
-    return !!status.context.capabilities?.erc4337?.entrypoint
+    return status.context.capabilities?.erc4337?.entrypoint
   }
 
   async prepare4337Transaction(
