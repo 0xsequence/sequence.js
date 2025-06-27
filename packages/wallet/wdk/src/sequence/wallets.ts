@@ -513,8 +513,8 @@ export class Wallets {
     console.log('initialConfiguration', initialConfiguration)
 
     // Create wallet
-    const wallet = await CoreWallet.fromConfiguration(initialConfiguration, {
-      context: args.use4337 ? this.shared.sequence.context4337 : this.shared.sequence.context,
+    const context = args.use4337 ? this.shared.sequence.context4337 : this.shared.sequence.context
+    const wallet = await CoreWallet.fromConfiguration(initialConfiguration, context, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
@@ -551,7 +551,6 @@ export class Wallets {
 
   public async getConfigurationParts(address: Address.Address) {
     const wallet = new CoreWallet(address, {
-      context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
@@ -567,7 +566,6 @@ export class Wallets {
     origin?: string,
   ) {
     const wallet = new CoreWallet(address, {
-      context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
@@ -608,7 +606,6 @@ export class Wallets {
     }
 
     const wallet = new CoreWallet(request.wallet, {
-      context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
@@ -817,7 +814,6 @@ export class Wallets {
 
   async getConfiguration(wallet: Address.Address) {
     const walletObject = new CoreWallet(wallet, {
-      context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
@@ -843,7 +839,6 @@ export class Wallets {
 
   async getNonce(chainId: bigint, address: Address.Address, space: bigint) {
     const wallet = new CoreWallet(address, {
-      context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
@@ -859,7 +854,6 @@ export class Wallets {
 
   async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
     const walletObject = new CoreWallet(wallet, {
-      context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
@@ -897,7 +891,6 @@ export class Wallets {
 
   async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
     const walletObject = new CoreWallet(wallet, {
-      context: this.shared.sequence.context,
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
     })
