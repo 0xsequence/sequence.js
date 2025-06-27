@@ -2,7 +2,7 @@ import { config as dotenvConfig } from 'dotenv'
 import { Abi, Address, Provider, RpcTransport } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'
 import { mockEthereum } from './setup'
-import { Signers as CoreSigners, Relayer } from '@0xsequence/wallet-core'
+import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'
 import * as Db from '../src/dbs'
 
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
@@ -33,6 +33,7 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
   }
 
   return new Manager({
+    stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
     networks: [
       {
         name: 'Arbitrum (local fork)',

@@ -1,4 +1,4 @@
-import { Address, Hash, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { Address, Hash, Hex, Provider, RpcTransport, Secp256k1, TypedData } from 'ox'
 import { describe, expect, it } from 'vitest'
 
 import { Config, Erc6492, Payload } from '../../primitives/src/index.js'
@@ -59,6 +59,72 @@ describe('Wallet', async () => {
           message,
         )
         const messageHash = Hash.keccak256(encodedMessage)
+
+        const envelope = await wallet.prepareMessageSignature(message, chainId)
+        const payloadHash = Payload.hash(wallet.address, chainId, envelope.payload)
+
+        // Sign it
+        const signerSignature = Secp256k1.sign({
+          payload: payloadHash,
+          privateKey: signer.privateKey,
+        })
+        const signedEnvelope = Envelope.toSigned(envelope, [
+          {
+            address: signer.address,
+            signature: {
+              type: 'hash',
+              ...signerSignature,
+            },
+          },
+        ])
+
+        // Encode it
+        const signature = await wallet.buildMessageSignature(signedEnvelope, provider)
+
+        // Validate off chain with ERC-6492
+        const isValid = await Erc6492.isValid(wallet.address, messageHash, signature, provider)
+        expect(isValid).toBe(true)
+      }, 30000)
+
+      it('should sign a typed data message', async () => {
+        const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+        const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+
+        const signer = createRandomSigner()
+        const wallet = await getWallet(
+          {
+            threshold: 1n,
+            checkpoint: 0n,
+            topology: { type: 'signer', address: signer.address, weight: 1n },
+          },
+          provider,
+          type === 'deployed',
+        )
+
+        const message = {
+          domain: {
+            name: 'MyApp',
+            version: '1',
+            chainId: Number(chainId),
+            verifyingContract: Address.from('0x0000000000000000000000000000000000000000'),
+          },
+          types: {
+            Mail: [
+              { name: 'from', type: 'address' },
+              { name: 'to', type: 'address' },
+              { name: 'contents', type: 'string' },
+            ],
+          },
+          primaryType: 'Mail' as const,
+          message: {
+            from: Address.from('0x0000000000000000000000000000000000000000'),
+            to: Address.from('0x0000000000000000000000000000000000000000'),
+            contents: 'Hello, Bob!',
+          },
+        }
+
+        const data = TypedData.encode(message)
+        const messageHash = Hash.keccak256(data)
 
         const envelope = await wallet.prepareMessageSignature(message, chainId)
         const payloadHash = Payload.hash(wallet.address, chainId, envelope.payload)
