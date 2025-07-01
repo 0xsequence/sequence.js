@@ -37,6 +37,7 @@ export class Transactions {
       source?: string
       noConfigUpdate?: boolean
       unsafe?: boolean
+      space?: bigint
     },
   ): Promise<string> {
     const network = this.shared.sequence.networks.find((network) => network.chainId === chainId)
@@ -63,6 +64,7 @@ export class Transactions {
     const envelope = await wallet.prepareTransaction(provider, calls, {
       noConfigUpdate: options?.noConfigUpdate,
       unsafe: options?.unsafe,
+      space: options?.space,
     })
 
     const id = uuidv7()

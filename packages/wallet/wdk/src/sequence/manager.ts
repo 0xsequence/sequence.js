@@ -462,7 +462,7 @@ export class Manager {
     from: Address.Address,
     chainId: bigint,
     txs: TransactionRequest[],
-    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean },
+    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
   }
