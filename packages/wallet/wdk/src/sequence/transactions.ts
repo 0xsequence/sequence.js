@@ -245,16 +245,15 @@ export class Transactions {
                 space: tx.envelope.payload.space,
               })
 
-              const erc4337OpWithEstimatedLimits = await bundler.estimateLimits(tx.wallet, erc4337Op.payload)
+              const erc4337OpsWithEstimatedLimits = await bundler.estimateLimits(tx.wallet, erc4337Op.payload)
 
-              return [
-                {
-                  kind: 'erc4337',
-                  id: uuidv7(),
-                  relayerId: bundler.id,
-                  alternativePayload: erc4337OpWithEstimatedLimits,
-                },
-              ]
+              return erc4337OpsWithEstimatedLimits.map(({ speed, payload }) => ({
+                kind: 'erc4337',
+                id: uuidv7(),
+                relayerId: bundler.id,
+                alternativePayload: payload,
+                speed,
+              }))
             } catch (e) {
               console.error('error estimating limits 4337', e)
               return []

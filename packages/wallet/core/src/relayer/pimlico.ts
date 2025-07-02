@@ -4,19 +4,15 @@ import { Provider, Hex, Address, RpcTransport } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { OperationStatus } from './relayer.js'
 
+type FeePerGasPair = {
+  maxFeePerGas: Hex.Hex | bigint
+  maxPriorityFeePerGas: Hex.Hex | bigint
+}
+
 type PimlicoGasPrice = {
-  slow: {
-    maxFeePerGas: Hex.Hex
-    maxPriorityFeePerGas: Hex.Hex
-  }
-  standard: {
-    maxFeePerGas: Hex.Hex
-    maxPriorityFeePerGas: Hex.Hex
-  }
-  fast: {
-    maxFeePerGas: Hex.Hex
-    maxPriorityFeePerGas: Hex.Hex
-  }
+  slow: FeePerGasPair
+  standard: FeePerGasPair
+  fast: FeePerGasPair
 }
 
 export class PimlicoBundler implements Bundler {
@@ -51,30 +47,22 @@ export class PimlicoBundler implements Bundler {
     return { opHash: status }
   }
 
-  async estimateLimits(wallet: Address.Address, payload: Payload.Calls4337_07): Promise<Payload.Calls4337_07> {
-    let maxFeePerGas = payload.maxFeePerGas
-    let maxPriorityFeePerGas = payload.maxPriorityFeePerGas
+  async estimateLimits(
+    wallet: Address.Address,
+    payload: Payload.Calls4337_07,
+  ): Promise<
+    {
+      speed?: 'slow' | 'standard' | 'fast'
+      payload: Payload.Calls4337_07
+    }[]
+  > {
+    const gasPrice = await this.bundlerRpc<PimlicoGasPrice>('pimlico_getUserOperationGasPrice', [])
 
-    if (!maxFeePerGas || !maxPriorityFeePerGas) {
-      const gasPrice = await this.bundlerRpc<PimlicoGasPrice>('pimlico_getUserOperationGasPrice', [])
-      if (!maxFeePerGas) {
-        maxFeePerGas = BigInt(gasPrice.standard.maxFeePerGas)
-      }
-      if (!maxPriorityFeePerGas) {
-        maxPriorityFeePerGas = BigInt(gasPrice.standard.maxPriorityFeePerGas)
-      }
-    }
-
-    // build a dummy op (v0.7 shape)
     const dummyOp = Payload.to4337UserOperation(payload, wallet, '0x000010000000000000000000000000000000000000000000')
     const rpcOp = UserOperation.toRpc(dummyOp)
-
-    // ask the bundler
     const est = await this.bundlerRpc<any>('eth_estimateUserOperationGas', [rpcOp, payload.entrypoint])
 
-    // fold the answer back in
-    return {
-      ...payload,
+    const estimatedFields = {
       callGasLimit: BigInt(est.callGasLimit),
       verificationGasLimit: BigInt(est.verificationGasLimit),
       preVerificationGas: BigInt(est.preVerificationGas),
@@ -84,8 +72,35 @@ export class PimlicoBundler implements Bundler {
       paymasterPostOpGasLimit: est.paymasterPostOpGasLimit
         ? BigInt(est.paymasterPostOpGasLimit)
         : payload.paymasterPostOpGasLimit,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
+    }
+
+    const passthroughOptions =
+      payload.maxFeePerGas > 0n || payload.maxPriorityFeePerGas > 0n
+        ? [this.createEstimateLimitVariation(payload, estimatedFields, undefined, gasPrice.standard)]
+        : []
+
+    return [
+      ...passthroughOptions,
+      this.createEstimateLimitVariation(payload, estimatedFields, 'slow', gasPrice.slow),
+      this.createEstimateLimitVariation(payload, estimatedFields, 'standard', gasPrice.standard),
+      this.createEstimateLimitVariation(payload, estimatedFields, 'fast', gasPrice.fast),
+    ]
+  }
+
+  private createEstimateLimitVariation(
+    payload: Payload.Calls4337_07,
+    estimatedFields: any,
+    speed?: 'slow' | 'standard' | 'fast',
+    feePerGasPair?: FeePerGasPair,
+  ) {
+    return {
+      speed,
+      payload: {
+        ...payload,
+        ...estimatedFields,
+        maxFeePerGas: BigInt(feePerGasPair?.maxFeePerGas ?? payload.maxFeePerGas),
+        maxPriorityFeePerGas: BigInt(feePerGasPair?.maxPriorityFeePerGas ?? payload.maxPriorityFeePerGas),
+      },
     }
   }
 

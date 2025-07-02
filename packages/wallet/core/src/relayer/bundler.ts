@@ -8,7 +8,10 @@ export interface Bundler {
 
   id: string
 
-  estimateLimits(wallet: Address.Address, payload: Payload.Calls4337_07): Promise<Payload.Calls4337_07>
+  estimateLimits(
+    wallet: Address.Address,
+    payload: Payload.Calls4337_07,
+  ): Promise<{ speed?: 'slow' | 'standard' | 'fast'; payload: Payload.Calls4337_07 }[]>
   relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }>
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
 
