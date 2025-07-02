@@ -1,8 +1,8 @@
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Bundler } from './bundler.js'
+import { Bundler } from '../bundler.js'
 import { Provider, Hex, Address, RpcTransport } from 'ox'
 import { UserOperation } from 'ox/erc4337'
-import { OperationStatus } from './relayer.js'
+import { OperationStatus } from '../relayer.js'
 
 type FeePerGasPair = {
   maxFeePerGas: Hex.Hex | bigint

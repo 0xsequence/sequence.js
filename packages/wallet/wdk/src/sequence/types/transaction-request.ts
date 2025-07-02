@@ -15,8 +15,8 @@ export type BaseRelayerOption = {
   speed?: 'slow' | 'standard' | 'fast'
 }
 
-export type LegacyRelayerOption = BaseRelayerOption & {
-  kind: 'legacy'
+export type StandardRelayerOption = BaseRelayerOption & {
+  kind: 'standard'
   feeOption?: Relayer.FeeOption
   quote?: Relayer.FeeQuote
   name?: string
@@ -28,10 +28,10 @@ export type ERC4337RelayerOption = BaseRelayerOption & {
   alternativePayload: Payload.Calls4337_07
 }
 
-export type RelayerOption = LegacyRelayerOption | ERC4337RelayerOption
+export type RelayerOption = StandardRelayerOption | ERC4337RelayerOption
 
-export function isLegacyRelayerOption(relayerOption: RelayerOption): relayerOption is LegacyRelayerOption {
-  return relayerOption.kind === 'legacy'
+export function isStandardRelayerOption(relayerOption: RelayerOption): relayerOption is StandardRelayerOption {
+  return relayerOption.kind === 'standard'
 }
 
 export function isERC4337RelayerOption(relayerOption: RelayerOption): relayerOption is ERC4337RelayerOption {

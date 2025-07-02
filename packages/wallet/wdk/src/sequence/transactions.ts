@@ -5,7 +5,9 @@ import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {
   ERC4337RelayerOption,
-  LegacyRelayerOption,
+  isERC4337RelayerOption,
+  isStandardRelayerOption,
+  StandardRelayerOption,
   Transaction,
   TransactionFinal,
   TransactionFormed,
@@ -196,7 +198,7 @@ export class Transactions {
       Promise.all(
         this.shared.sequence.relayers
           // Filter relayers based on the chainId of the transaction
-          .map(async (relayer): Promise<LegacyRelayerOption[]> => {
+          .map(async (relayer): Promise<StandardRelayerOption[]> => {
             const ifAvailable = await relayer.isAvailable(tx.wallet, tx.envelope.chainId)
             if (!ifAvailable) {
               return []
@@ -205,21 +207,21 @@ export class Transactions {
             const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
             if (feeOptions.options.length === 0) {
-              const { name, icon } = relayer instanceof Relayer.EIP6963.EIP6963Relayer ? relayer.info : {}
+              const { name, icon } = relayer instanceof Relayer.Standard.EIP6963.EIP6963Relayer ? relayer.info : {}
 
               return [
                 {
-                  kind: 'legacy',
+                  kind: 'standard',
                   id: uuidv7(),
                   relayerId: relayer.id,
                   name,
                   icon,
-                } as LegacyRelayerOption,
+                } as StandardRelayerOption,
               ]
             }
 
             return feeOptions.options.map((feeOption) => ({
-              kind: 'legacy',
+              kind: 'standard',
               id: uuidv7(),
               feeOption,
               relayerId: relayer.id,
@@ -282,7 +284,7 @@ export class Transactions {
     }
 
     // if we have a fee option on the selected relayer option
-    if (selection.kind === 'legacy') {
+    if (isStandardRelayerOption(selection)) {
       if (selection.feeOption) {
         // then we need to prepend the transaction payload with the fee
         const { token, to, value, gasLimit } = selection.feeOption
@@ -402,7 +404,7 @@ export class Transactions {
 
     let opHash: string | undefined
 
-    if (tx.relayerOption.kind === 'legacy') {
+    if (isStandardRelayerOption(tx.relayerOption)) {
       if (!Relayer.isRelayer(relayer)) {
         throw new Error(`Relayer ${tx.relayerOption.relayerId} is not a legacy relayer`)
       }
@@ -436,7 +438,7 @@ export class Transactions {
       await this.shared.modules.signatures.complete(signature.id)
     }
 
-    if (tx.relayerOption.kind === 'erc4337') {
+    if (isERC4337RelayerOption(tx.relayerOption)) {
       if (!Relayer.isBundler(relayer)) {
         throw new Error(`Relayer ${tx.relayerOption.relayerId} is not a bundler`)
       }

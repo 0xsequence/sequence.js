@@ -6,7 +6,7 @@ import {
   IntentPrecondition,
   GetMetaTxnReceiptReturn,
 } from './relayer.gen.js'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
 import { Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
 import {
@@ -15,7 +15,7 @@ import {
   FeeOption as RpcFeeOption,
   FeeToken as RpcFeeToken,
 } from './relayer.gen.js'
-import { decodePrecondition } from '../../preconditions/index.js'
+import { decodePrecondition } from '../../../preconditions/index.js'
 import {
   erc20BalanceOf,
   erc20Allowance,

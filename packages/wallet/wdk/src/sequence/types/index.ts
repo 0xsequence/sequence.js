@@ -18,7 +18,7 @@ export type { Kind, RecoverySigner, SignerWithKind, WitnessExtraSignerKind } fro
 export type {
   BaseRelayerOption,
   ERC4337RelayerOption,
-  LegacyRelayerOption,
+  StandardRelayerOption,
   RelayerOption,
   Transaction,
   TransactionDefined,

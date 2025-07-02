@@ -110,7 +110,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Sequence.Provider(),
   networks: Network.All,
-  relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [Relayer.Standard.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
   bundlers: [],
 
   defaultGuardTopology: {
@@ -241,7 +241,7 @@ export class Manager {
     // Add EIP-6963 relayers if enabled
     if (ops.multiInjectedProviderDiscovery) {
       try {
-        relayers.push(...Relayer.EIP6963.getRelayers())
+        relayers.push(...Relayer.Standard.EIP6963.getRelayers())
       } catch (error) {
         console.warn('Failed to initialize EIP-6963 relayers:', error)
       }
