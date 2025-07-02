@@ -11,6 +11,7 @@ export type TransactionRequest = {
 
 export type RelayerOption = {
   id: string
+  relayerType: string
   relayerId: string
   feeOption?: Relayer.FeeOption
   quote?: Relayer.FeeQuote

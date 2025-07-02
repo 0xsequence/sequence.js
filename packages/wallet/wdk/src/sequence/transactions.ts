@@ -125,19 +125,21 @@ export class Transactions {
 
             const { name, icon } = relayer instanceof Relayer.EIP6963.EIP6963Relayer ? relayer.info : {}
 
-            return [
-              {
-                id: uuidv7(),
-                relayerId: relayer.id,
-                name,
-                icon,
-              } as RelayerOption,
-            ]
+            const relayerOption: RelayerOption = {
+              id: uuidv7(),
+              relayerType: relayer.type,
+              relayerId: relayer.id,
+              name,
+              icon,
+            }
+
+            return [relayerOption]
           }
 
           return feeOptions.options.map((feeOption) => ({
             id: uuidv7(),
             feeOption,
+            relayerType: relayer.type,
             relayerId: relayer.id,
             quote: feeOptions.quote,
           }))
