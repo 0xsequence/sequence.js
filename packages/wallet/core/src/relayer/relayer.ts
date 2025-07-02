@@ -56,6 +56,7 @@ export type OperationStatus =
   | OperationFailedStatus
 
 export interface Relayer {
+  type: string
   id: string
 
   feeOptions(

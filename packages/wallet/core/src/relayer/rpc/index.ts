@@ -40,6 +40,7 @@ export const getChain = (chainId: number): Chain => {
 }
 
 export class RpcRelayer implements Relayer {
+  public readonly type = 'rpc'
   public readonly id: string
   public readonly chainId: number
   private client: GenRelayer
