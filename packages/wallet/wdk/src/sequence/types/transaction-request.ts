@@ -64,7 +64,22 @@ export type TransactionFormed = TransactionBase & {
 export type TransactionRelayed = TransactionBase & {
   status: 'relayed'
   opHash: string
+  relayedAt: number
+  relayerId: string
   opStatus?: Relayer.OperationStatus
 }
 
-export type Transaction = TransactionRequested | TransactionDefined | TransactionFormed | TransactionRelayed
+export type TransactionFinal = TransactionBase & {
+  status: 'final'
+  opHash: string
+  relayedAt: number
+  relayerId: string
+  opStatus: Relayer.OperationStatus
+}
+
+export type Transaction =
+  | TransactionRequested
+  | TransactionDefined
+  | TransactionFormed
+  | TransactionRelayed
+  | TransactionFinal

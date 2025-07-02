@@ -16,6 +16,9 @@ export type {
 export { Kinds } from './signer.js'
 export type { Kind, RecoverySigner, SignerWithKind, WitnessExtraSignerKind } from './signer.js'
 export type {
+  BaseRelayerOption,
+  ERC4337RelayerOption,
+  LegacyRelayerOption,
   RelayerOption,
   Transaction,
   TransactionDefined,

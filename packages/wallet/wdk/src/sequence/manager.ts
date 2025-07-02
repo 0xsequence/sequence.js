@@ -62,6 +62,7 @@ export type ManagerOptions = {
   stateProvider?: State.Provider
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
+  bundlers?: Relayer.Bundler[]
 
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings

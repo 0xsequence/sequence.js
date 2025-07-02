@@ -1,12 +1,13 @@
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
-import { Abi, AbiFunction, Address, Provider, RpcTransport } from 'ox'
+import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {
   ERC4337RelayerOption,
   LegacyRelayerOption,
   Transaction,
+  TransactionFinal,
   TransactionFormed,
   TransactionRelayed,
   TransactionRequest,
@@ -14,6 +15,76 @@ import {
 
 export class Transactions {
   constructor(private readonly shared: Shared) {}
+
+  initialize() {
+    this.shared.modules.cron.registerJob('update-transaction-status', 1000, async () => {
+      await this.refreshStatus()
+    })
+  }
+
+  public async refreshStatus(onlyTxId?: string): Promise<number> {
+    const transactions = await this.list()
+
+    const THIRTY_MINUTES = 30 * 60 * 1000
+    const now = Date.now()
+
+    let finalCount = 0
+
+    for (const tx of transactions) {
+      if (onlyTxId && tx.id !== onlyTxId) {
+        continue
+      }
+
+      if (tx.status === 'relayed') {
+        let relayer: Relayer.Relayer | Relayer.Bundler | undefined = this.shared.sequence.relayers.find(
+          (relayer) => relayer.id === tx.relayerId,
+        )
+        if (!relayer) {
+          const bundler = this.shared.sequence.bundlers.find((bundler) => bundler.id === tx.relayerId)
+          if (!bundler) {
+            console.warn('relayer or bundler not found', tx.id, tx.relayerId)
+            continue
+          }
+
+          relayer = bundler
+        }
+
+        // Check for timeout: if relayedAt is more than 30 minutes ago, fail with timeout
+        if (typeof tx.relayedAt === 'number' && now - tx.relayedAt > THIRTY_MINUTES) {
+          const opStatus = {
+            status: 'failed',
+            reason: 'timeout',
+          }
+          this.shared.databases.transactions.set({
+            ...tx,
+            opStatus,
+            status: 'final',
+          } as TransactionFinal)
+          finalCount++
+          continue
+        }
+
+        const opStatus = await relayer.status(tx.opHash as Hex.Hex, tx.envelope.chainId)
+
+        if (opStatus.status === 'confirmed' || opStatus.status === 'failed') {
+          this.shared.databases.transactions.set({
+            ...tx,
+            opStatus,
+            status: 'final',
+          } as TransactionFinal)
+          finalCount++
+        } else {
+          this.shared.databases.transactions.set({
+            ...tx,
+            opStatus,
+            status: 'relayed',
+          } as TransactionRelayed)
+        }
+      }
+    }
+
+    return finalCount
+  }
 
   public async list(): Promise<Transaction[]> {
     return this.shared.databases.transactions.list()
@@ -64,7 +135,7 @@ export class Transactions {
     const envelope = await wallet.prepareTransaction(provider, calls, {
       noConfigUpdate: options?.noConfigUpdate,
       unsafe: options?.unsafe,
-      space: options?.space,
+      space: options?.space !== undefined ? options.space : BigInt(Math.floor(Date.now() / 1000)),
     })
 
     const id = uuidv7()
@@ -359,16 +430,9 @@ export class Transactions {
         ...tx,
         status: 'relayed',
         opHash,
+        relayedAt: Date.now(),
+        relayerId: tx.relayerOption.relayerId,
       } as TransactionRelayed)
-
-      relayer.status(opHashLegacy, tx.envelope.chainId).then((opStatus) => {
-        this.shared.databases.transactions.set({
-          ...tx,
-          status: 'relayed',
-          opHash,
-          opStatus,
-        } as TransactionRelayed)
-      })
 
       await this.shared.modules.signatures.complete(signature.id)
     }
@@ -388,13 +452,29 @@ export class Transactions {
       })
 
       const { opHash: opHashBundler } = await relayer.relay(entrypoint, operation)
-
       opHash = opHashBundler
+
+      await this.shared.databases.transactions.set({
+        ...tx,
+        status: 'relayed',
+        opHash,
+        relayedAt: Date.now(),
+        relayerId: tx.relayerOption.relayerId,
+      } as TransactionRelayed)
     }
 
     if (!opHash) {
       throw new Error(`Relayer ${tx.relayerOption.relayerId} did not return an op hash`)
     }
+
+    // Refresh the status of the transaction every second for the next 30 seconds
+    const intervalId = setInterval(async () => {
+      const finalCount = await this.refreshStatus(tx.id)
+      if (finalCount > 0) {
+        clearInterval(intervalId)
+      }
+    }, 1000)
+    setTimeout(() => clearInterval(intervalId), 30 * 1000)
 
     return opHash
   }
