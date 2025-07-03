@@ -69,7 +69,7 @@ export class Implicit implements SessionSigner {
       ])
       const acceptImplicitRequestResult = await provider.request({
         method: 'eth_call',
-        params: [{ from: this._sessionManager, to: call.to, data: encodedCallData }],
+        params: [{ from: this._sessionManager, to: call.to, data: encodedCallData }, 'latest'],
       })
       const acceptImplicitRequest = Hex.from(
         AbiFunction.decodeResult(acceptImplicitRequestFunctionAbi, acceptImplicitRequestResult),

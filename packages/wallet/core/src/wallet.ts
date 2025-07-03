@@ -199,7 +199,7 @@ export class Wallet {
         provider
           .request({
             method: 'eth_call',
-            params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }],
+            params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }, 'latest'],
           })
           .then((res) => {
             const address = `0x${res.slice(-40)}`
@@ -232,7 +232,7 @@ export class Wallet {
         // For deployed stage2 wallets, get the image hash from the contract
         onChainImageHash = await provider.request({
           method: 'eth_call',
-          params: [{ to: this.address, data: AbiFunction.encodeData(Constants.IMAGE_HASH) }],
+          params: [{ to: this.address, data: AbiFunction.encodeData(Constants.IMAGE_HASH) }, 'latest'],
         })
       } else {
         // For non-deployed or stage1 wallets, get the deploy hash
@@ -304,7 +304,10 @@ export class Wallet {
   async get4337Nonce(provider: Provider.Provider, entrypoint: Address.Address, space: bigint): Promise<bigint> {
     const result = await provider.request({
       method: 'eth_call',
-      params: [{ to: entrypoint, data: AbiFunction.encodeData(Constants.READ_NONCE_4337, [this.address, space]) }],
+      params: [
+        { to: entrypoint, data: AbiFunction.encodeData(Constants.READ_NONCE_4337, [this.address, space]) },
+        'latest',
+      ],
     })
 
     if (result === '0x' || result.length === 0) {
