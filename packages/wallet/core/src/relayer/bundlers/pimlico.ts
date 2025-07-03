@@ -43,7 +43,6 @@ export class PimlicoBundler implements Bundler {
 
   async relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }> {
     const status = await this.bundlerRpc<Hex.Hex>('eth_sendUserOperation', [userOperation, entrypoint])
-    console.log('send user opperation response', status)
     return { opHash: status }
   }
 
