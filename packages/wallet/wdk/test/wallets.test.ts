@@ -36,7 +36,7 @@ describe('Wallets', () => {
       await respond(loginMnemonic)
     })
 
-    const request = await manager.getSignatureRequest(requestId)
+    const request = await manager.signatures.get(requestId)
     expect(request).toBeDefined()
     expect(request.action).toBe('logout')
 
@@ -51,7 +51,7 @@ describe('Wallets', () => {
     unregistedUI()
 
     await manager.wallets.completeLogout(requestId)
-    expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
+    expect((await manager.signatures.get(requestId))?.status).toBe('completed')
     const wallets2 = await manager.wallets.list()
     expect(wallets2.length).toBe(0)
     await expect(manager.wallets.has(wallet!)).resolves.toBeFalsy()
@@ -76,7 +76,7 @@ describe('Wallets', () => {
     expect(wallets2[0].address).toBe(wallet!)
     expect(wallets2[0].status).toBe('logging-out')
 
-    const request = await manager.getSignatureRequest(requestId)
+    const request = await manager.signatures.get(requestId)
     expect(request).toBeDefined()
     expect(request.action).toBe('logout')
 
@@ -88,7 +88,7 @@ describe('Wallets', () => {
     expect(result).toBe(true)
 
     await manager.wallets.completeLogout(requestId)
-    expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
+    expect((await manager.signatures.get(requestId))?.status).toBe('completed')
     const wallets3 = await manager.wallets.list()
     expect(wallets3.length).toBe(0)
     await expect(manager.wallets.has(wallet!)).resolves.toBeFalsy()
@@ -119,7 +119,7 @@ describe('Wallets', () => {
       await respond(mnemonic)
     })
 
-    const request = await manager.getSignatureRequest(requestId1!)
+    const request = await manager.signatures.get(requestId1!)
     expect(request).toBeDefined()
     expect(request.action).toBe('login')
 
@@ -135,7 +135,7 @@ describe('Wallets', () => {
 
     // Complete the login process
     await manager.wallets.completeLogin(requestId1!)
-    expect((await manager.getSignatureRequest(requestId1!))?.status).toBe('completed')
+    expect((await manager.signatures.get(requestId1!))?.status).toBe('completed')
     const wallets2 = await manager.wallets.list()
     expect(wallets2.length).toBe(1)
     expect(wallets2[0].address).toBe(wallet!)
@@ -164,7 +164,7 @@ describe('Wallets', () => {
     const requestId = await manager.wallets.logout(wallet!)
     expect(requestId).toBeDefined()
 
-    const request = await manager.getSignatureRequest(requestId)
+    const request = await manager.signatures.get(requestId)
     expect(request).toBeDefined()
     expect(request.action).toBe('logout')
 
@@ -176,7 +176,7 @@ describe('Wallets', () => {
     expect(result).toBe(true)
 
     await manager.wallets.completeLogout(requestId)
-    expect((await manager.getSignatureRequest(requestId))?.status).toBe('completed')
+    expect((await manager.signatures.get(requestId))?.status).toBe('completed')
 
     await expect(manager.wallets.list()).resolves.toEqual([])
 
@@ -190,7 +190,7 @@ describe('Wallets', () => {
       await respond(mnemonic)
     })
 
-    const request2 = await manager.getSignatureRequest(requestId2!)
+    const request2 = await manager.signatures.get(requestId2!)
     expect(request2).toBeDefined()
     expect(request2.action).toBe('login')
 
@@ -205,7 +205,7 @@ describe('Wallets', () => {
     unregistedUI2()
 
     await manager.wallets.completeLogin(requestId2!)
-    expect((await manager.getSignatureRequest(requestId2!))?.status).toBe('completed')
+    expect((await manager.signatures.get(requestId2!))?.status).toBe('completed')
     const wallets3 = await manager.wallets.list()
     expect(wallets3.length).toBe(1)
     expect(wallets3[0].address).toBe(wallet!)
@@ -274,7 +274,7 @@ describe('Wallets', () => {
     expect(wallets[0].address).toBe(wallet!)
     expect(wallets[0].status).toBe('logging-in')
 
-    const request = await manager.getSignatureRequest(requestId!)
+    const request = await manager.signatures.get(requestId!)
     expect(request).toBeDefined()
     expect(request.action).toBe('login')
 
@@ -289,7 +289,7 @@ describe('Wallets', () => {
     unregistedUI()
 
     await manager.wallets.completeLogin(requestId!)
-    expect((await manager.getSignatureRequest(requestId!))?.status).toBe('completed')
+    expect((await manager.signatures.get(requestId!))?.status).toBe('completed')
     const wallets2 = await manager.wallets.list()
     expect(wallets2.length).toBe(1)
     expect(wallets2[0].address).toBe(wallet!)

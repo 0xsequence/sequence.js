@@ -58,7 +58,7 @@ describe('Transactions', () => {
     expect(tx.status).toBe('formed')
 
     // Sign using the device signer
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -112,7 +112,7 @@ describe('Transactions', () => {
       await respond(mnemonic)
     })
 
-    const loginRequest = await manager.getSignatureRequest(loginId!)
+    const loginRequest = await manager.signatures.get(loginId!)
     expect(loginRequest).toBeDefined()
     expect(loginRequest.action).toBe('login')
 
@@ -131,7 +131,7 @@ describe('Transactions', () => {
     unregisteredUI()
 
     await manager.wallets.completeLogin(loginId!)
-    expect((await manager.getSignatureRequest(loginId!))?.status).toBe('completed')
+    expect((await manager.signatures.get(loginId!))?.status).toBe('completed')
 
     // Set balance for the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
@@ -171,7 +171,7 @@ describe('Transactions', () => {
     expect(tx.status).toBe('formed')
 
     // Sign using the device signer
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -289,7 +289,7 @@ describe('Transactions', () => {
     expect(tx!.status).toBe('formed')
 
     // Sign the transaction
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -381,7 +381,7 @@ describe('Transactions', () => {
     await expect(manager.getTransaction(txId!)).rejects.toThrow()
 
     // Signature request should be canceled
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('cancelled')
   })
@@ -399,7 +399,7 @@ describe('Transactions', () => {
     expect(rSigId).toBeDefined()
 
     // Sign using the device signer
-    const rSigRequest = await manager.getSignatureRequest(rSigId!)
+    const rSigRequest = await manager.signatures.get(rSigId!)
     expect(rSigRequest).toBeDefined()
     expect(rSigRequest.status).toBe('pending')
     expect(rSigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -446,7 +446,7 @@ describe('Transactions', () => {
     expect(tx!.status).toBe('formed')
 
     // Sign using the device signer
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)

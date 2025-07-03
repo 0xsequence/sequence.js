@@ -31,7 +31,7 @@ import { Logger } from './logger.js'
 import { Messages } from './messages.js'
 import { Recovery } from './recovery.js'
 import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
-import { Signatures } from './signatures.js'
+import { Signatures, SignaturesInterface } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions } from './transactions.js'
 import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet } from './types/index.js'
@@ -232,6 +232,7 @@ export class Manager {
   private readonly otpHandler?: OtpHandler
 
   public readonly wallets: WalletsInterface
+  public readonly signatures: SignaturesInterface
 
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
@@ -301,6 +302,7 @@ export class Manager {
     }
 
     this.wallets = modules.wallets
+    this.signatures = modules.signatures
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
     shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
@@ -369,33 +371,6 @@ export class Manager {
         module.initialize()
       }
     }
-  }
-
-  // Signatures
-
-  public async listSignatureRequests(): Promise<SignatureRequest[]> {
-    return this.shared.modules.signatures.list()
-  }
-
-  public async getSignatureRequest(requestId: string): Promise<SignatureRequest> {
-    return this.shared.modules.signatures.get(requestId)
-  }
-
-  public onSignatureRequestsUpdate(cb: (requests: BaseSignatureRequest[]) => void, trigger?: boolean) {
-    return this.shared.modules.signatures.onSignatureRequestsUpdate(cb, trigger)
-  }
-
-  public onSignatureRequestUpdate(
-    requestId: string,
-    cb: (requests: SignatureRequest) => void,
-    onError?: (error: Error) => void,
-    trigger?: boolean,
-  ) {
-    return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
-  }
-
-  public async cancelSignatureRequest(requestId: string) {
-    return this.shared.modules.signatures.cancel(requestId)
   }
 
   // Transactions

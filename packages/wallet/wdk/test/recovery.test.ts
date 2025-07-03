@@ -24,7 +24,7 @@ describe('Recovery', () => {
     expect(requestId1).toBeDefined()
 
     // Sign add recovery mnemonic
-    const request1 = await manager.getSignatureRequest(requestId1)
+    const request1 = await manager.signatures.get(requestId1)
     expect(request1).toBeDefined()
 
     // Device must be the only ready signer now
@@ -80,7 +80,7 @@ describe('Recovery', () => {
     })
 
     // Sign the queue recovery payload
-    const request2 = await manager.getSignatureRequest(requestId2)
+    const request2 = await manager.signatures.get(requestId2)
     expect(request2).toBeDefined()
 
     // Complete the queue recovery payload
@@ -168,7 +168,7 @@ describe('Recovery', () => {
     expect(requestId4).toBeDefined()
 
     // Now we sign using the recovery module
-    const request4 = await manager.getSignatureRequest(requestId4)
+    const request4 = await manager.signatures.get(requestId4)
 
     // Find the signer that is the recovery module handler
     const recoverySigner = request4.signers.find((s) => s.handler?.kind === 'recovery-extension')

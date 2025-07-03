@@ -193,7 +193,7 @@ describe('Sessions (via Manager)', () => {
       const requestId = await wdk.manager.addExplicitSession(dapp.wallet.address, explicitSigner.address, permission)
 
       // Sign and complete the request
-      const sigRequest = await wdk.manager.getSignatureRequest(requestId)
+      const sigRequest = await wdk.manager.signatures.get(requestId)
       const identitySigner = sigRequest.signers.find(
         (s) => s.address.toLowerCase() === wdk.identitySignerAddress.toLowerCase(),
       )
@@ -256,7 +256,7 @@ describe('Sessions (via Manager)', () => {
       })
 
       // Sign the request (Wallet UI action)
-      const sigRequest = await wdk.manager.getSignatureRequest(requestId)
+      const sigRequest = await wdk.manager.signatures.get(requestId)
       const identitySigner = sigRequest.signers[0]
       if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
         throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
