@@ -113,8 +113,8 @@ export type WalletSelectionOptions = {
  * is already a signer for existing wallets. This handler is then called to let the user decide how to proceed.
  *
  * @param options - The `WalletSelectionOptions` containing the list of existing wallets and context.
- * @returns A promise that resolves with:
- * - The `Address.Address` of an existing wallet if the user chose to log in to it.
- * - `undefined` if the user chose to create a new wallet.
+ * @returns A promise that resolves with one of the following:
+ * - The string `'create-new'` if the user chose to create a new wallet for this login method.
+ * - The string `'abort-signup'` if the user chose to abort the sign-up process (no wallet is created; the client may call `login` to log in to an existing wallet).
  */
-export type WalletSelectionUiHandler = (options: WalletSelectionOptions) => Promise<Address.Address | undefined>
+export type WalletSelectionUiHandler = (options: WalletSelectionOptions) => Promise<'create-new' | 'abort-signup'>

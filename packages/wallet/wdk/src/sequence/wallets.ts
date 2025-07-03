@@ -141,24 +141,26 @@ export interface WalletsInterface {
   /**
    * Creates and configures a new Sequence wallet.
    *
-   * This method orchestrates the entire sign-up process. It always creates a new wallet configuration
-   * unless a `walletSelector` is registered and an existing wallet is chosen. The process involves:
-   * 1. Generating a new login signer based on the specified `kind`.
-   * 2. Creating a new local device key for the current session.
-   * 3. Constructing the wallet's on-chain configuration (topology).
-   * 4. Deploying the new wallet address.
-   * 5. Storing the new wallet session locally.
+   * This method manages the full sign-up process, including generating a login signer, creating a device key,
+   * building the wallet's on-chain configuration, deploying the wallet, and storing the session locally.
+   *
+   * If a wallet selection UI handler is registered, it will be invoked if the provided credential is already associated
+   * with one or more existing wallets. The handler can return:
+   *   - `'create-new'`: The sign-up process continues and a new wallet is created. The method resolves to the new wallet address.
+   *   - `'abort-signup'`: The sign-up process is cancelled and the method returns `undefined`. To log in to an existing wallet,
+   *     the client must call the `login` method separately with the desired wallet address.
+   * If no handler is registered, a new wallet is always created.
    *
    * @param args The sign-up arguments, specifying the method and options.
-   * - `kind: 'mnemonic'`: Uses a mnemonic phrase as the login credential.
-   * - `kind: 'passkey'`: Prompts the user to create a WebAuthn passkey.
-   * - `kind: 'email-otp'`: Initiates an OTP flow to the user's email.
-   * - `kind: 'google-pkce' | 'apple'`: Completes an OAuth redirect flow.
-   * Common options like `noGuard` or `noRecovery` can customize the wallet's security features.
-   * @returns A promise that resolves to the address of the newly created and configured wallet.
+   *   - `kind: 'mnemonic'`: Uses a mnemonic phrase as the login credential.
+   *   - `kind: 'passkey'`: Prompts the user to create a WebAuthn passkey.
+   *   - `kind: 'email-otp'`: Initiates an OTP flow to the user's email.
+   *   - `kind: 'google-pkce' | 'apple'`: Completes an OAuth redirect flow.
+   *   Common options like `noGuard` or `noRecovery` can customize the wallet's security features.
+   * @returns A promise that resolves to the address of the newly created wallet, or `undefined` if the sign-up was aborted.
    * @see {SignupArgs}
    */
-  signUp(args: SignupArgs): Promise<Address.Address>
+  signUp(args: SignupArgs): Promise<Address.Address | undefined>
 
   /**
    * Initiates a sign-up or login process that involves an OAuth redirect.
@@ -448,7 +450,7 @@ function fromConfig(config: Config.Config): {
   throw new Error('unknown-config-format')
 }
 
-export class Wallets {
+export class Wallets implements WalletsInterface {
   private walletSelectionUiHandler: WalletSelectionUiHandler | null = null
 
   constructor(private readonly shared: Shared) {}
@@ -580,14 +582,16 @@ export class Wallets {
     return handler.commitAuth(args.target, true)
   }
 
-  async completeRedirect(args: CompleteRedirectArgs) {
+  async completeRedirect(args: CompleteRedirectArgs): Promise<Address.Address> {
     const commitment = await this.shared.databases.authCommitments.get(args.state)
     if (!commitment) {
       throw new Error('invalid-state')
     }
 
+    let walletAddress: Address.Address | undefined
+
     if (commitment.isSignUp) {
-      await this.signUp({
+      walletAddress = await this.signUp({
         kind: commitment.kind,
         commitment,
         code: args.code,
@@ -607,7 +611,7 @@ export class Wallets {
       const loginEmail = metadata.email
 
       if (loginEmail && commitment.target) {
-        const walletAddress = commitment.target as Address.Address
+        walletAddress = commitment.target as Address.Address
         const walletEntry = await this.shared.databases.manager.get(walletAddress)
 
         if (walletEntry) {
@@ -622,10 +626,15 @@ export class Wallets {
         }
       }
     }
-    return commitment.target
+
+    if (!walletAddress) {
+      throw new Error('invalid-state')
+    }
+
+    return walletAddress
   }
 
-  async signUp(args: SignupArgs) {
+  async signUp(args: SignupArgs): Promise<Address.Address | undefined> {
     const loginSigner = await this.prepareSignUp(args)
 
     // If there is an existing wallet callback, we check if any wallet already exist for this login signer
@@ -645,29 +654,15 @@ export class Wallets {
               },
         })
 
-        if (result) {
-          const selectedWalletAddress = result as Address.Address
-          const existingWalletEntry = await this.shared.databases.manager.get(selectedWalletAddress)
+        if (result === 'abort-signup') {
+          // Abort the signup process
+          return undefined
+        }
 
-          if (existingWalletEntry) {
-            const updatedWalletEntry = {
-              ...existingWalletEntry,
-              loginEmail: loginSigner.loginEmail,
-              loginType: loginSigner.extra.signerKind as Wallet['loginType'],
-              loginDate: new Date().toISOString(),
-            }
-
-            await this.shared.databases.manager.set(updatedWalletEntry)
-          } else {
-            // This case might indicate an inconsistency if the UI handler found a wallet
-            // that isn't in the primary manager DB, or if 'result' isn't the address.
-            console.warn(
-              '[Wallets/signUp] Wallet selected via UI handler not found in manager DB, or result format unexpected. Selected:',
-              selectedWalletAddress,
-            )
-          }
-          // Now we can exit early.
-          return
+        if (result === 'create-new') {
+          // Continue with the signup process
+        } else {
+          throw new Error('invalid-result-from-wallet-selector')
         }
       }
     } else {
