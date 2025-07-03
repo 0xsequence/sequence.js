@@ -436,8 +436,8 @@ function domainFor(
 }
 
 export function encode4337Nonce(key: bigint, seq: bigint): bigint {
-  if (key > 18446744073709551615n) throw new RangeError('key exceeds 192 bits')
-  if (seq > 6277101735386680763835789423207666416102355444464034512895n) throw new RangeError('seq exceeds 64 bits')
+  if (key > 6277101735386680763835789423207666416102355444464034512895n) throw new RangeError('key exceeds 192 bits')
+  if (seq > 18446744073709551615n) throw new RangeError('seq exceeds 64 bits')
   return (key << 64n) | seq
 }
 
