@@ -14,7 +14,7 @@ describe('Recovery', () => {
     })
 
     const mnemonic = Mnemonic.random(Mnemonic.english)
-    const wallet = await manager.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+    const wallet = await manager.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
     expect(wallet).toBeDefined()
 
     // Add recovery mnemonic

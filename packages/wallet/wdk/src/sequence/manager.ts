@@ -232,6 +232,8 @@ export class Manager {
 
   private readonly otpHandler?: OtpHandler
 
+  public readonly wallets: Wallets
+
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
 
@@ -298,6 +300,8 @@ export class Manager {
       messages: new Messages(shared),
       recovery: new Recovery(shared),
     }
+
+    this.wallets = modules.wallets
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
     shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
@@ -366,68 +370,6 @@ export class Manager {
         module.initialize()
       }
     }
-  }
-
-  // Wallets
-
-  public async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
-    return this.shared.modules.wallets.startSignUpWithRedirect(args)
-  }
-
-  public async completeRedirect(args: CompleteRedirectArgs) {
-    return this.shared.modules.wallets.completeRedirect(args)
-  }
-
-  public async signUp(options: SignupArgs) {
-    return this.shared.modules.wallets.signUp(options)
-  }
-
-  public async logout(wallet: Address.Address, options?: { skipRemoveDevice?: boolean }) {
-    return this.shared.modules.wallets.logout(wallet, options)
-  }
-
-  public async completeLogout(requestId: string, options?: { skipValidateSave?: boolean }) {
-    return this.shared.modules.wallets.completeLogout(requestId, options)
-  }
-
-  public async login(args: LoginArgs) {
-    return this.shared.modules.wallets.login(args)
-  }
-
-  public async completeLogin(requestId: string) {
-    return this.shared.modules.wallets.completeLogin(requestId)
-  }
-
-  public async listWallets() {
-    return this.shared.modules.wallets.list()
-  }
-
-  public async hasWallet(address: Address.Address) {
-    return this.shared.modules.wallets.exists(address)
-  }
-
-  public onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean) {
-    return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
-  }
-
-  public registerWalletSelector(handler: WalletSelectionUiHandler) {
-    return this.shared.modules.wallets.registerWalletSelector(handler)
-  }
-
-  public unregisterWalletSelector(handler?: WalletSelectionUiHandler) {
-    return this.shared.modules.wallets.unregisterWalletSelector(handler)
-  }
-
-  public async getConfiguration(wallet: Address.Address) {
-    return this.shared.modules.wallets.getConfiguration(wallet)
-  }
-
-  public async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
-    return this.shared.modules.wallets.getOnchainConfiguration(wallet, chainId)
-  }
-
-  public async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
-    return this.shared.modules.wallets.isUpdatedOnchain(wallet, chainId)
   }
 
   // Signatures

@@ -13,13 +13,14 @@ describe('Transactions', () => {
 
   it('Should send a transaction from a new wallet', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
     await provider.request({
@@ -89,19 +90,19 @@ describe('Transactions', () => {
   it('Should send a transaction after logging in to a wallet', async () => {
     manager = newManager()
     const mnemonic = Mnemonic.random(Mnemonic.english)
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic,
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     // Logout without removing the device
-    await manager.logout(wallet!, { skipRemoveDevice: true })
+    await manager.wallets.logout(wallet!, { skipRemoveDevice: true })
 
     // Login to the same wallet
-    const loginId = await manager.login({ wallet: wallet! })
+    const loginId = await manager.wallets.login({ wallet: wallet! })
     expect(loginId).toBeDefined()
 
     // Register the UI for the mnemonic signer
@@ -129,7 +130,7 @@ describe('Transactions', () => {
     expect(signRequests).toBe(1)
     unregisteredUI()
 
-    await manager.completeLogin(loginId!)
+    await manager.wallets.completeLogin(loginId!)
     expect((await manager.getSignatureRequest(loginId!))?.status).toBe('completed')
 
     // Set balance for the wallet
@@ -201,13 +202,13 @@ describe('Transactions', () => {
 
   it('Should call onTransactionsUpdate when a new transaction is requested', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     let transactions: Transaction[] = []
     let calledTimes = 0
@@ -238,13 +239,13 @@ describe('Transactions', () => {
 
   it('Should call onTransactionUpdate when a transaction is defined, relayer selected and relayed', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     const to = Address.from(Hex.random(20))
     const txId = await manager.requestTransaction(wallet!, 42161n, [
@@ -308,7 +309,7 @@ describe('Transactions', () => {
 
   it('Should delete an existing transaction before it is defined', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
@@ -329,7 +330,7 @@ describe('Transactions', () => {
 
   it('Should delete an existing transaction before the relayer is selected', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
@@ -352,7 +353,7 @@ describe('Transactions', () => {
 
   it('Should delete an existing transaction before it is relayed', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
@@ -387,7 +388,7 @@ describe('Transactions', () => {
 
   it('Should update the onchain configuration when a transaction is sent', async () => {
     const manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
@@ -406,12 +407,12 @@ describe('Transactions', () => {
     const rDeviceSigner = rSigRequest.signers.find((s) => s.status === 'ready')!
     await rDeviceSigner.handle()
 
-    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
 
     await manager.completeRecoveryUpdate(rSigId!)
 
     // It should no longer be updated onchain
-    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
 
     const randomAddress = Address.from(Hex.random(20))
     const txId = await manager.requestTransaction(wallet!, 42161n, [
@@ -459,12 +460,12 @@ describe('Transactions', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // The onchain configuration should be updated
-    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
   })
 
   it('Should reject unsafe transactions in safe mode (call to self)', async () => {
     const manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
@@ -481,7 +482,7 @@ describe('Transactions', () => {
 
   it('Should allow transactions to self in unsafe mode', async () => {
     const manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,

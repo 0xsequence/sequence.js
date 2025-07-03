@@ -75,7 +75,7 @@ describe('Sessions (via Manager)', () => {
     const identitySignerMnemonic = Mnemonic.random(Mnemonic.english)
     const identitySignerPk = Mnemonic.toPrivateKey(identitySignerMnemonic, { as: 'Hex' })
     const identitySignerAddress = new CoreSigners.Pk.Pk(identitySignerPk).address
-    const walletAddress = await manager.signUp({
+    const walletAddress = await manager.wallets.signUp({
       kind: 'mnemonic',
       mnemonic: identitySignerMnemonic,
       noGuard: true,
@@ -99,7 +99,6 @@ describe('Sessions (via Manager)', () => {
 
     // Create wallet in core
     const coreWallet = new CoreWallet(walletAddress, {
-      context: opts.context,
       guest: opts.guest,
       // Share the state provider with wdk. In practice this will be the key machine.
       stateProvider,
@@ -147,7 +146,7 @@ describe('Sessions (via Manager)', () => {
     if (CAN_RUN_LIVE && PRIVATE_KEY) {
       // Load the sender
       const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
-      const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)
+      const pkRelayer = new Relayer.Standard.PkRelayer(senderPk, provider)
       const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
       console.log('Transaction sent', tx)
       await new Promise((resolve) => setTimeout(resolve, 3000))

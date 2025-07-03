@@ -242,7 +242,7 @@ export class Wallets {
 
   constructor(private readonly shared: Shared) {}
 
-  public async exists(wallet: Address.Address): Promise<boolean> {
+  public async has(wallet: Address.Address): Promise<boolean> {
     return this.shared.databases.manager.get(wallet).then((r) => r !== undefined)
   }
 
@@ -617,7 +617,7 @@ export class Wallets {
 
   async login(args: LoginArgs): Promise<string | undefined> {
     if (isLoginToWalletArgs(args)) {
-      const prevWallet = await this.exists(args.wallet)
+      const prevWallet = await this.has(args.wallet)
       if (prevWallet) {
         throw new Error('wallet-already-logged-in')
       }

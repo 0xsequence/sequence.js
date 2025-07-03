@@ -368,7 +368,7 @@ export class Recovery {
             const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
 
             // If ready, we need to check if it was executed already
-            // for this, we check if the wallet 77nonce for the given space
+            // for this, we check if the wallet nonce for the given space
             // is greater than the nonce in the payload
             if (timestamp < Date.now() / 1000 && payload && Payload.isCalls(payload.payload)) {
               const nonce = await this.shared.modules.wallets.getNonce(chainId, wallet.address, payload.payload.space)
