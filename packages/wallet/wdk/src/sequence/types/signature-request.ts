@@ -6,7 +6,7 @@ import { Handler } from '../handlers/handler.js'
 export type ActionToPayload = {
   [Actions.Logout]: Payload.ConfigUpdate
   [Actions.Login]: Payload.ConfigUpdate
-  [Actions.SendTransaction]: Payload.Calls
+  [Actions.SendTransaction]: Payload.Calls | Payload.Calls4337_07
   [Actions.SignMessage]: Payload.Message
   [Actions.SessionUpdate]: Payload.ConfigUpdate
   [Actions.Recovery]: Payload.Recovery<Payload.Calls>

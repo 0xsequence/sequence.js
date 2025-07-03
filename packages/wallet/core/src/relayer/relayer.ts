@@ -1,6 +1,6 @@
 import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { GetMetaTxnReceiptReturn } from './rpc/index.js'
+import { GetMetaTxnReceiptReturn } from './standard/rpc/index.js'
 
 export interface FeeOption {
   token: Address.Address
@@ -56,8 +56,12 @@ export type OperationStatus =
   | OperationFailedStatus
 
 export interface Relayer {
+  kind: 'relayer'
+
   type: string
   id: string
+
+  isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean>
 
   feeOptions(
     wallet: Address.Address,
@@ -70,4 +74,14 @@ export interface Relayer {
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
 
   checkPrecondition(precondition: Precondition.Precondition): Promise<boolean>
+}
+
+export function isRelayer(relayer: any): relayer is Relayer {
+  return (
+    'isAvailable' in relayer &&
+    'feeOptions' in relayer &&
+    'relay' in relayer &&
+    'status' in relayer &&
+    'checkPrecondition' in relayer
+  )
 }

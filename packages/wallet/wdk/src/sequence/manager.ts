@@ -62,6 +62,7 @@ export type ManagerOptions = {
   stateProvider?: State.Provider
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
+  bundlers?: Relayer.Bundler[]
 
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
@@ -93,6 +94,7 @@ export const ManagerOptionsDefaults = {
 
   extensions: Extensions.Dev1,
   context: Context.Dev1,
+  context4337: Context.Dev2_4337,
   guest: Constants.DefaultGuest,
 
   encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
@@ -108,7 +110,8 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Sequence.Provider(),
   networks: Network.All,
-  relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [Relayer.Standard.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  bundlers: [],
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -181,6 +184,7 @@ export type Databases = {
 
 export type Sequence = {
   readonly context: Context.Context
+  readonly context4337: Context.Context
   readonly extensions: Extensions.Extensions
   readonly guest: Address.Address
 
@@ -188,6 +192,7 @@ export type Sequence = {
 
   readonly networks: Network.Network[]
   readonly relayers: Relayer.Relayer[]
+  readonly bundlers: Relayer.Bundler[]
 
   readonly defaultGuardTopology: Config.Topology
   readonly defaultRecoverySettings: RecoverySettings
@@ -236,7 +241,7 @@ export class Manager {
     // Add EIP-6963 relayers if enabled
     if (ops.multiInjectedProviderDiscovery) {
       try {
-        relayers.push(...Relayer.EIP6963.getRelayers())
+        relayers.push(...Relayer.Standard.EIP6963.getRelayers())
       } catch (error) {
         console.warn('Failed to initialize EIP-6963 relayers:', error)
       }
@@ -251,12 +256,14 @@ export class Manager {
 
       sequence: {
         context: ops.context,
+        context4337: ops.context4337,
         extensions: ops.extensions,
         guest: ops.guest,
 
         stateProvider: ops.stateProvider,
         networks: ops.networks,
         relayers,
+        bundlers: ops.bundlers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultRecoverySettings: ops.defaultRecoverySettings,
@@ -456,7 +463,7 @@ export class Manager {
     from: Address.Address,
     chainId: bigint,
     txs: TransactionRequest[],
-    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean },
+    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
   }

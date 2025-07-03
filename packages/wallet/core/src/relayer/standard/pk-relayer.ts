@@ -1,9 +1,10 @@
 import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
 import { LocalRelayer } from './local.js'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
 export class PkRelayer implements Relayer {
+  public readonly kind: 'relayer' = 'relayer'
   public readonly type = 'pk'
   public readonly id = 'pk'
   private readonly relayer: LocalRelayer
@@ -98,6 +99,11 @@ export class PkRelayer implements Relayer {
         return receipt.status === 'success' ? 'success' : 'failed'
       },
     })
+  }
+
+  async isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
+    const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+    return providerChainId === chainId
   }
 
   feeOptions(

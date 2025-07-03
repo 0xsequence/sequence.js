@@ -1,9 +1,9 @@
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { EIP1193Provider } from 'mipd'
 import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 import { IntentPrecondition } from './rpc/relayer.gen.js'
-import { decodePrecondition } from '../preconditions/index.js'
+import { decodePrecondition } from '../../preconditions/index.js'
 import {
   erc20BalanceOf,
   erc20Allowance,
@@ -23,10 +23,15 @@ export interface GenericProvider {
 }
 
 export class LocalRelayer implements Relayer {
+  public readonly kind: 'relayer' = 'relayer'
   public readonly type = 'local'
   public readonly id = 'local'
 
   constructor(public readonly provider: GenericProvider) {}
+
+  isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+    return Promise.resolve(true)
+  }
 
   static createFromWindow(window: Window): LocalRelayer | undefined {
     const eth = (window as any).ethereum

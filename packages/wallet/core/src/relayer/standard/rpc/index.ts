@@ -6,7 +6,7 @@ import {
   IntentPrecondition,
   GetMetaTxnReceiptReturn,
 } from './relayer.gen.js'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
 import { Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
 import {
@@ -15,7 +15,7 @@ import {
   FeeOption as RpcFeeOption,
   FeeToken as RpcFeeToken,
 } from './relayer.gen.js'
-import { decodePrecondition } from '../../preconditions/index.js'
+import { decodePrecondition } from '../../../preconditions/index.js'
 import {
   erc20BalanceOf,
   erc20Allowance,
@@ -40,6 +40,7 @@ export const getChain = (chainId: number): Chain => {
 }
 
 export class RpcRelayer implements Relayer {
+  public readonly kind: 'relayer' = 'relayer'
   public readonly type = 'rpc'
   public readonly id: string
   public readonly chainId: number
@@ -65,6 +66,10 @@ export class RpcRelayer implements Relayer {
       chain,
       transport: http(rpcUrl),
     })
+  }
+
+  isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
+    return Promise.resolve(BigInt(this.chainId) === chainId)
   }
 
   async feeOptions(

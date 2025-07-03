@@ -1,8 +1,8 @@
 import { config as dotenvConfig } from 'dotenv'
-import { Abi, Address } from 'ox'
+import { Abi, Address, Provider, RpcTransport } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'
 import { mockEthereum } from './setup'
-import { Signers as CoreSigners, State } from '@0xsequence/wallet-core'
+import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'
 import * as Db from '../src/dbs'
 
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
@@ -40,6 +40,77 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
         rpc: LOCAL_RPC_URL,
         chainId: 42161n,
         explorer: 'https://arbiscan.io/',
+        nativeCurrency: {
+          name: 'Ether',
+          symbol: 'ETH',
+          decimals: 18,
+        },
+      },
+    ],
+    // Override DBs with unique names if not provided in options,
+    // otherwise, use the provided DB instance.
+    // This assumes options?.someDb is either undefined or a fully constructed DB instance.
+    encryptedPksDb: effectiveOptions.encryptedPksDb || new CoreSigners.Pk.Encrypted.EncryptedPksDb('pk-db' + dbSuffix),
+    managerDb: effectiveOptions.managerDb || new Db.Wallets('sequence-manager' + dbSuffix),
+    transactionsDb: effectiveOptions.transactionsDb || new Db.Transactions('sequence-transactions' + dbSuffix),
+    signaturesDb: effectiveOptions.signaturesDb || new Db.Signatures('sequence-signature-requests' + dbSuffix),
+    authCommitmentsDb:
+      effectiveOptions.authCommitmentsDb || new Db.AuthCommitments('sequence-auth-commitments' + dbSuffix),
+    authKeysDb: effectiveOptions.authKeysDb || new Db.AuthKeys('sequence-auth-keys' + dbSuffix),
+    recoveryDb: effectiveOptions.recoveryDb || new Db.Recovery('sequence-recovery' + dbSuffix),
+    ...effectiveOptions,
+  })
+}
+
+export function newRemoteManager(
+  remoteManagerOptions: {
+    network: {
+      relayerPk: string
+      bundlerUrl: string
+      rpcUrl: string
+      chainId: bigint
+    }
+    tag?: string
+  },
+  options?: ManagerOptions,
+) {
+  testIdCounter++
+  const dbSuffix = remoteManagerOptions?.tag
+    ? `_${remoteManagerOptions.tag}_testrun_${testIdCounter}`
+    : `_testrun_${testIdCounter}`
+
+  let relayers: Relayer.Relayer[] = []
+  let bundlers: Relayer.Bundler[] = []
+
+  if (remoteManagerOptions.network.relayerPk) {
+    const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))
+    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
+  }
+
+  if (remoteManagerOptions.network.bundlerUrl) {
+    bundlers.push(
+      new Relayer.Bundlers.PimlicoBundler(
+        remoteManagerOptions.network.bundlerUrl,
+        Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl)),
+      ),
+    )
+  }
+
+  // Ensure options and its identity sub-object exist for easier merging
+  const effectiveOptions = {
+    relayers,
+    bundlers,
+    ...options,
+    identity: { ...ManagerOptionsDefaults.identity, ...options?.identity },
+  }
+
+  return new Manager({
+    networks: [
+      {
+        name: 'Remote Test Network',
+        rpc: remoteManagerOptions.network.rpcUrl,
+        chainId: remoteManagerOptions.network.chainId,
+        explorer: 'https://undefined/',
         nativeCurrency: {
           name: 'Ether',
           symbol: 'ETH',

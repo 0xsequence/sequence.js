@@ -1,11 +1,12 @@
 import { createStore, EIP6963ProviderInfo, EIP6963ProviderDetail } from 'mipd'
 import { EIP1193ProviderAdapter, LocalRelayer } from './local.js'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 import { Address, Hex } from 'ox'
-import { Payload, Precondition } from '@0xsequence/wallet-primitives'
+import { Payload } from '@0xsequence/wallet-primitives'
 import { IntentPrecondition } from './rpc/relayer.gen.js'
 
 export class EIP6963Relayer implements Relayer {
+  public readonly kind: 'relayer' = 'relayer'
   public readonly type = 'eip6963'
   public readonly id: string
   public readonly info: EIP6963ProviderInfo
@@ -16,6 +17,10 @@ export class EIP6963Relayer implements Relayer {
     this.id = detail.info.uuid
 
     this.relayer = new LocalRelayer(new EIP1193ProviderAdapter(detail.provider))
+  }
+
+  isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean> {
+    return this.relayer.isAvailable(wallet, chainId)
   }
 
   feeOptions(
