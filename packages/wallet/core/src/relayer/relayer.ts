@@ -58,6 +58,7 @@ export type OperationStatus =
 export interface Relayer {
   kind: 'relayer'
 
+  type: string
   id: string
 
   isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean>

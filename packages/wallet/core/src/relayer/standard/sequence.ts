@@ -5,6 +5,7 @@ import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
 export class SequenceRelayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
+  public readonly type = 'sequence'
   readonly id = 'sequence'
 
   private readonly service: Service

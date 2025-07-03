@@ -24,6 +24,7 @@ export interface GenericProvider {
 
 export class LocalRelayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
+  public readonly type = 'local'
   public readonly id = 'local'
 
   constructor(public readonly provider: GenericProvider) {}

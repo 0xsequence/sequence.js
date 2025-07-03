@@ -5,6 +5,7 @@ import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
 export class PkRelayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
+  public readonly type = 'pk'
   public readonly id = 'pk'
   private readonly relayer: LocalRelayer
 

@@ -213,6 +213,7 @@ export class Transactions {
                 {
                   kind: 'standard',
                   id: uuidv7(),
+                  relayerType: relayer.type,
                   relayerId: relayer.id,
                   name,
                   icon,
@@ -224,6 +225,7 @@ export class Transactions {
               kind: 'standard',
               id: uuidv7(),
               feeOption,
+              relayerType: relayer.type,
               relayerId: relayer.id,
               quote: feeOptions.quote,
             }))
@@ -252,6 +254,7 @@ export class Transactions {
               return erc4337OpsWithEstimatedLimits.map(({ speed, payload }) => ({
                 kind: 'erc4337',
                 id: uuidv7(),
+                relayerType: 'erc4337',
                 relayerId: bundler.id,
                 alternativePayload: payload,
                 speed,

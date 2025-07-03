@@ -84,12 +84,12 @@ export function newRemoteManager(
 
   if (remoteManagerOptions.network.relayerPk) {
     const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))
-    relayers.push(new Relayer.Pk.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
+    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
   }
 
   if (remoteManagerOptions.network.bundlerUrl) {
     bundlers.push(
-      new Relayer.Erc4337.PimlicoBundler(
+      new Relayer.Bundlers.PimlicoBundler(
         remoteManagerOptions.network.bundlerUrl,
         Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl)),
       ),

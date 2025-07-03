@@ -11,6 +11,7 @@ export type TransactionRequest = {
 
 export type BaseRelayerOption = {
   id: string
+  relayerType: string
   relayerId: string
   speed?: 'slow' | 'standard' | 'fast'
 }
