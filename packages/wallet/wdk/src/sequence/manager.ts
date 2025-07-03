@@ -38,8 +38,7 @@ import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet }
 import { Message, MessageRequest } from './types/message-request.js'
 import { Kinds, RecoverySigner } from './types/signer.js'
 import { Transaction, TransactionRequest } from './types/transaction-request.js'
-import { WalletSelectionUiHandler } from './types/wallet.js'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
+import { Wallets, WalletsInterface } from './wallets.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -232,7 +231,7 @@ export class Manager {
 
   private readonly otpHandler?: OtpHandler
 
-  public readonly wallets: Wallets
+  public readonly wallets: WalletsInterface
 
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)

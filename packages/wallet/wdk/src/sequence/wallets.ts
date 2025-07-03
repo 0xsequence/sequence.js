@@ -69,6 +69,217 @@ export type LoginToPasskeyArgs = {
 
 export type LoginArgs = LoginToWalletArgs | LoginToMnemonicArgs | LoginToPasskeyArgs
 
+export interface WalletsInterface {
+  /**
+   * Checks if a wallet is currently managed and logged in within this manager instance.
+   *
+   * This method queries the local database to see if there is an active session for the given wallet address.
+   * It's important to note that a `false` return value does not mean the wallet doesn't exist on-chain;
+   * it simply means this specific browser/device does not have a logged-in session for it.
+   *
+   * @param wallet The address of the wallet to check.
+   * @returns A promise that resolves to `true` if the wallet is managed, `false` otherwise.
+   */
+  has(wallet: Address.Address): Promise<boolean>
+
+  /**
+   * Retrieves the details of a managed wallet.
+   *
+   * This method returns the stored `Wallet` object, which contains information about the session,
+   * such as its status (`ready`, `logging-in`, `logging-out`), the device address used for this session,
+   * the login method (`mnemonic`, `passkey`, etc.), and the login date.
+   *
+   * @param walletAddress The address of the wallet to retrieve.
+   * @returns A promise that resolves to the `Wallet` object if found, or `undefined` if the wallet is not managed.
+   * @see {Wallet} for details on the returned object structure.
+   */
+  get(walletAddress: Address.Address): Promise<Wallet | undefined>
+
+  /**
+   * Lists all wallets that are currently managed and logged in by this manager instance.
+   *
+   * @returns A promise that resolves to an array of `Wallet` objects.
+   */
+  list(): Promise<Wallet[]>
+
+  /**
+   * Registers a UI handler for wallet selection.
+   *
+   * Some authentication methods (like emails or social logins) can be associated with multiple wallets.
+   * When a user attempts to sign up with a credential that already has wallets, this handler is invoked
+   * to prompt the user to either select an existing wallet to log into or confirm the creation of a new one.
+   *
+   * If no handler is registered, the system will default to creating a new wallet.
+   * Only one handler can be registered per manager instance.
+   *
+   * @param handler A function that receives `WalletSelectionOptions` and prompts the user for a decision.
+   * It should return the address of the selected wallet, or `undefined` to proceed with new wallet creation.
+   * @returns A function to unregister the provided handler.
+   */
+  registerWalletSelector(handler: WalletSelectionUiHandler): () => void
+
+  /**
+   * Unregisters the currently active wallet selection UI handler.
+   *
+   * @param handler (Optional) If provided, it will only unregister if the given handler is the one currently registered.
+   * This prevents accidentally unregistering a handler set by another part of the application.
+   */
+  unregisterWalletSelector(handler?: WalletSelectionUiHandler): void
+
+  /**
+   * Subscribes to updates for the list of managed wallets.
+   *
+   * The provided callback function is invoked whenever a wallet is added (login), removed (logout),
+   * or has its status updated (e.g., from 'logging-in' to 'ready').
+   *
+   * @param cb The callback function to execute with the updated list of wallets.
+   * @param trigger (Optional) If `true`, the callback will be immediately invoked with the current list of wallets upon registration.
+   * @returns A function to unsubscribe the listener.
+   */
+  onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean): () => void
+
+  /**
+   * Creates and configures a new Sequence wallet.
+   *
+   * This method orchestrates the entire sign-up process. It always creates a new wallet configuration
+   * unless a `walletSelector` is registered and an existing wallet is chosen. The process involves:
+   * 1. Generating a new login signer based on the specified `kind`.
+   * 2. Creating a new local device key for the current session.
+   * 3. Constructing the wallet's on-chain configuration (topology).
+   * 4. Deploying the new wallet address.
+   * 5. Storing the new wallet session locally.
+   *
+   * @param args The sign-up arguments, specifying the method and options.
+   * - `kind: 'mnemonic'`: Uses a mnemonic phrase as the login credential.
+   * - `kind: 'passkey'`: Prompts the user to create a WebAuthn passkey.
+   * - `kind: 'email-otp'`: Initiates an OTP flow to the user's email.
+   * - `kind: 'google-pkce' | 'apple'`: Completes an OAuth redirect flow.
+   * Common options like `noGuard` or `noRecovery` can customize the wallet's security features.
+   * @returns A promise that resolves to the address of the newly created and configured wallet.
+   * @see {SignupArgs}
+   */
+  signUp(args: SignupArgs): Promise<Address.Address>
+
+  /**
+   * Initiates a sign-up or login process that involves an OAuth redirect.
+   *
+   * This is the first step for social logins (e.g., Google, Apple). It generates the necessary
+   * challenges and state, stores them locally, and returns a URL. Your application should
+   * redirect the user to this URL to continue the authentication process with the third-party provider.
+   *
+   * @param args Arguments specifying the provider (`kind`) and the `target` URL for the provider to redirect back to.
+   * @returns A promise that resolves to the full OAuth URL to which the user should be redirected.
+   * @see {completeRedirect} for the second step of this flow.
+   */
+  startSignUpWithRedirect(args: StartSignUpWithRedirectArgs): Promise<string>
+
+  /**
+   * Completes an OAuth redirect flow after the user returns to the application.
+   *
+   * After the user authenticates with the third-party provider and is redirected back, your application
+   * must call this method with the `state` and `code` parameters from the URL query string.
+   * This method verifies the state, exchanges the code for a token, and completes the sign-up or login process.
+   *
+   * @param args The arguments containing the `state` and `code` from the redirect, along with original sign-up options.
+   * @returns A promise that resolves to the wallet address that was created or logged into.
+   */
+  completeRedirect(args: CompleteRedirectArgs): Promise<Address.Address>
+
+  /**
+   * Initiates the login process for an existing wallet by adding the current device as a new signer.
+   *
+   * This method is for adding a new device/session to a wallet that has already been created. It generates a
+   * configuration update transaction to add the new device key to the wallet's on-chain topology.
+   * This configuration change requires a signature from an existing authorized signer.
+   *
+   * The `args` can be one of:
+   * - `LoginToWalletArgs`: Login to a known wallet address.
+   * - `LoginToMnemonicArgs` / `LoginToPasskeyArgs`: "Discover" wallets associated with a credential,
+   *   prompt the user to select one via the `selectWallet` callback, and then log in.
+   *
+   * @param args The login arguments.
+   * @returns A promise that resolves to a `requestId`. This ID represents the signature request for the
+   *          configuration update, which must be signed by an existing key to authorize the new device.
+   * @see {completeLogin}
+   */
+  login(args: LoginArgs): Promise<string>
+
+  /**
+   * Completes the login process after the configuration update has been signed.
+   *
+   * After `login` is called and the resulting signature request is fulfilled, this method should be called
+   * with the `requestId`. It submits the signed configuration update to the key tracker, finalizing the
+   * addition of the new device. The wallet's local status is then set to 'ready'.
+   *
+   * @param requestId The ID of the completed signature request returned by `login`.
+   * @returns A promise that resolves when the login process is fully complete and the wallet is ready for use.
+   */
+  completeLogin(requestId: string): Promise<void>
+
+  /**
+   * Logs out from a given wallet, ending the current session.
+   *
+   * This method has two modes of operation:
+   * 1. **Hard Logout (default):** Initiates a key tracker update to remove the current device's key
+   *    from the wallet's configuration. This is the most secure option as it revokes the key's access
+   *    entirely. This returns a `requestId` that must be signed and completed via `completeLogout`.
+   * 2. **Soft Logout (`skipRemoveDevice: true`):** Immediately deletes the session and device key from local
+   *    storage only. This is faster as it requires no transaction, but the device key remains authorized.
+   *    This is suitable for clearing a session on a trusted device without revoking the key itself.
+   *
+   * @param wallet The address of the wallet to log out from.
+   * @param options (Optional) Configuration for the logout process.
+   * @returns If `skipRemoveDevice` is `true`, returns `Promise<undefined>`. Otherwise, returns a `Promise<string>`
+   *          containing the `requestId` for the on-chain logout transaction.
+   */
+  logout<T extends { skipRemoveDevice?: boolean } | undefined = undefined>(
+    wallet: Address.Address,
+    options?: T,
+  ): Promise<T extends { skipRemoveDevice: true } ? undefined : string>
+
+  /**
+   * Completes the "hard logout" process.
+   *
+   * If `logout` was called without `skipRemoveDevice: true`, the resulting configuration update must be signed.
+   * Once signed, this method takes the `requestId`, broadcasts the transaction to the network, and upon completion,
+   * removes all local data associated with the wallet and device.
+   *
+   * @param requestId The ID of the completed signature request returned by `logout`.
+   * @param options (Optional) Advanced options for completing the logout.
+   * @returns A promise that resolves when the on-chain update is submitted and local storage is cleared.
+   */
+  completeLogout(requestId: string, options?: { skipValidateSave?: boolean }): Promise<void>
+
+  /**
+   * Retrieves the full, resolved configuration of a wallet.
+   *
+   * This method provides a detailed view of the wallet's structure, including lists of
+   * login signers and device signers with their "kind" (e.g., 'local-device', 'login-passkey') resolved.
+   * It also includes the raw, low-level configuration topology.
+   *
+   * @param wallet The address of the wallet.
+   * @returns A promise that resolves to an object containing the resolved `devices`, `login` signers, and the `raw` configuration.
+   */
+  getConfiguration(wallet: Address.Address): Promise<{
+    devices: { address: Address.Address; kind?: string; imageHash?: string }[]
+    login: { address: Address.Address; kind?: string; imageHash?: string }[]
+    raw: any
+  }>
+
+  /**
+   * Fetches the current nonce of a wallet for a specific transaction space.
+   *
+   * Sequence wallets use a 2D nonce system (`space`, `nonce`) to prevent replay attacks and allow
+   * for concurrent transactions. This method reads the current nonce for a given space directly from the blockchain.
+   *
+   * @param chainId The chain ID of the network to query.
+   * @param address The address of the wallet.
+   * @param space A unique identifier for a transaction category or flow, typically a large random number.
+   * @returns A promise that resolves to the `bigint` nonce for the given space.
+   */
+  getNonce(chainId: bigint, address: Address.Address, space: bigint): Promise<bigint>
+}
+
 export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
   return 'wallet' in args
 }
@@ -615,7 +826,7 @@ export class Wallets {
     await this.shared.modules.signatures.complete(requestId)
   }
 
-  async login(args: LoginArgs): Promise<string | undefined> {
+  async login(args: LoginArgs): Promise<string> {
     if (isLoginToWalletArgs(args)) {
       const prevWallet = await this.has(args.wallet)
       if (prevWallet) {
