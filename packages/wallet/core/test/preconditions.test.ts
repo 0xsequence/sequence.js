@@ -9,7 +9,7 @@ import {
   Erc721OwnershipPrecondition,
   NativeBalancePrecondition,
 } from '../src/preconditions/types'
-import { LocalRelayer } from '../src/relayer/local'
+import { LocalRelayer } from '../src/relayer/standard/local'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
