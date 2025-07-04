@@ -395,7 +395,7 @@ describe('Transactions', () => {
     })
 
     // Add a recovery signer, just to change the configuration
-    const rSigId = await manager.addRecoverySigner(wallet!, Address.from(Hex.random(20)))
+    const rSigId = await manager.recovery.addSigner(wallet!, Address.from(Hex.random(20)))
     expect(rSigId).toBeDefined()
 
     // Sign using the device signer
@@ -409,7 +409,7 @@ describe('Transactions', () => {
 
     await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
 
-    await manager.completeRecoveryUpdate(rSigId!)
+    await manager.recovery.completeUpdate(rSigId!)
 
     // It should no longer be updated onchain
     await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()

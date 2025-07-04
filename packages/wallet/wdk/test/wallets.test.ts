@@ -144,7 +144,7 @@ describe('Wallets', () => {
     // The wallet should have 2 device keys and 2 recovery keys
     const config = await manager.wallets.getConfiguration(wallet!)
     expect(config.devices.length).toBe(2)
-    const recovery = await manager.getRecoverySigners(wallet!)
+    const recovery = await manager.recovery.getSigners(wallet!)
     expect(recovery?.length).toBe(2)
   })
 
@@ -213,7 +213,7 @@ describe('Wallets', () => {
     // The wallet should have a single device key and a single recovery key
     const config = await manager.wallets.getConfiguration(wallet!)
     expect(config.devices.length).toBe(1)
-    const recovery = await manager.getRecoverySigners(wallet!)
+    const recovery = await manager.recovery.getSigners(wallet!)
     expect(recovery?.length).toBe(1)
 
     // The kind of the device key should be 'local-device'
