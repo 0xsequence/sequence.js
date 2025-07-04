@@ -50,7 +50,7 @@ import { EmailAuth } from './email'
 import { ethers } from 'ethers'
 import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
-import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge, PlayFabChallenge, StytchChallenge } from './challenge'
+import { Challenge, EmailChallenge, GuestChallenge, IdTokenChallenge, PlayFabChallenge, StytchChallenge, XAuthChallenge } from './challenge'
 import { jwtDecode } from 'jwt-decode'
 
 export type Sessions = (Session & { isThis: boolean })[]
@@ -81,8 +81,11 @@ export type PlayFabIdentity = {
   playFabTitleId: string
   playFabSessionTicket: string
 }
+export type XAuthIdentity = {
+  xAccessToken: string
+}
 
-export type Identity = IdTokenIdentity | EmailIdentity | PlayFabIdentity | GuestIdentity
+export type Identity = IdTokenIdentity | EmailIdentity | PlayFabIdentity | GuestIdentity | XAuthIdentity
 
 export type SignInResponse = {
   sessionId: string
@@ -468,6 +471,8 @@ export class SequenceWaaS {
       return this.initEmailAuth(identity.email)
     } else if ('playFabTitleId' in identity) {
       return this.initPlayFabAuth(identity.playFabTitleId, identity.playFabSessionTicket)
+    } else if ('xAccessToken' in identity) {
+      return this.initXAuth(identity.xAccessToken)
     }
 
     throw new Error('invalid identity')
@@ -517,6 +522,16 @@ export class SequenceWaaS {
       throw new Error(`Invalid response: ${JSON.stringify(res)}`)
     }
     return new PlayFabChallenge(titleId, sessionTicket)
+  }
+
+  private async initXAuth(accessToken: string) {
+    const intent = await this.waas.initiateXAuth(accessToken)
+    const res = await this.sendIntent(intent)
+
+    if (!isInitiateAuthResponse(res)) {
+      throw new Error(`Invalid response: ${JSON.stringify(res)}`)
+    }
+    return new XAuthChallenge(accessToken)
   }
 
   async completeAuth(
