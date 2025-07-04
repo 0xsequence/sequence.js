@@ -28,7 +28,7 @@ import {
 } from './handlers/index.js'
 import { RecoveryHandler } from './handlers/recovery.js'
 import { Logger } from './logger.js'
-import { Messages } from './messages.js'
+import { Messages, MessagesInterface } from './messages.js'
 import { Recovery } from './recovery.js'
 import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
 import { Signatures, SignaturesInterface } from './signatures.js'
@@ -233,6 +233,7 @@ export class Manager {
   public readonly wallets: WalletsInterface
   public readonly signatures: SignaturesInterface
   public readonly transactions: TransactionsInterface
+  public readonly messages: MessagesInterface
 
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
@@ -304,6 +305,7 @@ export class Manager {
     this.wallets = modules.wallets
     this.signatures = modules.signatures
     this.transactions = modules.transactions
+    this.messages = modules.messages
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
     shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
@@ -388,41 +390,6 @@ export class Manager {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })
-  }
-
-  // Messages
-
-  public async listMessageRequests() {
-    return this.shared.modules.messages.list()
-  }
-
-  public async getMessageRequest(messageOrSignatureId: string) {
-    return this.shared.modules.messages.get(messageOrSignatureId)
-  }
-
-  public onMessageRequestsUpdate(cb: (messages: Message[]) => void, trigger?: boolean) {
-    return this.shared.modules.messages.onMessagesUpdate(cb, trigger)
-  }
-
-  public onMessageRequestUpdate(messageOrSignatureId: string, cb: (message: Message) => void, trigger?: boolean) {
-    return this.shared.modules.messages.onMessageUpdate(messageOrSignatureId, cb, trigger)
-  }
-
-  public async requestMessageSignature(
-    wallet: Address.Address,
-    message: MessageRequest,
-    chainId?: bigint,
-    options?: { source?: string },
-  ) {
-    return this.shared.modules.messages.request(wallet, message, chainId, options)
-  }
-
-  public async completedMessageSignature(messageOrSignatureId: string) {
-    return this.shared.modules.messages.complete(messageOrSignatureId)
-  }
-
-  public async deleteMessageRequest(messageOrSignatureId: string) {
-    return this.shared.modules.messages.delete(messageOrSignatureId)
   }
 
   // Sessions
