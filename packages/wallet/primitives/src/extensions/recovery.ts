@@ -474,6 +474,7 @@ export async function totalQueuedPayloads(
         to: extension,
         data: AbiFunction.encodeData(TOTAL_QUEUED_PAYLOADS, [wallet, signer]),
       },
+      'latest',
     ],
   })
 
@@ -507,6 +508,7 @@ export async function queuedPayloadHashOf(
         to: extension,
         data: AbiFunction.encodeData(QUEUED_PAYLOAD_HASHES, [wallet, signer, index]),
       },
+      'latest',
     ],
   })
 
@@ -537,6 +539,7 @@ export async function timestampForQueuedPayload(
         to: extension,
         data: AbiFunction.encodeData(TIMESTAMP_FOR_QUEUED_PAYLOAD, [wallet, signer, payloadHash]),
       },
+      'latest',
     ],
   })
 

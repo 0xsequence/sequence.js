@@ -227,6 +227,7 @@ export class Explicit implements ExplicitSessionSigner {
           to: sessionManagerAddress,
           data: readData,
         },
+        'latest',
       ],
     })
     const usageAmount = AbiFunction.decodeResult(Constants.GET_LIMIT_USAGE, getUsageLimitResult)

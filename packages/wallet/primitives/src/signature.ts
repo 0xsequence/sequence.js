@@ -1228,7 +1228,7 @@ async function recoverTopology(
 
             const response = await provider.request({
               method: 'eth_call',
-              params: block === undefined ? [call] : [call, Hex.fromNumber(block)],
+              params: block === undefined ? [call, 'latest'] : [call, Hex.fromNumber(block)],
             })
             const decodedResult = AbiFunction.decodeResult(IS_VALID_SIGNATURE, response)
 
@@ -1283,7 +1283,7 @@ async function recoverTopology(
 
             const response = await provider.request({
               method: 'eth_call',
-              params: block === undefined ? [call] : [call, Hex.fromNumber(block)],
+              params: block === undefined ? [call, 'latest'] : [call, Hex.fromNumber(block)],
             })
 
             return {
