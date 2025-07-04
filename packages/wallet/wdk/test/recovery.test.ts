@@ -19,7 +19,7 @@ describe('Recovery', () => {
 
     // Add recovery mnemonic
     const mnemonic2 = Mnemonic.random(Mnemonic.english)
-    const requestId1 = await manager.addRecoveryMnemonic(wallet!, mnemonic2)
+    const requestId1 = await manager.recovery.addMnemonic(wallet!, mnemonic2)
 
     expect(requestId1).toBeDefined()
 
@@ -36,11 +36,11 @@ describe('Recovery', () => {
     expect(result1).toBeTruthy()
 
     // Complete the add of the recovery mnemonic
-    await manager.completeRecoveryUpdate(requestId1)
+    await manager.recovery.completeUpdate(requestId1)
 
     // Get the recovery signers, there should be two one
     // and one should not be the device address
-    const recoverySigners = await manager.getRecoverySigners(wallet!)
+    const recoverySigners = await manager.recovery.getSigners(wallet!)
     expect(recoverySigners).toBeDefined()
     expect(recoverySigners!.length).toBe(2)
     const nonDeviceSigner = recoverySigners!.find((s) => s.address !== device?.address)
@@ -54,7 +54,7 @@ describe('Recovery', () => {
     })
 
     // Create a new recovery payload
-    const requestId2 = await manager.queueRecoveryPayload(wallet!, 42161n, {
+    const requestId2 = await manager.recovery.queuePayload(wallet!, 42161n, {
       type: 'call',
       space: Bytes.toBigInt(Bytes.random(20)),
       nonce: 0n,
@@ -100,7 +100,7 @@ describe('Recovery', () => {
     unregisterHandler()
 
     // Complete the recovery payload
-    const { to, data } = await manager.completeRecoveryPayload(requestId2)
+    const { to, data } = await manager.recovery.completePayload(requestId2)
 
     // Send this transaction to anvil so we queue the payload
     await provider.request({
@@ -115,11 +115,11 @@ describe('Recovery', () => {
 
     // Wait 3 seconds for the payload to become valid
     await new Promise((resolve) => setTimeout(resolve, 3000))
-    await manager.updateQueuedRecoveryPayloads()
+    await manager.recovery.updateQueuedPayloads()
 
     // Get the recovery payloads
     const recoveryPayloads = await new Promise<QueuedRecoveryPayload[]>((resolve) => {
-      const unsubscribe = manager.onQueuedRecoveryPayloadsUpdate(
+      const unsubscribe = manager.recovery.onQueuedPayloadsUpdate(
         wallet!,
         (payloads) => {
           unsubscribe()
@@ -193,9 +193,9 @@ describe('Recovery', () => {
 
     // Refresh the queued recovery payloads, the executed one
     // should be removed
-    await manager.updateQueuedRecoveryPayloads()
+    await manager.recovery.updateQueuedPayloads()
     const recoveryPayloads2 = await new Promise<QueuedRecoveryPayload[]>((resolve) => {
-      const unsubscribe = manager.onQueuedRecoveryPayloadsUpdate(
+      const unsubscribe = manager.recovery.onQueuedPayloadsUpdate(
         wallet!,
         (payloads) => {
           unsubscribe()

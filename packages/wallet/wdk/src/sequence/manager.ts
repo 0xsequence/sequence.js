@@ -2,17 +2,7 @@ import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
-import {
-  Attestation,
-  Config,
-  Constants,
-  Context,
-  Extensions,
-  Network,
-  Payload,
-  Signature as SequenceSignature,
-  SessionConfig,
-} from '@0xsequence/wallet-primitives'
+import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
@@ -29,14 +19,12 @@ import {
 import { RecoveryHandler } from './handlers/recovery.js'
 import { Logger } from './logger.js'
 import { Messages, MessagesInterface } from './messages.js'
-import { Recovery } from './recovery.js'
-import { AuthorizeImplicitSessionArgs, Sessions, SessionsInterface } from './sessions.js'
+import { Recovery, RecoveryInterface } from './recovery.js'
+import { Sessions, SessionsInterface } from './sessions.js'
 import { Signatures, SignaturesInterface } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions, TransactionsInterface } from './transactions.js'
-import { QueuedRecoveryPayload } from './types/index.js'
-import { Message, MessageRequest } from './types/message-request.js'
-import { Kinds, RecoverySigner } from './types/signer.js'
+import { Kinds } from './types/signer.js'
 import { Wallets, WalletsInterface } from './wallets.js'
 
 export type ManagerOptions = {
@@ -235,6 +223,7 @@ export class Manager {
   public readonly transactions: TransactionsInterface
   public readonly messages: MessagesInterface
   public readonly sessions: SessionsInterface
+  public readonly recovery: RecoveryInterface
 
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
@@ -308,6 +297,7 @@ export class Manager {
     this.transactions = modules.transactions
     this.messages = modules.messages
     this.sessions = modules.sessions
+    this.recovery = modules.recovery
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
     shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
@@ -392,48 +382,6 @@ export class Manager {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })
-  }
-
-  // Recovery
-
-  public async getRecoverySigners(wallet: Address.Address): Promise<RecoverySigner[] | undefined> {
-    return this.shared.modules.recovery.getRecoverySigners(wallet)
-  }
-
-  public onQueuedRecoveryPayloadsUpdate(
-    wallet: Address.Address,
-    cb: (payloads: QueuedRecoveryPayload[]) => void,
-    trigger?: boolean,
-  ) {
-    return this.shared.modules.recovery.onQueuedRecoveryPayloadsUpdate(wallet, cb, trigger)
-  }
-
-  public async queueRecoveryPayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls) {
-    return this.shared.modules.recovery.queueRecoveryPayload(wallet, chainId, payload)
-  }
-
-  public async completeRecoveryPayload(requestId: string) {
-    return this.shared.modules.recovery.completeRecoveryPayload(requestId)
-  }
-
-  public async addRecoveryMnemonic(wallet: Address.Address, mnemonic: string) {
-    return this.shared.modules.recovery.addRecoveryMnemonic(wallet, mnemonic)
-  }
-
-  public async addRecoverySigner(wallet: Address.Address, address: Address.Address) {
-    return this.shared.modules.recovery.addRecoverySigner(wallet, address)
-  }
-
-  public async removeRecoverySigner(wallet: Address.Address, address: Address.Address) {
-    return this.shared.modules.recovery.removeRecoverySigner(wallet, address)
-  }
-
-  public async completeRecoveryUpdate(requestId: string) {
-    return this.shared.modules.recovery.completeRecoveryUpdate(requestId)
-  }
-
-  public async updateQueuedRecoveryPayloads() {
-    return this.shared.modules.recovery.updateQueuedRecoveryPayloads()
   }
 
   public getNetworks(): Network.Network[] {
