@@ -15,7 +15,7 @@ export class RecoveryHandler implements Handler {
   ) {}
 
   onStatusChange(cb: () => void): () => void {
-    return this.recovery.onQueuedRecoveryPayloadsUpdate(undefined, cb)
+    return this.recovery.onQueuedPayloadsUpdate(undefined, cb)
   }
 
   async status(
