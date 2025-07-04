@@ -47,6 +47,12 @@ export interface RecoveryInterface {
    * **Note:** This method does *not* send the transaction. It is the developer's responsibility to take the
    * returned `to` and `data` and submit it to the network.
    *
+   * When the timelock has passed, the transaction can be sent using the Recovery handler. To do this, a transaction
+   * with the same original payload must be constructed, and the Recovery handler will become available to sign.
+   *
+   * The Recovery handler has sufficient weight to sign the transaction by itself, but it will only do so after
+   * the timelock has passed, and only if the payload being sent matches the original one that was queued.
+   *
    * @param requestId The ID of the fulfilled signature request from `queuePayload`.
    * @returns A promise that resolves to an object containing the `to` (the Recovery contract address) and `data`
    *   (the encoded calldata) for the on-chain queuing transaction.
