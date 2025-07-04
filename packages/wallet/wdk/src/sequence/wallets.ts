@@ -280,6 +280,19 @@ export interface WalletsInterface {
    * @returns A promise that resolves to the `bigint` nonce for the given space.
    */
   getNonce(chainId: bigint, address: Address.Address, space: bigint): Promise<bigint>
+
+  /**
+   * Checks if the wallet's on-chain configuration is up to date for a given chain.
+   *
+   * This method returns `true` if, on the specified chain, there are no pending configuration updates
+   * in the state tracker that have not yet been applied to the wallet. In other words, it verifies
+   * that the wallet's on-chain image hash matches the latest configuration image hash.
+   *
+   * @param wallet The address of the wallet to check.
+   * @param chainId The chain ID of the network to check against.
+   * @returns A promise that resolves to `true` if the wallet is up to date on the given chain, or `false` otherwise.
+   */
+  isUpdatedOnchain(wallet: Address.Address, chainId: bigint): Promise<boolean>
 }
 
 export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
