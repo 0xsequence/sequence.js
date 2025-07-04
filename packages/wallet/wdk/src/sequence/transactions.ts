@@ -579,9 +579,7 @@ export class Transactions implements TransactionsInterface {
       } as TransactionRelayed)
 
       await this.shared.modules.signatures.complete(signature.id)
-    }
-
-    if (isERC4337RelayerOption(tx.relayerOption)) {
+    } else if (isERC4337RelayerOption(tx.relayerOption)) {
       if (!Relayer.isBundler(relayer)) {
         throw new Error(`Relayer ${tx.relayerOption.relayerId} is not a bundler`)
       }
@@ -605,6 +603,8 @@ export class Transactions implements TransactionsInterface {
         relayedAt: Date.now(),
         relayerId: tx.relayerOption.relayerId,
       } as TransactionRelayed)
+    } else {
+      throw new Error(`Invalid relayer option ${(tx.relayerOption as any).kind}`)
     }
 
     if (!opHash) {
@@ -619,6 +619,10 @@ export class Transactions implements TransactionsInterface {
       }
     }, 1000)
     setTimeout(() => clearInterval(intervalId), 30 * 1000)
+
+    if (!opHash) {
+      throw new Error(`Relayer ${tx.relayerOption.relayerId} did not return an op hash`)
+    }
   }
 
   onTransactionsUpdate(cb: (transactions: Transaction[]) => void, trigger?: boolean) {
