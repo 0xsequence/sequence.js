@@ -14,17 +14,17 @@ describe('Recovery', () => {
     })
 
     const mnemonic = Mnemonic.random(Mnemonic.english)
-    const wallet = await manager.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+    const wallet = await manager.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
     expect(wallet).toBeDefined()
 
     // Add recovery mnemonic
     const mnemonic2 = Mnemonic.random(Mnemonic.english)
-    const requestId1 = await manager.addRecoveryMnemonic(wallet!, mnemonic2)
+    const requestId1 = await manager.recovery.addMnemonic(wallet!, mnemonic2)
 
     expect(requestId1).toBeDefined()
 
     // Sign add recovery mnemonic
-    const request1 = await manager.getSignatureRequest(requestId1)
+    const request1 = await manager.signatures.get(requestId1)
     expect(request1).toBeDefined()
 
     // Device must be the only ready signer now
@@ -36,11 +36,11 @@ describe('Recovery', () => {
     expect(result1).toBeTruthy()
 
     // Complete the add of the recovery mnemonic
-    await manager.completeRecoveryUpdate(requestId1)
+    await manager.recovery.completeUpdate(requestId1)
 
     // Get the recovery signers, there should be two one
     // and one should not be the device address
-    const recoverySigners = await manager.getRecoverySigners(wallet!)
+    const recoverySigners = await manager.recovery.getSigners(wallet!)
     expect(recoverySigners).toBeDefined()
     expect(recoverySigners!.length).toBe(2)
     const nonDeviceSigner = recoverySigners!.find((s) => s.address !== device?.address)
@@ -54,7 +54,7 @@ describe('Recovery', () => {
     })
 
     // Create a new recovery payload
-    const requestId2 = await manager.queueRecoveryPayload(wallet!, 42161n, {
+    const requestId2 = await manager.recovery.queuePayload(wallet!, 42161n, {
       type: 'call',
       space: Bytes.toBigInt(Bytes.random(20)),
       nonce: 0n,
@@ -80,7 +80,7 @@ describe('Recovery', () => {
     })
 
     // Sign the queue recovery payload
-    const request2 = await manager.getSignatureRequest(requestId2)
+    const request2 = await manager.signatures.get(requestId2)
     expect(request2).toBeDefined()
 
     // Complete the queue recovery payload
@@ -100,7 +100,7 @@ describe('Recovery', () => {
     unregisterHandler()
 
     // Complete the recovery payload
-    const { to, data } = await manager.completeRecoveryPayload(requestId2)
+    const { to, data } = await manager.recovery.completePayload(requestId2)
 
     // Send this transaction to anvil so we queue the payload
     await provider.request({
@@ -115,11 +115,11 @@ describe('Recovery', () => {
 
     // Wait 3 seconds for the payload to become valid
     await new Promise((resolve) => setTimeout(resolve, 3000))
-    await manager.updateQueuedRecoveryPayloads()
+    await manager.recovery.updateQueuedPayloads()
 
     // Get the recovery payloads
     const recoveryPayloads = await new Promise<QueuedRecoveryPayload[]>((resolve) => {
-      const unsubscribe = manager.onQueuedRecoveryPayloadsUpdate(
+      const unsubscribe = manager.recovery.onQueuedPayloadsUpdate(
         wallet!,
         (payloads) => {
           unsubscribe()
@@ -137,7 +137,7 @@ describe('Recovery', () => {
     expect((recoveryPayload!.payload as Payload.Calls).calls.length).toBe(1)
 
     // Send this transaction as any other regular transaction
-    const requestId3 = await manager.requestTransaction(
+    const requestId3 = await manager.transactions.request(
       wallet!,
       42161n,
       (recoveryPayload!.payload as Payload.Calls).calls,
@@ -148,13 +148,13 @@ describe('Recovery', () => {
     expect(requestId3).toBeDefined()
 
     // Define the same nonce and space for the recovery payload
-    await manager.defineTransaction(requestId3, {
+    await manager.transactions.define(requestId3, {
       nonce: (recoveryPayload!.payload as Payload.Calls).nonce,
       space: (recoveryPayload!.payload as Payload.Calls).space,
     })
 
     // Complete the transaction
-    const tx = await manager.getTransaction(requestId3)
+    const tx = await manager.transactions.get(requestId3)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('defined')
     expect((tx as TransactionDefined).relayerOptions.length).toBe(1)
@@ -164,11 +164,11 @@ describe('Recovery', () => {
     expect(localRelayer.relayerId).toBe('local')
 
     // Define the relayer
-    const requestId4 = await manager.selectTransactionRelayer(requestId3, localRelayer.id)
+    const requestId4 = await manager.transactions.selectRelayer(requestId3, localRelayer.id)
     expect(requestId4).toBeDefined()
 
     // Now we sign using the recovery module
-    const request4 = await manager.getSignatureRequest(requestId4)
+    const request4 = await manager.signatures.get(requestId4)
 
     // Find the signer that is the recovery module handler
     const recoverySigner = request4.signers.find((s) => s.handler?.kind === 'recovery-extension')
@@ -181,8 +181,7 @@ describe('Recovery', () => {
     expect(result4).toBeTruthy()
 
     // Complete the transaction
-    const txHash = await manager.relayTransaction(requestId4)
-    expect(txHash).toBeDefined()
+    await manager.transactions.relay(requestId4)
 
     // The balance of the wallet should be 0 wei
     const balance = await provider.request({
@@ -194,9 +193,9 @@ describe('Recovery', () => {
 
     // Refresh the queued recovery payloads, the executed one
     // should be removed
-    await manager.updateQueuedRecoveryPayloads()
+    await manager.recovery.updateQueuedPayloads()
     const recoveryPayloads2 = await new Promise<QueuedRecoveryPayload[]>((resolve) => {
-      const unsubscribe = manager.onQueuedRecoveryPayloadsUpdate(
+      const unsubscribe = manager.recovery.onQueuedPayloadsUpdate(
         wallet!,
         (payloads) => {
           unsubscribe()

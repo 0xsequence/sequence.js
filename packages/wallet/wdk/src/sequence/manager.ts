@@ -2,17 +2,7 @@ import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
-import {
-  Attestation,
-  Config,
-  Constants,
-  Context,
-  Extensions,
-  Network,
-  Payload,
-  Signature as SequenceSignature,
-  SessionConfig,
-} from '@0xsequence/wallet-primitives'
+import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
@@ -28,18 +18,14 @@ import {
 } from './handlers/index.js'
 import { RecoveryHandler } from './handlers/recovery.js'
 import { Logger } from './logger.js'
-import { Messages } from './messages.js'
-import { Recovery } from './recovery.js'
-import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
-import { Signatures } from './signatures.js'
+import { Messages, MessagesInterface } from './messages.js'
+import { Recovery, RecoveryInterface } from './recovery.js'
+import { Sessions, SessionsInterface } from './sessions.js'
+import { Signatures, SignaturesInterface } from './signatures.js'
 import { Signers } from './signers.js'
-import { Transactions } from './transactions.js'
-import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet } from './types/index.js'
-import { Message, MessageRequest } from './types/message-request.js'
-import { Kinds, RecoverySigner } from './types/signer.js'
-import { Transaction, TransactionRequest } from './types/transaction-request.js'
-import { WalletSelectionUiHandler } from './types/wallet.js'
-import { CompleteRedirectArgs, LoginArgs, SignupArgs, StartSignUpWithRedirectArgs, Wallets } from './wallets.js'
+import { Transactions, TransactionsInterface } from './transactions.js'
+import { Kinds } from './types/signer.js'
+import { Wallets, WalletsInterface } from './wallets.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -232,6 +218,117 @@ export class Manager {
 
   private readonly otpHandler?: OtpHandler
 
+  // ======== Begin Public Modules ========
+
+  /**
+   * Manages the lifecycle of user wallets within the WDK, from creation (sign-up)
+   * to session management (login/logout).
+   *
+   * This is the primary entry point for users. It handles the association of login
+   * credentials (like mnemonics or passkeys) with on-chain wallet configurations.
+   *
+   * Key behaviors:
+   * - `signUp()`: Creates a new wallet configuration and deploys it.
+   * - `login()`: Adds the current device as a new authorized signer to an existing wallet. This is a 2-step process requiring a signature from an existing signer.
+   * - `logout()`: Can perform a "soft" logout (local session removal) or a "hard" logout (on-chain key removal), which is also a 2-step process.
+   *
+   * This module orchestrates with the `signatures` module to handle the signing of
+   * configuration updates required for login and hard-logout operations.
+   *
+   * @see {WalletsInterface} for all available methods.
+   */
+  public readonly wallets: WalletsInterface
+
+  /**
+   * Acts as the central coordinator for all signing operations. It does not perform
+   * the signing itself but manages the entire process.
+   *
+   * When an action requires a signature (e.g., sending a transaction, updating configuration),
+   * a `SignatureRequest` is created here. This module then determines which signers
+   * (devices, passkeys, etc.) are required to meet the wallet's security threshold.
+   *
+   * Key features:
+   * - Tracks the real-time status of each required signer (`ready`, `actionable`, `signed`, `unavailable`).
+   * - Calculates the collected signature weight against the required threshold.
+   * - Provides hooks (`onSignatureRequestUpdate`) for building reactive UIs that guide the user through the signing process.
+   *
+   * Developers will primarily interact with this module to monitor the state of a signing
+   * request initiated by other modules like `transactions` or `wallets`.
+   *
+   * @see {SignaturesInterface} for all available methods.
+   * @see {SignatureRequest} for the detailed structure of a request object.
+   */
+  public readonly signatures: SignaturesInterface
+
+  /**
+   * Manages the end-to-end lifecycle of on-chain transactions, from creation to final confirmation.
+   *
+   * This module follows a distinct state machine:
+   * 1. `request()`: Creates a new transaction request.
+   * 2. `define()`: Fetches quotes and fee options from all available relayers and ERC-4337 bundlers.
+   * 3. `selectRelayer()`: Finalizes the transaction payload based on the chosen relayer and creates a `SignatureRequest`.
+   * 4. `relay()`: Submits the signed transaction to the chosen relayer/bundler for execution.
+   *
+   * The final on-chain status (`confirmed` or `failed`) is updated asynchronously by a background
+   * process. Use `onTransactionUpdate` to monitor a transaction's progress.
+   *
+   * @see {TransactionsInterface} for all available methods.
+   * @see {Transaction} for the detailed structure of a transaction object and its states.
+   */
+  public readonly transactions: TransactionsInterface
+
+  /**
+   * Handles the signing of off-chain messages, such as EIP-191 personal_sign messages
+   * or EIP-712 typed data.
+   *
+   * The flow is simpler than on-chain transactions:
+   * 1. `request()`: Prepares the message and creates a `SignatureRequest`.
+   * 2. The user signs the request via the `signatures` module UI.
+   * 3. `complete()`: Builds the final, EIP-1271/EIP-6492 compliant signature string.
+   *
+   * This module is essential for dapps that require off-chain proof of ownership or authorization.
+   * The resulting signature is verifiable on-chain by calling `isValidSignature` on the wallet contract.
+   *
+   * @see {MessagesInterface} for all available methods.
+   */
+  public readonly messages: MessagesInterface
+
+  /**
+   * Manages session keys, which are temporary, often permissioned, signers for a wallet.
+   * This allows dapps to perform actions on the user's behalf without prompting for a signature
+   * for every transaction.
+   *
+   * Two types of sessions are supported:
+   * - **Implicit Sessions**: Authorized by an off-chain attestation from the user's primary identity
+   *   signer. They are dapp-specific and don't require a configuration update to create. Ideal for
+   *   low-risk, frequent actions within a single application.
+   * - **Explicit Sessions**: Authorized by a wallet configuration update. These sessions
+   *   are more powerful and can be governed by detailed, on-chain permissions (e.g., value limits,
+   *   contract targets, function call rules).
+   *
+   * This module handles the creation, removal, and configuration of both session types.
+   *
+   * @see {SessionsInterface} for all available methods.
+   */
+  public readonly sessions: SessionsInterface
+
+  /**
+   * Manages the wallet's recovery mechanism, allowing designated recovery signers
+   * to execute transactions after a time delay.
+   *
+   * This module is responsible for:
+   * - **Configuration**: Adding or removing recovery signers (e.g., a secondary mnemonic). This is a standard configuration update that must be signed by the wallet's primary signers.
+   * - **Execution**: A two-step process to use the recovery feature:
+   *   1. `queuePayload()`: A recovery signer signs a payload, which is then sent on-chain to start a timelock.
+   *   2. After the timelock, the `recovery` handler itself can sign a transaction to execute the queued payload.
+   * - **Monitoring**: `updateQueuedPayloads()` fetches on-chain data about pending recovery attempts, a crucial security feature.
+   *
+   * @see {RecoveryInterface} for all available methods.
+   */
+  public readonly recovery: RecoveryInterface
+
+  // ======== End Public Modules ========
+
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
 
@@ -298,6 +395,13 @@ export class Manager {
       messages: new Messages(shared),
       recovery: new Recovery(shared),
     }
+
+    this.wallets = modules.wallets
+    this.signatures = modules.signatures
+    this.transactions = modules.transactions
+    this.messages = modules.messages
+    this.sessions = modules.sessions
+    this.recovery = modules.recovery
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
     shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
@@ -368,137 +472,6 @@ export class Manager {
     }
   }
 
-  // Wallets
-
-  public async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
-    return this.shared.modules.wallets.startSignUpWithRedirect(args)
-  }
-
-  public async completeRedirect(args: CompleteRedirectArgs) {
-    return this.shared.modules.wallets.completeRedirect(args)
-  }
-
-  public async signUp(options: SignupArgs) {
-    return this.shared.modules.wallets.signUp(options)
-  }
-
-  public async logout(wallet: Address.Address, options?: { skipRemoveDevice?: boolean }) {
-    return this.shared.modules.wallets.logout(wallet, options)
-  }
-
-  public async completeLogout(requestId: string, options?: { skipValidateSave?: boolean }) {
-    return this.shared.modules.wallets.completeLogout(requestId, options)
-  }
-
-  public async login(args: LoginArgs) {
-    return this.shared.modules.wallets.login(args)
-  }
-
-  public async completeLogin(requestId: string) {
-    return this.shared.modules.wallets.completeLogin(requestId)
-  }
-
-  public async listWallets() {
-    return this.shared.modules.wallets.list()
-  }
-
-  public async hasWallet(address: Address.Address) {
-    return this.shared.modules.wallets.exists(address)
-  }
-
-  public onWalletsUpdate(cb: (wallets: Wallet[]) => void, trigger?: boolean) {
-    return this.shared.modules.wallets.onWalletsUpdate(cb, trigger)
-  }
-
-  public registerWalletSelector(handler: WalletSelectionUiHandler) {
-    return this.shared.modules.wallets.registerWalletSelector(handler)
-  }
-
-  public unregisterWalletSelector(handler?: WalletSelectionUiHandler) {
-    return this.shared.modules.wallets.unregisterWalletSelector(handler)
-  }
-
-  public async getConfiguration(wallet: Address.Address) {
-    return this.shared.modules.wallets.getConfiguration(wallet)
-  }
-
-  public async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
-    return this.shared.modules.wallets.getOnchainConfiguration(wallet, chainId)
-  }
-
-  public async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
-    return this.shared.modules.wallets.isUpdatedOnchain(wallet, chainId)
-  }
-
-  // Signatures
-
-  public async listSignatureRequests(): Promise<SignatureRequest[]> {
-    return this.shared.modules.signatures.list()
-  }
-
-  public async getSignatureRequest(requestId: string): Promise<SignatureRequest> {
-    return this.shared.modules.signatures.get(requestId)
-  }
-
-  public onSignatureRequestsUpdate(cb: (requests: BaseSignatureRequest[]) => void, trigger?: boolean) {
-    return this.shared.modules.signatures.onSignatureRequestsUpdate(cb, trigger)
-  }
-
-  public onSignatureRequestUpdate(
-    requestId: string,
-    cb: (requests: SignatureRequest) => void,
-    onError?: (error: Error) => void,
-    trigger?: boolean,
-  ) {
-    return this.shared.modules.signatures.onSignatureRequestUpdate(requestId, cb, onError, trigger)
-  }
-
-  public async cancelSignatureRequest(requestId: string) {
-    return this.shared.modules.signatures.cancel(requestId)
-  }
-
-  // Transactions
-
-  public async requestTransaction(
-    from: Address.Address,
-    chainId: bigint,
-    txs: TransactionRequest[],
-    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
-  ) {
-    return this.shared.modules.transactions.request(from, chainId, txs, options)
-  }
-
-  public async defineTransaction(
-    transactionId: string,
-    changes?: { nonce?: bigint; space?: bigint; calls?: Pick<Payload.Call, 'gasLimit'>[] },
-  ) {
-    return this.shared.modules.transactions.define(transactionId, changes)
-  }
-
-  public async selectTransactionRelayer(transactionId: string, relayerOptionId: string) {
-    return this.shared.modules.transactions.selectRelayer(transactionId, relayerOptionId)
-  }
-
-  public async relayTransaction(transactionOrSignatureId: string) {
-    return this.shared.modules.transactions.relay(transactionOrSignatureId)
-  }
-
-  public async deleteTransaction(transactionId: string) {
-    return this.shared.modules.transactions.delete(transactionId)
-  }
-
-  public onTransactionsUpdate(cb: (transactions: Transaction[]) => void, trigger?: boolean) {
-    return this.shared.modules.transactions.onTransactionsUpdate(cb, trigger)
-  }
-
-  public onTransactionUpdate(transactionId: string, cb: (transaction: Transaction) => void, trigger?: boolean) {
-    return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
-  }
-
-  public getTransaction(transactionId: string): Promise<Transaction> {
-    return this.shared.modules.transactions.get(transactionId)
-  }
-
   public registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
@@ -513,133 +486,6 @@ export class Manager {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })
-  }
-
-  // Messages
-
-  public async listMessageRequests() {
-    return this.shared.modules.messages.list()
-  }
-
-  public async getMessageRequest(messageOrSignatureId: string) {
-    return this.shared.modules.messages.get(messageOrSignatureId)
-  }
-
-  public onMessageRequestsUpdate(cb: (messages: Message[]) => void, trigger?: boolean) {
-    return this.shared.modules.messages.onMessagesUpdate(cb, trigger)
-  }
-
-  public onMessageRequestUpdate(messageOrSignatureId: string, cb: (message: Message) => void, trigger?: boolean) {
-    return this.shared.modules.messages.onMessageUpdate(messageOrSignatureId, cb, trigger)
-  }
-
-  public async requestMessageSignature(
-    wallet: Address.Address,
-    message: MessageRequest,
-    chainId?: bigint,
-    options?: { source?: string },
-  ) {
-    return this.shared.modules.messages.request(wallet, message, chainId, options)
-  }
-
-  public async completedMessageSignature(messageOrSignatureId: string) {
-    return this.shared.modules.messages.complete(messageOrSignatureId)
-  }
-
-  public async deleteMessageRequest(messageOrSignatureId: string) {
-    return this.shared.modules.messages.delete(messageOrSignatureId)
-  }
-
-  // Sessions
-
-  public async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
-    return this.shared.modules.sessions.getSessionTopology(walletAddress)
-  }
-
-  public async prepareAuthorizeImplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    args: AuthorizeImplicitSessionArgs,
-  ): Promise<string> {
-    return this.shared.modules.sessions.prepareAuthorizeImplicitSession(walletAddress, sessionAddress, args)
-    // Run completeAuthorizeImplicitSession next
-  }
-
-  public async completeAuthorizeImplicitSession(requestId: string): Promise<{
-    attestation: Attestation.Attestation
-    signature: SequenceSignature.RSY
-  }> {
-    return this.shared.modules.sessions.completeAuthorizeImplicitSession(requestId)
-  }
-
-  public async addExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
-  ): Promise<string> {
-    return this.shared.modules.sessions.addExplicitSession(walletAddress, sessionAddress, permissions)
-    // Run completeSessionUpdate next
-  }
-
-  public async removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
-    return this.shared.modules.sessions.removeExplicitSession(walletAddress, sessionAddress)
-    // Run completeSessionUpdate next
-  }
-
-  public async addBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
-    return this.shared.modules.sessions.addBlacklistAddress(walletAddress, address)
-    // Run completeSessionUpdate next
-  }
-
-  public async removeBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
-    return this.shared.modules.sessions.removeBlacklistAddress(walletAddress, address)
-    // Run completeSessionUpdate next
-  }
-
-  public async completeSessionUpdate(requestId: string) {
-    return this.shared.modules.sessions.completeSessionUpdate(requestId)
-  }
-
-  // Recovery
-
-  public async getRecoverySigners(wallet: Address.Address): Promise<RecoverySigner[] | undefined> {
-    return this.shared.modules.recovery.getRecoverySigners(wallet)
-  }
-
-  public onQueuedRecoveryPayloadsUpdate(
-    wallet: Address.Address,
-    cb: (payloads: QueuedRecoveryPayload[]) => void,
-    trigger?: boolean,
-  ) {
-    return this.shared.modules.recovery.onQueuedRecoveryPayloadsUpdate(wallet, cb, trigger)
-  }
-
-  public async queueRecoveryPayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls) {
-    return this.shared.modules.recovery.queueRecoveryPayload(wallet, chainId, payload)
-  }
-
-  public async completeRecoveryPayload(requestId: string) {
-    return this.shared.modules.recovery.completeRecoveryPayload(requestId)
-  }
-
-  public async addRecoveryMnemonic(wallet: Address.Address, mnemonic: string) {
-    return this.shared.modules.recovery.addRecoveryMnemonic(wallet, mnemonic)
-  }
-
-  public async addRecoverySigner(wallet: Address.Address, address: Address.Address) {
-    return this.shared.modules.recovery.addRecoverySigner(wallet, address)
-  }
-
-  public async removeRecoverySigner(wallet: Address.Address, address: Address.Address) {
-    return this.shared.modules.recovery.removeRecoverySigner(wallet, address)
-  }
-
-  public async completeRecoveryUpdate(requestId: string) {
-    return this.shared.modules.recovery.completeRecoveryUpdate(requestId)
-  }
-
-  public async updateQueuedRecoveryPayloads() {
-    return this.shared.modules.recovery.updateQueuedRecoveryPayloads()
   }
 
   public getNetworks(): Network.Network[] {

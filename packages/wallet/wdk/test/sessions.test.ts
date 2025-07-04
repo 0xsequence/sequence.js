@@ -75,7 +75,7 @@ describe('Sessions (via Manager)', () => {
     const identitySignerMnemonic = Mnemonic.random(Mnemonic.english)
     const identitySignerPk = Mnemonic.toPrivateKey(identitySignerMnemonic, { as: 'Hex' })
     const identitySignerAddress = new CoreSigners.Pk.Pk(identitySignerPk).address
-    const walletAddress = await manager.signUp({
+    const walletAddress = await manager.wallets.signUp({
       kind: 'mnemonic',
       mnemonic: identitySignerMnemonic,
       noGuard: true,
@@ -99,7 +99,6 @@ describe('Sessions (via Manager)', () => {
 
     // Create wallet in core
     const coreWallet = new CoreWallet(walletAddress, {
-      context: opts.context,
       guest: opts.guest,
       // Share the state provider with wdk. In practice this will be the key machine.
       stateProvider,
@@ -147,7 +146,7 @@ describe('Sessions (via Manager)', () => {
     if (CAN_RUN_LIVE && PRIVATE_KEY) {
       // Load the sender
       const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
-      const pkRelayer = new Relayer.Pk.PkRelayer(senderPk, provider)
+      const pkRelayer = new Relayer.Standard.PkRelayer(senderPk, provider)
       const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
       console.log('Transaction sent', tx)
       await new Promise((resolve) => setTimeout(resolve, 3000))
@@ -191,10 +190,14 @@ describe('Sessions (via Manager)', () => {
       dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
       // Request the session permissions from the WDK
-      const requestId = await wdk.manager.addExplicitSession(dapp.wallet.address, explicitSigner.address, permission)
+      const requestId = await wdk.manager.sessions.addExplicitSession(
+        dapp.wallet.address,
+        explicitSigner.address,
+        permission,
+      )
 
       // Sign and complete the request
-      const sigRequest = await wdk.manager.getSignatureRequest(requestId)
+      const sigRequest = await wdk.manager.signatures.get(requestId)
       const identitySigner = sigRequest.signers.find(
         (s) => s.address.toLowerCase() === wdk.identitySignerAddress.toLowerCase(),
       )
@@ -205,7 +208,7 @@ describe('Sessions (via Manager)', () => {
       if (!handled) {
         throw new Error('Failed to handle identity signer')
       }
-      await wdk.manager.completeSessionUpdate(requestId)
+      await wdk.manager.sessions.complete(requestId)
 
       // Create a call payload
       const call: Payload.Call = {
@@ -252,12 +255,12 @@ describe('Sessions (via Manager)', () => {
       }
 
       // Request the session authorization from the WDK
-      const requestId = await wdk.manager.prepareAuthorizeImplicitSession(dapp.wallet.address, e.address, {
+      const requestId = await wdk.manager.sessions.prepareAuthorizeImplicitSession(dapp.wallet.address, e.address, {
         target: 'https://example.com',
       })
 
       // Sign the request (Wallet UI action)
-      const sigRequest = await wdk.manager.getSignatureRequest(requestId)
+      const sigRequest = await wdk.manager.signatures.get(requestId)
       const identitySigner = sigRequest.signers[0]
       if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
         throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
@@ -269,7 +272,7 @@ describe('Sessions (via Manager)', () => {
 
       // Complete the request
       const { attestation, signature: identitySignature } =
-        await wdk.manager.completeAuthorizeImplicitSession(requestId)
+        await wdk.manager.sessions.completeAuthorizeImplicitSession(requestId)
 
       // Load the implicit signer
       const implicitSigner = new CoreSigners.Session.Implicit(
