@@ -218,12 +218,116 @@ export class Manager {
 
   private readonly otpHandler?: OtpHandler
 
+  // ======== Begin Public Modules ========
+
+  /**
+   * Manages the lifecycle of user wallets within the WDK, from creation (sign-up)
+   * to session management (login/logout).
+   *
+   * This is the primary entry point for users. It handles the association of login
+   * credentials (like mnemonics or passkeys) with on-chain wallet configurations.
+   *
+   * Key behaviors:
+   * - `signUp()`: Creates a new wallet configuration and deploys it.
+   * - `login()`: Adds the current device as a new authorized signer to an existing wallet. This is a 2-step process requiring a signature from an existing signer.
+   * - `logout()`: Can perform a "soft" logout (local session removal) or a "hard" logout (on-chain key removal), which is also a 2-step process.
+   *
+   * This module orchestrates with the `signatures` module to handle the signing of
+   * configuration updates required for login and hard-logout operations.
+   *
+   * @see {WalletsInterface} for all available methods.
+   */
   public readonly wallets: WalletsInterface
+
+  /**
+   * Acts as the central coordinator for all signing operations. It does not perform
+   * the signing itself but manages the entire process.
+   *
+   * When an action requires a signature (e.g., sending a transaction, updating configuration),
+   * a `SignatureRequest` is created here. This module then determines which signers
+   * (devices, passkeys, etc.) are required to meet the wallet's security threshold.
+   *
+   * Key features:
+   * - Tracks the real-time status of each required signer (`ready`, `actionable`, `signed`, `unavailable`).
+   * - Calculates the collected signature weight against the required threshold.
+   * - Provides hooks (`onSignatureRequestUpdate`) for building reactive UIs that guide the user through the signing process.
+   *
+   * Developers will primarily interact with this module to monitor the state of a signing
+   * request initiated by other modules like `transactions` or `wallets`.
+   *
+   * @see {SignaturesInterface} for all available methods.
+   * @see {SignatureRequest} for the detailed structure of a request object.
+   */
   public readonly signatures: SignaturesInterface
+
+  /**
+   * Manages the end-to-end lifecycle of on-chain transactions, from creation to final confirmation.
+   *
+   * This module follows a distinct state machine:
+   * 1. `request()`: Creates a new transaction request.
+   * 2. `define()`: Fetches quotes and fee options from all available relayers and ERC-4337 bundlers.
+   * 3. `selectRelayer()`: Finalizes the transaction payload based on the chosen relayer and creates a `SignatureRequest`.
+   * 4. `relay()`: Submits the signed transaction to the chosen relayer/bundler for execution.
+   *
+   * The final on-chain status (`confirmed` or `failed`) is updated asynchronously by a background
+   * process. Use `onTransactionUpdate` to monitor a transaction's progress.
+   *
+   * @see {TransactionsInterface} for all available methods.
+   * @see {Transaction} for the detailed structure of a transaction object and its states.
+   */
   public readonly transactions: TransactionsInterface
+
+  /**
+   * Handles the signing of off-chain messages, such as EIP-191 personal_sign messages
+   * or EIP-712 typed data.
+   *
+   * The flow is simpler than on-chain transactions:
+   * 1. `request()`: Prepares the message and creates a `SignatureRequest`.
+   * 2. The user signs the request via the `signatures` module UI.
+   * 3. `complete()`: Builds the final, EIP-1271/EIP-6492 compliant signature string.
+   *
+   * This module is essential for dapps that require off-chain proof of ownership or authorization.
+   * The resulting signature is verifiable on-chain by calling `isValidSignature` on the wallet contract.
+   *
+   * @see {MessagesInterface} for all available methods.
+   */
   public readonly messages: MessagesInterface
+
+  /**
+   * Manages session keys, which are temporary, often permissioned, signers for a wallet.
+   * This allows dapps to perform actions on the user's behalf without prompting for a signature
+   * for every transaction.
+   *
+   * Two types of sessions are supported:
+   * - **Implicit Sessions**: Authorized by an off-chain attestation from the user's primary identity
+   *   signer. They are dapp-specific and don't require a configuration update to create. Ideal for
+   *   low-risk, frequent actions within a single application.
+   * - **Explicit Sessions**: Authorized by a wallet configuration update. These sessions
+   *   are more powerful and can be governed by detailed, on-chain permissions (e.g., value limits,
+   *   contract targets, function call rules).
+   *
+   * This module handles the creation, removal, and configuration of both session types.
+   *
+   * @see {SessionsInterface} for all available methods.
+   */
   public readonly sessions: SessionsInterface
+
+  /**
+   * Manages the wallet's recovery mechanism, allowing designated recovery signers
+   * to execute transactions after a time delay.
+   *
+   * This module is responsible for:
+   * - **Configuration**: Adding or removing recovery signers (e.g., a secondary mnemonic). This is a standard configuration update that must be signed by the wallet's primary signers.
+   * - **Execution**: A two-step process to use the recovery feature:
+   *   1. `queuePayload()`: A recovery signer signs a payload, which is then sent on-chain to start a timelock.
+   *   2. After the timelock, the `recovery` handler itself can sign a transaction to execute the queued payload.
+   * - **Monitoring**: `updateQueuedPayloads()` fetches on-chain data about pending recovery attempts, a crucial security feature.
+   *
+   * @see {RecoveryInterface} for all available methods.
+   */
   public readonly recovery: RecoveryInterface
+
+  // ======== End Public Modules ========
 
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
