@@ -119,3 +119,24 @@ export class PlayFabChallenge extends Challenge {
     return this
   }
 }
+
+export class XAuthChallenge extends Challenge {
+  constructor(
+    readonly accessToken: string
+  ) {
+    super()
+  }
+
+  getIntentParams(): ChallengeIntentParams {
+    const accessTokenHash = ethers.id(this.accessToken)
+    return {
+      identityType: IdentityType.Twitter,
+      verifier: accessTokenHash,
+      answer: this.accessToken
+    }
+  }
+
+  withAnswer() {
+    return this
+  }
+}
