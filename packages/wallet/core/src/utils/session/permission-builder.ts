@@ -266,8 +266,8 @@ export class PermissionBuilder {
   }
 
   build(): Permission.Permission {
-    if (this.rules.length === 0 && !this.allowAllSet) {
-      throw new Error(`must call forFunction(...) or allowAll() before calling build()`)
+    if (this.rules.length === 0 && !this.allowAllSet && !this.exactCalldataSet) {
+      throw new Error(`must call forFunction(...) or allowAll() or exactCalldata() before calling build()`)
     }
     return {
       target: this.target,

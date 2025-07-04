@@ -25,10 +25,12 @@ describe('SessionManager', () => {
     'should load from state',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
 
       let topology = SessionConfig.emptySessionsTopology(identityAddress)
       // Add random signer to the topology
       const sessionPermission: Signers.Session.ExplicitParams = {
+        chainId,
         valueLimit: 1000000000000000000n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [
@@ -184,70 +186,84 @@ describe('SessionManager', () => {
     timeout,
   )
 
+  const shouldCreateAndSignWithExplicitSession = async (useChainId: boolean) => {
+    const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+    const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+
+    // Create explicit signer
+    const explicitPrivateKey = Secp256k1.randomPrivateKey()
+    const explicitPermissions: Signers.Session.ExplicitParams = {
+      chainId: useChainId ? chainId : 0n,
+      valueLimit: 1000000000000000000n, // 1 ETH
+      deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+      permissions: [PermissionBuilder.for(EMITTER_ADDRESS).allowAll().build()],
+    }
+    const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, explicitPermissions)
+    // Create the topology and wallet
+    const topology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+      ...explicitPermissions,
+      signer: explicitSigner.address,
+      chainId,
+    })
+    await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+    const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+    const wallet = await Wallet.fromConfiguration(
+      {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
+      },
+      {
+        stateProvider,
+      },
+    )
+    // Create the session manager
+    const sessionManager = new Signers.SessionManager(wallet, {
+      provider,
+      sessionManagerAddress: Extensions.Dev1.sessions,
+    }).withExplicitSigner(explicitSigner)
+
+    // Create a test transaction within permissions
+    const call: Payload.Call = {
+      to: EMITTER_ADDRESS,
+      value: 0n,
+      data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
+      gasLimit: 0n,
+      delegateCall: false,
+      onlyFallback: false,
+      behaviorOnError: 'revert',
+    }
+    const payload: Payload.Calls = {
+      type: 'call',
+      nonce: 0n,
+      space: 0n,
+      calls: [call],
+    }
+
+    // Sign the transaction
+    const signature = await sessionManager.signSapient(wallet.address, chainId, payload, imageHash)
+
+    expect(signature.type).toBe('sapient')
+    expect(signature.address).toBe(sessionManager.address)
+    expect(signature.data).toBeDefined()
+
+    // Check if the signature is valid
+    const isValid = await sessionManager.isValidSapientSignature(wallet.address, chainId, payload, signature)
+    expect(isValid).toBe(true)
+  }
+
   it(
     'should create and sign with an explicit session',
     async () => {
-      const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      await shouldCreateAndSignWithExplicitSession(true)
+    },
+    timeout,
+  )
 
-      // Create explicit signer
-      const explicitPrivateKey = Secp256k1.randomPrivateKey()
-      const explicitPermissions: Signers.Session.ExplicitParams = {
-        valueLimit: 1000000000000000000n, // 1 ETH
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
-        permissions: [PermissionBuilder.for(EMITTER_ADDRESS).allowAll().build()],
-      }
-      const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, explicitPermissions)
-      // Create the topology and wallet
-      const topology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
-        ...explicitPermissions,
-        signer: explicitSigner.address,
-      })
-      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
-      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
-      const wallet = await Wallet.fromConfiguration(
-        {
-          threshold: 1n,
-          checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
-        },
-        {
-          stateProvider,
-        },
-      )
-      // Create the session manager
-      const sessionManager = new Signers.SessionManager(wallet, {
-        provider,
-        sessionManagerAddress: Extensions.Dev1.sessions,
-      }).withExplicitSigner(explicitSigner)
-
-      // Create a test transaction within permissions
-      const call: Payload.Call = {
-        to: EMITTER_ADDRESS,
-        value: 0n,
-        data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
-        gasLimit: 0n,
-        delegateCall: false,
-        onlyFallback: false,
-        behaviorOnError: 'revert',
-      }
-      const payload: Payload.Calls = {
-        type: 'call',
-        nonce: 0n,
-        space: 0n,
-        calls: [call],
-      }
-
-      // Sign the transaction
-      const signature = await sessionManager.signSapient(wallet.address, chainId, payload, imageHash)
-
-      expect(signature.type).toBe('sapient')
-      expect(signature.address).toBe(sessionManager.address)
-      expect(signature.data).toBeDefined()
-
-      // Check if the signature is valid
-      const isValid = await sessionManager.isValidSapientSignature(wallet.address, chainId, payload, signature)
-      expect(isValid).toBe(true)
+  it(
+    'should create and sign with an explicit session with 0 chainId',
+    async () => {
+      await shouldCreateAndSignWithExplicitSession(false)
     },
     timeout,
   )
@@ -397,6 +413,7 @@ describe('SessionManager', () => {
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
       const sessionPermission: Signers.Session.ExplicitParams = {
+        chainId,
         valueLimit: 1000000000000000000n, // 1 ETH
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [PermissionBuilder.for(EMITTER_ADDRESS).allowAll().build()],
@@ -464,6 +481,7 @@ describe('SessionManager', () => {
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
       const sessionPermission: Signers.Session.ExplicitParams = {
+        chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [PermissionBuilder.for(EMITTER_ADDRESS).forFunction(EMITTER_FUNCTIONS[0]).onlyOnce().build()],
@@ -550,6 +568,7 @@ describe('SessionManager', () => {
       const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
       const approveAmount = 10000000n // 10 USDC
       const sessionPermission: Signers.Session.ExplicitParams = {
+        chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [ERC20PermissionBuilder.buildApprove(USDC_ADDRESS, explicitAddress, approveAmount)],
@@ -644,6 +663,7 @@ describe('SessionManager', () => {
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
       const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
       const sessionPermission: Signers.Session.ExplicitParams = {
+        chainId,
         valueLimit: 1000000000000000000n, // 1 ETH
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [PermissionBuilder.for(explicitAddress).forFunction(EMITTER_FUNCTIONS[0]).onlyOnce().build()],
@@ -746,6 +766,7 @@ describe('SessionManager', () => {
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
       const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
       const sessionPermission: Signers.Session.ExplicitParams = {
+        chainId,
         valueLimit: 1000000000000000000n, // 1 ETH
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [
