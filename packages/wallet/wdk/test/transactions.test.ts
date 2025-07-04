@@ -29,7 +29,7 @@ describe('Transactions', () => {
     })
 
     const recipient = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: recipient,
         value: 9n,
@@ -37,9 +37,9 @@ describe('Transactions', () => {
     ])
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    let tx = await manager.getTransaction(txId!)
+    let tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('defined')
 
@@ -50,10 +50,10 @@ describe('Transactions', () => {
     expect(tx.relayerOptions.length).toBe(1)
     expect(tx.relayerOptions[0].id).toBeDefined()
 
-    const sigId = await manager.selectTransactionRelayer(txId!, tx.relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, tx.relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    tx = await manager.getTransaction(txId!)
+    tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('formed')
 
@@ -68,7 +68,7 @@ describe('Transactions', () => {
 
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId)
+    await manager.transactions.relay(txId)
 
     // Check the balance of the wallet
     const balance = await provider.request({
@@ -142,7 +142,7 @@ describe('Transactions', () => {
 
     // Send a transaction
     const recipient = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: recipient,
         value: 9n,
@@ -150,9 +150,9 @@ describe('Transactions', () => {
     ])
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    let tx = await manager.getTransaction(txId!)
+    let tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('defined')
 
@@ -163,10 +163,10 @@ describe('Transactions', () => {
     expect(tx.relayerOptions.length).toBe(1)
     expect(tx.relayerOptions[0].id).toBeDefined()
 
-    const sigId = await manager.selectTransactionRelayer(txId!, tx.relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, tx.relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    tx = await manager.getTransaction(txId!)
+    tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('formed')
 
@@ -181,7 +181,7 @@ describe('Transactions', () => {
 
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId)
+    await manager.transactions.relay(txId)
 
     // Check the balance of the wallet
     const balance = await provider.request({
@@ -212,13 +212,13 @@ describe('Transactions', () => {
 
     let transactions: Transaction[] = []
     let calledTimes = 0
-    manager.onTransactionsUpdate((txs) => {
+    manager.transactions.onTransactionsUpdate((txs) => {
       transactions = txs
       calledTimes++
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
         value: 9n,
@@ -226,7 +226,7 @@ describe('Transactions', () => {
     ])
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
     expect(calledTimes).toBe(1)
     expect(transactions.length).toBe(1)
@@ -248,7 +248,7 @@ describe('Transactions', () => {
     await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -256,13 +256,13 @@ describe('Transactions', () => {
 
     let tx: Transaction | undefined
     let calledTimes = 0
-    manager.onTransactionUpdate(txId!, (t) => {
+    manager.transactions.onTransactionUpdate(txId!, (t) => {
       tx = t
       calledTimes++
     })
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
     while (calledTimes < 1) {
       await new Promise((resolve) => setTimeout(resolve, 1))
@@ -278,7 +278,7 @@ describe('Transactions', () => {
     expect(tx!.requests[0].gasLimit).toBeUndefined()
     expect(tx!.requests[0].data).toBeUndefined()
 
-    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
     while (calledTimes < 2) {
@@ -297,7 +297,7 @@ describe('Transactions', () => {
     const deviceSigner = sigRequest.signers.find((s) => s.status === 'ready')!
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId!)
+    await manager.transactions.relay(txId!)
     while (calledTimes < 3) {
       await new Promise((resolve) => setTimeout(resolve, 1))
     }
@@ -316,7 +316,7 @@ describe('Transactions', () => {
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -324,8 +324,8 @@ describe('Transactions', () => {
 
     expect(txId).toBeDefined()
 
-    await manager.deleteTransaction(txId!)
-    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+    await manager.transactions.delete(txId!)
+    await expect(manager.transactions.get(txId!)).rejects.toThrow()
   })
 
   it('Should delete an existing transaction before the relayer is selected', async () => {
@@ -337,7 +337,7 @@ describe('Transactions', () => {
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -345,10 +345,10 @@ describe('Transactions', () => {
 
     expect(txId).toBeDefined()
 
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    await manager.deleteTransaction(txId!)
-    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+    await manager.transactions.delete(txId!)
+    await expect(manager.transactions.get(txId!)).rejects.toThrow()
   })
 
   it('Should delete an existing transaction before it is relayed', async () => {
@@ -360,7 +360,7 @@ describe('Transactions', () => {
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -368,17 +368,17 @@ describe('Transactions', () => {
 
     expect(txId).toBeDefined()
 
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    const tx = await manager.getTransaction(txId!)
+    const tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx!.status).toBe('defined')
 
-    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    await manager.deleteTransaction(txId!)
-    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+    await manager.transactions.delete(txId!)
+    await expect(manager.transactions.get(txId!)).rejects.toThrow()
 
     // Signature request should be canceled
     const sigRequest = await manager.signatures.get(sigId!)
@@ -415,15 +415,15 @@ describe('Transactions', () => {
     await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
 
     const randomAddress = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: randomAddress,
       },
     ])
 
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    let tx = await manager.getTransaction(txId!)
+    let tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx!.status).toBe('defined')
 
@@ -438,10 +438,10 @@ describe('Transactions', () => {
     expect(call1.to).toEqual(randomAddress)
     expect(call2.to).toEqual(wallet)
 
-    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    tx = await manager.getTransaction(txId!)
+    tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx!.status).toBe('formed')
 
@@ -454,7 +454,7 @@ describe('Transactions', () => {
     const deviceSigner = sigRequest.signers.find((s) => s.status === 'ready')!
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId!)
+    await manager.transactions.relay(txId!)
 
     // wait 1 second
     await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -471,7 +471,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId1 = manager.requestTransaction(wallet!, 42161n, [
+    const txId1 = manager.transactions.request(wallet!, 42161n, [
       {
         to: wallet!,
       },
@@ -488,7 +488,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId1 = await manager.requestTransaction(
+    const txId1 = await manager.transactions.request(
       wallet!,
       42161n,
       [

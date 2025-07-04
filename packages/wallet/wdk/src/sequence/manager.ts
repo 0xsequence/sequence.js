@@ -33,11 +33,10 @@ import { Recovery } from './recovery.js'
 import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
 import { Signatures, SignaturesInterface } from './signatures.js'
 import { Signers } from './signers.js'
-import { Transactions } from './transactions.js'
-import { BaseSignatureRequest, QueuedRecoveryPayload, SignatureRequest, Wallet } from './types/index.js'
+import { Transactions, TransactionsInterface } from './transactions.js'
+import { QueuedRecoveryPayload } from './types/index.js'
 import { Message, MessageRequest } from './types/message-request.js'
 import { Kinds, RecoverySigner } from './types/signer.js'
-import { Transaction, TransactionRequest } from './types/transaction-request.js'
 import { Wallets, WalletsInterface } from './wallets.js'
 
 export type ManagerOptions = {
@@ -233,6 +232,7 @@ export class Manager {
 
   public readonly wallets: WalletsInterface
   public readonly signatures: SignaturesInterface
+  public readonly transactions: TransactionsInterface
 
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
@@ -303,6 +303,7 @@ export class Manager {
 
     this.wallets = modules.wallets
     this.signatures = modules.signatures
+    this.transactions = modules.transactions
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
     shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
@@ -371,48 +372,6 @@ export class Manager {
         module.initialize()
       }
     }
-  }
-
-  // Transactions
-
-  public async requestTransaction(
-    from: Address.Address,
-    chainId: bigint,
-    txs: TransactionRequest[],
-    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
-  ) {
-    return this.shared.modules.transactions.request(from, chainId, txs, options)
-  }
-
-  public async defineTransaction(
-    transactionId: string,
-    changes?: { nonce?: bigint; space?: bigint; calls?: Pick<Payload.Call, 'gasLimit'>[] },
-  ) {
-    return this.shared.modules.transactions.define(transactionId, changes)
-  }
-
-  public async selectTransactionRelayer(transactionId: string, relayerOptionId: string) {
-    return this.shared.modules.transactions.selectRelayer(transactionId, relayerOptionId)
-  }
-
-  public async relayTransaction(transactionOrSignatureId: string) {
-    return this.shared.modules.transactions.relay(transactionOrSignatureId)
-  }
-
-  public async deleteTransaction(transactionId: string) {
-    return this.shared.modules.transactions.delete(transactionId)
-  }
-
-  public onTransactionsUpdate(cb: (transactions: Transaction[]) => void, trigger?: boolean) {
-    return this.shared.modules.transactions.onTransactionsUpdate(cb, trigger)
-  }
-
-  public onTransactionUpdate(transactionId: string, cb: (transaction: Transaction) => void, trigger?: boolean) {
-    return this.shared.modules.transactions.onTransactionUpdate(transactionId, cb, trigger)
-  }
-
-  public getTransaction(transactionId: string): Promise<Transaction> {
-    return this.shared.modules.transactions.get(transactionId)
   }
 
   public registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {

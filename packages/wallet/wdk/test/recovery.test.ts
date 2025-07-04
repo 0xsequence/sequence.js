@@ -137,7 +137,7 @@ describe('Recovery', () => {
     expect((recoveryPayload!.payload as Payload.Calls).calls.length).toBe(1)
 
     // Send this transaction as any other regular transaction
-    const requestId3 = await manager.requestTransaction(
+    const requestId3 = await manager.transactions.request(
       wallet!,
       42161n,
       (recoveryPayload!.payload as Payload.Calls).calls,
@@ -148,13 +148,13 @@ describe('Recovery', () => {
     expect(requestId3).toBeDefined()
 
     // Define the same nonce and space for the recovery payload
-    await manager.defineTransaction(requestId3, {
+    await manager.transactions.define(requestId3, {
       nonce: (recoveryPayload!.payload as Payload.Calls).nonce,
       space: (recoveryPayload!.payload as Payload.Calls).space,
     })
 
     // Complete the transaction
-    const tx = await manager.getTransaction(requestId3)
+    const tx = await manager.transactions.get(requestId3)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('defined')
     expect((tx as TransactionDefined).relayerOptions.length).toBe(1)
@@ -164,7 +164,7 @@ describe('Recovery', () => {
     expect(localRelayer.relayerId).toBe('local')
 
     // Define the relayer
-    const requestId4 = await manager.selectTransactionRelayer(requestId3, localRelayer.id)
+    const requestId4 = await manager.transactions.selectRelayer(requestId3, localRelayer.id)
     expect(requestId4).toBeDefined()
 
     // Now we sign using the recovery module
@@ -181,8 +181,7 @@ describe('Recovery', () => {
     expect(result4).toBeTruthy()
 
     // Complete the transaction
-    const txHash = await manager.relayTransaction(requestId4)
-    expect(txHash).toBeDefined()
+    await manager.transactions.relay(requestId4)
 
     // The balance of the wallet should be 0 wei
     const balance = await provider.request({
