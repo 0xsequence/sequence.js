@@ -30,7 +30,7 @@ import { RecoveryHandler } from './handlers/recovery.js'
 import { Logger } from './logger.js'
 import { Messages, MessagesInterface } from './messages.js'
 import { Recovery } from './recovery.js'
-import { AuthorizeImplicitSessionArgs, Sessions } from './sessions.js'
+import { AuthorizeImplicitSessionArgs, Sessions, SessionsInterface } from './sessions.js'
 import { Signatures, SignaturesInterface } from './signatures.js'
 import { Signers } from './signers.js'
 import { Transactions, TransactionsInterface } from './transactions.js'
@@ -234,6 +234,7 @@ export class Manager {
   public readonly signatures: SignaturesInterface
   public readonly transactions: TransactionsInterface
   public readonly messages: MessagesInterface
+  public readonly sessions: SessionsInterface
 
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
@@ -306,6 +307,7 @@ export class Manager {
     this.signatures = modules.signatures
     this.transactions = modules.transactions
     this.messages = modules.messages
+    this.sessions = modules.sessions
 
     this.devicesHandler = new DevicesHandler(modules.signatures, modules.devices)
     shared.handlers.set(Kinds.LocalDevice, this.devicesHandler)
@@ -390,56 +392,6 @@ export class Manager {
         handler.setRedirectUri(prefix + '/' + handler.signupKind)
       }
     })
-  }
-
-  // Sessions
-
-  public async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
-    return this.shared.modules.sessions.getSessionTopology(walletAddress)
-  }
-
-  public async prepareAuthorizeImplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    args: AuthorizeImplicitSessionArgs,
-  ): Promise<string> {
-    return this.shared.modules.sessions.prepareAuthorizeImplicitSession(walletAddress, sessionAddress, args)
-    // Run completeAuthorizeImplicitSession next
-  }
-
-  public async completeAuthorizeImplicitSession(requestId: string): Promise<{
-    attestation: Attestation.Attestation
-    signature: SequenceSignature.RSY
-  }> {
-    return this.shared.modules.sessions.completeAuthorizeImplicitSession(requestId)
-  }
-
-  public async addExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
-  ): Promise<string> {
-    return this.shared.modules.sessions.addExplicitSession(walletAddress, sessionAddress, permissions)
-    // Run completeSessionUpdate next
-  }
-
-  public async removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
-    return this.shared.modules.sessions.removeExplicitSession(walletAddress, sessionAddress)
-    // Run completeSessionUpdate next
-  }
-
-  public async addBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
-    return this.shared.modules.sessions.addBlacklistAddress(walletAddress, address)
-    // Run completeSessionUpdate next
-  }
-
-  public async removeBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string> {
-    return this.shared.modules.sessions.removeBlacklistAddress(walletAddress, address)
-    // Run completeSessionUpdate next
-  }
-
-  public async completeSessionUpdate(requestId: string) {
-    return this.shared.modules.sessions.completeSessionUpdate(requestId)
   }
 
   // Recovery
