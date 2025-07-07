@@ -168,6 +168,7 @@ describe('Sessions (via Manager)', () => {
       }
       const permission: Permission.SessionPermissions = {
         signer: e.address,
+        chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [
