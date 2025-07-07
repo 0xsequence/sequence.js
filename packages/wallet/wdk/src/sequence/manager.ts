@@ -112,12 +112,12 @@ export const ManagerOptionsDefaults = {
   relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
 
   guardUrl: 'https://dev-guard.sequence.app',
-  guardAddress: '0x0AB3c096F3b2FD017413266Dfb29524A21df556f' as Address.Address, // TODO: change to the actual guard address
+  guardAddress: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a' as Address.Address, // TODO: change to the actual guard address
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
     type: 'signer',
-    address: '0x0AB3c096F3b2FD017413266Dfb29524A21df556f', // TODO: change to the actual guard address
+    address: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a', // TODO: change to the actual guard address
     weight: 1n,
   } as Config.SignerLeaf,
 
