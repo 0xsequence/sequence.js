@@ -4,7 +4,7 @@ import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
-import { Shared } from './manager.js'
+import { ManagerOptionsDefaults, Shared } from './manager.js'
 import { Action } from './types/index.js'
 import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
@@ -483,9 +483,7 @@ export class Wallets {
       ? undefined
       : buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
 
-    // TODO: Add recovery module
-    // TODO: Add smart sessions module
-    // Placeholder
+    // Add modules
     let modules: Config.SapientSignerLeaf[] = []
 
     if (!args.noSessionManager) {
@@ -497,10 +495,9 @@ export class Wallets {
       // Prepare the configuration leaf
       const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
       modules.push({
-        type: 'sapient-signer',
+        ...ManagerOptionsDefaults.defaultSessionsTopology,
         address: this.shared.sequence.extensions.sessions,
         imageHash: sessionsImageHash,
-        weight: 255n,
       })
     }
 
