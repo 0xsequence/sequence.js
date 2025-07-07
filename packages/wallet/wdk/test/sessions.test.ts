@@ -168,6 +168,7 @@ describe('Sessions (via Manager)', () => {
       }
       const permission: Permission.SessionPermissions = {
         signer: e.address,
+        chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
         permissions: [
@@ -195,7 +196,9 @@ describe('Sessions (via Manager)', () => {
 
       // Sign and complete the request
       const sigRequest = await wdk.manager.getSignatureRequest(requestId)
-      const identitySigner = sigRequest.signers.find((s) => s.address === wdk.identitySignerAddress)
+      const identitySigner = sigRequest.signers.find(
+        (s) => s.address.toLowerCase() === wdk.identitySignerAddress.toLowerCase(),
+      )
       if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
         throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
       }

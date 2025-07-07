@@ -1,10 +1,17 @@
 import { Address, Hex } from 'ox'
 
+export type Capabilities = {
+  erc4337?: {
+    entrypoint: Address.Address
+  }
+}
+
 export type Context = {
   factory: Address.Address
   stage1: Address.Address
   stage2: Address.Address
   creationCode: Hex.Hex
+  capabilities?: Capabilities
 }
 
 export const Dev1: Context = {
@@ -19,4 +26,31 @@ export const Dev2: Context = {
   stage1: '0x300E98ae5bEA4A7291d62Eb0b9feD535E10095dD',
   stage2: '0x90cb0a8ccf40bEdA60896e408bdc7801033447C6',
   creationCode: '0x6041600e3d396021805130553df33d3d36153402601f57363d3d373d363d30545af43d82803e903d91601f57fd5bf3',
+}
+
+export const Dev2_4337: Context = {
+  factory: '0xFE14B91dE3c5Ca74c4D24608EBcD4B2848aA6010',
+  stage1: '0x8Ae58FCc0Ee9b32994CA52c9854deb969DC8fa2A',
+  stage2: '0x30f8e3AceAcDEac8a3F28935D87FD58DC5f71ad2',
+  creationCode: '0x6041600e3d396021805130553df33d3d36153402601f57363d3d373d363d30545af43d82803e903d91601f57fd5bf3',
+  capabilities: {
+    erc4337: {
+      entrypoint: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+    },
+  },
+}
+
+export type KnownContext = Context & {
+  name: string
+  development: boolean
+}
+
+export const KnownContexts: KnownContext[] = [
+  { name: 'Dev1', development: true, ...Dev1 },
+  { name: 'Dev2', development: true, ...Dev2 },
+  { name: 'Dev2_4337', development: true, ...Dev2_4337 },
+]
+
+export function isKnownContext(context: Context): context is KnownContext {
+  return (context as KnownContext).name !== undefined && (context as KnownContext).development !== undefined
 }

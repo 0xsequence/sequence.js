@@ -9,11 +9,34 @@ export type TransactionRequest = {
   gasLimit?: bigint
 }
 
-export type RelayerOption = {
+export type BaseRelayerOption = {
   id: string
+  relayerType: string
   relayerId: string
+  speed?: 'slow' | 'standard' | 'fast'
+}
+
+export type StandardRelayerOption = BaseRelayerOption & {
+  kind: 'standard'
   feeOption?: Relayer.FeeOption
   quote?: Relayer.FeeQuote
+  name?: string
+  icon?: string
+}
+
+export type ERC4337RelayerOption = BaseRelayerOption & {
+  kind: 'erc4337'
+  alternativePayload: Payload.Calls4337_07
+}
+
+export type RelayerOption = StandardRelayerOption | ERC4337RelayerOption
+
+export function isStandardRelayerOption(relayerOption: RelayerOption): relayerOption is StandardRelayerOption {
+  return relayerOption.kind === 'standard'
+}
+
+export function isERC4337RelayerOption(relayerOption: RelayerOption): relayerOption is ERC4337RelayerOption {
+  return relayerOption.kind === 'erc4337'
 }
 
 type TransactionBase = {
@@ -21,7 +44,7 @@ type TransactionBase = {
   wallet: Address.Address
   requests: TransactionRequest[]
   source: string
-  envelope: Envelope.Envelope<Payload.Calls>
+  envelope: Envelope.Envelope<Payload.Calls | Payload.Calls4337_07>
   timestamp: number
 }
 
@@ -43,7 +66,22 @@ export type TransactionFormed = TransactionBase & {
 export type TransactionRelayed = TransactionBase & {
   status: 'relayed'
   opHash: string
+  relayedAt: number
+  relayerId: string
   opStatus?: Relayer.OperationStatus
 }
 
-export type Transaction = TransactionRequested | TransactionDefined | TransactionFormed | TransactionRelayed
+export type TransactionFinal = TransactionBase & {
+  status: 'final'
+  opHash: string
+  relayedAt: number
+  relayerId: string
+  opStatus: Relayer.OperationStatus
+}
+
+export type Transaction =
+  | TransactionRequested
+  | TransactionDefined
+  | TransactionFormed
+  | TransactionRelayed
+  | TransactionFinal

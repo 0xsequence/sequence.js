@@ -64,11 +64,15 @@ export type ManagerOptions = {
   stateProvider?: State.Provider
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
+  bundlers?: Relayer.Bundler[]
   guardUrl?: string
   guardAddress?: Address.Address
 
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
+
+  // EIP-6963 support
+  multiInjectedProviderDiscovery?: boolean
 
   identity?: {
     url?: string
@@ -94,6 +98,7 @@ export const ManagerOptionsDefaults = {
 
   extensions: Extensions.Dev1,
   context: Context.Dev1,
+  context4337: Context.Dev2_4337,
   guest: Constants.DefaultGuest,
 
   encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
@@ -107,9 +112,10 @@ export const ManagerOptionsDefaults = {
 
   dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
 
-  stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore()),
+  stateProvider: new State.Sequence.Provider(),
   networks: Network.All,
-  relayers: () => [Relayer.Local.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [Relayer.Standard.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  bundlers: [],
 
   guardUrl: 'https://dev-guard.sequence.app',
   guardAddress: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a' as Address.Address, // TODO: change to the actual guard address
@@ -131,6 +137,8 @@ export const ManagerOptionsDefaults = {
     requiredDeltaTime: 2592000n, // 30 days (in seconds)
     minTimestamp: 0n,
   },
+
+  multiInjectedProviderDiscovery: true,
 
   identity: {
     // TODO: change to prod url once deployed
@@ -183,6 +191,7 @@ export type Databases = {
 
 export type Sequence = {
   readonly context: Context.Context
+  readonly context4337: Context.Context
   readonly extensions: Extensions.Extensions
   readonly guest: Address.Address
 
@@ -190,6 +199,7 @@ export type Sequence = {
 
   readonly networks: Network.Network[]
   readonly relayers: Relayer.Relayer[]
+  readonly bundlers: Relayer.Bundler[]
 
   readonly defaultGuardTopology: Config.Topology
   readonly defaultRecoverySettings: RecoverySettings
@@ -237,17 +247,35 @@ export class Manager {
   constructor(options?: ManagerOptions) {
     const ops = applyManagerOptionsDefaults(options)
 
+    // Build relayers list
+    let relayers: Relayer.Relayer[] = []
+
+    // Add EIP-6963 relayers if enabled
+    if (ops.multiInjectedProviderDiscovery) {
+      try {
+        relayers.push(...Relayer.Standard.EIP6963.getRelayers())
+      } catch (error) {
+        console.warn('Failed to initialize EIP-6963 relayers:', error)
+      }
+    }
+
+    // Add configured relayers
+    const configuredRelayers = typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers
+    relayers.push(...configuredRelayers)
+
     const shared: Shared = {
       verbose: ops.verbose,
 
       sequence: {
         context: ops.context,
+        context4337: ops.context4337,
         extensions: ops.extensions,
         guest: ops.guest,
 
         stateProvider: ops.stateProvider,
         networks: ops.networks,
-        relayers: typeof ops.relayers === 'function' ? ops.relayers() : ops.relayers,
+        relayers,
+        bundlers: ops.bundlers,
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultRecoverySettings: ops.defaultRecoverySettings,
@@ -454,7 +482,7 @@ export class Manager {
     from: Address.Address,
     chainId: bigint,
     txs: TransactionRequest[],
-    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean },
+    options?: { skipDefineGas?: boolean; source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
   ) {
     return this.shared.modules.transactions.request(from, chainId, txs, options)
   }

@@ -30,6 +30,7 @@
   "dependencies": {
     "@0xsequence/relayer": "workspace:^",
     "@0xsequence/wallet-primitives": "workspace:^",
+    "mipd": "^0.0.7",
     "ox": "^0.7.2",
     "viem": "^2.30.6"
   }

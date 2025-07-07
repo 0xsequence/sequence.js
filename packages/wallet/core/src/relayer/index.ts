@@ -1,5 +1,7 @@
+// Export the core interfaces and type guards
 export * from './relayer.js'
-export * as Local from './local.js'
-export * as Pk from './pk-relayer.js'
-export * as Rpc from './rpc/index.js'
-export * as Sequence from './sequence.js'
+export * from './bundler.js'
+
+// Group and export implementations
+export * as Standard from './standard/index.js'
+export * as Bundlers from './bundlers/index.js'

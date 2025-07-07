@@ -7,6 +7,10 @@ interface CronJob {
   handler: () => Promise<void>
 }
 
+/**
+ * Cron manages scheduled jobs, persisting their last run times and ensuring
+ * jobs are executed at their specified intervals.
+ */
 export class Cron {
   private jobs: Map<string, CronJob> = new Map()
   private checkInterval?: ReturnType<typeof setInterval>
@@ -14,17 +18,28 @@ export class Cron {
   private isStopping: boolean = false
   private currentCheckJobsPromise: Promise<void> = Promise.resolve()
 
+  /**
+   * Initializes the Cron scheduler and starts the periodic job checker.
+   * @param shared Shared context for modules and logging.
+   */
   constructor(private readonly shared: Shared) {
     this.start()
   }
 
+  /**
+   * Starts the periodic job checking loop.
+   * Does nothing if the Cron is stopping.
+   */
   private start() {
     if (this.isStopping) return
     this.executeCheckJobsChain()
     this.checkInterval = setInterval(() => this.executeCheckJobsChain(), 60 * 1000)
   }
 
-  // Wraps checkJobs to chain executions and manage currentCheckJobsPromise
+  /**
+   * Chains job checks to ensure sequential execution.
+   * Handles errors from previous executions to avoid breaking the chain.
+   */
   private executeCheckJobsChain(): void {
     this.currentCheckJobsPromise = this.currentCheckJobsPromise
       .catch(() => {}) // Ignore errors from previous chain link for sequencing
@@ -36,6 +51,9 @@ export class Cron {
       })
   }
 
+  /**
+   * Stops the Cron scheduler, clears the interval, and waits for any running job checks to finish.
+   */
   public async stop(): Promise<void> {
     this.isStopping = true
 
@@ -51,6 +69,13 @@ export class Cron {
     })
   }
 
+  /**
+   * Registers a new cron job.
+   * @param id Unique job identifier.
+   * @param interval Execution interval in milliseconds.
+   * @param handler Async function to execute.
+   * @throws If a job with the same ID already exists.
+   */
   registerJob(id: string, interval: number, handler: () => Promise<void>) {
     if (this.jobs.has(id)) {
       throw new Error(`Job with ID ${id} already exists`)
@@ -60,10 +85,19 @@ export class Cron {
     // No syncWithStorage needed here, it happens in checkJobs
   }
 
+  /**
+   * Unregisters a cron job by its ID.
+   * @param id Job identifier to remove.
+   */
   unregisterJob(id: string) {
     this.jobs.delete(id)
   }
 
+  /**
+   * Checks all registered jobs and executes those whose interval has elapsed.
+   * Updates last run times and persists state.
+   * Uses a lock to prevent concurrent execution.
+   */
   private async checkJobs(): Promise<void> {
     if (this.isStopping) {
       return
@@ -95,7 +129,6 @@ export class Cron {
               if (!this.isStopping) {
                 job.lastRun = now
                 storage.set(id, { lastRun: now })
-              } else {
               }
             } catch (error) {
               if (error instanceof DOMException && error.name === 'AbortError') {
@@ -120,12 +153,19 @@ export class Cron {
     }
   }
 
+  /**
+   * Loads the persisted last run times for jobs from localStorage.
+   * @returns Map of job IDs to their last run times.
+   */
   private async getStorageState(): Promise<Map<string, { lastRun: number }>> {
     if (this.isStopping) return new Map()
     const state = localStorage.getItem(this.STORAGE_KEY)
     return new Map(state ? JSON.parse(state) : [])
   }
 
+  /**
+   * Persists the current last run times of all jobs to localStorage.
+   */
   private async syncWithStorage() {
     if (this.isStopping) return
     const state = Array.from(this.jobs.entries()).map(([id, job]) => [id, { lastRun: job.lastRun }])

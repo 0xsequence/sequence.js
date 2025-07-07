@@ -1,15 +1,21 @@
 import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequence/relayer'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from './relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
 export class SequenceRelayer implements Relayer {
+  public readonly kind: 'relayer' = 'relayer'
+  public readonly type = 'sequence'
   readonly id = 'sequence'
 
   private readonly service: Service
 
   constructor(host: string) {
     this.service = new Service(host, fetch)
+  }
+
+  async isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+    return true
   }
 
   async feeOptions(

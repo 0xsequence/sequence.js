@@ -22,6 +22,7 @@ export type Permission = {
 
 export type SessionPermissions = {
   signer: Address.Address
+  chainId: bigint
   valueLimit: bigint
   deadline: bigint // uint64
   permissions: [Permission, ...Permission[]]
@@ -30,11 +31,32 @@ export type SessionPermissions = {
 export const MAX_PERMISSIONS_COUNT = 2 ** 7 - 1
 export const MAX_RULES_COUNT = 2 ** 8 - 1
 
-export const SELECTOR_MASK = Bytes.fromHex('0xffffffff', { size: 32 })
-export const ADDRESS_MASK = Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffff', { size: 32 })
-export const UINT256_MASK = Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', {
-  size: 32,
-})
+export const MASK = {
+  SELECTOR: Bytes.padRight(Bytes.fromHex('0xffffffff'), 32), // Select intentionally pads right. Other values should pad left
+  ADDRESS: Bytes.padLeft(Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffff'), 32),
+  BOOL: Bytes.padLeft(Bytes.fromHex('0x01'), 32),
+  // Bytes
+  BYTES1: Bytes.padLeft(Bytes.from(Array(1).fill(0xff)), 32),
+  BYTES2: Bytes.padLeft(Bytes.from(Array(2).fill(0xff)), 32),
+  BYTES4: Bytes.padLeft(Bytes.from(Array(4).fill(0xff)), 32),
+  BYTES8: Bytes.padLeft(Bytes.from(Array(8).fill(0xff)), 32),
+  BYTES16: Bytes.padLeft(Bytes.from(Array(16).fill(0xff)), 32),
+  BYTES32: Bytes.padLeft(Bytes.from(Array(32).fill(0xff)), 32),
+  // Ints
+  INT8: Bytes.padLeft(Bytes.from(Array(1).fill(0xff)), 32),
+  INT16: Bytes.padLeft(Bytes.from(Array(2).fill(0xff)), 32),
+  INT32: Bytes.padLeft(Bytes.from(Array(4).fill(0xff)), 32),
+  INT64: Bytes.padLeft(Bytes.from(Array(8).fill(0xff)), 32),
+  INT128: Bytes.padLeft(Bytes.from(Array(16).fill(0xff)), 32),
+  INT256: Bytes.padLeft(Bytes.from(Array(32).fill(0xff)), 32),
+  // Uints
+  UINT8: Bytes.padLeft(Bytes.from(Array(1).fill(0xff)), 32),
+  UINT16: Bytes.padLeft(Bytes.from(Array(2).fill(0xff)), 32),
+  UINT32: Bytes.padLeft(Bytes.from(Array(4).fill(0xff)), 32),
+  UINT64: Bytes.padLeft(Bytes.from(Array(8).fill(0xff)), 32),
+  UINT128: Bytes.padLeft(Bytes.from(Array(16).fill(0xff)), 32),
+  UINT256: Bytes.padLeft(Bytes.from(Array(32).fill(0xff)), 32),
+}
 
 // Encoding
 
@@ -47,6 +69,7 @@ export function encodeSessionPermissions(sessionPermissions: SessionPermissions)
 
   return Bytes.concat(
     Bytes.padLeft(Bytes.fromHex(sessionPermissions.signer), 20),
+    Bytes.padLeft(Bytes.fromNumber(sessionPermissions.chainId), 32),
     Bytes.padLeft(Bytes.fromNumber(sessionPermissions.valueLimit), 32),
     Bytes.padLeft(Bytes.fromNumber(sessionPermissions.deadline, { size: 8 }), 8),
     Bytes.fromNumber(sessionPermissions.permissions.length, { size: 1 }),
@@ -84,11 +107,12 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 
 export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions {
   const signer = Bytes.toHex(bytes.slice(0, 20))
-  const valueLimit = Bytes.toBigInt(bytes.slice(20, 52))
-  const deadline = Bytes.toBigInt(bytes.slice(52, 60))
-  const permissionsLength = Number(bytes[60]!)
+  const chainId = Bytes.toBigInt(bytes.slice(20, 52))
+  const valueLimit = Bytes.toBigInt(bytes.slice(52, 84))
+  const deadline = Bytes.toBigInt(bytes.slice(84, 92))
+  const permissionsLength = Number(bytes[92]!)
   const permissions = []
-  let pointer = 61
+  let pointer = 93
   for (let i = 0; i < permissionsLength; i++) {
     // Pass the remaining bytes instead of a fixed slice length
     const { permission, consumed } = decodePermission(bytes.slice(pointer))
@@ -100,6 +124,7 @@ export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions
   }
   return {
     signer,
+    chainId,
     valueLimit,
     deadline,
     permissions: permissions as [Permission, ...Permission[]],
@@ -196,6 +221,7 @@ export function sessionPermissionsToJson(sessionPermissions: SessionPermissions)
 export function encodeSessionPermissionsForJson(sessionPermissions: SessionPermissions): any {
   return {
     signer: sessionPermissions.signer.toString(),
+    chainId: sessionPermissions.chainId.toString(),
     valueLimit: sessionPermissions.valueLimit.toString(),
     deadline: sessionPermissions.deadline.toString(),
     permissions: sessionPermissions.permissions.map(encodePermissionForJson),
@@ -234,6 +260,7 @@ export function sessionPermissionsFromJson(json: string): SessionPermissions {
 export function sessionPermissionsFromParsed(parsed: any): SessionPermissions {
   return {
     signer: Address.from(parsed.signer),
+    chainId: BigInt(parsed.chainId),
     valueLimit: BigInt(parsed.valueLimit),
     deadline: BigInt(parsed.deadline),
     permissions: parsed.permissions.map(permissionFromParsed),
