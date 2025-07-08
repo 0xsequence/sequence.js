@@ -310,6 +310,19 @@ export class SequenceWaaSBase {
     return this.signIntent(intent)
   }
 
+  async initiateXAuth(accessToken: string): Promise<SignedIntent<IntentDataInitiateAuth>> {
+    const sessionId = await this.getSessionId()
+    const accessTokenHash = ethers.id(accessToken)
+    const intent = await initiateAuth({
+      sessionId,
+      identityType: IdentityType.Twitter,
+      verifier: accessTokenHash,
+      lifespan: DEFAULT_LIFESPAN
+    })
+
+    return this.signIntent(intent)
+  }
+
   async completeAuth(params: ChallengeIntentParams, optParams: Partial<OpenSessionArgs>) {
     const sessionId = await this.getSessionId()
     const intent = await openSession({
