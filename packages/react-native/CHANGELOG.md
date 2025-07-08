@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.21
+
+### Patch Changes
+
+- waas: x (twitter) authentication
+- Updated dependencies
+  - @0xsequence/waas@2.3.21
+
 ## 2.3.20
 
 ### Patch Changes

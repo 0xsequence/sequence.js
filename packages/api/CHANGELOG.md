@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.3.21
+
+### Patch Changes
+
+- waas: x (twitter) authentication
+
 ## 2.3.20
 
 ### Patch Changes
