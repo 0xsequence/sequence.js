@@ -123,8 +123,8 @@ export const ManagerOptionsDefaults = {
   defaultSessionsTopology: {
     // TODO: Move this somewhere else
     type: 'sapient-signer',
-    weight: 10n,
-  } as Omit<Config.SapientSignerLeaf, 'imageHash'>,
+    weight: 255n,
+  } as Omit<Config.SapientSignerLeaf, 'imageHash' | 'address'>,
 
   defaultRecoverySettings: {
     requiredDeltaTime: 2592000n, // 30 days (in seconds)

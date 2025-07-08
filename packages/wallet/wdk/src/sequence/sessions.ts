@@ -23,10 +23,30 @@ export type AuthorizeImplicitSessionArgs = {
 export class Sessions {
   constructor(private readonly shared: Shared) {}
 
-  async getSessionTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology> {
-    const { modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
+  async getSessionTopology(
+    walletAddress: Address.Address,
+    fixMissing = false,
+  ): Promise<SessionConfig.SessionsTopology> {
+    const { loginTopology, modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
     const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
     if (!managerLeaf) {
+      if (fixMissing) {
+        // Create the default session manager leaf
+        if (!Config.isSignerLeaf(loginTopology) && !Config.isSapientSignerLeaf(loginTopology)) {
+          throw new Error('Login topology is not a signer leaf')
+        }
+        const sessionsTopology = SessionConfig.emptySessionsTopology(loginTopology.address)
+        const sessionsConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionsTopology)
+        this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
+        const imageHash = GenericTree.hash(sessionsConfigTree)
+        const leaf: Config.SapientSignerLeaf = {
+          ...ManagerOptionsDefaults.defaultSessionsTopology,
+          address: this.shared.sequence.extensions.sessions,
+          imageHash,
+        }
+        modules.push(leaf)
+        return SessionConfig.configurationTreeToSessionsTopology(sessionsConfigTree)
+      }
       throw new Error('Session manager not found')
     }
     const imageHash = managerLeaf.imageHash
@@ -146,7 +166,8 @@ export class Sessions {
     permissions: CoreSigners.Session.ExplicitParams,
     origin?: string,
   ): Promise<string> {
-    const topology = await this.getSessionTopology(walletAddress)
+    // This will add the session manager if it's missing
+    const topology = await this.getSessionTopology(walletAddress, true)
     const newTopology = SessionConfig.addExplicitSession(topology, {
       ...permissions,
       signer: sessionAddress,
@@ -172,7 +193,8 @@ export class Sessions {
     address: Address.Address,
     origin?: string,
   ): Promise<string> {
-    const topology = await this.getSessionTopology(walletAddress)
+    // This will add the session manager if it's missing
+    const topology = await this.getSessionTopology(walletAddress, true)
     const newTopology = SessionConfig.addToImplicitBlacklist(topology, address)
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
@@ -204,6 +226,7 @@ export class Sessions {
       // Missing. Add it
       modules.push({
         ...ManagerOptionsDefaults.defaultSessionsTopology,
+        address: this.shared.sequence.extensions.sessions,
         imageHash: newImageHash,
       })
     } else {
