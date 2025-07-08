@@ -31,7 +31,7 @@ export class Guard {
         body: JSON.stringify({
           signer: this.shared.sequence.guardAddress,
           request: {
-            chainId,
+            chainId: Number(chainId),
             msg: Hex.fromBytes(digest),
             auxData,
           },
