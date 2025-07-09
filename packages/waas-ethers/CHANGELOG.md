@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.22
+
+### Patch Changes
+
+- Add Sei and Somnia
+- Updated dependencies
+  - @0xsequence/waas@2.3.22
+
 ## 2.3.21
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @0xsequence/core
 
+## 2.3.22
+
+### Patch Changes
+
+- Add Sei and Somnia
+- Updated dependencies
+  - @0xsequence/utils@2.3.22
+  - @0xsequence/abi@2.3.22
+
 ## 2.3.21
 
 ### Patch Changes

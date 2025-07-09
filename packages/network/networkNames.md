@@ -19,9 +19,12 @@ You can use this file as a reference to look up the correct network name slug a 
 | Polygon zkEVM | 1101 | polygon-zkevm |
 | Moonbeam | 1284 | moonbeam |
 | Moonbase Alpha | 1287 | moonbase-alpha |
+| Sei Testnet | 1328 | sei-testnet |
+| Sei | 1329 | sei |
 | Soneium | 1868 | soneium |
 | Soneium Minato (Testnet) | 1946 | soneium-minato |
 | B3 Sepolia | 1993 | b3-sepolia |
+| Somnia | 5031 | somnia |
 | LAOS | 6283 | laos |
 | The Root Network | 7668 | rootnet |
 | The Root Network Porcini Testnet | 7672 | rootnet-porcini |

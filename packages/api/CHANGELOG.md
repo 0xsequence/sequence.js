@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 2.3.22
+
+### Patch Changes
+
+- Add Sei and Somnia
+
 ## 2.3.21
 
 ### Patch Changes
