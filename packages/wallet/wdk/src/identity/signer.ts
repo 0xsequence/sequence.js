@@ -1,15 +1,15 @@
-import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
-import { Signers, State } from '@0xsequence/wallet-core'
-import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
-import { AuthKey } from '../dbs/auth-keys.js'
-import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 import * as Identity from '@0xsequence/identity-instrument'
+import { IdentityInstrument } from '@0xsequence/identity-instrument'
+import { Signers, State } from '@0xsequence/wallet-core'
+import { Address, Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
+import { Signature, Hex, Bytes } from 'ox'
+import { AuthKey } from '../dbs/auth-keys.js'
 
 export function toIdentityAuthKey(authKey: AuthKey): Identity.AuthKey {
   return {
     address: authKey.address,
     keyType: Identity.KeyType.Secp256r1,
-    signer: authKey.identitySigner,
+    signer: authKey.identitySigner ?? '',
     async sign(digest: Bytes.Bytes) {
       const authKeySignature = await window.crypto.subtle.sign(
         {
@@ -31,10 +31,10 @@ export class IdentitySigner implements Signers.Signer {
   ) {}
 
   get address(): Address.Address {
-    if (!Address.validate(this.authKey.identitySigner)) {
+    if (!this.authKey.identitySigner || this.authKey.identitySigner) {
       throw new Error('No signer address found')
     }
-    return Address.checksum(this.authKey.identitySigner)
+    return this.authKey.identitySigner
   }
 
   async sign(

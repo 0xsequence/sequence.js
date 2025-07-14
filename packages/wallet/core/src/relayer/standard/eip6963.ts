@@ -1,8 +1,8 @@
 import { createStore, EIP6963ProviderInfo, EIP6963ProviderDetail } from 'mipd'
 import { EIP1193ProviderAdapter, LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
-import { Address, Hex } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { IntentPrecondition } from './rpc/relayer.gen.js'
 
 export class EIP6963Relayer implements Relayer {

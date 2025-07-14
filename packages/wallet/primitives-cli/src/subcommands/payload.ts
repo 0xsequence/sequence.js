@@ -1,6 +1,6 @@
-import { AbiParameters, Address, Hex } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { AbiParameters, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
-import { Payload } from '@0xsequence/wallet-primitives'
 import { fromPosOrStdin } from '../utils.js'
 
 const CallAbi = [
@@ -34,7 +34,7 @@ export async function doConvertToAbi(_payload: string): Promise<string> {
   throw new Error('Not implemented')
 }
 
-export async function doConvertToPacked(payload: string, wallet?: string): Promise<string> {
+export async function doConvertToPacked(payload: string, wallet?: Address.Address): Promise<string> {
   const decodedPayload = Payload.fromAbiFormat(
     AbiParameters.decode(
       [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
@@ -43,7 +43,7 @@ export async function doConvertToPacked(payload: string, wallet?: string): Promi
   )
 
   if (Payload.isCalls(decodedPayload)) {
-    const packed = Payload.encode(decodedPayload, wallet ? (wallet as `0x${string}`) : undefined)
+    const packed = Payload.encode(decodedPayload, wallet)
     return Hex.from(packed)
   }
 
@@ -60,13 +60,13 @@ export async function doConvertToJson(payload: string): Promise<string> {
   return json
 }
 
-export async function doHash(wallet: string, chainId: bigint, payload: string): Promise<string> {
+export async function doHash(wallet: Address.Address, chainId: bigint, payload: string): Promise<string> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload as Hex.Hex,
   )[0] as unknown as Payload.SolidityDecoded
 
-  return Hex.from(Payload.hash(Address.from(wallet), chainId, Payload.fromAbiFormat(decoded)))
+  return Hex.from(Payload.hash(wallet, chainId, Payload.fromAbiFormat(decoded)))
 }
 
 const payloadCommand: CommandModule = {
@@ -106,7 +106,7 @@ const payloadCommand: CommandModule = {
         },
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
-          const result = await doConvertToPacked(payload, argv.wallet)
+          const result = await doConvertToPacked(payload, argv.wallet ? Address.normalize(argv.wallet) : undefined)
           console.log(result)
         },
       )
@@ -147,7 +147,7 @@ const payloadCommand: CommandModule = {
         },
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
-          const result = await doHash(argv.wallet, BigInt(argv.chainId), payload)
+          const result = await doHash(Address.normalize(argv.wallet), BigInt(argv.chainId), payload)
           console.log(result)
         },
       )

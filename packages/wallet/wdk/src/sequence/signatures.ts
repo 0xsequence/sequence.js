@@ -1,6 +1,6 @@
 import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {
@@ -12,7 +12,6 @@ import {
   SignerSigned,
   SignerUnavailable,
 } from './types/signature-request.js'
-import { Cron } from './cron.js'
 
 export class Signatures {
   constructor(private readonly shared: Shared) {}
@@ -81,9 +80,9 @@ export class Signatures {
         // We may have a signature for this signer already
         const signed = request.envelope.signatures.some((sig) => {
           if (Envelope.isSapientSignature(sig)) {
-            return Address.isEqual(sig.signature.address, sak.address) && sig.imageHash === sak.imageHash
+            return sig.signature.address === sak.address && sig.imageHash === sak.imageHash
           }
-          return Address.isEqual(sig.address, sak.address)
+          return sig.address === sak.address
         })
 
         if (!sak.kind) {
@@ -180,7 +179,7 @@ export class Signatures {
       const pendingRequests = await this.shared.databases.signatures.list()
       const pendingConfigUpdatesToClear = pendingRequests.filter(
         (sig) =>
-          Address.isEqual(sig.wallet, request.wallet) &&
+          sig.wallet === request.wallet &&
           sig.envelope.payload.type === 'config-update' &&
           sig.status === 'pending' &&
           sig.envelope.configuration.checkpoint <= request.envelope.configuration.checkpoint &&

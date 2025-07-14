@@ -1,4 +1,4 @@
-import { Address } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
 
 export interface Precondition {
   type(): string

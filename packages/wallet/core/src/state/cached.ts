@@ -1,6 +1,6 @@
-import { Address, Hex } from 'ox'
+import { Address, Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { MaybePromise, Provider } from './index.js'
-import { Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
 
 export class Cached implements Provider {
   constructor(
@@ -52,16 +52,16 @@ export class Cached implements Provider {
 
     // Sync values to source that are not in cache, and vice versa
     for (const [wallet, data] of Object.entries(deduplicated)) {
-      const walletAddress = Address.from(wallet)
-      if (!source[walletAddress]) {
-        await this.args.source.saveWitnesses(walletAddress, data.chainId, data.payload, {
+      Address.assert(wallet)
+      if (!source[wallet]) {
+        await this.args.source.saveWitnesses(wallet, data.chainId, data.payload, {
           type: 'unrecovered-signer',
           weight: 1n,
           signature: data.signature,
         })
       }
-      if (!cached[walletAddress]) {
-        await this.args.cache.saveWitnesses(walletAddress, data.chainId, data.payload, {
+      if (!cached[wallet]) {
+        await this.args.cache.saveWitnesses(wallet, data.chainId, data.payload, {
           type: 'unrecovered-signer',
           weight: 1n,
           signature: data.signature,
@@ -89,16 +89,16 @@ export class Cached implements Provider {
 
     // Sync values to source that are not in cache, and vice versa
     for (const [wallet, data] of Object.entries(deduplicated)) {
-      const walletAddress = Address.from(wallet)
-      if (!source[walletAddress]) {
-        await this.args.source.saveWitnesses(walletAddress, data.chainId, data.payload, {
+      Address.assert(wallet)
+      if (!source[wallet]) {
+        await this.args.source.saveWitnesses(wallet, data.chainId, data.payload, {
           type: 'unrecovered-signer',
           weight: 1n,
           signature: data.signature,
         })
       }
-      if (!cached[walletAddress]) {
-        await this.args.cache.saveWitnesses(walletAddress, data.chainId, data.payload, {
+      if (!cached[wallet]) {
+        await this.args.cache.saveWitnesses(wallet, data.chainId, data.payload, {
           type: 'unrecovered-signer',
           weight: 1n,
           signature: data.signature,

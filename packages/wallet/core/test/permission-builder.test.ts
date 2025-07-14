@@ -1,13 +1,13 @@
-import { AbiFunction, Address, Bytes } from 'ox'
+import { AbiFunction, Bytes } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Permission } from '../../primitives/src/index.js'
+import { Address, Permission } from '../../primitives/src/index.js'
 import { Utils } from '../src/index.js'
 
 const { PermissionBuilder } = Utils
 
-const TARGET = Address.from('0x1234567890123456789012345678901234567890')
-const TARGET2 = Address.from('0x1234567890123456789012345678901234567891')
+const TARGET = Address.normalize('0x1234567890123456789012345678901234567890')
+const TARGET2 = Address.normalize('0x1234567890123456789012345678901234567891')
 const UINT256_VALUE = 1000000000000000000n
 const BYTES32_MAX = Bytes.fromHex('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 const STRING_VALUE =

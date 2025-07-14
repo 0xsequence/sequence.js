@@ -1,10 +1,9 @@
-import { Address } from 'ox/Address'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
+import { Recovery } from '../recovery.js'
+import { Signatures } from '../signatures.js'
 import { BaseSignatureRequest, SignerUnavailable, SignerReady, SignerActionable, Kinds } from '../types/index.js'
 import { Handler } from './handler.js'
-import { Recovery } from '../recovery.js'
-import { Payload } from '@0xsequence/wallet-primitives'
-import { Hex } from 'ox'
-import { Signatures } from '../signatures.js'
 
 export class RecoveryHandler implements Handler {
   kind = Kinds.Recovery
@@ -19,7 +18,7 @@ export class RecoveryHandler implements Handler {
   }
 
   async status(
-    address: Address,
+    address: Address.Address,
     imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {

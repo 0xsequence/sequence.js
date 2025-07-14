@@ -1,12 +1,13 @@
-import { Generic, Migration } from './generic.js'
+import { Address } from '@0xsequence/wallet-primitives'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
+import { Generic } from './generic.js'
 
 const TABLE_NAME = 'auth-keys'
 
 export type AuthKey = {
-  address: string
+  address: Address.Address
   privateKey: CryptoKey
-  identitySigner: string
+  identitySigner?: Address.Address
   expiresAt: Date
 }
 
@@ -39,15 +40,15 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
   async set(item: AuthKey): Promise<AuthKey['address']> {
     const result = await super.set({
       ...item,
-      address: item.address.toLowerCase(),
-      identitySigner: item.identitySigner.toLowerCase(),
+      address: item.address,
+      identitySigner: item.identitySigner,
     })
     this.scheduleExpiration(item)
     return result
   }
 
   async del(address: AuthKey['address']): Promise<void> {
-    const result = await super.del(address.toLowerCase())
+    const result = await super.del(address)
     this.clearExpiration(address)
     return result
   }
@@ -95,7 +96,7 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
   async delBySigner(signer: string): Promise<void> {
     const authKey = await this.getBySigner(signer.toLowerCase())
     if (authKey) {
-      await this.del(authKey.address.toLowerCase())
+      await this.del(authKey.address)
     }
   }
 
@@ -105,12 +106,12 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
     const now = Date.now()
     const delay = authKey.expiresAt.getTime() - now
     if (delay <= 0) {
-      await this.del(authKey.address.toLowerCase())
+      await this.del(authKey.address)
       return
     }
     const timer = window.setTimeout(() => {
       console.log('removing expired auth key', authKey)
-      this.del(authKey.address.toLowerCase())
+      this.del(authKey.address)
     }, delay)
     this.expirationTimers.set(authKey.address.toLowerCase(), timer)
   }

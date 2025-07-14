@@ -1,7 +1,7 @@
 import { Signers } from '@0xsequence/wallet-core'
-import { Address } from 'ox'
-import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
+import { Address } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
+import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
 
 export class Devices {
   constructor(private readonly shared: Shared) {}

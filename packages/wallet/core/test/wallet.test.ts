@@ -1,7 +1,7 @@
-import { Address, Hash, Hex, Provider, RpcTransport, Secp256k1, TypedData } from 'ox'
+import { Hash, Hex, Provider, RpcTransport, Secp256k1, TypedData } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Config, Erc6492, Payload } from '../../primitives/src/index.js'
+import { Address, Config, Erc6492, Payload } from '../../primitives/src/index.js'
 import { Envelope, State, Wallet } from '../src/index.js'
 import { LOCAL_RPC_URL } from './constants.js'
 
@@ -106,7 +106,7 @@ describe('Wallet', async () => {
             name: 'MyApp',
             version: '1',
             chainId: Number(chainId),
-            verifyingContract: Address.from('0x0000000000000000000000000000000000000000'),
+            verifyingContract: Address.normalize('0x0000000000000000000000000000000000000000'),
           },
           types: {
             Mail: [
@@ -117,8 +117,8 @@ describe('Wallet', async () => {
           },
           primaryType: 'Mail' as const,
           message: {
-            from: Address.from('0x0000000000000000000000000000000000000000'),
-            to: Address.from('0x0000000000000000000000000000000000000000'),
+            from: Address.normalize('0x0000000000000000000000000000000000000000'),
+            to: Address.normalize('0x0000000000000000000000000000000000000000'),
             contents: 'Hello, Bob!',
           },
         }
@@ -228,7 +228,7 @@ describe('Wallet', async () => {
     // Topology too deep (more than 32 levels)
     let topology: Config.Topology = {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Address.normalize('0x0000000000000000000000000000000000000000'),
       weight: 1n,
     }
 
@@ -237,7 +237,7 @@ describe('Wallet', async () => {
         topology,
         {
           type: 'signer',
-          address: '0x0000000000000000000000000000000000000000',
+          address: Address.normalize('0x0000000000000000000000000000000000000000'),
           weight: 1n,
         },
       ]
@@ -322,7 +322,7 @@ describe('Wallet', async () => {
     // Topology too deep (more than 32 levels)
     let topology: Config.Topology = {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Address.normalize('0x0000000000000000000000000000000000000000'),
       weight: 1n,
     }
 
@@ -331,7 +331,7 @@ describe('Wallet', async () => {
         topology,
         {
           type: 'signer',
-          address: '0x0000000000000000000000000000000000000000',
+          address: Address.normalize('0x0000000000000000000000000000000000000000'),
           weight: 1n,
         },
       ]

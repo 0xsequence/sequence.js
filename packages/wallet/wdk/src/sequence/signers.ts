@@ -1,5 +1,5 @@
-import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { Shared } from './manager.js'
 import { Kind, Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 
@@ -33,7 +33,7 @@ export class Signers {
 
     // Some signers are known by the configuration of the wallet development kit, specifically
     // some of the sapient signers, who always share the same address
-    if (Address.isEqual(this.shared.sequence.extensions.recovery, address)) {
+    if (this.shared.sequence.extensions.recovery === address) {
       return Kinds.Recovery
     }
 

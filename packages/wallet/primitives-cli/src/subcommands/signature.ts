@@ -1,5 +1,5 @@
-import { Config, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, Signature as OxSignature } from 'ox'
+import { Address, Config, Signature } from '@0xsequence/wallet-primitives'
+import { Bytes, Hex, Signature as OxSignature } from 'ox'
 import { type CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils.js'
 import { PossibleElements } from './config.js'
@@ -43,7 +43,7 @@ export async function doEncode(
   const allSignatures = signatures.filter(Boolean).map((s) => {
     const values = s.split(':')
     return {
-      address: Address.from(values[0] as `0x${string}`),
+      address: Address.normalize(values[0]!),
       type: values[1],
       values: values.slice(2),
     }
@@ -52,33 +52,38 @@ export async function doEncode(
   const fullTopology = Signature.fillLeaves(config.topology, (leaf) => {
     if (Config.isSignerLeaf(leaf)) {
       // Type must be 1271, eth_sign, or hash
-      const candidate = allSignatures.find((s) => Address.isEqual(s.address, leaf.address))
+      const candidate = allSignatures.find((s) => s.address === leaf.address)
 
       if (!candidate) {
         return undefined
       }
 
       if (candidate.type === 'erc1271') {
+        Hex.assert(candidate.values[0])
         return {
-          address: candidate.address as `0x${string}`,
-          data: candidate.values[0] as `0x${string}`,
+          address: candidate.address,
+          data: candidate.values[0],
           type: 'erc1271',
         }
       }
 
       if (candidate.type === 'eth_sign') {
+        Hex.assert(candidate.values[0])
+        Hex.assert(candidate.values[1])
         return {
-          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0] as `0x${string}`, { size: 32 })),
-          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1] as `0x${string}`, { size: 32 })),
+          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0], { size: 32 })),
+          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1], { size: 32 })),
           yParity: OxSignature.vToYParity(Number(candidate.values[2])),
           type: 'eth_sign',
         }
       }
 
       if (candidate.type === 'hash') {
+        Hex.assert(candidate.values[0])
+        Hex.assert(candidate.values[1])
         return {
-          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0] as `0x${string}`, { size: 32 })),
-          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1] as `0x${string}`, { size: 32 })),
+          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0], { size: 32 })),
+          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1], { size: 32 })),
           yParity: OxSignature.vToYParity(Number(candidate.values[2])),
           type: 'hash',
         }
@@ -92,15 +97,16 @@ export async function doEncode(
     }
 
     if (Config.isSapientSignerLeaf(leaf)) {
-      const candidate = allSignatures.find((s) => Address.isEqual(s.address, leaf.address))
+      const candidate = allSignatures.find((s) => s.address === leaf.address)
       if (!candidate) {
         return undefined
       }
 
       if (candidate.type === 'sapient' || candidate.type === 'sapient_compact') {
+        Hex.assert(candidate.values[0])
         return {
-          address: candidate.address as `0x${string}`,
-          data: candidate.values[0] as `0x${string}`,
+          address: candidate.address,
+          data: candidate.values[0],
           type: candidate.type,
         }
       }

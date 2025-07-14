@@ -1,6 +1,6 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { Bundler } from '../bundler.js'
-import { Provider, Hex, Address, RpcTransport } from 'ox'
+import { Provider, Hex, RpcTransport } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { OperationStatus } from '../relayer.js'
 
@@ -38,7 +38,7 @@ export class PimlicoBundler implements Bundler {
       return false
     }
 
-    return supportedEntryPoints.some((ep) => Address.isEqual(ep, entrypoint))
+    return supportedEntryPoints.includes(entrypoint)
   }
 
   async relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }> {

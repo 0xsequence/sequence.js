@@ -1,6 +1,6 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
-import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider, RpcTransport } from 'ox'
+import { Address, Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
@@ -12,7 +12,7 @@ import { AuthCodeHandler } from './handlers/authcode.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple'
-  target: string
+  target: Address.Address
   metadata: { [key: string]: string }
 }
 
@@ -93,7 +93,7 @@ function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.He
     // instead, we add a dummy signer with weight 0
     return {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Address.normalize('0x0000000000000000000000000000000000000000'),
       weight: 0n,
     } as Config.SignerLeaf
   }
@@ -178,7 +178,7 @@ function toModulesTopology(modules: Config.SapientSignerLeaf[]): Config.Topology
   if (modules.length === 0) {
     return {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Address.normalize('0x0000000000000000000000000000000000000000'),
       weight: 0n,
     } as Config.SignerLeaf
   }
@@ -195,7 +195,7 @@ function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLea
     modules.push(topology)
   } else if (Config.isSignerLeaf(topology)) {
     // This signals that the wallet has no modules, so we just ignore it
-    if (topology.address !== '0x0000000000000000000000000000000000000000') {
+    if (topology.address !== Address.normalize('0x0000000000000000000000000000000000000000')) {
       throw new Error('signer-leaf-not-allowed-in-modules-topology')
     }
   } else {
@@ -396,7 +396,7 @@ export class Wallets {
       const loginEmail = metadata.email
 
       if (loginEmail && commitment.target) {
-        const walletAddress = commitment.target as Address.Address
+        const walletAddress = commitment.target
         const walletEntry = await this.shared.databases.manager.get(walletAddress)
 
         if (walletEntry) {
@@ -435,7 +435,7 @@ export class Wallets {
         })
 
         if (result) {
-          const selectedWalletAddress = result as Address.Address
+          const selectedWalletAddress = result
           const existingWalletEntry = await this.shared.databases.manager.get(selectedWalletAddress)
 
           if (existingWalletEntry) {
@@ -637,7 +637,7 @@ export class Wallets {
 
       const nextDevicesTopology = buildCappedTree([
         ...prevDevices.signers
-          .filter((x) => x !== '0x0000000000000000000000000000000000000000')
+          .filter((x) => x !== Address.normalize('0x0000000000000000000000000000000000000000'))
           .map((x) => ({ address: x })),
         ...prevDevices.sapientSigners.map((x) => ({ address: x.address, imageHash: x.imageHash })),
         { address: device.address },
@@ -684,7 +684,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
+      if (!wallets.some((w) => w.wallet === wallet)) {
         throw new Error('wallet-not-found')
       }
 
@@ -706,7 +706,7 @@ export class Wallets {
       }
 
       const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
+      if (!wallets.some((w) => w.wallet === wallet)) {
         throw new Error('wallet-not-found')
       }
 
@@ -765,7 +765,7 @@ export class Wallets {
     const nextDevicesTopology = buildCappedTree([
       ...Config.getSigners(devicesTopology)
         .signers.filter(
-          (x) => x !== '0x0000000000000000000000000000000000000000' && !Address.isEqual(x, device.address),
+          (x) => x !== Address.normalize('0x0000000000000000000000000000000000000000') && x !== device.address,
         )
         .map((x) => ({ address: x })),
       ...Config.getSigners(devicesTopology).sapientSigners,
