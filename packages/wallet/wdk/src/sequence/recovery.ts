@@ -27,7 +27,7 @@ export class Recovery {
     transformer: (leaves: Extensions.Recovery.RecoveryLeaf[]) => Extensions.Recovery.RecoveryLeaf[],
   ) {
     const ext = this.shared.sequence.extensions.recovery
-    const idx = modules.findIndex((m) => m.address === ext)
+    const idx = modules.findIndex((m) => Address.isEqual(m.address, ext))
     if (idx === -1) {
       return
     }

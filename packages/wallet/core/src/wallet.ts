@@ -338,12 +338,11 @@ export class Wallet {
     // is not "dangerous", aka it does not have any delegate calls
     // or calls to the wallet contract itself
     if (!options?.unsafe) {
-      const lowerCaseSelf = this.address.toLowerCase()
       for (const call of calls) {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (call.to.toLowerCase() === lowerCaseSelf) {
+        if (Address.isEqual(call.to, this.address)) {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }
@@ -452,12 +451,11 @@ export class Wallet {
     // is not "dangerous", aka it does not have any delegate calls
     // or calls to the wallet contract itself
     if (!options?.unsafe) {
-      const lowerCaseSelf = this.address.toLowerCase()
       for (const call of calls) {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (call.to.toLowerCase() === lowerCaseSelf) {
+        if (Address.isEqual(call.to, this.address)) {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }

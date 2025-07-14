@@ -220,9 +220,7 @@ describe('Sessions (via Manager)', () => {
 
       // Sign and complete the request
       const sigRequest = await wdk.manager.getSignatureRequest(requestId)
-      const identitySigner = sigRequest.signers.find(
-        (s) => s.address.toLowerCase() === wdk.identitySignerAddress.toLowerCase(),
-      )
+      const identitySigner = sigRequest.signers.find((s) => Address.isEqual(s.address, wdk.identitySignerAddress))
       if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
         throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
       }
@@ -305,9 +303,7 @@ describe('Sessions (via Manager)', () => {
 
       // Sign and complete the request
       const sigRequest = await wdk.manager.getSignatureRequest(requestId)
-      const identitySigner = sigRequest.signers.find(
-        (s) => s.address.toLowerCase() === wdk.identitySignerAddress.toLowerCase(),
-      )
+      const identitySigner = sigRequest.signers.find((s) => Address.isEqual(s.address, wdk.identitySignerAddress))
       if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
         throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
       }
