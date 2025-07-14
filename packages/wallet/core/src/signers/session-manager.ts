@@ -212,7 +212,7 @@ export class SessionManager implements SapientSigner {
     payload: Payload.Parented,
     imageHash: Hex.Hex,
   ): Promise<SignatureTypes.SignatureOfSapientSignerLeaf> {
-    if (wallet !== this.wallet.address) {
+    if (!Address.isEqual(wallet, this.wallet.address)) {
       throw new Error('Wallet address mismatch')
     }
     if ((await this.imageHash) !== imageHash) {

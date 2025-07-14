@@ -210,7 +210,7 @@ export class Signatures {
     if (Payload.isConfigUpdate(envelope.payload)) {
       const pendingRequests = await this.shared.databases.signatures.list()
       const pendingConfigUpdatesToClear = pendingRequests.filter(
-        (sig) => sig.wallet === envelope.wallet && Payload.isConfigUpdate(sig.envelope.payload),
+        (sig) => Address.isEqual(sig.wallet, envelope.wallet) && Payload.isConfigUpdate(sig.envelope.payload),
       )
 
       console.warn(
