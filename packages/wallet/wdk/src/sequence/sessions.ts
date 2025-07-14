@@ -175,6 +175,25 @@ export class Sessions {
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
 
+  async modifyExplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    permissions: CoreSigners.Session.ExplicitParams,
+    origin?: string,
+  ): Promise<string> {
+    // This will add the session manager if it's missing
+    const topology = await this.getSessionTopology(walletAddress, true)
+    const intermediateTopology = SessionConfig.removeExplicitSession(topology, sessionAddress)
+    if (!intermediateTopology) {
+      throw new Error('Incomplete session topology')
+    }
+    const newTopology = SessionConfig.addExplicitSession(intermediateTopology, {
+      ...permissions,
+      signer: sessionAddress,
+    })
+    return this.prepareSessionUpdate(walletAddress, newTopology, origin)
+  }
+
   async removeExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
@@ -183,7 +202,7 @@ export class Sessions {
     const topology = await this.getSessionTopology(walletAddress)
     const newTopology = SessionConfig.removeExplicitSession(topology, sessionAddress)
     if (!newTopology) {
-      throw new Error('Session not found')
+      throw new Error('Incomplete session topology')
     }
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
