@@ -1,6 +1,6 @@
-import { Config, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Config, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
-import { Address, Hex, Provider, RpcTransport } from 'ox'
+import { Hex, Provider, RpcTransport } from 'ox'
 import { Kinds, RecoverySigner } from './types/signer.js'
 import { Envelope } from '@0xsequence/wallet-core'
 import { QueuedRecoveryPayload } from './types/recovery.js'
@@ -27,7 +27,7 @@ export class Recovery {
     transformer: (leaves: Extensions.Recovery.RecoveryLeaf[]) => Extensions.Recovery.RecoveryLeaf[],
   ) {
     const ext = this.shared.sequence.extensions.recovery
-    const idx = modules.findIndex((m) => Address.isEqual(m.address, ext))
+    const idx = modules.findIndex((m) => m.address === ext)
     if (idx === -1) {
       return
     }
@@ -86,7 +86,7 @@ export class Recovery {
   }
 
   hasRecoveryModule(modules: Config.SapientSignerLeaf[]): boolean {
-    return modules.some((m) => Address.isEqual(m.address, this.shared.sequence.extensions.recovery))
+    return modules.some((m) => m.address === this.shared.sequence.extensions.recovery)
   }
 
   async addRecoverySignerToModules(modules: Config.SapientSignerLeaf[], address: Address.Address) {
@@ -95,11 +95,13 @@ export class Recovery {
     }
 
     await this.updateRecoveryModule(modules, (leaves) => {
-      if (leaves.some((l) => Address.isEqual(l.signer, address))) {
+      if (leaves.some((l) => l.signer === address)) {
         return leaves
       }
 
-      const filtered = leaves.filter((l) => !Address.isEqual(l.signer, '0x0000000000000000000000000000000000000000'))
+      const filtered = leaves.filter(
+        (l) => l.signer !== Address.normalize('0x0000000000000000000000000000000000000000'),
+      )
 
       return [
         ...filtered,
@@ -124,7 +126,7 @@ export class Recovery {
         return [
           {
             type: 'leaf',
-            signer: '0x0000000000000000000000000000000000000000',
+            signer: Address.normalize('0x0000000000000000000000000000000000000000'),
             requiredDeltaTime: 0n,
             minTimestamp: 0n,
           },
@@ -184,7 +186,7 @@ export class Recovery {
 
   async getRecoverySigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {
     const { raw } = await this.shared.modules.wallets.getConfiguration(address)
-    const recoveryLeaf = raw.modules.find((m) => Address.isEqual(m.address, this.shared.sequence.extensions.recovery))
+    const recoveryLeaf = raw.modules.find((m) => m.address === this.shared.sequence.extensions.recovery)
     if (!recoveryLeaf) {
       return undefined
     }
@@ -206,10 +208,10 @@ export class Recovery {
     )
 
     return leaves
-      .filter((l) => !Address.isEqual(l.signer, '0x0000000000000000000000000000000000000000'))
+      .filter((l) => l.signer !== Address.normalize('0x0000000000000000000000000000000000000000'))
       .map((l) => ({
         address: l.signer,
-        kind: kos.find((s) => Address.isEqual(s.address, l.signer))?.kind || 'unknown',
+        kind: kos.find((s) => s.address === l.signer)?.kind || 'unknown',
         isRecovery: true,
         minTimestamp: l.minTimestamp,
         requiredDeltaTime: l.requiredDeltaTime,
@@ -296,7 +298,7 @@ export class Recovery {
   async getQueuedRecoveryPayloads(wallet?: Address.Address): Promise<QueuedRecoveryPayload[]> {
     const all = await this.shared.databases.recovery.list()
     if (wallet) {
-      return all.filter((p) => Address.isEqual(p.wallet, wallet))
+      return all.filter((p) => p.wallet === wallet)
     }
 
     return all

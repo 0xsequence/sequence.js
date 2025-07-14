@@ -1,5 +1,6 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex } from 'ox'
+import { AbiFunction, AbiParameters, Bytes, Hash, Hex } from 'ox'
 import { getSignPayload } from 'ox/TypedData'
+import { Address, normalize } from './address.js'
 import { EXECUTE_USER_OP, RECOVER_SAPIENT_SIGNATURE } from './constants.js'
 import { Attestation } from './index.js'
 import { minBytesFor } from './utils.js'
@@ -15,7 +16,7 @@ export const BEHAVIOR_REVERT_ON_ERROR = 0x01
 export const BEHAVIOR_ABORT_ON_ERROR = 0x02
 
 interface SolidityCall {
-  to: Address.Address
+  to: Address
   value: bigint
   data: Hex.Hex
   gasLimit: bigint
@@ -33,11 +34,11 @@ export interface SolidityDecoded {
   message: Hex.Hex
   imageHash: Hex.Hex
   digest: Hex.Hex
-  parentWallets: Address.Address[]
+  parentWallets: Address[]
 }
 
 export type Call = {
-  to: Address.Address
+  to: Address
   value: bigint
   data: Hex.Hex
   gasLimit: bigint
@@ -70,30 +71,30 @@ export type Digest = {
 
 export type SessionImplicitAuthorize = {
   type: 'session-implicit-authorize'
-  sessionAddress: Address.Address
+  sessionAddress: Address
   attestation: Attestation.Attestation
 }
 
 export type Parent = {
-  parentWallets?: Address.Address[]
+  parentWallets?: Address[]
 }
 
 export type Calls4337_07 = {
   type: 'call_4337_07'
   calls: Call[]
-  entrypoint: Address.Address
+  entrypoint: Address
   callGasLimit: bigint
   maxFeePerGas: bigint
   maxPriorityFeePerGas: bigint
   space: bigint
   nonce: bigint
-  paymaster?: Address.Address | undefined
+  paymaster?: Address | undefined
   paymasterData?: Hex.Hex | undefined
   paymasterPostOpGasLimit?: bigint | undefined
   paymasterVerificationGasLimit?: bigint | undefined
   preVerificationGas: bigint
   verificationGasLimit: bigint
-  factory?: Address.Address | undefined
+  factory?: Address | undefined
   factoryData?: Hex.Hex | undefined
 }
 
@@ -119,7 +120,7 @@ export type TypedDataToSign = {
     name: string
     version: string
     chainId: number
-    verifyingContract: Address.Address
+    verifyingContract: Address
   }
   types: Record<string, Array<{ name: string; type: string }>>
   primaryType: string
@@ -199,7 +200,7 @@ export function isSessionImplicitAuthorize(payload: Payload): payload is Session
   return payload.type === 'session-implicit-authorize'
 }
 
-export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
+export function encode(payload: Calls, self?: Address): Bytes.Bytes {
   const callsLen = payload.calls.length
   const nonceBytesNeeded = minBytesFor(payload.nonce)
   console.log('TS encode: nonce value:', payload.nonce, 'nonceBytesNeeded:', nonceBytesNeeded)
@@ -286,7 +287,7 @@ export function encode(payload: Calls, self?: Address.Address): Bytes.Bytes {
     */
     let flags = 0
 
-    if (self && Address.isEqual(call.to, self)) {
+    if (self && call.to === self) {
       flags |= 0x01
     }
 
@@ -397,7 +398,7 @@ export function encodeSapient(
   return encoded
 }
 
-export function hash(wallet: Address.Address, chainId: bigint, payload: Parented): Bytes.Bytes {
+export function hash(wallet: Address, chainId: bigint, payload: Parented): Bytes.Bytes {
   if (isDigest(payload)) {
     return Bytes.fromHex(payload.digest)
   }
@@ -410,13 +411,13 @@ export function hash(wallet: Address.Address, chainId: bigint, payload: Parented
 
 function domainFor(
   payload: Payload,
-  wallet: Address.Address,
+  wallet: Address,
   chainId: bigint,
 ): {
   name: string
   version: string
   chainId: number
-  verifyingContract: Address.Address
+  verifyingContract: Address
 } {
   if (isRecovery(payload)) {
     return {
@@ -441,7 +442,7 @@ export function encode4337Nonce(key: bigint, seq: bigint): bigint {
   return (key << 64n) | seq
 }
 
-export function toTyped(wallet: Address.Address, chainId: bigint, payload: Parented): TypedDataToSign {
+export function toTyped(wallet: Address, chainId: bigint, payload: Parented): TypedDataToSign {
   const domain = domainFor(payload, wallet, chainId)
 
   switch (payload.type) {
@@ -552,7 +553,7 @@ export function toTyped(wallet: Address.Address, chainId: bigint, payload: Paren
 
 export function to4337UserOperation(
   payload: Calls4337_07,
-  wallet: Address.Address,
+  wallet: Address,
   signature?: Hex.Hex,
 ): UserOperation.UserOperation<'0.7'> {
   const callsPayload: Calls = {
@@ -583,7 +584,7 @@ export function to4337UserOperation(
   return operation
 }
 
-export function to4337Message(payload: Calls4337_07, wallet: Address.Address, chainId: bigint): Hex.Hex {
+export function to4337Message(payload: Calls4337_07, wallet: Address, chainId: bigint): Hex.Hex {
   const operation = to4337UserOperation(payload, wallet)
   const accountGasLimits = Hex.concat(
     Hex.padLeft(Hex.fromNumber(operation.verificationGasLimit), 16),
@@ -680,7 +681,7 @@ export function hashCall(call: Call): Hex.Hex {
   )
 }
 
-export function decode(packed: Bytes.Bytes, self?: Address.Address): Calls {
+export function decode(packed: Bytes.Bytes, self?: Address): Calls {
   let pointer = 0
   if (packed.length < 1) {
     throw new Error('Invalid packed data: missing globalFlag')
@@ -735,7 +736,7 @@ export function decode(packed: Bytes.Bytes, self?: Address.Address): Calls {
     pointer += 1
 
     // bit 0 => toSelf
-    let to: Address.Address
+    let to: Address
     if ((flags & 0x01) === 0x01) {
       if (!self) {
         throw new Error('Missing "self" address for toSelf call')
@@ -745,7 +746,7 @@ export function decode(packed: Bytes.Bytes, self?: Address.Address): Calls {
       if (pointer + 20 > packed.length) {
         throw new Error('Invalid packed data: not enough bytes for address')
       }
-      to = Bytes.toHex(packed.slice(pointer, pointer + 20)) as Address.Address
+      to = normalize(Bytes.toHex(packed.slice(pointer, pointer + 20)))
       pointer += 20
     }
 
@@ -844,39 +845,39 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
       nonce: decoded.nonce,
       space: decoded.space,
       calls: decoded.calls.map((call) => ({
-        to: Address.from(call.to),
+        to: call.to,
         value: call.value,
-        data: call.data as `0x${string}`,
+        data: call.data,
         gasLimit: call.gasLimit,
         delegateCall: call.delegateCall,
         onlyFallback: call.onlyFallback,
         behaviorOnError: parseBehaviorOnError(Number(call.behaviorOnError)),
       })),
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      parentWallets: decoded.parentWallets,
     }
   }
 
   if (decoded.kind === KIND_MESSAGE) {
     return {
       type: 'message',
-      message: decoded.message as `0x${string}`,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      message: decoded.message,
+      parentWallets: decoded.parentWallets,
     }
   }
 
   if (decoded.kind === KIND_CONFIG_UPDATE) {
     return {
       type: 'config-update',
-      imageHash: decoded.imageHash as `0x${string}`,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      imageHash: decoded.imageHash,
+      parentWallets: decoded.parentWallets,
     }
   }
 
   if (decoded.kind === KIND_DIGEST) {
     return {
       type: 'digest',
-      digest: decoded.digest as `0x${string}`,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      digest: decoded.digest,
+      parentWallets: decoded.parentWallets,
     }
   }
 

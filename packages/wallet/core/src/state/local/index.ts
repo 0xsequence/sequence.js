@@ -1,4 +1,5 @@
 import {
+  Address,
   Context,
   Payload,
   Signature,
@@ -7,7 +8,7 @@ import {
   Extensions,
   GenericTree,
 } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
+import { Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { MemoryStore } from './memory.js'
 
@@ -271,7 +272,7 @@ export class Provider implements ProviderInterface {
         if (Config.isSapientSignerLeaf(leaf)) {
           const sapientSignature = signaturesOfSigners.find(
             ({ signer, imageHash }: { signer: Address.Address; imageHash?: Hex.Hex }) => {
-              return imageHash && Address.isEqual(signer, leaf.address) && imageHash === leaf.imageHash
+              return imageHash && signer === leaf.address && imageHash === leaf.imageHash
             },
           )?.signature
 
@@ -281,7 +282,7 @@ export class Provider implements ProviderInterface {
           }
         }
 
-        const signature = signaturesOfSigners.find(({ signer }) => Address.isEqual(signer, leaf.address))?.signature
+        const signature = signaturesOfSigners.find(({ signer }) => signer === leaf.address)?.signature
         if (!signature) {
           return undefined
         }
@@ -355,10 +356,12 @@ export class Provider implements ProviderInterface {
     if (Signature.isRawSignerLeaf(topology)) {
       const type = topology.signature.type
       if (type === 'eth_sign' || type === 'hash') {
-        const address = Secp256k1.recoverAddress({
-          payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
-          signature: topology.signature,
-        })
+        const address = Address.normalize(
+          Secp256k1.recoverAddress({
+            payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
+            signature: topology.signature,
+          }),
+        )
 
         return this.store.saveSignatureOfSubdigest(address, subdigest, topology.signature)
       }

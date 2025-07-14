@@ -1,9 +1,10 @@
-import { Hex, Bytes } from 'ox'
-import * as Db from '../../dbs/index.js'
 import * as Identity from '@0xsequence/identity-instrument'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
+import * as Db from '../../dbs/index.js'
+import { IdentitySigner, toIdentityAuthKey } from '../../identity/signer.js'
 import { Signatures } from '../signatures.js'
 import { BaseSignatureRequest } from '../types/signature-request.js'
-import { IdentitySigner, toIdentityAuthKey } from '../../identity/signer.js'
 
 export const identityTypeToHex = (identityType?: Identity.IdentityType): Hex.Hex => {
   // Bytes4
@@ -51,7 +52,7 @@ export class IdentityHandler {
 
     const res = await this.nitro.completeAuth(toIdentityAuthKey(authKey), challenge)
 
-    authKey.identitySigner = res.signer.address
+    authKey.identitySigner = Address.normalize(res.signer.address)
     authKey.expiresAt = new Date(Date.now() + 1000 * 60 * 3) // 3 minutes
     await this.authKeys.delBySigner('')
     await this.authKeys.delBySigner(authKey.identitySigner)
@@ -90,8 +91,7 @@ export class IdentityHandler {
       )
       const publicKey = await window.crypto.subtle.exportKey('raw', keyPair.publicKey)
       authKey = {
-        address: Hex.fromBytes(new Uint8Array(publicKey)),
-        identitySigner: '',
+        address: Address.normalize(Hex.fromBytes(new Uint8Array(publicKey))),
         expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
         privateKey: keyPair.privateKey,
       }

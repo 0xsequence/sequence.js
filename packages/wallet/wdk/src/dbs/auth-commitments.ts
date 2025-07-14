@@ -1,5 +1,6 @@
-import { Generic, Migration } from './generic.js'
+import { Address } from '@0xsequence/wallet-primitives'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
+import { Generic } from './generic.js'
 
 const TABLE_NAME = 'auth-commitments'
 
@@ -9,7 +10,7 @@ export type AuthCommitment = {
   metadata: { [key: string]: string }
   verifier?: string
   challenge?: string
-  target: string
+  target: Address.Address
   isSignUp: boolean
   signer?: string
 }

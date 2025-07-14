@@ -1,10 +1,11 @@
-import { Hex, Address, Bytes } from 'ox'
-import { Handler } from './handler.js'
-import * as Db from '../../dbs/index.js'
-import { Signatures } from '../signatures.js'
 import * as Identity from '@0xsequence/identity-instrument'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex, Bytes } from 'ox'
+import * as Db from '../../dbs/index.js'
 import { IdentitySigner } from '../../identity/signer.js'
+import { Signatures } from '../signatures.js'
 import { AuthCodeHandler } from './authcode.js'
+import { Handler } from './handler.js'
 
 export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
   constructor(
@@ -19,7 +20,7 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
     super(signupKind, issuer, audience, nitro, signatures, commitments, authKeys)
   }
 
-  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
+  public async commitAuth(target: Address.Address, isSignUp: boolean, state?: string, signer?: string) {
     let challenge = new Identity.AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
     if (signer) {
       challenge = challenge.withSigner({ address: signer, keyType: Identity.KeyType.Secp256k1 })

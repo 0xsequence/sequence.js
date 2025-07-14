@@ -1,7 +1,7 @@
+import { Address, Signature, Config } from '@0xsequence/wallet-primitives'
 import type { CommandModule } from 'yargs'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { fromPosOrStdin } from '../utils.js'
-import { Signature, Config } from '@0xsequence/wallet-primitives'
 
 export const PossibleElements = [
   {
@@ -48,7 +48,7 @@ function parseElements(elements: string): Config.Leaf[] {
       const [_, address, weight] = firstElement!.split(':')
       leaves.push({
         type: 'signer',
-        address: Address.from(address!),
+        address: Address.normalize(address!),
         weight: BigInt(weight!),
       })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
@@ -74,7 +74,7 @@ function parseElements(elements: string): Config.Leaf[] {
       leaves.push({
         type: 'sapient-signer',
         imageHash: imageHash as `0x${string}`,
-        address: Address.from(address!),
+        address: Address.normalize(address!),
         weight: BigInt(weight!),
       })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
@@ -120,7 +120,7 @@ export async function createConfig(options: {
     checkpoint: BigInt(options.checkpoint),
     // Starts with empty topology
     topology: Config.flatLeavesToTopology(leaves),
-    checkpointer: options.checkpointer ? Address.from(options.checkpointer) : undefined,
+    checkpointer: options.checkpointer ? Address.normalize(options.checkpointer) : undefined,
   }
 
   return Config.configToJson(config)

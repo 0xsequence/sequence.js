@@ -1,4 +1,5 @@
 import {
+  Address,
   Config,
   Constants,
   Payload,
@@ -6,7 +7,7 @@ import {
   SessionSignature,
   Signature as SignatureTypes,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Hex, Provider } from 'ox'
+import { AbiFunction, Hex, Provider } from 'ox'
 import * as State from '../state/index.js'
 import { Wallet } from '../wallet.js'
 import { SapientSigner } from './index.js'
@@ -111,14 +112,14 @@ export class SessionManager implements SapientSigner {
     const blacklist = SessionConfig.getImplicitBlacklist(topology)
     const validImplicitSigners = this._implicitSigners.filter(
       (signer) =>
-        Address.isEqual(signer.identitySigner, identitySigner) &&
+        signer.identitySigner === identitySigner &&
         // Blacklist must exist for implicit signers to be used
         blacklist &&
-        !blacklist.some((b) => Address.isEqual(b, signer.address)),
+        !blacklist.includes(signer.address),
     )
     const topologyExplicitSigners = SessionConfig.getExplicitSigners(topology)
     const validExplicitSigners = this._explicitSigners.filter((signer) =>
-      topologyExplicitSigners.some((s) => Address.isEqual(s, signer.address)),
+      topologyExplicitSigners.includes(signer.address),
     )
 
     // Prioritize implicit signers
@@ -252,7 +253,7 @@ export class SessionManager implements SapientSigner {
     if (expectedIncrement) {
       // This should equal the last call
       const lastCall = payload.calls[payload.calls.length - 1]!
-      if (!Address.isEqual(expectedIncrement.to, lastCall.to) || !Hex.isEqual(expectedIncrement.data, lastCall.data)) {
+      if (expectedIncrement.to !== lastCall.to || !Hex.isEqual(expectedIncrement.data, lastCall.data)) {
         throw new Error('Expected increment mismatch')
       }
     }

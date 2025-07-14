@@ -1,9 +1,10 @@
 import { Signers } from '@0xsequence/wallet-core'
-import { Address, Hex, Mnemonic } from 'ox'
-import { Handler } from './handler.js'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex, Mnemonic } from 'ox'
 import { Signatures } from '../signatures.js'
+import { SignerUnavailable, BaseSignatureRequest, SignerActionable } from '../types/index.js'
 import { Kinds } from '../types/signer.js'
-import { SignerReady, SignerUnavailable, BaseSignatureRequest, SignerActionable } from '../types/index.js'
+import { Handler } from './handler.js'
 
 type RespondFn = (mnemonic: string) => Promise<void>
 
@@ -66,7 +67,7 @@ export class MnemonicHandler implements Handler {
               return reject('invalid-mnemonic')
             }
 
-            if (!Address.isEqual(signer.address, address)) {
+            if (signer.address !== address) {
               return reject('wrong-mnemonic')
             }
 

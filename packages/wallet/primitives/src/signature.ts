@@ -1,4 +1,5 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
+import { AbiFunction, AbiParameters, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
+import { Address, normalize, validate } from './address.js'
 import {
   Config,
   Leaf,
@@ -51,7 +52,7 @@ export type SignatureOfSignerLeafHash = {
 
 export type SignatureOfSignerLeafErc1271 = {
   type: 'erc1271'
-  address: `0x${string}`
+  address: Address
   data: Hex.Hex
 }
 
@@ -61,7 +62,7 @@ export type SignatureOfSignerLeaf =
   | SignatureOfSignerLeafErc1271
 
 export type SignatureOfSapientSignerLeaf = {
-  address: `0x${string}`
+  address: Address
   data: Hex.Hex
   type: 'sapient' | 'sapient_compact'
 }
@@ -99,7 +100,7 @@ export type RawConfig = {
   threshold: bigint
   checkpoint: bigint
   topology: RawTopology
-  checkpointer?: Address.Address
+  checkpointer?: Address
 }
 
 export type RawSignature = {
@@ -107,7 +108,7 @@ export type RawSignature = {
   checkpointerData?: Bytes.Bytes
   configuration: RawConfig
   suffix?: RawSignature[]
-  erc6492?: { to: Address.Address; data: Bytes.Bytes }
+  erc6492?: { to: Address; data: Bytes.Bytes }
 }
 
 export function isSignatureOfSapientSignerLeaf(signature: any): signature is SignatureOfSapientSignerLeaf {
@@ -142,7 +143,7 @@ export function isRawConfig(configuration: any): configuration is RawConfig {
     typeof configuration.threshold === 'bigint' &&
     typeof configuration.checkpoint === 'bigint' &&
     isRawTopology(configuration.topology) &&
-    (configuration.checkpointer === undefined || Address.validate(configuration.checkpointer))
+    (configuration.checkpointer === undefined || validate(configuration.checkpointer))
   )
 }
 
@@ -191,7 +192,7 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
 
   const noChainId = (flag & 0x02) === 0x02
 
-  let checkpointerAddress: Address.Address | undefined
+  let checkpointerAddress: Address | undefined
   let checkpointerData: Bytes.Bytes | undefined
 
   // bit [6] => checkpointer address + data
@@ -199,7 +200,7 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
     if (index + 20 > signature.length) {
       throw new Error('Not enough bytes for checkpointer address')
     }
-    checkpointerAddress = Bytes.toHex(signature.slice(index, index + 20))
+    checkpointerAddress = normalize(Bytes.toHex(signature.slice(index, index + 20)))
     index += 20
 
     if (index + 3 > signature.length) {
@@ -1104,7 +1105,7 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
 
 export async function recover(
   signature: RawSignature,
-  wallet: Address.Address,
+  wallet: Address,
   chainId: bigint,
   payload: Parented,
   options?: {
@@ -1156,7 +1157,7 @@ export async function recover(
 
 async function recoverTopology(
   topology: RawTopology,
-  wallet: Address.Address,
+  wallet: Address,
   chainId: bigint,
   payload: Parented,
   options?: {
@@ -1173,18 +1174,20 @@ async function recoverTopology(
         return {
           topology: {
             type: 'signer',
-            address: Secp256k1.recoverAddress({
-              payload:
-                topology.signature.type === 'eth_sign'
-                  ? Hash.keccak256(
-                      AbiParameters.encodePacked(
-                        ['string', 'bytes32'],
-                        ['\x19Ethereum Signed Message:\n32', Bytes.toHex(digest)],
-                      ),
-                    )
-                  : digest,
-              signature: topology.signature,
-            }),
+            address: normalize(
+              Secp256k1.recoverAddress({
+                payload:
+                  topology.signature.type === 'eth_sign'
+                    ? Hash.keccak256(
+                        AbiParameters.encodePacked(
+                          ['string', 'bytes32'],
+                          ['\x19Ethereum Signed Message:\n32', Bytes.toHex(digest)],
+                        ),
+                      )
+                    : digest,
+                signature: topology.signature,
+              }),
+            ),
             weight: topology.weight,
             signed: true,
             signature: topology.signature,
@@ -1314,7 +1317,7 @@ async function recoverTopology(
         : 0n,
     }
   } else if (isAnyAddressSubdigestLeaf(topology)) {
-    const anyAddressOpHash = hash('0x0000000000000000000000000000000000000000', chainId, payload)
+    const anyAddressOpHash = hash(normalize('0x0000000000000000000000000000000000000000'), chainId, payload)
     return {
       topology,
       weight: Bytes.isEqual(Bytes.fromHex(topology.digest), anyAddressOpHash)

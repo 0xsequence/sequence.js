@@ -1,5 +1,4 @@
-import { Payload, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Reader } from './index.js'
 import { isSapientSigner, SapientSigner, Signer } from '../signers/index.js'
 
@@ -16,7 +15,7 @@ export async function getWalletsFor<S extends Signer | SapientSigner>(
 ): Promise<Array<WalletWithWitness<S>>> {
   const wallets = await retrieveWallets(stateReader, signer)
   return Object.entries(wallets).map(([wallet, { chainId, payload, signature }]) => {
-    Hex.assert(wallet)
+    Address.assert(wallet)
     return {
       wallet,
       chainId,
@@ -30,7 +29,7 @@ async function retrieveWallets<S extends Signer | SapientSigner>(
   stateReader: Reader,
   signer: S,
 ): Promise<{
-  [wallet: `0x${string}`]: {
+  [wallet: Address.Address]: {
     chainId: bigint
     payload: Payload.Parented
     signature: S extends SapientSigner ? Signature.SignatureOfSapientSignerLeaf : Signature.SignatureOfSignerLeaf

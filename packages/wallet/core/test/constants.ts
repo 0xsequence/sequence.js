@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv'
-import { Abi, AbiEvent, Address } from 'ox'
+import { Abi, AbiEvent } from 'ox'
 
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })

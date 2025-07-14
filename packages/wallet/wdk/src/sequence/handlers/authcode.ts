@@ -1,10 +1,11 @@
-import { Hex, Address, Bytes } from 'ox'
-import { Handler } from './handler.js'
-import * as Db from '../../dbs/index.js'
-import { Signatures } from '../signatures.js'
 import * as Identity from '@0xsequence/identity-instrument'
-import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex, Bytes } from 'ox'
+import * as Db from '../../dbs/index.js'
 import { IdentitySigner } from '../../identity/signer.js'
+import { Signatures } from '../signatures.js'
+import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
+import { Handler } from './handler.js'
 import { IdentityHandler } from './identity.js'
 
 export class AuthCodeHandler extends IdentityHandler implements Handler {
@@ -30,7 +31,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     this.redirectUri = redirectUri
   }
 
-  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
+  public async commitAuth(target: Address.Address, isSignUp: boolean, state?: string, signer?: string) {
     if (!state) {
       state = Hex.fromBytes(Bytes.random(32))
     }
@@ -94,7 +95,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       status: 'actionable',
       message: 'request-redirect',
       handle: async () => {
-        const url = await this.commitAuth(window.location.pathname, false, request.id, address)
+        const url = await this.commitAuth(Address.normalize(window.location.pathname), false, request.id, address)
         window.location.href = url
         return true
       },

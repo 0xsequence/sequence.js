@@ -1,8 +1,8 @@
-import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
-
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
+import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 import {
+  Address,
   Attestation,
   Config,
   Constants,
@@ -13,7 +13,6 @@ import {
   Signature as SequenceSignature,
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
@@ -116,7 +115,7 @@ export const ManagerOptionsDefaults = {
   defaultGuardTopology: {
     // TODO: Move this somewhere else
     type: 'signer',
-    address: '0xf71eC72C8C03a0857DD7601ACeF1e42b85983e99',
+    address: Address.normalize('0xf71eC72C8C03a0857DD7601ACeF1e42b85983e99'),
     weight: 1n,
   } as Config.SignerLeaf,
 

@@ -1,5 +1,6 @@
-import { Address, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it, vi } from 'vitest'
+import { Address } from '../../primitives/src/index'
 import {
   Erc1155ApprovalPrecondition,
   Erc1155BalancePrecondition,
@@ -12,7 +13,7 @@ import {
 import { LocalRelayer } from '../src/relayer/standard/local'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
 
-const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
+const ERC20_IMPLICIT_MINT_CONTRACT = Address.normalize('0x041E0CDC028050519C8e6485B2d9840caf63773F')
 
 function randomAddress(): Address.Address {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))

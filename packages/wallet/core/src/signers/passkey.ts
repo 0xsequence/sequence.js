@@ -1,5 +1,5 @@
-import { Hex, Bytes, Address, P256, Hash } from 'ox'
-import { Payload, Extensions } from '@0xsequence/wallet-primitives'
+import { Hex, Bytes, P256, Hash } from 'ox'
+import { Address, Payload, Extensions } from '@0xsequence/wallet-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { WebAuthnP256 } from 'ox'
 import { State } from '../index.js'
@@ -194,7 +194,7 @@ export class Passkey implements SapientSigner, Witnessable {
       imageHashes.map(async (imageHash) => {
         const wallets = await stateReader.getWalletsForSapient(extensions.passkeys, imageHash)
         return Object.keys(wallets).map((wallet) => ({
-          wallet: Address.from(wallet),
+          wallet: Address.normalize(wallet),
           imageHash,
         }))
       }),
@@ -203,9 +203,7 @@ export class Passkey implements SapientSigner, Witnessable {
     // Flatten and remove duplicates
     const flattened = signers
       .flat()
-      .filter(
-        (v, i, self) => self.findIndex((t) => Address.isEqual(t.wallet, v.wallet) && t.imageHash === v.imageHash) === i,
-      )
+      .filter((v, i, self) => self.findIndex((t) => t.wallet === v.wallet && t.imageHash === v.imageHash) === i)
 
     // If there are no signers, return undefined
     if (flattened.length === 0) {

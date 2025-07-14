@@ -1,9 +1,10 @@
-import { Kinds } from '../types/signer.js'
-import { Signatures } from '../signatures.js'
-import { Address, Hex } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { Devices } from '../devices.js'
-import { Handler } from './handler.js'
+import { Signatures } from '../signatures.js'
 import { SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
+import { Kinds } from '../types/signer.js'
+import { Handler } from './handler.js'
 
 export class DevicesHandler implements Handler {
   kind = Kinds.LocalDevice
