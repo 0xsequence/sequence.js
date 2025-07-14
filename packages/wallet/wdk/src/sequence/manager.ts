@@ -581,6 +581,15 @@ export class Manager {
     // Run completeSessionUpdate next
   }
 
+  public async modifyExplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    permissions: CoreSigners.Session.ExplicitParams,
+  ): Promise<string> {
+    return this.shared.modules.sessions.modifyExplicitSession(walletAddress, sessionAddress, permissions)
+    // Run completeSessionUpdate next
+  }
+
   public async removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string> {
     return this.shared.modules.sessions.removeExplicitSession(walletAddress, sessionAddress)
     // Run completeSessionUpdate next
