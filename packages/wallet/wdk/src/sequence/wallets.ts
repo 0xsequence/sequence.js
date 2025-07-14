@@ -6,7 +6,7 @@ import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
 import { Action } from './types/index.js'
-import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
+import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
 import { AuthCodeHandler } from './handlers/authcode.js'
 
@@ -263,8 +263,8 @@ export interface WalletsInterface {
    * @returns A promise that resolves to an object containing the resolved `devices`, `login` signers, and the `raw` configuration.
    */
   getConfiguration(wallet: Address.Address): Promise<{
-    devices: { address: Address.Address; kind?: string; imageHash?: string }[]
-    login: { address: Address.Address; kind?: string; imageHash?: string }[]
+    devices: SignerWithKind[]
+    login: SignerWithKind[]
     raw: any
   }>
 
