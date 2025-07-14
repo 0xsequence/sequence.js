@@ -43,6 +43,13 @@ export interface SignaturesInterface {
   list(): Promise<BaseSignatureRequest[]>
 
   /**
+   * Cancel a specific signature request.
+   *
+   * @param requestId
+   */
+  cancel(requestId: string): Promise<void>
+
+  /**
    * Subscribes to real-time updates for a single, specific signature request.
    *
    * The provided callback is invoked whenever the state of the request changes. This is a powerful
