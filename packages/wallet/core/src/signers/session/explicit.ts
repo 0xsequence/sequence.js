@@ -24,11 +24,15 @@ export class Explicit implements ExplicitSessionSigner {
 
   async findSupportedPermission(
     wallet: Address.Address,
-    _chainId: bigint,
+    chainId: bigint,
     call: Payload.Call,
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<Permission.Permission | undefined> {
+    if (this.sessionPermissions.chainId !== 0n && this.sessionPermissions.chainId !== chainId) {
+      return undefined
+    }
+
     if (call.value !== 0n) {
       // Validate the value
       if (!provider) {

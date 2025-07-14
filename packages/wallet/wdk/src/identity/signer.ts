@@ -30,7 +30,7 @@ export class IdentitySigner implements Signers.Signer {
     readonly authKey: AuthKey,
   ) {}
 
-  get address(): `0x${string}` {
+  get address(): Address.Address {
     if (!Address.validate(this.authKey.identitySigner)) {
       throw new Error('No signer address found')
     }
