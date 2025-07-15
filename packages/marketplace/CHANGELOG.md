@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.23
+
+### Patch Changes
+
+- Networks update
+
 ## 2.3.22
 
 ### Patch Changes

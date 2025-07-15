@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.3.23
+
+### Patch Changes
+
+- Networks update
+- Updated dependencies
+  - @0xsequence/core@2.3.23
+
 ## 2.3.22
 
 ### Patch Changes

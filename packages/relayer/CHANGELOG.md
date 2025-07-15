@@ -1,5 +1,15 @@
 # @0xsequence/relayer
 
+## 2.3.23
+
+### Patch Changes
+
+- Networks update
+- Updated dependencies
+  - @0xsequence/utils@2.3.23
+  - @0xsequence/core@2.3.23
+  - @0xsequence/abi@2.3.23
+
 ## 2.3.22
 
 ### Patch Changes

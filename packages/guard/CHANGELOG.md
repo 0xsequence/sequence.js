@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.3.23
+
+### Patch Changes
+
+- Networks update
+- Updated dependencies
+  - @0xsequence/account@2.3.23
+  - @0xsequence/signhub@2.3.23
+  - @0xsequence/utils@2.3.23
+  - @0xsequence/core@2.3.23
+
 ## 2.3.22
 
 ### Patch Changes

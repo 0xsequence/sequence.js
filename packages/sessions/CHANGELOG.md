@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.23
+
+### Patch Changes
+
+- Networks update
+- Updated dependencies
+  - @0xsequence/migration@2.3.23
+  - @0xsequence/replacer@2.3.23
+  - @0xsequence/utils@2.3.23
+  - @0xsequence/core@2.3.23
+
 ## 2.3.22
 
 ### Patch Changes
