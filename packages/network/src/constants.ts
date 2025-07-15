@@ -1189,8 +1189,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       rootUrl: 'https://mainnet.somnia.w3us.site/',
     },
     nativeToken: {
-      symbol: 'STT',
-      name: 'STT',
+      symbol: 'SOMI',
+      name: 'SOMI',
       decimals: 18,
     },
   },
