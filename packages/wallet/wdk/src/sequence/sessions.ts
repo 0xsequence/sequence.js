@@ -1,14 +1,14 @@
 import { Signers as CoreSigners, Envelope } from '@0xsequence/wallet-core'
 import {
+  Address,
   Attestation,
   Config,
-  Constants,
   GenericTree,
   Payload,
   Signature as SequenceSignature,
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 import { IdentityType } from '@0xsequence/identity-instrument'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
@@ -28,7 +28,7 @@ export class Sessions {
     fixMissing = false,
   ): Promise<SessionConfig.SessionsTopology> {
     const { loginTopology, modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
-    const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
+    const managerLeaf = modules.find((leaf) => leaf.address === this.shared.sequence.extensions.sessions)
     if (!managerLeaf) {
       if (fixMissing) {
         // Create the default session manager leaf
@@ -221,7 +221,7 @@ export class Sessions {
 
     // Find the session manager in the old configuration
     const { modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
-    const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
+    const managerLeaf = modules.find((leaf) => leaf.address === this.shared.sequence.extensions.sessions)
     if (!managerLeaf) {
       // Missing. Add it
       modules.push({

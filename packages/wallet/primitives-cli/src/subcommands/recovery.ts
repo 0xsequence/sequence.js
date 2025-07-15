@@ -1,7 +1,7 @@
+import { Address, Extensions } from '@0xsequence/wallet-primitives'
+import { Bytes, Hex } from 'ox'
 import { CommandModule } from 'yargs'
 import { readStdin } from '../utils.js'
-import { Address, Bytes, Hex } from 'ox'
-import { Extensions } from '@0xsequence/wallet-primitives'
 
 async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.Recovery.RecoveryLeaf[]> {
   if (typeof leavesInput === 'string') {
@@ -21,7 +21,7 @@ async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.R
     const minTimestamp = BigInt(minTimestampStr)
     return {
       type: 'leaf',
-      signer: address as Address.Address,
+      signer: Address.normalize(address!),
       requiredDeltaTime,
       minTimestamp,
     }
@@ -41,10 +41,10 @@ export async function doEncode(leavesInput: string | string[]): Promise<string> 
   return Bytes.toHex(encoded)
 }
 
-export async function doTrim(leavesInput: string | string[], signer: string): Promise<string> {
+export async function doTrim(leavesInput: string | string[], signer: Address.Address): Promise<string> {
   const leaves = await parseLeaves(leavesInput)
   const topology = Extensions.Recovery.fromRecoveryLeaves(leaves)
-  const trimmed = Extensions.Recovery.trimTopology(topology, signer as Address.Address)
+  const trimmed = Extensions.Recovery.trimTopology(topology, signer)
   const encoded = Extensions.Recovery.encodeTopology(trimmed)
   return Bytes.toHex(encoded)
 }
@@ -152,7 +152,7 @@ const recoveryCommand: CommandModule = {
               .map((line) => line.trim())
               .filter((line) => line)
           }
-          const signer = argv.signer
+          const signer = Address.normalize(argv.signer)
           try {
             const encoded = await doTrim(leavesInput, signer)
             console.log(encoded)

@@ -1,11 +1,11 @@
-import { Payload, Permission, SessionSignature, Constants } from '@0xsequence/wallet-primitives'
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
+import { Address, Payload, Permission, SessionSignature, Constants } from '@0xsequence/wallet-primitives'
+import { AbiFunction, AbiParameters, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { ExplicitSessionSigner, UsageLimit } from './session.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
-const VALUE_TRACKING_ADDRESS: Address.Address = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+const VALUE_TRACKING_ADDRESS: Address.Address = Address.normalize('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 
 export class Explicit implements ExplicitSessionSigner {
   private readonly _privateKey: PkStore
@@ -101,7 +101,7 @@ export class Explicit implements ExplicitSessionSigner {
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<boolean> {
-    if (!Address.isEqual(permission.target, call.to)) {
+    if (permission.target !== call.to) {
       return false
     }
 

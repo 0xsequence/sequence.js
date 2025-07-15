@@ -7,8 +7,8 @@ import {
   GetMetaTxnReceiptReturn,
 } from './relayer.gen.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
-import { Address, Hex, Bytes, AbiFunction } from 'ox'
-import { Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
+import { Hex, Bytes, AbiFunction } from 'ox'
+import { Address, Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
 import {
   IntentPrecondition as RpcIntentPrecondition,
   ETHTxnStatus,
@@ -375,8 +375,8 @@ export class RpcRelayer implements Relayer {
 
   private mapRpcFeeTokenToAddress(rpcToken: RpcFeeToken): Address.Address {
     if (rpcToken.type === FeeTokenType.ERC20_TOKEN && rpcToken.contractAddress) {
-      return Address.from(rpcToken.contractAddress)
+      return Address.normalize(rpcToken.contractAddress)
     }
-    return '0x0000000000000000000000000000000000000000'
+    return Address.normalize('0x0000000000000000000000000000000000000000')
   }
 }

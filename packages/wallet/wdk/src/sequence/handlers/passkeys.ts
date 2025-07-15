@@ -1,10 +1,10 @@
 import { Signers, State } from '@0xsequence/wallet-core'
-import { Address, Hex } from 'ox'
-import { Kinds } from '../types/signer.js'
+import { Address, Extensions } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { Signatures } from '../signatures.js'
-import { Extensions } from '@0xsequence/wallet-primitives'
-import { Handler } from './handler.js'
 import { SignerActionable, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
+import { Kinds } from '../types/signer.js'
+import { Handler } from './handler.js'
 
 export class PasskeysHandler implements Handler {
   kind = Kinds.LoginPasskey

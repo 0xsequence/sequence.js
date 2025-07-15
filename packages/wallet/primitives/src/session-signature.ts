@@ -1,4 +1,5 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
+import { Address } from './address.js'
 import { Attestation, encode, encodeForJson, fromParsed, toJson } from './attestation.js'
 import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {
@@ -94,9 +95,11 @@ function rsyFromRsvStr(sigStr: string): RSY {
   if (!rStr || !sStr || !vStr) {
     throw new Error('Invalid signature format')
   }
+  Hex.assert(rStr)
+  Hex.assert(sStr)
   return {
-    r: Bytes.toBigInt(Bytes.fromHex(rStr as `0x${string}`, { size: 32 })),
-    s: Bytes.toBigInt(Bytes.fromHex(sStr as `0x${string}`, { size: 32 })),
+    r: Bytes.toBigInt(Bytes.fromHex(rStr, { size: 32 })),
+    s: Bytes.toBigInt(Bytes.fromHex(sStr, { size: 32 })),
     yParity: parseInt(vStr, 10) - 27,
   }
 }
@@ -106,8 +109,8 @@ function rsyFromRsvStr(sigStr: string): RSY {
 export function encodeSessionCallSignatures(
   callSignatures: SessionCallSignature[],
   topology: SessionsTopology,
-  explicitSigners: Address.Address[] = [],
-  implicitSigners: Address.Address[] = [],
+  explicitSigners: Address[] = [],
+  implicitSigners: Address[] = [],
 ): Bytes.Bytes {
   const parts: Bytes.Bytes[] = []
 

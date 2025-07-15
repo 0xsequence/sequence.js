@@ -1,6 +1,6 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
-import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
+import { Abi, AbiFunction, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {
@@ -294,7 +294,7 @@ export class Transactions {
 
         Address.assert(to)
 
-        if (token === '0x0000000000000000000000000000000000000000') {
+        if (token === Address.normalize('0x0000000000000000000000000000000000000000')) {
           tx.envelope.payload.calls.unshift({
             to,
             value: BigInt(value),

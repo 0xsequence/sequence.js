@@ -1,11 +1,12 @@
-import { Hex, Address } from 'ox'
-import { Signers } from '@0xsequence/wallet-core'
 import * as Identity from '@0xsequence/identity-instrument'
-import { Handler } from './handler.js'
+import { Signers } from '@0xsequence/wallet-core'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import * as Db from '../../dbs/index.js'
 import { Signatures } from '../signatures.js'
 import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
 import { Kinds } from '../types/signer.js'
+import { Handler } from './handler.js'
 import { IdentityHandler } from './identity.js'
 
 type RespondFn = (otp: string) => Promise<void>

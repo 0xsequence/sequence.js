@@ -1,4 +1,5 @@
-import { Address, Hex } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { SignerActionable, SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 
 export interface Handler {

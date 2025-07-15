@@ -1,4 +1,5 @@
-import { Abi, AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { Abi, AbiFunction, Bytes, Hex, Provider } from 'ox'
+import { Address, normalize } from '../address.js'
 import * as Payload from '../payload.js'
 import * as GenericTree from '../generic-tree.js'
 import { Signature } from '../index.js'
@@ -34,7 +35,7 @@ export const TOTAL_QUEUED_PAYLOADS = Abi.from([
  */
 export type RecoveryLeaf = {
   type: 'leaf'
-  signer: Address.Address
+  signer: Address
   requiredDeltaTime: bigint
   minTimestamp: bigint
 }
@@ -152,7 +153,7 @@ export function parseBranch(encoded: Bytes.Bytes): { nodes: Tree[]; leftover: By
       if (encoded.length < index + 32) {
         throw new Error('Invalid recovery leaf')
       }
-      const signer = Address.from(Hex.fromBytes(encoded.slice(index + 1, index + 21)))
+      const signer = normalize(Hex.fromBytes(encoded.slice(index + 1, index + 21)))
       const requiredDeltaTime = Bytes.toBigInt(encoded.slice(index + 21, index + 24))
       const minTimestamp = Bytes.toBigInt(encoded.slice(index + 24, index + 32))
       nodes.push({ type: 'leaf', signer, requiredDeltaTime, minTimestamp })
@@ -200,7 +201,7 @@ export function parseBranch(encoded: Bytes.Bytes): { nodes: Tree[]; leftover: By
  * @param signer - The signer address to keep
  * @returns The trimmed topology
  */
-export function trimTopology(topology: Tree, signer: Address.Address): Tree {
+export function trimTopology(topology: Tree, signer: Address): Tree {
   if (isRecoveryLeaf(topology)) {
     if (topology.signer === signer) {
       return topology
@@ -346,7 +347,7 @@ export function fromRecoveryLeaves(leaves: RecoveryLeaf[]): Tree {
  */
 export function hashRecoveryPayload(
   payload: Payload.MayRecoveryPayload,
-  wallet: Address.Address,
+  wallet: Address,
   chainId: bigint,
   noChainId: boolean,
 ): Hex.Hex {
@@ -401,7 +402,7 @@ export function fromGenericTree(tree: GenericTree.Tree): Tree {
     }
 
     const offset = RECOVERY_LEAF_PREFIX.length
-    const signer = Address.from(Hex.fromBytes(bytes.slice(offset, offset + 20)))
+    const signer = normalize(Hex.fromBytes(bytes.slice(offset, offset + 20)))
     const requiredDeltaTime = Bytes.toBigInt(bytes.slice(offset + 20, offset + 52))
     const minTimestamp = Bytes.toBigInt(bytes.slice(offset + 52, offset + 84))
 
@@ -435,9 +436,9 @@ export function fromGenericTree(tree: GenericTree.Tree): Tree {
  * @returns The encoded calldata for the queuePayload function on the recovery extension
  */
 export function encodeCalldata(
-  wallet: Address.Address,
+  wallet: Address,
   payload: Payload.Recovery<any>,
-  signer: Address.Address,
+  signer: Address,
   signature: Signature.SignatureOfSignerLeaf,
 ) {
   let signatureBytes: Hex.Hex
@@ -463,9 +464,9 @@ export function encodeCalldata(
  */
 export async function totalQueuedPayloads(
   provider: Provider.Provider,
-  extension: Address.Address,
-  wallet: Address.Address,
-  signer: Address.Address,
+  extension: Address,
+  wallet: Address,
+  signer: Address,
 ): Promise<bigint> {
   const total = await provider.request({
     method: 'eth_call',
@@ -496,9 +497,9 @@ export async function totalQueuedPayloads(
  */
 export async function queuedPayloadHashOf(
   provider: Provider.Provider,
-  extension: Address.Address,
-  wallet: Address.Address,
-  signer: Address.Address,
+  extension: Address,
+  wallet: Address,
+  signer: Address,
   index: bigint,
 ): Promise<Hex.Hex> {
   const hash = await provider.request({
@@ -527,9 +528,9 @@ export async function queuedPayloadHashOf(
  */
 export async function timestampForQueuedPayload(
   provider: Provider.Provider,
-  extension: Address.Address,
-  wallet: Address.Address,
-  signer: Address.Address,
+  extension: Address,
+  wallet: Address,
+  signer: Address,
   payloadHash: Hex.Hex,
 ): Promise<bigint> {
   const timestamp = await provider.request({

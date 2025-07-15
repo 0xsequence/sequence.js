@@ -1,13 +1,13 @@
 import {
+  Address,
   Config,
   Constants,
   Context,
   Erc6492,
   Payload,
-  Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
+import { AbiFunction, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
 import { UserOperation } from 'ox/erc4337'
@@ -83,7 +83,7 @@ export class Wallet {
     }
 
     await merged.stateProvider.saveWallet(configuration, context)
-    return new Wallet(SequenceAddress.from(configuration, context), merged)
+    return new Wallet(Address.from(configuration, context), merged)
   }
 
   async isDeployed(provider: Provider.Provider): Promise<boolean> {
@@ -184,9 +184,7 @@ export class Wallet {
     // the capabilities of the context
     const counterFactualContext =
       this.knownContexts.find(
-        (kc) =>
-          Address.isEqual(deployInformation.context.factory, kc.factory) &&
-          Address.isEqual(deployInformation.context.stage1, kc.stage1),
+        (kc) => deployInformation.context.factory === kc.factory && deployInformation.context.stage1 === kc.stage1,
       ) ?? deployInformation.context
 
     let context: Context.KnownContext | Context.Context | undefined
@@ -201,11 +199,7 @@ export class Wallet {
             method: 'eth_call',
             params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }, 'latest'],
           })
-          .then((res) => {
-            const address = `0x${res.slice(-40)}`
-            Address.assert(address, { strict: false })
-            return address
-          })
+          .then((response) => Address.normalize(`0x${response.slice(-40)}`))
           .catch(() => undefined),
       ])
 
@@ -216,7 +210,7 @@ export class Wallet {
       // Try to find the context from the known contexts (or use the counterfactual context)
       context = implementation
         ? [...this.knownContexts, counterFactualContext].find(
-            (kc) => Address.isEqual(implementation!, kc.stage1) || Address.isEqual(implementation!, kc.stage2),
+            (kc) => implementation === kc.stage1 || implementation === kc.stage2,
           )
         : counterFactualContext
 
@@ -225,7 +219,7 @@ export class Wallet {
       }
 
       // Determine stage based on implementation address
-      stage = implementation && Address.isEqual(implementation, context.stage2) ? 'stage2' : 'stage1'
+      stage = implementation && implementation === context.stage2 ? 'stage2' : 'stage1'
 
       // Get image hash and updates
       if (isDeployed && stage === 'stage2') {
@@ -342,7 +336,7 @@ export class Wallet {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (Address.isEqual(call.to, this.address)) {
+        if (call.to === this.address) {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }
@@ -455,7 +449,7 @@ export class Wallet {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (Address.isEqual(call.to, this.address)) {
+        if (call.to === this.address) {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }

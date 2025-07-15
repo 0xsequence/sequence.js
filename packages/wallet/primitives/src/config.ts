@@ -1,8 +1,8 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
+import { Address } from './address.js'
 import {
   isRawConfig,
   isRawNestedLeaf,
-  isRawNode,
   isRawSignerLeaf,
   isSignedSapientSignerLeaf,
   isSignedSignerLeaf,
@@ -14,7 +14,7 @@ import {
 
 export type SignerLeaf = {
   type: 'signer'
-  address: Address.Address
+  address: Address
   weight: bigint
   signed?: boolean
   signature?: SignatureOfSignerLeaf
@@ -22,7 +22,7 @@ export type SignerLeaf = {
 
 export type SapientSignerLeaf = {
   type: 'sapient-signer'
-  address: Address.Address
+  address: Address
   weight: bigint
   imageHash: Hex.Hex
   signed?: boolean
@@ -58,7 +58,7 @@ export type Config = {
   threshold: bigint
   checkpoint: bigint
   topology: Topology
-  checkpointer?: Address.Address
+  checkpointer?: Address
 }
 
 export function isSignerLeaf(cand: any): cand is SignerLeaf {
@@ -109,12 +109,12 @@ export function isTopology(cand: any): cand is Topology {
 }
 
 export function getSigners(configuration: Config | Topology): {
-  signers: Address.Address[]
-  sapientSigners: { address: Address.Address; imageHash: Hex.Hex }[]
+  signers: Address[]
+  sapientSigners: { address: Address; imageHash: Hex.Hex }[]
   isComplete: boolean
 } {
-  const signers = new Set<Address.Address>()
-  const sapientSigners = new Set<{ address: Address.Address; imageHash: Hex.Hex }>()
+  const signers = new Set<Address>()
+  const sapientSigners = new Set<{ address: Address; imageHash: Hex.Hex }>()
 
   let isComplete = true
 
@@ -143,18 +143,18 @@ export function getSigners(configuration: Config | Topology): {
 
 export function findSignerLeaf(
   configuration: Config | Topology,
-  address: Address.Address,
+  address: Address,
 ): SignerLeaf | SapientSignerLeaf | undefined {
   if (isConfig(configuration)) {
     return findSignerLeaf(configuration.topology, address)
   } else if (isNode(configuration)) {
     return findSignerLeaf(configuration[0], address) || findSignerLeaf(configuration[1], address)
   } else if (isSignerLeaf(configuration)) {
-    if (Address.isEqual(configuration.address, address)) {
+    if (configuration.address === address) {
       return configuration
     }
   } else if (isSapientSignerLeaf(configuration)) {
-    if (Address.isEqual(configuration.address, address)) {
+    if (configuration.address === address) {
       return configuration
     }
   }

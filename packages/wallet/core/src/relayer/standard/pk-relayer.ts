@@ -1,5 +1,5 @@
-import { Payload, Precondition } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
+import { Address, Payload, Precondition } from '@0xsequence/wallet-primitives'
+import { Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
 import { LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
@@ -72,10 +72,10 @@ export class PkRelayer implements Relayer {
         })
         return tx
       },
-      getBalance: async (address: string): Promise<bigint> => {
+      getBalance: async (address: Address.Address): Promise<bigint> => {
         const balanceHex = await this.provider.request({
           method: 'eth_getBalance',
-          params: [address as Address.Address, 'latest'],
+          params: [address, 'latest'],
         })
         return BigInt(balanceHex)
       },
