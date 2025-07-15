@@ -1,4 +1,4 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
 import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
@@ -434,7 +434,7 @@ export class Transactions implements TransactionsInterface {
 
         Address.assert(to)
 
-        if (token === '0x0000000000000000000000000000000000000000') {
+        if (token === Constants.ZeroAddress) {
           tx.envelope.payload.calls.unshift({
             to,
             value: BigInt(value),

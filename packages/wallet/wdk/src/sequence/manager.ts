@@ -81,7 +81,7 @@ export const ManagerOptionsDefaults = {
   extensions: Extensions.Dev1,
   context: Context.Dev1,
   context4337: Context.Dev2_4337,
-  guest: Constants.DefaultGuest,
+  guest: Constants.DefaultGuestAddress,
 
   encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
   managerDb: new Db.Wallets(),

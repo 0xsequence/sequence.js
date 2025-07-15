@@ -1,5 +1,5 @@
 import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequence/relayer'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
@@ -38,7 +38,7 @@ export class SequenceRelayer implements Relayer {
           Address.assert(contractAddress)
           token = contractAddress
         } else {
-          token = '0x0000000000000000000000000000000000000000'
+          token = Constants.ZeroAddress
         }
 
         return { token, to, value, gasLimit }

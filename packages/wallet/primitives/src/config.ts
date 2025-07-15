@@ -11,6 +11,7 @@ import {
   SignatureOfSapientSignerLeaf,
   SignatureOfSignerLeaf,
 } from './signature.js'
+import { Constants } from './index.js'
 
 export type SignerLeaf = {
   type: 'signer'
@@ -201,10 +202,7 @@ export function hashConfiguration(topology: Topology | Config): Bytes.Bytes {
     root = Hash.keccak256(Bytes.concat(root, Bytes.padLeft(Bytes.fromNumber(topology.threshold), 32)))
     root = Hash.keccak256(Bytes.concat(root, Bytes.padLeft(Bytes.fromNumber(topology.checkpoint), 32)))
     root = Hash.keccak256(
-      Bytes.concat(
-        root,
-        Bytes.padLeft(Bytes.fromHex(topology.checkpointer ?? '0x0000000000000000000000000000000000000000'), 32),
-      ),
+      Bytes.concat(root, Bytes.padLeft(Bytes.fromHex(topology.checkpointer ?? Constants.ZeroAddress), 32)),
     )
     return root
   }

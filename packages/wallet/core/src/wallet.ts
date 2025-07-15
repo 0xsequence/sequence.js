@@ -22,7 +22,7 @@ export type WalletOptions = {
 export const DefaultWalletOptions: WalletOptions = {
   knownContexts: Context.KnownContexts,
   stateProvider: new State.Sequence.Provider(),
-  guest: Constants.DefaultGuest,
+  guest: Constants.DefaultGuestAddress,
 }
 
 export type WalletStatus = {

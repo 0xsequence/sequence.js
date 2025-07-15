@@ -175,6 +175,7 @@ export class Generic<T extends { [P in K]: IDBValidKey }, K extends keyof T> {
 
   addListener(listener: DbUpdateListener<T, K>): () => void {
     this.listeners.push(listener)
+
     return () => this.removeListener(listener)
   }
 

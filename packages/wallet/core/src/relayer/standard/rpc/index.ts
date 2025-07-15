@@ -8,7 +8,7 @@ import {
 } from './relayer.gen.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
-import { Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
+import { Constants, Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
 import {
   IntentPrecondition as RpcIntentPrecondition,
   ETHTxnStatus,
@@ -377,6 +377,6 @@ export class RpcRelayer implements Relayer {
     if (rpcToken.type === FeeTokenType.ERC20_TOKEN && rpcToken.contractAddress) {
       return Address.from(rpcToken.contractAddress)
     }
-    return '0x0000000000000000000000000000000000000000'
+    return Constants.ZeroAddress // Default to zero address for native token or unsupported types
   }
 }
