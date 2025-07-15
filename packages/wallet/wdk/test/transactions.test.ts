@@ -13,13 +13,14 @@ describe('Transactions', () => {
 
   it('Should send a transaction from a new wallet', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
     await provider.request({
@@ -28,7 +29,7 @@ describe('Transactions', () => {
     })
 
     const recipient = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: recipient,
         value: 9n,
@@ -36,9 +37,9 @@ describe('Transactions', () => {
     ])
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    let tx = await manager.getTransaction(txId!)
+    let tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('defined')
 
@@ -49,15 +50,15 @@ describe('Transactions', () => {
     expect(tx.relayerOptions.length).toBe(1)
     expect(tx.relayerOptions[0].id).toBeDefined()
 
-    const sigId = await manager.selectTransactionRelayer(txId!, tx.relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, tx.relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    tx = await manager.getTransaction(txId!)
+    tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('formed')
 
     // Sign using the device signer
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -67,7 +68,7 @@ describe('Transactions', () => {
 
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId)
+    await manager.transactions.relay(txId)
 
     // Check the balance of the wallet
     const balance = await provider.request({
@@ -89,19 +90,19 @@ describe('Transactions', () => {
   it('Should send a transaction after logging in to a wallet', async () => {
     manager = newManager()
     const mnemonic = Mnemonic.random(Mnemonic.english)
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic,
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     // Logout without removing the device
-    await manager.logout(wallet!, { skipRemoveDevice: true })
+    await manager.wallets.logout(wallet!, { skipRemoveDevice: true })
 
     // Login to the same wallet
-    const loginId = await manager.login({ wallet: wallet! })
+    const loginId = await manager.wallets.login({ wallet: wallet! })
     expect(loginId).toBeDefined()
 
     // Register the UI for the mnemonic signer
@@ -111,7 +112,7 @@ describe('Transactions', () => {
       await respond(mnemonic)
     })
 
-    const loginRequest = await manager.getSignatureRequest(loginId!)
+    const loginRequest = await manager.signatures.get(loginId!)
     expect(loginRequest).toBeDefined()
     expect(loginRequest.action).toBe('login')
 
@@ -129,8 +130,8 @@ describe('Transactions', () => {
     expect(signRequests).toBe(1)
     unregisteredUI()
 
-    await manager.completeLogin(loginId!)
-    expect((await manager.getSignatureRequest(loginId!))?.status).toBe('completed')
+    await manager.wallets.completeLogin(loginId!)
+    expect((await manager.signatures.get(loginId!))?.status).toBe('completed')
 
     // Set balance for the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
@@ -141,7 +142,7 @@ describe('Transactions', () => {
 
     // Send a transaction
     const recipient = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: recipient,
         value: 9n,
@@ -149,9 +150,9 @@ describe('Transactions', () => {
     ])
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    let tx = await manager.getTransaction(txId!)
+    let tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('defined')
 
@@ -162,15 +163,15 @@ describe('Transactions', () => {
     expect(tx.relayerOptions.length).toBe(1)
     expect(tx.relayerOptions[0].id).toBeDefined()
 
-    const sigId = await manager.selectTransactionRelayer(txId!, tx.relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, tx.relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    tx = await manager.getTransaction(txId!)
+    tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx.status).toBe('formed')
 
     // Sign using the device signer
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -180,7 +181,7 @@ describe('Transactions', () => {
 
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId)
+    await manager.transactions.relay(txId)
 
     // Check the balance of the wallet
     const balance = await provider.request({
@@ -201,23 +202,23 @@ describe('Transactions', () => {
 
   it('Should call onTransactionsUpdate when a new transaction is requested', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     let transactions: Transaction[] = []
     let calledTimes = 0
-    manager.onTransactionsUpdate((txs) => {
+    manager.transactions.onTransactionsUpdate((txs) => {
       transactions = txs
       calledTimes++
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
         value: 9n,
@@ -225,7 +226,7 @@ describe('Transactions', () => {
     ])
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
     expect(calledTimes).toBe(1)
     expect(transactions.length).toBe(1)
@@ -238,16 +239,16 @@ describe('Transactions', () => {
 
   it('Should call onTransactionUpdate when a transaction is defined, relayer selected and relayed', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
     expect(wallet).toBeDefined()
-    await expect(manager.hasWallet(wallet!)).resolves.toBeTruthy()
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -255,13 +256,13 @@ describe('Transactions', () => {
 
     let tx: Transaction | undefined
     let calledTimes = 0
-    manager.onTransactionUpdate(txId!, (t) => {
+    manager.transactions.onTransactionUpdate(txId!, (t) => {
       tx = t
       calledTimes++
     })
 
     expect(txId).toBeDefined()
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
     while (calledTimes < 1) {
       await new Promise((resolve) => setTimeout(resolve, 1))
@@ -277,7 +278,7 @@ describe('Transactions', () => {
     expect(tx!.requests[0].gasLimit).toBeUndefined()
     expect(tx!.requests[0].data).toBeUndefined()
 
-    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
     while (calledTimes < 2) {
@@ -288,7 +289,7 @@ describe('Transactions', () => {
     expect(tx!.status).toBe('formed')
 
     // Sign the transaction
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -296,7 +297,7 @@ describe('Transactions', () => {
     const deviceSigner = sigRequest.signers.find((s) => s.status === 'ready')!
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId!)
+    await manager.transactions.relay(txId!)
     while (calledTimes < 3) {
       await new Promise((resolve) => setTimeout(resolve, 1))
     }
@@ -308,14 +309,14 @@ describe('Transactions', () => {
 
   it('Should delete an existing transaction before it is defined', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -323,20 +324,20 @@ describe('Transactions', () => {
 
     expect(txId).toBeDefined()
 
-    await manager.deleteTransaction(txId!)
-    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+    await manager.transactions.delete(txId!)
+    await expect(manager.transactions.get(txId!)).rejects.toThrow()
   })
 
   it('Should delete an existing transaction before the relayer is selected', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -344,22 +345,22 @@ describe('Transactions', () => {
 
     expect(txId).toBeDefined()
 
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    await manager.deleteTransaction(txId!)
-    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+    await manager.transactions.delete(txId!)
+    await expect(manager.transactions.get(txId!)).rejects.toThrow()
   })
 
   it('Should delete an existing transaction before it is relayed', async () => {
     manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
       },
@@ -367,38 +368,38 @@ describe('Transactions', () => {
 
     expect(txId).toBeDefined()
 
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    const tx = await manager.getTransaction(txId!)
+    const tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx!.status).toBe('defined')
 
-    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    await manager.deleteTransaction(txId!)
-    await expect(manager.getTransaction(txId!)).rejects.toThrow()
+    await manager.transactions.delete(txId!)
+    await expect(manager.transactions.get(txId!)).rejects.toThrow()
 
     // Signature request should be canceled
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('cancelled')
   })
 
   it('Should update the onchain configuration when a transaction is sent', async () => {
     const manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
 
     // Add a recovery signer, just to change the configuration
-    const rSigId = await manager.addRecoverySigner(wallet!, Address.from(Hex.random(20)))
+    const rSigId = await manager.recovery.addSigner(wallet!, Address.from(Hex.random(20)))
     expect(rSigId).toBeDefined()
 
     // Sign using the device signer
-    const rSigRequest = await manager.getSignatureRequest(rSigId!)
+    const rSigRequest = await manager.signatures.get(rSigId!)
     expect(rSigRequest).toBeDefined()
     expect(rSigRequest.status).toBe('pending')
     expect(rSigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -406,23 +407,23 @@ describe('Transactions', () => {
     const rDeviceSigner = rSigRequest.signers.find((s) => s.status === 'ready')!
     await rDeviceSigner.handle()
 
-    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
 
-    await manager.completeRecoveryUpdate(rSigId!)
+    await manager.recovery.completeUpdate(rSigId!)
 
     // It should no longer be updated onchain
-    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
 
     const randomAddress = Address.from(Hex.random(20))
-    const txId = await manager.requestTransaction(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: randomAddress,
       },
     ])
 
-    await manager.defineTransaction(txId!)
+    await manager.transactions.define(txId!)
 
-    let tx = await manager.getTransaction(txId!)
+    let tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx!.status).toBe('defined')
 
@@ -437,15 +438,15 @@ describe('Transactions', () => {
     expect(call1.to).toEqual(randomAddress)
     expect(call2.to).toEqual(wallet)
 
-    const sigId = await manager.selectTransactionRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
+    const sigId = await manager.transactions.selectRelayer(txId!, (tx as TransactionDefined).relayerOptions[0].id)
     expect(sigId).toBeDefined()
 
-    tx = await manager.getTransaction(txId!)
+    tx = await manager.transactions.get(txId!)
     expect(tx).toBeDefined()
     expect(tx!.status).toBe('formed')
 
     // Sign using the device signer
-    const sigRequest = await manager.getSignatureRequest(sigId!)
+    const sigRequest = await manager.signatures.get(sigId!)
     expect(sigRequest).toBeDefined()
     expect(sigRequest.status).toBe('pending')
     expect(sigRequest.signers.filter((s) => s.status === 'ready').length).toBe(1)
@@ -453,24 +454,24 @@ describe('Transactions', () => {
     const deviceSigner = sigRequest.signers.find((s) => s.status === 'ready')!
     await deviceSigner.handle()
 
-    await manager.relayTransaction(txId!)
+    await manager.transactions.relay(txId!)
 
     // wait 1 second
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // The onchain configuration should be updated
-    await expect(manager.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
   })
 
   it('Should reject unsafe transactions in safe mode (call to self)', async () => {
     const manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
 
-    const txId1 = manager.requestTransaction(wallet!, 42161n, [
+    const txId1 = manager.transactions.request(wallet!, 42161n, [
       {
         to: wallet!,
       },
@@ -481,13 +482,13 @@ describe('Transactions', () => {
 
   it('Should allow transactions to self in unsafe mode', async () => {
     const manager = newManager()
-    const wallet = await manager.signUp({
+    const wallet = await manager.wallets.signUp({
       mnemonic: Mnemonic.random(Mnemonic.english),
       kind: 'mnemonic',
       noGuard: true,
     })
 
-    const txId1 = await manager.requestTransaction(
+    const txId1 = await manager.transactions.request(
       wallet!,
       42161n,
       [
