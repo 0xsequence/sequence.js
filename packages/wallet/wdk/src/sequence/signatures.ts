@@ -38,9 +38,9 @@ export interface SignaturesInterface {
    * For displaying an interactive UI for a specific request, it's recommended to use `get(requestId)`
    * or subscribe via `onSignatureRequestUpdate` to get the most detailed and real-time state.
    *
-   * @returns A promise that resolves to an array of `SignatureRequest` objects.
+   * @returns A promise that resolves to an array of `BaseSignatureRequest` objects.
    */
-  list(): Promise<SignatureRequest[]>
+  list(): Promise<BaseSignatureRequest[]>
 
   /**
    * Cancel a specific signature request.
@@ -79,15 +79,15 @@ export interface SignaturesInterface {
    * changes to 'completed' or 'cancelled'), or removed. This is ideal for keeping a list
    * view of all signature requests synchronized.
    *
-   * The callback receives an array of `SignatureRequest` objects, which contain the core,
+   * The callback receives an array of `BaseSignatureRequest` objects, which contain the core,
    * static data for each request.
    *
-   * @param cb The callback function to execute with the updated list of `SignatureRequest` objects.
+   * @param cb The callback function to execute with the updated list of `BaseSignatureRequest` objects.
    * @param trigger (Optional) If `true`, the callback will be immediately invoked with the current
    *   list of requests upon registration.
    * @returns A function that, when called, will unsubscribe the listener.
    */
-  onSignatureRequestsUpdate(cb: (requests: SignatureRequest[]) => void, trigger?: boolean): () => void
+  onSignatureRequestsUpdate(cb: (requests: BaseSignatureRequest[]) => void, trigger?: boolean): () => void
 }
 
 export class Signatures implements SignaturesInterface {
@@ -111,8 +111,8 @@ export class Signatures implements SignaturesInterface {
     return request
   }
 
-  async list(): Promise<SignatureRequest[]> {
-    return this.shared.databases.signatures.list() as Promise<SignatureRequest[]>
+  async list(): Promise<BaseSignatureRequest[]> {
+    return this.shared.databases.signatures.list()
   }
 
   async get(requestId: string): Promise<SignatureRequest> {
@@ -236,7 +236,7 @@ export class Signatures implements SignaturesInterface {
     }
   }
 
-  onSignatureRequestsUpdate(cb: (requests: SignatureRequest[]) => void, trigger?: boolean) {
+  onSignatureRequestsUpdate(cb: (requests: BaseSignatureRequest[]) => void, trigger?: boolean) {
     const undo = this.shared.databases.signatures.addListener(() => {
       this.list().then((l) => cb(l))
     })
