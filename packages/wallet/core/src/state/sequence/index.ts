@@ -267,7 +267,7 @@ export class Provider implements ProviderInterface {
         factory: context.factory,
         mainModule: context.stage1,
         mainModuleUpgradable: context.stage2,
-        guestModule: Constants.DefaultGuest,
+        guestModule: Constants.DefaultGuestAddress,
         walletCreationCode: context.creationCode,
       },
     })

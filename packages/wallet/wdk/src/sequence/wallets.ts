@@ -1,5 +1,5 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
-import { Config, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Config, Constants, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
@@ -93,7 +93,7 @@ function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.He
     // instead, we add a dummy signer with weight 0
     return {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Constants.ZeroAddress,
       weight: 0n,
     } as Config.SignerLeaf
   }
@@ -178,7 +178,7 @@ function toModulesTopology(modules: Config.SapientSignerLeaf[]): Config.Topology
   if (modules.length === 0) {
     return {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Constants.ZeroAddress,
       weight: 0n,
     } as Config.SignerLeaf
   }
@@ -195,7 +195,7 @@ function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLea
     modules.push(topology)
   } else if (Config.isSignerLeaf(topology)) {
     // This signals that the wallet has no modules, so we just ignore it
-    if (topology.address !== '0x0000000000000000000000000000000000000000') {
+    if (topology.address !== Constants.ZeroAddress) {
       throw new Error('signer-leaf-not-allowed-in-modules-topology')
     }
   } else {
@@ -636,9 +636,7 @@ export class Wallets {
       }
 
       const nextDevicesTopology = buildCappedTree([
-        ...prevDevices.signers
-          .filter((x) => x !== '0x0000000000000000000000000000000000000000')
-          .map((x) => ({ address: x })),
+        ...prevDevices.signers.filter((x) => x !== Constants.ZeroAddress).map((x) => ({ address: x })),
         ...prevDevices.sapientSigners.map((x) => ({ address: x.address, imageHash: x.imageHash })),
         { address: device.address },
       ])
@@ -764,9 +762,7 @@ export class Wallets {
     const { devicesTopology, modules } = await this.getConfigurationParts(wallet)
     const nextDevicesTopology = buildCappedTree([
       ...Config.getSigners(devicesTopology)
-        .signers.filter(
-          (x) => x !== '0x0000000000000000000000000000000000000000' && !Address.isEqual(x, device.address),
-        )
+        .signers.filter((x) => x !== Constants.ZeroAddress && !Address.isEqual(x, device.address))
         .map((x) => ({ address: x })),
       ...Config.getSigners(devicesTopology).sapientSigners,
     ])

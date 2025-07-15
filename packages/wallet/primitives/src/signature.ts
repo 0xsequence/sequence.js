@@ -22,6 +22,7 @@ import { RECOVER_SAPIENT_SIGNATURE, RECOVER_SAPIENT_SIGNATURE_COMPACT, IS_VALID_
 import { wrap, decode } from './erc-6492.js'
 import { fromConfigUpdate, hash, Parented } from './payload.js'
 import { minBytesFor, packRSY, unpackRSY } from './utils.js'
+import { Constants } from './index.js'
 
 export const FLAG_SIGNATURE_HASH = 0
 export const FLAG_ADDRESS = 1
@@ -1314,7 +1315,7 @@ async function recoverTopology(
         : 0n,
     }
   } else if (isAnyAddressSubdigestLeaf(topology)) {
-    const anyAddressOpHash = hash('0x0000000000000000000000000000000000000000', chainId, payload)
+    const anyAddressOpHash = hash(Constants.ZeroAddress, chainId, payload)
     return {
       topology,
       weight: Bytes.isEqual(Bytes.fromHex(topology.digest), anyAddressOpHash)

@@ -1,7 +1,7 @@
 import { Address, Hash, Hex, Provider, RpcTransport, Secp256k1, TypedData } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Config, Erc6492, Payload } from '../../primitives/src/index.js'
+import { Constants, Config, Erc6492, Payload } from '../../primitives/src/index.js'
 import { Envelope, State, Wallet } from '../src/index.js'
 import { LOCAL_RPC_URL } from './constants.js'
 
@@ -106,7 +106,7 @@ describe('Wallet', async () => {
             name: 'MyApp',
             version: '1',
             chainId: Number(chainId),
-            verifyingContract: Address.from('0x0000000000000000000000000000000000000000'),
+            verifyingContract: Constants.ZeroAddress,
           },
           types: {
             Mail: [
@@ -117,8 +117,8 @@ describe('Wallet', async () => {
           },
           primaryType: 'Mail' as const,
           message: {
-            from: Address.from('0x0000000000000000000000000000000000000000'),
-            to: Address.from('0x0000000000000000000000000000000000000000'),
+            from: Constants.ZeroAddress,
+            to: Constants.ZeroAddress,
             contents: 'Hello, Bob!',
           },
         }
@@ -160,7 +160,7 @@ describe('Wallet', async () => {
       {
         threshold: 0n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -174,7 +174,7 @@ describe('Wallet', async () => {
       {
         threshold: 1n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 256n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 256n },
       },
       {
         stateProvider,
@@ -188,7 +188,7 @@ describe('Wallet', async () => {
       {
         threshold: 65536n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -202,7 +202,7 @@ describe('Wallet', async () => {
       {
         threshold: 1n,
         checkpoint: 72057594037927936n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -216,7 +216,7 @@ describe('Wallet', async () => {
       {
         threshold: 2n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -228,7 +228,7 @@ describe('Wallet', async () => {
     // Topology too deep (more than 32 levels)
     let topology: Config.Topology = {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Constants.ZeroAddress,
       weight: 1n,
     }
 
@@ -237,7 +237,7 @@ describe('Wallet', async () => {
         topology,
         {
           type: 'signer',
-          address: '0x0000000000000000000000000000000000000000',
+          address: Constants.ZeroAddress,
           weight: 1n,
         },
       ]
@@ -262,7 +262,7 @@ describe('Wallet', async () => {
       {
         threshold: 1n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -273,7 +273,7 @@ describe('Wallet', async () => {
     const walletUpdatePromise1 = wallet.prepareUpdate({
       threshold: 0n,
       checkpoint: 0n,
-      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
     })
 
     await expect(walletUpdatePromise1).rejects.toThrow('unsafe-threshold-0')
@@ -282,7 +282,7 @@ describe('Wallet', async () => {
     const walletUpdatePromise2 = wallet.prepareUpdate({
       threshold: 1n,
       checkpoint: 0n,
-      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 256n },
+      topology: { type: 'signer', address: Constants.ZeroAddress, weight: 256n },
     })
 
     await expect(walletUpdatePromise2).rejects.toThrow('unsafe-invalid-values')
@@ -291,7 +291,7 @@ describe('Wallet', async () => {
     const walletUpdatePromise3 = wallet.prepareUpdate({
       threshold: 65536n,
       checkpoint: 0n,
-      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
     })
 
     await expect(walletUpdatePromise3).rejects.toThrow('unsafe-invalid-values')
@@ -300,7 +300,7 @@ describe('Wallet', async () => {
     const walletUpdatePromise4 = wallet.prepareUpdate({
       threshold: 1n,
       checkpoint: 72057594037927936n,
-      topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+      topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
     })
 
     await expect(walletUpdatePromise4).rejects.toThrow('unsafe-invalid-values')
@@ -310,7 +310,7 @@ describe('Wallet', async () => {
       {
         threshold: 2n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -322,7 +322,7 @@ describe('Wallet', async () => {
     // Topology too deep (more than 32 levels)
     let topology: Config.Topology = {
       type: 'signer',
-      address: '0x0000000000000000000000000000000000000000',
+      address: Constants.ZeroAddress,
       weight: 1n,
     }
 
@@ -331,7 +331,7 @@ describe('Wallet', async () => {
         topology,
         {
           type: 'signer',
-          address: '0x0000000000000000000000000000000000000000',
+          address: Constants.ZeroAddress,
           weight: 1n,
         },
       ]
@@ -351,7 +351,7 @@ describe('Wallet', async () => {
       {
         threshold: 0n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -367,7 +367,7 @@ describe('Wallet', async () => {
       {
         threshold: 1n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         stateProvider,
@@ -380,7 +380,7 @@ describe('Wallet', async () => {
       {
         threshold: 0n,
         checkpoint: 0n,
-        topology: { type: 'signer', address: '0x0000000000000000000000000000000000000000', weight: 1n },
+        topology: { type: 'signer', address: Constants.ZeroAddress, weight: 1n },
       },
       {
         unsafe: true,

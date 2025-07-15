@@ -1,4 +1,4 @@
-import { Config, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
+import { Config, Constants, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { Kinds, RecoverySigner } from './types/signer.js'
@@ -99,7 +99,7 @@ export class Recovery {
         return leaves
       }
 
-      const filtered = leaves.filter((l) => !Address.isEqual(l.signer, '0x0000000000000000000000000000000000000000'))
+      const filtered = leaves.filter((l) => !Address.isEqual(l.signer, Constants.ZeroAddress))
 
       return [
         ...filtered,
@@ -124,7 +124,7 @@ export class Recovery {
         return [
           {
             type: 'leaf',
-            signer: '0x0000000000000000000000000000000000000000',
+            signer: Constants.ZeroAddress,
             requiredDeltaTime: 0n,
             minTimestamp: 0n,
           },
@@ -206,7 +206,7 @@ export class Recovery {
     )
 
     return leaves
-      .filter((l) => !Address.isEqual(l.signer, '0x0000000000000000000000000000000000000000'))
+      .filter((l) => !Address.isEqual(l.signer, Constants.ZeroAddress))
       .map((l) => ({
         address: l.signer,
         kind: kos.find((s) => Address.isEqual(s.address, l.signer))?.kind || 'unknown',
