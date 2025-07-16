@@ -105,18 +105,27 @@ export class Provider implements ProviderInterface {
   private async getWalletsGeneric<T>(
     subdigests: Hex.Hex[],
     loadSignatureFn: (subdigest: Hex.Hex) => Promise<T | undefined>,
-  ): Promise<{ [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: T } }> {
+  ): Promise<Record<Address.Address, { chainId: bigint; payload: Payload.Parented; signature: T }>> {
     const payloads = await Promise.all(subdigests.map((sd) => this.store.loadPayloadOfSubdigest(sd)))
-    const response: { [wallet: `0x${string}`]: { chainId: bigint; payload: Payload.Parented; signature: T } } = {}
+    const response: Record<Address.Address, { chainId: bigint; payload: Payload.Parented; signature: T }> = {}
 
     for (const payload of payloads) {
-      if (!payload || response[payload.wallet]) {
+      if (!payload) {
         continue
       }
-      const subdigest = Hex.fromBytes(Payload.hash(payload.wallet, payload.chainId, payload.content))
+
+      const walletAddress = Address.checksum(payload.wallet)
+
+      // If we already have a witness for this wallet, skip it
+      if (response[walletAddress]) {
+        continue
+      }
+
+      const subdigest = Hex.fromBytes(Payload.hash(walletAddress, payload.chainId, payload.content))
       const signature = await loadSignatureFn(subdigest)
       if (!signature) continue
-      response[payload.wallet] = {
+
+      response[walletAddress] = {
         chainId: payload.chainId,
         payload: payload.content,
         signature,

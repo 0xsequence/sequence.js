@@ -47,10 +47,14 @@ export class Provider implements ProviderInterface {
       signature: Signature.SignatureOfSignerLeaf
     }
   }> {
-    const { wallets } = await this.service.wallets({ signer })
+    const result = await this.service.wallets({ signer })
+    const wallets = toAddressKeys(result.wallets)
 
     return Object.fromEntries(
-      Object.entries(wallets).map(([wallet, signature]) => {
+      Object.entries(wallets).map((entry) => {
+        const wallet = Address.checksum(entry[0])
+        const signature = entry[1]
+
         Address.assert(wallet)
         Hex.assert(signature.signature)
 
@@ -101,7 +105,8 @@ export class Provider implements ProviderInterface {
       signature: Signature.SignatureOfSapientSignerLeaf
     }
   }> {
-    const { wallets } = await this.service.wallets({ signer, sapientHash: imageHash })
+    const result = await this.service.wallets({ signer, sapientHash: imageHash })
+    const wallets = toAddressKeys(result.wallets)
 
     return Object.fromEntries(
       Object.entries(wallets).map(
@@ -606,4 +611,13 @@ function getSignerSignatures(
   } else {
     throw new Error(`unknown topology '${JSON.stringify(topology)}'`)
   }
+}
+
+function toAddressKeys<T extends Record<string, unknown>>(obj: T): Record<Address.Address, T[keyof T]> {
+  return Object.fromEntries(
+    Object.entries(obj).map(([wallet, signature]) => {
+      const checksumAddress = Address.checksum(wallet)
+      return [checksumAddress, signature]
+    }),
+  ) as Record<Address.Address, T[keyof T]>
 }

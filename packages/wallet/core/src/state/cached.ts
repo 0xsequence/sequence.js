@@ -44,15 +44,16 @@ export class Cached implements Provider {
     }
   }> {
     // Get both from cache and source
-    const cached = await this.args.cache.getWallets(signer)
-    const source = await this.args.source.getWallets(signer)
+    const cached = toAddressKeys(await this.args.cache.getWallets(signer))
+    const source = toAddressKeys(await this.args.source.getWallets(signer))
 
     // Merge and deduplicate
     const deduplicated = { ...cached, ...source }
 
     // Sync values to source that are not in cache, and vice versa
-    for (const [wallet, data] of Object.entries(deduplicated)) {
-      const walletAddress = Address.from(wallet)
+    for (const [walletAddress, data] of Object.entries(deduplicated)) {
+      Address.assert(walletAddress)
+
       if (!source[walletAddress]) {
         await this.args.source.saveWitnesses(walletAddress, data.chainId, data.payload, {
           type: 'unrecovered-signer',
@@ -230,4 +231,13 @@ export class Cached implements Provider {
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void> {
     return this.args.source.savePayload(wallet, payload, chainId)
   }
+}
+
+function toAddressKeys<T extends Record<string, unknown>>(obj: T): Record<Address.Address, T[keyof T]> {
+  return Object.fromEntries(
+    Object.entries(obj).map(([wallet, signature]) => {
+      const checksumAddress = Address.checksum(wallet)
+      return [checksumAddress, signature]
+    }),
+  ) as Record<Address.Address, T[keyof T]>
 }
