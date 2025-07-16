@@ -1,9 +1,9 @@
 import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { GetMetaTxnReceiptReturn } from './standard/rpc/index.js'
+import { FeeToken, GetMetaTxnReceiptReturn } from './standard/rpc/index.js'
 
 export interface FeeOption {
-  token: Address.Address
+  token: FeeToken
   to: string
   value: string
   gasLimit: number

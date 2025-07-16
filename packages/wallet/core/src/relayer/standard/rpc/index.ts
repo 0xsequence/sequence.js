@@ -366,17 +366,10 @@ export class RpcRelayer implements Relayer {
 
   private mapRpcFeeOptionToFeeOption(rpcOption: RpcFeeOption): FeeOption {
     return {
-      token: this.mapRpcFeeTokenToAddress(rpcOption.token),
+      token: rpcOption.token,
       to: rpcOption.to,
       value: rpcOption.value,
       gasLimit: rpcOption.gasLimit,
     }
-  }
-
-  private mapRpcFeeTokenToAddress(rpcToken: RpcFeeToken): Address.Address {
-    if (rpcToken.type === FeeTokenType.ERC20_TOKEN && rpcToken.contractAddress) {
-      return Address.from(rpcToken.contractAddress)
-    }
-    return Constants.ZeroAddress // Default to zero address for native token or unsupported types
   }
 }

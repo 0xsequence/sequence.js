@@ -434,7 +434,7 @@ export class Transactions implements TransactionsInterface {
 
         Address.assert(to)
 
-        if (token === Constants.ZeroAddress) {
+        if (token.contractAddress === Constants.ZeroAddress) {
           tx.envelope.payload.calls.unshift({
             to,
             value: BigInt(value),
@@ -448,7 +448,7 @@ export class Transactions implements TransactionsInterface {
           const [transfer] = Abi.from(['function transfer(address to, uint256 amount) returns (bool)'])
 
           tx.envelope.payload.calls.unshift({
-            to: token,
+            to: token.contractAddress as Address.Address,
             value: 0n,
             data: AbiFunction.encodeData(transfer, [to, BigInt(value)]),
             gasLimit: BigInt(gasLimit),
