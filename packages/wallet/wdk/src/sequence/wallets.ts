@@ -183,9 +183,9 @@ export interface WalletsInterface {
    * This method verifies the state, exchanges the code for a token, and completes the sign-up or login process.
    *
    * @param args The arguments containing the `state` and `code` from the redirect, along with original sign-up options.
-   * @returns A promise that resolves to the wallet address that was created or logged into.
+   * @returns A promise that resolves to target path that should be redirected to.
    */
-  completeRedirect(args: CompleteRedirectArgs): Promise<Address.Address>
+  completeRedirect(args: CompleteRedirectArgs): Promise<string>
 
   /**
    * Initiates the login process for an existing wallet by adding the current device as a new signer.
@@ -595,16 +595,15 @@ export class Wallets implements WalletsInterface {
     return handler.commitAuth(args.target, true)
   }
 
-  async completeRedirect(args: CompleteRedirectArgs): Promise<Address.Address> {
+  async completeRedirect(args: CompleteRedirectArgs): Promise<string> {
     const commitment = await this.shared.databases.authCommitments.get(args.state)
     if (!commitment) {
       throw new Error('invalid-state')
     }
 
-    let walletAddress: Address.Address | undefined
-
+    // isSignUp needs actually `signIn`
     if (commitment.isSignUp) {
-      walletAddress = await this.signUp({
+      await this.signUp({
         kind: commitment.kind,
         commitment,
         code: args.code,
@@ -619,32 +618,14 @@ export class Wallets implements WalletsInterface {
         throw new Error('handler-not-registered')
       }
 
-      const [_signer, metadata] = await handler.completeAuth(commitment, args.code)
-
-      const loginEmail = metadata.email
-
-      if (loginEmail && commitment.target) {
-        walletAddress = commitment.target as Address.Address
-        const walletEntry = await this.shared.databases.manager.get(walletAddress)
-
-        if (walletEntry) {
-          const updatedWalletEntry = {
-            ...walletEntry,
-            loginEmail,
-            loginType: ('login-' + commitment.kind) as Wallet['loginType'],
-            loginDate: new Date().toISOString(),
-          }
-
-          await this.shared.databases.manager.set(updatedWalletEntry)
-        }
-      }
+      await handler.completeAuth(commitment, args.code)
     }
 
-    if (!walletAddress) {
+    if (!commitment.target) {
       throw new Error('invalid-state')
     }
 
-    return walletAddress
+    return commitment.target
   }
 
   async signUp(args: SignupArgs): Promise<Address.Address | undefined> {
