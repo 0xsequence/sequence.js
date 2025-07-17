@@ -601,7 +601,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('invalid-state')
     }
 
-    // isSignUp needs actually `signIn`
+    // commitment.isSignUp and signUp also mean 'signIn' from wallet's perspective
     if (commitment.isSignUp) {
       await this.signUp({
         kind: commitment.kind,
