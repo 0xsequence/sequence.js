@@ -32,9 +32,7 @@ export class SequenceRelayer implements Relayer {
     const { options, quote } = await this.service.feeOptions({ wallet, to, data })
 
     return {
-      options: options.map(({ token, to, value, gasLimit }) => {
-        return { token, to, value, gasLimit }
-      }),
+      options,
       quote: quote ? { _tag: 'FeeQuote', _quote: quote } : undefined,
     }
   }
