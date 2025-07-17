@@ -4,17 +4,11 @@ import {
   MetaTxn as RpcMetaTxn,
   FeeTokenType,
   IntentPrecondition,
-  GetMetaTxnReceiptReturn,
 } from './relayer.gen.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
-import { Constants, Payload, Precondition as PrimitivePrecondition } from '@0xsequence/wallet-primitives'
-import {
-  IntentPrecondition as RpcIntentPrecondition,
-  ETHTxnStatus,
-  FeeOption as RpcFeeOption,
-  FeeToken as RpcFeeToken,
-} from './relayer.gen.js'
+import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { ETHTxnStatus, FeeToken as RpcFeeToken } from './relayer.gen.js'
 import { decodePrecondition } from '../../../preconditions/index.js'
 import {
   erc20BalanceOf,
@@ -87,8 +81,16 @@ export class RpcRelayer implements Relayer {
         data: Bytes.toHex(data),
       })
 
-      const options = result.options.map((feeOption) => this.mapRpcFeeOptionToFeeOption(feeOption))
       const quote = result.quote ? ({ _tag: 'FeeQuote', _quote: result.quote } as FeeQuote) : undefined
+      const options = result.options.map((option) => ({
+        token: {
+          ...option.token,
+          contractAddress: this.mapRpcFeeTokenToAddress(option.token),
+        },
+        to: option.to,
+        value: option.value,
+        gasLimit: option.gasLimit,
+      }))
 
       return { options, quote }
     } catch (e) {
@@ -361,15 +363,6 @@ export class RpcRelayer implements Relayer {
 
       default:
         return false
-    }
-  }
-
-  private mapRpcFeeOptionToFeeOption(rpcOption: RpcFeeOption): FeeOption {
-    return {
-      token: this.mapRpcFeeTokenToAddress(rpcOption.token),
-      to: rpcOption.to,
-      value: rpcOption.value,
-      gasLimit: rpcOption.gasLimit,
     }
   }
 
