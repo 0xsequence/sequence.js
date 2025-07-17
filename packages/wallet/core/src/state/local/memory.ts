@@ -3,16 +3,19 @@ import { Address, Hex } from 'ox'
 import { Store } from './index.js'
 
 export class MemoryStore implements Store {
-  private configs = new Map<`0x${string}`, Config.Config>()
-  private counterfactualWallets = new Map<`0x${string}`, { imageHash: Hex.Hex; context: Context.Context }>()
-  private payloads = new Map<`0x${string}`, { content: Payload.Parented; chainId: bigint; wallet: Address.Address }>()
-  private signerSubdigests = new Map<string, Set<string>>()
-  private signatures = new Map<`0x${string}`, Signature.SignatureOfSignerLeaf>()
+  private configs = new Map<Hex.Hex, Config.Config>()
+  private counterfactualWallets = new Map<Address.Address, { imageHash: Hex.Hex; context: Context.Context }>()
+  private payloads = new Map<Hex.Hex, { content: Payload.Parented; chainId: bigint; wallet: Address.Address }>()
+  private signerSubdigests = new Map<Address.Address, Set<Hex.Hex>>()
+  private signatures = new Map<`${Address.Address}-${Hex.Hex}`, Signature.SignatureOfSignerLeaf>()
 
-  private sapientSignerSubdigests = new Map<string, Set<string>>()
-  private sapientSignatures = new Map<`0x${string}`, Signature.SignatureOfSapientSignerLeaf>()
+  private sapientSignerSubdigests = new Map<`${Address.Address}-${Hex.Hex}`, Set<Hex.Hex>>()
+  private sapientSignatures = new Map<
+    `${Address.Address}-${Hex.Hex}-${Hex.Hex}`,
+    Signature.SignatureOfSapientSignerLeaf
+  >()
 
-  private trees = new Map<`0x${string}`, GenericTree.Tree>()
+  private trees = new Map<Hex.Hex, GenericTree.Tree>()
 
   private deepCopy<T>(value: T): T {
     // modern runtime → fast native path
@@ -38,38 +41,42 @@ export class MemoryStore implements Store {
     return out as T
   }
 
-  private getSignatureKey(signer: Address.Address, subdigest: Hex.Hex): string {
-    return `${signer.toLowerCase()}-${subdigest.toLowerCase()}`
+  private getSignatureKey(signer: Address.Address, subdigest: Hex.Hex): `${Address.Address}-${Hex.Hex}` {
+    return `${signer}-${subdigest}`
   }
 
-  private getSapientSignatureKey(signer: Address.Address, subdigest: Hex.Hex, imageHash: Hex.Hex): string {
-    return `${signer.toLowerCase()}-${imageHash.toLowerCase()}-${subdigest.toLowerCase()}`
+  private getSapientSignatureKey(
+    signer: Address.Address,
+    subdigest: Hex.Hex,
+    imageHash: Hex.Hex,
+  ): `${Address.Address}-${Hex.Hex}-${Hex.Hex}` {
+    return `${signer}-${imageHash}-${subdigest}`
   }
 
   async loadConfig(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
-    const config = this.configs.get(imageHash.toLowerCase() as `0x${string}`)
+    const config = this.configs.get(imageHash)
     return config ? this.deepCopy(config) : undefined
   }
 
   async saveConfig(imageHash: Hex.Hex, config: Config.Config): Promise<void> {
-    this.configs.set(imageHash.toLowerCase() as `0x${string}`, this.deepCopy(config))
+    this.configs.set(imageHash, this.deepCopy(config))
   }
 
   async loadCounterfactualWallet(
     wallet: Address.Address,
   ): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
-    const counterfactualWallet = this.counterfactualWallets.get(wallet.toLowerCase() as `0x${string}`)
+    const counterfactualWallet = this.counterfactualWallets.get(wallet)
     return counterfactualWallet ? this.deepCopy(counterfactualWallet) : undefined
   }
 
   async saveCounterfactualWallet(wallet: Address.Address, imageHash: Hex.Hex, context: Context.Context): Promise<void> {
-    this.counterfactualWallets.set(wallet.toLowerCase() as `0x${string}`, this.deepCopy({ imageHash, context }))
+    this.counterfactualWallets.set(wallet, this.deepCopy({ imageHash, context }))
   }
 
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
   ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Address } | undefined> {
-    const payload = this.payloads.get(subdigest.toLowerCase() as `0x${string}`)
+    const payload = this.payloads.get(subdigest)
     return payload ? this.deepCopy(payload) : undefined
   }
 
@@ -77,11 +84,11 @@ export class MemoryStore implements Store {
     subdigest: Hex.Hex,
     payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Address },
   ): Promise<void> {
-    this.payloads.set(subdigest.toLowerCase() as `0x${string}`, this.deepCopy(payload))
+    this.payloads.set(subdigest, this.deepCopy(payload))
   }
 
   async loadSubdigestsOfSigner(signer: Address.Address): Promise<Hex.Hex[]> {
-    const subdigests = this.signerSubdigests.get(signer.toLowerCase() as `0x${string}`)
+    const subdigests = this.signerSubdigests.get(signer)
     return subdigests ? Array.from(subdigests).map((s) => s as Hex.Hex) : []
   }
 
@@ -90,7 +97,7 @@ export class MemoryStore implements Store {
     subdigest: Hex.Hex,
   ): Promise<Signature.SignatureOfSignerLeaf | undefined> {
     const key = this.getSignatureKey(signer, subdigest)
-    const signature = this.signatures.get(key as `0x${string}`)
+    const signature = this.signatures.get(key)
     return signature ? this.deepCopy(signature) : undefined
   }
 
@@ -100,10 +107,10 @@ export class MemoryStore implements Store {
     signature: Signature.SignatureOfSignerLeaf,
   ): Promise<void> {
     const key = this.getSignatureKey(signer, subdigest)
-    this.signatures.set(key as `0x${string}`, this.deepCopy(signature))
+    this.signatures.set(key, this.deepCopy(signature))
 
-    const signerKey = signer.toLowerCase()
-    const subdigestKey = subdigest.toLowerCase()
+    const signerKey = signer
+    const subdigestKey = subdigest
 
     if (!this.signerSubdigests.has(signerKey)) {
       this.signerSubdigests.set(signerKey, new Set())
@@ -112,7 +119,7 @@ export class MemoryStore implements Store {
   }
 
   async loadSubdigestsOfSapientSigner(signer: Address.Address, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
-    const key = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
+    const key: `${Address.Address}-${Hex.Hex}` = `${signer}-${imageHash}`
     const subdigests = this.sapientSignerSubdigests.get(key)
     return subdigests ? Array.from(subdigests).map((s) => s as Hex.Hex) : []
   }
@@ -123,7 +130,7 @@ export class MemoryStore implements Store {
     imageHash: Hex.Hex,
   ): Promise<Signature.SignatureOfSapientSignerLeaf | undefined> {
     const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
-    const signature = this.sapientSignatures.get(key as `0x${string}`)
+    const signature = this.sapientSignatures.get(key)
     return signature ? this.deepCopy(signature) : undefined
   }
 
@@ -134,10 +141,10 @@ export class MemoryStore implements Store {
     signature: Signature.SignatureOfSapientSignerLeaf,
   ): Promise<void> {
     const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
-    this.sapientSignatures.set(key as `0x${string}`, this.deepCopy(signature))
+    this.sapientSignatures.set(key, this.deepCopy(signature))
 
-    const signerKey = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
-    const subdigestKey = subdigest.toLowerCase()
+    const signerKey: `${Address.Address}-${Hex.Hex}` = `${signer}-${imageHash}`
+    const subdigestKey = subdigest
 
     if (!this.sapientSignerSubdigests.has(signerKey)) {
       this.sapientSignerSubdigests.set(signerKey, new Set())
@@ -146,11 +153,11 @@ export class MemoryStore implements Store {
   }
 
   async loadTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
-    const tree = this.trees.get(rootHash.toLowerCase() as `0x${string}`)
+    const tree = this.trees.get(rootHash)
     return tree ? this.deepCopy(tree) : undefined
   }
 
   async saveTree(rootHash: Hex.Hex, tree: GenericTree.Tree): Promise<void> {
-    this.trees.set(rootHash.toLowerCase() as `0x${string}`, this.deepCopy(tree))
+    this.trees.set(rootHash, this.deepCopy(tree))
   }
 }

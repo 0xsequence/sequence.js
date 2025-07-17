@@ -54,26 +54,20 @@ function parseElements(elements: string): Config.Leaf[] {
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'subdigest') {
       const [_, digest] = firstElement!.split(':')
-      leaves.push({
-        type: 'subdigest',
-        digest: digest as `0x${string}`,
-      })
+      Hex.assert(digest)
+      leaves.push({ type: 'subdigest', digest })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'any-address-subdigest') {
       const [_, digest] = firstElement!.split(':')
-      leaves.push({
-        type: 'any-address-subdigest',
-        digest: digest as `0x${string}`,
-      })
+      Hex.assert(digest)
+      leaves.push({ type: 'any-address-subdigest', digest })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'sapient') {
       const [_, imageHash, address, weight] = firstElement!.split(':')
-      if (!imageHash || !imageHash.startsWith('0x') || imageHash.length !== 66) {
-        throw new Error(`Invalid image hash: ${imageHash}`)
-      }
+      Hex.assert(imageHash)
       leaves.push({
         type: 'sapient-signer',
-        imageHash: imageHash as `0x${string}`,
+        imageHash,
         address: Address.from(address!),
         weight: BigInt(weight!),
       })

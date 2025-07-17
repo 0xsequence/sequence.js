@@ -94,9 +94,11 @@ function rsyFromRsvStr(sigStr: string): RSY {
   if (!rStr || !sStr || !vStr) {
     throw new Error('Invalid signature format')
   }
+  Hex.assert(rStr)
+  Hex.assert(sStr)
   return {
-    r: Bytes.toBigInt(Bytes.fromHex(rStr as `0x${string}`, { size: 32 })),
-    s: Bytes.toBigInt(Bytes.fromHex(sStr as `0x${string}`, { size: 32 })),
+    r: Bytes.toBigInt(Bytes.fromHex(rStr, { size: 32 })),
+    s: Bytes.toBigInt(Bytes.fromHex(sStr, { size: 32 })),
     yParity: parseInt(vStr, 10) - 27,
   }
 }

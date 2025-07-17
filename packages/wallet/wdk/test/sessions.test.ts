@@ -145,7 +145,8 @@ describe('Sessions (via Manager)', () => {
     // Send the transaction
     if (CAN_RUN_LIVE && PRIVATE_KEY) {
       // Load the sender
-      const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
+      Hex.assert(PRIVATE_KEY)
+      const senderPk = PRIVATE_KEY
       const pkRelayer = new Relayer.Standard.PkRelayer(senderPk, provider)
       const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
       console.log('Transaction sent', tx)

@@ -36,14 +36,17 @@ export async function doEncode(
   input: string,
   signatures: string[] = [],
   noChainId: boolean,
-  checkpointerData?: string,
+  checkpointerData?: Hex.Hex,
 ): Promise<string> {
   const config = Config.configFromJson(input)
 
   const allSignatures = signatures.filter(Boolean).map((s) => {
     const values = s.split(':')
+    if (values[0] === undefined) {
+      throw new Error(`no address in signature '${s}'`)
+    }
     return {
-      address: Address.from(values[0] as `0x${string}`),
+      address: Address.from(values[0]),
       type: values[1],
       values: values.slice(2),
     }
@@ -59,26 +62,31 @@ export async function doEncode(
       }
 
       if (candidate.type === 'erc1271') {
+        Hex.assert(candidate.values[0])
         return {
-          address: candidate.address as `0x${string}`,
-          data: candidate.values[0] as `0x${string}`,
+          address: candidate.address,
+          data: candidate.values[0],
           type: 'erc1271',
         }
       }
 
       if (candidate.type === 'eth_sign') {
+        Hex.assert(candidate.values[0])
+        Hex.assert(candidate.values[1])
         return {
-          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0] as `0x${string}`, { size: 32 })),
-          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1] as `0x${string}`, { size: 32 })),
+          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0], { size: 32 })),
+          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1], { size: 32 })),
           yParity: OxSignature.vToYParity(Number(candidate.values[2])),
           type: 'eth_sign',
         }
       }
 
       if (candidate.type === 'hash') {
+        Hex.assert(candidate.values[0])
+        Hex.assert(candidate.values[1])
         return {
-          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0] as `0x${string}`, { size: 32 })),
-          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1] as `0x${string}`, { size: 32 })),
+          r: Bytes.toBigInt(Bytes.fromHex(candidate.values[0], { size: 32 })),
+          s: Bytes.toBigInt(Bytes.fromHex(candidate.values[1], { size: 32 })),
           yParity: OxSignature.vToYParity(Number(candidate.values[2])),
           type: 'hash',
         }
@@ -98,9 +106,10 @@ export async function doEncode(
       }
 
       if (candidate.type === 'sapient' || candidate.type === 'sapient_compact') {
+        Hex.assert(candidate.values[0])
         return {
-          address: candidate.address as `0x${string}`,
-          data: candidate.values[0] as `0x${string}`,
+          address: candidate.address,
+          data: candidate.values[0],
           type: candidate.type,
         }
       }
@@ -118,18 +127,18 @@ export async function doEncode(
   const encoded = Signature.encodeSignature({
     noChainId,
     configuration: { ...config, topology: fullTopology },
-    checkpointerData: checkpointerData ? Bytes.fromHex(checkpointerData as `0x${string}`) : undefined,
+    checkpointerData: checkpointerData ? Bytes.fromHex(checkpointerData) : undefined,
   })
 
   return Hex.fromBytes(encoded)
 }
 
-export async function doConcat(signatures: string[]): Promise<string> {
+export async function doConcat(signatures: Hex.Hex[]): Promise<string> {
   if (signatures.length === 0) {
     throw new Error('No signatures provided')
   }
 
-  const decoded = signatures.map((s) => Signature.decodeSignature(Bytes.fromHex(s as `0x${string}`)))
+  const decoded = signatures.map((s) => Signature.decodeSignature(Bytes.fromHex(s)))
 
   const reEncoded = Signature.encodeSignature({
     ...decoded[0]!,
@@ -139,8 +148,8 @@ export async function doConcat(signatures: string[]): Promise<string> {
   return Hex.fromBytes(reEncoded)
 }
 
-export async function doDecode(signature: string): Promise<string> {
-  const bytes = Bytes.fromHex(signature as `0x${string}`)
+export async function doDecode(signature: Hex.Hex): Promise<string> {
+  const bytes = Bytes.fromHex(signature)
   const decoded = Signature.decodeSignature(bytes)
   return Signature.rawSignatureToJson(decoded)
 }
@@ -181,6 +190,7 @@ const signatureCommand: CommandModule = {
             })
         },
         async (argv) => {
+          Hex.assert(argv.checkpointerData)
           const input = await fromPosOrStdin(argv, 'input')
           console.log(await doEncode(input, argv.signature, !argv.chainId, argv.checkpointerData))
         },
@@ -197,7 +207,14 @@ const signatureCommand: CommandModule = {
           })
         },
         async (argv) => {
-          console.log(await doConcat(argv.signatures))
+          console.log(
+            await doConcat(
+              argv.signatures.map((signature) => {
+                Hex.assert(signature)
+                return signature
+              }),
+            ),
+          )
         },
       )
       .command(
@@ -212,6 +229,7 @@ const signatureCommand: CommandModule = {
         },
         async (argv) => {
           const input = await fromPosOrStdin(argv, 'signature')
+          Hex.assert(input)
           console.log(await doDecode(input))
         },
       )

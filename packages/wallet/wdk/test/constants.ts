@@ -84,7 +84,7 @@ export function newRemoteManager(
 
   if (remoteManagerOptions.network.relayerPk) {
     const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))
-    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
+    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk, provider))
   }
 
   if (remoteManagerOptions.network.bundlerUrl) {

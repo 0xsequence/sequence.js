@@ -1,20 +1,20 @@
-import { Address, Bytes } from 'ox'
+import { Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { Address as SequenceAddress, Context } from '@0xsequence/wallet-primitives'
 
 export async function doCalculateAddress(options: {
-  imageHash: string
-  factory: string
-  module: string
-  creationCode?: string
+  imageHash: Hex.Hex
+  factory: Address.Address
+  module: Address.Address
+  creationCode?: Hex.Hex
 }): Promise<string> {
   const context = {
-    factory: Address.from(options.factory),
-    stage1: Address.from(options.module),
-    creationCode: (options.creationCode || Context.Dev2.creationCode) as `0x${string}`,
+    factory: options.factory,
+    stage1: options.module,
+    creationCode: options.creationCode || Context.Dev2.creationCode,
   }
 
-  return SequenceAddress.from(Bytes.fromHex(options.imageHash as `0x${string}`), context)
+  return SequenceAddress.from(Bytes.fromHex(options.imageHash), context)
 }
 
 const addressCommand: CommandModule = {

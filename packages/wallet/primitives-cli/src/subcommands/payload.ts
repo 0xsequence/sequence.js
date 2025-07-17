@@ -34,7 +34,7 @@ export async function doConvertToAbi(_payload: string): Promise<string> {
   throw new Error('Not implemented')
 }
 
-export async function doConvertToPacked(payload: string, wallet?: string): Promise<string> {
+export async function doConvertToPacked(payload: string, wallet?: Address.Address): Promise<string> {
   const decodedPayload = Payload.fromAbiFormat(
     AbiParameters.decode(
       [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
@@ -43,7 +43,7 @@ export async function doConvertToPacked(payload: string, wallet?: string): Promi
   )
 
   if (Payload.isCalls(decodedPayload)) {
-    const packed = Payload.encode(decodedPayload, wallet ? (wallet as `0x${string}`) : undefined)
+    const packed = Payload.encode(decodedPayload, wallet)
     return Hex.from(packed)
   }
 
@@ -105,6 +105,10 @@ const payloadCommand: CommandModule = {
             })
         },
         async (argv) => {
+          if (argv.wallet === undefined) {
+            throw new Error('wallet is not an address')
+          }
+          Address.assert(argv.wallet)
           const payload = await fromPosOrStdin(argv, 'payload')
           const result = await doConvertToPacked(payload, argv.wallet)
           console.log(result)

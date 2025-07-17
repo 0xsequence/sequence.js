@@ -1,11 +1,11 @@
-import { Hex } from 'ox'
+import { Address, Hex } from 'ox'
 import { CommandModule } from 'yargs'
 import sessionExplicitCommand from './sessionExplicit.js'
 import sessionImplicitCommand from './sessionImplicit.js'
 
 import { GenericTree, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
 
-export async function doEmptyTopology(identitySigner: `0x${string}`): Promise<string> {
+export async function doEmptyTopology(identitySigner: Address.Address): Promise<string> {
   const topology = SessionConfig.emptySessionsTopology(identitySigner)
   return SessionConfig.sessionsTopologyToJson(topology)
 }
@@ -19,16 +19,16 @@ export async function doEncodeTopology(sessionTopologyInput: string): Promise<st
 export async function doEncodeSessionCallSignatures(
   sessionTopologyInput: string,
   callSignaturesInput: string[],
-  explicitSigners: string[] = [],
-  implicitSigners: string[] = [],
+  explicitSigners: Address.Address[] = [],
+  implicitSigners: Address.Address[] = [],
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
   const callSignatures = callSignaturesInput.map((s) => SessionSignature.sessionCallSignatureFromJson(s))
   const encoded = SessionSignature.encodeSessionCallSignatures(
     callSignatures,
     sessionTopology,
-    explicitSigners as `0x${string}`[],
-    implicitSigners as `0x${string}`[],
+    explicitSigners,
+    implicitSigners,
   )
   return Hex.from(encoded)
 }
@@ -57,7 +57,8 @@ const sessionCommand: CommandModule = {
           })
         },
         async (args) => {
-          console.log(await doEmptyTopology(args.identitySigner as `0x${string}`))
+          Address.assert(args.identitySigner)
+          console.log(await doEmptyTopology(args.identitySigner))
         },
       )
       .command(
@@ -112,8 +113,14 @@ const sessionCommand: CommandModule = {
             await doEncodeSessionCallSignatures(
               args.sessionTopology,
               args.callSignatures,
-              args.explicitSigners,
-              args.implicitSigners,
+              args.explicitSigners.map((signer) => {
+                Address.assert(signer)
+                return signer
+              }),
+              args.implicitSigners.map((signer) => {
+                Address.assert(signer)
+                return signer
+              }),
             ),
           )
         },
