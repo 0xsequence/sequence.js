@@ -1,6 +1,7 @@
 import { Address, Hex } from 'ox'
 import { MaybePromise, Provider } from './index.js'
 import { Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
+import { normalizeAddressKeys } from './utils.js'
 
 export class Cached implements Provider {
   constructor(
@@ -44,8 +45,8 @@ export class Cached implements Provider {
     }
   }> {
     // Get both from cache and source
-    const cached = toAddressKeys(await this.args.cache.getWallets(signer))
-    const source = toAddressKeys(await this.args.source.getWallets(signer))
+    const cached = normalizeAddressKeys(await this.args.cache.getWallets(signer))
+    const source = normalizeAddressKeys(await this.args.source.getWallets(signer))
 
     // Merge and deduplicate
     const deduplicated = { ...cached, ...source }
@@ -231,13 +232,4 @@ export class Cached implements Provider {
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void> {
     return this.args.source.savePayload(wallet, payload, chainId)
   }
-}
-
-function toAddressKeys<T extends Record<string, unknown>>(obj: T): Record<Address.Address, T[keyof T]> {
-  return Object.fromEntries(
-    Object.entries(obj).map(([wallet, signature]) => {
-      const checksumAddress = Address.checksum(wallet)
-      return [checksumAddress, signature]
-    }),
-  ) as Record<Address.Address, T[keyof T]>
 }

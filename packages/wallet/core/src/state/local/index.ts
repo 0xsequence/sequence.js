@@ -10,6 +10,7 @@ import {
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { MemoryStore } from './memory.js'
+import { normalizeAddressKeys } from '../utils.js'
 
 export interface Store {
   // top level configurations store
@@ -123,7 +124,10 @@ export class Provider implements ProviderInterface {
 
       const subdigest = Hex.fromBytes(Payload.hash(walletAddress, payload.chainId, payload.content))
       const signature = await loadSignatureFn(subdigest)
-      if (!signature) continue
+
+      if (!signature) {
+        continue
+      }
 
       response[walletAddress] = {
         chainId: payload.chainId,
@@ -136,16 +140,20 @@ export class Provider implements ProviderInterface {
   }
 
   async getWallets(signer: Address.Address) {
-    return this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(
-      await this.store.loadSubdigestsOfSigner(signer),
-      (subdigest) => this.store.loadSignatureOfSubdigest(signer, subdigest),
+    return normalizeAddressKeys(
+      await this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(
+        await this.store.loadSubdigestsOfSigner(signer),
+        (subdigest) => this.store.loadSignatureOfSubdigest(signer, subdigest),
+      ),
     )
   }
 
   async getWalletsForSapient(signer: Address.Address, imageHash: Hex.Hex) {
-    return this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(
-      await this.store.loadSubdigestsOfSapientSigner(signer, imageHash),
-      (subdigest) => this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
+    return normalizeAddressKeys(
+      await this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(
+        await this.store.loadSubdigestsOfSapientSigner(signer, imageHash),
+        (subdigest) => this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
+      ),
     )
   }
 
@@ -156,7 +164,8 @@ export class Provider implements ProviderInterface {
     | { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf }
     | Promise<{ chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined>
     | undefined {
-    return this.getWallets(signer).then((wallets) => wallets[wallet])
+    const checksumAddress = Address.checksum(wallet)
+    return this.getWallets(signer).then((wallets) => wallets[checksumAddress])
   }
 
   getWitnessForSapient(
@@ -169,7 +178,8 @@ export class Provider implements ProviderInterface {
         { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
       >
     | undefined {
-    return this.getWalletsForSapient(signer, imageHash).then((wallets) => wallets[wallet])
+    const checksumAddress = Address.checksum(wallet)
+    return this.getWalletsForSapient(signer, imageHash).then((wallets) => wallets[checksumAddress])
   }
 
   async saveWitnesses(

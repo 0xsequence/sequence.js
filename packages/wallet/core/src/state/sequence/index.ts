@@ -2,6 +2,7 @@ import { Config, Constants, Context, GenericTree, Payload, Signature } from '@0x
 import { Address, Bytes, Hex, Signature as oxSignature } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { Sessions, SignatureType } from './sessions.gen.js'
+import { normalizeAddressKeys } from '../utils.js'
 
 export class Provider implements ProviderInterface {
   private readonly service: Sessions
@@ -48,13 +49,10 @@ export class Provider implements ProviderInterface {
     }
   }> {
     const result = await this.service.wallets({ signer })
-    const wallets = toAddressKeys(result.wallets)
+    const wallets = normalizeAddressKeys(result.wallets)
 
     return Object.fromEntries(
-      Object.entries(wallets).map((entry) => {
-        const wallet = Address.checksum(entry[0])
-        const signature = entry[1]
-
+      Object.entries(wallets).map(([wallet, signature]) => {
         Address.assert(wallet)
         Hex.assert(signature.signature)
 
@@ -106,7 +104,7 @@ export class Provider implements ProviderInterface {
     }
   }> {
     const result = await this.service.wallets({ signer, sapientHash: imageHash })
-    const wallets = toAddressKeys(result.wallets)
+    const wallets = normalizeAddressKeys(result.wallets)
 
     return Object.fromEntries(
       Object.entries(wallets).map(
@@ -611,13 +609,4 @@ function getSignerSignatures(
   } else {
     throw new Error(`unknown topology '${JSON.stringify(topology)}'`)
   }
-}
-
-function toAddressKeys<T extends Record<string, unknown>>(obj: T): Record<Address.Address, T[keyof T]> {
-  return Object.fromEntries(
-    Object.entries(obj).map(([wallet, signature]) => {
-      const checksumAddress = Address.checksum(wallet)
-      return [checksumAddress, signature]
-    }),
-  ) as Record<Address.Address, T[keyof T]>
 }
