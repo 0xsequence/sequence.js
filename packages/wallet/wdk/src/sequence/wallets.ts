@@ -9,6 +9,7 @@ import { Action } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
 import { AuthCodeHandler } from './handlers/authcode.js'
+import { Device } from './types/device.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple'
@@ -101,6 +102,18 @@ export interface WalletsInterface {
    * @returns A promise that resolves to an array of `Wallet` objects.
    */
   list(): Promise<Wallet[]>
+
+  /**
+   * Lists all device keys currently authorized in the wallet's on-chain configuration.
+   *
+   * This method inspects the wallet's configuration to find all signers that
+   * have been identified as 'local-device' keys. It also indicates which of
+   * these keys corresponds to the current, active session.
+   *
+   * @param wallet The address of the wallet to query.
+   * @returns A promise that resolves to an array of `Device` objects.
+   */
+  listDevices(wallet: Address.Address): Promise<Device[]>
 
   /**
    * Registers a UI handler for wallet selection.
@@ -478,6 +491,22 @@ export class Wallets implements WalletsInterface {
 
   public async list(): Promise<Wallet[]> {
     return this.shared.databases.manager.list()
+  }
+
+  public async listDevices(wallet: Address.Address): Promise<Device[]> {
+    const walletEntry = await this.get(wallet)
+    if (!walletEntry) {
+      throw new Error('wallet-not-found')
+    }
+
+    const localDeviceAddress = walletEntry.device
+
+    const { devices: deviceSigners } = await this.getConfiguration(wallet)
+
+    return deviceSigners.map((signer) => ({
+      address: signer.address,
+      isLocal: Address.isEqual(signer.address, localDeviceAddress),
+    }))
   }
 
   public registerWalletSelector(handler: WalletSelectionUiHandler) {
