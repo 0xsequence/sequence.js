@@ -1507,6 +1507,13 @@ export interface GetOnRampURLReturn {
 }
 export interface SardineGetClientTokenArgs {
 }
+export interface GetOnRampURLArgs {
+  chainId: string
+}
+
+export interface GetOnRampURLReturn {
+  url: string
+}
 export interface SardineGetClientTokenArgs {}
 
 export interface SardineGetClientTokenReturn {
@@ -1931,6 +1938,7 @@ export interface UpdatePackContentReturn {
 }
 export interface GetRevealTxDataArgs {
   contractAddress: string
+  packId: string
   chainId: number
   userAddress: string
 }
@@ -3461,33 +3469,20 @@ export class API implements API {
       }
     )
   }
-  
+
   getRevealTxData = (args: GetRevealTxDataArgs, headers?: object, signal?: AbortSignal): Promise<GetRevealTxDataReturn> => {
-    return this.fetch(
-      this.url('GetRevealTxData'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          txData: <string>(_data.txData),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
-  }
-  
-  checkoutOptionsPrimary = (args: CheckoutOptionsPrimaryArgs, headers?: object, signal?: AbortSignal): Promise<CheckoutOptionsPrimaryReturn> => {
-    return this.fetch(
-      this.url('CheckoutOptionsPrimary'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          options: <CheckoutOptions>(_data.options),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+    return this.fetch(this.url('GetRevealTxData'), createHTTPRequest(args, headers, signal)).then(
+      res => {
+        return buildResponse(res).then(_data => {
+          return {
+            txData: <string>_data.txData
+          }
+        })
+      },
+      error => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      }
+    )
   }
 
   checkoutOptionsPrimary = (
