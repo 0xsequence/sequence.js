@@ -475,4 +475,84 @@ describe('Wallets', () => {
     await managerDevice1.stop()
     await managerDevice2.stop()
   })
+
+  it('Should remotely log out a device', async () => {
+    // === Step 1: Setup with two devices ===
+    const loginMnemonic = Mnemonic.random(Mnemonic.english)
+    const managerDevice1 = newManager(undefined, undefined, 'device-1')
+
+    const wallet = await managerDevice1.wallets.signUp({
+      mnemonic: loginMnemonic,
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    const managerDevice2 = newManager(undefined, undefined, 'device-2')
+    const loginRequestId = await managerDevice2.wallets.login({ wallet: wallet! })
+
+    const unregisterUI = managerDevice2.registerMnemonicUI(async (respond) => {
+      await respond(loginMnemonic)
+    })
+
+    const loginSigRequest = await managerDevice2.signatures.get(loginRequestId)
+    const mnemonicSigner = loginSigRequest.signers.find((s) => s.handler?.kind === 'login-mnemonic')!
+    await (mnemonicSigner as SignerActionable).handle()
+    unregisterUI()
+
+    await managerDevice2.wallets.completeLogin(loginRequestId)
+
+    const initialDevices = await managerDevice1.wallets.listDevices(wallet!)
+    console.log('Initial devices', initialDevices)
+    expect(initialDevices.length).toBe(2)
+    const device2Address = initialDevices.find((d) => !d.isLocal)!.address
+
+    // === Step 2: Initiate remote logout from Device 1 ===
+    const remoteLogoutRequestId = await managerDevice1.wallets.remoteLogout(wallet!, device2Address)
+    expect(remoteLogoutRequestId).toBeDefined()
+
+    // === Step 3: Authorize the remote logout from Device 1 ===
+    const logoutSigRequest = await managerDevice1.signatures.get(remoteLogoutRequestId)
+    expect(logoutSigRequest.action).toBe('remote-logout')
+
+    const device1Signer = logoutSigRequest.signers.find((s) => s.handler?.kind === 'local-device')
+    expect(device1Signer).toBeDefined()
+    expect(device1Signer?.status).toBe('ready')
+
+    const handled = await (device1Signer as SignerReady).handle()
+    expect(handled).toBe(true)
+
+    await managerDevice1.wallets.completeConfigurationUpdate(remoteLogoutRequestId)
+
+    // The signature request should now be marked as completed
+    expect((await managerDevice1.signatures.get(remoteLogoutRequestId))?.status).toBe('completed')
+
+    // === Step 5: Verification ===
+    const finalDevices = await managerDevice1.wallets.listDevices(wallet!)
+    console.log('Final devices', finalDevices)
+    expect(finalDevices.length).toBe(1)
+    expect(finalDevices[0].isLocal).toBe(true)
+    expect(finalDevices[0].address).not.toBe(device2Address)
+
+    await managerDevice1.stop()
+    await managerDevice2.stop()
+  })
+
+  it('Should not be able to remotely log out from the current device', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    const devices = await manager.wallets.listDevices(wallet!)
+    expect(devices.length).toBe(1)
+    const localDeviceAddress = devices[0].address
+
+    const remoteLogoutPromise = manager.wallets.remoteLogout(wallet!, localDeviceAddress)
+
+    await expect(remoteLogoutPromise).rejects.toThrow('cannot-remote-logout-from-local-device')
+  })
 })
