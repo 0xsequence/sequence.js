@@ -5,6 +5,7 @@ import { Handler } from '../handlers/handler.js'
 
 export type ActionToPayload = {
   [Actions.Logout]: Payload.ConfigUpdate
+  [Actions.RemoteLogout]: Payload.ConfigUpdate
   [Actions.Login]: Payload.ConfigUpdate
   [Actions.SendTransaction]: Payload.Calls | Payload.Calls4337_07
   [Actions.SignMessage]: Payload.Message
@@ -17,6 +18,7 @@ export type ActionToPayload = {
 
 export const Actions = {
   Logout: 'logout',
+  RemoteLogout: 'remote-logout',
   Login: 'login',
   SendTransaction: 'send-transaction',
   SignMessage: 'sign-message',
