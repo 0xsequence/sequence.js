@@ -676,4 +676,245 @@ describe('Config', () => {
       expect(typeof config.threshold).toBe('bigint')
     })
   })
+
+  describe('mergeLeaf function (internal)', () => {
+    it('should merge identical node leaves', () => {
+      const nodeLeaf1 = '0x1111111111111111111111111111111111111111111111111111111111111111'
+      const nodeLeaf2 = '0x1111111111111111111111111111111111111111111111111111111111111111'
+
+      // Use mergeTopology to indirectly test mergeLeaf
+      const result = mergeTopology(nodeLeaf1, nodeLeaf2)
+      expect(result).toBe(nodeLeaf1)
+    })
+
+    it('should throw for different node leaves', () => {
+      const nodeLeaf1 = '0x1111111111111111111111111111111111111111111111111111111111111111'
+      const nodeLeaf2 = '0x2222222222222222222222222222222222222222222222222222222222222222'
+
+      expect(() => mergeTopology(nodeLeaf1, nodeLeaf2)).toThrow('Topology mismatch: different node leaves')
+    })
+
+    it('should merge node leaf with matching topology hash', () => {
+      const topology = sampleSignerLeaf
+      const topologyHash = Bytes.toHex(hashConfiguration(topology))
+
+      const result = mergeTopology(topologyHash, topology)
+      expect(result).toEqual(topology)
+    })
+
+    it('should merge topology with matching node leaf hash', () => {
+      const topology = sampleSignerLeaf
+      const topologyHash = Bytes.toHex(hashConfiguration(topology))
+
+      const result = mergeTopology(topology, topologyHash)
+      expect(result).toEqual(topology)
+    })
+
+    it('should throw when node leaf hash does not match topology', () => {
+      const topology = sampleSignerLeaf
+      const wrongHash = '0x0000000000000000000000000000000000000000000000000000000000000000'
+
+      expect(() => mergeTopology(wrongHash, topology)).toThrow('Topology mismatch: node leaf hash does not match')
+      expect(() => mergeTopology(topology, wrongHash)).toThrow('Topology mismatch: node leaf hash does not match')
+    })
+
+    it('should merge identical signer leaves', () => {
+      const signer1: SignerLeaf = {
+        type: 'signer',
+        address: testAddress1,
+        weight: 1n,
+      }
+      const signer2: SignerLeaf = {
+        type: 'signer',
+        address: testAddress1,
+        weight: 1n,
+      }
+
+      const result = mergeTopology(signer1, signer2)
+      expect(result).toEqual(signer1)
+    })
+
+    it('should throw for signer leaves with different addresses', () => {
+      const signer1: SignerLeaf = {
+        type: 'signer',
+        address: testAddress1,
+        weight: 1n,
+      }
+      const signer2: SignerLeaf = {
+        type: 'signer',
+        address: testAddress2,
+        weight: 1n,
+      }
+
+      expect(() => mergeTopology(signer1, signer2)).toThrow('Topology mismatch: signer fields differ')
+    })
+
+    it('should throw for signer leaves with different weights', () => {
+      const signer1: SignerLeaf = {
+        type: 'signer',
+        address: testAddress1,
+        weight: 1n,
+      }
+      const signer2: SignerLeaf = {
+        type: 'signer',
+        address: testAddress1,
+        weight: 2n,
+      }
+
+      expect(() => mergeTopology(signer1, signer2)).toThrow('Topology mismatch: signer fields differ')
+    })
+
+    it('should throw for signer leaves with different signature states', () => {
+      const signer1: SignerLeaf = {
+        type: 'signer',
+        address: testAddress1,
+        weight: 1n,
+        signed: true,
+      }
+      const signer2: SignerLeaf = {
+        type: 'signer',
+        address: testAddress1,
+        weight: 1n,
+        signed: false,
+      }
+
+      expect(() => mergeTopology(signer1, signer2)).toThrow('Topology mismatch: signer signature fields differ')
+    })
+
+    it('should merge identical sapient signer leaves', () => {
+      const result = mergeTopology(sampleSapientSignerLeaf, sampleSapientSignerLeaf)
+      expect(result).toEqual(sampleSapientSignerLeaf)
+    })
+
+    it('should throw for sapient signers with different addresses', () => {
+      const sapient1: SapientSignerLeaf = {
+        type: 'sapient-signer',
+        address: testAddress1,
+        weight: 1n,
+        imageHash: testImageHash,
+      }
+      const sapient2: SapientSignerLeaf = {
+        type: 'sapient-signer',
+        address: testAddress2,
+        weight: 1n,
+        imageHash: testImageHash,
+      }
+
+      expect(() => mergeTopology(sapient1, sapient2)).toThrow('Topology mismatch: sapient signer fields differ')
+    })
+
+    it('should throw for sapient signers with different image hashes', () => {
+      const sapient1: SapientSignerLeaf = {
+        type: 'sapient-signer',
+        address: testAddress1,
+        weight: 1n,
+        imageHash: testImageHash,
+      }
+      const sapient2: SapientSignerLeaf = {
+        type: 'sapient-signer',
+        address: testAddress1,
+        weight: 1n,
+        imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      }
+
+      expect(() => mergeTopology(sapient1, sapient2)).toThrow('Topology mismatch: sapient signer fields differ')
+    })
+
+    it('should throw for sapient signers with different signature states', () => {
+      const sapient1: SapientSignerLeaf = {
+        type: 'sapient-signer',
+        address: testAddress1,
+        weight: 1n,
+        imageHash: testImageHash,
+        signed: true,
+      }
+      const sapient2: SapientSignerLeaf = {
+        type: 'sapient-signer',
+        address: testAddress1,
+        weight: 1n,
+        imageHash: testImageHash,
+        signed: false,
+      }
+
+      expect(() => mergeTopology(sapient1, sapient2)).toThrow('Topology mismatch: sapient signature fields differ')
+    })
+
+    it('should merge identical any-address-subdigest leaves', () => {
+      const result = mergeTopology(sampleAnyAddressSubdigestLeaf, sampleAnyAddressSubdigestLeaf)
+      expect(result).toEqual(sampleAnyAddressSubdigestLeaf)
+    })
+
+    it('should throw for any-address-subdigest leaves with different digests', () => {
+      const subdigest1: AnyAddressSubdigestLeaf = {
+        type: 'any-address-subdigest',
+        digest: testDigest,
+      }
+      const subdigest2: AnyAddressSubdigestLeaf = {
+        type: 'any-address-subdigest',
+        digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      }
+
+      expect(() => mergeTopology(subdigest1, subdigest2)).toThrow(
+        'Topology mismatch: any-address-subdigest fields differ',
+      )
+    })
+
+    it('should merge nested leaves recursively', () => {
+      const nested1: NestedLeaf = {
+        type: 'nested',
+        tree: sampleSignerLeaf,
+        weight: 2n,
+        threshold: 1n,
+      }
+      const nested2: NestedLeaf = {
+        type: 'nested',
+        tree: sampleSignerLeaf,
+        weight: 2n,
+        threshold: 1n,
+      }
+
+      const result = mergeTopology(nested1, nested2)
+      expect(result).toEqual(nested1)
+    })
+
+    it('should throw for nested leaves with different weights', () => {
+      const nested1: NestedLeaf = {
+        type: 'nested',
+        tree: sampleSignerLeaf,
+        weight: 1n,
+        threshold: 1n,
+      }
+      const nested2: NestedLeaf = {
+        type: 'nested',
+        tree: sampleSignerLeaf,
+        weight: 2n,
+        threshold: 1n,
+      }
+
+      expect(() => mergeTopology(nested1, nested2)).toThrow('Topology mismatch: nested leaf fields differ')
+    })
+
+    it('should throw for nested leaves with different thresholds', () => {
+      const nested1: NestedLeaf = {
+        type: 'nested',
+        tree: sampleSignerLeaf,
+        weight: 1n,
+        threshold: 1n,
+      }
+      const nested2: NestedLeaf = {
+        type: 'nested',
+        tree: sampleSignerLeaf,
+        weight: 1n,
+        threshold: 2n,
+      }
+
+      expect(() => mergeTopology(nested1, nested2)).toThrow('Topology mismatch: nested leaf fields differ')
+    })
+
+    it('should throw for completely incompatible leaf types', () => {
+      expect(() => mergeTopology(sampleSignerLeaf, sampleSubdigestLeaf)).toThrow(
+        'Topology mismatch: incompatible leaf types',
+      )
+    })
+  })
 })
