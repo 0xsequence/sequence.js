@@ -4,7 +4,6 @@ import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State 
 import { Attestation, Constants, Extensions, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
-import { zeroAddress } from 'viem'
 
 describe('Sessions (via Manager)', () => {
   // Shared components
@@ -417,7 +416,7 @@ describe('Sessions (via Manager)', () => {
 
       // Now we modify the permissions target contract to zero address
       // This should cause any session call to the EMITTER_ADDRESS contract to fail
-      permission.permissions[0].target = zeroAddress
+      permission.permissions[0].target = '0x0000000000000000000000000000000000000000'
 
       await setupExplicitSession(explicitSigner.address, permission, true)
 
