@@ -24,6 +24,31 @@ describe('Sessions (via Manager)', () => {
     sessionManager: CoreSigners.SessionManager
   }
 
+  const setupExplicitSession = async (
+    sessionAddress: Address.Address,
+    permissions: Permission.SessionPermissions,
+    isModify = false,
+  ) => {
+    let requestId: string
+    if (isModify) {
+      requestId = await wdk.manager.sessions.modifyExplicitSession(dapp.wallet.address, sessionAddress, permissions)
+    } else {
+      requestId = await wdk.manager.sessions.addExplicitSession(dapp.wallet.address, sessionAddress, permissions)
+    }
+
+    // Sign and complete the request
+    const sigRequest = await wdk.manager.signatures.get(requestId)
+    const identitySigner = sigRequest.signers.find((s) => Address.isEqual(s.address, wdk.identitySignerAddress))
+    if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
+      throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
+    }
+    const handled = await identitySigner.handle()
+    if (!handled) {
+      throw new Error('Failed to handle identity signer')
+    }
+    await wdk.manager.sessions.complete(requestId)
+  }
+
   beforeEach(async () => {
     // Create provider or use arbitrum sepolia
     if (RPC_URL) {
@@ -215,24 +240,7 @@ describe('Sessions (via Manager)', () => {
       // Add to manager
       dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-      // Request the session permissions from the WDK
-      const requestId = await wdk.manager.sessions.addExplicitSession(
-        dapp.wallet.address,
-        explicitSigner.address,
-        permission,
-      )
-
-      // Sign and complete the request
-      const sigRequest = await wdk.manager.signatures.get(requestId)
-      const identitySigner = sigRequest.signers.find((s) => Address.isEqual(s.address, wdk.identitySignerAddress))
-      if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
-        throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
-      }
-      const handled = await identitySigner.handle()
-      if (!handled) {
-        throw new Error('Failed to handle identity signer')
-      }
-      await wdk.manager.sessions.complete(requestId)
+      await setupExplicitSession(explicitSigner.address, permission)
 
       // Create a call payload
       const call: Payload.Call = {
@@ -302,24 +310,7 @@ describe('Sessions (via Manager)', () => {
       // Add to manager
       dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-      // Request the session permissions from the WDK
-      const requestId = await wdk.manager.sessions.addExplicitSession(
-        dapp.wallet.address,
-        explicitSigner.address,
-        permission,
-      )
-
-      // Sign and complete the request
-      const sigRequest = await wdk.manager.signatures.get(requestId)
-      const identitySigner = sigRequest.signers.find((s) => Address.isEqual(s.address, wdk.identitySignerAddress))
-      if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
-        throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
-      }
-      const handled = await identitySigner.handle()
-      if (!handled) {
-        throw new Error('Failed to handle identity signer')
-      }
-      await wdk.manager.sessions.complete(requestId)
+      await setupExplicitSession(explicitSigner.address, permission)
 
       // Create a call payload
       const call: Payload.Call = {
@@ -351,6 +342,87 @@ describe('Sessions (via Manager)', () => {
 
       // Sign and send the transaction
       await signAndSend(call)
+    },
+    PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
+  )
+
+  it(
+    'should modify an explicit session permission',
+    async () => {
+      // First we create the explicit sessions signer
+      const e = await dapp.pkStore.generateAndStore()
+      const s = await dapp.pkStore.getEncryptedPkStore(e.address)
+      if (!s) {
+        throw new Error('Failed to create pk store')
+      }
+      // Create the initial permissions
+      let permission: Permission.SessionPermissions = {
+        signer: e.address,
+        chainId,
+        valueLimit: 0n,
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: EMITTER_ADDRESS,
+            rules: [
+              {
+                // Require the explicitEmit selector
+                cumulative: false,
+                operation: Permission.ParameterOperation.EQUAL,
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0]), { size: 32 }),
+                offset: 0n,
+                mask: Bytes.fromHex('0xffffffff', { size: 32 }),
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new CoreSigners.Session.Explicit(s, permission)
+      // Add to manager
+      dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
+
+      await setupExplicitSession(explicitSigner.address, permission)
+
+      // Create a call payload
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_ABI[0]),
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+
+      if (!RPC_URL) {
+        // Configure mock provider
+        ;(provider as any).request.mockImplementation(({ method, params }) => {
+          if (method === 'eth_chainId') {
+            return Promise.resolve(chainId.toString())
+          }
+          if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
+            // Undeployed wallet
+            return Promise.resolve('0x')
+          }
+          if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
+            // Nonce is 0
+            return Promise.resolve('0x00')
+          }
+        })
+      }
+
+      // Sign and send the transaction
+      await signAndSend(call)
+
+      // Now we modify the permissions target contract to zero address
+      // This should cause any session call to the EMITTER_ADDRESS contract to fail
+      permission.permissions[0].target = '0x0000000000000000000000000000000000000000'
+
+      await setupExplicitSession(explicitSigner.address, permission, true)
+
+      // Sign and send the transaction
+      // Should fail with 'No signer supported for call'
+      await expect(signAndSend(call)).rejects.toThrow('No signer supported for call')
     },
     PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
   )

@@ -103,6 +103,29 @@ export interface SessionsInterface {
   ): Promise<string>
 
   /**
+   * Initiates an on-chain configuration update to modify an existing "explicit session".
+   *
+   * This method atomically replaces the permissions for a given session key. If the session
+   * key does not already exist, it will be added. This is the recommended way to update
+   * permissions for an active session.
+   *
+   * Like adding a session, this requires a signed configuration update.
+   *
+   * @param walletAddress The address of the wallet to modify.
+   * @param sessionAddress The address of the session signer to modify.
+   * @param permissions The new, complete set of rules and limits for this session key.
+   * @param origin Optional string to identify the source of the request.
+   * @returns A promise that resolves to a `requestId` for the configuration update.
+   * @see {complete} to finalize the update after it has been signed.
+   */
+  modifyExplicitSession(
+    walletAddress: Address.Address,
+    sessionAddress: Address.Address,
+    permissions: CoreSigners.Session.ExplicitParams,
+    origin?: string,
+  ): Promise<string>
+
+  /**
    * Initiates an on-chain configuration update to remove an explicit session key.
    *
    * This revokes all on-chain permissions for the specified `sessionAddress`, effectively disabling it.
