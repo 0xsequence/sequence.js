@@ -2,12 +2,13 @@
 
 import { jsonReplacers, jsonRevivers } from './utils/index.js'
 import {
+  MessageType,
   PendingRequest,
-  TransportMessage,
-  TransportMode,
   PopupModeOptions,
   SendRequestOptions,
-  MessageType,
+  SequenceSessionStorage,
+  TransportMessage,
+  TransportMode,
   WalletSize,
 } from './types/index.js'
 
@@ -33,6 +34,8 @@ export class DappTransport {
   private messageQueue: TransportMessage[] = []
   private readonly requestTimeoutMs: number
   private readonly handshakeTimeoutMs: number
+  private readonly sequenceSessionStorage: SequenceSessionStorage
+  private readonly redirectUrlActionHandler?: (url: string) => void
 
   public readonly walletOrigin: string
 
@@ -40,6 +43,8 @@ export class DappTransport {
     public readonly walletUrl: string,
     readonly mode: TransportMode = TransportMode.POPUP,
     popupModeOptions: PopupModeOptions = {},
+    sequenceSessionStorage?: SequenceSessionStorage,
+    redirectUrlActionHandler?: (url: string) => void,
   ) {
     try {
       this.walletOrigin = new URL(walletUrl).origin
@@ -52,12 +57,22 @@ export class DappTransport {
       throw new Error('Invalid wallet origin derived from walletUrl.')
     }
 
+    if (sequenceSessionStorage) {
+      this.sequenceSessionStorage = sequenceSessionStorage
+    } else if (typeof window !== 'undefined' && window.sessionStorage) {
+      this.sequenceSessionStorage = window.sessionStorage
+    } else {
+      throw new Error('A storage implementation must be provided for non-browser environments.')
+    }
+
     this.requestTimeoutMs = popupModeOptions.requestTimeoutMs ?? 300000
     this.handshakeTimeoutMs = popupModeOptions.handshakeTimeoutMs ?? 15000
 
     if (this.mode === TransportMode.POPUP) {
       window.addEventListener('message', this.handleMessage)
     }
+
+    this.redirectUrlActionHandler = redirectUrlActionHandler
   }
 
   get isWalletOpen(): boolean {
@@ -78,8 +93,13 @@ export class DappTransport {
     if (this.mode === TransportMode.REDIRECT) {
       const redirectUrl = options.redirectUrl || window.location.href
 
-      const url = this.getRequestRedirectUrl(action, payload, redirectUrl, options.path)
-      window.location.href = url
+      const url = await this.getRequestRedirectUrl(action, payload, redirectUrl, options.path)
+      if (this.redirectUrlActionHandler) {
+        this.redirectUrlActionHandler(url)
+      } else {
+        console.info('[DappTransport] No redirectUrlActionHandler provided. Using window.location.href to navigate.')
+        window.location.href = url
+      }
       return new Promise<TResponse>(() => {})
     }
 
@@ -113,15 +133,20 @@ export class DappTransport {
     })
   }
 
-  public getRequestRedirectUrl(action: string, payload: any, redirectUrl: string, path?: string): string {
+  public async getRequestRedirectUrl(
+    action: string,
+    payload: any,
+    redirectUrl: string,
+    path?: string,
+  ): Promise<string> {
     const id = this.generateId()
     const request = { id, action, timestamp: Date.now() }
 
     try {
-      sessionStorage.setItem(REDIRECT_REQUEST_KEY, JSON.stringify(request, jsonReplacers))
+      await this.sequenceSessionStorage.setItem(REDIRECT_REQUEST_KEY, JSON.stringify(request, jsonReplacers))
     } catch (e) {
-      console.error('Failed to set redirect request in sessionStorage', e)
-      throw new Error('Could not save redirect state to sessionStorage. Redirect flow is unavailable.')
+      console.error('Failed to set redirect request in storage', e)
+      throw new Error('Could not save redirect state to storage. Redirect flow is unavailable.')
     }
 
     const serializedPayload = btoa(JSON.stringify(payload || {}, jsonReplacers))
@@ -136,29 +161,30 @@ export class DappTransport {
     return url.toString()
   }
 
-  public getRedirectResponse<TResponse = any>(
+  public async getRedirectResponse<TResponse = any>(
     cleanState: boolean = true,
-  ): { payload: TResponse; action: string } | { error: any; action: string } | null {
-    const params = new URLSearchParams(window.location.search)
+    url?: string,
+  ): Promise<{ payload: TResponse; action: string } | { error: any; action: string } | null> {
+    const params = new URLSearchParams(url ? new URL(url).search : window.location.search)
     const responseId = params.get('id')
     if (!responseId) return null
 
     let originalRequest: { id: string; action: string; timestamp: number }
     try {
-      const storedRequest = sessionStorage.getItem(REDIRECT_REQUEST_KEY)
+      const storedRequest = await this.sequenceSessionStorage.getItem(REDIRECT_REQUEST_KEY)
       if (!storedRequest) {
         return null
       }
       originalRequest = JSON.parse(storedRequest, jsonRevivers)
     } catch (e) {
-      console.error('Failed to parse redirect request from sessionStorage', e)
+      console.error('Failed to parse redirect request from storage', e)
       return null
     }
 
     if (originalRequest.id !== responseId) {
       console.error(`Mismatched ID in redirect response. Expected ${originalRequest.id}, got ${responseId}.`)
       if (cleanState) {
-        sessionStorage.removeItem(REDIRECT_REQUEST_KEY)
+        await this.sequenceSessionStorage.removeItem(REDIRECT_REQUEST_KEY)
       }
       return null
     }
@@ -166,11 +192,15 @@ export class DappTransport {
     const responsePayloadB64 = params.get('payload')
     const responseErrorB64 = params.get('error')
 
+    const isBrowser = typeof window !== 'undefined' && window.history
+
     if (cleanState) {
-      sessionStorage.removeItem(REDIRECT_REQUEST_KEY)
-      const cleanUrl = new URL(window.location.href)
-      ;['id', 'payload', 'error', 'mode'].forEach((p) => cleanUrl.searchParams.delete(p))
-      history.replaceState({}, document.title, cleanUrl.toString())
+      await this.sequenceSessionStorage.removeItem(REDIRECT_REQUEST_KEY)
+      if (isBrowser && !url) {
+        const cleanUrl = new URL(window.location.href)
+        ;['id', 'payload', 'error', 'mode'].forEach((p) => cleanUrl.searchParams.delete(p))
+        history.replaceState({}, document.title, cleanUrl.toString())
+      }
     }
 
     if (responseErrorB64) {

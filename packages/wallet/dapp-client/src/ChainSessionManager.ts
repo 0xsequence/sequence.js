@@ -5,23 +5,8 @@ import { Attestation, Extensions, Payload, SessionConfig } from '@0xsequence/wal
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
-import {
-  getImplicitSession,
-  clearImplicitSession,
-  saveExplicitSession,
-  getExplicitSessions,
-  clearExplicitSessions,
-  setPendingRedirectRequest,
-  isRedirectRequestPending,
-  saveTempSessionPk,
-  getAndClearTempSessionPk,
-  saveSignatureRequestContext,
-  saveImplicitSession,
-  savePendingRequestPayload,
-  getAndClearPendingRequestPayload,
-} from './utils/storage.js'
+
 import { ChainId } from '@0xsequence/network'
-import { getRelayerUrl, getRpcUrl } from './utils/index.js'
 import {
   AddExplicitSessionError,
   FeeOptionError,
@@ -31,29 +16,37 @@ import {
   TransactionError,
   WalletRedirectError,
 } from './utils/errors.js'
+import { SequenceStorage } from './utils/storage.js'
+import { getRelayerUrl, getRpcUrl } from './utils/index.js'
+
 import {
-  SignatureEventListener,
-  Session,
-  PreferredLoginMethod,
   AddExplicitSessionPayload,
   AddImplicitSessionPayload,
   ConnectSuccessResponsePayload,
+  PreferredLoginMethod,
+  RandomPrivateKeyFn,
   RequestActionType,
+  Session,
+  SignatureEventListener,
   SignatureResponse,
-  Transaction,
-  SignTypedDataPayload,
   SignMessagePayload,
+  SignTypedDataPayload,
+  Transaction,
   TransportMode,
 } from './types/index.js'
 import { CACHE_DB_NAME } from './utils/constants.js'
 
 /**
- * @internal
+ * Manages sessions and wallet interactions for a single blockchain.
+ * This class is used internally by the DappClient to handle chain-specific logic.
  */
 export class ChainSessionManager {
   private readonly instanceId: string
 
   private stateProvider: State.Provider
+
+  private readonly redirectUrl?: string
+  private readonly randomPrivateKeyFn: RandomPrivateKeyFn
 
   private eventListeners: Map<'signatureResponse', Set<SignatureEventListener>> = new Map()
 
@@ -66,28 +59,60 @@ export class ChainSessionManager {
   private relayer: Relayer.Standard.Rpc.RpcRelayer
   private readonly chainId: ChainId
   public transport: DappTransport | null = null
+  private sequenceStorage: SequenceStorage
   public isInitialized: boolean = false
   private isInitializing: boolean = false
   public loginMethod: PreferredLoginMethod | null = null
   public userEmail: string | null = null
 
-  constructor(chainId: ChainId, keyMachineUrl: string, transport: DappTransport) {
+  /**
+   * @param chainId The ID of the chain this manager is responsible for.
+   * @param keyMachineUrl The URL of the key management service.
+   * @param transport The transport mechanism for communicating with the wallet.
+   * @param sequenceStorage The storage implementation for persistent session data.
+   * @param redirectUrl (Optional) The URL to redirect back to after a redirect-based flow.
+   * @param randomPrivateKeyFn (Optional) A function to generate random private keys.
+   * @param canUseIndexedDb (Optional) A flag to enable or disable IndexedDB for caching.
+   */
+  constructor(
+    chainId: ChainId,
+    keyMachineUrl: string,
+    transport: DappTransport,
+    sequenceStorage: SequenceStorage,
+    redirectUrl?: string,
+    randomPrivateKeyFn?: RandomPrivateKeyFn,
+    canUseIndexedDb: boolean = true,
+  ) {
     this.instanceId = `manager-${Math.random().toString(36).substring(2, 9)}`
     console.log(`ChainSessionManager instance created: ${this.instanceId}`)
 
     const rpcUrl = getRpcUrl(chainId)
     this.chainId = chainId
 
-    this.stateProvider = new State.Cached({
-      source: new State.Sequence.Provider(keyMachineUrl),
-      cache: new State.Local.Provider(new State.Local.IndexedDbStore(CACHE_DB_NAME)),
-    })
+    if (canUseIndexedDb) {
+      this.stateProvider = new State.Cached({
+        source: new State.Sequence.Provider(keyMachineUrl),
+        cache: new State.Local.Provider(new State.Local.IndexedDbStore(CACHE_DB_NAME)),
+      })
+    } else {
+      this.stateProvider = new State.Sequence.Provider(keyMachineUrl)
+    }
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
     this.relayer = new Relayer.Standard.Rpc.RpcRelayer(getRelayerUrl(chainId), Number(this.chainId), getRpcUrl(chainId))
 
     this.transport = transport
+    this.sequenceStorage = sequenceStorage
+
+    this.redirectUrl = redirectUrl
+    this.randomPrivateKeyFn = randomPrivateKeyFn ?? Secp256k1.randomPrivateKey
   }
 
+  /**
+   * Registers an event listener for a specific event within this chain manager.
+   * @param event The event to listen for ('signatureResponse').
+   * @param listener The function to call when the event occurs.
+   * @returns A function to unsubscribe the listener.
+   */
   public on(event: 'signatureResponse', listener: SignatureEventListener): () => void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set())
@@ -102,6 +127,11 @@ export class ChainSessionManager {
     this.eventListeners.get(event)?.forEach((listener) => listener(data))
   }
 
+  /**
+   * Initializes the manager by loading sessions from storage for this specific chain.
+   * @returns A promise resolving to the login method and email if an implicit session is found, or void.
+   * @throws {InitializationError} If initialization fails.
+   */
   async initialize(): Promise<{
     loginMethod: string | null
     userEmail: string | null
@@ -112,17 +142,12 @@ export class ChainSessionManager {
     this._resetState()
 
     try {
-      const implicitSession = await getImplicitSession()
+      const implicitSession = await this.sequenceStorage.getImplicitSession()
       if (implicitSession) {
         await this._loadSessionFromStorage(implicitSession)
       }
-
-      if (isRedirectRequestPending()) {
-        await this.handleRedirectResponse()
-        setPendingRedirectRequest(false)
-      }
     } catch (err) {
-      this._resetStateAndClearCredentials()
+      await this._resetStateAndClearCredentials()
       throw new InitializationError(`Initialization failed: ${err}`)
     } finally {
       this.isInitializing = false
@@ -131,6 +156,10 @@ export class ChainSessionManager {
     return { loginMethod: this.loginMethod, userEmail: this.userEmail }
   }
 
+  /**
+   * Initializes the manager with a known wallet address, without loading sessions from storage.
+   * @param walletAddress The address of the wallet to initialize with.
+   */
   public initializeWithWallet(walletAddress: Address.Address) {
     if (this.isInitialized) return
 
@@ -149,19 +178,21 @@ export class ChainSessionManager {
     const walletAddr = Address.from(implicitSession.walletAddress)
     this.initializeWithWallet(walletAddr)
 
-    await this._initializeImplicitSessionInternal(
-      implicitSession.pk,
-      walletAddr,
-      implicitSession.attestation,
-      implicitSession.identitySignature,
-      false,
-      implicitSession.loginMethod,
-      implicitSession.userEmail,
-    )
+    if (implicitSession.chainId === this.chainId) {
+      await this._initializeImplicitSessionInternal(
+        implicitSession.pk,
+        walletAddr,
+        implicitSession.attestation,
+        implicitSession.identitySignature,
+        false,
+        implicitSession.loginMethod,
+        implicitSession.userEmail,
+      )
+    }
 
-    const allExplicitSessions = await getExplicitSessions()
-    const walletExplicitSessions = allExplicitSessions.filter((s) =>
-      Address.isEqual(Address.from(s.walletAddress), walletAddr),
+    const allExplicitSessions = await this.sequenceStorage.getExplicitSessions()
+    const walletExplicitSessions = allExplicitSessions.filter(
+      (s) => Address.isEqual(Address.from(s.walletAddress), walletAddr) && s.chainId === this.chainId,
     )
 
     for (const sessionData of walletExplicitSessions) {
@@ -169,6 +200,13 @@ export class ChainSessionManager {
     }
   }
 
+  /**
+   * Initiates the creation of a new session by sending a request to the wallet.
+   * @param implicitSessionRedirectUrl The URL to redirect to after an implicit session is created.
+   * @param permissions (Optional) Permissions for an initial explicit session.
+   * @param options (Optional) Additional options like preferred login method.
+   * @throws {InitializationError} If a session already exists or transport fails.
+   */
   async createNewSession(
     implicitSessionRedirectUrl: string,
     permissions?: Signers.Session.ExplicitParams,
@@ -181,7 +219,7 @@ export class ChainSessionManager {
       throw new InitializationError('A session already exists. Disconnect first.')
     }
 
-    const newPk = Secp256k1.randomPrivateKey()
+    const newPk = await this.randomPrivateKeyFn()
     const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: newPk }))
 
     try {
@@ -196,15 +234,15 @@ export class ChainSessionManager {
       }
 
       if (this.transport.mode === TransportMode.REDIRECT) {
-        saveTempSessionPk(newPk)
-        savePendingRequestPayload(this.chainId, payload)
-        setPendingRedirectRequest(true)
+        await this.sequenceStorage.saveTempSessionPk(newPk)
+        await this.sequenceStorage.savePendingRequestPayload(this.chainId, payload)
+        await this.sequenceStorage.setPendingRedirectRequest(true)
       }
 
       const connectResponse = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
         RequestActionType.ADD_IMPLICIT_SESSION,
         payload,
-        { path: '/request/connect' },
+        { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
       const receivedAddress = Address.from(connectResponse.walletAddress)
@@ -212,7 +250,7 @@ export class ChainSessionManager {
       if (!attestation || !signature)
         throw new InitializationError('Attestation or signature missing for implicit session.')
 
-      this._resetStateAndClearCredentials()
+      await this._resetStateAndClearCredentials()
 
       this.initializeWithWallet(receivedAddress)
 
@@ -228,7 +266,7 @@ export class ChainSessionManager {
 
       if (permissions) {
         await this._initializeExplicitSessionInternal(newPk, true)
-        await saveExplicitSession({
+        await this.sequenceStorage.saveExplicitSession({
           pk: newPk,
           walletAddress: receivedAddress,
           chainId: this.chainId,
@@ -245,6 +283,12 @@ export class ChainSessionManager {
     }
   }
 
+  /**
+   * Initiates the addition of a new explicit session by sending a request to the wallet.
+   * @param permissions The permissions for the new explicit session.
+   * @throws {InitializationError} If the manager is not initialized.
+   * @throws {AddExplicitSessionError} If adding the session fails.
+   */
   async addExplicitSession(permissions: Signers.Session.ExplicitParams): Promise<void> {
     if (!this.walletAddress) {
       throw new InitializationError(
@@ -252,7 +296,7 @@ export class ChainSessionManager {
       )
     }
 
-    const newPk = Secp256k1.randomPrivateKey()
+    const newPk = await this.randomPrivateKeyFn()
 
     try {
       if (!this.transport) throw new InitializationError('Transport failed to initialize.')
@@ -265,15 +309,15 @@ export class ChainSessionManager {
       }
 
       if (this.transport.mode === TransportMode.REDIRECT) {
-        saveTempSessionPk(newPk)
-        setPendingRedirectRequest(true)
-        savePendingRequestPayload(this.chainId, payload)
+        await this.sequenceStorage.saveTempSessionPk(newPk)
+        await this.sequenceStorage.setPendingRedirectRequest(true)
+        await this.sequenceStorage.savePendingRequestPayload(this.chainId, payload)
       }
 
       const response = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
         RequestActionType.ADD_EXPLICIT_SESSION,
         payload,
-        { path: '/request/connect' },
+        { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
       if (!Address.isEqual(Address.from(response.walletAddress), this.walletAddress)) {
@@ -285,7 +329,7 @@ export class ChainSessionManager {
       }
 
       await this._initializeExplicitSessionInternal(newPk, true)
-      await saveExplicitSession({
+      await this.sequenceStorage.saveExplicitSession({
         pk: newPk,
         walletAddress: this.walletAddress,
         chainId: this.chainId,
@@ -297,8 +341,8 @@ export class ChainSessionManager {
   }
 
   private async _handleRedirectConnectionResponse(response: { payload: any; action: string }): Promise<boolean> {
-    const savedRequest = getAndClearPendingRequestPayload()
-    const tempPk = getAndClearTempSessionPk()
+    const savedRequest = await this.sequenceStorage.getAndClearPendingRequestPayload()
+    const tempPk = await this.sequenceStorage.getAndClearTempSessionPk()
     if (!tempPk) {
       throw new InitializationError('Failed to retrieve temporary session key after redirect.')
     }
@@ -313,7 +357,7 @@ export class ChainSessionManager {
         if (!attestation || !signature) throw new WalletRedirectError('Attestation or signature missing.')
 
         const savedPayload = savedRequest?.payload as AddImplicitSessionPayload | undefined
-        this._resetStateAndClearCredentials()
+        await this._resetStateAndClearCredentials()
 
         this.initializeWithWallet(receivedAddress)
 
@@ -329,7 +373,7 @@ export class ChainSessionManager {
 
         if (savedPayload && savedPayload.permissions) {
           await this._initializeExplicitSessionInternal(tempPk, true)
-          await saveExplicitSession({
+          await this.sequenceStorage.saveExplicitSession({
             pk: tempPk,
             walletAddress: receivedAddress,
             chainId: this.chainId,
@@ -341,7 +385,7 @@ export class ChainSessionManager {
         }
 
         await this._initializeExplicitSessionInternal(tempPk, true)
-        await saveExplicitSession({
+        await this.sequenceStorage.saveExplicitSession({
           pk: tempPk,
           walletAddress: receivedAddress,
           chainId: this.chainId,
@@ -354,8 +398,11 @@ export class ChainSessionManager {
     }
   }
 
+  /**
+   * Resets the manager state and clears all credentials from storage.
+   */
   async disconnect(): Promise<void> {
-    this._resetStateAndClearCredentials()
+    await this._resetStateAndClearCredentials()
     if (this.transport) {
       this.transport.destroy()
       this.transport = null
@@ -391,7 +438,7 @@ export class ChainSessionManager {
 
       this.walletAddress = address
       if (saveSession)
-        await saveImplicitSession({
+        await this.sequenceStorage.saveImplicitSession({
           pk,
           walletAddress: address,
           attestation,
@@ -450,12 +497,18 @@ export class ChainSessionManager {
       throw new InitializationError(`Explicit session init failed after ${maxRetries} attempts: ${lastError.message}`)
   }
 
+  /**
+   * Fetches fee options for a set of transactions.
+   * @param calls The transactions to estimate fees for.
+   * @returns A promise that resolves with an array of fee options.
+   * @throws {FeeOptionError} If fetching fee options fails.
+   */
   async getFeeOptions(calls: Transaction[]): Promise<Relayer.FeeOption[]> {
     const callsToSend = calls.map((tx) => ({
       to: tx.to,
       value: tx.value,
       data: tx.data,
-      gasLimit: tx.gasLimit ?? 0n,
+      gasLimit: tx.gasLimit ?? BigInt(0),
       delegateCall: tx.delegateCall ?? false,
       onlyFallback: tx.onlyFallback ?? false,
       behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
@@ -469,6 +522,14 @@ export class ChainSessionManager {
     }
   }
 
+  /**
+   * Builds, signs, and sends a batch of transactions.
+   * @param transactions The transactions to be sent.
+   * @param feeOption (Optional) The fee option to use for sponsoring the transaction.
+   * @returns A promise that resolves with the transaction hash.
+   * @throws {InitializationError} If the session is not initialized.
+   * @throws {TransactionError} If the transaction fails at any stage.
+   */
   async buildSignAndSendTransactions(transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<string> {
     if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized)
       throw new InitializationError('Session is not initialized.')
@@ -477,7 +538,7 @@ export class ChainSessionManager {
         to: tx.to,
         value: tx.value,
         data: tx.data,
-        gasLimit: tx.gasLimit ?? 0n,
+        gasLimit: tx.gasLimit ?? BigInt(0),
         delegateCall: tx.delegateCall ?? false,
         onlyFallback: tx.onlyFallback ?? false,
         behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
@@ -488,7 +549,7 @@ export class ChainSessionManager {
         const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
         const transferCall: Payload.Call = {
           to: feeOption.token.contractAddress as `0x${string}`,
-          value: 0n,
+          value: BigInt(0),
           data: AbiFunction.encodeData(transfer, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
           gasLimit: BigInt(feeOption.gasLimit),
           delegateCall: false,
@@ -512,9 +573,16 @@ export class ChainSessionManager {
     }
   }
 
-  private async handleRedirectResponse(): Promise<boolean> {
+  /**
+   * Handles a redirect response from the wallet for this specific chain.
+   * @param url (Optional) The full URL of the redirect response.
+   * @returns A promise that resolves to true if the response was handled successfully.
+   * @throws {WalletRedirectError} If the response is invalid or causes an error.
+   * @throws {InitializationError} If the session cannot be initialized from the response.
+   */
+  public async handleRedirectResponse(url?: string): Promise<boolean> {
     if (!this.transport) return false
-    const response = this.transport.getRedirectResponse()
+    const response = await this.transport.getRedirectResponse(true, url)
     if (!response) return false
 
     if ('error' in response && response.error) {
@@ -546,10 +614,18 @@ export class ChainSessionManager {
     throw new WalletRedirectError('Received an invalid redirect response from the wallet.')
   }
 
+  /**
+   * Gets the wallet address associated with this manager.
+   * @returns The wallet address, or null if not initialized.
+   */
   getWalletAddress(): Address.Address | null {
     return this.walletAddress
   }
 
+  /**
+   * Gets the sessions (signers) managed by this instance.
+   * @returns An array of session objects.
+   */
   getSessions(): Session[] {
     return this.sessions
   }
@@ -559,13 +635,17 @@ export class ChainSessionManager {
    * The signature is delivered via the `signatureResponse` event.
    * @param message The message to sign.
    *
-   * @throws If the session is not initialized. {@link InitializationError}
-   * @throws If the signature request fails. {@link SigningError}
+   * @throws {InitializationError} If the session is not initialized.
+   * @throws {SigningError} If the signature request fails.
    *
-   * @returns An empty promise.
+   * @returns A promise that resolves when the signing process is initiated.
    */
   async signMessage(message: string): Promise<void> {
-    const payload: SignMessagePayload = { address: this.walletAddress!, message, chainId: this.chainId }
+    const payload: SignMessagePayload = {
+      address: this.walletAddress!,
+      message,
+      chainId: this.chainId,
+    }
     try {
       await this._requestSignature(RequestActionType.SIGN_MESSAGE, payload)
     } catch (err) {
@@ -578,13 +658,17 @@ export class ChainSessionManager {
    * The signature is delivered via the `signatureResponse` event.
    * @param typedData The EIP-712 typed data object to sign.
    *
-   * @throws If the session is not initialized. {@link InitializationError}
-   * @throws If the signature request fails. {@link SigningError}
+   * @throws {InitializationError} If the session is not initialized.
+   * @throws {SigningError} If the signature request fails.
    *
-   * @returns An empty promise.
+   * @returns A promise that resolves when the signing process is initiated.
    */
   async signTypedData(typedData: unknown): Promise<void> {
-    const payload: SignTypedDataPayload = { address: this.walletAddress!, typedData, chainId: this.chainId }
+    const payload: SignTypedDataPayload = {
+      address: this.walletAddress!,
+      typedData,
+      chainId: this.chainId,
+    }
     try {
       await this._requestSignature(RequestActionType.SIGN_TYPED_DATA, payload)
     } catch (err) {
@@ -595,11 +679,11 @@ export class ChainSessionManager {
   /**
    * @private A generic helper to handle the logic for requesting any type of signature.
    *
-   * @param action The action to request. {@link RequestActionType}
-   * @param payload The payload to send. {@link any}
+   * @param action The action to request.
+   * @param payload The payload to send.
    *
-   * @throws If the session is not initialized or transport is not available. {@link InitializationError}
-   * @throws If the signature request fails. {@link SigningError}
+   * @throws {InitializationError} If the session is not initialized or transport is not available.
+   * @throws {SigningError} If the signature request fails.
    */
   private async _requestSignature(action: any, payload: any): Promise<void> {
     if (!this.isInitialized || !this.walletAddress) {
@@ -611,11 +695,20 @@ export class ChainSessionManager {
 
     try {
       if (this.transport.mode === TransportMode.REDIRECT) {
-        saveSignatureRequestContext({ action, payload })
-        setPendingRedirectRequest(true)
-        await this.transport.sendRequest(action, payload, { path: '/request/sign' })
+        await this.sequenceStorage.saveSignatureRequestContext({
+          action,
+          payload,
+        })
+        await this.sequenceStorage.setPendingRedirectRequest(true)
+        await this.transport.sendRequest(action, payload, {
+          path: '/request/sign',
+          redirectUrl: this.redirectUrl,
+        })
       } else {
-        const response = await this.transport.sendRequest<SignatureResponse>(action, payload, { path: '/request/sign' })
+        const response = await this.transport.sendRequest<SignatureResponse>(action, payload, {
+          path: '/request/sign',
+          redirectUrl: this.redirectUrl,
+        })
         this.emit('signatureResponse', { action, response })
       }
     } catch (err) {
@@ -691,9 +784,9 @@ export class ChainSessionManager {
     this.isInitialized = false
   }
 
-  private _resetStateAndClearCredentials(): void {
+  private async _resetStateAndClearCredentials(): Promise<void> {
     this._resetState()
-    clearImplicitSession()
-    clearExplicitSessions()
+    await this.sequenceStorage.clearImplicitSession()
+    await this.sequenceStorage.clearExplicitSessions()
   }
 }

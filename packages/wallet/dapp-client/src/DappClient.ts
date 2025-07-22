@@ -1,44 +1,45 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChainId } from '@0xsequence/network'
-import { ChainSessionManager } from './ChainSessionManager.js'
-import {
-  ChainSessionManagerEvent,
-  Transaction,
-  Session,
-  TransportMode,
-  DappClientEventListener,
-} from './types/index.js'
-import { DappTransport } from './DappTransport.js'
-import {
-  clearExplicitSessions,
-  clearImplicitSession,
-  getAndClearTempSessionPk,
-  getExplicitSessions,
-  getImplicitSession,
-  isRedirectRequestPending,
-  setPendingRedirectRequest,
-  peekSignatureRequestContext,
-  peekPendingRequestPayload,
-} from './utils/storage.js'
 import { Relayer, Signers } from '@0xsequence/wallet-core'
 import { Address } from 'ox'
+
+import { ChainSessionManager } from './ChainSessionManager.js'
+import { DappTransport } from './DappTransport.js'
 import { InitializationError } from './utils/errors.js'
-import { DEFAULT_KEYMACHINE_URL } from './utils/constants.js'
+import { SequenceStorage, WebStorage } from './utils/storage.js'
+import {
+  ChainSessionManagerEvent,
+  RandomPrivateKeyFn,
+  RequestActionType,
+  SequenceSessionStorage,
+  Session,
+  SignatureResponse,
+  Transaction,
+  TransportMode,
+} from './types/index.js'
+
+// A generic listener for events from the DappClient
+export type DappClientEventListener = (data?: any) => void
+
+export type DappClientSignatureEventListener = (data: {
+  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
+  response?: SignatureResponse
+  error?: any
+  chainId: number
+}) => void
+
+const DEFAULT_KEYMACHINE_URL = 'https://v3-keymachine.sequence-dev.app'
 
 /**
  * The main entry point for interacting with the Wallet.
  * This client manages user sessions across multiple chains, handles connection
  * and disconnection, and provides methods for signing and sending transactions.
  *
- * @param transportMode The communication mode to use with the wallet. {@link TransportMode}
- * @param walletUrl The URL of the Wallet Webapp.
- * @param keymachineUrl (Optional) The URL of the key management service. {@link DEFAULT_KEYMACHINE_URL}
- *
- * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client} for more detailed documentation.
+ * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client} for more detailed documentation.
  *
  * @example
  * // It is recommended to manage a singleton instance of this client.
- * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
+ * const dappClient = new DappClient('http://localhost:5173');
  *
  * async function main() {
  *   // Initialize the client on page load to restore existing sessions.
@@ -59,6 +60,12 @@ export class DappClient {
   private transport: DappTransport
   private keymachineUrl: string
   private walletUrl: string
+  private sequenceStorage: SequenceStorage
+  private redirectUrl?: string
+  private sequenceSessionStorage?: SequenceSessionStorage
+  private randomPrivateKeyFn?: RandomPrivateKeyFn
+  private redirectUrlActionHandler?: (url: string) => void
+  private canUseIndexedDb: boolean
 
   private isInitializing = false
 
@@ -66,14 +73,56 @@ export class DappClient {
   private eventListeners: Map<ChainSessionManagerEvent, Set<DappClientEventListener>> = new Map()
 
   /**
-   * @param transportMode The communication mode to use with the wallet. {@link TransportMode}
    * @param walletUrl The URL of the Wallet Webapp.
-   * @param keymachineUrl (Optional) The URL of the key management service. {@link DEFAULT_KEYMACHINE_URL}
+   * @param options Configuration options for the client.
+   * @param options.transportMode The communication mode to use with the wallet. Defaults to 'popup'.
+   * @param options.keymachineUrl The URL of the key management service.
+   * @param options.redirectUrl The URL to redirect back to after a redirect-based flow.
+   * @param options.sequenceStorage The storage implementation for persistent session data. Defaults to WebStorage using IndexedDB.
+   * @param options.sequenceSessionStorage The storage implementation for temporary data (e.g., pending requests). Defaults to sessionStorage.
+   * @param options.randomPrivateKeyFn A function to generate random private keys for new sessions.
+   * @param options.redirectUrlActionHandler A handler to manually control navigation for redirect flows.
+   * @param options.canUseIndexedDb A flag to enable or disable the use of IndexedDB for caching.
    */
-  constructor(transportMode: TransportMode, walletUrl: string, keymachineUrl: string = DEFAULT_KEYMACHINE_URL) {
-    this.transport = new DappTransport(walletUrl, transportMode)
+  constructor(
+    walletUrl: string,
+    options?: {
+      transportMode?: TransportMode
+      keymachineUrl?: string
+      redirectUrl?: string
+      sequenceStorage?: SequenceStorage
+      sequenceSessionStorage?: SequenceSessionStorage
+      randomPrivateKeyFn?: RandomPrivateKeyFn
+      redirectUrlActionHandler?: (url: string) => void
+      canUseIndexedDb?: boolean
+    },
+  ) {
+    const {
+      transportMode = TransportMode.POPUP,
+      keymachineUrl = DEFAULT_KEYMACHINE_URL,
+      redirectUrl,
+      sequenceStorage = new WebStorage(),
+      sequenceSessionStorage,
+      randomPrivateKeyFn,
+      redirectUrlActionHandler,
+      canUseIndexedDb = true,
+    } = options || {}
+
+    this.transport = new DappTransport(
+      walletUrl,
+      transportMode,
+      undefined,
+      sequenceSessionStorage,
+      redirectUrlActionHandler,
+    )
     this.keymachineUrl = keymachineUrl
     this.walletUrl = walletUrl
+    this.sequenceStorage = sequenceStorage
+    this.redirectUrl = redirectUrl
+    this.sequenceSessionStorage = sequenceSessionStorage
+    this.randomPrivateKeyFn = randomPrivateKeyFn
+    this.redirectUrlActionHandler = redirectUrlActionHandler
+    this.canUseIndexedDb = canUseIndexedDb
   }
 
   /**
@@ -84,11 +133,12 @@ export class DappClient {
   }
 
   /**
+   * Registers an event listener for a specific event.
    * @param event The event to listen for. {@link ChainSessionManagerEvent}
    * @param listener The listener to call when the event occurs. {@link DappClientEventListener}
    * @returns A function to remove the listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/on} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/on} for more detailed documentation.
    *
    * @example
    * useEffect(() => {
@@ -123,12 +173,13 @@ export class DappClient {
   }
 
   /**
-   * @returns The wallet address of the current session. {@link Address.Address}
+   * Retrieves the wallet address of the current session.
+   * @returns The wallet address of the current session, or null if not initialized. {@link Address.Address}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/get-wallet-address} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-wallet-address} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
@@ -141,12 +192,13 @@ export class DappClient {
   }
 
   /**
+   * Retrieves a list of all active sessions (signers) associated with the current wallet.
    * @returns An array of all the active sessions. {@link { address: Address.Address, isImplicit: boolean }[]}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/get-all-sessions} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-all-sessions} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
@@ -156,34 +208,61 @@ export class DappClient {
    */
   public getAllSessions(): Session[] {
     const allSessions = new Map<string, Session>()
-    for (const chainSessionManager of this.chainSessionManagers.values()) {
+    Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
       chainSessionManager.getSessions().forEach((session) => {
         const uniqueKey = `${session.address.toLowerCase()}-${session.isImplicit}`
         if (!allSessions.has(uniqueKey)) {
           allSessions.set(uniqueKey, session)
         }
       })
-    }
+    })
     return Array.from(allSessions.values())
   }
 
+  private async _loadStateFromStorage(): Promise<void> {
+    const implicitSession = await this.sequenceStorage.getImplicitSession()
+    if (!implicitSession) {
+      this.isInitialized = false
+      this.emit('sessionsUpdated')
+      return
+    }
+
+    this.walletAddress = implicitSession.walletAddress
+    this.loginMethod = implicitSession.loginMethod ?? null
+    this.userEmail = implicitSession.userEmail ?? null
+
+    const explicitSessions = await this.sequenceStorage.getExplicitSessions()
+    const chainIdsToInitialize = new Set<ChainId>([
+      implicitSession.chainId,
+      ...explicitSessions.filter((s) => Address.isEqual(s.walletAddress, this.walletAddress!)).map((s) => s.chainId),
+    ])
+
+    const initPromises = Array.from(chainIdsToInitialize).map((chainId) =>
+      this.getChainSessionManager(chainId).initialize(),
+    )
+
+    await Promise.all(initPromises)
+
+    this.isInitialized = true
+    this.emit('sessionsUpdated')
+  }
+
   /**
-   * Initializes the client by loading any existing `Implicit` or `Explicit` session from storage.
+   * Initializes the client by loading any existing session from storage and handling any pending redirect responses.
    * This should be called once when your application loads.
    *
    * @remarks
-   * An `Implicit` session is a session that can interact only with the Dapp contracts, it is a special Session that needs to be integrated by the Dapp.
-   * @remarks
-   * An `explicit session` is a session that can interact with any contract as long as the user has granted the necessary permissions.
+   * An `Implicit` session is a session that can interact only with specific, Dapp-defined contracts.
+   * An `Explicit` session is a session that can interact with any contract as long as the user has granted the necessary permissions.
    *
    * @throws If the initialization process fails. {@link InitializationError}
    *
-   * @returns An empty promise
+   * @returns A promise that resolves when initialization is complete.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/initialize} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/initialize} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    */
   async initialize(): Promise<void> {
@@ -191,37 +270,17 @@ export class DappClient {
     this.isInitializing = true
 
     try {
-      if (isRedirectRequestPending()) {
+      // First, load any existing session from storage. This is crucial so that
+      // when we process a redirect for an explicit session, we know the wallet address.
+      await this._loadStateFromStorage()
+
+      // Now, check if there's a response from a redirect flow.
+      if (await this.sequenceStorage.isRedirectRequestPending()) {
         await this.handleRedirectResponse()
-        setPendingRedirectRequest(false)
+        // After handling the redirect which may have added a new session,
+        // reload the state to reflect the change.
+        await this._loadStateFromStorage()
       }
-
-      const implicitSession = await getImplicitSession()
-      if (!implicitSession) {
-        this.isInitialized = false
-        this.isInitializing = false
-        this.emit('sessionsUpdated')
-        return
-      }
-
-      this.walletAddress = implicitSession.walletAddress
-      this.loginMethod = implicitSession.loginMethod ?? null
-      this.userEmail = implicitSession.userEmail ?? null
-
-      const explicitSessions = await getExplicitSessions()
-      const chainIdsToInitialize = new Set<ChainId>([
-        implicitSession.chainId,
-        ...explicitSessions.filter((s) => Address.isEqual(s.walletAddress, this.walletAddress!)).map((s) => s.chainId),
-      ])
-
-      const initPromises = Array.from(chainIdsToInitialize).map((chainId) =>
-        this.getChainSessionManager(chainId).initialize(),
-      )
-
-      await Promise.all(initPromises)
-
-      this.isInitialized = true
-      this.emit('sessionsUpdated')
     } catch (e) {
       await this.disconnect()
       throw e
@@ -231,21 +290,56 @@ export class DappClient {
   }
 
   /**
-   * Creates and initializes a new session for the given chain.
+   * Handles the redirect response from the Wallet.
+   * This is called automatically on `initialize()` for web environments but can be called manually
+   * with a URL in environments like React Native.
+   * @param url The full redirect URL from the wallet. If not provided, it will be read from the browser's current location.
+   * @returns A promise that resolves when the redirect has been handled.
+   */
+  public async handleRedirectResponse(url?: string): Promise<void> {
+    const response = await this.transport.getRedirectResponse(false, url)
+    if (!response) {
+      await this.sequenceStorage.setPendingRedirectRequest(false)
+      return
+    }
+
+    let chainId: ChainId | undefined
+    const signatureContext = await this.sequenceStorage.peekSignatureRequestContext()
+    if (signatureContext) {
+      chainId = (signatureContext.payload as any).chainId
+    } else {
+      const connectContext = await this.sequenceStorage.peekPendingRequestPayload()
+      if (connectContext) chainId = connectContext.chainId
+    }
+
+    if (chainId) {
+      const chainSessionManager = this.getChainSessionManager(chainId)
+      await chainSessionManager.handleRedirectResponse(url)
+    } else {
+      // Full cleanup for an orphaned redirect response
+      this.transport.getRedirectResponse(true, url)
+      await this.sequenceStorage.getAndClearTempSessionPk()
+      await this.sequenceStorage.getAndClearPendingRequestPayload()
+      throw new InitializationError('Chain id is missing from the redirect response signature context payload')
+    }
+  }
+
+  /**
+   * Initiates a connection with the wallet and creates a new session.
    * @param chainId The primary chain ID for the new session. {@link ChainId}
-   * @param implicitSessionRedirectUrl The URL to redirect back to after login.
-   * @param permissions (Optional) The permissions to request for the new session. {@link Signers.Session.ExplicitParams}
-   * @param options (Optional) The options for the new session. {@link Signers.Session.ExplicitParams}
+   * @param implicitSessionRedirectUrl The URL to redirect back to after a redirect-based login. For popups, this can be the origin.
+   * @param permissions (Optional) Permissions to request for an initial explicit session. {@link Signers.Session.ExplicitParams}
+   * @param options (Optional) Connection options, such as a preferred login method or email.
    * @throws If the connection process fails. {@link ConnectionError}
    * @throws If a session already exists. {@link InitializationError}
    *
-   * @returns An empty promise.
+   * @returns A promise that resolves when the connection is established.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/connect} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/connect} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
-   * await dappClient.connect(137, window.location.origin, {
+   * const dappClient = new DappClient('http://localhost:5173');
+   * await dappClient.connect(137, window.location.origin, undefined, {
    *   preferredLoginMethod: 'google',
    * });
    */
@@ -265,7 +359,12 @@ export class DappClient {
     try {
       const chainSessionManager = this.getChainSessionManager(chainId)
       await chainSessionManager.createNewSession(implicitSessionRedirectUrl, permissions, options)
-      await this.initialize()
+
+      // For popup mode, we need to manually update the state and emit an event.
+      // For redirect mode, this code won't be reached; the page will navigate away.
+      if (this.transport.mode === TransportMode.POPUP) {
+        await this._loadStateFromStorage()
+      }
     } catch (err) {
       await this.disconnect()
       throw err
@@ -273,18 +372,18 @@ export class DappClient {
   }
 
   /**
-   * Creates and initializes an explicit session for a given chain.
+   * Adds a new explicit session for a given chain to an existing wallet.
    * @remarks
-   * An `explicit session` is a session that can interact with any contract as long as the user has granted the necessary permissions.
+   * An `explicit session` is a session that can interact with any contract, subject to user-approved permissions.
    * @param chainId The chain ID on which to add the explicit session. {@link ChainId}
    * @param permissions The permissions to request for the new session. {@link Signers.Session.ExplicitParams}
    *
    * @throws If the session cannot be added. {@link AddExplicitSessionError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
-   * @returns An empty promise.
+   * @returns A promise that resolves when the session is added.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/add-explicit-session} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/add-explicit-session} for more detailed documentation.
    *
    * @example
    * ...
@@ -292,7 +391,7 @@ export class DappClient {
    * import { DappClient } from "@0xsequence/sessions";
    * ...
    *
-   * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * const amount = 1000000;
@@ -318,7 +417,7 @@ export class DappClient {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
     await chainSessionManager.addExplicitSession(permissions)
-    await this.initialize()
+    this.emit('sessionsUpdated')
   }
 
   /**
@@ -330,10 +429,10 @@ export class DappClient {
    *
    * @returns A promise that resolves with the fee options. {@link Relayer.FeeOption[]}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/get-fee-options} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-fee-options} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
@@ -359,19 +458,19 @@ export class DappClient {
   }
 
   /**
-   * Sends a transaction using the session signer.
+   * Sends a transaction using an available session signer.
    * @param chainId The chain ID on which to send the transaction. {@link ChainId}
    * @param transactions An array of transactions to be executed atomically. {@link Transaction}
    * @param feeOption (Optional) The selected fee option to sponsor the transaction. {@link Relayer.FeeOption}
-   * @throws {TransactionError} If the transaction fails to send or confirm. {@link TransactionError}
-   * @throws {InitializationError} If the client or relevant chain is not initialized. {@link InitializationError}
+   * @throws {TransactionError} If the transaction fails to send or confirm.
+   * @throws {InitializationError} If the client or relevant chain is not initialized.
    *
-   * @returns A promise that resolves with the transaction hash. {@link Promise<string>}
+   * @returns A promise that resolves with the transaction hash.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/send-transaction} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/send-transaction} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
@@ -392,23 +491,23 @@ export class DappClient {
   }
 
   /**
-   * Signs a message using the session signer.
+   * Signs a standard message (EIP-191) using an available session signer.
    * @param chainId The chain ID on which to sign the message. {@link ChainId}
-   * @param message The message to sign. {@link string}
+   * @param message The message to sign.
    * @throws If the message cannot be signed. {@link SigningError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
-   * @returns An empty promise. (The signature is returned in the `signatureResponse` event listener.) {@link Promise<void>}
+   * @returns A promise that resolves when the signing process is initiated. The signature is delivered via the `signatureResponse` event listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/sign-message} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/sign-message} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
    *   const message = 'Hello, world!';
-   *   await dappClient.signMessage(1, message  );
+   *   await dappClient.signMessage(1, message);
    * }
    */
   async signMessage(chainId: ChainId, message: string): Promise<void> {
@@ -420,18 +519,18 @@ export class DappClient {
   }
 
   /**
-   * Signs a typed data object using the session signer.
+   * Signs a typed data object (EIP-712) using an available session signer.
    * @param chainId The chain ID on which to sign the typed data. {@link ChainId}
-   * @param typedData The typed data object to sign. {@link unknown}
+   * @param typedData The typed data object to sign.
    * @throws If the typed data cannot be signed. {@link SigningError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
-   * @returns An empty promise. (The signature is returned in the `signatureResponse` event listener.) {@link Promise<void>}
+   * @returns A promise that resolves when the signing process is initiated. The signature is returned in the `signatureResponse` event listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/sign-typed-data} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/sign-typed-data} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
@@ -448,14 +547,14 @@ export class DappClient {
   }
 
   /**
-   * Disconnects the session client from the wallet, clearing all session from browser storage but not revoking them.
-   * Sessions will still be active untill the user revokes them from the Wallet.
-   * @returns An empty promise.
+   * Disconnects the client, clearing all session data from browser storage.
+   * @remarks This action does not revoke the sessions on-chain. Sessions remain active until they expire or are manually revoked by the user in their wallet.
+   * @returns A promise that resolves when disconnection is complete.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/disconnect} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/disconnect} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
+   * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
@@ -466,11 +565,17 @@ export class DappClient {
     const transportMode = this.transport.mode
 
     this.transport.destroy()
-    this.transport = new DappTransport(this.walletUrl, transportMode)
+    this.transport = new DappTransport(
+      this.walletUrl,
+      transportMode,
+      undefined,
+      this.sequenceSessionStorage,
+      this.redirectUrlActionHandler,
+    )
 
     this.chainSessionManagers.clear()
-    await clearImplicitSession()
-    await clearExplicitSessions()
+    await this.sequenceStorage.clearImplicitSession()
+    await this.sequenceStorage.clearExplicitSessions()
     this.isInitialized = false
     this.walletAddress = null
     this.loginMethod = null
@@ -479,48 +584,31 @@ export class DappClient {
   }
 
   /**
-   * Handles the redirect response from the Wallet.
-   * @returns An empty promise.
-   */
-  private async handleRedirectResponse() {
-    const response = this.transport.getRedirectResponse(false)
-    if (!response) return
-
-    let chainId: ChainId | undefined
-    const signatureContext = peekSignatureRequestContext()
-    if (signatureContext) {
-      chainId = (signatureContext.payload as any).chainId
-    } else {
-      const connectContext = peekPendingRequestPayload()
-      if (connectContext) chainId = connectContext.chainId
-    }
-
-    if (chainId) {
-      const chainSessionManager = this.getChainSessionManager(chainId)
-      await chainSessionManager.initialize()
-    } else {
-      this.transport.getRedirectResponse(true)
-      getAndClearTempSessionPk()
-      throw new InitializationError('Chain id is missing from the redirect response signature context payload')
-    }
-  }
-
-  /**
-   * @param event The event to emit. {@link ChainSessionEvent}
-   * @param data The data to emit. {@link any}
+   * @private Emits an event to all registered listeners.
+   * @param event The event to emit. {@link ChainSessionManagerEvent}
+   * @param data The data to emit with the event.
    */
   private emit(event: ChainSessionManagerEvent, data?: any): void {
     this.eventListeners.get(event)?.forEach((listener) => listener(data))
   }
 
   /**
+   * @private Retrieves or creates a ChainSessionManager for a given chain ID.
    * @param chainId The chain ID to get the ChainSessionManager for. {@link ChainId}
    * @returns The ChainSessionManager for the given chain ID. {@link ChainSessionManager}
    */
   private getChainSessionManager(chainId: ChainId): ChainSessionManager {
     let chainSessionManager = this.chainSessionManagers.get(chainId)
     if (!chainSessionManager) {
-      chainSessionManager = new ChainSessionManager(chainId, this.keymachineUrl, this.transport)
+      chainSessionManager = new ChainSessionManager(
+        chainId,
+        this.keymachineUrl,
+        this.transport,
+        this.sequenceStorage,
+        this.redirectUrl,
+        this.randomPrivateKeyFn,
+        this.canUseIndexedDb,
+      )
       this.chainSessionManagers.set(chainId, chainSessionManager)
 
       chainSessionManager.on('signatureResponse', (data) => {

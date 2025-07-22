@@ -62,6 +62,8 @@ export interface SignatureResponse {
 
 // --- Dapp-facing Types ---
 
+export type RandomPrivateKeyFn = () => Hex.Hex | Promise<Hex.Hex>
+
 type RequiredKeys = 'to' | 'data' | 'value'
 
 export type Transaction =
@@ -96,6 +98,12 @@ export type DappClientSignatureEventListener = (data: {
 }) => void
 
 // --- DappTransport Types ---
+
+export interface SequenceSessionStorage {
+  getItem(key: string): string | null | Promise<string | null>
+  setItem(key: string, value: string): void | Promise<void>
+  removeItem(key: string): void | Promise<void>
+}
 
 export enum MessageType {
   WALLET_OPENED = 'WALLET_OPENED',
