@@ -2,12 +2,11 @@
 import { ChainId } from '@0xsequence/network'
 import { ChainSessionManager } from './ChainSessionManager.js'
 import {
-  RequestActionType,
-  SignatureResponse,
   ChainSessionManagerEvent,
   Transaction,
   Session,
   TransportMode,
+  DappClientEventListener,
 } from './types/index.js'
 import { DappTransport } from './DappTransport.js'
 import {
@@ -26,16 +25,6 @@ import { Address } from 'ox'
 import { InitializationError } from './utils/errors.js'
 import { DEFAULT_KEYMACHINE_URL } from './utils/constants.js'
 
-// A generic listener for events from the DappClient
-export type DappClientEventListener = (data?: any) => void
-
-export type DappClientSignatureEventListener = (data: {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
-  response?: SignatureResponse
-  error?: any
-  chainId: number
-}) => void
-
 /**
  * The main entry point for interacting with the Wallet.
  * This client manages user sessions across multiple chains, handles connection
@@ -45,11 +34,11 @@ export type DappClientSignatureEventListener = (data: {
  * @param walletUrl The URL of the Wallet Webapp.
  * @param keymachineUrl (Optional) The URL of the key management service. {@link DEFAULT_KEYMACHINE_URL}
  *
- * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client} for more detailed documentation.
+ * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client} for more detailed documentation.
  *
  * @example
  * // It is recommended to manage a singleton instance of this client.
- * const dappClient = new DappClient('popup', 'http://localhost:5173');
+ * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
  *
  * async function main() {
  *   // Initialize the client on page load to restore existing sessions.
@@ -99,7 +88,7 @@ export class DappClient {
    * @param listener The listener to call when the event occurs. {@link DappClientEventListener}
    * @returns A function to remove the listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/on} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/on} for more detailed documentation.
    *
    * @example
    * useEffect(() => {
@@ -136,7 +125,7 @@ export class DappClient {
   /**
    * @returns The wallet address of the current session. {@link Address.Address}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-wallet-address} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/get-wallet-address} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
@@ -154,7 +143,7 @@ export class DappClient {
   /**
    * @returns An array of all the active sessions. {@link { address: Address.Address, isImplicit: boolean }[]}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-all-sessions} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/get-all-sessions} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
@@ -191,7 +180,7 @@ export class DappClient {
    *
    * @returns An empty promise
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/initialize} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/initialize} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
@@ -252,7 +241,7 @@ export class DappClient {
    *
    * @returns An empty promise.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/connect} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/connect} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://my-wallet-url.com');
@@ -295,7 +284,7 @@ export class DappClient {
    *
    * @returns An empty promise.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/add-explicit-session} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/add-explicit-session} for more detailed documentation.
    *
    * @example
    * ...
@@ -341,7 +330,7 @@ export class DappClient {
    *
    * @returns A promise that resolves with the fee options. {@link Relayer.FeeOption[]}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-fee-options} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/get-fee-options} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
@@ -379,7 +368,7 @@ export class DappClient {
    *
    * @returns A promise that resolves with the transaction hash. {@link Promise<string>}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/send-transaction} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/send-transaction} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
@@ -411,7 +400,7 @@ export class DappClient {
    *
    * @returns An empty promise. (The signature is returned in the `signatureResponse` event listener.) {@link Promise<void>}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/sign-message} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/sign-message} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
@@ -439,7 +428,7 @@ export class DappClient {
    *
    * @returns An empty promise. (The signature is returned in the `signatureResponse` event listener.) {@link Promise<void>}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/sign-typed-data} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/sign-typed-data} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');
@@ -463,7 +452,7 @@ export class DappClient {
    * Sessions will still be active untill the user revokes them from the Wallet.
    * @returns An empty promise.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/disconnect} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-clientt/disconnect} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('popup', 'https://v3.sequence-dev.app');

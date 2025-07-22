@@ -47,6 +47,9 @@ import {
 } from './types/index.js'
 import { CACHE_DB_NAME } from './utils/constants.js'
 
+/**
+ * @internal
+ */
 export class ChainSessionManager {
   private readonly instanceId: string
 

@@ -85,6 +85,16 @@ export type SignatureEventListener = (data: {
   error?: any
 }) => void
 
+// A generic listener for events from the DappClient
+export type DappClientEventListener = (data?: any) => void
+
+export type DappClientSignatureEventListener = (data: {
+  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
+  response?: SignatureResponse
+  error?: any
+  chainId: number
+}) => void
+
 // --- DappTransport Types ---
 
 export enum MessageType {
