@@ -1349,8 +1349,8 @@ function encode(
         space: payload.space,
         nonce: payload.nonce,
         message: '0x',
-        imageHash: '0x',
-        digest: '0x',
+        imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
         parentWallets: payload.parentWallets ?? [],
       }
 
@@ -1362,8 +1362,8 @@ function encode(
         space: 0n,
         nonce: 0n,
         message: payload.message,
-        imageHash: '0x',
-        digest: '0x',
+        imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
         parentWallets: payload.parentWallets ?? [],
       }
 
@@ -1376,7 +1376,7 @@ function encode(
         nonce: 0n,
         message: '0x',
         imageHash: payload.imageHash,
-        digest: '0x',
+        digest: '0x0000000000000000000000000000000000000000000000000000000000000000',
         parentWallets: payload.parentWallets ?? [],
       }
 
@@ -1388,7 +1388,7 @@ function encode(
         space: 0n,
         nonce: 0n,
         message: '0x',
-        imageHash: '0x',
+        imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         digest: payload.digest,
         parentWallets: payload.parentWallets ?? [],
       }
