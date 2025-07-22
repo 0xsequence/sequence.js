@@ -30,11 +30,13 @@ It is recommended to create and manage a single, singleton instance of the `Dapp
 import { DappClient } from '@0xsequence/dapp-client'
 
 // 1. Create a single client instance for your app
-const dappClient = new DappClient('popup', 'https://my-wallet-url.com')
+const dappClient = new DappClient('https://my-wallet-url.com')
 
 // 2. Initialize the client when your application loads
 async function initializeClient() {
   try {
+    // The initialize method loads any existing session from storage
+    // and handles any pending redirect responses.
     await dappClient.initialize()
     console.log('Client initialized. User is connected:', dappClient.isInitialized)
   } catch (error) {
@@ -51,13 +53,22 @@ The main entry point for interacting with the Wallet. This client manages user s
 
 ### Constructor
 
-**`new DappClient(transportMode, walletUrl, keymachineUrl?)`**
+**`new DappClient(walletUrl, options?)`**
 
-| Parameter       | Type            | Description                                                                                        |
-| :-------------- | :-------------- | :------------------------------------------------------------------------------------------------- |
-| `transportMode` | `TransportMode` | The communication mode to use with the wallet ('popup' or 'redirect').                             |
-| `walletUrl`     | `string`        | The URL of the Ecosystem Wallet.                                                                   |
-| `keymachineUrl` | `string`        | (Optional) The URL of the key management service. Defaults to the production Sequence Key Machine. |
+Initializes a new instance of the DappClient.
+
+| Parameter                          | Type                        | Description                                                                                  |
+| :--------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------- |
+| `walletUrl`                        | `string`                    | **(Required)** The URL of the Ecosystem Wallet Webapp.                                       |
+| `options`                          | `object`                    | (Optional) An object containing configuration options for the client.                        |
+| `options.transportMode`            | `'popup' \| 'redirect'`     | The communication mode to use with the wallet. Defaults to `'popup'`.                        |
+| `options.keymachineUrl`            | `string`                    | The URL of the key management service. Defaults to the production Sequence Key Machine.      |
+| `options.redirectUrl`              | `string`                    | The URL to redirect back to after a redirect-based flow.                                     |
+| `options.sequenceStorage`          | `SequenceStorage`           | An object for persistent session data storage. Defaults to `WebStorage` (using IndexedDB).   |
+| `options.sequenceSessionStorage`   | `SequenceSessionStorage`    | An object for temporary data storage (e.g., pending requests). Defaults to `sessionStorage`. |
+| `options.randomPrivateKeyFn`       | `() => Hex \| Promise<Hex>` | A function to generate random private keys for new sessions.                                 |
+| `options.redirectUrlActionHandler` | `(url: string) => void`     | A handler to manually control navigation for redirect flows.                                 |
+| `options.canUseIndexedDb`          | `boolean`                   | A flag to enable or disable the use of IndexedDB for caching. Defaults to `true`.            |
 
 ---
 
@@ -200,12 +211,28 @@ Registers an event listener for client-side events.
   - `listener`: `DappClientEventListener` - The callback function.
 - **Returns:** `() => void` - A function to unsubscribe the listener.
 - **Example:**
+
   ```typescript
+  // The listener for `signatureResponse` receives the signing result.
   dappClient.on('signatureResponse', (data) => {
+    // The `data` object includes the chainId where the signing occurred.
+    console.log('Signature response from chain:', data.chainId)
+
     if (data.error) {
       console.error('Signing failed:', data.error)
-    } else {
-      console.log('Signature received:', data.response.signature)
+      return
     }
+
+    // The `data.response` object contains the signature and other details.
+    console.log('Action:', data.action) // 'signMessage' or 'signTypedData'
+    console.log('Signature:', data.response.signature)
+    console.log('Signed by wallet:', data.response.walletAddress)
+  })
+
+  // The listener for `sessionsUpdated` is useful for syncing UI state.
+  dappClient.on('sessionsUpdated', () => {
+    console.log('Sessions updated!')
+    console.log('Is initialized:', dappClient.isInitialized)
+    console.log('Wallet address:', dappClient.getWalletAddress())
   })
   ```
