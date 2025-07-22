@@ -19,7 +19,7 @@ This client simplifies complex wallet interactions such as connecting a user, se
 ### Installation
 
 ```bash
-pnpm install @0xsequence/sessions # (Example package name)
+pnpm install @0xsequence/dapp-client
 ```
 
 ### Basic Usage
@@ -27,7 +27,7 @@ pnpm install @0xsequence/sessions # (Example package name)
 It is recommended to create and manage a single, singleton instance of the `DappClient` throughout your application.
 
 ```typescript
-import { DappClient } from './DappClient.js' // Adjust path as needed
+import { DappClient } from '@0xsequence/dapp-client'
 
 // 1. Create a single client instance for your app
 const dappClient = new DappClient('popup', 'https://my-wallet-url.com')
@@ -56,7 +56,7 @@ The main entry point for interacting with the Wallet. This client manages user s
 | Parameter       | Type            | Description                                                                                        |
 | :-------------- | :-------------- | :------------------------------------------------------------------------------------------------- |
 | `transportMode` | `TransportMode` | The communication mode to use with the wallet ('popup' or 'redirect').                             |
-| `walletUrl`     | `string`        | The URL of the Sequence Wallet Webapp.                                                             |
+| `walletUrl`     | `string`        | The URL of the Ecosystem Wallet.                                                                   |
 | `keymachineUrl` | `string`        | (Optional) The URL of the key management service. Defaults to the production Sequence Key Machine. |
 
 ---
@@ -90,7 +90,7 @@ Creates and initializes a new user session for a given chain.
 - **Parameters:**
   - `chainId`: `ChainId` - The primary chain ID for the new session.
   - `implicitSessionRedirectUrl`: `string` - The URL to redirect back to after login.
-  - `permissions?`: `Signers.Session.ExplicitParams` - (Optional) Permissions to request for the new session.
+  - `permissions?`: `Signers.Session.ExplicitParams` - (Optional) Permissions to request the user to approve for the new session (Unrestricted permissions if not provided).
   - `options?`: `{ preferredLoginMethod?, email? }` - (Optional) Options for the new session.
 - **Returns:** `Promise<void>`
 - **Throws:** `ConnectionError`, `InitializationError`
@@ -123,7 +123,7 @@ Returns an array of all active session keys (both implicit and explicit).
 
 #### **addExplicitSession()**
 
-Creates and initializes a new explicit (permissioned) session for a given chain.
+Creates and initializes a new explicit session for a given chain.
 
 - **Parameters:**
   - `chainId`: `ChainId` - The chain ID for the new session.
@@ -133,7 +133,7 @@ Creates and initializes a new explicit (permissioned) session for a given chain.
 - **Example:**
   ```typescript
   // Allow this session to transfer 1 USDC on Polygon
-  const USDC_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
+  const USDC_ADDRESS = '0x...'
   const permissions = {
     permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, '1000000')],
   }
@@ -149,7 +149,7 @@ Signs and sends a transaction using an active session signer.
 - **Parameters:**
   - `chainId`: `ChainId` - The chain ID for the transaction.
   - `transactions`: `Transaction[]` - An array of transactions to execute.
-  - `feeOption?`: `Relayer.FeeOption` - (Optional) A fee option for gas sponsorship.
+  - `feeOption?`: `Relayer.FeeOption` - (Optional) A gas fee option for (ex: User could pay the gas in USDC).
 - **Returns:** `Promise<string>` - The transaction hash.
 - **Throws:** `TransactionError`, `InitializationError`
 
@@ -157,7 +157,7 @@ Signs and sends a transaction using an active session signer.
 
 #### **getFeeOptions()**
 
-Gets available gas fee options for a transaction, enabling gas sponsorship.
+Gets available gas fee options for a transaction.
 
 - **Parameters:**
   - `chainId`: `ChainId` - The chain ID for the transaction.
