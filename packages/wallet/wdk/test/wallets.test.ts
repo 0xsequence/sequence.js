@@ -382,4 +382,97 @@ describe('Wallets', () => {
     expect(callbackCalls).toBe(1)
     unregisterCallback!()
   })
+
+  it('Should list all active devices for a wallet', async () => {
+    const manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const devices = await manager.wallets.listDevices(wallet!)
+    expect(devices.length).toBe(1)
+    expect(devices[0].address).not.toBe(wallet)
+    expect(devices[0].isLocal).toBe(true)
+    expect(devices[0]).toBeDefined()
+  })
+
+  it('Should list all active devices for a wallet, including a new remote device', async () => {
+    // Step 1: Wallet signs up on device 1
+    const loginMnemonic = Mnemonic.random(Mnemonic.english)
+    const managerDevice1 = newManager(undefined, undefined, 'device-1')
+
+    const wallet = await managerDevice1.wallets.signUp({
+      mnemonic: loginMnemonic,
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    // Verify initial state from Device 1's perspective
+    const devices1 = await managerDevice1.wallets.listDevices(wallet!)
+    expect(devices1.length).toBe(1)
+    expect(devices1[0].isLocal).toBe(true)
+    const device1Address = devices1[0].address
+
+    // Wallet logs in on device 2
+    const managerDevice2 = newManager(undefined, undefined, 'device-2')
+
+    // Initiate the login process from Device 2. This returns a signature request ID.
+    const requestId = await managerDevice2.wallets.login({ wallet: wallet! })
+    expect(requestId).toBeDefined()
+
+    // Register the Mnemonic UI handler for Device 2 to authorize the new device.
+    // It will provide the master mnemonic when asked.
+    const unregisterUI = managerDevice2.registerMnemonicUI(async (respond) => {
+      await respond(loginMnemonic)
+    })
+
+    // Get the signature request and handle it using the mnemonic signer.
+    const sigRequest = await managerDevice2.signatures.get(requestId)
+    const mnemonicSigner = sigRequest.signers.find((s) => s.handler?.kind === 'login-mnemonic')
+    expect(mnemonicSigner).toBeDefined()
+    expect(mnemonicSigner?.status).toBe('actionable')
+
+    const handled = await (mnemonicSigner as SignerActionable).handle()
+    expect(handled).toBe(true)
+
+    // Clean up the UI handler
+    unregisterUI()
+
+    // Finalize the login for Device 2
+    await managerDevice2.wallets.completeLogin(requestId)
+
+    // Step 3: Verification from both devices' perspectives
+
+    // Verify from Device 2's perspective
+    const devices2 = await managerDevice2.wallets.listDevices(wallet!)
+    expect(devices2.length).toBe(2)
+
+    const device2Entry = devices2.find((d) => d.isLocal === true) // Device 2 is the local device
+    const device1EntryForDevice2 = devices2.find((d) => d.isLocal === false) // Device 1 is the remote device
+
+    expect(device2Entry).toBeDefined()
+    expect(device2Entry?.isLocal).toBe(true)
+    expect(device1EntryForDevice2).toBeDefined()
+    expect(device1EntryForDevice2?.address).toBe(device1Address)
+
+    // Verify from Device 1's perspective
+    const devices1AfterLogin = await managerDevice1.wallets.listDevices(wallet!)
+    expect(devices1AfterLogin.length).toBe(2) // Now the wallet has logged in on two devices
+
+    const device1EntryForDevice1 = devices1AfterLogin.find((d) => d.isLocal === true)
+    const device2EntryForDevice1 = devices1AfterLogin.find((d) => d.isLocal === false)
+
+    expect(device1EntryForDevice1).toBeDefined()
+    expect(device1EntryForDevice1?.isLocal).toBe(true)
+    expect(device1EntryForDevice1?.address).toBe(device1Address)
+    expect(device2EntryForDevice1).toBeDefined()
+    expect(device2EntryForDevice1?.isLocal).toBe(false)
+
+    // Stop the managers to clean up resources
+    await managerDevice1.stop()
+    await managerDevice2.stop()
+  })
 })
