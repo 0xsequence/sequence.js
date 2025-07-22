@@ -253,6 +253,17 @@ export interface WalletsInterface {
   ): Promise<T extends { skipRemoveDevice: true } ? undefined : string>
 
   /**
+   * Initiates a remote logout process for a given wallet.
+   *
+   * This method is used to log out a device from a wallet that is not the local device.
+   *
+   * @param wallet The address of the wallet to log out from.
+   * @param deviceAddress The address of the device to log out.
+   * @returns A promise that resolves to a `requestId` for the on-chain logout transaction.
+   */
+  remoteLogout(wallet: Address.Address, deviceAddress: Address.Address): Promise<string>
+
+  /**
    * Completes the "hard logout" process.
    *
    * If `logout` was called without `skipRemoveDevice: true`, the resulting configuration update must be signed.
@@ -264,6 +275,19 @@ export interface WalletsInterface {
    * @returns A promise that resolves when the on-chain update is submitted and local storage is cleared.
    */
   completeLogout(requestId: string, options?: { skipValidateSave?: boolean }): Promise<void>
+
+  /**
+   * Completes a generic configuration update after it has been signed.
+   *
+   * This method takes a requestId for any action that results in a configuration
+   * update (e.g., from `login`, `logout`, `remoteLogout`, `addSigner`, etc.),
+   * validates it, and saves the new configuration to the state provider. The
+   * update will be bundled with the next on-chain transaction.
+   *
+   * @param requestId The ID of the completed signature request.
+   * @returns A promise that resolves when the update has been processed.
+   */
+  completeConfigurationUpdate(requestId: string): Promise<void>
 
   /**
    * Retrieves the full, resolved configuration of a wallet.
@@ -988,32 +1012,26 @@ export class Wallets implements WalletsInterface {
       throw new Error('device-not-found')
     }
 
-    const { devicesTopology, modules } = await this.getConfigurationParts(wallet)
-    const nextDevicesTopology = buildCappedTree([
-      ...Config.getSigners(devicesTopology)
-        .signers.filter((x) => x !== Constants.ZeroAddress && !Address.isEqual(x, device.address))
-        .map((x) => ({ address: x })),
-      ...Config.getSigners(devicesTopology).sapientSigners,
-    ])
-
-    // Remove device from the recovery topology, if it exists
-    if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
-      await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, device.address)
-    }
-
-    const requestId = await this.requestConfigurationUpdate(
-      wallet,
-      {
-        devicesTopology: nextDevicesTopology,
-        modules,
-      },
-      'logout',
-      'wallet-webapp',
-    )
+    const requestId = await this._prepareDeviceRemovalUpdate(wallet, device.address, 'logout')
 
     await this.shared.databases.manager.set({ ...walletEntry, status: 'logging-out' })
 
     return requestId as any
+  }
+
+  public async remoteLogout(wallet: Address.Address, deviceAddress: Address.Address): Promise<string> {
+    const walletEntry = await this.get(wallet)
+    if (!walletEntry) {
+      throw new Error('wallet-not-found')
+    }
+
+    if (Address.isEqual(walletEntry.device, deviceAddress)) {
+      throw new Error('cannot-remote-logout-from-local-device')
+    }
+
+    const requestId = await this._prepareDeviceRemovalUpdate(wallet, deviceAddress, 'remote-logout')
+
+    return requestId
   }
 
   async completeLogout(requestId: string, options?: { skipValidateSave?: boolean }) {
@@ -1126,5 +1144,39 @@ export class Wallets implements WalletsInterface {
     const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
     const onchainStatus = await walletObject.getStatus(provider)
     return onchainStatus.imageHash === onchainStatus.onChainImageHash
+  }
+
+  private async _prepareDeviceRemovalUpdate(
+    wallet: Address.Address,
+    deviceToRemove: Address.Address,
+    action: 'logout' | 'remote-logout',
+  ): Promise<string> {
+    const { devicesTopology, modules } = await this.getConfigurationParts(wallet)
+
+    // The result of this entire inner block is a clean, simple list of the remaining devices, ready to be rebuilt.
+    const nextDevicesTopology = buildCappedTree([
+      ...Config.getSigners(devicesTopology)
+        .signers.filter((x) => x !== Constants.ZeroAddress && !Address.isEqual(x, deviceToRemove))
+        .map((x) => ({ address: x })),
+      ...Config.getSigners(devicesTopology).sapientSigners,
+    ])
+
+    // Remove the device from the recovery module's topology as well.
+    if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
+      await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, deviceToRemove)
+    }
+
+    // Request the configuration update.
+    const requestId = await this.requestConfigurationUpdate(
+      wallet,
+      {
+        devicesTopology: nextDevicesTopology,
+        modules,
+      },
+      action,
+      'wallet-webapp',
+    )
+
+    return requestId
   }
 }
