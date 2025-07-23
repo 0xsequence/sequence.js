@@ -137,7 +137,10 @@ export class IndexedDbStore implements Store {
 
   async loadSubdigestsOfSigner(signer: Address.Address): Promise<Hex.Hex[]> {
     const dataSet = await this.getSet(STORE_SIGNER_SUBDIGESTS, signer.toLowerCase())
-    return Array.from(dataSet) as Hex.Hex[]
+    return Array.from(dataSet).map((subdigest) => {
+      Hex.assert(subdigest)
+      return subdigest
+    })
   }
 
   async loadSignatureOfSubdigest(
@@ -166,7 +169,10 @@ export class IndexedDbStore implements Store {
   async loadSubdigestsOfSapientSigner(signer: Address.Address, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
     const key = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
     const dataSet = await this.getSet(STORE_SAPIENT_SIGNER_SUBDIGESTS, key)
-    return Array.from(dataSet) as Hex.Hex[]
+    return Array.from(dataSet).map((subdigest) => {
+      Hex.assert(subdigest)
+      return subdigest
+    })
   }
 
   async loadSapientSignatureOfSubdigest(

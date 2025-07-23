@@ -81,16 +81,19 @@ export class RpcRelayer implements Relayer {
         data: Bytes.toHex(data),
       })
 
-      const quote = result.quote ? ({ _tag: 'FeeQuote', _quote: result.quote } as FeeQuote) : undefined
-      const options = result.options.map((option) => ({
-        token: {
-          ...option.token,
-          contractAddress: this.mapRpcFeeTokenToAddress(option.token),
-        },
-        to: option.to,
-        value: option.value,
-        gasLimit: option.gasLimit,
-      }))
+      const quote: FeeQuote | undefined = result.quote ? { _tag: 'FeeQuote', _quote: result.quote } : undefined
+      const options = result.options.map((option) => {
+        Address.assert(option.to)
+        return {
+          token: {
+            ...option.token,
+            contractAddress: this.mapRpcFeeTokenToAddress(option.token),
+          },
+          to: option.to,
+          value: option.value,
+          gasLimit: option.gasLimit,
+        }
+      })
 
       return { options, quote }
     } catch (e) {
@@ -172,7 +175,7 @@ export class RpcRelayer implements Relayer {
         return { status: 'unknown' }
       }
 
-      switch (receipt.status as ETHTxnStatus) {
+      switch (receipt.status) {
         case ETHTxnStatus.QUEUED:
         case ETHTxnStatus.PENDING_PRECONDITION:
         case ETHTxnStatus.SENT:
@@ -210,7 +213,7 @@ export class RpcRelayer implements Relayer {
       case 'native-balance': {
         const native = decoded as any
         try {
-          const balance = await this.provider.getBalance({ address: native.address.toString() as `0x${string}` })
+          const balance = await this.provider.getBalance({ address: native.address })
           const minWei = native.min !== undefined ? BigInt(native.min) : undefined
           const maxWei = native.max !== undefined ? BigInt(native.max) : undefined
 
@@ -235,12 +238,12 @@ export class RpcRelayer implements Relayer {
       case 'erc20-balance': {
         const erc20 = decoded as any
         try {
-          const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address.toString()])
-          const result = await this.provider.call({
-            to: erc20.token.toString() as `0x${string}`,
-            data: data as `0x${string}`,
-          })
-          const balance = BigInt(result.toString())
+          const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address])
+          const result = await this.provider.call({ to: erc20.token, data })
+          if (result.data === undefined) {
+            throw new Error('no response for erc-20 balance query')
+          }
+          const balance = BigInt(result.data)
           const minWei = erc20.min !== undefined ? BigInt(erc20.min) : undefined
           const maxWei = erc20.max !== undefined ? BigInt(erc20.max) : undefined
 
@@ -264,12 +267,12 @@ export class RpcRelayer implements Relayer {
       case 'erc20-approval': {
         const erc20 = decoded as any
         try {
-          const data = AbiFunction.encodeData(erc20Allowance, [erc20.address.toString(), erc20.operator.toString()])
-          const result = await this.provider.call({
-            to: erc20.token.toString() as `0x${string}`,
-            data: data as `0x${string}`,
-          })
-          const allowance = BigInt(result.toString())
+          const data = AbiFunction.encodeData(erc20Allowance, [erc20.address, erc20.operator])
+          const result = await this.provider.call({ to: erc20.token, data })
+          if (result.data === undefined) {
+            throw new Error('no response for erc-20 allowance query')
+          }
+          const allowance = BigInt(result.data)
           const minAllowance = BigInt(erc20.min)
           return allowance >= minAllowance
         } catch (error) {
@@ -282,11 +285,11 @@ export class RpcRelayer implements Relayer {
         const erc721 = decoded as any
         try {
           const data = AbiFunction.encodeData(erc721OwnerOf, [erc721.tokenId])
-          const result = await this.provider.call({
-            to: erc721.token.toString() as `0x${string}`,
-            data: data as `0x${string}`,
-          })
-          const resultHex = result.toString() as `0x${string}`
+          const result = await this.provider.call({ to: erc721.token, data })
+          const resultHex = result.data
+          if (resultHex === undefined) {
+            throw new Error('no response for erc-721 ownership query')
+          }
           const owner = resultHex.slice(-40)
           const isOwner = owner.toLowerCase() === erc721.address.toString().slice(2).toLowerCase()
           const expectedOwnership = erc721.owned !== undefined ? erc721.owned : true
@@ -301,11 +304,11 @@ export class RpcRelayer implements Relayer {
         const erc721 = decoded as any
         try {
           const data = AbiFunction.encodeData(erc721GetApproved, [erc721.tokenId])
-          const result = await this.provider.call({
-            to: erc721.token.toString() as `0x${string}`,
-            data: data as `0x${string}`,
-          })
-          const resultHex = result.toString() as `0x${string}`
+          const result = await this.provider.call({ to: erc721.token, data })
+          const resultHex = result.data
+          if (resultHex === undefined) {
+            throw new Error('no response for erc-721 approval query')
+          }
           const approved = resultHex.slice(-40)
           return approved.toLowerCase() === erc721.operator.toString().slice(2).toLowerCase()
         } catch (error) {
@@ -317,12 +320,12 @@ export class RpcRelayer implements Relayer {
       case 'erc1155-balance': {
         const erc1155 = decoded as any
         try {
-          const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address.toString(), erc1155.tokenId])
-          const result = await this.provider.call({
-            to: erc1155.token.toString() as `0x${string}`,
-            data: data as `0x${string}`,
-          })
-          const balance = BigInt(result.toString())
+          const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address, erc1155.tokenId])
+          const result = await this.provider.call({ to: erc1155.token, data })
+          if (result.data === undefined) {
+            throw new Error('no response for erc-1155 balance query')
+          }
+          const balance = BigInt(result.data)
           const minWei = erc1155.min !== undefined ? BigInt(erc1155.min) : undefined
           const maxWei = erc1155.max !== undefined ? BigInt(erc1155.max) : undefined
 
@@ -346,15 +349,12 @@ export class RpcRelayer implements Relayer {
       case 'erc1155-approval': {
         const erc1155 = decoded as any
         try {
-          const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [
-            erc1155.address.toString(),
-            erc1155.operator.toString(),
-          ])
-          const result = await this.provider.call({
-            to: erc1155.token.toString() as `0x${string}`,
-            data: data as `0x${string}`,
-          })
-          return BigInt(result.toString()) === 1n
+          const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [erc1155.address, erc1155.operator])
+          const result = await this.provider.call({ to: erc1155.token, data })
+          if (result.data === undefined) {
+            throw new Error('no response for erc-1155 approval query')
+          }
+          return BigInt(result.data) === 1n
         } catch (error) {
           console.error('Error checking ERC1155 approval:', error)
           return false

@@ -7,14 +7,14 @@ import { Extensions } from '@0xsequence/wallet-primitives'
 
 // Reusable function for encoding a signature
 export async function doEncodeSignature(options: {
-  x: string
-  y: string
+  x: Hex.Hex
+  y: Hex.Hex
   requireUserVerification: boolean
   credentialId?: string
-  metadataHash?: string
-  r: string
-  s: string
-  authenticatorData: string
+  metadataHash?: Hex.Hex
+  r: Hex.Hex
+  s: Hex.Hex
+  authenticatorData: Hex.Hex
   clientDataJson: string | object
   embedMetadata: boolean
 }): Promise<string> {
@@ -26,21 +26,17 @@ export async function doEncodeSignature(options: {
   }
 
   const publicKey: Extensions.Passkeys.PublicKey = {
-    x: options.x as Hex.Hex,
-    y: options.y as Hex.Hex,
+    x: options.x,
+    y: options.y,
     requireUserVerification: options.requireUserVerification,
-    metadata: options.credentialId
-      ? { credentialId: options.credentialId }
-      : options.metadataHash
-        ? (options.metadataHash as Hex.Hex)
-        : undefined,
+    metadata: options.credentialId ? { credentialId: options.credentialId } : options.metadataHash,
   }
 
   const decodedSignature: Extensions.Passkeys.DecodedSignature = {
     publicKey,
-    r: Bytes.fromHex(options.r as Hex.Hex),
-    s: Bytes.fromHex(options.s as Hex.Hex),
-    authenticatorData: Bytes.fromHex(options.authenticatorData as Hex.Hex),
+    r: Bytes.fromHex(options.r),
+    s: Bytes.fromHex(options.s),
+    authenticatorData: Bytes.fromHex(options.authenticatorData),
     clientDataJSON:
       typeof options.clientDataJson === 'string' ? options.clientDataJson : JSON.stringify(options.clientDataJson),
     embedMetadata: options.embedMetadata,
@@ -51,8 +47,8 @@ export async function doEncodeSignature(options: {
 }
 
 // Reusable function for decoding a signature
-export async function doDecodeSignature(encodedSignatureHex: string): Promise<string> {
-  const encodedBytes = Bytes.fromHex(encodedSignatureHex as Hex.Hex)
+export async function doDecodeSignature(encodedSignature: Hex.Hex): Promise<string> {
+  const encodedBytes = Bytes.fromHex(encodedSignature)
   const decoded = Extensions.Passkeys.decode(encodedBytes)
 
   // Convert bytes back to hex for readability in JSON output
@@ -75,25 +71,21 @@ export async function doDecodeSignature(encodedSignatureHex: string): Promise<st
 
 // Reusable function for computing the root
 export async function doComputeRoot(options: {
-  x: string
-  y: string
+  x: Hex.Hex
+  y: Hex.Hex
   requireUserVerification: boolean
   credentialId?: string
-  metadataHash?: string
+  metadataHash?: Hex.Hex
 }): Promise<string> {
   if (options.credentialId && options.metadataHash) {
     throw new Error('Cannot provide both credential-id and metadata-hash')
   }
 
   const publicKey: Extensions.Passkeys.PublicKey = {
-    x: options.x as Hex.Hex,
-    y: options.y as Hex.Hex,
+    x: options.x,
+    y: options.y,
     requireUserVerification: options.requireUserVerification,
-    metadata: options.credentialId
-      ? { credentialId: options.credentialId }
-      : options.metadataHash
-        ? (options.metadataHash as Hex.Hex)
-        : undefined,
+    metadata: options.credentialId ? { credentialId: options.credentialId } : options.metadataHash,
   }
 
   const root = Extensions.Passkeys.rootFor(publicKey)
@@ -102,15 +94,15 @@ export async function doComputeRoot(options: {
 
 // Reusable function for validating a signature
 export async function doValidateSignature(options: {
-  challenge: string
-  x: string
-  y: string
+  challenge: Hex.Hex
+  x: Hex.Hex
+  y: Hex.Hex
   requireUserVerification: boolean
   credentialId?: string
-  metadataHash?: string
-  r: string
-  s: string
-  authenticatorData: string
+  metadataHash?: Hex.Hex
+  r: Hex.Hex
+  s: Hex.Hex
+  authenticatorData: Hex.Hex
   clientDataJson: string
 }): Promise<boolean> {
   if (options.credentialId && options.metadataHash) {
@@ -118,26 +110,22 @@ export async function doValidateSignature(options: {
   }
 
   const publicKey: Extensions.Passkeys.PublicKey = {
-    x: options.x as Hex.Hex,
-    y: options.y as Hex.Hex,
+    x: options.x,
+    y: options.y,
     requireUserVerification: options.requireUserVerification,
-    metadata: options.credentialId
-      ? { credentialId: options.credentialId }
-      : options.metadataHash
-        ? (options.metadataHash as Hex.Hex)
-        : undefined,
+    metadata: options.credentialId ? { credentialId: options.credentialId } : options.metadataHash,
   }
 
   // Construct DecodedSignature without embedMetadata flag, as validation doesn't need it directly
   const decodedSignature: Omit<Extensions.Passkeys.DecodedSignature, 'embedMetadata'> = {
     publicKey,
-    r: Bytes.fromHex(options.r as Hex.Hex),
-    s: Bytes.fromHex(options.s as Hex.Hex),
-    authenticatorData: Bytes.fromHex(options.authenticatorData as Hex.Hex),
+    r: Bytes.fromHex(options.r),
+    s: Bytes.fromHex(options.s),
+    authenticatorData: Bytes.fromHex(options.authenticatorData),
     clientDataJSON: options.clientDataJson,
   }
 
-  return Extensions.Passkeys.isValidSignature(options.challenge as Hex.Hex, decodedSignature)
+  return Extensions.Passkeys.isValidSignature(options.challenge, decodedSignature)
 }
 
 const passkeysCommand: CommandModule = {
@@ -182,6 +170,13 @@ const passkeysCommand: CommandModule = {
             .conflicts('credential-id', 'metadata-hash')
         },
         async (argv) => {
+          Hex.assert(argv.x)
+          Hex.assert(argv.y)
+          Hex.assert(argv.metadataHash)
+          Hex.assert(argv.r)
+          Hex.assert(argv.s)
+          Hex.assert(argv.authenticatorData)
+
           const result = await doEncodeSignature({
             x: argv.x,
             y: argv.y,
@@ -207,8 +202,10 @@ const passkeysCommand: CommandModule = {
           })
         },
         async (argv) => {
-          const encodedSignatureHex = await fromPosOrStdin(argv, 'encoded-signature')
-          const result = await doDecodeSignature(encodedSignatureHex)
+          const encodedSignature = await fromPosOrStdin(argv, 'encoded-signature')
+          Hex.assert(encodedSignature)
+
+          const result = await doDecodeSignature(encodedSignature)
           console.log(result)
         },
       )
@@ -232,6 +229,10 @@ const passkeysCommand: CommandModule = {
             .conflicts('credential-id', 'metadata-hash')
         },
         async (argv) => {
+          Hex.assert(argv.x)
+          Hex.assert(argv.y)
+          Hex.assert(argv.metadataHash)
+
           const result = await doComputeRoot({
             x: argv.x,
             y: argv.y,
@@ -275,6 +276,14 @@ const passkeysCommand: CommandModule = {
             .conflicts('credential-id', 'metadata-hash')
         },
         async (argv) => {
+          Hex.assert(argv.challenge)
+          Hex.assert(argv.x)
+          Hex.assert(argv.y)
+          Hex.assert(argv.metadataHash)
+          Hex.assert(argv.r)
+          Hex.assert(argv.s)
+          Hex.assert(argv.authenticatorData)
+
           const isValid = await doValidateSignature({
             challenge: argv.challenge,
             x: argv.x,

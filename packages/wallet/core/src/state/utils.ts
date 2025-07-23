@@ -30,7 +30,7 @@ async function retrieveWallets<S extends Signer | SapientSigner>(
   stateReader: Reader,
   signer: S,
 ): Promise<{
-  [wallet: `0x${string}`]: {
+  [wallet: Address.Address]: {
     chainId: bigint
     payload: Payload.Parented
     signature: S extends SapientSigner ? Signature.SignatureOfSapientSignerLeaf : Signature.SignatureOfSignerLeaf

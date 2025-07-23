@@ -1,6 +1,6 @@
 import { Permission, SessionConfig, Config } from '@0xsequence/wallet-primitives'
 import crypto from 'crypto'
-import { Bytes } from 'ox'
+import { Address, Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 
 export interface RandomOptions {
@@ -41,7 +41,7 @@ function randomBytes(length: number, options?: RandomOptions): Uint8Array {
   return crypto.getRandomValues(bytes)
 }
 
-function randomHex(length: number, options?: RandomOptions): `0x${string}` {
+function randomHex(length: number, options?: RandomOptions): Hex.Hex {
   return Bytes.toHex(randomBytes(length, options))
 }
 
@@ -52,7 +52,7 @@ function randomBigInt(max: bigint, options?: RandomOptions): bigint {
   return BigInt(Math.floor(Math.random() * Number(max)))
 }
 
-function randomAddress(options?: RandomOptions): `0x${string}` {
+function randomAddress(options?: RandomOptions): Address.Address {
   return `0x${Buffer.from(randomBytes(20, options)).toString('hex')}`
 }
 

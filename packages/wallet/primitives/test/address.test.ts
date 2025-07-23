@@ -215,12 +215,12 @@ describe('Address', () => {
     it('should produce different addresses for different factory addresses', () => {
       const context1 = {
         ...mockContext,
-        factory: '0x1111111111111111111111111111111111111111' as Address.Address,
+        factory: '0x1111111111111111111111111111111111111111',
       }
 
       const context2 = {
         ...mockContext,
-        factory: '0x2222222222222222222222222222222222222222' as Address.Address,
+        factory: '0x2222222222222222222222222222222222222222',
       }
 
       const address1 = from(sampleConfig, context1)
@@ -232,12 +232,12 @@ describe('Address', () => {
     it('should produce different addresses for different stage1 addresses', () => {
       const context1 = {
         ...mockContext,
-        stage1: '0x1111111111111111111111111111111111111111' as Address.Address,
+        stage1: '0x1111111111111111111111111111111111111111',
       }
 
       const context2 = {
         ...mockContext,
-        stage1: '0x2222222222222222222222222222222222222222' as Address.Address,
+        stage1: '0x2222222222222222222222222222222222222222',
       }
 
       const address1 = from(sampleConfig, context1)
@@ -247,15 +247,8 @@ describe('Address', () => {
     })
 
     it('should produce different addresses for different creation code', () => {
-      const context1 = {
-        ...mockContext,
-        creationCode: '0x1111' as Hex.Hex,
-      }
-
-      const context2 = {
-        ...mockContext,
-        creationCode: '0x2222' as Hex.Hex,
-      }
+      const context1: typeof mockContext = { ...mockContext, creationCode: '0x1111' }
+      const context2: typeof mockContext = { ...mockContext, creationCode: '0x2222' }
 
       const address1 = from(sampleConfig, context1)
       const address2 = from(sampleConfig, context2)
@@ -284,10 +277,7 @@ describe('Address', () => {
     })
 
     it('should handle empty creation code', () => {
-      const contextWithEmptyCode = {
-        ...mockContext,
-        creationCode: '0x' as Hex.Hex,
-      }
+      const contextWithEmptyCode: typeof mockContext = { ...mockContext, creationCode: '0x' }
 
       const address = from(sampleConfig, contextWithEmptyCode)
 

@@ -21,9 +21,8 @@ export class PkRelayer implements Relayer {
           throw new Error('Provider chain id does not match relayer chain id')
         }
 
-        const oxArgs = { ...args, to: args.to as `0x${string}`, data: args.data as `0x${string}` }
         // Estimate gas with a safety buffer
-        const estimatedGas = BigInt(await this.provider.request({ method: 'eth_estimateGas', params: [oxArgs] }))
+        const estimatedGas = BigInt(await this.provider.request({ method: 'eth_estimateGas', params: [args] }))
         const safeGasLimit = estimatedGas > 21000n ? (estimatedGas * 12n) / 10n : 50000n
 
         // Get base fee and priority fee
@@ -51,8 +50,8 @@ export class PkRelayer implements Relayer {
           chainId: Number(chainId),
           type: 'eip1559',
           from: relayerAddress,
-          to: oxArgs.to,
-          data: oxArgs.data,
+          to: args.to,
+          data: args.data,
           gas: safeGasLimit,
           maxFeePerGas: maxFeePerGas,
           maxPriorityFeePerGas: priorityFee,
@@ -72,17 +71,14 @@ export class PkRelayer implements Relayer {
         })
         return tx
       },
-      getBalance: async (address: string): Promise<bigint> => {
+      getBalance: async (address): Promise<bigint> => {
         const balanceHex = await this.provider.request({
           method: 'eth_getBalance',
-          params: [address as Address.Address, 'latest'],
+          params: [address, 'latest'],
         })
         return BigInt(balanceHex)
       },
-      call: async (args: { to: string; data: string }): Promise<string> => {
-        const callArgs = { to: args.to as `0x${string}`, data: args.data as `0x${string}` }
-        return await this.provider.request({ method: 'eth_call', params: [callArgs, 'latest'] })
-      },
+      call: (args) => this.provider.request({ method: 'eth_call', params: [args, 'latest'] }),
       getTransactionReceipt: async (txHash: string, chainId: bigint) => {
         Hex.assert(txHash)
 

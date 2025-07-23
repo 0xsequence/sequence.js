@@ -63,7 +63,7 @@ export function decode<T extends Bytes.Bytes | Hex.Hex>(
         try {
           const [to, data, decoded] = AbiParameters.decode(
             [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
-            signature.slice(0, -WrappedSignature.magicBytes.slice(2).length) as Hex.Hex,
+            `0x${signature.slice(2, -WrappedSignature.magicBytes.slice(2).length)}`,
           )
           return { signature: decoded as T, erc6492: { to, data: data as T } }
         } catch {

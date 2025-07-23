@@ -192,7 +192,7 @@ export const permissionStructAbi = {
       ],
     },
   ],
-} as const
+}
 
 export function abiEncodePermission(permission: Permission): string {
   return AbiParameters.encode(

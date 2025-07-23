@@ -76,16 +76,16 @@ vi.mock('ox', async () => {
 describe('Passkeys', () => {
   // Real P-256 curve points that fit within 32 bytes (from ox WebAuthnP256 test data)
   // These are actual valid secp256r1 coordinates that work with Hex.padLeft(32)
-  const testPublicKeyX = '0x62a31768d44f5eff222f8d70c4cb61abd5840b27d617a7fe8d11b72dd5e86fc1' as Hex.Hex // 32 bytes
-  const testPublicKeyY = '0x6611bae3f1e2cd38e405153776a7dcb6995b8254a1416ead102a096c45d80618' as Hex.Hex // 32 bytes
+  const testPublicKeyX = '0x62a31768d44f5eff222f8d70c4cb61abd5840b27d617a7fe8d11b72dd5e86fc1' // 32 bytes
+  const testPublicKeyY = '0x6611bae3f1e2cd38e405153776a7dcb6995b8254a1416ead102a096c45d80618' // 32 bytes
 
   // Valid secp256r1 signature components from ox test data (32 bytes each)
   const validR = Bytes.fromHex('0x171c8c7b0c3fbea57a28027bc8cf2bbc8b3a22dc31e69e0e9c6b8b9c6b8b9c6b')
   const validS = Bytes.fromHex('0x6729577e31f54b21dbf72c2c805e5a9e7d5b9e7e5e5e5e5e5e5e5e5e5e5e5e5e')
 
   const testCredentialId = 'test-credential-id-12345'
-  const testMetadataHash = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' as Hex.Hex // 32 bytes
-  const testChallenge = '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' as Hex.Hex // From ox tests
+  const testMetadataHash = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' // 32 bytes
+  const testChallenge = '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' // From ox tests
 
   const samplePasskeyMetadata: PasskeyMetadata = {
     credentialId: testCredentialId,
@@ -150,7 +150,7 @@ describe('Passkeys', () => {
 
   // Create WebAuthn metadata following ox patterns
   const createValidMetadata = (overrides: any = {}) => ({
-    authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000' as Hex.Hex,
+    authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
     challengeIndex: 23,
     clientDataJSON:
       '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"https://example.com","crossOrigin":false}',
@@ -261,11 +261,7 @@ describe('Passkeys', () => {
       })
 
       it('should properly pad coordinates', () => {
-        const shortCoordinateKey = createValidPublicKey({
-          x: '0x1234' as Hex.Hex,
-          y: '0x5678' as Hex.Hex,
-        })
-
+        const shortCoordinateKey = createValidPublicKey({ x: '0x1234', y: '0x5678' })
         const tree = toTree(shortCoordinateKey)
         expect(GenericTree.isBranch(tree)).toBe(true)
         if (GenericTree.isBranch(tree)) {
@@ -542,10 +538,10 @@ describe('Passkeys', () => {
 
       it('should handle different challenge formats', () => {
         const challenges = [
-          '0x0000000000000000000000000000000000000000000000000000000000000000' as Hex.Hex,
-          '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' as Hex.Hex,
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
           testChallenge,
-          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' as Hex.Hex, // From ox tests
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf', // From ox tests
         ]
 
         challenges.forEach((challenge) => {
@@ -571,8 +567,8 @@ describe('Passkeys', () => {
 
       it('should handle invalid public key coordinates gracefully', () => {
         const invalidPublicKey = createValidPublicKey({
-          x: '0x0000000000000000000000000000000000000000000000000000000000000000' as Hex.Hex,
-          y: '0x0000000000000000000000000000000000000000000000000000000000000000' as Hex.Hex,
+          x: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          y: '0x0000000000000000000000000000000000000000000000000000000000000000',
         })
 
         const signature = createValidSignature({
@@ -610,9 +606,9 @@ describe('Passkeys', () => {
     it('should handle authenticator data flag variations', () => {
       // Test different authenticator data flags following WebAuthn spec
       const flagVariations = [
-        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000' as Hex.Hex, // User present
-        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000000' as Hex.Hex, // User verified
-        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631500000000' as Hex.Hex, // Both flags
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000', // User present
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000000', // User verified
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631500000000', // Both flags
       ]
 
       flagVariations.forEach((authenticatorData) => {
@@ -687,8 +683,8 @@ describe('Passkeys', () => {
 
     it('should handle extreme coordinate values', () => {
       const extremeKey = createValidPublicKey({
-        x: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' as Hex.Hex,
-        y: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' as Hex.Hex,
+        x: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+        y: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
       })
 
       const tree = toTree(extremeKey)

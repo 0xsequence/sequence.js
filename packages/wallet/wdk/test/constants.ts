@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv'
-import { Abi, Address, Provider, RpcTransport } from 'ox'
+import { Abi, Address, Hex, Provider, RpcTransport } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'
 import { mockEthereum } from './setup'
 import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'
@@ -65,7 +65,7 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
 export function newRemoteManager(
   remoteManagerOptions: {
     network: {
-      relayerPk: string
+      relayerPk: Hex.Hex
       bundlerUrl: string
       rpcUrl: string
       chainId: bigint
@@ -84,7 +84,7 @@ export function newRemoteManager(
 
   if (remoteManagerOptions.network.relayerPk) {
     const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))
-    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
+    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk, provider))
   }
 
   if (remoteManagerOptions.network.bundlerUrl) {

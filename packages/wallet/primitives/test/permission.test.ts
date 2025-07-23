@@ -25,8 +25,8 @@ import {
 
 describe('Permission', () => {
   // Test data
-  const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
+  const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
+  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0'
   const testChainId = 1n
   const testValueLimit = 1000000000000000000n // 1 ETH
   const testDeadline = 1893456000n // Jan 1, 2030

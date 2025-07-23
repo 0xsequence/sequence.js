@@ -151,7 +151,8 @@ export class EncryptedPkStore implements PkStore {
       this.encrypted.data,
     )
     const decoder = new TextDecoder()
-    const privateKey = decoder.decode(decryptedBuffer) as Hex.Hex
+    const privateKey = decoder.decode(decryptedBuffer)
+    Hex.assert(privateKey)
     return Secp256k1.sign({ payload: digest, privateKey })
   }
 }

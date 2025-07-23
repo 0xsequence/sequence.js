@@ -14,6 +14,10 @@ async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.R
       throw new Error(`Invalid leaf format: ${leafStr}`)
     }
     const [_, address, requiredDeltaTimeStr, minTimestampStr] = parts
+    if (address === undefined) {
+      throw new Error('no address for recovery leaf')
+    }
+    Address.assert(address)
     if (!requiredDeltaTimeStr || !minTimestampStr) {
       throw new Error(`Invalid leaf format: ${leafStr}`)
     }
@@ -21,7 +25,7 @@ async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.R
     const minTimestamp = BigInt(minTimestampStr)
     return {
       type: 'leaf',
-      signer: address as Address.Address,
+      signer: address,
       requiredDeltaTime,
       minTimestamp,
     }
@@ -41,10 +45,10 @@ export async function doEncode(leavesInput: string | string[]): Promise<string> 
   return Bytes.toHex(encoded)
 }
 
-export async function doTrim(leavesInput: string | string[], signer: string): Promise<string> {
+export async function doTrim(leavesInput: string | string[], signer: Address.Address): Promise<string> {
   const leaves = await parseLeaves(leavesInput)
   const topology = Extensions.Recovery.fromRecoveryLeaves(leaves)
-  const trimmed = Extensions.Recovery.trimTopology(topology, signer as Address.Address)
+  const trimmed = Extensions.Recovery.trimTopology(topology, signer)
   const encoded = Extensions.Recovery.encodeTopology(trimmed)
   return Bytes.toHex(encoded)
 }
@@ -153,6 +157,7 @@ const recoveryCommand: CommandModule = {
               .filter((line) => line)
           }
           const signer = argv.signer
+          Address.assert(signer)
           try {
             const encoded = await doTrim(leavesInput, signer)
             console.log(encoded)

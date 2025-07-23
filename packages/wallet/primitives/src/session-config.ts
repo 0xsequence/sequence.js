@@ -239,7 +239,7 @@ export function encodeLeafToGeneric(leaf: SessionLeaf): GenericTree.Leaf {
 export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
   const flag = bytes[0]!
   if (flag === SESSIONS_FLAG_BLACKLIST) {
-    const blacklist: `0x${string}`[] = []
+    const blacklist: Address.Address[] = []
     for (let i = 1; i < bytes.length; i += 20) {
       blacklist.push(Bytes.toHex(bytes.slice(i, i + 20)))
     }
@@ -401,7 +401,8 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
 
   // Parse identity signer
   if (typeof parsed === 'object' && parsed !== null && 'identitySigner' in parsed) {
-    const identitySigner = parsed.identitySigner as `0x${string}`
+    const identitySigner = parsed.identitySigner
+    Address.assert(identitySigner)
     return { type: 'identity-signer', identitySigner }
   }
 
@@ -423,7 +424,7 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
  */
 export function removeExplicitSession(
   topology: SessionsTopology,
-  signerAddress: `0x${string}`,
+  signerAddress: Address.Address,
 ): SessionsTopology | null {
   if (isSessionPermissions(topology)) {
     if (Address.isEqual(topology.signer, signerAddress)) {

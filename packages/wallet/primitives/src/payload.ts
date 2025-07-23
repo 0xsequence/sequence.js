@@ -745,7 +745,7 @@ export function decode(packed: Bytes.Bytes, self?: Address.Address): Calls {
       if (pointer + 20 > packed.length) {
         throw new Error('Invalid packed data: not enough bytes for address')
       }
-      to = Bytes.toHex(packed.slice(pointer, pointer + 20)) as Address.Address
+      to = Bytes.toHex(packed.slice(pointer, pointer + 20))
       pointer += 20
     }
 
@@ -846,7 +846,7 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
       calls: decoded.calls.map((call) => ({
         to: Address.from(call.to),
         value: call.value,
-        data: call.data as `0x${string}`,
+        data: call.data,
         gasLimit: call.gasLimit,
         delegateCall: call.delegateCall,
         onlyFallback: call.onlyFallback,
@@ -859,7 +859,7 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
   if (decoded.kind === KIND_MESSAGE) {
     return {
       type: 'message',
-      message: decoded.message as `0x${string}`,
+      message: decoded.message,
       parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
     }
   }
@@ -867,7 +867,7 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
   if (decoded.kind === KIND_CONFIG_UPDATE) {
     return {
       type: 'config-update',
-      imageHash: decoded.imageHash as `0x${string}`,
+      imageHash: decoded.imageHash,
       parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
     }
   }
@@ -875,7 +875,7 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
   if (decoded.kind === KIND_DIGEST) {
     return {
       type: 'digest',
-      digest: decoded.digest as `0x${string}`,
+      digest: decoded.digest,
       parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
     }
   }

@@ -1,5 +1,5 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
@@ -674,15 +674,29 @@ export class ChainSessionManager {
 
       const callsToSend = calls
       if (feeOption) {
-        const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
-        const transferCall: Payload.Call = {
-          to: feeOption.token.contractAddress as `0x${string}`,
-          value: BigInt(0),
-          data: AbiFunction.encodeData(transfer, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
-          gasLimit: BigInt(feeOption.gasLimit),
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert' as const,
+        let transferCall: Payload.Call
+        if (feeOption.token.contractAddress && feeOption.token.contractAddress !== Constants.ZeroAddress) {
+          Address.assert(feeOption.token.contractAddress)
+          const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
+          transferCall = {
+            to: feeOption.token.contractAddress,
+            value: BigInt(0),
+            data: AbiFunction.encodeData(transfer, [feeOption.to, BigInt(feeOption.value)]),
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          }
+        } else {
+          transferCall = {
+            to: feeOption.to,
+            value: BigInt(feeOption.value),
+            data: '0x',
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          }
         }
         callsToSend.unshift(transferCall)
       }
@@ -926,7 +940,7 @@ export class ChainSessionManager {
    * @param chainId The chain ID of the transaction.
    * @returns The final status of the transaction.
    */
-  private async _waitForTransactionReceipt(opHash: `0x${string}`, chainId: bigint): Promise<Relayer.OperationStatus> {
+  private async _waitForTransactionReceipt(opHash: Hex.Hex, chainId: bigint): Promise<Relayer.OperationStatus> {
     try {
       while (true) {
         const currentStatus = await this.relayer.status(opHash, chainId)
