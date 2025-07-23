@@ -52,7 +52,7 @@ export type SignatureOfSignerLeafHash = {
 
 export type SignatureOfSignerLeafErc1271 = {
   type: 'erc1271'
-  address: `0x${string}`
+  address: Address.Address
   data: Hex.Hex
 }
 
@@ -62,7 +62,7 @@ export type SignatureOfSignerLeaf =
   | SignatureOfSignerLeafErc1271
 
 export type SignatureOfSapientSignerLeaf = {
-  address: `0x${string}`
+  address: Address.Address
   data: Hex.Hex
   type: 'sapient' | 'sapient_compact'
 }
@@ -1070,7 +1070,8 @@ function rawTopologyFromJson(obj: any): RawTopology {
     }
   }
   if (typeof obj === 'string') {
-    return obj as Hex.Hex
+    Hex.assert(obj)
+    return obj
   }
   throw new Error('Invalid raw topology format')
 }

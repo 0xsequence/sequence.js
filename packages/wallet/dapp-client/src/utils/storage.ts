@@ -148,8 +148,11 @@ export class WebStorage implements SequenceStorage {
   async getAndClearTempSessionPk(): Promise<Hex.Hex | null> {
     try {
       const pk = sessionStorage.getItem(TEMP_SESSION_PK_KEY)
+      if (pk !== null) {
+        Hex.assert(pk)
+      }
       sessionStorage.removeItem(TEMP_SESSION_PK_KEY)
-      return pk as Hex.Hex | null
+      return pk
     } catch (error) {
       console.error('Failed to retrieve temp session PK:', error)
       return null

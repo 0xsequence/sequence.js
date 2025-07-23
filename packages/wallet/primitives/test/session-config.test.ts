@@ -42,9 +42,9 @@ import { SessionPermissions } from '../src/permission.js'
 
 describe('Session Config', () => {
   // Test data
-  const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
-  const testAddress3 = '0xa0b86a33e6f8b5f56e64c9e1a1b8c6a9cc4b9a9e' as Address.Address
+  const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
+  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0'
+  const testAddress3 = '0xa0b86a33e6f8b5f56e64c9e1a1b8c6a9cc4b9a9e'
   const testNode = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as SessionNode
 
   const samplePermission = {
@@ -733,7 +733,7 @@ describe('Session Config', () => {
 
     describe('addToImplicitBlacklist', () => {
       it('should add address to blacklist', () => {
-        const newAddress = '0x1111111111111111111111111111111111111111' as Address.Address
+        const newAddress = '0x1111111111111111111111111111111111111111'
         const result = addToImplicitBlacklist(sampleCompleteTopology, newAddress)
 
         const blacklist = getImplicitBlacklist(result)
@@ -771,7 +771,7 @@ describe('Session Config', () => {
       })
 
       it('should handle non-existent address gracefully', () => {
-        const nonExistentAddress = '0x1111111111111111111111111111111111111111' as Address.Address
+        const nonExistentAddress = '0x1111111111111111111111111111111111111111'
         // Create a copy since removeFromImplicitBlacklist mutates the original
         const topologyClone = structuredClone(sampleCompleteTopology)
         const result = removeFromImplicitBlacklist(topologyClone, nonExistentAddress)

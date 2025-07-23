@@ -21,8 +21,8 @@ import * as Payload from '../src/payload.js'
 
 describe('Session Signature', () => {
   // Test data
-  const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
+  const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
+  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0'
   const testChainId = 1n
   const testSpace = 0n
   const testNonce = 1n
@@ -537,8 +537,8 @@ describe('Session Signature', () => {
       const minimalAttestation: Attestation = {
         approvedSigner: testAddress1,
         identityType: Bytes.fromHex('0x00'),
-        issuerHash: Bytes.fromHex(('0x' + '00'.repeat(32)) as Hex.Hex),
-        audienceHash: Bytes.fromHex(('0x' + '00'.repeat(32)) as Hex.Hex),
+        issuerHash: Bytes.fromHex('0x' + '00'.repeat(32)),
+        audienceHash: Bytes.fromHex('0x' + '00'.repeat(32)),
         applicationData: Bytes.fromArray([]),
         authData: {
           redirectUrl: '',

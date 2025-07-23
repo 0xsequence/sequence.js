@@ -4,7 +4,7 @@ import { FeeToken, GetMetaTxnReceiptReturn } from './standard/rpc/index.js'
 
 export interface FeeOption {
   token: FeeToken
-  to: string
+  to: Address.Address
   value: string
   gasLimit: number
 }

@@ -347,7 +347,8 @@ function decodeTopology(obj: any): Topology {
   }
 
   if (typeof obj === 'string') {
-    return obj as Hex.Hex
+    Hex.assert(obj)
+    return obj
   }
 
   switch (obj.type) {
