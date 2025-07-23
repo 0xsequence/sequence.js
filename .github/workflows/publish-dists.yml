@@ -22,7 +22,7 @@ jobs:
 
       - name: Prepare dist branch
         run: |
-          PACKAGES=("services/identity-instrument" "services/relayer" "wallet/core" "wallet/primitives" "wallet/wdk")
+          PACKAGES=("services/identity-instrument" "services/relayer" "wallet/core" "wallet/primitives" "wallet/wdk" "wallet/dapp-client")
 
           for PACKAGE in "${PACKAGES[@]}"; do
             BRANCH="dists/$PACKAGE"
