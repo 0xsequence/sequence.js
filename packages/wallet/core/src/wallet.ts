@@ -1,10 +1,10 @@
 import {
+  Address,
   Config,
   Constants,
   Context,
   Erc6492,
   Payload,
-  Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Bytes, Hex, Provider, TypedData } from 'ox'
@@ -83,7 +83,7 @@ export class Wallet {
     }
 
     await merged.stateProvider.saveWallet(configuration, context)
-    return new Wallet(SequenceAddress.from(configuration, context), merged)
+    return new Wallet(Address.from(configuration, context), merged)
   }
 
   async isDeployed(provider: Provider.Provider): Promise<boolean> {
@@ -201,11 +201,7 @@ export class Wallet {
             method: 'eth_call',
             params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }, 'latest'],
           })
-          .then((res) => {
-            const address = `0x${res.slice(-40)}`
-            Address.assert(address, { strict: false })
-            return address
-          })
+          .then((res) => Address.checksum(`0x${res.slice(-40)}`))
           .catch(() => undefined),
       ])
 

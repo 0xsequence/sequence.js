@@ -1,5 +1,5 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Address, Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
@@ -204,7 +204,7 @@ export class ChainSessionManager {
    * @param implicitSession The main implicit session data, which contains the wallet address.
    */
   private async _loadSessionFromStorage(implicitSession: ImplicitSessionData) {
-    const walletAddr = Address.from(implicitSession.walletAddress)
+    const walletAddr = Address.checksum(implicitSession.walletAddress)
     this.initializeWithWallet(walletAddr)
 
     if (implicitSession.chainId === this.chainId) {
@@ -221,7 +221,7 @@ export class ChainSessionManager {
 
     const allExplicitSessions = await this.sequenceStorage.getExplicitSessions()
     const walletExplicitSessions = allExplicitSessions.filter(
-      (s) => Address.isEqual(Address.from(s.walletAddress), walletAddr) && s.chainId === this.chainId,
+      (s) => Address.isEqual(s.walletAddress, walletAddr) && s.chainId === this.chainId,
     )
 
     for (const sessionData of walletExplicitSessions) {
@@ -278,7 +278,7 @@ export class ChainSessionManager {
         { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
-      const receivedAddress = Address.from(connectResponse.walletAddress)
+      const receivedAddress = connectResponse.walletAddress
       const { attestation, signature, email, loginMethod } = connectResponse
       if (!attestation || !signature)
         throw new InitializationError('Attestation or signature missing for implicit session.')
@@ -357,7 +357,7 @@ export class ChainSessionManager {
         { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
-      if (!Address.isEqual(Address.from(response.walletAddress), this.walletAddress)) {
+      if (!Address.isEqual(response.walletAddress, this.walletAddress)) {
         throw new AddExplicitSessionError('Wallet address mismatch.')
       }
 
@@ -418,10 +418,7 @@ export class ChainSessionManager {
         { path: '/request/modify', redirectUrl: this.redirectUrl },
       )
 
-      if (
-        !Address.isEqual(Address.from(response.walletAddress), this.walletAddress) &&
-        !Address.isEqual(Address.from(response.sessionAddress), sessionAddress)
-      ) {
+      if (!Address.isEqual(response.walletAddress, this.walletAddress) && !Address.isEqual(response.sessionAddress, sessionAddress)) {
         throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
       }
 
@@ -450,7 +447,7 @@ export class ChainSessionManager {
 
     try {
       const connectResponse = response.payload
-      const receivedAddress = Address.from(connectResponse.walletAddress)
+      const receivedAddress = connectResponse.walletAddress
       const { email, loginMethod } = connectResponse
 
       if (response.action === RequestActionType.ADD_IMPLICIT_SESSION) {
@@ -676,10 +673,9 @@ export class ChainSessionManager {
       if (feeOption) {
         let transferCall: Payload.Call
         if (feeOption.token.contractAddress && feeOption.token.contractAddress !== Constants.ZeroAddress) {
-          Address.assert(feeOption.token.contractAddress)
           const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
           transferCall = {
-            to: feeOption.token.contractAddress,
+            to: Address.checksum(feeOption.token.contractAddress),
             value: BigInt(0),
             data: AbiFunction.encodeData(transfer, [feeOption.to, BigInt(feeOption.value)]),
             gasLimit: BigInt(feeOption.gasLimit),
@@ -759,7 +755,7 @@ export class ChainSessionManager {
         return true
       } else if (response.action === RequestActionType.MODIFY_EXPLICIT_SESSION) {
         const modifyResponse = response.payload as ModifySessionSuccessResponsePayload
-        if (!Address.isEqual(Address.from(modifyResponse.walletAddress), this.walletAddress!)) {
+        if (!Address.isEqual(modifyResponse.walletAddress, this.walletAddress!)) {
           throw new ModifyExplicitSessionError('Wallet address mismatch on redirect response.')
         }
 

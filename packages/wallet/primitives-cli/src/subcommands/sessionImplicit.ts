@@ -1,6 +1,6 @@
-import { SessionConfig } from '@0xsequence/wallet-primitives'
+import { Address, SessionConfig } from '@0xsequence/wallet-primitives'
 import type { CommandModule } from 'yargs'
-import { fromPosOrStdin, requireString } from '../utils.js'
+import { fromPosOrStdin } from '../utils.js'
 
 export async function doAddBlacklistAddress(
   blacklistAddress: Address.Checksummed,
@@ -42,9 +42,7 @@ const sessionImplicitCommand: CommandModule = {
             })
         },
         async (argv) => {
-          const blacklistAddress = argv.blacklistAddress
-          requireString(blacklistAddress, 'Blacklist address')
-          Address.assert(blacklistAddress)
+          const blacklistAddress = Address.checksum(argv.blacklistAddress)
           const sessionTopologyInput = await fromPosOrStdin(argv, 'session-topology')
           console.log(await doAddBlacklistAddress(blacklistAddress, sessionTopologyInput))
         },
@@ -66,11 +64,7 @@ const sessionImplicitCommand: CommandModule = {
             })
         },
         async (argv) => {
-          const blacklistAddress = argv.blacklistAddress
-          if (!blacklistAddress) {
-            throw new Error('Blacklist address is required')
-          }
-          Address.assert(blacklistAddress)
+          const blacklistAddress = Address.checksum(argv.blacklistAddress)
           const sessionTopologyInput = await fromPosOrStdin(argv, 'session-topology')
           console.log(await doRemoveBlacklistAddress(blacklistAddress, sessionTopologyInput))
         },

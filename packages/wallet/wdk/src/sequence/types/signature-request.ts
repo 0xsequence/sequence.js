@@ -1,5 +1,5 @@
 import { Envelope } from '@0xsequence/wallet-core'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { Handler } from '../handlers/handler.js'
 

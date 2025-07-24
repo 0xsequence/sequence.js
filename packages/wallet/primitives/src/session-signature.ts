@@ -1,4 +1,5 @@
 import { Bytes, Hash, Hex } from 'ox'
+import { Checksummed } from './address.js'
 import { Attestation, encode, encodeForJson, fromParsed, toJson } from './attestation.js'
 import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {

@@ -1,3 +1,5 @@
+import { Address } from '@0xsequence/wallet-primitives'
+
 /**
  * Represents the local state of a managed wallet session within the SDK.
  * This object contains information about the current session, not just the on-chain state.

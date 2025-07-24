@@ -1,5 +1,4 @@
-import { Payload, Signature } from '@0xsequence/wallet-primitives'
-import { Hex } from 'ox'
+import { Address, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Reader } from './index.js'
 import { isSapientSigner, SapientSigner, Signer } from '../signers/index.js'
 
@@ -16,9 +15,8 @@ export async function getWalletsFor<S extends Signer | SapientSigner>(
 ): Promise<Array<WalletWithWitness<S>>> {
   const wallets = await retrieveWallets(stateReader, signer)
   return Object.entries(wallets).map(([wallet, { chainId, payload, signature }]) => {
-    Hex.assert(wallet)
     return {
-      wallet,
+      wallet: Address.checksum(wallet),
       chainId,
       payload,
       signature,
@@ -47,15 +45,4 @@ async function retrieveWallets<S extends Signer | SapientSigner>(
   } else {
     return stateReader.getWallets(await signer.address) as unknown as any
   }
-}
-
-export function normalizeAddressKeys<T extends Record<string, unknown>>(
-  obj: T,
-): Record<Address.Checksummed, T[keyof T]> {
-  return Object.fromEntries(
-    Object.entries(obj).map(([wallet, signature]) => {
-      const checksumAddress = Address.checksum(wallet)
-      return [checksumAddress, signature]
-    }),
-  ) as Record<Address.Checksummed, T[keyof T]>
 }

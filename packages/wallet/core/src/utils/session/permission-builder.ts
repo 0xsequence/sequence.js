@@ -1,4 +1,4 @@
-import { Permission } from '@0xsequence/wallet-primitives'
+import { Address, Permission } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Bytes } from 'ox'
 
 /**

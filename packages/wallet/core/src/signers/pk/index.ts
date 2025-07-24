@@ -1,5 +1,5 @@
 import type { Payload as PayloadTypes, Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex, PublicKey, Secp256k1 } from 'ox'
 import { Signer as SignerInterface, Witnessable } from '../index.js'
 import { State } from '../../index.js'

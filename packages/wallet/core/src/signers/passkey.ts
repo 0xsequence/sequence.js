@@ -1,5 +1,5 @@
 import { Hex, Bytes, P256, Hash } from 'ox'
-import { Payload, Extensions } from '@0xsequence/wallet-primitives'
+import { Address, Payload, Extensions } from '@0xsequence/wallet-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { WebAuthnP256 } from 'ox'
 import { State } from '../index.js'
@@ -193,10 +193,7 @@ export class Passkey implements SapientSigner, Witnessable {
     const signers = await Promise.all(
       imageHashes.map(async (imageHash) => {
         const wallets = await stateReader.getWalletsForSapient(extensions.passkeys, imageHash)
-        return Object.keys(wallets).map((wallet) => ({
-          wallet: Address.from(wallet),
-          imageHash,
-        }))
+        return Object.keys(wallets).map((wallet) => ({ wallet: Address.checksum(wallet), imageHash }))
       }),
     )
 

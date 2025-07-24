@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { Bytes, Hash, Hex } from 'ox'
 
-import { from } from '../src/address.js'
+import { checksum, from, isChecksummed } from '../src/address.js'
 import { Context, Dev1, Dev2 } from '../src/context.js'
 import { Config, hashConfiguration } from '../src/config.js'
 
 describe('Address', () => {
   const mockContext: Omit<Context, 'stage2'> = {
-    factory: '0xe828630697817291140D6B7A42a2c3b7277bE45a',
-    stage1: '0x2a4fB19F66F1427A5E363Bf1bB3be27b9A9ACC39',
+    factory: checksum('0xe828630697817291140D6B7A42a2c3b7277bE45a'),
+    stage1: checksum('0x2a4fB19F66F1427A5E363Bf1bB3be27b9A9ACC39'),
     creationCode: '0x603e600e3d39601e805130553df33d3d34601c57363d3d373d363d30545af43d82803e903d91601c57fd5bf3',
   }
 
@@ -17,7 +17,7 @@ describe('Address', () => {
     checkpoint: 0n,
     topology: {
       type: 'signer',
-      address: '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1',
+      address: checksum('0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'),
       weight: 1n,
     },
   }
@@ -27,7 +27,7 @@ describe('Address', () => {
       const address = from(sampleConfig, mockContext)
 
       // Should return a valid address
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be deterministic - same inputs should produce same output
@@ -40,7 +40,7 @@ describe('Address', () => {
       const address = from(configHash, mockContext)
 
       // Should return a valid address
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should produce same address as Config object
@@ -54,7 +54,7 @@ describe('Address', () => {
         checkpoint: 0n,
         topology: {
           type: 'signer',
-          address: '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1',
+          address: checksum('0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'),
           weight: 1n,
         },
       }
@@ -64,7 +64,7 @@ describe('Address', () => {
         checkpoint: 0n,
         topology: {
           type: 'signer',
-          address: '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1',
+          address: checksum('0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'),
           weight: 1n,
         },
       }
@@ -78,8 +78,8 @@ describe('Address', () => {
     it('should generate different addresses for different contexts', () => {
       const address1 = from(sampleConfig, mockContext)
       const address2 = from(sampleConfig, {
-        factory: '0xFE14B91dE3c5Ca74c4D24608EBcD4B2848aA6010',
-        stage1: '0x300E98ae5bEA4A7291d62Eb0b9feD535E10095dD',
+        factory: checksum('0xFE14B91dE3c5Ca74c4D24608EBcD4B2848aA6010'),
+        stage1: checksum('0x300E98ae5bEA4A7291d62Eb0b9feD535E10095dD'),
         creationCode:
           '0x6041600e3d396021805130553df33d3d36153402601f57363d3d373d363d30545af43d82803e903d91601f57fd5bf3',
       })
@@ -91,7 +91,7 @@ describe('Address', () => {
       const { stage2, ...dev1Context } = Dev1
       const address = from(sampleConfig, dev1Context)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 
@@ -99,7 +99,7 @@ describe('Address', () => {
       const { stage2, ...dev2Context } = Dev2
       const address = from(sampleConfig, dev2Context)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be different from Dev1
@@ -115,12 +115,12 @@ describe('Address', () => {
         topology: [
           {
             type: 'signer',
-            address: '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1',
+            address: checksum('0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'),
             weight: 1n,
           },
           {
             type: 'signer',
-            address: '0x8ba1f109551bD432803012645aac136c776056C0',
+            address: checksum('0x8ba1f109551bD432803012645aac136c776056C0'),
             weight: 1n,
           },
         ],
@@ -128,7 +128,7 @@ describe('Address', () => {
 
       const address = from(complexConfig, mockContext)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 
@@ -142,7 +142,7 @@ describe('Address', () => {
           threshold: 1n,
           tree: {
             type: 'signer',
-            address: '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1',
+            address: checksum('0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'),
             weight: 1n,
           },
         },
@@ -150,7 +150,7 @@ describe('Address', () => {
 
       const address = from(nestedConfig, mockContext)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 
@@ -160,7 +160,7 @@ describe('Address', () => {
         checkpoint: 0n,
         topology: {
           type: 'sapient-signer',
-          address: '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1',
+          address: checksum('0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'),
           weight: 1n,
           imageHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         },
@@ -168,7 +168,7 @@ describe('Address', () => {
 
       const address = from(sapientConfig, mockContext)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 
@@ -176,17 +176,17 @@ describe('Address', () => {
       const configWithCheckpointer: Config = {
         threshold: 1n,
         checkpoint: 100n,
-        checkpointer: '0x1234567890123456789012345678901234567890',
+        checkpointer: checksum('0x1234567890123456789012345678901234567890'),
         topology: {
           type: 'signer',
-          address: '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1',
+          address: checksum('0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'),
           weight: 1n,
         },
       }
 
       const address = from(configWithCheckpointer, mockContext)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be different from config without checkpointer
@@ -200,7 +200,7 @@ describe('Address', () => {
       const zeroHash = new Uint8Array(32).fill(0)
       const address = from(zeroHash, mockContext)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 
@@ -208,19 +208,19 @@ describe('Address', () => {
       const maxHash = new Uint8Array(32).fill(255)
       const address = from(maxHash, mockContext)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 
     it('should produce different addresses for different factory addresses', () => {
       const context1 = {
         ...mockContext,
-        factory: '0x1111111111111111111111111111111111111111',
+        factory: checksum('0x1111111111111111111111111111111111111111'),
       }
 
       const context2 = {
         ...mockContext,
-        factory: '0x2222222222222222222222222222222222222222',
+        factory: checksum('0x2222222222222222222222222222222222222222'),
       }
 
       const address1 = from(sampleConfig, context1)
@@ -232,12 +232,12 @@ describe('Address', () => {
     it('should produce different addresses for different stage1 addresses', () => {
       const context1 = {
         ...mockContext,
-        stage1: '0x1111111111111111111111111111111111111111',
+        stage1: checksum('0x1111111111111111111111111111111111111111'),
       }
 
       const context2 = {
         ...mockContext,
-        stage1: '0x2222222222222222222222222222222222222222',
+        stage1: checksum('0x2222222222222222222222222222222222222222'),
       }
 
       const address1 = from(sampleConfig, context1)
@@ -270,7 +270,7 @@ describe('Address', () => {
         { as: 'Bytes' },
       )
 
-      const expectedAddress = Bytes.toHex(addressHash.subarray(12))
+      const expectedAddress = checksum(Bytes.toHex(addressHash.subarray(12)))
       const actualAddress = from(sampleConfig, mockContext)
 
       expect(actualAddress).toBe(expectedAddress)
@@ -281,7 +281,7 @@ describe('Address', () => {
 
       const address = from(sampleConfig, contextWithEmptyCode)
 
-      expect(() => Address.assert(address)).not.toThrow()
+      expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 

@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs'
 import { readStdin } from '../utils.js'
 import { Bytes, Hex } from 'ox'
-import { Extensions } from '@0xsequence/wallet-primitives'
+import { Address, Extensions } from '@0xsequence/wallet-primitives'
 
 async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.Recovery.RecoveryLeaf[]> {
   if (typeof leavesInput === 'string') {
@@ -17,7 +17,6 @@ async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.R
     if (address === undefined) {
       throw new Error('no address for recovery leaf')
     }
-    Address.assert(address)
     if (!requiredDeltaTimeStr || !minTimestampStr) {
       throw new Error(`Invalid leaf format: ${leafStr}`)
     }
@@ -25,7 +24,7 @@ async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.R
     const minTimestamp = BigInt(minTimestampStr)
     return {
       type: 'leaf',
-      signer: address,
+      signer: Address.checksum(address),
       requiredDeltaTime,
       minTimestamp,
     }
@@ -156,10 +155,8 @@ const recoveryCommand: CommandModule = {
               .map((line) => line.trim())
               .filter((line) => line)
           }
-          const signer = argv.signer
-          Address.assert(signer)
           try {
-            const encoded = await doTrim(leavesInput, signer)
+            const encoded = await doTrim(leavesInput, Address.checksum(argv.signer))
             console.log(encoded)
           } catch (error) {
             console.error((error as Error).message)

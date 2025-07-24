@@ -1,5 +1,6 @@
 import { AbiFunction, AbiParameters, Bytes, Hash, Hex } from 'ox'
 import { getSignPayload } from 'ox/TypedData'
+import { checksum, Checksummed, isEqual } from './address.js'
 import { EXECUTE_USER_OP, RECOVER_SAPIENT_SIGNATURE } from './constants.js'
 import { Attestation } from './index.js'
 import { minBytesFor } from './utils.js'
@@ -286,7 +287,7 @@ export function encode(payload: Calls, self?: Checksummed): Bytes.Bytes {
     */
     let flags = 0
 
-    if (self && Address.isEqual(call.to, self)) {
+    if (self && isEqual(call.to, self)) {
       flags |= 0x01
     }
 
@@ -745,7 +746,7 @@ export function decode(packed: Bytes.Bytes, self?: Checksummed): Calls {
       if (pointer + 20 > packed.length) {
         throw new Error('Invalid packed data: not enough bytes for address')
       }
-      to = Bytes.toHex(packed.slice(pointer, pointer + 20))
+      to = checksum( Bytes.toHex(packed.slice(pointer, pointer + 20)) )
       pointer += 20
     }
 
@@ -843,16 +844,8 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
       type: 'call',
       nonce: decoded.nonce,
       space: decoded.space,
-      calls: decoded.calls.map((call) => ({
-        to: Address.from(call.to),
-        value: call.value,
-        data: call.data,
-        gasLimit: call.gasLimit,
-        delegateCall: call.delegateCall,
-        onlyFallback: call.onlyFallback,
-        behaviorOnError: parseBehaviorOnError(Number(call.behaviorOnError)),
-      })),
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      calls: decoded.calls.map((call) => ({ ...call, behaviorOnError: parseBehaviorOnError(Number(call.behaviorOnError)) })),
+      parentWallets: decoded.parentWallets,
     }
   }
 
@@ -860,7 +853,7 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
     return {
       type: 'message',
       message: decoded.message,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      parentWallets: decoded.parentWallets,
     }
   }
 
@@ -868,7 +861,7 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
     return {
       type: 'config-update',
       imageHash: decoded.imageHash,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      parentWallets: decoded.parentWallets,
     }
   }
 
@@ -876,7 +869,7 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
     return {
       type: 'digest',
       digest: decoded.digest,
-      parentWallets: decoded.parentWallets.map((wallet) => Address.from(wallet)),
+      parentWallets: decoded.parentWallets,
     }
   }
 

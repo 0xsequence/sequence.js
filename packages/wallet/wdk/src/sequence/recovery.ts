@@ -1,4 +1,4 @@
-import { Config, Constants, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Config, Constants, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
 import { Hex, Provider, RpcTransport } from 'ox'
 import { Kinds, RecoverySigner } from './types/signer.js'

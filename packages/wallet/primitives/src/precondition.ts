@@ -104,14 +104,5 @@ export function createIntentPrecondition<T extends AnyPrecondition>(
     throw new Error(`Invalid precondition type: ${type}`)
   }
 
-  const intent: IntentPrecondition<T> = {
-    type: type,
-    data: data as Omit<T, 'type'>,
-  }
-
-  if (chainId !== undefined) {
-    intent.chainId = chainId
-  }
-
-  return intent
+  return { type, data, ...(chainId !== undefined ? { chainId } : undefined) }
 }

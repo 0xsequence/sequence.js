@@ -1,4 +1,5 @@
 import { AbiParameters, Bytes } from 'ox'
+import { checksum, Checksummed } from './address.js'
 
 export enum ParameterOperation {
   EQUAL = 0,
@@ -106,7 +107,7 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 // Decoding
 
 export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions {
-  const signer = Bytes.toHex(bytes.slice(0, 20))
+  const signer = checksum( Bytes.toHex(bytes.slice(0, 20)) )
   const chainId = Bytes.toBigInt(bytes.slice(20, 52))
   const valueLimit = Bytes.toBigInt(bytes.slice(52, 84))
   const deadline = Bytes.toBigInt(bytes.slice(84, 92))
@@ -133,7 +134,7 @@ export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions
 
 // Returns the permission and the number of bytes consumed in the permission block
 function decodePermission(bytes: Bytes.Bytes): { permission: Permission; consumed: number } {
-  const target = Bytes.toHex(bytes.slice(0, 20))
+  const target = checksum( Bytes.toHex(bytes.slice(0, 20)) )
   const rulesLength = Number(bytes[20]!)
   const rules = []
   let pointer = 21
@@ -259,7 +260,7 @@ export function sessionPermissionsFromJson(json: string): SessionPermissions {
 
 export function sessionPermissionsFromParsed(parsed: any): SessionPermissions {
   return {
-    signer: Address.from(parsed.signer),
+    signer: checksum(parsed.signer),
     chainId: BigInt(parsed.chainId),
     valueLimit: BigInt(parsed.valueLimit),
     deadline: BigInt(parsed.deadline),
@@ -273,7 +274,7 @@ export function permissionFromJson(json: string): Permission {
 
 function permissionFromParsed(parsed: any): Permission {
   return {
-    target: Address.from(parsed.target),
+    target: checksum(parsed.target),
     rules: parsed.rules.map((decoded: any) => ({
       cumulative: decoded.cumulative,
       operation: decoded.operation,

@@ -1,8 +1,7 @@
-import { Config, Constants, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
+import { Address, Config, Constants, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex, Signature as oxSignature } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { Sessions, SignatureType } from './sessions.gen.js'
-import { normalizeAddressKeys } from '../utils.js'
 
 export class Provider implements ProviderInterface {
   private readonly service: Sessions
@@ -25,17 +24,14 @@ export class Provider implements ProviderInterface {
     const { deployHash, context } = await this.service.deployHash({ wallet })
 
     Hex.assert(deployHash)
-    Address.assert(context.factory)
-    Address.assert(context.mainModule)
-    Address.assert(context.mainModuleUpgradable)
     Hex.assert(context.walletCreationCode)
 
     return {
       imageHash: deployHash,
       context: {
-        factory: context.factory,
-        stage1: context.mainModule,
-        stage2: context.mainModuleUpgradable,
+        factory: Address.checksum(context.factory),
+        stage1: Address.checksum(context.mainModule),
+        stage2: Address.checksum(context.mainModuleUpgradable),
         creationCode: context.walletCreationCode,
       },
     }
@@ -48,18 +44,24 @@ export class Provider implements ProviderInterface {
       signature: Signature.SignatureOfSignerLeaf
     }
   }> {
-    const result = await this.service.wallets({ signer })
-    const wallets = normalizeAddressKeys(result.wallets)
+    const { wallets } = await this.service.wallets({ signer })
 
     return Object.fromEntries(
-      Object.entries(wallets).map(([wallet, signature]) => {
-        Address.assert(wallet)
-        Hex.assert(signature.signature)
+      Object.entries(wallets).map(
+        ([wallet, signature]): [
+          Address.Checksummed,
+          {
+            chainId: bigint
+            payload: Payload.Parented
+            signature: Signature.SignatureOfSignerLeaf
+          },
+        ] => {
+          Hex.assert(signature.signature)
 
         switch (signature.type) {
           case SignatureType.EIP712:
             return [
-              wallet,
+              Address.checksum(wallet),
               {
                 chainId: BigInt(signature.chainID),
                 payload: fromServicePayload(signature.payload),
@@ -68,7 +70,7 @@ export class Provider implements ProviderInterface {
             ]
           case SignatureType.EthSign:
             return [
-              wallet,
+              Address.checksum(wallet),
               {
                 chainId: BigInt(signature.chainID),
                 payload: fromServicePayload(signature.payload),
@@ -77,7 +79,7 @@ export class Provider implements ProviderInterface {
             ]
           case SignatureType.EIP1271:
             return [
-              wallet,
+              Address.checksum(wallet),
               {
                 chainId: BigInt(signature.chainID),
                 payload: fromServicePayload(signature.payload),
@@ -89,7 +91,8 @@ export class Provider implements ProviderInterface {
           case SignatureType.SapientCompact:
             throw new Error(`unexpected compact sapient signature by ${signer}`)
         }
-      }),
+        },
+      ),
     )
   }
 
@@ -103,16 +106,18 @@ export class Provider implements ProviderInterface {
       signature: Signature.SignatureOfSapientSignerLeaf
     }
   }> {
-    const result = await this.service.wallets({ signer, sapientHash: imageHash })
-    const wallets = normalizeAddressKeys(result.wallets)
+    const { wallets } = await this.service.wallets({ signer, sapientHash: imageHash })
 
     return Object.fromEntries(
       Object.entries(wallets).map(
         ([wallet, signature]): [
           Address.Checksummed,
-          { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf },
+          {
+            chainId: bigint
+            payload: Payload.Parented
+            signature: Signature.SignatureOfSapientSignerLeaf
+          },
         ] => {
-          Address.assert(wallet)
           Hex.assert(signature.signature)
 
           switch (signature.type) {
@@ -124,7 +129,7 @@ export class Provider implements ProviderInterface {
               throw new Error(`unexpected erc-1271 signature by ${signer}`)
             case SignatureType.Sapient:
               return [
-                wallet,
+                Address.checksum(wallet),
                 {
                   chainId: BigInt(signature.chainID),
                   payload: fromServicePayload(signature.payload),
@@ -133,7 +138,7 @@ export class Provider implements ProviderInterface {
               ]
             case SignatureType.SapientCompact:
               return [
-                wallet,
+                Address.checksum(wallet),
                 {
                   chainId: BigInt(signature.chainID),
                   payload: fromServicePayload(signature.payload),
@@ -256,9 +261,7 @@ export class Provider implements ProviderInterface {
       throw new Error(`invalid payload version ${version}, expected version 3`)
     }
 
-    Address.assert(wallet)
-
-    return { payload: fromServicePayload(payload), wallet, chainId: BigInt(chainID) }
+    return { payload: fromServicePayload(payload), wallet: Address.checksum(wallet), chainId: BigInt(chainID) }
   }
 
   async saveWallet(deployConfiguration: Config.Config, context: Context.Context): Promise<void> {
@@ -396,14 +399,10 @@ function getServiceConfig(config: Config.Config): ServiceConfig {
 }
 
 function fromServiceConfig(config: ServiceConfig): Config.Config {
-  if (config.checkpointer !== undefined) {
-    Address.assert(config.checkpointer)
-  }
-
   return {
     threshold: BigInt(config.threshold),
     checkpoint: BigInt(config.checkpoint),
-    checkpointer: config.checkpointer,
+    checkpointer: config.checkpointer ? Address.checksum(config.checkpointer) : undefined,
     topology: fromServiceConfigTree(config.tree),
   }
 }
@@ -445,18 +444,16 @@ function fromServiceConfigTree(tree: ServiceConfigTree): Config.Topology {
 
       if ('weight' in tree) {
         if ('address' in tree) {
-          Address.assert(tree.address)
-
           if (tree.imageHash) {
             Hex.assert(tree.imageHash)
             return {
               type: 'sapient-signer',
-              address: tree.address,
+              address: Address.checksum(tree.address),
               weight: BigInt(tree.weight),
               imageHash: tree.imageHash,
             }
           } else {
-            return { type: 'signer', address: tree.address, weight: BigInt(tree.weight) }
+            return { type: 'signer', address: Address.checksum(tree.address), weight: BigInt(tree.weight) }
           }
         }
 
@@ -535,11 +532,10 @@ function getServicePayloadCall(call: Payload.Call): ServicePayloadCall {
 }
 
 function fromServicePayloadCall(call: ServicePayloadCall): Payload.Call {
-  Address.assert(call.to)
   Hex.assert(call.data)
 
   return {
-    to: call.to,
+    to: Address.checksum(call.to),
     value: BigInt(call.value),
     data: call.data,
     gasLimit: BigInt(call.gasLimit),

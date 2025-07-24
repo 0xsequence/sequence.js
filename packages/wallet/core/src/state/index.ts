@@ -1,5 +1,5 @@
 import { Hex } from 'ox'
-import { Context, Config, Payload, Signature, GenericTree } from '@0xsequence/wallet-primitives'
+import { Address, Context, Config, Payload, Signature, GenericTree } from '@0xsequence/wallet-primitives'
 
 export type Provider = Reader & Writer
 

@@ -537,7 +537,7 @@ describe('Passkeys', () => {
       })
 
       it('should handle different challenge formats', () => {
-        const challenges = [
+        const challenges: Hex.Hex[] = [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
           '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
           testChallenge,
@@ -605,7 +605,7 @@ describe('Passkeys', () => {
   describe('WebAuthn Spec Compliance', () => {
     it('should handle authenticator data flag variations', () => {
       // Test different authenticator data flags following WebAuthn spec
-      const flagVariations = [
+      const flagVariations: Hex.Hex[] = [
         '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000', // User present
         '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000000', // User verified
         '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631500000000', // Both flags

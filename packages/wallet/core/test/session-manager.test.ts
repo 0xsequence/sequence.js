@@ -1,11 +1,9 @@
+import { Address, Attestation, Extensions, GenericTree, Payload, Permission, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiEvent, AbiFunction, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Attestation, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'
 import { Envelope, Signers, State, Utils, Wallet } from '../src/index.js'
-
 import { EMITTER_FUNCTIONS, EMITTER_ADDRESS, EMITTER_EVENT_TOPICS, LOCAL_RPC_URL, USDC_ADDRESS } from './constants'
-import { Extensions } from '@0xsequence/wallet-primitives'
 
 const { PermissionBuilder, ERC20PermissionBuilder } = Utils
 

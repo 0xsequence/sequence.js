@@ -1,7 +1,7 @@
+import { Address, Constants, Config, Erc6492, Payload } from '@0xsequence/wallet-primitives'
 import { Hash, Hex, Provider, RpcTransport, Secp256k1, TypedData } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Constants, Config, Erc6492, Payload } from '../../primitives/src/index.js'
 import { Envelope, State, Wallet } from '../src/index.js'
 import { LOCAL_RPC_URL } from './constants.js'
 

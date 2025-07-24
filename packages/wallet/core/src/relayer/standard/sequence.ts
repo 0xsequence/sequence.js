@@ -1,5 +1,5 @@
 import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequence/relayer'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
@@ -32,10 +32,7 @@ export class SequenceRelayer implements Relayer {
     const { options, quote } = await this.service.feeOptions({ wallet, to, data })
 
     return {
-      options: options.map((option) => {
-        Address.assert(option.to)
-        return { ...option, to: option.to }
-      }),
+      options: options.map(option => ({ ...option, to: Address.checksum(option.to) })),
       quote: quote ? { _tag: 'FeeQuote', _quote: quote } : undefined,
     }
   }

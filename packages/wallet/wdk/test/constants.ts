@@ -1,3 +1,4 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { config as dotenvConfig } from 'dotenv'
 import { Abi, Hex, Provider, RpcTransport } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'

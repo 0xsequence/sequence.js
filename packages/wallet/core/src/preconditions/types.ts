@@ -1,3 +1,5 @@
+import { Address } from '@0xsequence/wallet-primitives'
+
 export interface Precondition {
   type(): string
   isValid(): Error | undefined

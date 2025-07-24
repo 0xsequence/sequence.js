@@ -3,7 +3,7 @@ import { CommandModule } from 'yargs'
 import sessionExplicitCommand from './sessionExplicit.js'
 import sessionImplicitCommand from './sessionImplicit.js'
 
-import { GenericTree, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
+import { Address, GenericTree, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
 
 export async function doEmptyTopology(identitySigner: Address.Checksummed): Promise<string> {
   const topology = SessionConfig.emptySessionsTopology(identitySigner)
@@ -57,8 +57,7 @@ const sessionCommand: CommandModule = {
           })
         },
         async (args) => {
-          Address.assert(args.identitySigner)
-          console.log(await doEmptyTopology(args.identitySigner))
+          console.log(await doEmptyTopology(Address.checksum(args.identitySigner)))
         },
       )
       .command(
@@ -113,14 +112,8 @@ const sessionCommand: CommandModule = {
             await doEncodeSessionCallSignatures(
               args.sessionTopology,
               args.callSignatures,
-              args.explicitSigners.map((signer) => {
-                Address.assert(signer)
-                return signer
-              }),
-              args.implicitSigners.map((signer) => {
-                Address.assert(signer)
-                return signer
-              }),
+              args.explicitSigners.map(Address.checksum),
+              args.implicitSigners.map(Address.checksum),
             ),
           )
         },

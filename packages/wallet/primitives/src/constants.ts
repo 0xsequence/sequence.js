@@ -1,8 +1,9 @@
 import { Abi } from 'ox'
+import { checksum } from './address.js'
 
-export const ZeroAddress: Checksummed = '0x0000000000000000000000000000000000000000'
+export const ZeroAddress = checksum( '0x0000000000000000000000000000000000000000' )
 
-export const DefaultGuestAddress: Checksummed = '0xf3c7175460BeD3340A1c4dc700fD6C8Cd3F56250'
+export const DefaultGuestAddress = checksum( '0xf3c7175460BeD3340A1c4dc700fD6C8Cd3F56250' )
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([

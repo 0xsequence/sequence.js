@@ -1,4 +1,4 @@
-import { Permission, SessionConfig, Config } from '@0xsequence/wallet-primitives'
+import { Address, Permission, SessionConfig, Config } from '@0xsequence/wallet-primitives'
 import crypto from 'crypto'
 import { Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
@@ -53,7 +53,7 @@ function randomBigInt(max: bigint, options?: RandomOptions): bigint {
 }
 
 function randomAddress(options?: RandomOptions): Address.Checksummed {
-  return `0x${Buffer.from(randomBytes(20, options)).toString('hex')}`
+  return Address.checksum(`0x${Buffer.from(randomBytes(20, options)).toString('hex')}`)
 }
 
 function generateRandomTopology(depth: number, options?: RandomOptions): Config.Topology {

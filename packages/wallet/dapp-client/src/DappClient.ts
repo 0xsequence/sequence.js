@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChainId } from '@0xsequence/network'
 import { Relayer, Signers } from '@0xsequence/wallet-core'
+import { Address } from '@0xsequence/wallet-primitives'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
@@ -203,7 +204,7 @@ export class DappClient {
     const allSessions = new Map<string, Session>()
     Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
       chainSessionManager.getSessions().forEach((session) => {
-        const uniqueKey = `${session.address.toLowerCase()}-${session.isImplicit}`
+        const uniqueKey = `${session.address}-${session.isImplicit}`
         if (!allSessions.has(uniqueKey)) {
           allSessions.set(uniqueKey, session)
         }

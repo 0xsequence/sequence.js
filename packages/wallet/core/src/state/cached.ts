@@ -1,7 +1,6 @@
 import { Hex } from 'ox'
 import { MaybePromise, Provider } from './index.js'
-import { Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { normalizeAddressKeys } from './utils.js'
+import { Address, Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
 
 export class Cached implements Provider {
   constructor(
@@ -45,16 +44,15 @@ export class Cached implements Provider {
     }
   }> {
     // Get both from cache and source
-    const cached = normalizeAddressKeys(await this.args.cache.getWallets(signer))
-    const source = normalizeAddressKeys(await this.args.source.getWallets(signer))
+    const cached = await this.args.cache.getWallets(signer)
+    const source = await this.args.source.getWallets(signer)
 
     // Merge and deduplicate
     const deduplicated = { ...cached, ...source }
 
     // Sync values to source that are not in cache, and vice versa
-    for (const [walletAddress, data] of Object.entries(deduplicated)) {
-      Address.assert(walletAddress)
-
+    for (const [wallet, data] of Object.entries(deduplicated)) {
+      const walletAddress = Address.checksum(wallet)
       if (!source[walletAddress]) {
         await this.args.source.saveWitnesses(walletAddress, data.chainId, data.payload, {
           type: 'unrecovered-signer',
@@ -91,7 +89,7 @@ export class Cached implements Provider {
 
     // Sync values to source that are not in cache, and vice versa
     for (const [wallet, data] of Object.entries(deduplicated)) {
-      const walletAddress = Address.from(wallet)
+      const walletAddress = Address.checksum(wallet)
       if (!source[walletAddress]) {
         await this.args.source.saveWitnesses(walletAddress, data.chainId, data.payload, {
           type: 'unrecovered-signer',

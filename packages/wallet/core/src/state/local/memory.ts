@@ -1,4 +1,4 @@
-import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
+import { Address, Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { Store } from './index.js'
 

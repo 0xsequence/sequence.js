@@ -2,18 +2,19 @@ import { describe, expect, it, vi } from 'vitest'
 import { Bytes, Hex, Provider } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
 
+import { checksum } from '../src/address.js'
 import { deploy, wrap, decode, isValid } from '../src/erc-6492.js'
 import { Context } from '../src/context.js'
 
 describe('ERC-6492', () => {
   const mockContext: Context = {
-    factory: '0x1234567890123456789012345678901234567890',
-    stage1: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', // Fixed: 40 hex chars
-    stage2: '0x9876543210987654321098765432109876543210',
+    factory: checksum('0x1234567890123456789012345678901234567890'),
+    stage1: checksum('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'), // Fixed: 40 hex chars
+    stage2: checksum('0x9876543210987654321098765432109876543210'),
     creationCode: '0x608060405234801561001057600080fd5b50',
   }
 
-  const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
+  const testAddress = checksum('0x742d35cc6635c0532925a3b8d563a6b35b7f05f1')
   const testMessageHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
   const testSignature =
     '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456789001'
@@ -30,7 +31,7 @@ describe('ERC-6492', () => {
       expect(result.data.startsWith('0x')).toBe(true)
 
       // Should contain the encoded function call with stage1 and deployHash
-      expect(result.data).toContain(mockContext.stage1.slice(2)) // Remove 0x prefix for contains check
+      expect(result.data).toContain(mockContext.stage1.slice(2).toLowerCase()) // Remove 0x prefix for contains check
     })
 
     it('should create deploy call data with bytes', () => {
@@ -42,7 +43,7 @@ describe('ERC-6492', () => {
 
       // Convert to hex to check contents
       const dataHex = Bytes.toHex(result.data)
-      expect(dataHex).toContain(mockContext.stage1.slice(2))
+      expect(dataHex).toContain(mockContext.stage1.slice(2).toLowerCase())
     })
 
     it('should return same type as input for deploy hash', () => {
@@ -57,9 +58,9 @@ describe('ERC-6492', () => {
 
     it('should work with different contexts', () => {
       const differentContext: Context = {
-        factory: '0x9999999999999999999999999999999999999999',
-        stage1: '0x1111111111111111111111111111111111111111',
-        stage2: '0x2222222222222222222222222222222222222222',
+        factory: checksum('0x9999999999999999999999999999999999999999'),
+        stage1: checksum('0x1111111111111111111111111111111111111111'),
+        stage2: checksum('0x2222222222222222222222222222222222222222'),
         creationCode: '0x6080604052',
       }
 
@@ -132,7 +133,7 @@ describe('ERC-6492', () => {
 
       // The wrapped signature should contain encoded: address, bytes (data), bytes (signature)
       expect(result.length).toBeGreaterThan(testSignature.length + deployData.data.length)
-      expect(result).toContain(testAddress.slice(2)) // Address without 0x
+      expect(result).toContain(testAddress.slice(2).toLowerCase()) // Address without 0x
       expect(result.endsWith(WrappedSignature.magicBytes.slice(2))).toBe(true)
     })
   })
@@ -209,7 +210,7 @@ describe('ERC-6492', () => {
 
     it('should handle malformed wrapped signature gracefully', () => {
       // Create a signature that ends with magic bytes but has invalid encoding
-      const malformedSig = '0x1234' + WrappedSignature.magicBytes.slice(2)
+      const malformedSig = `0x1234${WrappedSignature.magicBytes.slice(2)}` as const
       const result = decode(malformedSig)
 
       // Should return original signature when decoding fails
@@ -415,9 +416,9 @@ describe('ERC-6492', () => {
 
     it('should handle edge case with minimal data', () => {
       const minimalContext: Context = {
-        factory: '0x0000000000000000000000000000000000000000',
-        stage1: '0x0000000000000000000000000000000000000000',
-        stage2: '0x0000000000000000000000000000000000000000',
+        factory: checksum('0x0000000000000000000000000000000000000000'),
+        stage1: checksum('0x0000000000000000000000000000000000000000'),
+        stage2: checksum('0x0000000000000000000000000000000000000000'),
         creationCode: '0x',
       }
 
@@ -434,7 +435,7 @@ describe('ERC-6492', () => {
 
   describe('Error handling and edge cases', () => {
     it('should handle very long signatures', () => {
-      const longSignature = '0x' + '00'.repeat(1000)
+      const longSignature = `0x${'00'.repeat(1000)}` as const
       const deployData: DeployData = { to: testAddress, data: '0x1234' }
 
       const wrapped = wrap(longSignature, deployData)
@@ -457,29 +458,11 @@ describe('ERC-6492', () => {
 
     it('should handle signatures that accidentally contain magic bytes', () => {
       // Create a signature that contains the magic bytes but isn't wrapped
-      const magicInSignature = testSignature + WrappedSignature.magicBytes.slice(2) + '1234'
+      const magicInSignature = `${testSignature}${WrappedSignature.magicBytes.slice(2)}1234` as const
       const result = decode(magicInSignature)
 
       // Should try to decode, but if it fails, should return original
       expect(result.signature).toBeDefined()
-    })
-
-    it('should handle different address formats', () => {
-      const checksumAddress = '0x742d35Cc6635C0532925a3b8D563A6b35B7f05f1'
-      const lowercaseAddress = checksumAddress.toLowerCase()
-
-      const deployData1: DeployData = { to: checksumAddress, data: '0x1234' }
-      const deployData2: DeployData = { to: lowercaseAddress, data: '0x1234' }
-
-      const wrapped1 = wrap(testSignature, deployData1)
-      const wrapped2 = wrap(testSignature, deployData2)
-
-      const decoded1 = decode(wrapped1)
-      const decoded2 = decode(wrapped2)
-
-      // Addresses may be normalized to lowercase in decode
-      expect(decoded1.erc6492!.to.toLowerCase()).toBe(checksumAddress.toLowerCase())
-      expect(decoded2.erc6492!.to).toBe(lowercaseAddress)
     })
   })
 })

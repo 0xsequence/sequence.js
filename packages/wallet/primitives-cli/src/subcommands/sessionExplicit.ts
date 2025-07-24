@@ -1,4 +1,4 @@
-import { Permission, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Address, Permission, SessionConfig } from '@0xsequence/wallet-primitives'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils.js'
 
@@ -82,9 +82,7 @@ const sessionExplicitCommand: CommandModule = {
             })
         },
         async (argv) => {
-          const explicitSessionAddress = argv.explicitSessionAddress
-          Address.assert(explicitSessionAddress)
-
+          const explicitSessionAddress = Address.checksum(argv.explicitSessionAddress)
           const topologyInput = await fromPosOrStdin(argv, 'session-topology')
           console.log(await doRemoveSession(explicitSessionAddress, topologyInput))
         },

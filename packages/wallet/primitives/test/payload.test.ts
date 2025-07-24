@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { Bytes, Hash, Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 
+import { checksum } from '../src/address.js'
 import {
   KIND_TRANSACTIONS,
   KIND_MESSAGE,
@@ -53,8 +54,8 @@ import * as Attestation from '../src/attestation.js'
 
 describe('Payload', () => {
   // Test data
-  const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0'
+  const testAddress = checksum('0x742d35cc6635c0532925a3b8d563a6b35b7f05f1')
+  const testAddress2 = checksum('0x8ba1f109551bd432803012645aac136c776056c0')
   const testChainId = 1n
   const testImageHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
   const testDigest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef'
@@ -938,7 +939,7 @@ describe('Payload', () => {
       })
 
       it('should throw for data too large', () => {
-        const largeData = '0x' + '00'.repeat(0x1000000) // 16MB + 1 byte
+        const largeData = `0x${'00'.repeat(0x1000000)}` as const // 16MB + 1 byte
         const callWithLargeData: Call = {
           ...sampleCall,
           data: largeData,

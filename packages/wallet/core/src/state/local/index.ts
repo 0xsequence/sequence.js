@@ -1,4 +1,5 @@
 import {
+  Address,
   Context,
   Payload,
   Signature,
@@ -10,7 +11,6 @@ import {
 import { Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { MemoryStore } from './memory.js'
-import { normalizeAddressKeys } from '../utils.js'
 
 export interface Store {
   // top level configurations store
@@ -140,20 +140,16 @@ export class Provider implements ProviderInterface {
   }
 
   async getWallets(signer: Address.Checksummed) {
-    return normalizeAddressKeys(
-      await this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(
+    return this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(
         await this.store.loadSubdigestsOfSigner(signer),
         (subdigest) => this.store.loadSignatureOfSubdigest(signer, subdigest),
-      ),
     )
   }
 
   async getWalletsForSapient(signer: Address.Checksummed, imageHash: Hex.Hex) {
-    return normalizeAddressKeys(
-      await this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(
+    return this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(
         await this.store.loadSubdigestsOfSapientSigner(signer, imageHash),
         (subdigest) => this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
-      ),
     )
   }
 
@@ -374,17 +370,17 @@ export class Provider implements ProviderInterface {
     if (Signature.isRawSignerLeaf(topology)) {
       const type = topology.signature.type
       if (type === 'eth_sign' || type === 'hash') {
-        const address = Secp256k1.recoverAddress({
+        const address = Address.checksum(Secp256k1.recoverAddress({
           payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
           signature: topology.signature,
-        })
+        }))
 
         return this.store.saveSignatureOfSubdigest(address, subdigest, topology.signature)
       }
 
       if (Signature.isSignatureOfSapientSignerLeaf(topology.signature)) {
-        switch (topology.signature.address.toLowerCase()) {
-          case this.extensions.passkeys.toLowerCase():
+        switch (topology.signature.address) {
+          case this.extensions.passkeys:
             const decoded = Extensions.Passkeys.decode(Bytes.fromHex(topology.signature.data))
 
             if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {

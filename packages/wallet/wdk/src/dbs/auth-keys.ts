@@ -1,3 +1,4 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { Generic, Migration } from './generic.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 
@@ -6,7 +7,7 @@ const TABLE_NAME = 'auth-keys'
 export type AuthKey = {
   address: string
   privateKey: CryptoKey
-  identitySigner: string
+  identitySigner?: Address.Checksummed
   expiresAt: Date
 }
 
@@ -37,11 +38,7 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
   }
 
   async set(item: AuthKey): Promise<AuthKey['address']> {
-    const result = await super.set({
-      ...item,
-      address: item.address.toLowerCase(),
-      identitySigner: item.identitySigner.toLowerCase(),
-    })
+    const result = await super.set({ ...item, address: item.address.toLowerCase() })
     this.scheduleExpiration(item)
     return result
   }
@@ -52,15 +49,14 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
     return result
   }
 
-  async getBySigner(signer: string, attempt: number = 1): Promise<AuthKey | undefined> {
-    const normalizedSigner = signer.toLowerCase()
+  async getBySigner(signer: Address.Checksummed | undefined, attempt: number = 1): Promise<AuthKey | undefined> {
     const store = await this.getStore('readonly')
     const index = store.index('identitySigner')
 
     // Below code has a workaround where get does not work as expected
     // and we fall back to getAll to find the key by identitySigner.
     try {
-      const result = await index.get(normalizedSigner)
+      const result = await index.get(signer ?? '')
       if (result !== undefined) {
         return result
       } else if (attempt < 2) {
@@ -70,13 +66,12 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
         try {
           const allKeys = await store.getAll()
           if (allKeys && allKeys.length > 0) {
-            const foundKey = allKeys.find((key) => key.identitySigner.toLowerCase() === normalizedSigner)
-            return foundKey
+            return allKeys.find((key) => signer === undefined ? key.identitySigner === undefined : Address.isEqual(key.identitySigner, signer))
           }
           return undefined
         } catch (getAllError) {
           console.error(
-            `[AuthKeys.getBySigner] Fallback: Error during getAll() for signer ${normalizedSigner}:`,
+            `[AuthKeys.getBySigner] Fallback: Error during getAll() for signer ${signer}:`,
             getAllError,
           )
           throw getAllError
@@ -84,7 +79,7 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
       }
     } catch (error) {
       console.error(
-        `[AuthKeys.getBySigner attempt #${attempt}] Index query error for signer ${normalizedSigner}:`,
+        `[AuthKeys.getBySigner attempt #${attempt}] Index query error for signer ${signer}:`,
         error,
       )
 
@@ -92,8 +87,8 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
     }
   }
 
-  async delBySigner(signer: string): Promise<void> {
-    const authKey = await this.getBySigner(signer.toLowerCase())
+  async delBySigner(signer: Address.Checksummed | undefined): Promise<void> {
+    const authKey = await this.getBySigner(signer)
     if (authKey) {
       await this.del(authKey.address.toLowerCase())
     }

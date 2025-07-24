@@ -1,4 +1,4 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 
 export type QueuedRecoveryPayload = {

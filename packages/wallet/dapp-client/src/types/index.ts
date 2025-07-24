@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Attestation, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Signers } from '@0xsequence/wallet-core'
 import { ChainId } from '@0xsequence/network'
 import { Hex } from 'ox'
@@ -52,7 +52,7 @@ export interface SignTypedDataPayload {
 }
 
 export interface ConnectSuccessResponsePayload {
-  walletAddress: string
+  walletAddress: Address.Checksummed
   attestation?: Attestation.Attestation
   signature?: Hex.Hex
   email?: string
@@ -60,18 +60,18 @@ export interface ConnectSuccessResponsePayload {
 }
 
 export interface ModifySessionSuccessResponsePayload {
-  walletAddress: string
-  sessionAddress: string
+  walletAddress: Address.Checksummed
+  sessionAddress: Address.Checksummed
 }
 
 export interface SignatureResponse {
   signature: Hex.Hex
-  walletAddress: string
+  walletAddress: Address.Checksummed
 }
 
 export interface ExplicitSessionResponsePayload {
-  walletAddress: string
-  sessionAddress: string
+  walletAddress: Address.Checksummed
+  sessionAddress: Address.Checksummed
 }
 
 // --- Dapp-facing Types ---
