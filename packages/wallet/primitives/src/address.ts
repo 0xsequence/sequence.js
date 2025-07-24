@@ -2,7 +2,7 @@ import { Bytes, Hash } from 'ox'
 import { Context } from './context.js'
 import { Config, hashConfiguration } from './config.js'
 
-export function from(configuration: Bytes.Bytes | Config, context: Omit<Context, 'stage2'>): Address.Checksummed {
+export function from(configuration: Bytes.Bytes | Config, context: Omit<Context, 'stage2'>): Checksummed {
   const imageHash = configuration instanceof Uint8Array ? configuration : hashConfiguration(configuration)
 
   return Bytes.toHex(

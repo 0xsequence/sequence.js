@@ -15,7 +15,7 @@ import { Constants } from './index.js'
 
 export type SignerLeaf = {
   type: 'signer'
-  address: Address.Checksummed
+  address: Checksummed
   weight: bigint
   signed?: boolean
   signature?: SignatureOfSignerLeaf
@@ -23,7 +23,7 @@ export type SignerLeaf = {
 
 export type SapientSignerLeaf = {
   type: 'sapient-signer'
-  address: Address.Checksummed
+  address: Checksummed
   weight: bigint
   imageHash: Hex.Hex
   signed?: boolean
@@ -59,7 +59,7 @@ export type Config = {
   threshold: bigint
   checkpoint: bigint
   topology: Topology
-  checkpointer?: Address.Checksummed
+  checkpointer?: Checksummed
 }
 
 export function isSignerLeaf(cand: any): cand is SignerLeaf {
@@ -110,12 +110,12 @@ export function isTopology(cand: any): cand is Topology {
 }
 
 export function getSigners(configuration: Config | Topology): {
-  signers: Address.Checksummed[]
-  sapientSigners: { address: Address.Checksummed; imageHash: Hex.Hex }[]
+  signers: Checksummed[]
+  sapientSigners: { address: Checksummed; imageHash: Hex.Hex }[]
   isComplete: boolean
 } {
-  const signers = new Set<Address.Checksummed>()
-  const sapientSigners = new Set<{ address: Address.Checksummed; imageHash: Hex.Hex }>()
+  const signers = new Set<Checksummed>()
+  const sapientSigners = new Set<{ address: Checksummed; imageHash: Hex.Hex }>()
 
   let isComplete = true
 
@@ -144,7 +144,7 @@ export function getSigners(configuration: Config | Topology): {
 
 export function findSignerLeaf(
   configuration: Config | Topology,
-  address: Address.Checksummed,
+  address: Checksummed,
 ): SignerLeaf | SapientSignerLeaf | undefined {
   if (isConfig(configuration)) {
     return findSignerLeaf(configuration.topology, address)

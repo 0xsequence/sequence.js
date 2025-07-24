@@ -52,7 +52,7 @@ export type SignatureOfSignerLeafHash = {
 
 export type SignatureOfSignerLeafErc1271 = {
   type: 'erc1271'
-  address: Address.Checksummed
+  address: Checksummed
   data: Hex.Hex
 }
 
@@ -62,7 +62,7 @@ export type SignatureOfSignerLeaf =
   | SignatureOfSignerLeafErc1271
 
 export type SignatureOfSapientSignerLeaf = {
-  address: Address.Checksummed
+  address: Checksummed
   data: Hex.Hex
   type: 'sapient' | 'sapient_compact'
 }
@@ -100,7 +100,7 @@ export type RawConfig = {
   threshold: bigint
   checkpoint: bigint
   topology: RawTopology
-  checkpointer?: Address.Checksummed
+  checkpointer?: Checksummed
 }
 
 export type RawSignature = {
@@ -108,7 +108,7 @@ export type RawSignature = {
   checkpointerData?: Bytes.Bytes
   configuration: RawConfig
   suffix?: RawSignature[]
-  erc6492?: { to: Address.Checksummed; data: Bytes.Bytes }
+  erc6492?: { to: Checksummed; data: Bytes.Bytes }
 }
 
 export function isSignatureOfSapientSignerLeaf(signature: any): signature is SignatureOfSapientSignerLeaf {
@@ -192,7 +192,7 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
 
   const noChainId = (flag & 0x02) === 0x02
 
-  let checkpointerAddress: Address.Checksummed | undefined
+  let checkpointerAddress: Checksummed | undefined
   let checkpointerData: Bytes.Bytes | undefined
 
   // bit [6] => checkpointer address + data
@@ -1106,7 +1106,7 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
 
 export async function recover(
   signature: RawSignature,
-  wallet: Address.Checksummed,
+  wallet: Checksummed,
   chainId: bigint,
   payload: Parented,
   options?: {
@@ -1158,7 +1158,7 @@ export async function recover(
 
 async function recoverTopology(
   topology: RawTopology,
-  wallet: Address.Checksummed,
+  wallet: Checksummed,
   chainId: bigint,
   payload: Parented,
   options?: {
