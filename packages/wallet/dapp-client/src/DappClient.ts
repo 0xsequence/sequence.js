@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChainId } from '@0xsequence/network'
 import { Relayer, Signers } from '@0xsequence/wallet-core'
-import { Address } from 'ox'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'

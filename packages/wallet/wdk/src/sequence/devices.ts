@@ -1,5 +1,4 @@
 import { Signers } from '@0xsequence/wallet-core'
-import { Address } from 'ox'
 import { Kinds, WitnessExtraSignerKind } from './types/signer.js'
 import { Shared } from './manager.js'
 

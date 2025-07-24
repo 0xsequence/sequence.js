@@ -1,5 +1,4 @@
 import { Permission, SessionConfig } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
 import type { CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils.js'
 

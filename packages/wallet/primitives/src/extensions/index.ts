@@ -1,5 +1,3 @@
-import { Address } from 'ox'
-
 export type Extensions = {
   passkeys: Address.Address
   recovery: Address.Address

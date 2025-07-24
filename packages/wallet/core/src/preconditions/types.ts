@@ -1,5 +1,3 @@
-import { Address } from 'ox'
-
 export interface Precondition {
   type(): string
   isValid(): Error | undefined

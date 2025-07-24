@@ -1,5 +1,3 @@
-import { Address } from 'ox'
-
 /**
  * Represents a device key that is authorized to sign for a wallet.
  */
