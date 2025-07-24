@@ -1,5 +1,5 @@
 import { Config, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import * as State from '../state/index.js'
 
 export * as Pk from './pk/index.js'

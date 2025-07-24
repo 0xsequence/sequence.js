@@ -1,4 +1,4 @@
-import { Hex, Address, Bytes } from 'ox'
+import { Hex, Bytes } from 'ox'
 import { Handler } from './handler.js'
 import * as Db from '../../dbs/index.js'
 import { Signatures } from '../signatures.js'

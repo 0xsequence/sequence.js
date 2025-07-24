@@ -1,5 +1,5 @@
 import { Attestation } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { ChainId } from '@0xsequence/network'
 import { jsonReplacers, jsonRevivers } from './index.js'
 import {

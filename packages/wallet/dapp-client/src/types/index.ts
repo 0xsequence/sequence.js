@@ -2,7 +2,7 @@
 import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Signers } from '@0xsequence/wallet-core'
 import { ChainId } from '@0xsequence/network'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import type { TypedData } from 'ox/TypedData'
 
 // --- Public Interfaces and Constants ---

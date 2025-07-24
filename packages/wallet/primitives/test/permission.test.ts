@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Address, Bytes } from 'ox'
+import { Bytes } from 'ox'
 
 import {
   ParameterOperation,

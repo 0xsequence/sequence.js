@@ -1,6 +1,6 @@
 import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {

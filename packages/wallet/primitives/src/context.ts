@@ -1,4 +1,4 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 
 export type Capabilities = {
   erc4337?: {

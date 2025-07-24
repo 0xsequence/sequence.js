@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 
 import {
   Config,

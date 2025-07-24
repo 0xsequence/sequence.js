@@ -1,5 +1,5 @@
 import { Config, Constants, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, Signature as oxSignature } from 'ox'
+import { Bytes, Hex, Signature as oxSignature } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { Sessions, SignatureType } from './sessions.gen.js'
 import { normalizeAddressKeys } from '../utils.js'

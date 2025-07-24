@@ -1,6 +1,6 @@
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
-import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
+import { Abi, AbiFunction, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {

@@ -1,4 +1,4 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hex, Provider } from 'ox'
+import { AbiFunction, AbiParameters, Bytes, Hex, Provider } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
 import { DEPLOY } from './constants.js'
 import { Context } from './context.js'

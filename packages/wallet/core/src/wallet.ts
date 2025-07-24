@@ -7,7 +7,7 @@ import {
   Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
+import { AbiFunction, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
 import { UserOperation } from 'ox/erc4337'

@@ -1,6 +1,6 @@
 import { Kinds } from '../types/signer.js'
 import { Signatures } from '../signatures.js'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { Devices } from '../devices.js'
 import { Handler } from './handler.js'
 import { SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'

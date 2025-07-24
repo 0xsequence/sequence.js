@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { Address, Bytes, Hex } from 'ox'
+import { Bytes, Hex } from 'ox'
 
 import {
   FLAG_RECOVERY_LEAF,

@@ -7,7 +7,7 @@ import {
   Extensions,
   GenericTree,
 } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
+import { Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { MemoryStore } from './memory.js'
 import { normalizeAddressKeys } from '../utils.js'

@@ -1,4 +1,4 @@
-import { AbiParameters, Address, Bytes } from 'ox'
+import { AbiParameters, Bytes } from 'ox'
 
 export enum ParameterOperation {
   EQUAL = 0,

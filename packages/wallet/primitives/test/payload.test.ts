@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 
 import {

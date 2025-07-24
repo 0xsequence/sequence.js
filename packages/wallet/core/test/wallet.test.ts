@@ -1,4 +1,4 @@
-import { Address, Hash, Hex, Provider, RpcTransport, Secp256k1, TypedData } from 'ox'
+import { Hash, Hex, Provider, RpcTransport, Secp256k1, TypedData } from 'ox'
 import { describe, expect, it } from 'vitest'
 
 import { Constants, Config, Erc6492, Payload } from '../../primitives/src/index.js'

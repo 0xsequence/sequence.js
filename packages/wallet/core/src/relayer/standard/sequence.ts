@@ -1,6 +1,6 @@
 import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequence/relayer'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex } from 'ox'
+import { AbiFunction, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
 export class SequenceRelayer implements Relayer {

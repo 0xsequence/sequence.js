@@ -1,5 +1,5 @@
 import { Config, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 
 export type Envelope<T extends Payload.Payload> = {
   readonly wallet: Address.Address

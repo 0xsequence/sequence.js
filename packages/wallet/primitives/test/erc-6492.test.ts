@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Address, Bytes, Hex, Provider } from 'ox'
+import { Bytes, Hex, Provider } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
 
 import { deploy, wrap, decode, isValid } from '../src/erc-6492.js'

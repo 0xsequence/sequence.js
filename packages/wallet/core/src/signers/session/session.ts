@@ -1,5 +1,5 @@
 import { Payload, SessionSignature } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider } from 'ox'
+import { Hex, Provider } from 'ox'
 
 export interface SessionSigner {
   address: Address.Address | Promise<Address.Address>

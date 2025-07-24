@@ -1,4 +1,4 @@
-import { AbiParameters, Address, Hex } from 'ox'
+import { AbiParameters, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { fromPosOrStdin } from '../utils.js'

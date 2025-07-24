@@ -1,5 +1,5 @@
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { Shared } from './manager.js'
 import { Kind, Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 

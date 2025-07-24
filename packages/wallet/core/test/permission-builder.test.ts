@@ -1,4 +1,4 @@
-import { AbiFunction, Address, Bytes } from 'ox'
+import { AbiFunction, Bytes } from 'ox'
 import { describe, expect, it } from 'vitest'
 
 import { Permission } from '../../primitives/src/index.js'

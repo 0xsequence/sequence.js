@@ -1,6 +1,6 @@
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { EIP1193Provider } from 'mipd'
-import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
+import { AbiFunction, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 import { IntentPrecondition } from './rpc/relayer.gen.js'
 import { decodePrecondition } from '../../preconditions/index.js'

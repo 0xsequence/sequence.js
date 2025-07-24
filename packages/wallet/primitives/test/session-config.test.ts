@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Address, Bytes, Hex } from 'ox'
+import { Bytes, Hex } from 'ox'
 
 import {
   SESSIONS_FLAG_PERMISSIONS,

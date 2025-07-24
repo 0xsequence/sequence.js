@@ -1,4 +1,4 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 
 export const Kinds = {
   LocalDevice: 'local-device',

@@ -1,4 +1,4 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
+import { AbiFunction, AbiParameters, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
 import {
   Config,
   Leaf,

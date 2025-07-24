@@ -1,5 +1,5 @@
 import { Permission } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes } from 'ox'
+import { AbiFunction, Bytes } from 'ox'
 
 /**
  * Parses a human-readable signature like

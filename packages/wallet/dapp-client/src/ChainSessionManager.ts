@@ -1,6 +1,6 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
 import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { AbiFunction, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
 

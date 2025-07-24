@@ -1,6 +1,6 @@
 import { Permission, SessionConfig, Config } from '@0xsequence/wallet-primitives'
 import crypto from 'crypto'
-import { Address, Bytes, Hex } from 'ox'
+import { Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 
 export interface RandomOptions {

@@ -1,4 +1,4 @@
-import { Address, Bytes, Hex } from 'ox'
+import { Bytes, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
 import { Address as SequenceAddress, Context } from '@0xsequence/wallet-primitives'
 

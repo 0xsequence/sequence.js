@@ -1,4 +1,4 @@
-import { Hex, Bytes, Address, P256, Hash } from 'ox'
+import { Hex, Bytes, P256, Hash } from 'ox'
 import { Payload, Extensions } from '@0xsequence/wallet-primitives'
 import type { Signature as SignatureTypes } from '@0xsequence/wallet-primitives'
 import { WebAuthnP256 } from 'ox'
