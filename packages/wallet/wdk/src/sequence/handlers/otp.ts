@@ -1,4 +1,4 @@
-import { Hex, Address } from 'ox'
+import { Hex } from 'ox'
 import { Signers } from '@0xsequence/wallet-core'
 import * as Identity from '@0xsequence/identity-instrument'
 import { Handler } from './handler.js'
