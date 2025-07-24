@@ -8,8 +8,14 @@ export type {
   SequenceSessionStorage,
   RandomPrivateKeyFn,
   Session,
+  SignMessagePayload,
+  AddExplicitSessionPayload,
+  AddImplicitSessionPayload,
+  SignTypedDataPayload,
+  ConnectSuccessResponsePayload,
+  ModifySessionSuccessResponsePayload,
 } from './types/index.js'
-export { TransportMode, RequestActionType } from './types/index.js'
+export { RequestActionType, TransportMode } from './types/index.js'
 export {
   FeeOptionError,
   TransactionError,
@@ -17,6 +23,7 @@ export {
   ConnectionError,
   InitializationError,
   SigningError,
+  ModifyExplicitSessionError,
 } from './utils/errors.js'
 export { getExplorerUrl, jsonReplacers, jsonRevivers } from './utils/index.js'
 export type {
