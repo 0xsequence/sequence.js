@@ -35,7 +35,7 @@ const DEFAULT_KEYMACHINE_URL = 'https://v3-keymachine.sequence-dev.app'
  * This client manages user sessions across multiple chains, handles connection
  * and disconnection, and provides methods for signing and sending transactions.
  *
- * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client} for more detailed documentation.
+ * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client} for more detailed documentation.
  *
  * @example
  * // It is recommended to manage a singleton instance of this client.
@@ -138,7 +138,7 @@ export class DappClient {
    * @param listener The listener to call when the event occurs. {@link DappClientEventListener}
    * @returns A function to remove the listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/on} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/on} for more detailed documentation.
    *
    * @example
    * useEffect(() => {
@@ -176,7 +176,7 @@ export class DappClient {
    * Retrieves the wallet address of the current session.
    * @returns The wallet address of the current session, or null if not initialized. {@link Address.Address}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-wallet-address} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-wallet-address} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -195,7 +195,7 @@ export class DappClient {
    * Retrieves a list of all active sessions (signers) associated with the current wallet.
    * @returns An array of all the active sessions. {@link { address: Address.Address, isImplicit: boolean }[]}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-all-sessions} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-all-sessions} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -259,7 +259,7 @@ export class DappClient {
    *
    * @returns A promise that resolves when initialization is complete.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/initialize} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/initialize} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -335,7 +335,7 @@ export class DappClient {
    *
    * @returns A promise that resolves when the connection is established.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/connect} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/connect} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -383,7 +383,7 @@ export class DappClient {
    *
    * @returns A promise that resolves when the session is added.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/add-explicit-session} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/add-explicit-session} for more detailed documentation.
    *
    * @example
    * ...
@@ -421,6 +421,52 @@ export class DappClient {
   }
 
   /**
+   * Modifies the permissions of an existing explicit session for a given chain and session address.
+   * @param chainId The chain ID on which the explicit session exists. {@link ChainId}
+   * @param sessionAddress The address of the explicit session to modify. {@link Address.Address}
+   * @param permissions The new permissions to set for the session. {@link Signers.Session.ExplicitParams}
+   *
+   * @throws If the client or relevant chain is not initialized. {@link InitializationError}
+   * @throws If something goes wrong while modifying the session. {@link ModifyExplicitSessionError}
+   *
+   * @returns A promise that resolves when the session permissions are updated.
+   *
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/modify-explicit-session} for more detailed documentation.
+   *
+   * @example
+   * const dappClient = new DappClient('http://localhost:5173');
+   * await dappClient.initialize();
+   *
+   * if (dappClient.isInitialized) {
+   *   // The address of an existing explicit session (Grants the Dapp permission to transfer 100 USDC for the user)
+   *   const sessionAddress = '0x...';
+   *   // We create a new permission object where we can increase the granted transfer amount limit
+   *   const permissions: Signers.Session.ExplicitParams = {
+   *     chainId: BigInt(chainId),
+   *     valueLimit: 0n,
+   *     deadline: BigInt(Date.now() + 1000 * 60 * 5000),
+   *     permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, amount)]
+   *   };
+   *   await dappClient.modifyExplicitSession(1, sessionAddress, permissions);
+   * }
+   */
+  async modifyExplicitSession(
+    chainId: ChainId,
+    sessionAddress: Address.Address,
+    permissions: Signers.Session.ExplicitParams,
+  ): Promise<void> {
+    if (!this.isInitialized || !this.walletAddress)
+      throw new InitializationError('Cannot modify an explicit session without an existing wallet.')
+
+    const chainSessionManager = this.getChainSessionManager(chainId)
+    if (!chainSessionManager.isInitialized) {
+      chainSessionManager.initializeWithWallet(this.walletAddress)
+    }
+    await chainSessionManager.modifyExplicitSession(sessionAddress, permissions)
+    await this.initialize()
+  }
+
+  /**
    * Gets the gas fee options for an array of transactions.
    * @param chainId The chain ID on which to get the fee options. {@link ChainId}
    * @param transactions An array of transactions to get the fee options for. {@link Transaction}
@@ -429,7 +475,7 @@ export class DappClient {
    *
    * @returns A promise that resolves with the fee options. {@link Relayer.FeeOption[]}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/get-fee-options} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-fee-options} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -467,7 +513,7 @@ export class DappClient {
    *
    * @returns A promise that resolves with the transaction hash.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/send-transaction} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/send-transaction} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -499,7 +545,7 @@ export class DappClient {
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is delivered via the `signatureResponse` event listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/sign-message} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/sign-message} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -527,7 +573,7 @@ export class DappClient {
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is returned in the `signatureResponse` event listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/sign-typed-data} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/sign-typed-data} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -551,7 +597,7 @@ export class DappClient {
    * @remarks This action does not revoke the sessions on-chain. Sessions remain active until they expire or are manually revoked by the user in their wallet.
    * @returns A promise that resolves when disconnection is complete.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/multichain-session-client/disconnect} for more detailed documentation.
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/disconnect} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
