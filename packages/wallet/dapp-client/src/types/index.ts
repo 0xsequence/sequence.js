@@ -28,7 +28,6 @@ export interface ModifySessionPayload {
   walletAddress: Address.Address
   sessionAddress: Address.Address
   permissions: Signers.Session.ExplicitParams
-  origin?: string
 }
 
 export interface AddImplicitSessionPayload {

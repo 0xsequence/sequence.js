@@ -67,6 +67,8 @@ export interface SequenceStorage {
   saveImplicitSession(sessionData: ImplicitSessionData): Promise<void>
   getImplicitSession(): Promise<ImplicitSessionData | null>
   clearImplicitSession(): Promise<void>
+
+  clearAllData(): Promise<void>
 }
 
 const DB_NAME = 'SequenceDappStorage'
@@ -291,6 +293,23 @@ export class WebStorage implements SequenceStorage {
       await this.deleteIDBItem(IMPLICIT_SESSIONS_IDB_KEY)
     } catch (error) {
       console.error('Failed to clear implicit session:', error)
+      throw error
+    }
+  }
+
+  async clearAllData(): Promise<void> {
+    try {
+      // Clear all session storage items
+      sessionStorage.removeItem(PENDING_REDIRECT_REQUEST_KEY)
+      sessionStorage.removeItem(TEMP_SESSION_PK_KEY)
+      sessionStorage.removeItem(PENDING_SIGNATURE_REQUEST_CONTEXT_KEY)
+      sessionStorage.removeItem(PENDING_REQUEST_PAYLOAD_KEY)
+
+      // Clear all IndexedDB items
+      await this.clearExplicitSessions()
+      await this.clearImplicitSession()
+    } catch (error) {
+      console.error('Failed to clear all data:', error)
       throw error
     }
   }

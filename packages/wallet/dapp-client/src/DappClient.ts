@@ -304,23 +304,35 @@ export class DappClient {
     }
 
     let chainId: ChainId | undefined
-    const signatureContext = await this.sequenceStorage.peekSignatureRequestContext()
-    if (signatureContext) {
-      chainId = (signatureContext.payload as any).chainId
-    } else {
+    const { action } = response
+
+    // Use the action from the response to determine where to find the chainId
+    if (action === RequestActionType.SIGN_MESSAGE || action === RequestActionType.SIGN_TYPED_DATA) {
+      const signatureContext = await this.sequenceStorage.peekSignatureRequestContext()
+      if (signatureContext) {
+        chainId = (signatureContext.payload as any).chainId
+      }
+    } else if (action === RequestActionType.ADD_IMPLICIT_SESSION || action === RequestActionType.ADD_EXPLICIT_SESSION) {
       const connectContext = await this.sequenceStorage.peekPendingRequestPayload()
-      if (connectContext) chainId = connectContext.chainId
+      if (connectContext) {
+        chainId = connectContext.chainId
+      }
     }
+
+    // TODO handle modify explicit session as well, but we also need to make sure we save related data before redirecting
 
     if (chainId) {
       const chainSessionManager = this.getChainSessionManager(chainId)
       await chainSessionManager.handleRedirectResponse(url)
     } else {
-      // Full cleanup for an orphaned redirect response
+      // Clean up orphaned redirect response more thoroughly
       this.transport.getRedirectResponse(true, url)
       await this.sequenceStorage.getAndClearTempSessionPk()
       await this.sequenceStorage.getAndClearPendingRequestPayload()
-      throw new InitializationError('Chain id is missing from the redirect response signature context payload')
+      await this.sequenceStorage.getAndClearSignatureRequestContext()
+      await this.sequenceStorage.setPendingRedirectRequest(false)
+
+      throw new InitializationError(`Could not find a pending request context for the redirect action: ${action}`)
     }
   }
 
@@ -620,8 +632,7 @@ export class DappClient {
     )
 
     this.chainSessionManagers.clear()
-    await this.sequenceStorage.clearImplicitSession()
-    await this.sequenceStorage.clearExplicitSessions()
+    await this.sequenceStorage.clearAllData()
     this.isInitialized = false
     this.walletAddress = null
     this.loginMethod = null

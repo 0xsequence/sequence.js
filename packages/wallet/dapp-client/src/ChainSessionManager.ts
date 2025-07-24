@@ -367,13 +367,12 @@ export class ChainSessionManager {
         walletAddress: this.walletAddress,
         sessionAddress: sessionAddress,
         permissions: newPermissions,
-        origin: window.location.origin,
       }
 
       const response = await this.transport.sendRequest<ModifySessionSuccessResponsePayload>(
         RequestActionType.MODIFY_EXPLICIT_SESSION,
         payload,
-        { path: '/request/modify' },
+        { path: '/request/modify', redirectUrl: this.redirectUrl },
       )
 
       if (
@@ -638,12 +637,22 @@ export class ChainSessionManager {
     if (!response) return false
 
     if ('error' in response && response.error) {
-      this.emit('signatureResponse', {
-        action: response.action as any,
-        error: response.error,
-      })
-      throw new WalletRedirectError(`Wallet responded with an error: ${JSON.stringify(response.error)}`)
+      const { action } = response
+
+      // Only emit signatureResponse event if the failed action was a signature request.
+      if (action === RequestActionType.SIGN_MESSAGE || action === RequestActionType.SIGN_TYPED_DATA) {
+        this.emit('signatureResponse', {
+          action: action,
+          error: response.error,
+        })
+      }
+
+      // Always throw on error to propagate the failure up to the caller.
+      throw new WalletRedirectError(
+        `Wallet responded with an error for action '${action}': ${JSON.stringify(response.error)}`,
+      )
     }
+
     if ('payload' in response && response.payload) {
       if (
         response.action === RequestActionType.ADD_IMPLICIT_SESSION ||
@@ -663,6 +672,7 @@ export class ChainSessionManager {
         throw new WalletRedirectError(`Received unhandled redirect action: ${response.action}`)
       }
     }
+
     throw new WalletRedirectError('Received an invalid redirect response from the wallet.')
   }
 
