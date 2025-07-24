@@ -1,4 +1,4 @@
-import { Address, Bytes, Hash } from 'ox'
+import { Bytes, Hash } from 'ox'
 import { Context } from './context.js'
 import { Config, hashConfiguration } from './config.js'
 

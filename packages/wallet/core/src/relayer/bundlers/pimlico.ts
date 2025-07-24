@@ -1,6 +1,6 @@
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Bundler } from '../bundler.js'
-import { Provider, Hex, Address, RpcTransport } from 'ox'
+import { Provider, Hex, RpcTransport } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { OperationStatus } from '../relayer.js'
 

@@ -1,5 +1,5 @@
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { OperationStatus } from './relayer.js'
 

@@ -1,4 +1,4 @@
-import { Hex, Address, PublicKey, Secp256k1, Bytes } from 'ox'
+import { Hex, PublicKey, Secp256k1, Bytes } from 'ox'
 import { PkStore } from './index.js'
 
 export interface EncryptedData {

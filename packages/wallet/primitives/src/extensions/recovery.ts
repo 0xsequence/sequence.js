@@ -1,4 +1,4 @@
-import { Abi, AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { Abi, AbiFunction, Bytes, Hex, Provider } from 'ox'
 import * as Payload from '../payload.js'
 import * as GenericTree from '../generic-tree.js'
 import { Signature } from '../index.js'

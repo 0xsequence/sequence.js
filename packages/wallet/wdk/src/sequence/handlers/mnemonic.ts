@@ -1,5 +1,5 @@
 import { Signers } from '@0xsequence/wallet-core'
-import { Address, Hex, Mnemonic } from 'ox'
+import { Hex, Mnemonic } from 'ox'
 import { Handler } from './handler.js'
 import { Signatures } from '../signatures.js'
 import { Kinds } from '../types/signer.js'

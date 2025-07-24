@@ -6,7 +6,7 @@ import {
   SessionSignature,
   Signature as SignatureTypes,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Hex, Provider } from 'ox'
+import { AbiFunction, Hex, Provider } from 'ox'
 import * as State from '../state/index.js'
 import { Wallet } from '../wallet.js'
 import { SapientSigner } from './index.js'

@@ -1,4 +1,4 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 import * as GenericTree from './generic-tree.js'
 import {
   decodeSessionPermissions,

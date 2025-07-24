@@ -1,4 +1,4 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { CommandModule } from 'yargs'
 import sessionExplicitCommand from './sessionExplicit.js'
 import sessionImplicitCommand from './sessionImplicit.js'

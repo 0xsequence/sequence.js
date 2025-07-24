@@ -1,4 +1,4 @@
-import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
+import { Signature, Hex, Bytes, PersonalMessage } from 'ox'
 import { Signers, State } from '@0xsequence/wallet-core'
 import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
 import { AuthKey } from '../dbs/auth-keys.js'

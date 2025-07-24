@@ -1,4 +1,4 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 import { Attestation, encode, encodeForJson, fromParsed, toJson } from './attestation.js'
 import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {

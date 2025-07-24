@@ -1,5 +1,5 @@
 import { Payload, Permission, SessionSignature, Constants } from '@0xsequence/wallet-primitives'
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
+import { AbiFunction, AbiParameters, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { ExplicitSessionSigner, UsageLimit } from './session.js'
 

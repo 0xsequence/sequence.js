@@ -1,4 +1,4 @@
-import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
+import { AbiFunction, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State } from '../../core/src/index.js'
 import { Attestation, Constants, Extensions, Payload, Permission } from '../../primitives/src/index.js'

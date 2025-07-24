@@ -1,4 +1,4 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex } from 'ox'
+import { AbiFunction, AbiParameters, Bytes, Hash, Hex } from 'ox'
 import { getSignPayload } from 'ox/TypedData'
 import { EXECUTE_USER_OP, RECOVER_SAPIENT_SIGNATURE } from './constants.js'
 import { Attestation } from './index.js'

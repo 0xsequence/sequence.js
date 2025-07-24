@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv'
-import { Abi, Address, Hex, Provider, RpcTransport } from 'ox'
+import { Abi, Hex, Provider, RpcTransport } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'
 import { mockEthereum } from './setup'
 import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'

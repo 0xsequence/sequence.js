@@ -1,4 +1,4 @@
-import { AbiEvent, AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { AbiEvent, AbiFunction, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it } from 'vitest'
 
 import { Attestation, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'

@@ -1,6 +1,6 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
 import { Config, Constants, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider, RpcTransport } from 'ox'
+import { Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'

@@ -6,7 +6,7 @@ import {
   IntentPrecondition,
 } from './relayer.gen.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
-import { Address, Hex, Bytes, AbiFunction } from 'ox'
+import { Hex, Bytes, AbiFunction } from 'ox'
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { ETHTxnStatus, FeeToken as RpcFeeToken } from './relayer.gen.js'
 import { decodePrecondition } from '../../../preconditions/index.js'

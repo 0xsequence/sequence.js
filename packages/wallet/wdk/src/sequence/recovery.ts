@@ -1,6 +1,6 @@
 import { Config, Constants, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
-import { Address, Hex, Provider, RpcTransport } from 'ox'
+import { Hex, Provider, RpcTransport } from 'ox'
 import { Kinds, RecoverySigner } from './types/signer.js'
 import { Envelope } from '@0xsequence/wallet-core'
 import { QueuedRecoveryPayload } from './types/recovery.js'

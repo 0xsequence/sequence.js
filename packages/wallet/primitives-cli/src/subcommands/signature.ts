@@ -1,5 +1,5 @@
 import { Config, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, Signature as OxSignature } from 'ox'
+import { Bytes, Hex, Signature as OxSignature } from 'ox'
 import { type CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils.js'
 import { PossibleElements } from './config.js'

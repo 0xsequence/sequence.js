@@ -1,6 +1,6 @@
 import { Envelope, Wallet } from '@0xsequence/wallet-core'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
+import { Bytes, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import { Message, MessageRequest, MessageRequested, MessageSigned } from './types/message-request.js'

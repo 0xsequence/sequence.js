@@ -1,5 +1,5 @@
 import { Attestation, Payload, Signature as SequenceSignature, SessionSignature } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
+import { AbiFunction, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { SessionSigner } from './session.js'
 

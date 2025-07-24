@@ -1,4 +1,4 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { SignerActionable, SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 
 export interface Handler {

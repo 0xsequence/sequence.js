@@ -1,4 +1,4 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { MaybePromise, Provider } from './index.js'
 import { Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { normalizeAddressKeys } from './utils.js'

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { Manager, SignerActionable, Transaction, TransactionDefined, TransactionRelayed } from '../src/sequence'
-import { Address, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
+import { Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { LOCAL_RPC_URL, newManager } from './constants'
 import { Payload } from '@0xsequence/wallet-primitives'
 

@@ -1,4 +1,4 @@
-import { Address, Bytes, Hash } from 'ox'
+import { Bytes, Hash } from 'ox'
 
 export type Attestation = {
   approvedSigner: Address.Address

@@ -1,4 +1,4 @@
-import { Address, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it, vi } from 'vitest'
 import {
   Erc1155ApprovalPrecondition,
