@@ -19,40 +19,40 @@ export interface Store {
 
   // counterfactual wallets
   loadCounterfactualWallet: (
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
   ) => Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined>
-  saveCounterfactualWallet: (wallet: Address.Address, imageHash: Hex.Hex, context: Context.Context) => Promise<void>
+  saveCounterfactualWallet: (wallet: Address.Checksummed, imageHash: Hex.Hex, context: Context.Context) => Promise<void>
 
   // payloads
   loadPayloadOfSubdigest: (
     subdigest: Hex.Hex,
-  ) => Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Address } | undefined>
+  ) => Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed } | undefined>
   savePayloadOfSubdigest: (
     subdigest: Hex.Hex,
-    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Address },
+    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed },
   ) => Promise<void>
 
   // signatures
-  loadSubdigestsOfSigner: (signer: Address.Address) => Promise<Hex.Hex[]>
+  loadSubdigestsOfSigner: (signer: Address.Checksummed) => Promise<Hex.Hex[]>
   loadSignatureOfSubdigest: (
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
   ) => Promise<Signature.SignatureOfSignerLeaf | undefined>
   saveSignatureOfSubdigest: (
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     signature: Signature.SignatureOfSignerLeaf,
   ) => Promise<void>
 
   // sapient signatures
-  loadSubdigestsOfSapientSigner: (signer: Address.Address, imageHash: Hex.Hex) => Promise<Hex.Hex[]>
+  loadSubdigestsOfSapientSigner: (signer: Address.Checksummed, imageHash: Hex.Hex) => Promise<Hex.Hex[]>
   loadSapientSignatureOfSubdigest: (
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
   ) => Promise<Signature.SignatureOfSapientSignerLeaf | undefined>
   saveSapientSignatureOfSubdigest: (
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
     signature: Signature.SignatureOfSapientSignerLeaf,
@@ -92,23 +92,23 @@ export class Provider implements ProviderInterface {
   }
 
   saveCounterfactualWallet(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     imageHash: Hex.Hex,
     context: Context.Context,
   ): void | Promise<void> {
     this.store.saveCounterfactualWallet(wallet, imageHash, context)
   }
 
-  getDeploy(wallet: Address.Address): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
+  getDeploy(wallet: Address.Checksummed): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
     return this.store.loadCounterfactualWallet(wallet)
   }
 
   private async getWalletsGeneric<T>(
     subdigests: Hex.Hex[],
     loadSignatureFn: (subdigest: Hex.Hex) => Promise<T | undefined>,
-  ): Promise<Record<Address.Address, { chainId: bigint; payload: Payload.Parented; signature: T }>> {
+  ): Promise<Record<Address.Checksummed, { chainId: bigint; payload: Payload.Parented; signature: T }>> {
     const payloads = await Promise.all(subdigests.map((sd) => this.store.loadPayloadOfSubdigest(sd)))
-    const response: Record<Address.Address, { chainId: bigint; payload: Payload.Parented; signature: T }> = {}
+    const response: Record<Address.Checksummed, { chainId: bigint; payload: Payload.Parented; signature: T }> = {}
 
     for (const payload of payloads) {
       if (!payload) {
@@ -139,7 +139,7 @@ export class Provider implements ProviderInterface {
     return response
   }
 
-  async getWallets(signer: Address.Address) {
+  async getWallets(signer: Address.Checksummed) {
     return normalizeAddressKeys(
       await this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(
         await this.store.loadSubdigestsOfSigner(signer),
@@ -148,7 +148,7 @@ export class Provider implements ProviderInterface {
     )
   }
 
-  async getWalletsForSapient(signer: Address.Address, imageHash: Hex.Hex) {
+  async getWalletsForSapient(signer: Address.Checksummed, imageHash: Hex.Hex) {
     return normalizeAddressKeys(
       await this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(
         await this.store.loadSubdigestsOfSapientSigner(signer, imageHash),
@@ -158,8 +158,8 @@ export class Provider implements ProviderInterface {
   }
 
   getWitnessFor(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
   ):
     | { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf }
     | Promise<{ chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined>
@@ -169,8 +169,8 @@ export class Provider implements ProviderInterface {
   }
 
   getWitnessForSapient(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ):
     | { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf }
@@ -183,7 +183,7 @@ export class Provider implements ProviderInterface {
   }
 
   async saveWitnesses(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
@@ -199,7 +199,7 @@ export class Provider implements ProviderInterface {
   }
 
   async getConfigurationUpdates(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<{ imageHash: Hex.Hex; signature: Signature.RawSignature }[]> {
@@ -289,7 +289,7 @@ export class Provider implements ProviderInterface {
       const encoded = Signature.fillLeaves(fromConfig.topology, (leaf) => {
         if (Config.isSapientSignerLeaf(leaf)) {
           const sapientSignature = signaturesOfSigners.find(
-            ({ signer, imageHash }: { signer: Address.Address; imageHash?: Hex.Hex }) => {
+            ({ signer, imageHash }: { signer: Address.Checksummed; imageHash?: Hex.Hex }) => {
               return imageHash && Address.isEqual(signer, leaf.address) && imageHash === leaf.imageHash
             },
           )?.signature
@@ -343,7 +343,7 @@ export class Provider implements ProviderInterface {
   }
 
   async saveUpdate(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     configuration: Config.Config,
     signature: Signature.RawSignature,
   ): Promise<void> {
@@ -426,12 +426,12 @@ export class Provider implements ProviderInterface {
 
   async getPayload(
     opHash: Hex.Hex,
-  ): Promise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined> {
+  ): Promise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Checksummed } | undefined> {
     const data = await this.store.loadPayloadOfSubdigest(opHash)
     return data ? { chainId: data.chainId, payload: data.content, wallet: data.wallet } : undefined
   }
 
-  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+  savePayload(wallet: Address.Checksummed, payload: Payload.Parented, chainId: bigint): Promise<void> {
     const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
     return this.store.savePayloadOfSubdigest(subdigest, { content: payload, chainId, wallet })
   }

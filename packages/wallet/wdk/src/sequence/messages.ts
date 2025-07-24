@@ -49,7 +49,7 @@ export interface MessagesInterface {
    * @see {complete} to finalize the signature after it has been signed.
    */
   request(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     message: MessageRequest,
     chainId?: bigint,
     options?: { source?: string },
@@ -129,7 +129,7 @@ export class Messages implements MessagesInterface {
   }
 
   async request(
-    from: Address.Address,
+    from: Address.Checksummed,
     message: MessageRequest,
     chainId?: bigint,
     options?: {

@@ -54,18 +54,18 @@ export type AuthCodeSignupArgs = CommonSignupArgs & {
 export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodeSignupArgs
 
 export type LoginToWalletArgs = {
-  wallet: Address.Address
+  wallet: Address.Checksummed
 }
 
 export type LoginToMnemonicArgs = {
   kind: 'mnemonic'
   mnemonic: string
-  selectWallet: (wallets: Address.Address[]) => Promise<Address.Address>
+  selectWallet: (wallets: Address.Checksummed[]) => Promise<Address.Checksummed>
 }
 
 export type LoginToPasskeyArgs = {
   kind: 'passkey'
-  selectWallet: (wallets: Address.Address[]) => Promise<Address.Address>
+  selectWallet: (wallets: Address.Checksummed[]) => Promise<Address.Checksummed>
 }
 
 export type LoginArgs = LoginToWalletArgs | LoginToMnemonicArgs | LoginToPasskeyArgs
@@ -81,7 +81,7 @@ export interface WalletsInterface {
    * @param wallet The address of the wallet to check.
    * @returns A promise that resolves to `true` if the wallet is managed, `false` otherwise.
    */
-  has(wallet: Address.Address): Promise<boolean>
+  has(wallet: Address.Checksummed): Promise<boolean>
 
   /**
    * Retrieves the details of a managed wallet.
@@ -94,7 +94,7 @@ export interface WalletsInterface {
    * @returns A promise that resolves to the `Wallet` object if found, or `undefined` if the wallet is not managed.
    * @see {Wallet} for details on the returned object structure.
    */
-  get(walletAddress: Address.Address): Promise<Wallet | undefined>
+  get(walletAddress: Address.Checksummed): Promise<Wallet | undefined>
 
   /**
    * Lists all wallets that are currently managed and logged in by this manager instance.
@@ -113,7 +113,7 @@ export interface WalletsInterface {
    * @param wallet The address of the wallet to query.
    * @returns A promise that resolves to an array of `Device` objects.
    */
-  listDevices(wallet: Address.Address): Promise<Device[]>
+  listDevices(wallet: Address.Checksummed): Promise<Device[]>
 
   /**
    * Registers a UI handler for wallet selection.
@@ -173,7 +173,7 @@ export interface WalletsInterface {
    * @returns A promise that resolves to the address of the newly created wallet, or `undefined` if the sign-up was aborted.
    * @see {SignupArgs}
    */
-  signUp(args: SignupArgs): Promise<Address.Address | undefined>
+  signUp(args: SignupArgs): Promise<Address.Checksummed | undefined>
 
   /**
    * Initiates a sign-up or login process that involves an OAuth redirect.
@@ -248,7 +248,7 @@ export interface WalletsInterface {
    *          containing the `requestId` for the on-chain logout transaction.
    */
   logout<T extends { skipRemoveDevice?: boolean } | undefined = undefined>(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     options?: T,
   ): Promise<T extends { skipRemoveDevice: true } ? undefined : string>
 
@@ -261,7 +261,7 @@ export interface WalletsInterface {
    * @param deviceAddress The address of the device to log out.
    * @returns A promise that resolves to a `requestId` for the on-chain logout transaction.
    */
-  remoteLogout(wallet: Address.Address, deviceAddress: Address.Address): Promise<string>
+  remoteLogout(wallet: Address.Checksummed, deviceAddress: Address.Checksummed): Promise<string>
 
   /**
    * Completes the "hard logout" process.
@@ -299,7 +299,7 @@ export interface WalletsInterface {
    * @param wallet The address of the wallet.
    * @returns A promise that resolves to an object containing the resolved `devices`, `login` signers, and the `raw` configuration.
    */
-  getConfiguration(wallet: Address.Address): Promise<{
+  getConfiguration(wallet: Address.Checksummed): Promise<{
     devices: SignerWithKind[]
     login: SignerWithKind[]
     raw: any
@@ -316,7 +316,7 @@ export interface WalletsInterface {
    * @param space A unique identifier for a transaction category or flow, typically a large random number.
    * @returns A promise that resolves to the `bigint` nonce for the given space.
    */
-  getNonce(chainId: bigint, address: Address.Address, space: bigint): Promise<bigint>
+  getNonce(chainId: bigint, address: Address.Checksummed, space: bigint): Promise<bigint>
 
   /**
    * Checks if the wallet's on-chain configuration is up to date for a given chain.
@@ -329,7 +329,7 @@ export interface WalletsInterface {
    * @param chainId The chain ID of the network to check against.
    * @returns A promise that resolves to `true` if the wallet is up to date on the given chain, or `false` otherwise.
    */
-  isUpdatedOnchain(wallet: Address.Address, chainId: bigint): Promise<boolean>
+  isUpdatedOnchain(wallet: Address.Checksummed, chainId: bigint): Promise<boolean>
 }
 
 export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
@@ -348,7 +348,7 @@ export function isAuthCodeArgs(args: SignupArgs): args is AuthCodeSignupArgs {
   return 'kind' in args && (args.kind === 'google-pkce' || args.kind === 'apple')
 }
 
-function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
+function buildCappedTree(members: { address: Address.Checksummed; imageHash?: Hex.Hex }[]): Config.Topology {
   const loginMemberWeight = 1n
 
   if (members.length === 0) {
@@ -505,11 +505,11 @@ export class Wallets implements WalletsInterface {
 
   constructor(private readonly shared: Shared) {}
 
-  public async has(wallet: Address.Address): Promise<boolean> {
+  public async has(wallet: Address.Checksummed): Promise<boolean> {
     return this.shared.databases.manager.get(wallet).then((r) => r !== undefined)
   }
 
-  public async get(walletAddress: Address.Address): Promise<Wallet | undefined> {
+  public async get(walletAddress: Address.Checksummed): Promise<Wallet | undefined> {
     return await this.shared.databases.manager.get(walletAddress)
   }
 
@@ -517,7 +517,7 @@ export class Wallets implements WalletsInterface {
     return this.shared.databases.manager.list()
   }
 
-  public async listDevices(wallet: Address.Address): Promise<Device[]> {
+  public async listDevices(wallet: Address.Checksummed): Promise<Device[]> {
     const walletEntry = await this.get(wallet)
     if (!walletEntry) {
       throw new Error('wallet-not-found')
@@ -681,7 +681,7 @@ export class Wallets implements WalletsInterface {
     return commitment.target
   }
 
-  async signUp(args: SignupArgs): Promise<Address.Address | undefined> {
+  async signUp(args: SignupArgs): Promise<Address.Checksummed | undefined> {
     const loginSigner = await this.prepareSignUp(args)
 
     // If there is an existing wallet callback, we check if any wallet already exist for this login signer
@@ -800,7 +800,7 @@ export class Wallets implements WalletsInterface {
     return wallet.address
   }
 
-  public async getConfigurationParts(address: Address.Address) {
+  public async getConfigurationParts(address: Address.Checksummed) {
     const wallet = new CoreWallet(address, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -811,7 +811,7 @@ export class Wallets implements WalletsInterface {
   }
 
   public async requestConfigurationUpdate(
-    address: Address.Address,
+    address: Address.Checksummed,
     changes: Partial<ReturnType<typeof fromConfig>>,
     action: Action,
     origin?: string,
@@ -985,7 +985,7 @@ export class Wallets implements WalletsInterface {
   }
 
   async logout<T extends { skipRemoveDevice?: boolean } | undefined = undefined>(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     options?: T,
   ): Promise<T extends { skipRemoveDevice: true } ? undefined : string> {
     const walletEntry = await this.shared.databases.manager.get(wallet)
@@ -1019,7 +1019,7 @@ export class Wallets implements WalletsInterface {
     return requestId as any
   }
 
-  public async remoteLogout(wallet: Address.Address, deviceAddress: Address.Address): Promise<string> {
+  public async remoteLogout(wallet: Address.Checksummed, deviceAddress: Address.Checksummed): Promise<string> {
     const walletEntry = await this.get(wallet)
     if (!walletEntry) {
       throw new Error('wallet-not-found')
@@ -1053,7 +1053,7 @@ export class Wallets implements WalletsInterface {
     await this.shared.modules.devices.remove(walletEntry.device)
   }
 
-  async getConfiguration(wallet: Address.Address) {
+  async getConfiguration(wallet: Address.Checksummed) {
     const walletObject = new CoreWallet(wallet, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -1078,7 +1078,7 @@ export class Wallets implements WalletsInterface {
     }
   }
 
-  async getNonce(chainId: bigint, address: Address.Address, space: bigint) {
+  async getNonce(chainId: bigint, address: Address.Checksummed, space: bigint) {
     const wallet = new CoreWallet(address, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -1093,7 +1093,7 @@ export class Wallets implements WalletsInterface {
     return wallet.getNonce(provider, space)
   }
 
-  async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
+  async getOnchainConfiguration(wallet: Address.Checksummed, chainId: bigint) {
     const walletObject = new CoreWallet(wallet, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -1130,7 +1130,7 @@ export class Wallets implements WalletsInterface {
     }
   }
 
-  async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
+  async isUpdatedOnchain(wallet: Address.Checksummed, chainId: bigint) {
     const walletObject = new CoreWallet(wallet, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -1147,8 +1147,8 @@ export class Wallets implements WalletsInterface {
   }
 
   private async _prepareDeviceRemovalUpdate(
-    wallet: Address.Address,
-    deviceToRemove: Address.Address,
+    wallet: Address.Checksummed,
+    deviceToRemove: Address.Checksummed,
     action: 'logout' | 'remote-logout',
   ): Promise<string> {
     const { devicesTopology, modules } = await this.getConfigurationParts(wallet)

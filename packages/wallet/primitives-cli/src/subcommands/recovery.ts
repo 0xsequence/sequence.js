@@ -45,7 +45,7 @@ export async function doEncode(leavesInput: string | string[]): Promise<string> 
   return Bytes.toHex(encoded)
 }
 
-export async function doTrim(leavesInput: string | string[], signer: Address.Address): Promise<string> {
+export async function doTrim(leavesInput: string | string[], signer: Address.Checksummed): Promise<string> {
   const leaves = await parseLeaves(leavesInput)
   const topology = Extensions.Recovery.fromRecoveryLeaves(leaves)
   const trimmed = Extensions.Recovery.trimTopology(topology, signer)

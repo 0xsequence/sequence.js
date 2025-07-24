@@ -13,7 +13,7 @@ import {
 
 export interface ExplicitSessionData {
   pk: Hex.Hex
-  walletAddress: Address.Address
+  walletAddress: Address.Checksummed
   chainId: ChainId
   loginMethod?: PreferredLoginMethod
   userEmail?: string
@@ -21,7 +21,7 @@ export interface ExplicitSessionData {
 
 export interface ImplicitSessionData {
   pk: Hex.Hex
-  walletAddress: Address.Address
+  walletAddress: Address.Checksummed
   attestation: Attestation.Attestation
   identitySignature: Hex.Hex
   chainId: ChainId

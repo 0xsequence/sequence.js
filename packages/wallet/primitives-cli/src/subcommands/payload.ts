@@ -34,7 +34,7 @@ export async function doConvertToAbi(_payload: string): Promise<string> {
   throw new Error('Not implemented')
 }
 
-export async function doConvertToPacked(payload: Hex.Hex, wallet?: Address.Address): Promise<string> {
+export async function doConvertToPacked(payload: Hex.Hex, wallet?: Address.Checksummed): Promise<string> {
   const decodedPayload = Payload.fromAbiFormat(
     AbiParameters.decode(
       [{ type: 'tuple', name: 'payload', components: DecodedAbi }],

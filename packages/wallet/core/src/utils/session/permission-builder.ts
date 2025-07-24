@@ -31,18 +31,18 @@ function isDynamicType(type: string): boolean {
 }
 
 export class PermissionBuilder {
-  private target: Address.Address
+  private target: Address.Checksummed
   private rules: Permission.ParameterRule[] = []
   private fnTypes?: string[]
   private fnNames?: (string | undefined)[]
   private allowAllSet: boolean = false
   private exactCalldataSet: boolean = false
 
-  private constructor(target: Address.Address) {
+  private constructor(target: Address.Checksummed) {
     this.target = target
   }
 
-  static for(target: Address.Address): PermissionBuilder {
+  static for(target: Address.Checksummed): PermissionBuilder {
     return new PermissionBuilder(target)
   }
 
@@ -172,7 +172,7 @@ export class PermissionBuilder {
 
   withAddressParam(
     param: string | number,
-    value: Address.Address,
+    value: Address.Checksummed,
     operation: Permission.ParameterOperation = Permission.ParameterOperation.EQUAL,
     cumulative = false,
   ): this {
@@ -280,14 +280,14 @@ export class PermissionBuilder {
  * Builds permissions for an ERC20 token.
  */
 export class ERC20PermissionBuilder {
-  static buildTransfer(target: Address.Address, limit: bigint): Permission.Permission {
+  static buildTransfer(target: Address.Checksummed, limit: bigint): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function transfer(address to, uint256 value)')
       .withUintNParam('value', limit, 256, Permission.ParameterOperation.LESS_THAN_OR_EQUAL, true)
       .build()
   }
 
-  static buildApprove(target: Address.Address, spender: Address.Address, limit: bigint): Permission.Permission {
+  static buildApprove(target: Address.Checksummed, spender: Address.Checksummed, limit: bigint): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function approve(address spender, uint256 value)')
       .withAddressParam('spender', spender)
@@ -300,14 +300,18 @@ export class ERC20PermissionBuilder {
  * Builds permissions for an ERC721 token.
  */
 export class ERC721PermissionBuilder {
-  static buildTransfer(target: Address.Address, tokenId: bigint): Permission.Permission {
+  static buildTransfer(target: Address.Checksummed, tokenId: bigint): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function transferFrom(address from, address to, uint256 tokenId)')
       .withUintNParam('tokenId', tokenId)
       .build()
   }
 
-  static buildApprove(target: Address.Address, spender: Address.Address, tokenId: bigint): Permission.Permission {
+  static buildApprove(
+    target: Address.Checksummed,
+    spender: Address.Checksummed,
+    tokenId: bigint,
+  ): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function approve(address spender, uint256 tokenId)')
       .withAddressParam('spender', spender)
@@ -320,7 +324,7 @@ export class ERC721PermissionBuilder {
  * Builds permissions for an ERC1155 token.
  */
 export class ERC1155PermissionBuilder {
-  static buildTransfer(target: Address.Address, tokenId: bigint, limit: bigint): Permission.Permission {
+  static buildTransfer(target: Address.Checksummed, tokenId: bigint, limit: bigint): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data)')
       .withUintNParam('id', tokenId)
@@ -328,7 +332,7 @@ export class ERC1155PermissionBuilder {
       .build()
   }
 
-  static buildApproveAll(target: Address.Address, operator: Address.Address): Permission.Permission {
+  static buildApproveAll(target: Address.Checksummed, operator: Address.Checksummed): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function setApprovalForAll(address operator, bool approved)')
       .withAddressParam('operator', operator)

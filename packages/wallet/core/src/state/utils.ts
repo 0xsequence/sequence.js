@@ -4,7 +4,7 @@ import { Reader } from './index.js'
 import { isSapientSigner, SapientSigner, Signer } from '../signers/index.js'
 
 export type WalletWithWitness<S extends Signer | SapientSigner> = {
-  wallet: Address.Address
+  wallet: Address.Checksummed
   chainId: bigint
   payload: Payload.Parented
   signature: S extends SapientSigner ? Signature.SignatureOfSapientSignerLeaf : Signature.SignatureOfSignerLeaf
@@ -30,7 +30,7 @@ async function retrieveWallets<S extends Signer | SapientSigner>(
   stateReader: Reader,
   signer: S,
 ): Promise<{
-  [wallet: Address.Address]: {
+  [wallet: Address.Checksummed]: {
     chainId: bigint
     payload: Payload.Parented
     signature: S extends SapientSigner ? Signature.SignatureOfSapientSignerLeaf : Signature.SignatureOfSignerLeaf
@@ -49,11 +49,13 @@ async function retrieveWallets<S extends Signer | SapientSigner>(
   }
 }
 
-export function normalizeAddressKeys<T extends Record<string, unknown>>(obj: T): Record<Address.Address, T[keyof T]> {
+export function normalizeAddressKeys<T extends Record<string, unknown>>(
+  obj: T,
+): Record<Address.Checksummed, T[keyof T]> {
   return Object.fromEntries(
     Object.entries(obj).map(([wallet, signature]) => {
       const checksumAddress = Address.checksum(wallet)
       return [checksumAddress, signature]
     }),
-  ) as Record<Address.Address, T[keyof T]>
+  ) as Record<Address.Checksummed, T[keyof T]>
 }

@@ -28,10 +28,10 @@ export class PimlicoBundler implements Bundler {
     this.bundlerRpcUrl = bundlerRpcUrl
   }
 
-  async isAvailable(entrypoint: Address.Address, chainId: bigint): Promise<boolean> {
+  async isAvailable(entrypoint: Address.Checksummed, chainId: bigint): Promise<boolean> {
     const [bundlerChainId, supportedEntryPoints] = await Promise.all([
       this.bundlerRpc<string>('eth_chainId', []),
-      this.bundlerRpc<Address.Address[]>('eth_supportedEntryPoints', []),
+      this.bundlerRpc<Address.Checksummed[]>('eth_supportedEntryPoints', []),
     ])
 
     if (chainId !== BigInt(bundlerChainId)) {
@@ -41,13 +41,13 @@ export class PimlicoBundler implements Bundler {
     return supportedEntryPoints.some((ep) => Address.isEqual(ep, entrypoint))
   }
 
-  async relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }> {
+  async relay(entrypoint: Address.Checksummed, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }> {
     const status = await this.bundlerRpc<Hex.Hex>('eth_sendUserOperation', [userOperation, entrypoint])
     return { opHash: status }
   }
 
   async estimateLimits(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     payload: Payload.Calls4337_07,
   ): Promise<
     {

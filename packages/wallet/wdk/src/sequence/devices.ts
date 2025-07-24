@@ -9,7 +9,7 @@ export class Devices {
     return this.shared.databases.encryptedPks.listAddresses()
   }
 
-  async has(address: Address.Address) {
+  async has(address: Address.Checksummed) {
     const entry = await this.shared.databases.encryptedPks.getEncryptedEntry(address)
     return entry !== undefined
   }
@@ -26,7 +26,7 @@ export class Devices {
     return new Signers.Pk.Pk(s)
   }
 
-  async get(address: Address.Address) {
+  async get(address: Address.Checksummed) {
     const s = await this.shared.databases.encryptedPks.getEncryptedPkStore(address)
     if (!s) {
       return undefined
@@ -35,7 +35,7 @@ export class Devices {
     return new Signers.Pk.Pk(s)
   }
 
-  async witness(address: Address.Address, wallet: Address.Address) {
+  async witness(address: Address.Checksummed, wallet: Address.Checksummed) {
     const signer = await this.get(address)
     if (!signer) {
       throw new Error('Signer not found')
@@ -46,7 +46,7 @@ export class Devices {
     } as WitnessExtraSignerKind)
   }
 
-  async remove(address: Address.Address) {
+  async remove(address: Address.Checksummed) {
     await this.shared.databases.encryptedPks.remove(address)
   }
 }

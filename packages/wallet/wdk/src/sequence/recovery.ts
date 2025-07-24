@@ -20,7 +20,7 @@ export interface RecoveryInterface {
    *   the recovery module enabled, it returns `undefined`.
    * @see {RecoverySigner} for details on the returned object structure.
    */
-  getSigners(wallet: Address.Address): Promise<RecoverySigner[] | undefined>
+  getSigners(wallet: Address.Checksummed): Promise<RecoverySigner[] | undefined>
 
   /**
    * Initiates the process of queuing a recovery payload for future execution. This is the first of a two-part
@@ -36,7 +36,7 @@ export interface RecoveryInterface {
    *   with the signing UI and `completePayload`.
    * @see {completePayload} for the next step.
    */
-  queuePayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls): Promise<string>
+  queuePayload(wallet: Address.Checksummed, chainId: bigint, payload: Payload.Calls): Promise<string>
 
   /**
    * Finalizes a queued recovery payload request and returns the transaction data needed to start the timelock on-chain.
@@ -58,7 +58,7 @@ export interface RecoveryInterface {
    *   (the encoded calldata) for the on-chain queuing transaction.
    * @throws An error if the `requestId` is invalid, not for a recovery action, or not fully signed.
    */
-  completePayload(requestId: string): Promise<{ to: Address.Address; data: Hex.Hex }>
+  completePayload(requestId: string): Promise<{ to: Address.Checksummed; data: Hex.Hex }>
 
   /**
    * Initiates a configuration update to add a new mnemonic as a recovery signer for a wallet.
@@ -72,7 +72,7 @@ export interface RecoveryInterface {
    * @returns A promise that resolves to a `requestId` for the configuration update signature request.
    * @see {completeUpdate} to finalize this change after it has been signed.
    */
-  addMnemonic(wallet: Address.Address, mnemonic: string): Promise<string>
+  addMnemonic(wallet: Address.Checksummed, mnemonic: string): Promise<string>
 
   /**
    * Initiates a configuration update to add any generic address as a recovery signer.
@@ -88,7 +88,7 @@ export interface RecoveryInterface {
    * @returns A promise that resolves to a `requestId` for the configuration update signature request.
    * @see {completeUpdate} to finalize this change after it has been signed.
    */
-  addSigner(wallet: Address.Address, address: Address.Address): Promise<string>
+  addSigner(wallet: Address.Checksummed, address: Address.Checksummed): Promise<string>
 
   /**
    * Initiates a configuration update to remove a recovery signer from a wallet.
@@ -100,7 +100,7 @@ export interface RecoveryInterface {
    * @returns A promise that resolves to a `requestId` for the configuration update signature request.
    * @see {completeUpdate} to finalize this change after it has been signed.
    */
-  removeSigner(wallet: Address.Address, address: Address.Address): Promise<string>
+  removeSigner(wallet: Address.Checksummed, address: Address.Checksummed): Promise<string>
 
   /**
    * Finalizes and saves a pending recovery configuration update.
@@ -144,7 +144,7 @@ export interface RecoveryInterface {
    * @returns A function that, when called, unsubscribes the listener.
    */
   onQueuedPayloadsUpdate(
-    wallet: Address.Address | undefined,
+    wallet: Address.Checksummed | undefined,
     cb: (payloads: QueuedRecoveryPayload[]) => void,
     trigger?: boolean,
   ): () => void
@@ -201,7 +201,7 @@ export class Recovery implements RecoveryInterface {
     modules[idx].imageHash = GenericTree.hash(nextGeneric)
   }
 
-  public async initRecoveryModule(modules: Config.SapientSignerLeaf[], address: Address.Address) {
+  public async initRecoveryModule(modules: Config.SapientSignerLeaf[], address: Address.Checksummed) {
     if (this.hasRecoveryModule(modules)) {
       throw new Error('recovery-module-already-initialized')
     }
@@ -232,7 +232,7 @@ export class Recovery implements RecoveryInterface {
     return modules.some((m) => Address.isEqual(m.address, this.shared.sequence.extensions.recovery))
   }
 
-  async addRecoverySignerToModules(modules: Config.SapientSignerLeaf[], address: Address.Address) {
+  async addRecoverySignerToModules(modules: Config.SapientSignerLeaf[], address: Address.Checksummed) {
     if (!this.hasRecoveryModule(modules)) {
       throw new Error('recovery-module-not-enabled')
     }
@@ -256,7 +256,7 @@ export class Recovery implements RecoveryInterface {
     })
   }
 
-  async removeRecoverySignerFromModules(modules: Config.SapientSignerLeaf[], address: Address.Address) {
+  async removeRecoverySignerFromModules(modules: Config.SapientSignerLeaf[], address: Address.Checksummed) {
     if (!this.hasRecoveryModule(modules)) {
       throw new Error('recovery-module-not-enabled')
     }
@@ -278,7 +278,7 @@ export class Recovery implements RecoveryInterface {
     })
   }
 
-  async addMnemonic(wallet: Address.Address, mnemonic: string) {
+  async addMnemonic(wallet: Address.Checksummed, mnemonic: string) {
     const signer = MnemonicHandler.toSigner(mnemonic)
     if (!signer) {
       throw new Error('invalid-mnemonic')
@@ -292,7 +292,7 @@ export class Recovery implements RecoveryInterface {
     return this.addSigner(wallet, signer.address)
   }
 
-  async addSigner(wallet: Address.Address, address: Address.Address) {
+  async addSigner(wallet: Address.Checksummed, address: Address.Checksummed) {
     const { modules } = await this.shared.modules.wallets.getConfigurationParts(wallet)
     await this.addRecoverySignerToModules(modules, address)
     return this.shared.modules.wallets.requestConfigurationUpdate(
@@ -305,7 +305,7 @@ export class Recovery implements RecoveryInterface {
     )
   }
 
-  async removeSigner(wallet: Address.Address, address: Address.Address) {
+  async removeSigner(wallet: Address.Checksummed, address: Address.Checksummed) {
     const { modules } = await this.shared.modules.wallets.getConfigurationParts(wallet)
     await this.removeRecoverySignerFromModules(modules, address)
     return this.shared.modules.wallets.requestConfigurationUpdate(
@@ -325,7 +325,7 @@ export class Recovery implements RecoveryInterface {
     return this.shared.modules.wallets.completeConfigurationUpdate(requestId)
   }
 
-  async getSigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {
+  async getSigners(address: Address.Checksummed): Promise<RecoverySigner[] | undefined> {
     const { raw } = await this.shared.modules.wallets.getConfiguration(address)
     const recoveryLeaf = raw.modules.find((m) => Address.isEqual(m.address, this.shared.sequence.extensions.recovery))
     if (!recoveryLeaf) {
@@ -359,7 +359,7 @@ export class Recovery implements RecoveryInterface {
       }))
   }
 
-  async queuePayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls) {
+  async queuePayload(wallet: Address.Checksummed, chainId: bigint, payload: Payload.Calls) {
     const signers = await this.getSigners(wallet)
     if (!signers) {
       throw new Error('recovery-signers-not-found')
@@ -398,7 +398,7 @@ export class Recovery implements RecoveryInterface {
   }
 
   // TODO: Handle this transaction instead of just returning the to and data
-  async completePayload(requestId: string): Promise<{ to: Address.Address; data: Hex.Hex }> {
+  async completePayload(requestId: string): Promise<{ to: Address.Checksummed; data: Hex.Hex }> {
     const signature = await this.shared.modules.signatures.get(requestId)
     if (signature.action !== 'recovery' || !Payload.isRecovery(signature.envelope.payload)) {
       throw new Error('invalid-recovery-payload')
@@ -436,7 +436,7 @@ export class Recovery implements RecoveryInterface {
     }
   }
 
-  async getQueuedRecoveryPayloads(wallet?: Address.Address): Promise<QueuedRecoveryPayload[]> {
+  async getQueuedRecoveryPayloads(wallet?: Address.Checksummed): Promise<QueuedRecoveryPayload[]> {
     const all = await this.shared.databases.recovery.list()
     if (wallet) {
       return all.filter((p) => Address.isEqual(p.wallet, wallet))
@@ -446,7 +446,7 @@ export class Recovery implements RecoveryInterface {
   }
 
   onQueuedPayloadsUpdate(
-    wallet: Address.Address | undefined,
+    wallet: Address.Checksummed | undefined,
     cb: (payloads: QueuedRecoveryPayload[]) => void,
     trigger?: boolean,
   ) {
@@ -553,7 +553,7 @@ export class Recovery implements RecoveryInterface {
     }
   }
 
-  async encodeRecoverySignature(imageHash: Hex.Hex, signer: Address.Address) {
+  async encodeRecoverySignature(imageHash: Hex.Hex, signer: Address.Checksummed) {
     const genericTree = await this.shared.sequence.stateProvider.getTree(imageHash)
     if (!genericTree) {
       throw new Error('recovery-module-tree-not-found')

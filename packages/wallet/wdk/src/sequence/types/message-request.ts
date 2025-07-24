@@ -6,7 +6,7 @@ export type MessageRequest = string | Hex.Hex | Payload.TypedDataToSign
 
 type MessageBase = {
   id: string
-  wallet: Address.Address
+  wallet: Address.Checksummed
   message: MessageRequest
   source: string
   signatureId: string

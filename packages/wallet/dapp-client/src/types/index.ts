@@ -20,19 +20,19 @@ export type PreferredLoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'm
 // --- Payloads for Transport ---
 
 export interface AddExplicitSessionPayload {
-  sessionAddress: Address.Address
+  sessionAddress: Address.Checksummed
   permissions: Signers.Session.ExplicitParams
   preferredLoginMethod?: PreferredLoginMethod
   email?: string
 }
 export interface ModifySessionPayload {
-  walletAddress: Address.Address
-  sessionAddress: Address.Address
+  walletAddress: Address.Checksummed
+  sessionAddress: Address.Checksummed
   permissions: Signers.Session.ExplicitParams
 }
 
 export interface AddImplicitSessionPayload {
-  sessionAddress: Address.Address
+  sessionAddress: Address.Checksummed
   implicitSessionRedirectUrl?: string
   permissions?: Signers.Session.ExplicitParams
   preferredLoginMethod?: PreferredLoginMethod
@@ -40,13 +40,13 @@ export interface AddImplicitSessionPayload {
 }
 
 export interface SignMessagePayload {
-  address: Address.Address
+  address: Address.Checksummed
   message: string
   chainId: ChainId
 }
 
 export interface SignTypedDataPayload {
-  address: Address.Address
+  address: Address.Checksummed
   typedData: TypedData
   chainId: ChainId
 }
@@ -87,7 +87,7 @@ export type Transaction =
     Partial<Omit<Payload.Call, RequiredKeys>>
 
 export type Session = {
-  address: Address.Address
+  address: Address.Checksummed
   isImplicit: boolean
 }
 
@@ -165,14 +165,14 @@ export interface BaseRequest {
 export interface MessageSignatureRequest extends BaseRequest {
   type: 'message_signature'
   message: string
-  address: Address.Address
+  address: Address.Checksummed
   chainId: number
 }
 
 export interface TypedDataSignatureRequest extends BaseRequest {
   type: 'typed_data_signature'
   typedData: unknown
-  address: Address.Address
+  address: Address.Checksummed
   chainId: number
 }
 

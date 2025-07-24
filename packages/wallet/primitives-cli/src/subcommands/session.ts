@@ -5,7 +5,7 @@ import sessionImplicitCommand from './sessionImplicit.js'
 
 import { GenericTree, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
 
-export async function doEmptyTopology(identitySigner: Address.Address): Promise<string> {
+export async function doEmptyTopology(identitySigner: Address.Checksummed): Promise<string> {
   const topology = SessionConfig.emptySessionsTopology(identitySigner)
   return SessionConfig.sessionsTopologyToJson(topology)
 }
@@ -19,8 +19,8 @@ export async function doEncodeTopology(sessionTopologyInput: string): Promise<st
 export async function doEncodeSessionCallSignatures(
   sessionTopologyInput: string,
   callSignaturesInput: string[],
-  explicitSigners: Address.Address[] = [],
-  implicitSigners: Address.Address[] = [],
+  explicitSigners: Address.Checksummed[] = [],
+  implicitSigners: Address.Checksummed[] = [],
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
   const callSignatures = callSignaturesInput.map((s) => SessionSignature.sessionCallSignatureFromJson(s))

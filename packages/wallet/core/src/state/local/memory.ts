@@ -4,14 +4,14 @@ import { Store } from './index.js'
 
 export class MemoryStore implements Store {
   private configs = new Map<Hex.Hex, Config.Config>()
-  private counterfactualWallets = new Map<Address.Address, { imageHash: Hex.Hex; context: Context.Context }>()
-  private payloads = new Map<Hex.Hex, { content: Payload.Parented; chainId: bigint; wallet: Address.Address }>()
-  private signerSubdigests = new Map<Address.Address, Set<Hex.Hex>>()
-  private signatures = new Map<`${Address.Address}-${Hex.Hex}`, Signature.SignatureOfSignerLeaf>()
+  private counterfactualWallets = new Map<Address.Checksummed, { imageHash: Hex.Hex; context: Context.Context }>()
+  private payloads = new Map<Hex.Hex, { content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed }>()
+  private signerSubdigests = new Map<Address.Checksummed, Set<Hex.Hex>>()
+  private signatures = new Map<`${Address.Checksummed}-${Hex.Hex}`, Signature.SignatureOfSignerLeaf>()
 
-  private sapientSignerSubdigests = new Map<`${Address.Address}-${Hex.Hex}`, Set<Hex.Hex>>()
+  private sapientSignerSubdigests = new Map<`${Address.Checksummed}-${Hex.Hex}`, Set<Hex.Hex>>()
   private sapientSignatures = new Map<
-    `${Address.Address}-${Hex.Hex}-${Hex.Hex}`,
+    `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}`,
     Signature.SignatureOfSapientSignerLeaf
   >()
 
@@ -41,15 +41,15 @@ export class MemoryStore implements Store {
     return out as T
   }
 
-  private getSignatureKey(signer: Address.Address, subdigest: Hex.Hex): `${Address.Address}-${Hex.Hex}` {
+  private getSignatureKey(signer: Address.Checksummed, subdigest: Hex.Hex): `${Address.Checksummed}-${Hex.Hex}` {
     return `${signer}-${subdigest}`
   }
 
   private getSapientSignatureKey(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
-  ): `${Address.Address}-${Hex.Hex}-${Hex.Hex}` {
+  ): `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}` {
     return `${signer}-${imageHash}-${subdigest}`
   }
 
@@ -63,37 +63,41 @@ export class MemoryStore implements Store {
   }
 
   async loadCounterfactualWallet(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
   ): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
     const counterfactualWallet = this.counterfactualWallets.get(wallet)
     return counterfactualWallet ? this.deepCopy(counterfactualWallet) : undefined
   }
 
-  async saveCounterfactualWallet(wallet: Address.Address, imageHash: Hex.Hex, context: Context.Context): Promise<void> {
+  async saveCounterfactualWallet(
+    wallet: Address.Checksummed,
+    imageHash: Hex.Hex,
+    context: Context.Context,
+  ): Promise<void> {
     this.counterfactualWallets.set(wallet, this.deepCopy({ imageHash, context }))
   }
 
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
-  ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Address } | undefined> {
+  ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed } | undefined> {
     const payload = this.payloads.get(subdigest)
     return payload ? this.deepCopy(payload) : undefined
   }
 
   async savePayloadOfSubdigest(
     subdigest: Hex.Hex,
-    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Address },
+    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed },
   ): Promise<void> {
     this.payloads.set(subdigest, this.deepCopy(payload))
   }
 
-  async loadSubdigestsOfSigner(signer: Address.Address): Promise<Hex.Hex[]> {
+  async loadSubdigestsOfSigner(signer: Address.Checksummed): Promise<Hex.Hex[]> {
     const subdigests = this.signerSubdigests.get(signer)
     return subdigests ? Array.from(subdigests) : []
   }
 
   async loadSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
   ): Promise<Signature.SignatureOfSignerLeaf | undefined> {
     const key = this.getSignatureKey(signer, subdigest)
@@ -102,7 +106,7 @@ export class MemoryStore implements Store {
   }
 
   async saveSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     signature: Signature.SignatureOfSignerLeaf,
   ): Promise<void> {
@@ -115,14 +119,14 @@ export class MemoryStore implements Store {
     this.signerSubdigests.get(signer)!.add(subdigest)
   }
 
-  async loadSubdigestsOfSapientSigner(signer: Address.Address, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
+  async loadSubdigestsOfSapientSigner(signer: Address.Checksummed, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
     const key = `${signer}-${imageHash}` as const
     const subdigests = this.sapientSignerSubdigests.get(key)
     return subdigests ? Array.from(subdigests) : []
   }
 
   async loadSapientSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
   ): Promise<Signature.SignatureOfSapientSignerLeaf | undefined> {
@@ -132,7 +136,7 @@ export class MemoryStore implements Store {
   }
 
   async saveSapientSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
     signature: Signature.SignatureOfSapientSignerLeaf,

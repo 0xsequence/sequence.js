@@ -7,7 +7,7 @@ export interface Handler {
   onStatusChange(cb: () => void): () => void
 
   status(
-    address: Address.Address,
+    address: Address.Checksummed,
     imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable>

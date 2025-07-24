@@ -19,7 +19,10 @@ export class PasskeysHandler implements Handler {
     return () => {}
   }
 
-  private async loadPasskey(wallet: Address.Address, imageHash: Hex.Hex): Promise<Signers.Passkey.Passkey | undefined> {
+  private async loadPasskey(
+    wallet: Address.Checksummed,
+    imageHash: Hex.Hex,
+  ): Promise<Signers.Passkey.Passkey | undefined> {
     try {
       return await Signers.Passkey.Passkey.loadFromWitness(this.stateReader, this.extensions, wallet, imageHash)
     } catch (e) {
@@ -29,7 +32,7 @@ export class PasskeysHandler implements Handler {
   }
 
   async status(
-    address: Address.Address,
+    address: Address.Checksummed,
     imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerActionable | SignerUnavailable> {

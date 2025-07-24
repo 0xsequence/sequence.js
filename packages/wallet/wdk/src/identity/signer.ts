@@ -30,7 +30,7 @@ export class IdentitySigner implements Signers.Signer {
     readonly authKey: AuthKey,
   ) {}
 
-  get address(): Address.Address {
+  get address(): Address.Checksummed {
     if (!Address.validate(this.authKey.identitySigner)) {
       throw new Error('No signer address found')
     }
@@ -38,7 +38,7 @@ export class IdentitySigner implements Signers.Signer {
   }
 
   async sign(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
   ): Promise<SequenceSignature.SignatureOfSignerLeaf> {
@@ -55,7 +55,7 @@ export class IdentitySigner implements Signers.Signer {
     }
   }
 
-  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
+  async witness(stateWriter: State.Writer, wallet: Address.Checksummed, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
       Hex.fromString(
         JSON.stringify({

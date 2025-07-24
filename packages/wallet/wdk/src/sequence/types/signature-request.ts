@@ -42,7 +42,7 @@ export type BaseSignatureRequest<A extends Action = Action> =
       /** A unique identifier for the signature request (UUID v7). */
       id: string
       /** The address of the wallet this request is for. */
-      wallet: Address.Address
+      wallet: Address.Checksummed
       /** A string indicating the origin of the request (e.g., a dapp URL or 'wallet-webapp'). */
       origin: string
       /** The ISO 8601 timestamp of when the request was created. */
@@ -62,7 +62,7 @@ export type BaseSignatureRequest<A extends Action = Action> =
       /** A unique identifier for the signature request (UUID v7). */
       id: string
       /** The address of the wallet this request is for. */
-      wallet: Address.Address
+      wallet: Address.Checksummed
       /** A string indicating the origin of the request (e.g., a dapp URL or 'wallet-webapp'). */
       origin: string
       /** The ISO 8601 timestamp of when the request was created. */
@@ -89,7 +89,7 @@ export type BaseSignatureRequest<A extends Action = Action> =
  */
 export type SignerBase = {
   /** The address of the signer. */
-  address: Address.Address
+  address: Address.Checksummed
   /**
    * For sapient signers (e.g., passkeys, recovery modules), this is the hash of the
    * configuration tree that defines the signer's behavior, acting as a unique identifier.

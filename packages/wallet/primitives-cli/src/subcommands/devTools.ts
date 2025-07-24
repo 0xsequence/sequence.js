@@ -52,7 +52,7 @@ function randomBigInt(max: bigint, options?: RandomOptions): bigint {
   return BigInt(Math.floor(Math.random() * Number(max)))
 }
 
-function randomAddress(options?: RandomOptions): Address.Address {
+function randomAddress(options?: RandomOptions): Address.Checksummed {
   return `0x${Buffer.from(randomBytes(20, options)).toString('hex')}`
 }
 

@@ -4,7 +4,7 @@ import { FeeToken, GetMetaTxnReceiptReturn } from './standard/rpc/index.js'
 
 export interface FeeOption {
   token: FeeToken
-  to: Address.Address
+  to: Address.Checksummed
   value: string
   gasLimit: number
 }
@@ -61,15 +61,15 @@ export interface Relayer {
   type: string
   id: string
 
-  isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean>
+  isAvailable(wallet: Address.Checksummed, chainId: bigint): Promise<boolean>
 
   feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
 
-  relay(to: Address.Address, data: Hex.Hex, chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }>
+  relay(to: Address.Checksummed, data: Hex.Hex, chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }>
 
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
 

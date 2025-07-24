@@ -54,7 +54,7 @@ export interface TransactionsInterface {
    * @returns A promise that resolves to the unique `transactionId` for this new request.
    */
   request(
-    from: Address.Address,
+    from: Address.Checksummed,
     chainId: bigint,
     txs: TransactionRequest[],
     options?: { source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
@@ -243,7 +243,7 @@ export class Transactions implements TransactionsInterface {
   }
 
   async request(
-    from: Address.Address,
+    from: Address.Checksummed,
     chainId: bigint,
     txs: TransactionRequest[],
     options?: {

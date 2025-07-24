@@ -16,9 +16,9 @@ import {
 type GenericProviderTransactionReceipt = 'success' | 'failed' | 'unknown'
 
 export interface GenericProvider {
-  sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: bigint): Promise<string | undefined>
-  getBalance(address: Address.Address): Promise<bigint>
-  call(args: { to: Address.Address; data: Hex.Hex }): Promise<string>
+  sendTransaction(args: { to: Address.Checksummed; data: Hex.Hex }, chainId: bigint): Promise<string | undefined>
+  getBalance(address: Address.Checksummed): Promise<bigint>
+  call(args: { to: Address.Checksummed; data: Hex.Hex }): Promise<string>
   getTransactionReceipt(txHash: Hex.Hex, chainId: bigint): Promise<GenericProviderTransactionReceipt>
 }
 
@@ -29,7 +29,7 @@ export class LocalRelayer implements Relayer {
 
   constructor(public readonly provider: GenericProvider) {}
 
-  isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+  isAvailable(_wallet: Address.Checksummed, _chainId: bigint): Promise<boolean> {
     return Promise.resolve(true)
   }
 
@@ -48,7 +48,7 @@ export class LocalRelayer implements Relayer {
   }
 
   feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
@@ -70,7 +70,7 @@ export class LocalRelayer implements Relayer {
   }
 
   async relay(
-    to: Address.Address,
+    to: Address.Checksummed,
     data: Hex.Hex,
     chainId: bigint,
     quote?: FeeQuote,
@@ -288,8 +288,8 @@ export class EIP1193ProviderAdapter implements GenericProvider {
     }
   }
 
-  async sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: bigint) {
-    const accounts: Address.Address[] = await this.provider.request({ method: 'eth_requestAccounts' })
+  async sendTransaction(args: { to: Address.Checksummed; data: Hex.Hex }, chainId: bigint) {
+    const accounts: Address.Checksummed[] = await this.provider.request({ method: 'eth_requestAccounts' })
     const from = accounts[0]
 
     if (!from) {
@@ -313,7 +313,7 @@ export class EIP1193ProviderAdapter implements GenericProvider {
     return tx
   }
 
-  async getBalance(address: Address.Address) {
+  async getBalance(address: Address.Checksummed) {
     const balance = await this.provider.request({
       method: 'eth_getBalance',
       params: [address, 'latest'],
@@ -321,7 +321,7 @@ export class EIP1193ProviderAdapter implements GenericProvider {
     return BigInt(balance)
   }
 
-  async call(args: { to: Address.Address; data: Hex.Hex }) {
+  async call(args: { to: Address.Checksummed; data: Hex.Hex }) {
     return await this.provider.request({
       method: 'eth_call',
       params: [args, 'latest'],

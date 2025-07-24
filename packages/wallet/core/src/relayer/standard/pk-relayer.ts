@@ -97,20 +97,20 @@ export class PkRelayer implements Relayer {
     })
   }
 
-  async isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
+  async isAvailable(_wallet: Address.Checksummed, chainId: bigint): Promise<boolean> {
     const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
     return providerChainId === chainId
   }
 
   feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     return this.relayer.feeOptions(wallet, chainId, calls)
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
+  async relay(to: Address.Checksummed, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
     const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
     if (providerChainId !== chainId) {
       throw new Error('Provider chain id does not match relayer chain id')

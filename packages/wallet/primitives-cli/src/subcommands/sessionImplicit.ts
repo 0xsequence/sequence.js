@@ -3,7 +3,7 @@ import type { CommandModule } from 'yargs'
 import { fromPosOrStdin, requireString } from '../utils.js'
 
 export async function doAddBlacklistAddress(
-  blacklistAddress: Address.Address,
+  blacklistAddress: Address.Checksummed,
   sessionTopologyInput: string,
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
@@ -12,7 +12,7 @@ export async function doAddBlacklistAddress(
 }
 
 export async function doRemoveBlacklistAddress(
-  blacklistAddress: Address.Address,
+  blacklistAddress: Address.Checksummed,
   sessionTopologyInput: string,
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)

@@ -5,7 +5,7 @@ export interface Device {
   /**
    * The on-chain address of the device key.
    */
-  address: Address.Address
+  address: Address.Checksummed
 
   /**
    * True if this is the key for the current local session.

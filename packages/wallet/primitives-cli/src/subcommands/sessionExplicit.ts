@@ -20,7 +20,10 @@ export async function doAddSession(sessionInput: string, topologyInput: string):
   return SessionConfig.sessionsTopologyToJson(topology)
 }
 
-export async function doRemoveSession(explicitSessionAddress: Address.Address, topologyInput: string): Promise<string> {
+export async function doRemoveSession(
+  explicitSessionAddress: Address.Checksummed,
+  topologyInput: string,
+): Promise<string> {
   const topology = SessionConfig.sessionsTopologyFromJson(topologyInput)
   if (!SessionConfig.isSessionsTopology(topology)) {
     throw new Error('Session topology must be a valid session topology')

@@ -13,7 +13,7 @@ describe('Sessions (via Manager)', () => {
 
   // Wallet webapp components
   let wdk: {
-    identitySignerAddress: Address.Address
+    identitySignerAddress: Address.Checksummed
     manager: Sequence.Manager
   }
 
@@ -25,7 +25,7 @@ describe('Sessions (via Manager)', () => {
   }
 
   const setupExplicitSession = async (
-    sessionAddress: Address.Address,
+    sessionAddress: Address.Checksummed,
     permissions: Permission.SessionPermissions,
     isModify = false,
   ) => {

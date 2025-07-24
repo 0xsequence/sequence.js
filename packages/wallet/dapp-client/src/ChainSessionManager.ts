@@ -62,7 +62,7 @@ export class ChainSessionManager {
 
   private sessions: Session[] = []
 
-  private walletAddress: Address.Address | null = null
+  private walletAddress: Address.Checksummed | null = null
   private sessionManager: Signers.SessionManager | null = null
   private wallet: Wallet | null = null
   private provider: Provider.Provider | null = null
@@ -185,7 +185,7 @@ export class ChainSessionManager {
    * This is used when a wallet address is known but the session manager for this chain hasn't been instantiated yet.
    * @param walletAddress The address of the wallet to initialize with.
    */
-  public initializeWithWallet(walletAddress: Address.Address) {
+  public initializeWithWallet(walletAddress: Address.Checksummed) {
     if (this.isInitialized) return
 
     this.walletAddress = walletAddress
@@ -385,7 +385,7 @@ export class ChainSessionManager {
    * @throws {ModifyExplicitSessionError} If modifying the session fails.
    */
   async modifyExplicitSession(
-    sessionAddress: Address.Address,
+    sessionAddress: Address.Checksummed,
     newPermissions: Signers.Session.ExplicitParams,
   ): Promise<void> {
     if (!this.walletAddress) {
@@ -536,7 +536,7 @@ export class ChainSessionManager {
    */
   private async _initializeImplicitSessionInternal(
     pk: Hex.Hex,
-    address: Address.Address,
+    address: Address.Checksummed,
     attestation: Attestation.Attestation,
     identitySignature: Hex.Hex,
     saveSession: boolean = false,
@@ -781,7 +781,7 @@ export class ChainSessionManager {
    * Gets the wallet address associated with this manager.
    * @returns The wallet address, or null if not initialized.
    */
-  getWalletAddress(): Address.Address | null {
+  getWalletAddress(): Address.Checksummed | null {
     return this.walletAddress
   }
 
@@ -894,7 +894,7 @@ export class ChainSessionManager {
    * @param calls The payload calls to include in the transaction.
    * @returns The signed transaction data ready for relaying.
    */
-  private async _buildAndSignCalls(calls: Payload.Call[]): Promise<{ to: Address.Address; data: Hex.Hex }> {
+  private async _buildAndSignCalls(calls: Payload.Call[]): Promise<{ to: Address.Checksummed; data: Hex.Hex }> {
     if (!this.wallet || !this.sessionManager || !this.provider)
       throw new InitializationError('Session not fully initialized.')
 
