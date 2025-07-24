@@ -8,8 +8,8 @@ import { AbiFunction, Address, Bytes } from 'ox'
  */
 function parseSignature(sig: string): { types: string[]; names: (string | undefined)[] } {
   const m = sig.match(/\(([^)]*)\)/)
-  if (!m || !m[1]) throw new Error(`Invalid function signature: ${sig}`)
-  const inner = m[1].trim()
+  if (!m) throw new Error(`Invalid function signature: ${sig}`)
+  const inner = m[1]?.trim() ?? ''
   if (inner === '') return { types: [], names: [] }
 
   const parts = inner.split(',').map((p) => p.trim())
@@ -323,7 +323,7 @@ export class ERC1155PermissionBuilder {
   static buildTransfer(target: Address.Address, tokenId: bigint, limit: bigint): Permission.Permission {
     return PermissionBuilder.for(target)
       .forFunction('function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data)')
-      .withUintNParam('tokenId', tokenId)
+      .withUintNParam('id', tokenId)
       .withUintNParam('amount', limit, 256, Permission.ParameterOperation.LESS_THAN_OR_EQUAL, true)
       .build()
   }
