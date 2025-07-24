@@ -67,7 +67,7 @@ export class DappClient {
 
   private isInitializing = false
 
-  private walletAddress: Address.Address | null = null
+  private walletAddress: Address.Checksummed | null = null
   private eventListeners: {
     [K in keyof DappClientEventMap]?: Set<DappClientEventMap[K]>
   } = {}
@@ -167,7 +167,7 @@ export class DappClient {
 
   /**
    * Retrieves the wallet address of the current session.
-   * @returns The wallet address of the current session, or null if not initialized. {@link Address.Address}
+   * @returns The wallet address of the current session, or null if not initialized. {@link Address.Checksummed}
    *
    * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-wallet-address} for more detailed documentation.
    *
@@ -180,13 +180,13 @@ export class DappClient {
    *   console.log('Wallet address:', walletAddress);
    * }
    */
-  public getWalletAddress(): Address.Address | null {
+  public getWalletAddress(): Address.Checksummed | null {
     return this.walletAddress
   }
 
   /**
    * Retrieves a list of all active sessions (signers) associated with the current wallet.
-   * @returns An array of all the active sessions. {@link { address: Address.Address, isImplicit: boolean }[]}
+   * @returns An array of all the active sessions. {@link { address: Address.Checksummed, isImplicit: boolean }[]}
    *
    * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-all-sessions} for more detailed documentation.
    *
@@ -424,7 +424,7 @@ export class DappClient {
   /**
    * Modifies the permissions of an existing explicit session for a given chain and session address.
    * @param chainId The chain ID on which the explicit session exists. {@link ChainId}
-   * @param sessionAddress The address of the explicit session to modify. {@link Address.Address}
+   * @param sessionAddress The address of the explicit session to modify. {@link Address.Checksummed}
    * @param permissions The new permissions to set for the session. {@link Signers.Session.ExplicitParams}
    *
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
@@ -453,7 +453,7 @@ export class DappClient {
    */
   async modifyExplicitSession(
     chainId: ChainId,
-    sessionAddress: Address.Address,
+    sessionAddress: Address.Checksummed,
     permissions: Signers.Session.ExplicitParams,
   ): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)

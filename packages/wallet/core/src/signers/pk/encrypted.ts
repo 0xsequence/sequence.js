@@ -5,7 +5,7 @@ export interface EncryptedData {
   iv: Uint8Array
   data: ArrayBuffer
   keyPointer: string
-  address: Address.Address
+  address: Address.Checksummed
   publicKey: PublicKey.PublicKey
 }
 
@@ -21,7 +21,7 @@ export class EncryptedPksDb {
     this.tableName = tableName
   }
 
-  private computeDbKey(address: Address.Address): string {
+  private computeDbKey(address: Address.Checksummed): string {
     return `pk_${address.toLowerCase()}`
   }
 
@@ -105,23 +105,23 @@ export class EncryptedPksDb {
     return encrypted
   }
 
-  async getEncryptedEntry(address: Address.Address): Promise<EncryptedData | undefined> {
+  async getEncryptedEntry(address: Address.Checksummed): Promise<EncryptedData | undefined> {
     const dbKey = this.computeDbKey(address)
     return this.getData<EncryptedData>(dbKey)
   }
 
-  async getEncryptedPkStore(address: Address.Address): Promise<EncryptedPkStore | undefined> {
+  async getEncryptedPkStore(address: Address.Checksummed): Promise<EncryptedPkStore | undefined> {
     const entry = await this.getEncryptedEntry(address)
     if (!entry) return
     return new EncryptedPkStore(entry)
   }
 
-  async listAddresses(): Promise<Address.Address[]> {
+  async listAddresses(): Promise<Address.Checksummed[]> {
     const allEntries = await this.getAllData<EncryptedData>()
     return allEntries.map((entry) => entry.address)
   }
 
-  async remove(address: Address.Address) {
+  async remove(address: Address.Checksummed) {
     const dbKey = this.computeDbKey(address)
     await this.putData(dbKey, undefined)
     const keyPointer = this.localStorageKeyPrefix + address
@@ -132,7 +132,7 @@ export class EncryptedPksDb {
 export class EncryptedPkStore implements PkStore {
   constructor(private readonly encrypted: EncryptedData) {}
 
-  address(): Address.Address {
+  address(): Address.Checksummed {
     return this.encrypted.address
   }
 

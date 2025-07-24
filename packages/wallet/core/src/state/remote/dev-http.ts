@@ -118,12 +118,12 @@ export class DevHttpProvider implements Provider {
     return config
   }
 
-  async getDeploy(wallet: Address.Address): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
+  async getDeploy(wallet: Address.Checksummed): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
     return this.request('GET', `/deploy/${wallet}`)
   }
 
-  async getWallets(signer: Address.Address): Promise<{
-    [wallet: Address.Address]: {
+  async getWallets(signer: Address.Checksummed): Promise<{
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
@@ -134,10 +134,10 @@ export class DevHttpProvider implements Provider {
   }
 
   async getWalletsForSapient(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): Promise<{
-    [wallet: Address.Address]: {
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
@@ -148,8 +148,8 @@ export class DevHttpProvider implements Provider {
   }
 
   async getWitnessFor(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
   ): Promise<
     | {
         chainId: bigint
@@ -163,8 +163,8 @@ export class DevHttpProvider implements Provider {
   }
 
   async getWitnessForSapient(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): Promise<
     | {
@@ -179,7 +179,7 @@ export class DevHttpProvider implements Provider {
   }
 
   async getConfigurationUpdates(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
@@ -199,7 +199,7 @@ export class DevHttpProvider implements Provider {
   }
 
   async saveWitnesses(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
@@ -209,7 +209,7 @@ export class DevHttpProvider implements Provider {
   }
 
   async saveUpdate(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     configuration: Config.Config,
     signature: Signature.RawSignature,
   ): Promise<void> {
@@ -233,7 +233,7 @@ export class DevHttpProvider implements Provider {
     | {
         chainId: bigint
         payload: Payload.Parented
-        wallet: Address.Address
+        wallet: Address.Checksummed
       }
     | undefined
   > {
@@ -241,13 +241,13 @@ export class DevHttpProvider implements Provider {
       | {
           chainId: bigint
           payload: Payload.Parented
-          wallet: Address.Address
+          wallet: Address.Checksummed
         }
       | undefined
     >('GET', `/payload/${opHash}`)
   }
 
-  async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+  async savePayload(wallet: Address.Checksummed, payload: Payload.Parented, chainId: bigint): Promise<void> {
     return this.request<void>('POST', '/payload', { wallet, payload, chainId })
   }
 }

@@ -6,10 +6,10 @@ export type Provider = Reader & Writer
 export interface Reader {
   getConfiguration(imageHash: Hex.Hex): MaybePromise<Config.Config | undefined>
 
-  getDeploy(wallet: Address.Address): MaybePromise<{ imageHash: Hex.Hex; context: Context.Context } | undefined>
+  getDeploy(wallet: Address.Checksummed): MaybePromise<{ imageHash: Hex.Hex; context: Context.Context } | undefined>
 
-  getWallets(signer: Address.Address): MaybePromise<{
-    [wallet: Address.Address]: {
+  getWallets(signer: Address.Checksummed): MaybePromise<{
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
@@ -17,10 +17,10 @@ export interface Reader {
   }>
 
   getWalletsForSapient(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): MaybePromise<{
-    [wallet: Address.Address]: {
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
@@ -28,22 +28,22 @@ export interface Reader {
   }>
 
   getWitnessFor(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
   ): MaybePromise<
     { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined
   >
 
   getWitnessForSapient(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): MaybePromise<
     { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
   >
 
   getConfigurationUpdates(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>>
@@ -51,21 +51,21 @@ export interface Reader {
   getTree(rootHash: Hex.Hex): MaybePromise<GenericTree.Tree | undefined>
   getPayload(
     opHash: Hex.Hex,
-  ): MaybePromise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined>
+  ): MaybePromise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Checksummed } | undefined>
 }
 
 export interface Writer {
   saveWallet(deployConfiguration: Config.Config, context: Context.Context): MaybePromise<void>
 
   saveWitnesses(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
   ): MaybePromise<void>
 
   saveUpdate(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     configuration: Config.Config,
     signature: Signature.RawSignature,
   ): MaybePromise<void>
@@ -74,7 +74,7 @@ export interface Writer {
 
   saveConfiguration(config: Config.Config): MaybePromise<void>
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void>
-  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void>
+  savePayload(wallet: Address.Checksummed, payload: Payload.Parented, chainId: bigint): MaybePromise<void>
 }
 
 export type MaybePromise<T> = T | Promise<T>

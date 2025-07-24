@@ -31,7 +31,7 @@ export type ManagerOptions = {
 
   extensions?: Extensions.Extensions
   context?: Context.Context
-  guest?: Address.Address
+  guest?: Address.Checksummed
 
   encryptedPksDb?: CoreSigners.Pk.Encrypted.EncryptedPksDb
   managerDb?: Db.Wallets
@@ -171,7 +171,7 @@ export type Sequence = {
   readonly context: Context.Context
   readonly context4337: Context.Context
   readonly extensions: Extensions.Extensions
-  readonly guest: Address.Address
+  readonly guest: Address.Checksummed
 
   readonly stateProvider: State.Provider
 

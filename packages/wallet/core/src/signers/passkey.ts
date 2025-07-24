@@ -22,7 +22,7 @@ export type CreaetePasskeyOptions = {
 
 export type WitnessMessage = {
   action: 'consent-to-be-part-of-wallet'
-  wallet: Address.Address
+  wallet: Address.Checksummed
   publicKey: Extensions.Passkeys.PublicKey
   timestamp: number
   metadata?: Extensions.Passkeys.PasskeyMetadata
@@ -41,7 +41,7 @@ export class Passkey implements SapientSigner, Witnessable {
   public readonly credentialId: string
 
   public readonly publicKey: Extensions.Passkeys.PublicKey
-  public readonly address: Address.Address
+  public readonly address: Address.Checksummed
   public readonly imageHash: Hex.Hex
   public readonly embedMetadata: boolean
   public readonly metadata?: Extensions.Passkeys.PasskeyMetadata
@@ -58,7 +58,7 @@ export class Passkey implements SapientSigner, Witnessable {
   static async loadFromWitness(
     stateReader: State.Reader,
     extensions: Pick<Extensions.Extensions, 'passkeys'>,
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     imageHash: Hex.Hex,
   ) {
     // In the witness we will find the public key, and may find the credential id
@@ -222,7 +222,7 @@ export class Passkey implements SapientSigner, Witnessable {
   }
 
   async signSapient(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
@@ -260,7 +260,7 @@ export class Passkey implements SapientSigner, Witnessable {
     }
   }
 
-  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
+  async witness(stateWriter: State.Writer, wallet: Address.Checksummed, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
       Hex.fromString(
         JSON.stringify({

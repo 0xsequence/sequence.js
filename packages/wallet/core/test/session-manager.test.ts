@@ -9,7 +9,7 @@ import { Extensions } from '@0xsequence/wallet-primitives'
 
 const { PermissionBuilder, ERC20PermissionBuilder } = Utils
 
-function randomAddress(): Address.Address {
+function randomAddress(): Address.Checksummed {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
 }
 
@@ -298,7 +298,7 @@ describe('SessionManager', () => {
 
   const simulateTransaction = async (
     provider: Provider.Provider,
-    transaction: { to: Address.Address; data: Hex.Hex },
+    transaction: { to: Address.Checksummed; data: Hex.Hex },
     expectedEventTopic?: Hex.Hex,
   ) => {
     console.log('Simulating transaction', transaction)

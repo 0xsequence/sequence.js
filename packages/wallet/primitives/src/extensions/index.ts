@@ -1,7 +1,7 @@
 export type Extensions = {
-  passkeys: Address.Address
-  recovery: Address.Address
-  sessions: Address.Address
+  passkeys: Address.Checksummed
+  recovery: Address.Checksummed
+  sessions: Address.Checksummed
 }
 
 export const Dev1: Extensions = {

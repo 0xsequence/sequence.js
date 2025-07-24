@@ -62,12 +62,12 @@ export class RpcRelayer implements Relayer {
     })
   }
 
-  isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
+  isAvailable(_wallet: Address.Checksummed, chainId: bigint): Promise<boolean> {
     return Promise.resolve(BigInt(this.chainId) === chainId)
   }
 
   async feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
@@ -103,8 +103,8 @@ export class RpcRelayer implements Relayer {
   }
 
   async sendMetaTxn(
-    walletAddress: Address.Address,
-    to: Address.Address,
+    walletAddress: Address.Checksummed,
+    to: Address.Checksummed,
     data: Hex.Hex,
     chainId: bigint,
     quote?: FeeQuote,
@@ -132,7 +132,7 @@ export class RpcRelayer implements Relayer {
   }
 
   async relay(
-    to: Address.Address,
+    to: Address.Checksummed,
     data: Hex.Hex,
     chainId: bigint,
     quote?: FeeQuote,
@@ -366,7 +366,7 @@ export class RpcRelayer implements Relayer {
     }
   }
 
-  private mapRpcFeeTokenToAddress(rpcToken: RpcFeeToken): Address.Address {
+  private mapRpcFeeTokenToAddress(rpcToken: RpcFeeToken): Address.Checksummed {
     if (rpcToken.type === FeeTokenType.ERC20_TOKEN && rpcToken.contractAddress) {
       return Address.from(rpcToken.contractAddress)
     }

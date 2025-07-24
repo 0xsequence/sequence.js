@@ -14,7 +14,7 @@ import { CAN_RUN_LIVE, RPC_URL } from './constants'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
-function randomAddress(): Address.Address {
+function randomAddress(): Address.Checksummed {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
 }
 
@@ -41,7 +41,7 @@ describe('Preconditions', () => {
 
   const testWalletAddress = randomAddress()
 
-  const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Address) => {
+  const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Checksummed) => {
     const code = await provider.request({ method: 'eth_getCode', params: [contract, 'latest'] })
     if (code === '0x') {
       throw new Error(`Contract ${contract} not deployed`)

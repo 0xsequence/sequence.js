@@ -108,8 +108,8 @@ function rsyFromRsvStr(sigStr: string): RSY {
 export function encodeSessionCallSignatures(
   callSignatures: SessionCallSignature[],
   topology: SessionsTopology,
-  explicitSigners: Address.Address[] = [],
-  implicitSigners: Address.Address[] = [],
+  explicitSigners: Address.Checksummed[] = [],
+  implicitSigners: Address.Checksummed[] = [],
 ): Bytes.Bytes {
   const parts: Bytes.Bytes[] = []
 

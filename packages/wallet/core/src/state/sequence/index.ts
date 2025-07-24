@@ -21,7 +21,7 @@ export class Provider implements ProviderInterface {
     return fromServiceConfig(config)
   }
 
-  async getDeploy(wallet: Address.Address): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
+  async getDeploy(wallet: Address.Checksummed): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
     const { deployHash, context } = await this.service.deployHash({ wallet })
 
     Hex.assert(deployHash)
@@ -41,8 +41,8 @@ export class Provider implements ProviderInterface {
     }
   }
 
-  async getWallets(signer: Address.Address): Promise<{
-    [wallet: Address.Address]: {
+  async getWallets(signer: Address.Checksummed): Promise<{
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
@@ -94,10 +94,10 @@ export class Provider implements ProviderInterface {
   }
 
   async getWalletsForSapient(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): Promise<{
-    [wallet: Address.Address]: {
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
@@ -109,7 +109,7 @@ export class Provider implements ProviderInterface {
     return Object.fromEntries(
       Object.entries(wallets).map(
         ([wallet, signature]): [
-          Address.Address,
+          Address.Checksummed,
           { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf },
         ] => {
           Address.assert(wallet)
@@ -147,8 +147,8 @@ export class Provider implements ProviderInterface {
   }
 
   async getWitnessFor(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
   ): Promise<{ chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined> {
     try {
       const { witness } = await this.service.witness({ signer, wallet })
@@ -183,8 +183,8 @@ export class Provider implements ProviderInterface {
   }
 
   async getWitnessForSapient(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): Promise<
     { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
@@ -218,7 +218,7 @@ export class Provider implements ProviderInterface {
   }
 
   async getConfigurationUpdates(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
@@ -249,7 +249,7 @@ export class Provider implements ProviderInterface {
 
   async getPayload(
     opHash: Hex.Hex,
-  ): Promise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined> {
+  ): Promise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Checksummed } | undefined> {
     const { version, payload, wallet, chainID } = await this.service.payload({ digest: opHash })
 
     if (version !== 3) {
@@ -277,7 +277,7 @@ export class Provider implements ProviderInterface {
   }
 
   async saveWitnesses(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
@@ -319,7 +319,7 @@ export class Provider implements ProviderInterface {
   }
 
   async saveUpdate(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     configuration: Config.Config,
     signature: Signature.RawSignature,
   ): Promise<void> {
@@ -344,7 +344,7 @@ export class Provider implements ProviderInterface {
     // TODO: save deploy hash even if we don't have its configuration
   }
 
-  async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+  async savePayload(wallet: Address.Checksummed, payload: Payload.Parented, chainId: bigint): Promise<void> {
     await this.service.savePayload({
       version: 3,
       payload: getServicePayload(payload),

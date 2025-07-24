@@ -16,12 +16,12 @@ export type ParameterRule = {
 }
 
 export type Permission = {
-  target: Address.Address
+  target: Address.Checksummed
   rules: ParameterRule[]
 }
 
 export type SessionPermissions = {
-  signer: Address.Address
+  signer: Address.Checksummed
   chainId: bigint
   valueLimit: bigint
   deadline: bigint // uint64

@@ -18,7 +18,7 @@ export type WitnessExtraSignerKind = {
 }
 
 export type SignerWithKind = {
-  address: Address.Address
+  address: Address.Checksummed
   kind?: Kind
   imageHash?: Hex.Hex
 }
@@ -26,7 +26,7 @@ export type SignerWithKind = {
 export type RecoverySigner = {
   kind: Kind
   isRecovery: true
-  address: Address.Address
+  address: Address.Checksummed
   minTimestamp: bigint
   requiredDeltaTime: bigint
 }

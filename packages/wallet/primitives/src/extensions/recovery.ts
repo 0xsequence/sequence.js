@@ -34,7 +34,7 @@ export const TOTAL_QUEUED_PAYLOADS = Abi.from([
  */
 export type RecoveryLeaf = {
   type: 'leaf'
-  signer: Address.Address
+  signer: Address.Checksummed
   requiredDeltaTime: bigint
   minTimestamp: bigint
 }
@@ -200,7 +200,7 @@ export function parseBranch(encoded: Bytes.Bytes): { nodes: Tree[]; leftover: By
  * @param signer - The signer address to keep
  * @returns The trimmed topology
  */
-export function trimTopology(topology: Tree, signer: Address.Address): Tree {
+export function trimTopology(topology: Tree, signer: Address.Checksummed): Tree {
   if (isRecoveryLeaf(topology)) {
     if (topology.signer === signer) {
       return topology
@@ -346,7 +346,7 @@ export function fromRecoveryLeaves(leaves: RecoveryLeaf[]): Tree {
  */
 export function hashRecoveryPayload(
   payload: Payload.MayRecoveryPayload,
-  wallet: Address.Address,
+  wallet: Address.Checksummed,
   chainId: bigint,
   noChainId: boolean,
 ): Hex.Hex {
@@ -435,9 +435,9 @@ export function fromGenericTree(tree: GenericTree.Tree): Tree {
  * @returns The encoded calldata for the queuePayload function on the recovery extension
  */
 export function encodeCalldata(
-  wallet: Address.Address,
+  wallet: Address.Checksummed,
   payload: Payload.Recovery<any>,
-  signer: Address.Address,
+  signer: Address.Checksummed,
   signature: Signature.SignatureOfSignerLeaf,
 ) {
   let signatureBytes: Hex.Hex
@@ -463,9 +463,9 @@ export function encodeCalldata(
  */
 export async function totalQueuedPayloads(
   provider: Provider.Provider,
-  extension: Address.Address,
-  wallet: Address.Address,
-  signer: Address.Address,
+  extension: Address.Checksummed,
+  wallet: Address.Checksummed,
+  signer: Address.Checksummed,
 ): Promise<bigint> {
   const total = await provider.request({
     method: 'eth_call',
@@ -496,9 +496,9 @@ export async function totalQueuedPayloads(
  */
 export async function queuedPayloadHashOf(
   provider: Provider.Provider,
-  extension: Address.Address,
-  wallet: Address.Address,
-  signer: Address.Address,
+  extension: Address.Checksummed,
+  wallet: Address.Checksummed,
+  signer: Address.Checksummed,
   index: bigint,
 ): Promise<Hex.Hex> {
   const hash = await provider.request({
@@ -527,9 +527,9 @@ export async function queuedPayloadHashOf(
  */
 export async function timestampForQueuedPayload(
   provider: Provider.Provider,
-  extension: Address.Address,
-  wallet: Address.Address,
-  signer: Address.Address,
+  extension: Address.Checksummed,
+  wallet: Address.Checksummed,
+  signer: Address.Checksummed,
   payloadHash: Hex.Hex,
 ): Promise<bigint> {
   const timestamp = await provider.request({

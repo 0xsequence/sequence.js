@@ -7,7 +7,7 @@ export interface Wallet {
    * The unique, on-chain address of the wallet.
    * @property
    */
-  address: Address.Address
+  address: Address.Checksummed
 
   /**
    * The current status of the wallet's session in the manager.
@@ -30,7 +30,7 @@ export interface Wallet {
    * most signing operations, avoiding the need to use the primary login credential repeatedly.
    * @property
    */
-  device: Address.Address
+  device: Address.Checksummed
 
   /**
    * A string identifier for the authentication method used for this session.
@@ -89,13 +89,13 @@ export type WalletSelectionOptions = {
    * The UI should present these as login options.
    * @property
    */
-  existingWallets: Address.Address[]
+  existingWallets: Address.Checksummed[]
 
   /**
    * The address of the signer/credential that triggered this selection flow (e.g., a passkey's public key address).
    * @property
    */
-  signerAddress: Address.Address
+  signerAddress: Address.Checksummed
 
   /**
    * Additional context about how the selection handler was invoked.

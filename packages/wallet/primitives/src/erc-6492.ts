@@ -9,7 +9,7 @@ const EIP_6492_OFFCHAIN_DEPLOY_CODE =
 export function deploy<T extends Bytes.Bytes | Hex.Hex>(
   deployHash: T,
   context: Context,
-): { to: Address.Address; data: T } {
+): { to: Address.Checksummed; data: T } {
   const encoded = AbiFunction.encodeData(DEPLOY, [context.stage1, Hex.from(deployHash)])
 
   switch (typeof deployHash) {
@@ -22,7 +22,7 @@ export function deploy<T extends Bytes.Bytes | Hex.Hex>(
 
 export function wrap<T extends Bytes.Bytes | Hex.Hex>(
   signature: T,
-  { to, data }: { to: Address.Address; data: Bytes.Bytes | Hex.Hex },
+  { to, data }: { to: Address.Checksummed; data: Bytes.Bytes | Hex.Hex },
 ): T {
   const encoded = Hex.concat(
     AbiParameters.encode(
@@ -42,7 +42,7 @@ export function wrap<T extends Bytes.Bytes | Hex.Hex>(
 
 export function decode<T extends Bytes.Bytes | Hex.Hex>(
   signature: T,
-): { signature: T; erc6492?: { to: Address.Address; data: T } } {
+): { signature: T; erc6492?: { to: Address.Checksummed; data: T } } {
   switch (typeof signature) {
     case 'object':
       if (
@@ -76,7 +76,7 @@ export function decode<T extends Bytes.Bytes | Hex.Hex>(
 }
 
 export function isValid(
-  address: Address.Address,
+  address: Address.Checksummed,
   messageHash: Bytes.Bytes | Hex.Hex,
   encodedSignature: Bytes.Bytes | Hex.Hex,
   provider: Provider.Provider,

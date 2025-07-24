@@ -8,21 +8,21 @@ export * as Session from './session/index.js'
 export * from './session-manager.js'
 
 export interface Signer {
-  readonly address: MaybePromise<Address.Address>
+  readonly address: MaybePromise<Address.Checksummed>
 
   sign: (
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
   ) => Config.SignerSignature<Signature.SignatureOfSignerLeaf>
 }
 
 export interface SapientSigner {
-  readonly address: MaybePromise<Address.Address>
+  readonly address: MaybePromise<Address.Checksummed>
   readonly imageHash: MaybePromise<Hex.Hex | undefined>
 
   signSapient: (
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
@@ -30,7 +30,7 @@ export interface SapientSigner {
 }
 
 export interface Witnessable {
-  witness: (stateWriter: State.Writer, wallet: Address.Address, extra?: Object) => Promise<void>
+  witness: (stateWriter: State.Writer, wallet: Address.Checksummed, extra?: Object) => Promise<void>
 }
 
 type MaybePromise<T> = T | Promise<T>

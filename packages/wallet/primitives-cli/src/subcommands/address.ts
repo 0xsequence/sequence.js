@@ -4,8 +4,8 @@ import { Address as SequenceAddress, Context } from '@0xsequence/wallet-primitiv
 
 export async function doCalculateAddress(options: {
   imageHash: Hex.Hex
-  factory: Address.Address
-  module: Address.Address
+  factory: Address.Checksummed
+  module: Address.Checksummed
   creationCode?: Hex.Hex
 }): Promise<string> {
   const context = {

@@ -14,12 +14,12 @@ export class SequenceRelayer implements Relayer {
     this.service = new Service(host, fetch)
   }
 
-  async isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+  async isAvailable(_wallet: Address.Checksummed, _chainId: bigint): Promise<boolean> {
     return true
   }
 
   async feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     _chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
@@ -45,7 +45,12 @@ export class SequenceRelayer implements Relayer {
     return false
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, _chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
+  async relay(
+    to: Address.Checksummed,
+    data: Hex.Hex,
+    _chainId: bigint,
+    quote?: FeeQuote,
+  ): Promise<{ opHash: Hex.Hex }> {
     const walletAddress = to // TODO: pass wallet address or stop requiring it
 
     const { txnHash } = await this.service.sendMetaTxn({

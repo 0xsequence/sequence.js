@@ -23,7 +23,11 @@ function toKnownKind(kind: string): Kind {
 export class Signers {
   constructor(private readonly shared: Shared) {}
 
-  async kindOf(wallet: Address.Address, address: Address.Address, imageHash?: Hex.Hex): Promise<Kind | undefined> {
+  async kindOf(
+    wallet: Address.Checksummed,
+    address: Address.Checksummed,
+    imageHash?: Hex.Hex,
+  ): Promise<Kind | undefined> {
     // // The device may be among the local devices, in that case it is a local device
     // // TODO: Maybe signers shouldn't be getting in the way of devices, it feels like a
     // //      different concern
@@ -63,8 +67,8 @@ export class Signers {
   }
 
   async resolveKinds(
-    wallet: Address.Address,
-    signers: (Address.Address | { address: Address.Address; imageHash: Hex.Hex })[],
+    wallet: Address.Checksummed,
+    signers: (Address.Checksummed | { address: Address.Checksummed; imageHash: Hex.Hex })[],
   ): Promise<SignerWithKind[]> {
     return Promise.all(
       signers.map(async (signer) => {

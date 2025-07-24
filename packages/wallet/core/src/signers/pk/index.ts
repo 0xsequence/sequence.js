@@ -5,7 +5,7 @@ import { Signer as SignerInterface, Witnessable } from '../index.js'
 import { State } from '../../index.js'
 
 export interface PkStore {
-  address(): Address.Address
+  address(): Address.Checksummed
   publicKey(): PublicKey.PublicKey
   signDigest(digest: Bytes.Bytes): Promise<{ r: bigint; s: bigint; yParity: number }>
 }
@@ -13,7 +13,7 @@ export interface PkStore {
 export class MemoryPkStore implements PkStore {
   constructor(private readonly privateKey: Hex.Hex) {}
 
-  address(): Address.Address {
+  address(): Address.Checksummed {
     return Address.fromPublicKey(this.publicKey())
   }
 
@@ -29,7 +29,7 @@ export class MemoryPkStore implements PkStore {
 export class Pk implements SignerInterface, Witnessable {
   private readonly privateKey: PkStore
 
-  public readonly address: Address.Address
+  public readonly address: Address.Checksummed
   public readonly pubKey: PublicKey.PublicKey
 
   constructor(privateKey: Hex.Hex | PkStore) {
@@ -39,7 +39,7 @@ export class Pk implements SignerInterface, Witnessable {
   }
 
   async sign(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: PayloadTypes.Parented,
   ): Promise<SignatureTypes.SignatureOfSignerLeaf> {
@@ -52,7 +52,7 @@ export class Pk implements SignerInterface, Witnessable {
     return { ...signature, type: 'hash' }
   }
 
-  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
+  async witness(stateWriter: State.Writer, wallet: Address.Checksummed, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
       Hex.fromString(
         JSON.stringify({

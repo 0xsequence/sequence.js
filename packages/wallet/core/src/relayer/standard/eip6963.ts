@@ -19,19 +19,19 @@ export class EIP6963Relayer implements Relayer {
     this.relayer = new LocalRelayer(new EIP1193ProviderAdapter(detail.provider))
   }
 
-  isAvailable(wallet: Address.Address, chainId: bigint): Promise<boolean> {
+  isAvailable(wallet: Address.Checksummed, chainId: bigint): Promise<boolean> {
     return this.relayer.isAvailable(wallet, chainId)
   }
 
   feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     return this.relayer.feeOptions(wallet, chainId, calls)
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
+  async relay(to: Address.Checksummed, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
     return this.relayer.relay(to, data, chainId)
   }
 

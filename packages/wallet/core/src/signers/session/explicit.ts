@@ -5,12 +5,12 @@ import { ExplicitSessionSigner, UsageLimit } from './session.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
-const VALUE_TRACKING_ADDRESS: Address.Address = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+const VALUE_TRACKING_ADDRESS: Address.Checksummed = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 export class Explicit implements ExplicitSessionSigner {
   private readonly _privateKey: PkStore
 
-  public readonly address: Address.Address
+  public readonly address: Address.Checksummed
   public readonly sessionPermissions: Permission.SessionPermissions
 
   constructor(privateKey: Hex.Hex | PkStore, sessionPermissions: ExplicitParams) {
@@ -23,10 +23,10 @@ export class Explicit implements ExplicitSessionSigner {
   }
 
   async findSupportedPermission(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     call: Payload.Call,
-    sessionManagerAddress: Address.Address,
+    sessionManagerAddress: Address.Checksummed,
     provider?: Provider.Provider,
   ): Promise<Permission.Permission | undefined> {
     if (this.sessionPermissions.chainId !== 0n && this.sessionPermissions.chainId !== chainId) {
@@ -97,8 +97,8 @@ export class Explicit implements ExplicitSessionSigner {
   async validatePermission(
     permission: Permission.Permission,
     call: Payload.Call,
-    wallet: Address.Address,
-    sessionManagerAddress: Address.Address,
+    wallet: Address.Checksummed,
+    sessionManagerAddress: Address.Checksummed,
     provider?: Provider.Provider,
   ): Promise<boolean> {
     if (!Address.isEqual(permission.target, call.to)) {
@@ -155,10 +155,10 @@ export class Explicit implements ExplicitSessionSigner {
   }
 
   async supportedCall(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     call: Payload.Call,
-    sessionManagerAddress: Address.Address,
+    sessionManagerAddress: Address.Checksummed,
     provider?: Provider.Provider,
   ): Promise<boolean> {
     if (
@@ -177,14 +177,14 @@ export class Explicit implements ExplicitSessionSigner {
   }
 
   async signCall(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     call: Payload.Call,
     nonce: {
       space: bigint
       nonce: bigint
     },
-    sessionManagerAddress: Address.Address,
+    sessionManagerAddress: Address.Checksummed,
     provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
     let permissionIndex: number
@@ -218,8 +218,8 @@ export class Explicit implements ExplicitSessionSigner {
   }
 
   private async readCurrentUsageLimit(
-    wallet: Address.Address,
-    sessionManagerAddress: Address.Address,
+    wallet: Address.Checksummed,
+    sessionManagerAddress: Address.Checksummed,
     usageHash: Hex.Hex,
     provider: Provider.Provider,
   ): Promise<UsageLimit> {
@@ -242,10 +242,10 @@ export class Explicit implements ExplicitSessionSigner {
   }
 
   async prepareIncrements(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
-    sessionManagerAddress: Address.Address,
+    sessionManagerAddress: Address.Checksummed,
     provider?: Provider.Provider,
   ): Promise<UsageLimit[]> {
     const increments: { usageHash: Hex.Hex; increment: bigint }[] = []

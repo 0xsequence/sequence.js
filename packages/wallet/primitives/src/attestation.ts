@@ -1,7 +1,7 @@
 import { Bytes, Hash } from 'ox'
 
 export type Attestation = {
-  approvedSigner: Address.Address
+  approvedSigner: Address.Checksummed
   identityType: Bytes.Bytes // bytes4
   issuerHash: Bytes.Bytes // bytes32
   audienceHash: Bytes.Bytes // bytes32
@@ -112,7 +112,7 @@ export function fromParsed(parsed: any): Attestation {
 
 export const ACCEPT_IMPLICIT_REQUEST_MAGIC_PREFIX = Hash.keccak256(Bytes.fromString('acceptImplicitRequest'))
 
-export function generateImplicitRequestMagic(attestation: Attestation, wallet: Address.Address): Bytes.Bytes {
+export function generateImplicitRequestMagic(attestation: Attestation, wallet: Address.Checksummed): Bytes.Bytes {
   return Hash.keccak256(
     Bytes.concat(
       ACCEPT_IMPLICIT_REQUEST_MAGIC_PREFIX,
