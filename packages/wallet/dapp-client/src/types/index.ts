@@ -8,6 +8,7 @@ import { Address, Hex } from 'ox'
 
 export const RequestActionType = {
   ADD_EXPLICIT_SESSION: 'addExplicitSession',
+  MODIFY_EXPLICIT_SESSION: 'modifyExplicitSession',
   ADD_IMPLICIT_SESSION: 'addImplicitSession',
   SIGN_MESSAGE: 'signMessage',
   SIGN_TYPED_DATA: 'signTypedData',
@@ -22,6 +23,12 @@ export interface AddExplicitSessionPayload {
   permissions: Signers.Session.ExplicitParams
   preferredLoginMethod?: PreferredLoginMethod
   email?: string
+}
+export interface ModifySessionPayload {
+  walletAddress: Address.Address
+  sessionAddress: Address.Address
+  permissions: Signers.Session.ExplicitParams
+  origin?: string
 }
 
 export interface AddImplicitSessionPayload {
@@ -44,14 +51,17 @@ export interface SignTypedDataPayload {
   chainId: ChainId
 }
 
-// --- Responses from Wallet ---
-
 export interface ConnectSuccessResponsePayload {
   walletAddress: string
   attestation?: Attestation.Attestation
   signature?: Hex.Hex
   email?: string
   loginMethod?: PreferredLoginMethod
+}
+
+export interface ModifySessionSuccessResponsePayload {
+  walletAddress: string
+  sessionAddress: string
 }
 
 export interface SignatureResponse {

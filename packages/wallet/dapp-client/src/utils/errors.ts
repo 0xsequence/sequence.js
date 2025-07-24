@@ -19,6 +19,13 @@ export class TransactionError extends Error {
   }
 }
 
+export class ModifyExplicitSessionError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ModifyExplicitSessionError'
+  }
+}
+
 export class ConnectionError extends Error {
   constructor(message: string) {
     super(message)

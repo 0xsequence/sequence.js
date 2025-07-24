@@ -11,6 +11,7 @@ import {
   AddExplicitSessionError,
   FeeOptionError,
   InitializationError,
+  ModifyExplicitSessionError,
   SessionConfigError,
   SigningError,
   TransactionError,
@@ -23,6 +24,8 @@ import {
   AddExplicitSessionPayload,
   AddImplicitSessionPayload,
   ConnectSuccessResponsePayload,
+  ModifySessionPayload,
+  ModifySessionSuccessResponsePayload,
   PreferredLoginMethod,
   RandomPrivateKeyFn,
   RequestActionType,
@@ -337,6 +340,55 @@ export class ChainSessionManager {
     } catch (err) {
       if (this.transport?.mode === TransportMode.POPUP) this.transport.closeWallet()
       throw new AddExplicitSessionError(`Adding explicit session failed: ${err}`)
+    }
+  }
+
+  /**
+   * Initiates the modification of an existing explicit session by sending a request to the wallet.
+   * @param sessionAddress The address of the explicit session to modify.
+   * @param newPermissions The new permissions for the session.
+   * @throws {InitializationError} If the manager is not initialized.
+   * @throws {ModifyExplicitSessionError} If modifying the session fails.
+   */
+  async modifyExplicitSession(
+    sessionAddress: Address.Address,
+    newPermissions: Signers.Session.ExplicitParams,
+  ): Promise<void> {
+    if (!this.walletAddress) {
+      throw new InitializationError(
+        'Cannot modify an explicit session without a wallet address. Initialize the manager with a wallet address first.',
+      )
+    }
+
+    try {
+      if (!this.transport) throw new InitializationError('Transport failed to initialize.')
+
+      const payload: ModifySessionPayload = {
+        walletAddress: this.walletAddress,
+        sessionAddress: sessionAddress,
+        permissions: newPermissions,
+        origin: window.location.origin,
+      }
+
+      const response = await this.transport.sendRequest<ModifySessionSuccessResponsePayload>(
+        RequestActionType.MODIFY_EXPLICIT_SESSION,
+        payload,
+        { path: '/request/modify' },
+      )
+
+      if (
+        !Address.isEqual(Address.from(response.walletAddress), this.walletAddress) &&
+        !Address.isEqual(Address.from(response.sessionAddress), sessionAddress)
+      ) {
+        throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
+      }
+
+      if (this.transport?.mode === TransportMode.POPUP) {
+        this.transport?.closeWallet()
+      }
+    } catch (err) {
+      if (this.transport?.mode === TransportMode.POPUP) this.transport.closeWallet()
+      throw new ModifyExplicitSessionError(`Modifying explicit session failed: ${err}`)
     }
   }
 
