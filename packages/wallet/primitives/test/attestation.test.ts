@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Bytes, Hash, Hex } from 'ox'
 
+import { checksum } from '../src/address.js'
 import {
   Attestation,
   AuthData,
@@ -24,7 +25,7 @@ describe('Attestation', () => {
   }
 
   const sampleAttestation: Attestation = {
-    approvedSigner: '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1',
+    approvedSigner: checksum('0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'),
     identityType: Bytes.fromHex('0x12345678'),
     issuerHash: Bytes.fromHex('0x1111111111111111111111111111111111111111111111111111111111111111'),
     audienceHash: Bytes.fromHex('0x2222222222222222222222222222222222222222222222222222222222222222'),
@@ -177,7 +178,7 @@ describe('Attestation', () => {
     it('should handle different address formats', () => {
       const attestationWithDifferentAddress: Attestation = {
         ...sampleAttestation,
-        approvedSigner: '0x8ba1f109551bd432803012645aac136c776056c0',
+        approvedSigner: checksum('0x8ba1f109551bd432803012645aac136c776056c0'),
       }
 
       const encoded = encode(attestationWithDifferentAddress)
@@ -199,7 +200,7 @@ describe('Attestation', () => {
     it('should generate different hashes for different attestations', () => {
       const differentAttestation: Attestation = {
         ...sampleAttestation,
-        approvedSigner: '0x8ba1f109551bd432803012645aac136c776056c0',
+        approvedSigner: checksum('0x8ba1f109551bd432803012645aac136c776056c0'),
       }
 
       const hash1 = hash(sampleAttestation)
@@ -291,7 +292,7 @@ describe('Attestation', () => {
     })
 
     it('should generate implicit request magic correctly', () => {
-      const wallet = '0x1234567890123456789012345678901234567890'
+      const wallet = checksum('0x1234567890123456789012345678901234567890')
       const magic = generateImplicitRequestMagic(sampleAttestation, wallet)
 
       expect(magic.length).toBe(32) // keccak256 produces 32 bytes
@@ -302,8 +303,8 @@ describe('Attestation', () => {
     })
 
     it('should generate different magic for different wallets', () => {
-      const wallet1 = '0x1111111111111111111111111111111111111111'
-      const wallet2 = '0x2222222222222222222222222222222222222222'
+      const wallet1 = checksum('0x1111111111111111111111111111111111111111')
+      const wallet2 = checksum('0x2222222222222222222222222222222222222222')
 
       const magic1 = generateImplicitRequestMagic(sampleAttestation, wallet1)
       const magic2 = generateImplicitRequestMagic(sampleAttestation, wallet2)
@@ -312,7 +313,7 @@ describe('Attestation', () => {
     })
 
     it('should generate different magic for different attestations', () => {
-      const wallet = '0x1234567890123456789012345678901234567890'
+      const wallet = checksum('0x1234567890123456789012345678901234567890')
       const differentAttestation: Attestation = {
         ...sampleAttestation,
         audienceHash: Bytes.fromHex('0x3333333333333333333333333333333333333333333333333333333333333333'),
@@ -325,7 +326,7 @@ describe('Attestation', () => {
     })
 
     it('should generate magic matching manual calculation', () => {
-      const wallet = '0x1234567890123456789012345678901234567890'
+      const wallet = checksum('0x1234567890123456789012345678901234567890')
 
       const manualMagic = Hash.keccak256(
         Bytes.concat(
@@ -345,7 +346,7 @@ describe('Attestation', () => {
   describe('Edge cases and error conditions', () => {
     it('should handle attestation with minimal data', () => {
       const minimalAttestation: Attestation = {
-        approvedSigner: '0x0000000000000000000000000000000000000000',
+        approvedSigner: checksum('0x0000000000000000000000000000000000000000'),
         identityType: new Uint8Array(4),
         issuerHash: new Uint8Array(32),
         audienceHash: new Uint8Array(32),
@@ -398,7 +399,7 @@ describe('Attestation', () => {
     it('should maintain byte precision in round-trip operations', () => {
       // Test with specific byte patterns
       const precisionAttestation: Attestation = {
-        approvedSigner: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        approvedSigner: checksum('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'),
         identityType: Bytes.fromHex('0xCAFEBABE'),
         issuerHash: Bytes.fromHex('0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
         audienceHash: Bytes.fromHex('0xfedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'),

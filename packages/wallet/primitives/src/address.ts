@@ -23,7 +23,7 @@ export function fromPublicKey(publicKey: PublicKey.PublicKey, options?: Address.
 export function from(configuration: Bytes.Bytes | Config, context: Omit<Context, 'stage2'>): Checksummed {
   const imageHash = configuration instanceof Uint8Array ? configuration : hashConfiguration(configuration)
 
-  return Bytes.toHex(
+  return checksum( Bytes.toHex(
     Hash.keccak256(
       Bytes.concat(
         Bytes.from('0xff'),
@@ -33,5 +33,5 @@ export function from(configuration: Bytes.Bytes | Config, context: Omit<Context,
       ),
       { as: 'Bytes' },
     ).subarray(12),
-  )
+  ) )
 }

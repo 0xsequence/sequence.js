@@ -1,4 +1,5 @@
 import { Bytes, Hash, Hex } from 'ox'
+import { Checksummed, isEqual } from './address.js'
 import {
   isRawConfig,
   isRawNestedLeaf,
@@ -151,11 +152,11 @@ export function findSignerLeaf(
   } else if (isNode(configuration)) {
     return findSignerLeaf(configuration[0], address) || findSignerLeaf(configuration[1], address)
   } else if (isSignerLeaf(configuration)) {
-    if (Address.isEqual(configuration.address, address)) {
+    if (isEqual(configuration.address, address)) {
       return configuration
     }
   } else if (isSapientSignerLeaf(configuration)) {
-    if (Address.isEqual(configuration.address, address)) {
+    if (isEqual(configuration.address, address)) {
       return configuration
     }
   }
@@ -417,11 +418,10 @@ type CancelCallback = (success: boolean) => void
 type MaybePromise<T> = T | Promise<T>
 
 export function mergeTopology(a: Topology, b: Topology): Topology {
-  if (isNode(a) && isNode(b)) {
+  if (isNode(a)) {
+    if (isNode(b)) {
     return [mergeTopology(a[0], b[0]), mergeTopology(a[1], b[1])]
-  }
-
-  if (isNode(a) && !isNode(b)) {
+    } else {
     if (!isNodeLeaf(b)) {
       throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
     }
@@ -430,9 +430,9 @@ export function mergeTopology(a: Topology, b: Topology): Topology {
       throw new Error('Topology mismatch: node hash does not match')
     }
     return a
-  }
-
-  if (!isNode(a) && isNode(b)) {
+    }
+  } else {
+    if (isNode(b)) {
     if (!isNodeLeaf(a)) {
       throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
     }
@@ -441,9 +441,10 @@ export function mergeTopology(a: Topology, b: Topology): Topology {
       throw new Error('Topology mismatch: node hash does not match')
     }
     return b
+    } else {
+      return mergeLeaf(a, b)
+    }
   }
-
-  return mergeLeaf(a as Leaf, b as Leaf)
 }
 
 /**

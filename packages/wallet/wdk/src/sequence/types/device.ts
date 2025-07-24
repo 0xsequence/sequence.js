@@ -1,3 +1,5 @@
+import { Address } from '@0xsequence/wallet-primitives'
+
 /**
  * Represents a device key that is authorized to sign for a wallet.
  */

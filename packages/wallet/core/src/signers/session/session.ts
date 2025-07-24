@@ -1,4 +1,4 @@
-import { Payload, SessionSignature } from '@0xsequence/wallet-primitives'
+import { Address, Payload, SessionSignature } from '@0xsequence/wallet-primitives'
 import { Hex, Provider } from 'ox'
 
 export interface SessionSigner {

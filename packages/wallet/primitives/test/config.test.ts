@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Bytes, Hash, Hex } from 'ox'
 
+import { checksum } from '../src/address.js'
 import {
   Config,
   Topology,
@@ -36,8 +37,8 @@ import {
 } from '../src/config.js'
 
 describe('Config', () => {
-  const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0'
+  const testAddress1 = checksum('0x742d35cc6635c0532925a3b8d563a6b35b7f05f1')
+  const testAddress2 = checksum('0x8ba1f109551bd432803012645aac136c776056c0')
   const testImageHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
   const testDigest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef'
 

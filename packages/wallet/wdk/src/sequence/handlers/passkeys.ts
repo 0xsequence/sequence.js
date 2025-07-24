@@ -2,7 +2,7 @@ import { Signers, State } from '@0xsequence/wallet-core'
 import { Hex } from 'ox'
 import { Kinds } from '../types/signer.js'
 import { Signatures } from '../signatures.js'
-import { Extensions } from '@0xsequence/wallet-primitives'
+import { Address, Extensions } from '@0xsequence/wallet-primitives'
 import { Handler } from './handler.js'
 import { SignerActionable, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 

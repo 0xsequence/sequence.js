@@ -1,4 +1,5 @@
 import { Abi, AbiFunction, Bytes, Hex, Provider } from 'ox'
+import { checksum, Checksummed } from '../address.js'
 import * as Payload from '../payload.js'
 import * as GenericTree from '../generic-tree.js'
 import { Signature } from '../index.js'
@@ -152,7 +153,7 @@ export function parseBranch(encoded: Bytes.Bytes): { nodes: Tree[]; leftover: By
       if (encoded.length < index + 32) {
         throw new Error('Invalid recovery leaf')
       }
-      const signer = Address.from(Hex.fromBytes(encoded.slice(index + 1, index + 21)))
+      const signer = checksum(Hex.fromBytes(encoded.slice(index + 1, index + 21)))
       const requiredDeltaTime = Bytes.toBigInt(encoded.slice(index + 21, index + 24))
       const minTimestamp = Bytes.toBigInt(encoded.slice(index + 24, index + 32))
       nodes.push({ type: 'leaf', signer, requiredDeltaTime, minTimestamp })
@@ -401,7 +402,7 @@ export function fromGenericTree(tree: GenericTree.Tree): Tree {
     }
 
     const offset = RECOVERY_LEAF_PREFIX.length
-    const signer = Address.from(Hex.fromBytes(bytes.slice(offset, offset + 20)))
+    const signer = checksum(Hex.fromBytes(bytes.slice(offset, offset + 20)))
     const requiredDeltaTime = Bytes.toBigInt(bytes.slice(offset + 20, offset + 52))
     const minTimestamp = Bytes.toBigInt(bytes.slice(offset + 52, offset + 84))
 

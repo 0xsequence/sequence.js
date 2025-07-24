@@ -1,5 +1,6 @@
 import { AbiFunction, AbiParameters, Bytes, Hex, Provider } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
+import { checksum, Checksummed } from './address.js'
 import { DEPLOY } from './constants.js'
 import { Context } from './context.js'
 
@@ -50,7 +51,7 @@ export function decode<T extends Bytes.Bytes | Hex.Hex>(
           [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
           signature.subarray(0, -WrappedSignature.magicBytes.slice(2).length / 2),
         )
-        return { signature: Hex.toBytes(decoded) as T, erc6492: { to, data: Hex.toBytes(data) as T } }
+        return { signature: Hex.toBytes(decoded) as T, erc6492: { to: checksum( to ), data: Hex.toBytes(data) as T } }
       } else {
         return { signature }
       }
@@ -62,7 +63,7 @@ export function decode<T extends Bytes.Bytes | Hex.Hex>(
             [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
             `0x${signature.slice(2, -WrappedSignature.magicBytes.slice(2).length)}`,
           )
-          return { signature: decoded as T, erc6492: { to, data: data as T } }
+          return { signature: decoded as T, erc6492: { to: checksum( to ), data: data as T } }
         } catch {
           return { signature }
         }

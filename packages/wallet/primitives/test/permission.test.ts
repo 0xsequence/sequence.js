@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Bytes } from 'ox'
 
+import { checksum } from '../src/address.js'
 import {
   ParameterOperation,
   ParameterRule,
@@ -25,8 +26,8 @@ import {
 
 describe('Permission', () => {
   // Test data
-  const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0'
+  const testAddress = checksum('0x742d35cc6635c0532925a3b8d563a6b35b7f05f1')
+  const testAddress2 = checksum('0x8ba1f109551bd432803012645aac136c776056c0')
   const testChainId = 1n
   const testValueLimit = 1000000000000000000n // 1 ETH
   const testDeadline = 1893456000n // Jan 1, 2030
@@ -479,8 +480,8 @@ describe('Permission', () => {
         ]
 
         expectedFields.forEach((expected, i) => {
-          expect(rulesComponent.components[i].name).toBe(expected.name)
-          expect(rulesComponent.components[i].type).toBe(expected.type)
+          expect(rulesComponent.components![i].name).toBe(expected.name)
+          expect(rulesComponent.components![i].type).toBe(expected.type)
         })
       })
     })

@@ -1,6 +1,6 @@
 import { AbiParameters, Hex } from 'ox'
 import type { CommandModule } from 'yargs'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { fromPosOrStdin } from '../utils.js'
 
 const CallAbi = [
@@ -59,13 +59,13 @@ export async function doConvertToJson(payload: Hex.Hex): Promise<string> {
   return JSON.stringify(decoded)
 }
 
-export async function doHash(wallet: string, chainId: bigint, payload: Hex.Hex): Promise<string> {
+export async function doHash(wallet: Address.Checksummed, chainId: bigint, payload: Hex.Hex): Promise<string> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload,
   )[0] as unknown as Payload.SolidityDecoded
 
-  return Hex.from(Payload.hash(Address.from(wallet), chainId, Payload.fromAbiFormat(decoded)))
+  return Hex.from(Payload.hash(wallet, chainId, Payload.fromAbiFormat(decoded)))
 }
 
 const payloadCommand: CommandModule = {
@@ -106,10 +106,7 @@ const payloadCommand: CommandModule = {
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
           Hex.assert(payload)
-          if (argv.wallet !== undefined) {
-            Address.assert(argv.wallet)
-          }
-          const result = await doConvertToPacked(payload, argv.wallet)
+          const result = await doConvertToPacked(payload, argv.wallet ? Address.checksum(argv.wallet) : undefined)
           console.log(result)
         },
       )
@@ -152,7 +149,7 @@ const payloadCommand: CommandModule = {
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
           Hex.assert(payload)
-          const result = await doHash(argv.wallet, BigInt(argv.chainId), payload)
+          const result = await doHash(Address.checksum(argv.wallet), BigInt(argv.chainId), payload)
           console.log(result)
         },
       )

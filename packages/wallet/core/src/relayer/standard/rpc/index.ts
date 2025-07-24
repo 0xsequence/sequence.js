@@ -7,7 +7,7 @@ import {
 } from './relayer.gen.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
 import { Hex, Bytes, AbiFunction } from 'ox'
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Constants, Payload } from '@0xsequence/wallet-primitives'
 import { ETHTxnStatus, FeeToken as RpcFeeToken } from './relayer.gen.js'
 import { decodePrecondition } from '../../../preconditions/index.js'
 import {
@@ -83,13 +83,12 @@ export class RpcRelayer implements Relayer {
 
       const quote: FeeQuote | undefined = result.quote ? { _tag: 'FeeQuote', _quote: result.quote } : undefined
       const options = result.options.map((option) => {
-        Address.assert(option.to)
         return {
           token: {
             ...option.token,
             contractAddress: this.mapRpcFeeTokenToAddress(option.token),
           },
-          to: option.to,
+          to: Address.checksum(option.to),
           value: option.value,
           gasLimit: option.gasLimit,
         }
@@ -290,8 +289,8 @@ export class RpcRelayer implements Relayer {
           if (resultHex === undefined) {
             throw new Error('no response for erc-721 ownership query')
           }
-          const owner = resultHex.slice(-40)
-          const isOwner = owner.toLowerCase() === erc721.address.toString().slice(2).toLowerCase()
+          const owner = Address.checksum(`0x${resultHex.slice(-40)}`)
+          const isOwner = Address.isEqual(owner, erc721.address)
           const expectedOwnership = erc721.owned !== undefined ? erc721.owned : true
           return isOwner === expectedOwnership
         } catch (error) {
@@ -309,8 +308,8 @@ export class RpcRelayer implements Relayer {
           if (resultHex === undefined) {
             throw new Error('no response for erc-721 approval query')
           }
-          const approved = resultHex.slice(-40)
-          return approved.toLowerCase() === erc721.operator.toString().slice(2).toLowerCase()
+          const approved = Address.checksum(resultHex.slice(-40))
+          return Address.isEqual(approved, erc721.operator)
         } catch (error) {
           console.error('Error checking ERC721 approval:', error)
           return false
@@ -368,7 +367,7 @@ export class RpcRelayer implements Relayer {
 
   private mapRpcFeeTokenToAddress(rpcToken: RpcFeeToken): Address.Checksummed {
     if (rpcToken.type === FeeTokenType.ERC20_TOKEN && rpcToken.contractAddress) {
-      return Address.from(rpcToken.contractAddress)
+      return Address.checksum(rpcToken.contractAddress)
     }
     return Constants.ZeroAddress // Default to zero address for native token or unsupported types
   }

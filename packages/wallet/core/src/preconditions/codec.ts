@@ -1,3 +1,4 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import {
   Precondition,
   NativeBalancePrecondition,
@@ -40,7 +41,7 @@ export function decodePrecondition(p: IntentPrecondition): Precondition | undefi
     switch (p.type) {
       case 'native-balance':
         precondition = new NativeBalancePrecondition(
-          Address.from(data.address),
+          Address.checksum(data.address),
           data.min ? BigInt(data.min) : undefined,
           data.max ? BigInt(data.max) : undefined,
         )
@@ -48,8 +49,8 @@ export function decodePrecondition(p: IntentPrecondition): Precondition | undefi
 
       case 'erc20-balance':
         precondition = new Erc20BalancePrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
+          Address.checksum(data.address),
+          Address.checksum(data.token),
           data.min ? BigInt(data.min) : undefined,
           data.max ? BigInt(data.max) : undefined,
         )
@@ -57,17 +58,17 @@ export function decodePrecondition(p: IntentPrecondition): Precondition | undefi
 
       case 'erc20-approval':
         precondition = new Erc20ApprovalPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
-          Address.from(data.operator),
+          Address.checksum(data.address),
+          Address.checksum(data.token),
+          Address.checksum(data.operator),
           BigInt(data.min),
         )
         break
 
       case 'erc721-ownership':
         precondition = new Erc721OwnershipPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
+          Address.checksum(data.address),
+          Address.checksum(data.token),
           BigInt(data.tokenId),
           data.owned,
         )
@@ -75,17 +76,17 @@ export function decodePrecondition(p: IntentPrecondition): Precondition | undefi
 
       case 'erc721-approval':
         precondition = new Erc721ApprovalPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
+          Address.checksum(data.address),
+          Address.checksum(data.token),
           BigInt(data.tokenId),
-          Address.from(data.operator),
+          Address.checksum(data.operator),
         )
         break
 
       case 'erc1155-balance':
         precondition = new Erc1155BalancePrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
+          Address.checksum(data.address),
+          Address.checksum(data.token),
           BigInt(data.tokenId),
           data.min ? BigInt(data.min) : undefined,
           data.max ? BigInt(data.max) : undefined,
@@ -94,10 +95,10 @@ export function decodePrecondition(p: IntentPrecondition): Precondition | undefi
 
       case 'erc1155-approval':
         precondition = new Erc1155ApprovalPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
+          Address.checksum(data.address),
+          Address.checksum(data.token),
           BigInt(data.tokenId),
-          Address.from(data.operator),
+          Address.checksum(data.operator),
           BigInt(data.min),
         )
         break

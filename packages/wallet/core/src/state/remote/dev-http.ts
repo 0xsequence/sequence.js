@@ -1,5 +1,5 @@
 import { Hex } from 'ox'
-import { Config, Context, GenericTree, Payload, Signature, Utils } from '@0xsequence/wallet-primitives'
+import { Address, Config, Context, GenericTree, Payload, Signature, Utils } from '@0xsequence/wallet-primitives'
 import { Provider } from '../index.js'
 
 export class DevHttpProvider implements Provider {

@@ -1,4 +1,5 @@
 import { Bytes, Hash } from 'ox'
+import { checksum, Checksummed } from './address.js'
 
 export type Attestation = {
   approvedSigner: Checksummed
@@ -39,7 +40,7 @@ export function encodeAuthData(authData: AuthData): Bytes.Bytes {
 }
 
 export function decode(bytes: Bytes.Bytes): Attestation {
-  const approvedSigner = Bytes.toHex(bytes.slice(0, 20))
+  const approvedSigner = checksum( Bytes.toHex(bytes.slice(0, 20)) )
   const identityType = bytes.slice(20, 24)
   const issuerHash = bytes.slice(24, 56)
   const audienceHash = bytes.slice(56, 88)
@@ -96,7 +97,7 @@ export function fromJson(json: string): Attestation {
 
 export function fromParsed(parsed: any): Attestation {
   return {
-    approvedSigner: Address.from(parsed.approvedSigner),
+    approvedSigner: checksum(parsed.approvedSigner),
     identityType: Bytes.fromHex(parsed.identityType),
     issuerHash: Bytes.fromHex(parsed.issuerHash),
     audienceHash: Bytes.fromHex(parsed.audienceHash),

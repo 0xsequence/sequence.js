@@ -1,3 +1,4 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { Hex, PublicKey, Secp256k1, Bytes } from 'ox'
 import { PkStore } from './index.js'
 
@@ -21,8 +22,8 @@ export class EncryptedPksDb {
     this.tableName = tableName
   }
 
-  private computeDbKey(address: Address.Checksummed): string {
-    return `pk_${address.toLowerCase()}`
+  private computeDbKey(address: Address.Checksummed): `pk_${Address.Checksummed}` {
+    return `pk_${address}`
   }
 
   private openDB(): Promise<IDBDatabase> {

@@ -1,4 +1,4 @@
-import { Config, Payload, Signature } from '@0xsequence/wallet-primitives'
+import { Address, Config, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import * as State from '../state/index.js'
 

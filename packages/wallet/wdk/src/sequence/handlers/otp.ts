@@ -1,3 +1,4 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { Signers } from '@0xsequence/wallet-core'
 import * as Identity from '@0xsequence/identity-instrument'

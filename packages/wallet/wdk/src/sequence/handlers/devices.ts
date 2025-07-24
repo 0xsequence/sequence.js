@@ -1,3 +1,4 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { Kinds } from '../types/signer.js'
 import { Signatures } from '../signatures.js'
 import { Hex } from 'ox'

@@ -1,4 +1,4 @@
-import { Config, Signature } from '@0xsequence/wallet-primitives'
+import { Address, Config, Signature } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex, Signature as OxSignature } from 'ox'
 import { type CommandModule } from 'yargs'
 import { fromPosOrStdin } from '../utils.js'
@@ -45,9 +45,8 @@ export async function doEncode(
     if (values[0] === undefined) {
       throw new Error('no address for signature')
     }
-    Address.assert(values[0])
     return {
-      address: values[0],
+      address: Address.checksum(values[0]),
       type: values[1],
       values: values.slice(2),
     }

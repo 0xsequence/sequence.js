@@ -1,3 +1,4 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { Hex, Bytes } from 'ox'
 import * as Db from '../../dbs/index.js'
 import * as Identity from '@0xsequence/identity-instrument'
@@ -33,8 +34,8 @@ export class IdentityHandler {
   }
 
   protected async nitroCommitVerifier(challenge: Identity.Challenge) {
-    await this.authKeys.delBySigner('')
-    const authKey = await this.getAuthKey('')
+    await this.authKeys.delBySigner(undefined)
+    const authKey = await this.getAuthKey(undefined)
     if (!authKey) {
       throw new Error('no-auth-key')
     }
@@ -44,16 +45,16 @@ export class IdentityHandler {
   }
 
   protected async nitroCompleteAuth(challenge: Identity.Challenge) {
-    const authKey = await this.getAuthKey('')
+    const authKey = await this.getAuthKey(undefined)
     if (!authKey) {
       throw new Error('no-auth-key')
     }
 
     const res = await this.nitro.completeAuth(toIdentityAuthKey(authKey), challenge)
 
-    authKey.identitySigner = res.signer.address
+    authKey.identitySigner = Address.checksum(res.signer.address)
     authKey.expiresAt = new Date(Date.now() + 1000 * 60 * 3) // 3 minutes
-    await this.authKeys.delBySigner('')
+    await this.authKeys.delBySigner(undefined)
     await this.authKeys.delBySigner(authKey.identitySigner)
     await this.authKeys.set(authKey)
 
@@ -69,7 +70,7 @@ export class IdentityHandler {
     })
   }
 
-  protected async getAuthKeySigner(address: string): Promise<IdentitySigner | undefined> {
+  protected async getAuthKeySigner(address: Address.Checksummed): Promise<IdentitySigner | undefined> {
     const authKey = await this.getAuthKey(address)
     if (!authKey) {
       return undefined
@@ -77,7 +78,7 @@ export class IdentityHandler {
     return new IdentitySigner(this.nitro, authKey)
   }
 
-  private async getAuthKey(signer: string): Promise<Db.AuthKey | undefined> {
+  private async getAuthKey(signer: Address.Checksummed | undefined): Promise<Db.AuthKey | undefined> {
     let authKey = await this.authKeys.getBySigner(signer)
     if (!signer && !authKey) {
       const keyPair = await window.crypto.subtle.generateKey(
@@ -91,7 +92,6 @@ export class IdentityHandler {
       const publicKey = await window.crypto.subtle.exportKey('raw', keyPair.publicKey)
       authKey = {
         address: Hex.fromBytes(new Uint8Array(publicKey)),
-        identitySigner: '',
         expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
         privateKey: keyPair.privateKey,
       }

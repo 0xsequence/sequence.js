@@ -1,4 +1,4 @@
-import { Attestation } from '@0xsequence/wallet-primitives'
+import { Address, Attestation } from '@0xsequence/wallet-primitives'
 import { Hex } from 'ox'
 import { ChainId } from '@0xsequence/network'
 import { jsonReplacers, jsonRevivers } from './index.js'

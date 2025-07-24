@@ -1,5 +1,6 @@
 import { Signers as CoreSigners, Envelope } from '@0xsequence/wallet-core'
 import {
+  Address,
   Attestation,
   Config,
   Constants,

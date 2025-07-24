@@ -1,4 +1,4 @@
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Constants, Payload } from '@0xsequence/wallet-primitives'
 import { EIP1193Provider } from 'mipd'
 import { AbiFunction, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
@@ -217,8 +217,8 @@ export class LocalRelayer implements Relayer {
           to: erc721.token.toString(),
           data,
         })
-        const owner = '0x' + result.slice(26)
-        const isOwner = owner.toLowerCase() === erc721.address.toString().toLowerCase()
+        const owner = Address.checksum(`0x${result.slice(26)}`)
+        const isOwner = Address.isEqual(owner, erc721.address)
         return erc721.owned === undefined ? isOwner : erc721.owned === isOwner
       }
 
@@ -229,8 +229,8 @@ export class LocalRelayer implements Relayer {
           to: erc721.token.toString(),
           data,
         })
-        const approved = '0x' + result.slice(26)
-        return approved.toLowerCase() === erc721.operator.toString().toLowerCase()
+        const approved = Address.checksum(`0x${result.slice(26)}`)
+        return Address.isEqual(approved, erc721.operator)
       }
 
       case 'erc1155-balance': {

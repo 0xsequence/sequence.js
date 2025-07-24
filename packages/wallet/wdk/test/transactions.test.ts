@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Manager, SignerActionable, Transaction, TransactionDefined, TransactionRelayed } from '../src/sequence'
 import { Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { LOCAL_RPC_URL, newManager } from './constants'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 
 describe('Transactions', () => {
   let manager: Manager | undefined
@@ -28,7 +28,7 @@ describe('Transactions', () => {
       params: [wallet!, '0xa'],
     })
 
-    const recipient = Address.from(Hex.random(20))
+    const recipient = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: recipient,
@@ -141,7 +141,7 @@ describe('Transactions', () => {
     })
 
     // Send a transaction
-    const recipient = Address.from(Hex.random(20))
+    const recipient = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: recipient,
@@ -217,7 +217,7 @@ describe('Transactions', () => {
       calledTimes++
     })
 
-    const to = Address.from(Hex.random(20))
+    const to = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
@@ -247,7 +247,7 @@ describe('Transactions', () => {
     expect(wallet).toBeDefined()
     await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
-    const to = Address.from(Hex.random(20))
+    const to = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
@@ -315,7 +315,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const to = Address.from(Hex.random(20))
+    const to = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
@@ -336,7 +336,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const to = Address.from(Hex.random(20))
+    const to = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
@@ -359,7 +359,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const to = Address.from(Hex.random(20))
+    const to = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to,
@@ -395,7 +395,7 @@ describe('Transactions', () => {
     })
 
     // Add a recovery signer, just to change the configuration
-    const rSigId = await manager.recovery.addSigner(wallet!, Address.from(Hex.random(20)))
+    const rSigId = await manager.recovery.addSigner(wallet!, Address.checksum(Hex.random(20)))
     expect(rSigId).toBeDefined()
 
     // Sign using the device signer
@@ -414,7 +414,7 @@ describe('Transactions', () => {
     // It should no longer be updated onchain
     await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
 
-    const randomAddress = Address.from(Hex.random(20))
+    const randomAddress = Address.checksum(Hex.random(20))
     const txId = await manager.transactions.request(wallet!, 42161n, [
       {
         to: randomAddress,

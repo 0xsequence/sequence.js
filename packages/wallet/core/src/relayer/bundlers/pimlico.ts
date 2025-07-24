@@ -1,4 +1,4 @@
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { Bundler } from '../bundler.js'
 import { Provider, Hex, RpcTransport } from 'ox'
 import { UserOperation } from 'ox/erc4337'

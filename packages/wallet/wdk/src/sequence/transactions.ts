@@ -1,4 +1,4 @@
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Constants, Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
 import { Abi, AbiFunction, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
@@ -432,9 +432,7 @@ export class Transactions implements TransactionsInterface {
         // then we need to prepend the transaction payload with the fee
         const { token, to, value, gasLimit } = selection.feeOption
 
-        Address.assert(to)
-
-        if (token.contractAddress === undefined || token.contractAddress === Constants.ZeroAddress) {
+        if (!token.contractAddress || token.contractAddress === Constants.ZeroAddress) {
           tx.envelope.payload.calls.unshift({
             to,
             value: BigInt(value),
@@ -445,10 +443,9 @@ export class Transactions implements TransactionsInterface {
             behaviorOnError: 'revert',
           })
         } else {
-          Address.assert(token.contractAddress)
           const [transfer] = Abi.from(['function transfer(address to, uint256 amount) returns (bool)'])
           tx.envelope.payload.calls.unshift({
-            to: token.contractAddress,
+            to: Address.checksum(token.contractAddress),
             value: 0n,
             data: AbiFunction.encodeData(transfer, [to, BigInt(value)]),
             gasLimit: BigInt(gasLimit),

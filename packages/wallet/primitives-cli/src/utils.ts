@@ -29,9 +29,3 @@ export async function fromPosOrStdin<T>(argv: Arguments<T>, arg: keyof T): Promi
 
   return await readStdin()
 }
-
-export function requireString(arg: string | undefined, name: string): asserts arg is string {
-  if (!arg) {
-    throw new Error(`${name} is required`)
-  }
-}
