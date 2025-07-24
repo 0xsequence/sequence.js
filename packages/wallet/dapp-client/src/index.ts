@@ -14,9 +14,8 @@ export type {
   SignTypedDataPayload,
   ConnectSuccessResponsePayload,
   ModifySessionSuccessResponsePayload,
-  TransportMode,
 } from './types/index.js'
-export { RequestActionType } from './types/index.js'
+export { RequestActionType, TransportMode } from './types/index.js'
 export {
   FeeOptionError,
   TransactionError,
