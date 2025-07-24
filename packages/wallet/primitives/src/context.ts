@@ -2,14 +2,14 @@ import { Hex } from 'ox'
 
 export type Capabilities = {
   erc4337?: {
-    entrypoint: Address.Checksummed
+    entrypoint: Checksummed
   }
 }
 
 export type Context = {
-  factory: Address.Checksummed
-  stage1: Address.Checksummed
-  stage2: Address.Checksummed
+  factory: Checksummed
+  stage1: Checksummed
+  stage2: Checksummed
   creationCode: Hex.Hex
   capabilities?: Capabilities
 }

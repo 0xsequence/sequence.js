@@ -15,7 +15,7 @@ export const BEHAVIOR_REVERT_ON_ERROR = 0x01
 export const BEHAVIOR_ABORT_ON_ERROR = 0x02
 
 interface SolidityCall {
-  to: Address.Checksummed
+  to: Checksummed
   value: bigint
   data: Hex.Hex
   gasLimit: bigint
@@ -33,11 +33,11 @@ export interface SolidityDecoded {
   message: Hex.Hex
   imageHash: Hex.Hex
   digest: Hex.Hex
-  parentWallets: Address.Checksummed[]
+  parentWallets: Checksummed[]
 }
 
 export type Call = {
-  to: Address.Checksummed
+  to: Checksummed
   value: bigint
   data: Hex.Hex
   gasLimit: bigint
@@ -70,30 +70,30 @@ export type Digest = {
 
 export type SessionImplicitAuthorize = {
   type: 'session-implicit-authorize'
-  sessionAddress: Address.Checksummed
+  sessionAddress: Checksummed
   attestation: Attestation.Attestation
 }
 
 export type Parent = {
-  parentWallets?: Address.Checksummed[]
+  parentWallets?: Checksummed[]
 }
 
 export type Calls4337_07 = {
   type: 'call_4337_07'
   calls: Call[]
-  entrypoint: Address.Checksummed
+  entrypoint: Checksummed
   callGasLimit: bigint
   maxFeePerGas: bigint
   maxPriorityFeePerGas: bigint
   space: bigint
   nonce: bigint
-  paymaster?: Address.Checksummed | undefined
+  paymaster?: Checksummed | undefined
   paymasterData?: Hex.Hex | undefined
   paymasterPostOpGasLimit?: bigint | undefined
   paymasterVerificationGasLimit?: bigint | undefined
   preVerificationGas: bigint
   verificationGasLimit: bigint
-  factory?: Address.Checksummed | undefined
+  factory?: Checksummed | undefined
   factoryData?: Hex.Hex | undefined
 }
 
@@ -119,7 +119,7 @@ export type TypedDataToSign = {
     name: string
     version: string
     chainId: number
-    verifyingContract: Address.Checksummed
+    verifyingContract: Checksummed
   }
   types: Record<string, Array<{ name: string; type: string }>>
   primaryType: string
@@ -199,7 +199,7 @@ export function isSessionImplicitAuthorize(payload: Payload): payload is Session
   return payload.type === 'session-implicit-authorize'
 }
 
-export function encode(payload: Calls, self?: Address.Checksummed): Bytes.Bytes {
+export function encode(payload: Calls, self?: Checksummed): Bytes.Bytes {
   const callsLen = payload.calls.length
   const nonceBytesNeeded = minBytesFor(payload.nonce)
   console.log('TS encode: nonce value:', payload.nonce, 'nonceBytesNeeded:', nonceBytesNeeded)
@@ -397,7 +397,7 @@ export function encodeSapient(
   return encoded
 }
 
-export function hash(wallet: Address.Checksummed, chainId: bigint, payload: Parented): Bytes.Bytes {
+export function hash(wallet: Checksummed, chainId: bigint, payload: Parented): Bytes.Bytes {
   if (isDigest(payload)) {
     return Bytes.fromHex(payload.digest)
   }
@@ -410,13 +410,13 @@ export function hash(wallet: Address.Checksummed, chainId: bigint, payload: Pare
 
 function domainFor(
   payload: Payload,
-  wallet: Address.Checksummed,
+  wallet: Checksummed,
   chainId: bigint,
 ): {
   name: string
   version: string
   chainId: number
-  verifyingContract: Address.Checksummed
+  verifyingContract: Checksummed
 } {
   if (isRecovery(payload)) {
     return {
@@ -441,7 +441,7 @@ export function encode4337Nonce(key: bigint, seq: bigint): bigint {
   return (key << 64n) | seq
 }
 
-export function toTyped(wallet: Address.Checksummed, chainId: bigint, payload: Parented): TypedDataToSign {
+export function toTyped(wallet: Checksummed, chainId: bigint, payload: Parented): TypedDataToSign {
   const domain = domainFor(payload, wallet, chainId)
 
   switch (payload.type) {
@@ -552,7 +552,7 @@ export function toTyped(wallet: Address.Checksummed, chainId: bigint, payload: P
 
 export function to4337UserOperation(
   payload: Calls4337_07,
-  wallet: Address.Checksummed,
+  wallet: Checksummed,
   signature?: Hex.Hex,
 ): UserOperation.UserOperation<'0.7'> {
   const callsPayload: Calls = {
@@ -583,7 +583,7 @@ export function to4337UserOperation(
   return operation
 }
 
-export function to4337Message(payload: Calls4337_07, wallet: Address.Checksummed, chainId: bigint): Hex.Hex {
+export function to4337Message(payload: Calls4337_07, wallet: Checksummed, chainId: bigint): Hex.Hex {
   const operation = to4337UserOperation(payload, wallet)
   const accountGasLimits = Hex.concat(
     Hex.padLeft(Hex.fromNumber(operation.verificationGasLimit), 16),
@@ -680,7 +680,7 @@ export function hashCall(call: Call): Hex.Hex {
   )
 }
 
-export function decode(packed: Bytes.Bytes, self?: Address.Checksummed): Calls {
+export function decode(packed: Bytes.Bytes, self?: Checksummed): Calls {
   let pointer = 0
   if (packed.length < 1) {
     throw new Error('Invalid packed data: missing globalFlag')
@@ -735,7 +735,7 @@ export function decode(packed: Bytes.Bytes, self?: Address.Checksummed): Calls {
     pointer += 1
 
     // bit 0 => toSelf
-    let to: Address.Checksummed
+    let to: Checksummed
     if ((flags & 0x01) === 0x01) {
       if (!self) {
         throw new Error('Missing "self" address for toSelf call')
