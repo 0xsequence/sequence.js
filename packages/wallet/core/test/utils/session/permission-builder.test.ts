@@ -1,8 +1,8 @@
 import { AbiFunction, Address, Bytes } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Permission } from '../../primitives/src/index.js'
-import { Utils } from '../src/index.js'
+import { Permission } from '../../../../primitives/src/index.js'
+import { Utils } from '../../../src/index.js'
 import { Constants } from '@0xsequence/wallet-primitives'
 
 const { PermissionBuilder } = Utils
