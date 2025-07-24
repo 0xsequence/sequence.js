@@ -1,4 +1,4 @@
-import { Abi, Address } from 'ox'
+import { Abi } from 'ox'
 
 export const ZeroAddress: Address.Address = '0x0000000000000000000000000000000000000000'
 
