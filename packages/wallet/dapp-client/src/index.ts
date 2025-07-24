@@ -2,15 +2,14 @@ export { DappClient } from './DappClient.js'
 export type { DappClientEventListener, DappClientSignatureEventListener } from './DappClient.js'
 export type {
   PreferredLoginMethod,
-  TransportMode,
   Transaction,
-  RequestActionType,
   SignatureResponse,
   ChainSessionManagerEvent,
   SequenceSessionStorage,
   RandomPrivateKeyFn,
   Session,
 } from './types/index.js'
+export { TransportMode, RequestActionType } from './types/index.js'
 export {
   FeeOptionError,
   TransactionError,
