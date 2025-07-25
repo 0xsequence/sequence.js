@@ -1,5 +1,5 @@
 export { DappClient } from './DappClient.js'
-export type { DappClientEventListener, DappClientSignatureEventListener } from './DappClient.js'
+export type { DappClientEventListener } from './DappClient.js'
 export type {
   PreferredLoginMethod,
   Transaction,
@@ -15,6 +15,8 @@ export type {
   ConnectSuccessResponsePayload,
   ModifySessionSuccessResponsePayload,
   ModifySessionPayload,
+  DappClientSignatureEventListener,
+  DappClientExplicitSessionEventListener,
 } from './types/index.js'
 export { RequestActionType, TransportMode } from './types/index.js'
 export {
@@ -31,7 +33,7 @@ export type {
   SequenceStorage,
   ExplicitSessionData,
   ImplicitSessionData,
-  SignatureRequestContext,
-  PendingRequestPayload,
+  PendingRequestContext,
+  PendingPayload,
 } from './utils/storage.js'
 export { WebStorage } from './utils/storage.js'
