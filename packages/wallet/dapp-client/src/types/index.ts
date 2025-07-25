@@ -91,7 +91,12 @@ export type Session = {
 export type ChainSessionManagerEvent = 'signatureResponse' | 'sessionsUpdated'
 
 export type SignatureEventListener = (data: {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
+  action: (typeof RequestActionType)[
+    | 'SIGN_MESSAGE'
+    | 'SIGN_TYPED_DATA'
+    | 'MODIFY_EXPLICIT_SESSION'
+    | 'ADD_EXPLICIT_SESSION'
+    | 'ADD_IMPLICIT_SESSION']
   response?: SignatureResponse
   error?: any
 }) => void

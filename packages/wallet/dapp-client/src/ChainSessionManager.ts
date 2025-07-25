@@ -369,6 +369,11 @@ export class ChainSessionManager {
         permissions: newPermissions,
       }
 
+      if (this.transport.mode === TransportMode.REDIRECT) {
+        await this.sequenceStorage.setPendingRedirectRequest(true)
+        await this.sequenceStorage.savePendingRequestPayload(this.chainId, payload)
+      }
+
       const response = await this.transport.sendRequest<ModifySessionSuccessResponsePayload>(
         RequestActionType.MODIFY_EXPLICIT_SESSION,
         payload,
@@ -639,18 +644,26 @@ export class ChainSessionManager {
     if ('error' in response && response.error) {
       const { action } = response
 
-      // Only emit signatureResponse event if the failed action was a signature request.
-      if (action === RequestActionType.SIGN_MESSAGE || action === RequestActionType.SIGN_TYPED_DATA) {
+      if (
+        action === RequestActionType.SIGN_MESSAGE ||
+        action === RequestActionType.SIGN_TYPED_DATA ||
+        action === RequestActionType.MODIFY_EXPLICIT_SESSION ||
+        action === RequestActionType.ADD_EXPLICIT_SESSION ||
+        action === RequestActionType.ADD_IMPLICIT_SESSION
+      ) {
         this.emit('signatureResponse', {
           action: action,
           error: response.error,
         })
+
+        console.warn(`[DappClient] Wallet rejected the action '${action}':`, response.error)
+        return true
       }
 
-      // Always throw on error to propagate the failure up to the caller.
-      throw new WalletRedirectError(
-        `Wallet responded with an error for action '${action}': ${JSON.stringify(response.error)}`,
-      )
+      // // Always throw on error to propagate the failure up to the caller.
+      // throw new WalletRedirectError(
+      //   `Wallet responded with an error for action '${action}': ${JSON.stringify(response.error)}`,
+      // )
     }
 
     if ('payload' in response && response.payload) {
@@ -667,6 +680,12 @@ export class ChainSessionManager {
           action: response.action,
           response: response.payload as SignatureResponse,
         })
+        return true
+      } else if (response.action === RequestActionType.MODIFY_EXPLICIT_SESSION) {
+        const modifyResponse = response.payload as ModifySessionSuccessResponsePayload
+        if (!Address.isEqual(Address.from(modifyResponse.walletAddress), this.walletAddress!)) {
+          throw new ModifyExplicitSessionError('Wallet address mismatch on redirect response.')
+        }
         return true
       } else {
         throw new WalletRedirectError(`Received unhandled redirect action: ${response.action}`)

@@ -5,6 +5,7 @@ import { jsonReplacers, jsonRevivers } from './index.js'
 import {
   AddExplicitSessionPayload,
   AddImplicitSessionPayload,
+  ModifySessionPayload,
   PreferredLoginMethod,
   RequestActionType,
 } from '../types/index.js'
@@ -53,7 +54,7 @@ export interface SequenceStorage {
     AddImplicitSessionPayload | AddExplicitSessionPayload
   > | null>
   peekPendingRequestPayload(): Promise<PendingRequestPayload<
-    AddImplicitSessionPayload | AddExplicitSessionPayload
+    AddImplicitSessionPayload | AddExplicitSessionPayload | ModifySessionPayload
   > | null>
 
   saveSignatureRequestContext(context: SignatureRequestContext): Promise<void>
