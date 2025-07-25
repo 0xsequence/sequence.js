@@ -8,25 +8,24 @@ import { DappTransport } from './DappTransport.js'
 import { InitializationError } from './utils/errors.js'
 import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
-  ChainSessionManagerEvent,
+  DappClientExplicitSessionEventListener,
+  DappClientSignatureEventListener,
   RandomPrivateKeyFn,
   RequestActionType,
   SequenceSessionStorage,
   Session,
-  SignatureResponse,
   Transaction,
   TransportMode,
 } from './types/index.js'
+import { TypedData } from 'ox/TypedData'
 
-// A generic listener for events from the DappClient
 export type DappClientEventListener = (data?: any) => void
 
-export type DappClientSignatureEventListener = (data: {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
-  response?: SignatureResponse
-  error?: any
-  chainId: number
-}) => void
+interface DappClientEventMap {
+  sessionsUpdated: () => void
+  signatureResponse: DappClientSignatureEventListener
+  explicitSessionResponse: DappClientExplicitSessionEventListener
+}
 
 const DEFAULT_KEYMACHINE_URL = 'https://v3-keymachine.sequence-dev.app'
 
@@ -70,7 +69,9 @@ export class DappClient {
   private isInitializing = false
 
   private walletAddress: Address.Address | null = null
-  private eventListeners: Map<ChainSessionManagerEvent, Set<DappClientEventListener>> = new Map()
+  private eventListeners: {
+    [K in keyof DappClientEventMap]?: Set<DappClientEventMap[K]>
+  } = {}
 
   /**
    * @param walletUrl The URL of the Wallet Webapp.
@@ -134,8 +135,8 @@ export class DappClient {
 
   /**
    * Registers an event listener for a specific event.
-   * @param event The event to listen for. {@link ChainSessionManagerEvent}
-   * @param listener The listener to call when the event occurs. {@link DappClientEventListener}
+   * @param event The event to listen for.
+   * @param listener The listener to call when the event occurs.
    * @returns A function to remove the listener.
    *
    * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/on} for more detailed documentation.
@@ -146,29 +147,22 @@ export class DappClient {
    *     setSession({
    *       isInitialized: dappClient.isInitialized,
    *       walletAddress: dappClient.getWalletAddress(),
-   *       signerAddresses: dappClient.getAllSessionSigners(),
-   *       loginMethod: dappClient.loginMethod,
-   *       userEmail: dappClient.userEmail,
+   *       // ... other properties
    *     });
    *   };
-   *   const eventName = "sessionsUpdated" as ChainSessionManagerEvent;
-   *   const unsubscribe = dappClient.on(eventName, handleSessionUpdate);
    *
-   *   // Perform an initial sync
-   *   handleSessionUpdate();
+   *   const unsubscribe = dappClient.on("sessionsUpdated", handleSessionUpdate);
    *
-   *   return () => {
-   *     unsubscribe();
-   *   };
+   *   return () => unsubscribe();
    * }, [dappClient]);
    */
-  public on(event: ChainSessionManagerEvent, listener: DappClientEventListener): () => void {
-    if (!this.eventListeners.has(event)) {
-      this.eventListeners.set(event, new Set())
+  public on<K extends keyof DappClientEventMap>(event: K, listener: DappClientEventMap[K]): () => void {
+    if (!this.eventListeners[event]) {
+      this.eventListeners[event] = new Set() as any
     }
-    this.eventListeners.get(event)!.add(listener)
+    ;(this.eventListeners[event] as any).add(listener)
     return () => {
-      this.eventListeners.get(event)?.delete(listener)
+      ;(this.eventListeners[event] as any)?.delete(listener)
     }
   }
 
@@ -219,7 +213,13 @@ export class DappClient {
     return Array.from(allSessions.values())
   }
 
+  /**
+   * @private Loads the client's state from storage, initializing all chain managers
+   * for previously established sessions.
+   */
   private async _loadStateFromStorage(): Promise<void> {
+    this.emit('sessionsUpdated')
+
     const implicitSession = await this.sequenceStorage.getImplicitSession()
     if (!implicitSession) {
       this.isInitialized = false
@@ -276,9 +276,17 @@ export class DappClient {
 
       // Now, check if there's a response from a redirect flow.
       if (await this.sequenceStorage.isRedirectRequestPending()) {
-        await this.handleRedirectResponse()
-        // After handling the redirect which may have added a new session,
-        // reload the state to reflect the change.
+        try {
+          // Attempt to handle any response from the wallet redirect.
+          await this.handleRedirectResponse()
+        } finally {
+          // We have to clear pending redirect data here as well in case we received an error from the wallet.
+          await this.sequenceStorage.setPendingRedirectRequest(false)
+          await this.sequenceStorage.getAndClearTempSessionPk()
+        }
+
+        // After handling the redirect, the session state will have changed,
+        // so we must load it again.
         await this._loadStateFromStorage()
       }
     } catch (e) {
@@ -297,41 +305,20 @@ export class DappClient {
    * @returns A promise that resolves when the redirect has been handled.
    */
   public async handleRedirectResponse(url?: string): Promise<void> {
-    const response = await this.transport.getRedirectResponse(false, url)
+    const pendingRequest = await this.sequenceStorage.peekPendingRequest()
+
+    const response = await this.transport.getRedirectResponse(true, url)
     if (!response) {
-      await this.sequenceStorage.setPendingRedirectRequest(false)
       return
     }
 
-    let chainId: ChainId | undefined
     const { action } = response
-
-    // Use the action from the response to determine where to find the chainId
-    if (action === RequestActionType.SIGN_MESSAGE || action === RequestActionType.SIGN_TYPED_DATA) {
-      const signatureContext = await this.sequenceStorage.peekSignatureRequestContext()
-      if (signatureContext) {
-        chainId = (signatureContext.payload as any).chainId
-      }
-    } else if (action === RequestActionType.ADD_IMPLICIT_SESSION || action === RequestActionType.ADD_EXPLICIT_SESSION) {
-      const connectContext = await this.sequenceStorage.peekPendingRequestPayload()
-      if (connectContext) {
-        chainId = connectContext.chainId
-      }
-    }
-
-    // TODO handle modify explicit session as well, but we also need to make sure we save related data before redirecting
+    const chainId = pendingRequest?.chainId
 
     if (chainId) {
       const chainSessionManager = this.getChainSessionManager(chainId)
-      await chainSessionManager.handleRedirectResponse(url)
+      await chainSessionManager.handleRedirectResponse(response)
     } else {
-      // Clean up orphaned redirect response more thoroughly
-      this.transport.getRedirectResponse(true, url)
-      await this.sequenceStorage.getAndClearTempSessionPk()
-      await this.sequenceStorage.getAndClearPendingRequestPayload()
-      await this.sequenceStorage.getAndClearSignatureRequestContext()
-      await this.sequenceStorage.setPendingRedirectRequest(false)
-
       throw new InitializationError(`Could not find a pending request context for the redirect action: ${action}`)
     }
   }
@@ -341,7 +328,7 @@ export class DappClient {
    * @param chainId The primary chain ID for the new session. {@link ChainId}
    * @param implicitSessionRedirectUrl The URL to redirect back to after a redirect-based login. For popups, this can be the origin.
    * @param permissions (Optional) Permissions to request for an initial explicit session. {@link Signers.Session.ExplicitParams}
-   * @param options (Optional) Connection options, such as a preferred login method or email.
+   * @param options (Optional) Connection options, such as a preferred login method or email for social or email logins.
    * @throws If the connection process fails. {@link ConnectionError}
    * @throws If a session already exists. {@link InitializationError}
    *
@@ -429,7 +416,10 @@ export class DappClient {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
     await chainSessionManager.addExplicitSession(permissions)
-    this.emit('sessionsUpdated')
+
+    if (this.transport.mode === TransportMode.POPUP) {
+      await this._loadStateFromStorage()
+    }
   }
 
   /**
@@ -475,13 +465,16 @@ export class DappClient {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
     await chainSessionManager.modifyExplicitSession(sessionAddress, permissions)
-    await this.initialize()
+
+    if (this.transport.mode === TransportMode.POPUP) {
+      await this._loadStateFromStorage()
+    }
   }
 
   /**
    * Gets the gas fee options for an array of transactions.
    * @param chainId The chain ID on which to get the fee options. {@link ChainId}
-   * @param transactions An array of transactions to get the fee options for. {@link Transaction}
+   * @param transactions An array of transactions to get fee options for. These transactions will not be sent.
    * @throws If the fee options cannot be fetched. {@link FeeOptionError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
@@ -516,9 +509,9 @@ export class DappClient {
   }
 
   /**
-   * Sends a transaction using an available session signer.
+   * Signs and sends a transaction using an available session signer.
    * @param chainId The chain ID on which to send the transaction. {@link ChainId}
-   * @param transactions An array of transactions to be executed atomically. {@link Transaction}
+   * @param transactions An array of transactions to be executed atomically in a single batch. {@link Transaction}
    * @param feeOption (Optional) The selected fee option to sponsor the transaction. {@link Relayer.FeeOption}
    * @throws {TransactionError} If the transaction fails to send or confirm.
    * @throws {InitializationError} If the client or relevant chain is not initialized.
@@ -596,7 +589,7 @@ export class DappClient {
    *   await dappClient.signTypedData(1, typedData);
    * }
    */
-  async signTypedData(chainId: ChainId, typedData: unknown): Promise<void> {
+  async signTypedData(chainId: ChainId, typedData: TypedData): Promise<void> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -642,11 +635,14 @@ export class DappClient {
 
   /**
    * @private Emits an event to all registered listeners.
-   * @param event The event to emit. {@link ChainSessionManagerEvent}
-   * @param data The data to emit with the event.
+   * @param event The event to emit.
+   * @param args The data to emit with the event.
    */
-  private emit(event: ChainSessionManagerEvent, data?: any): void {
-    this.eventListeners.get(event)?.forEach((listener) => listener(data))
+  private emit<K extends keyof DappClientEventMap>(event: K, ...args: Parameters<DappClientEventMap[K]>): void {
+    const listeners = this.eventListeners[event]
+    if (listeners) {
+      listeners.forEach((listener) => (listener as (...a: typeof args) => void)(...args))
+    }
   }
 
   /**
@@ -670,6 +666,10 @@ export class DappClient {
 
       chainSessionManager.on('signatureResponse', (data) => {
         this.emit('signatureResponse', { ...data, chainId })
+      })
+
+      chainSessionManager.on('explicitSessionResponse', (data) => {
+        this.emit('explicitSessionResponse', { ...data, chainId })
       })
     }
     return chainSessionManager

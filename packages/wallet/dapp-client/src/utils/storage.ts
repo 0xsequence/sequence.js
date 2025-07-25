@@ -7,7 +7,8 @@ import {
   AddImplicitSessionPayload,
   ModifySessionPayload,
   PreferredLoginMethod,
-  RequestActionType,
+  SignMessagePayload,
+  SignTypedDataPayload,
 } from '../types/index.js'
 
 export interface ExplicitSessionData {
@@ -28,15 +29,17 @@ export interface ImplicitSessionData {
   userEmail?: string
 }
 
-export interface SignatureRequestContext {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: any
-}
+export type PendingPayload =
+  | AddImplicitSessionPayload
+  | AddExplicitSessionPayload
+  | ModifySessionPayload
+  | SignMessagePayload
+  | SignTypedDataPayload
 
-export interface PendingRequestPayload<T> {
+export interface PendingRequestContext {
   chainId: ChainId
-  payload: T
+  action: string
+  payload: PendingPayload
 }
 
 export interface SequenceStorage {
@@ -46,20 +49,9 @@ export interface SequenceStorage {
   saveTempSessionPk(pk: Hex.Hex): Promise<void>
   getAndClearTempSessionPk(): Promise<Hex.Hex | null>
 
-  savePendingRequestPayload(
-    chainId: ChainId,
-    payload: AddImplicitSessionPayload | AddExplicitSessionPayload,
-  ): Promise<void>
-  getAndClearPendingRequestPayload(): Promise<PendingRequestPayload<
-    AddImplicitSessionPayload | AddExplicitSessionPayload
-  > | null>
-  peekPendingRequestPayload(): Promise<PendingRequestPayload<
-    AddImplicitSessionPayload | AddExplicitSessionPayload | ModifySessionPayload
-  > | null>
-
-  saveSignatureRequestContext(context: SignatureRequestContext): Promise<void>
-  getAndClearSignatureRequestContext(): Promise<SignatureRequestContext | null>
-  peekSignatureRequestContext(): Promise<SignatureRequestContext | null>
+  savePendingRequest(context: PendingRequestContext): Promise<void>
+  getAndClearPendingRequest(): Promise<PendingRequestContext | null>
+  peekPendingRequest(): Promise<PendingRequestContext | null>
 
   saveExplicitSession(sessionData: ExplicitSessionData): Promise<void>
   getExplicitSessions(): Promise<ExplicitSessionData[]>
@@ -80,8 +72,7 @@ const EXPLICIT_SESSIONS_IDB_KEY = 'SequenceExplicitSession'
 
 const PENDING_REDIRECT_REQUEST_KEY = 'SequencePendingRedirect'
 const TEMP_SESSION_PK_KEY = 'SequencePendingTempSessionPk'
-const PENDING_SIGNATURE_REQUEST_CONTEXT_KEY = 'SequencePendingSignatureContext'
-const PENDING_REQUEST_PAYLOAD_KEY = 'SequencePendingRequestPayload'
+const PENDING_REQUEST_CONTEXT_KEY = 'SequencePendingRequestContext'
 
 export class WebStorage implements SequenceStorage {
   private openDB(): Promise<IDBDatabase> {
@@ -165,72 +156,33 @@ export class WebStorage implements SequenceStorage {
     }
   }
 
-  async savePendingRequestPayload(
-    chainId: ChainId,
-    payload: AddImplicitSessionPayload | AddExplicitSessionPayload,
-  ): Promise<void> {
+  async savePendingRequest(context: PendingRequestContext): Promise<void> {
     try {
-      const data: PendingRequestPayload<typeof payload> = { chainId, payload }
-      sessionStorage.setItem(PENDING_REQUEST_PAYLOAD_KEY, JSON.stringify(data, jsonReplacers))
+      sessionStorage.setItem(PENDING_REQUEST_CONTEXT_KEY, JSON.stringify(context, jsonReplacers))
     } catch (error) {
-      console.error('Failed to save pending request payload:', error)
+      console.error('Failed to save pending request context:', error)
     }
   }
 
-  async getAndClearPendingRequestPayload(): Promise<PendingRequestPayload<
-    AddImplicitSessionPayload | AddExplicitSessionPayload
-  > | null> {
+  async getAndClearPendingRequest(): Promise<PendingRequestContext | null> {
     try {
-      const payload = sessionStorage.getItem(PENDING_REQUEST_PAYLOAD_KEY)
-      if (!payload) return null
-      sessionStorage.removeItem(PENDING_REQUEST_PAYLOAD_KEY)
-      return JSON.parse(payload, jsonRevivers)
-    } catch (error) {
-      console.error('Failed to retrieve pending request payload:', error)
-      return null
-    }
-  }
-
-  async peekPendingRequestPayload(): Promise<PendingRequestPayload<
-    AddImplicitSessionPayload | AddExplicitSessionPayload
-  > | null> {
-    try {
-      const payload = sessionStorage.getItem(PENDING_REQUEST_PAYLOAD_KEY)
-      if (!payload) return null
-      return JSON.parse(payload, jsonRevivers)
-    } catch (error) {
-      console.error('Failed to peek at pending request payload:', error)
-      return null
-    }
-  }
-
-  async saveSignatureRequestContext(context: SignatureRequestContext): Promise<void> {
-    try {
-      sessionStorage.setItem(PENDING_SIGNATURE_REQUEST_CONTEXT_KEY, JSON.stringify(context, jsonReplacers))
-    } catch (error) {
-      console.error('Failed to save signature request context:', error)
-    }
-  }
-
-  async getAndClearSignatureRequestContext(): Promise<SignatureRequestContext | null> {
-    try {
-      const context = sessionStorage.getItem(PENDING_SIGNATURE_REQUEST_CONTEXT_KEY)
+      const context = sessionStorage.getItem(PENDING_REQUEST_CONTEXT_KEY)
       if (!context) return null
-      sessionStorage.removeItem(PENDING_SIGNATURE_REQUEST_CONTEXT_KEY)
+      sessionStorage.removeItem(PENDING_REQUEST_CONTEXT_KEY)
       return JSON.parse(context, jsonRevivers)
     } catch (error) {
-      console.error('Failed to retrieve signature request context:', error)
+      console.error('Failed to retrieve pending request context:', error)
       return null
     }
   }
 
-  async peekSignatureRequestContext(): Promise<SignatureRequestContext | null> {
+  async peekPendingRequest(): Promise<PendingRequestContext | null> {
     try {
-      const context = sessionStorage.getItem(PENDING_SIGNATURE_REQUEST_CONTEXT_KEY)
+      const context = sessionStorage.getItem(PENDING_REQUEST_CONTEXT_KEY)
       if (!context) return null
       return JSON.parse(context, jsonRevivers)
     } catch (error) {
-      console.error('Failed to peek at signature request context:', error)
+      console.error('Failed to peek at pending request context:', error)
       return null
     }
   }
@@ -303,8 +255,7 @@ export class WebStorage implements SequenceStorage {
       // Clear all session storage items
       sessionStorage.removeItem(PENDING_REDIRECT_REQUEST_KEY)
       sessionStorage.removeItem(TEMP_SESSION_PK_KEY)
-      sessionStorage.removeItem(PENDING_SIGNATURE_REQUEST_CONTEXT_KEY)
-      sessionStorage.removeItem(PENDING_REQUEST_PAYLOAD_KEY)
+      sessionStorage.removeItem(PENDING_REQUEST_CONTEXT_KEY)
 
       // Clear all IndexedDB items
       await this.clearExplicitSessions()

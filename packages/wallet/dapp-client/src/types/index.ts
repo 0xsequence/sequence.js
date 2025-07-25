@@ -3,6 +3,7 @@ import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Signers } from '@0xsequence/wallet-core'
 import { ChainId } from '@0xsequence/network'
 import { Address, Hex } from 'ox'
+import type { TypedData } from 'ox/TypedData'
 
 // --- Public Interfaces and Constants ---
 
@@ -46,7 +47,7 @@ export interface SignMessagePayload {
 
 export interface SignTypedDataPayload {
   address: Address.Address
-  typedData: unknown
+  typedData: TypedData
   chainId: ChainId
 }
 
@@ -66,7 +67,11 @@ export interface ModifySessionSuccessResponsePayload {
 export interface SignatureResponse {
   signature: Hex.Hex
   walletAddress: string
-  managerRequestId: string
+}
+
+export interface ExplicitSessionResponsePayload {
+  walletAddress: string
+  sessionAddress: string
 }
 
 // --- Dapp-facing Types ---
@@ -88,16 +93,17 @@ export type Session = {
 
 // --- Event Types ---
 
-export type ChainSessionManagerEvent = 'signatureResponse' | 'sessionsUpdated'
+export type ChainSessionManagerEvent = 'signatureResponse' | 'sessionsUpdated' | 'explicitSessionResponse'
 
 export type SignatureEventListener = (data: {
-  action: (typeof RequestActionType)[
-    | 'SIGN_MESSAGE'
-    | 'SIGN_TYPED_DATA'
-    | 'MODIFY_EXPLICIT_SESSION'
-    | 'ADD_EXPLICIT_SESSION'
-    | 'ADD_IMPLICIT_SESSION']
+  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
   response?: SignatureResponse
+  error?: any
+}) => void
+
+export type ExplicitSessionEventListener = (data: {
+  action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
+  response?: ExplicitSessionResponsePayload
   error?: any
 }) => void
 
@@ -107,6 +113,13 @@ export type DappClientEventListener = (data?: any) => void
 export type DappClientSignatureEventListener = (data: {
   action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
   response?: SignatureResponse
+  error?: any
+  chainId: number
+}) => void
+
+export type DappClientExplicitSessionEventListener = (data: {
+  action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
+  response?: ExplicitSessionResponsePayload
   error?: any
   chainId: number
 }) => void
