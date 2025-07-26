@@ -40,7 +40,7 @@ export function encodeAuthData(authData: AuthData): Bytes.Bytes {
 }
 
 export function decode(bytes: Bytes.Bytes): Attestation {
-  const approvedSigner = checksum( Bytes.toHex(bytes.slice(0, 20)) )
+  const approvedSigner = checksum(Bytes.toHex(bytes.slice(0, 20)))
   const identityType = bytes.slice(20, 24)
   const issuerHash = bytes.slice(24, 56)
   const audienceHash = bytes.slice(56, 88)

@@ -100,7 +100,11 @@ export class IndexedDbStore implements Store {
     return `${signer}-${subdigest}`
   }
 
-  private getSapientSignatureKey(signer: Address.Checksummed, subdigest: Hex.Hex, imageHash: Hex.Hex): `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}` {
+  private getSapientSignatureKey(
+    signer: Address.Checksummed,
+    subdigest: Hex.Hex,
+    imageHash: Hex.Hex,
+  ): `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}` {
     return `${signer}-${imageHash}-${subdigest}`
   }
 

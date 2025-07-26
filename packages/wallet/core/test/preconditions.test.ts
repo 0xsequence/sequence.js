@@ -168,7 +168,9 @@ describe('Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the ownerOf call
-      ;(provider as any).call.mockResolvedValue(`0x000000000000000000000000${testWalletAddress.toString().slice(2).toLowerCase()}`)
+      ;(provider as any).call.mockResolvedValue(
+        `0x000000000000000000000000${testWalletAddress.toString().slice(2).toLowerCase()}`,
+      )
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
@@ -201,7 +203,9 @@ describe('Preconditions', () => {
 
     if (!CAN_RUN_LIVE) {
       // Mock the getApproved call
-      ;(provider as any).call.mockResolvedValue(`0x000000000000000000000000${operator.toString().slice(2).toLowerCase()}`)
+      ;(provider as any).call.mockResolvedValue(
+        `0x000000000000000000000000${operator.toString().slice(2).toLowerCase()}`,
+      )
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
