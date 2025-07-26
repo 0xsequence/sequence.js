@@ -21,7 +21,7 @@ describe('Generic Tree', () => {
   }
 
   const sampleNode: Node = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
-  const sampleNode2: Node = ('0x' + 'ab'.repeat(32)) as Hex.Hex // Exactly 32 bytes
+  const sampleNode2: Node = `0x${'ab'.repeat(32)}` // Exactly 32 bytes
 
   const sampleBranch: Branch = [sampleLeaf1, sampleLeaf2]
   const complexBranch: Branch = [sampleLeaf1, sampleNode, sampleLeaf2]
@@ -349,7 +349,7 @@ describe('Generic Tree', () => {
           value: Bytes.fromHex('0x1234'),
         }
 
-        const specificNode: Node = ('0x' + '00'.repeat(32)) as Hex.Hex
+        const specificNode: Node = `0x${'00'.repeat(32)}`
         const tree: Branch = [specificLeaf, specificNode]
 
         // Manual calculation
@@ -442,7 +442,7 @@ describe('Generic Tree', () => {
       const largeBranch: Tree = Array(10)
         .fill(null)
         .map((_, i) => ({
-          type: 'leaf' as const,
+          type: 'leaf',
           value: Bytes.fromString(`leaf-${i}`),
         })) as Branch
 

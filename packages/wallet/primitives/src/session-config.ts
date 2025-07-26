@@ -1,4 +1,5 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
+import { checksum, Checksummed, isEqual } from './address.js'
 import * as GenericTree from './generic-tree.js'
 import {
   decodeSessionPermissions,
@@ -18,12 +19,12 @@ export const SESSIONS_FLAG_IDENTITY_SIGNER = 4
 
 export type ImplicitBlacklistLeaf = {
   type: 'implicit-blacklist'
-  blacklist: Address.Address[]
+  blacklist: Checksummed[]
 }
 
 export type IdentitySignerLeaf = {
   type: 'identity-signer'
-  identitySigner: Address.Address
+  identitySigner: Checksummed
 }
 
 export type SessionPermissionsLeaf = SessionPermissions & {
@@ -106,7 +107,7 @@ function checkIsCompleteSessionsBranch(topology: SessionsTopology): {
  * @param topology The topology to get the identity signer from
  * @returns The identity signer or null if it's not present
  */
-export function getIdentitySigner(topology: SessionsTopology): Address.Address | null {
+export function getIdentitySigner(topology: SessionsTopology): Checksummed | null {
   if (isIdentitySignerLeaf(topology)) {
     // Got it
     return topology.identitySigner
@@ -131,7 +132,7 @@ export function getIdentitySigner(topology: SessionsTopology): Address.Address |
  * @param topology The topology to get the implicit blacklist from
  * @returns The implicit blacklist or null if it's not present
  */
-export function getImplicitBlacklist(topology: SessionsTopology): Address.Address[] | null {
+export function getImplicitBlacklist(topology: SessionsTopology): Checksummed[] | null {
   const blacklistNode = getImplicitBlacklistLeaf(topology)
   if (!blacklistNode) {
     return null
@@ -164,9 +165,9 @@ export function getImplicitBlacklistLeaf(topology: SessionsTopology): ImplicitBl
   return null
 }
 
-export function getSessionPermissions(topology: SessionsTopology, address: Address.Address): SessionPermissions | null {
+export function getSessionPermissions(topology: SessionsTopology, address: Checksummed): SessionPermissions | null {
   if (isSessionPermissions(topology)) {
-    if (Address.isEqual(topology.signer, address)) {
+    if (isEqual(topology.signer, address)) {
       return topology
     }
   }
@@ -181,16 +182,16 @@ export function getSessionPermissions(topology: SessionsTopology, address: Addre
   return null
 }
 
-export function getExplicitSigners(topology: SessionsTopology): Address.Address[] {
+export function getExplicitSigners(topology: SessionsTopology): Checksummed[] {
   return getExplicitSignersFromBranch(topology, [])
 }
 
-function getExplicitSignersFromBranch(topology: SessionsTopology, current: Address.Address[]): Address.Address[] {
+function getExplicitSignersFromBranch(topology: SessionsTopology, current: Checksummed[]): Checksummed[] {
   if (isSessionPermissions(topology)) {
     return [...current, topology.signer]
   }
   if (isSessionsBranch(topology)) {
-    const result: Address.Address[] = [...current]
+    const result: Checksummed[] = [...current]
     for (const child of topology) {
       result.push(...getExplicitSignersFromBranch(child, current))
     }
@@ -239,14 +240,14 @@ export function encodeLeafToGeneric(leaf: SessionLeaf): GenericTree.Leaf {
 export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
   const flag = bytes[0]!
   if (flag === SESSIONS_FLAG_BLACKLIST) {
-    const blacklist: `0x${string}`[] = []
+    const blacklist: Checksummed[] = []
     for (let i = 1; i < bytes.length; i += 20) {
-      blacklist.push(Bytes.toHex(bytes.slice(i, i + 20)))
+      blacklist.push(checksum(Bytes.toHex(bytes.slice(i, i + 20))))
     }
     return { type: 'implicit-blacklist', blacklist }
   }
   if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
-    return { type: 'identity-signer', identitySigner: Bytes.toHex(bytes.slice(1, 21)) }
+    return { type: 'identity-signer', identitySigner: checksum(Bytes.toHex(bytes.slice(1, 21))) }
   }
   if (flag === SESSIONS_FLAG_PERMISSIONS) {
     return { type: 'session-permissions', ...decodeSessionPermissions(bytes.slice(1)) }
@@ -401,13 +402,12 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
 
   // Parse identity signer
   if (typeof parsed === 'object' && parsed !== null && 'identitySigner' in parsed) {
-    const identitySigner = parsed.identitySigner as `0x${string}`
-    return { type: 'identity-signer', identitySigner }
+    return { type: 'identity-signer', identitySigner: checksum(parsed.identitySigner) }
   }
 
   // Parse blacklist
   if (typeof parsed === 'object' && parsed !== null && 'blacklist' in parsed) {
-    const blacklist = parsed.blacklist.map((address: any) => Address.from(address))
+    const blacklist = parsed.blacklist.map(checksum)
     return { type: 'implicit-blacklist', blacklist }
   }
 
@@ -421,12 +421,9 @@ function sessionsTopologyFromParsed(parsed: any): SessionsTopology {
  * Returns the updated topology or null if it becomes empty (for nesting).
  * If the signer is not found, the topology is returned unchanged.
  */
-export function removeExplicitSession(
-  topology: SessionsTopology,
-  signerAddress: `0x${string}`,
-): SessionsTopology | null {
+export function removeExplicitSession(topology: SessionsTopology, signerAddress: Checksummed): SessionsTopology | null {
   if (isSessionPermissions(topology)) {
-    if (Address.isEqual(topology.signer, signerAddress)) {
+    if (isEqual(topology.signer, signerAddress)) {
       return null
     }
     // Return the leaf unchanged
@@ -594,8 +591,8 @@ export function cleanSessionsTopology(
  */
 export function minimiseSessionsTopology(
   topology: SessionsTopology,
-  explicitSigners: Address.Address[] = [],
-  implicitSigners: Address.Address[] = [],
+  explicitSigners: Checksummed[] = [],
+  implicitSigners: Checksummed[] = [],
 ): SessionsTopology {
   if (isSessionsBranch(topology)) {
     const branches = topology.map((b) => minimiseSessionsTopology(b, explicitSigners, implicitSigners))
@@ -636,13 +633,13 @@ export function minimiseSessionsTopology(
  * Adds an address to the implicit session's blacklist.
  * If the address is not already in the blacklist, it is added and the list is sorted.
  */
-export function addToImplicitBlacklist(topology: SessionsTopology, address: Address.Address): SessionsTopology {
+export function addToImplicitBlacklist(topology: SessionsTopology, address: Checksummed): SessionsTopology {
   const blacklistNode = getImplicitBlacklistLeaf(topology)
   if (!blacklistNode) {
     throw new Error('No blacklist found')
   }
   const { blacklist } = blacklistNode
-  if (blacklist.some((addr) => Address.isEqual(addr, address))) {
+  if (blacklist.includes(address)) {
     return topology
   }
   blacklist.push(address)
@@ -653,7 +650,7 @@ export function addToImplicitBlacklist(topology: SessionsTopology, address: Addr
 /**
  * Removes an address from the implicit session's blacklist.
  */
-export function removeFromImplicitBlacklist(topology: SessionsTopology, address: Address.Address): SessionsTopology {
+export function removeFromImplicitBlacklist(topology: SessionsTopology, address: Checksummed): SessionsTopology {
   const blacklistNode = getImplicitBlacklistLeaf(topology)
   if (!blacklistNode) {
     throw new Error('No blacklist found')
@@ -667,7 +664,7 @@ export function removeFromImplicitBlacklist(topology: SessionsTopology, address:
 /**
  *  Generate an empty sessions topology with the given identity signer. No session permission and an empty blacklist
  */
-export function emptySessionsTopology(identitySigner: Address.Address): SessionsTopology {
+export function emptySessionsTopology(identitySigner: Checksummed): SessionsTopology {
   return [
     {
       type: 'implicit-blacklist',

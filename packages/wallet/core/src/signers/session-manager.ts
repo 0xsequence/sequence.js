@@ -1,4 +1,5 @@
 import {
+  Address,
   Config,
   Constants,
   Payload,
@@ -6,14 +7,14 @@ import {
   SessionSignature,
   Signature as SignatureTypes,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Hex, Provider } from 'ox'
+import { AbiFunction, Hex, Provider } from 'ox'
 import * as State from '../state/index.js'
 import { Wallet } from '../wallet.js'
 import { SapientSigner } from './index.js'
 import { Explicit, Implicit, isExplicitSessionSigner, SessionSigner, UsageLimit } from './session/index.js'
 
 export type SessionManagerOptions = {
-  sessionManagerAddress: Address.Address
+  sessionManagerAddress: Address.Checksummed
   stateProvider?: State.Provider
   implicitSigners?: Implicit[]
   explicitSigners?: Explicit[]
@@ -22,7 +23,7 @@ export type SessionManagerOptions = {
 
 export class SessionManager implements SapientSigner {
   public readonly stateProvider: State.Provider
-  public readonly address: Address.Address
+  public readonly address: Address.Checksummed
 
   private readonly _implicitSigners: Implicit[]
   private readonly _explicitSigners: Explicit[]
@@ -101,7 +102,11 @@ export class SessionManager implements SapientSigner {
     })
   }
 
-  async findSignersForCalls(wallet: Address.Address, chainId: bigint, calls: Payload.Call[]): Promise<SessionSigner[]> {
+  async findSignersForCalls(
+    wallet: Address.Checksummed,
+    chainId: bigint,
+    calls: Payload.Call[],
+  ): Promise<SessionSigner[]> {
     // Only use signers that match the topology
     const topology = await this.topology
     const identitySigner = SessionConfig.getIdentitySigner(topology)
@@ -152,7 +157,7 @@ export class SessionManager implements SapientSigner {
   }
 
   async prepareIncrement(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
   ): Promise<Payload.Call | null> {
@@ -207,7 +212,7 @@ export class SessionManager implements SapientSigner {
   }
 
   async signSapient(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
@@ -258,8 +263,8 @@ export class SessionManager implements SapientSigner {
     }
 
     // Encode the signature
-    const explicitSigners: Address.Address[] = []
-    const implicitSigners: Address.Address[] = []
+    const explicitSigners: Address.Checksummed[] = []
+    const implicitSigners: Address.Checksummed[] = []
     await Promise.all(
       signers.map(async (signer) => {
         if (isExplicitSessionSigner(signer)) {
@@ -284,7 +289,7 @@ export class SessionManager implements SapientSigner {
   }
 
   async isValidSapientSignature(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     signature: SignatureTypes.SignatureOfSapientSignerLeaf,

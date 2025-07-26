@@ -1,6 +1,6 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { Address, Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { AbiFunction, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
 
@@ -62,7 +62,7 @@ export class ChainSessionManager {
 
   private sessions: Session[] = []
 
-  private walletAddress: Address.Address | null = null
+  private walletAddress: Address.Checksummed | null = null
   private sessionManager: Signers.SessionManager | null = null
   private wallet: Wallet | null = null
   private provider: Provider.Provider | null = null
@@ -185,7 +185,7 @@ export class ChainSessionManager {
    * This is used when a wallet address is known but the session manager for this chain hasn't been instantiated yet.
    * @param walletAddress The address of the wallet to initialize with.
    */
-  public initializeWithWallet(walletAddress: Address.Address) {
+  public initializeWithWallet(walletAddress: Address.Checksummed) {
     if (this.isInitialized) return
 
     this.walletAddress = walletAddress
@@ -204,7 +204,7 @@ export class ChainSessionManager {
    * @param implicitSession The main implicit session data, which contains the wallet address.
    */
   private async _loadSessionFromStorage(implicitSession: ImplicitSessionData) {
-    const walletAddr = Address.from(implicitSession.walletAddress)
+    const walletAddr = Address.checksum(implicitSession.walletAddress)
     this.initializeWithWallet(walletAddr)
 
     if (implicitSession.chainId === this.chainId) {
@@ -221,7 +221,7 @@ export class ChainSessionManager {
 
     const allExplicitSessions = await this.sequenceStorage.getExplicitSessions()
     const walletExplicitSessions = allExplicitSessions.filter(
-      (s) => Address.isEqual(Address.from(s.walletAddress), walletAddr) && s.chainId === this.chainId,
+      (s) => Address.isEqual(s.walletAddress, walletAddr) && s.chainId === this.chainId,
     )
 
     for (const sessionData of walletExplicitSessions) {
@@ -278,7 +278,7 @@ export class ChainSessionManager {
         { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
-      const receivedAddress = Address.from(connectResponse.walletAddress)
+      const receivedAddress = connectResponse.walletAddress
       const { attestation, signature, email, loginMethod } = connectResponse
       if (!attestation || !signature)
         throw new InitializationError('Attestation or signature missing for implicit session.')
@@ -357,7 +357,7 @@ export class ChainSessionManager {
         { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
-      if (!Address.isEqual(Address.from(response.walletAddress), this.walletAddress)) {
+      if (!Address.isEqual(response.walletAddress, this.walletAddress)) {
         throw new AddExplicitSessionError('Wallet address mismatch.')
       }
 
@@ -385,7 +385,7 @@ export class ChainSessionManager {
    * @throws {ModifyExplicitSessionError} If modifying the session fails.
    */
   async modifyExplicitSession(
-    sessionAddress: Address.Address,
+    sessionAddress: Address.Checksummed,
     newPermissions: Signers.Session.ExplicitParams,
   ): Promise<void> {
     if (!this.walletAddress) {
@@ -419,8 +419,8 @@ export class ChainSessionManager {
       )
 
       if (
-        !Address.isEqual(Address.from(response.walletAddress), this.walletAddress) &&
-        !Address.isEqual(Address.from(response.sessionAddress), sessionAddress)
+        !Address.isEqual(response.walletAddress, this.walletAddress) &&
+        !Address.isEqual(response.sessionAddress, sessionAddress)
       ) {
         throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
       }
@@ -450,7 +450,7 @@ export class ChainSessionManager {
 
     try {
       const connectResponse = response.payload
-      const receivedAddress = Address.from(connectResponse.walletAddress)
+      const receivedAddress = connectResponse.walletAddress
       const { email, loginMethod } = connectResponse
 
       if (response.action === RequestActionType.ADD_IMPLICIT_SESSION) {
@@ -536,7 +536,7 @@ export class ChainSessionManager {
    */
   private async _initializeImplicitSessionInternal(
     pk: Hex.Hex,
-    address: Address.Address,
+    address: Address.Checksummed,
     attestation: Attestation.Attestation,
     identitySignature: Hex.Hex,
     saveSession: boolean = false,
@@ -674,15 +674,28 @@ export class ChainSessionManager {
 
       const callsToSend = calls
       if (feeOption) {
-        const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
-        const transferCall: Payload.Call = {
-          to: feeOption.token.contractAddress as `0x${string}`,
-          value: BigInt(0),
-          data: AbiFunction.encodeData(transfer, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
-          gasLimit: BigInt(feeOption.gasLimit),
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert' as const,
+        let transferCall: Payload.Call
+        if (feeOption.token.contractAddress && feeOption.token.contractAddress !== Constants.ZeroAddress) {
+          const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
+          transferCall = {
+            to: Address.checksum(feeOption.token.contractAddress),
+            value: BigInt(0),
+            data: AbiFunction.encodeData(transfer, [feeOption.to, BigInt(feeOption.value)]),
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          }
+        } else {
+          transferCall = {
+            to: feeOption.to,
+            value: BigInt(feeOption.value),
+            data: '0x',
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          }
         }
         callsToSend.unshift(transferCall)
       }
@@ -745,7 +758,7 @@ export class ChainSessionManager {
         return true
       } else if (response.action === RequestActionType.MODIFY_EXPLICIT_SESSION) {
         const modifyResponse = response.payload as ModifySessionSuccessResponsePayload
-        if (!Address.isEqual(Address.from(modifyResponse.walletAddress), this.walletAddress!)) {
+        if (!Address.isEqual(modifyResponse.walletAddress, this.walletAddress!)) {
           throw new ModifyExplicitSessionError('Wallet address mismatch on redirect response.')
         }
 
@@ -767,7 +780,7 @@ export class ChainSessionManager {
    * Gets the wallet address associated with this manager.
    * @returns The wallet address, or null if not initialized.
    */
-  getWalletAddress(): Address.Address | null {
+  getWalletAddress(): Address.Checksummed | null {
     return this.walletAddress
   }
 
@@ -880,7 +893,7 @@ export class ChainSessionManager {
    * @param calls The payload calls to include in the transaction.
    * @returns The signed transaction data ready for relaying.
    */
-  private async _buildAndSignCalls(calls: Payload.Call[]): Promise<{ to: Address.Address; data: Hex.Hex }> {
+  private async _buildAndSignCalls(calls: Payload.Call[]): Promise<{ to: Address.Checksummed; data: Hex.Hex }> {
     if (!this.wallet || !this.sessionManager || !this.provider)
       throw new InitializationError('Session not fully initialized.')
 
@@ -926,7 +939,7 @@ export class ChainSessionManager {
    * @param chainId The chain ID of the transaction.
    * @returns The final status of the transaction.
    */
-  private async _waitForTransactionReceipt(opHash: `0x${string}`, chainId: bigint): Promise<Relayer.OperationStatus> {
+  private async _waitForTransactionReceipt(opHash: Hex.Hex, chainId: bigint): Promise<Relayer.OperationStatus> {
     try {
       while (true) {
         const currentStatus = await this.relayer.status(opHash, chainId)

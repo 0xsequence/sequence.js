@@ -120,7 +120,7 @@ Disconnects the client and clears all session data from browser storage. Note: t
 
 Returns the wallet address of the current session.
 
-- **Returns:** `Address.Address | null`
+- **Returns:** `Address.Checksummed | null`
 
 ---
 

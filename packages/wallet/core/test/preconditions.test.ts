@@ -1,4 +1,5 @@
-import { Address, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it, vi } from 'vitest'
 import {
   Erc1155ApprovalPrecondition,
@@ -14,7 +15,7 @@ import { CAN_RUN_LIVE, RPC_URL } from './constants'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
-function randomAddress(): Address.Address {
+function randomAddress(): Address.Checksummed {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
 }
 
@@ -41,7 +42,7 @@ describe('Preconditions', () => {
 
   const testWalletAddress = randomAddress()
 
-  const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Address) => {
+  const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Checksummed) => {
     const code = await provider.request({ method: 'eth_getCode', params: [contract, 'latest'] })
     if (code === '0x') {
       throw new Error(`Contract ${contract} not deployed`)
@@ -168,7 +169,7 @@ describe('Preconditions', () => {
     if (!CAN_RUN_LIVE) {
       // Mock the ownerOf call
       ;(provider as any).call.mockResolvedValue(
-        '0x000000000000000000000000' + testWalletAddress.toString().slice(2).toLowerCase(),
+        `0x000000000000000000000000${testWalletAddress.toString().slice(2).toLowerCase()}`,
       )
     }
 
@@ -203,7 +204,7 @@ describe('Preconditions', () => {
     if (!CAN_RUN_LIVE) {
       // Mock the getApproved call
       ;(provider as any).call.mockResolvedValue(
-        '0x000000000000000000000000' + operator.toString().slice(2).toLowerCase(),
+        `0x000000000000000000000000${operator.toString().slice(2).toLowerCase()}`,
       )
     }
 

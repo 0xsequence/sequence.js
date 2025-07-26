@@ -1,20 +1,22 @@
-import { SessionConfig } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
+import { Address, SessionConfig } from '@0xsequence/wallet-primitives'
 import type { CommandModule } from 'yargs'
-import { fromPosOrStdin, requireString } from '../utils.js'
+import { fromPosOrStdin } from '../utils.js'
 
-export async function doAddBlacklistAddress(blacklistAddress: string, sessionTopologyInput: string): Promise<string> {
+export async function doAddBlacklistAddress(
+  blacklistAddress: Address.Checksummed,
+  sessionTopologyInput: string,
+): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
-  const updated = SessionConfig.addToImplicitBlacklist(sessionTopology, blacklistAddress as Address.Address)
+  const updated = SessionConfig.addToImplicitBlacklist(sessionTopology, blacklistAddress)
   return SessionConfig.sessionsTopologyToJson(updated)
 }
 
 export async function doRemoveBlacklistAddress(
-  blacklistAddress: string,
+  blacklistAddress: Address.Checksummed,
   sessionTopologyInput: string,
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
-  const updated = SessionConfig.removeFromImplicitBlacklist(sessionTopology, blacklistAddress as Address.Address)
+  const updated = SessionConfig.removeFromImplicitBlacklist(sessionTopology, blacklistAddress)
   return SessionConfig.sessionsTopologyToJson(updated)
 }
 
@@ -40,8 +42,7 @@ const sessionImplicitCommand: CommandModule = {
             })
         },
         async (argv) => {
-          const blacklistAddress = argv.blacklistAddress
-          requireString(blacklistAddress, 'Blacklist address')
+          const blacklistAddress = Address.checksum(argv.blacklistAddress)
           const sessionTopologyInput = await fromPosOrStdin(argv, 'session-topology')
           console.log(await doAddBlacklistAddress(blacklistAddress, sessionTopologyInput))
         },
@@ -63,10 +64,7 @@ const sessionImplicitCommand: CommandModule = {
             })
         },
         async (argv) => {
-          const blacklistAddress = argv.blacklistAddress as string
-          if (!blacklistAddress) {
-            throw new Error('Blacklist address is required')
-          }
+          const blacklistAddress = Address.checksum(argv.blacklistAddress)
           const sessionTopologyInput = await fromPosOrStdin(argv, 'session-topology')
           console.log(await doRemoveBlacklistAddress(blacklistAddress, sessionTopologyInput))
         },

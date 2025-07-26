@@ -1,18 +1,21 @@
-import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { Store } from './index.js'
 
 export class MemoryStore implements Store {
-  private configs = new Map<`0x${string}`, Config.Config>()
-  private counterfactualWallets = new Map<`0x${string}`, { imageHash: Hex.Hex; context: Context.Context }>()
-  private payloads = new Map<`0x${string}`, { content: Payload.Parented; chainId: bigint; wallet: Address.Address }>()
-  private signerSubdigests = new Map<string, Set<string>>()
-  private signatures = new Map<`0x${string}`, Signature.SignatureOfSignerLeaf>()
+  private configs = new Map<Hex.Hex, Config.Config>()
+  private counterfactualWallets = new Map<Address.Checksummed, { imageHash: Hex.Hex; context: Context.Context }>()
+  private payloads = new Map<Hex.Hex, { content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed }>()
+  private signerSubdigests = new Map<Address.Checksummed, Set<Hex.Hex>>()
+  private signatures = new Map<`${Address.Checksummed}-${Hex.Hex}`, Signature.SignatureOfSignerLeaf>()
 
-  private sapientSignerSubdigests = new Map<string, Set<string>>()
-  private sapientSignatures = new Map<`0x${string}`, Signature.SignatureOfSapientSignerLeaf>()
+  private sapientSignerSubdigests = new Map<`${Address.Checksummed}-${Hex.Hex}`, Set<Hex.Hex>>()
+  private sapientSignatures = new Map<
+    `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}`,
+    Signature.SignatureOfSapientSignerLeaf
+  >()
 
-  private trees = new Map<`0x${string}`, GenericTree.Tree>()
+  private trees = new Map<Hex.Hex, GenericTree.Tree>()
 
   private deepCopy<T>(value: T): T {
     // modern runtime → fast native path
@@ -38,119 +41,123 @@ export class MemoryStore implements Store {
     return out as T
   }
 
-  private getSignatureKey(signer: Address.Address, subdigest: Hex.Hex): string {
-    return `${signer.toLowerCase()}-${subdigest.toLowerCase()}`
+  private getSignatureKey(signer: Address.Checksummed, subdigest: Hex.Hex): `${Address.Checksummed}-${Hex.Hex}` {
+    return `${signer}-${subdigest}`
   }
 
-  private getSapientSignatureKey(signer: Address.Address, subdigest: Hex.Hex, imageHash: Hex.Hex): string {
-    return `${signer.toLowerCase()}-${imageHash.toLowerCase()}-${subdigest.toLowerCase()}`
+  private getSapientSignatureKey(
+    signer: Address.Checksummed,
+    subdigest: Hex.Hex,
+    imageHash: Hex.Hex,
+  ): `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}` {
+    return `${signer}-${imageHash}-${subdigest}`
   }
 
   async loadConfig(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
-    const config = this.configs.get(imageHash.toLowerCase() as `0x${string}`)
+    const config = this.configs.get(imageHash)
     return config ? this.deepCopy(config) : undefined
   }
 
   async saveConfig(imageHash: Hex.Hex, config: Config.Config): Promise<void> {
-    this.configs.set(imageHash.toLowerCase() as `0x${string}`, this.deepCopy(config))
+    this.configs.set(imageHash, this.deepCopy(config))
   }
 
   async loadCounterfactualWallet(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
   ): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
-    const counterfactualWallet = this.counterfactualWallets.get(wallet.toLowerCase() as `0x${string}`)
+    const counterfactualWallet = this.counterfactualWallets.get(wallet)
     return counterfactualWallet ? this.deepCopy(counterfactualWallet) : undefined
   }
 
-  async saveCounterfactualWallet(wallet: Address.Address, imageHash: Hex.Hex, context: Context.Context): Promise<void> {
-    this.counterfactualWallets.set(wallet.toLowerCase() as `0x${string}`, this.deepCopy({ imageHash, context }))
+  async saveCounterfactualWallet(
+    wallet: Address.Checksummed,
+    imageHash: Hex.Hex,
+    context: Context.Context,
+  ): Promise<void> {
+    this.counterfactualWallets.set(wallet, this.deepCopy({ imageHash, context }))
   }
 
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
-  ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Address } | undefined> {
-    const payload = this.payloads.get(subdigest.toLowerCase() as `0x${string}`)
+  ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed } | undefined> {
+    const payload = this.payloads.get(subdigest)
     return payload ? this.deepCopy(payload) : undefined
   }
 
   async savePayloadOfSubdigest(
     subdigest: Hex.Hex,
-    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Address },
+    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed },
   ): Promise<void> {
-    this.payloads.set(subdigest.toLowerCase() as `0x${string}`, this.deepCopy(payload))
+    this.payloads.set(subdigest, this.deepCopy(payload))
   }
 
-  async loadSubdigestsOfSigner(signer: Address.Address): Promise<Hex.Hex[]> {
-    const subdigests = this.signerSubdigests.get(signer.toLowerCase() as `0x${string}`)
-    return subdigests ? Array.from(subdigests).map((s) => s as Hex.Hex) : []
+  async loadSubdigestsOfSigner(signer: Address.Checksummed): Promise<Hex.Hex[]> {
+    const subdigests = this.signerSubdigests.get(signer)
+    return subdigests ? Array.from(subdigests) : []
   }
 
   async loadSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
   ): Promise<Signature.SignatureOfSignerLeaf | undefined> {
     const key = this.getSignatureKey(signer, subdigest)
-    const signature = this.signatures.get(key as `0x${string}`)
+    const signature = this.signatures.get(key)
     return signature ? this.deepCopy(signature) : undefined
   }
 
   async saveSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     signature: Signature.SignatureOfSignerLeaf,
   ): Promise<void> {
     const key = this.getSignatureKey(signer, subdigest)
-    this.signatures.set(key as `0x${string}`, this.deepCopy(signature))
+    this.signatures.set(key, this.deepCopy(signature))
 
-    const signerKey = signer.toLowerCase()
-    const subdigestKey = subdigest.toLowerCase()
-
-    if (!this.signerSubdigests.has(signerKey)) {
-      this.signerSubdigests.set(signerKey, new Set())
+    if (!this.signerSubdigests.has(signer)) {
+      this.signerSubdigests.set(signer, new Set())
     }
-    this.signerSubdigests.get(signerKey)!.add(subdigestKey)
+    this.signerSubdigests.get(signer)!.add(subdigest)
   }
 
-  async loadSubdigestsOfSapientSigner(signer: Address.Address, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
-    const key = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
+  async loadSubdigestsOfSapientSigner(signer: Address.Checksummed, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
+    const key = `${signer}-${imageHash}` as const
     const subdigests = this.sapientSignerSubdigests.get(key)
-    return subdigests ? Array.from(subdigests).map((s) => s as Hex.Hex) : []
+    return subdigests ? Array.from(subdigests) : []
   }
 
   async loadSapientSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
   ): Promise<Signature.SignatureOfSapientSignerLeaf | undefined> {
     const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
-    const signature = this.sapientSignatures.get(key as `0x${string}`)
+    const signature = this.sapientSignatures.get(key)
     return signature ? this.deepCopy(signature) : undefined
   }
 
   async saveSapientSignatureOfSubdigest(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
     signature: Signature.SignatureOfSapientSignerLeaf,
   ): Promise<void> {
     const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
-    this.sapientSignatures.set(key as `0x${string}`, this.deepCopy(signature))
+    this.sapientSignatures.set(key, this.deepCopy(signature))
 
-    const signerKey = `${signer.toLowerCase()}-${imageHash.toLowerCase()}`
-    const subdigestKey = subdigest.toLowerCase()
+    const signerKey = `${signer}-${imageHash}` as const
 
     if (!this.sapientSignerSubdigests.has(signerKey)) {
       this.sapientSignerSubdigests.set(signerKey, new Set())
     }
-    this.sapientSignerSubdigests.get(signerKey)!.add(subdigestKey)
+    this.sapientSignerSubdigests.get(signerKey)!.add(subdigest)
   }
 
   async loadTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
-    const tree = this.trees.get(rootHash.toLowerCase() as `0x${string}`)
+    const tree = this.trees.get(rootHash)
     return tree ? this.deepCopy(tree) : undefined
   }
 
   async saveTree(rootHash: Hex.Hex, tree: GenericTree.Tree): Promise<void> {
-    this.trees.set(rootHash.toLowerCase() as `0x${string}`, this.deepCopy(tree))
+    this.trees.set(rootHash, this.deepCopy(tree))
   }
 }

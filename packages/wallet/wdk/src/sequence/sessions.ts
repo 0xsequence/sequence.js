@@ -1,5 +1,6 @@
 import { Signers as CoreSigners, Envelope } from '@0xsequence/wallet-core'
 import {
+  Address,
   Attestation,
   Config,
   Constants,
@@ -8,7 +9,7 @@ import {
   Signature as SequenceSignature,
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
 import { IdentityType } from '@0xsequence/identity-instrument'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
@@ -34,7 +35,7 @@ export interface SessionsInterface {
    * @returns A promise that resolves to the wallet's `SessionsTopology` object.
    * @throws An error if the wallet is not configured with a session manager or if the topology cannot be found.
    */
-  getTopology(walletAddress: Address.Address): Promise<SessionConfig.SessionsTopology>
+  getTopology(walletAddress: Address.Checksummed): Promise<SessionConfig.SessionsTopology>
 
   /**
    * Initiates the authorization of an "implicit session".
@@ -56,8 +57,8 @@ export interface SessionsInterface {
    * @see {completeAuthorizeImplicitSession} to finalize the process after signing.
    */
   prepareAuthorizeImplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
+    walletAddress: Address.Checksummed,
+    sessionAddress: Address.Checksummed,
     args: AuthorizeImplicitSessionArgs,
   ): Promise<string>
 
@@ -97,8 +98,8 @@ export interface SessionsInterface {
    * @see {complete} to finalize the update after it has been signed.
    */
   addExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
+    walletAddress: Address.Checksummed,
+    sessionAddress: Address.Checksummed,
     permissions: CoreSigners.Session.ExplicitParams,
   ): Promise<string>
 
@@ -119,8 +120,8 @@ export interface SessionsInterface {
    * @see {complete} to finalize the update after it has been signed.
    */
   modifyExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
+    walletAddress: Address.Checksummed,
+    sessionAddress: Address.Checksummed,
     permissions: CoreSigners.Session.ExplicitParams,
     origin?: string,
   ): Promise<string>
@@ -136,7 +137,7 @@ export interface SessionsInterface {
    * @returns A promise that resolves to a `requestId` for the configuration update signature request.
    * @see {complete} to finalize the update after it has been signed.
    */
-  removeExplicitSession(walletAddress: Address.Address, sessionAddress: Address.Address): Promise<string>
+  removeExplicitSession(walletAddress: Address.Checksummed, sessionAddress: Address.Checksummed): Promise<string>
 
   /**
    * Initiates an on-chain configuration update to add a contract address to the implicit session blacklist.
@@ -148,7 +149,7 @@ export interface SessionsInterface {
    * @returns A promise that resolves to a `requestId` for the configuration update signature request.
    * @see {complete} to finalize the update after it has been signed.
    */
-  addBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string>
+  addBlacklistAddress(walletAddress: Address.Checksummed, address: Address.Checksummed): Promise<string>
 
   /**
    * Initiates an on-chain configuration update to remove a contract address from the implicit session blacklist.
@@ -158,7 +159,7 @@ export interface SessionsInterface {
    * @returns A promise that resolves to a `requestId` for the configuration update signature request.
    * @see {complete} to finalize the update after it has been signed.
    */
-  removeBlacklistAddress(walletAddress: Address.Address, address: Address.Address): Promise<string>
+  removeBlacklistAddress(walletAddress: Address.Checksummed, address: Address.Checksummed): Promise<string>
 
   /**
    * Finalizes and saves a pending  session configuration update.
@@ -185,7 +186,7 @@ export interface SessionsInterface {
 export class Sessions implements SessionsInterface {
   constructor(private readonly shared: Shared) {}
 
-  async getTopology(walletAddress: Address.Address, fixMissing = false): Promise<SessionConfig.SessionsTopology> {
+  async getTopology(walletAddress: Address.Checksummed, fixMissing = false): Promise<SessionConfig.SessionsTopology> {
     const { loginTopology, modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
     const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
     if (!managerLeaf) {
@@ -217,8 +218,8 @@ export class Sessions implements SessionsInterface {
   }
 
   async prepareAuthorizeImplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
+    walletAddress: Address.Checksummed,
+    sessionAddress: Address.Checksummed,
     args: AuthorizeImplicitSessionArgs,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress)
@@ -320,8 +321,8 @@ export class Sessions implements SessionsInterface {
   }
 
   async addExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
+    walletAddress: Address.Checksummed,
+    sessionAddress: Address.Checksummed,
     permissions: CoreSigners.Session.ExplicitParams,
     origin?: string,
   ): Promise<string> {
@@ -334,8 +335,8 @@ export class Sessions implements SessionsInterface {
   }
 
   async modifyExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
+    walletAddress: Address.Checksummed,
+    sessionAddress: Address.Checksummed,
     permissions: CoreSigners.Session.ExplicitParams,
     origin?: string,
   ): Promise<string> {
@@ -353,8 +354,8 @@ export class Sessions implements SessionsInterface {
   }
 
   async removeExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
+    walletAddress: Address.Checksummed,
+    sessionAddress: Address.Checksummed,
     origin?: string,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress)
@@ -366,8 +367,8 @@ export class Sessions implements SessionsInterface {
   }
 
   async addBlacklistAddress(
-    walletAddress: Address.Address,
-    address: Address.Address,
+    walletAddress: Address.Checksummed,
+    address: Address.Checksummed,
     origin?: string,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress, true)
@@ -376,8 +377,8 @@ export class Sessions implements SessionsInterface {
   }
 
   async removeBlacklistAddress(
-    walletAddress: Address.Address,
-    address: Address.Address,
+    walletAddress: Address.Checksummed,
+    address: Address.Checksummed,
     origin?: string,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress)
@@ -386,7 +387,7 @@ export class Sessions implements SessionsInterface {
   }
 
   private async prepareSessionUpdate(
-    walletAddress: Address.Address,
+    walletAddress: Address.Checksummed,
     topology: SessionConfig.SessionsTopology,
     origin: string = 'wallet-webapp',
   ): Promise<string> {

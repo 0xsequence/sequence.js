@@ -1,12 +1,12 @@
 import { Envelope } from '@0xsequence/wallet-core'
-import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 
 export type MessageRequest = string | Hex.Hex | Payload.TypedDataToSign
 
 type MessageBase = {
   id: string
-  wallet: Address.Address
+  wallet: Address.Checksummed
   message: MessageRequest
   source: string
   signatureId: string

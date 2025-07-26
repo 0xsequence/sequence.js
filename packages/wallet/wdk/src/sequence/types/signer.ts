@@ -1,4 +1,5 @@
-import { Address, Hex } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 
 export const Kinds = {
   LocalDevice: 'local-device',
@@ -18,7 +19,7 @@ export type WitnessExtraSignerKind = {
 }
 
 export type SignerWithKind = {
-  address: Address.Address
+  address: Address.Checksummed
   kind?: Kind
   imageHash?: Hex.Hex
 }
@@ -26,7 +27,7 @@ export type SignerWithKind = {
 export type RecoverySigner = {
   kind: Kind
   isRecovery: true
-  address: Address.Address
+  address: Address.Checksummed
   minTimestamp: bigint
   requiredDeltaTime: bigint
 }

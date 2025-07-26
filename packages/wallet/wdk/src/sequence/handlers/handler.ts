@@ -1,4 +1,5 @@
-import { Address, Hex } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { SignerActionable, SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
 
 export interface Handler {
@@ -7,7 +8,7 @@ export interface Handler {
   onStatusChange(cb: () => void): () => void
 
   status(
-    address: Address.Address,
+    address: Address.Checksummed,
     imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable>

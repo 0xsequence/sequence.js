@@ -1,4 +1,5 @@
-import { Hex, Address, Bytes } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex, Bytes } from 'ox'
 import { Handler } from './handler.js'
 import * as Db from '../../dbs/index.js'
 import { Signatures } from '../signatures.js'
@@ -71,7 +72,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
   }
 
   async status(
-    address: Address.Address,
+    address: Address.Checksummed,
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {

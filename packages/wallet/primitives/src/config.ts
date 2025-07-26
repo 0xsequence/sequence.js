@@ -1,4 +1,5 @@
-import { Address, Bytes, Hash, Hex } from 'ox'
+import { Bytes, Hash, Hex } from 'ox'
+import { Checksummed, isEqual } from './address.js'
 import {
   isRawConfig,
   isRawNestedLeaf,
@@ -15,7 +16,7 @@ import { Constants } from './index.js'
 
 export type SignerLeaf = {
   type: 'signer'
-  address: Address.Address
+  address: Checksummed
   weight: bigint
   signed?: boolean
   signature?: SignatureOfSignerLeaf
@@ -23,7 +24,7 @@ export type SignerLeaf = {
 
 export type SapientSignerLeaf = {
   type: 'sapient-signer'
-  address: Address.Address
+  address: Checksummed
   weight: bigint
   imageHash: Hex.Hex
   signed?: boolean
@@ -59,7 +60,7 @@ export type Config = {
   threshold: bigint
   checkpoint: bigint
   topology: Topology
-  checkpointer?: Address.Address
+  checkpointer?: Checksummed
 }
 
 export function isSignerLeaf(cand: any): cand is SignerLeaf {
@@ -110,12 +111,12 @@ export function isTopology(cand: any): cand is Topology {
 }
 
 export function getSigners(configuration: Config | Topology): {
-  signers: Address.Address[]
-  sapientSigners: { address: Address.Address; imageHash: Hex.Hex }[]
+  signers: Checksummed[]
+  sapientSigners: { address: Checksummed; imageHash: Hex.Hex }[]
   isComplete: boolean
 } {
-  const signers = new Set<Address.Address>()
-  const sapientSigners = new Set<{ address: Address.Address; imageHash: Hex.Hex }>()
+  const signers = new Set<Checksummed>()
+  const sapientSigners = new Set<{ address: Checksummed; imageHash: Hex.Hex }>()
 
   let isComplete = true
 
@@ -144,18 +145,18 @@ export function getSigners(configuration: Config | Topology): {
 
 export function findSignerLeaf(
   configuration: Config | Topology,
-  address: Address.Address,
+  address: Checksummed,
 ): SignerLeaf | SapientSignerLeaf | undefined {
   if (isConfig(configuration)) {
     return findSignerLeaf(configuration.topology, address)
   } else if (isNode(configuration)) {
     return findSignerLeaf(configuration[0], address) || findSignerLeaf(configuration[1], address)
   } else if (isSignerLeaf(configuration)) {
-    if (Address.isEqual(configuration.address, address)) {
+    if (isEqual(configuration.address, address)) {
       return configuration
     }
   } else if (isSapientSignerLeaf(configuration)) {
-    if (Address.isEqual(configuration.address, address)) {
+    if (isEqual(configuration.address, address)) {
       return configuration
     }
   }
@@ -347,7 +348,8 @@ function decodeTopology(obj: any): Topology {
   }
 
   if (typeof obj === 'string') {
-    return obj as Hex.Hex
+    Hex.assert(obj)
+    return obj
   }
 
   switch (obj.type) {
@@ -416,33 +418,33 @@ type CancelCallback = (success: boolean) => void
 type MaybePromise<T> = T | Promise<T>
 
 export function mergeTopology(a: Topology, b: Topology): Topology {
-  if (isNode(a) && isNode(b)) {
-    return [mergeTopology(a[0], b[0]), mergeTopology(a[1], b[1])]
+  if (isNode(a)) {
+    if (isNode(b)) {
+      return [mergeTopology(a[0], b[0]), mergeTopology(a[1], b[1])]
+    } else {
+      if (!isNodeLeaf(b)) {
+        throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
+      }
+      const hb = hashConfiguration(b)
+      if (!Bytes.isEqual(hb, hashConfiguration(a))) {
+        throw new Error('Topology mismatch: node hash does not match')
+      }
+      return a
+    }
+  } else {
+    if (isNode(b)) {
+      if (!isNodeLeaf(a)) {
+        throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
+      }
+      const ha = hashConfiguration(a)
+      if (!Bytes.isEqual(ha, hashConfiguration(b))) {
+        throw new Error('Topology mismatch: node hash does not match')
+      }
+      return b
+    } else {
+      return mergeLeaf(a, b)
+    }
   }
-
-  if (isNode(a) && !isNode(b)) {
-    if (!isNodeLeaf(b)) {
-      throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
-    }
-    const hb = hashConfiguration(b)
-    if (!Bytes.isEqual(hb, hashConfiguration(a))) {
-      throw new Error('Topology mismatch: node hash does not match')
-    }
-    return a
-  }
-
-  if (!isNode(a) && isNode(b)) {
-    if (!isNodeLeaf(a)) {
-      throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
-    }
-    const ha = hashConfiguration(a)
-    if (!Bytes.isEqual(ha, hashConfiguration(b))) {
-      throw new Error('Topology mismatch: node hash does not match')
-    }
-    return b
-  }
-
-  return mergeLeaf(a as Leaf, b as Leaf)
 }
 
 /**

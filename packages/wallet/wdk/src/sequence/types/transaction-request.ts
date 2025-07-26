@@ -1,9 +1,9 @@
 import { Envelope, Relayer } from '@0xsequence/wallet-core'
-import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 
 export type TransactionRequest = {
-  to: Address.Address
+  to: Address.Checksummed
   value?: bigint
   data?: Hex.Hex
   gasLimit?: bigint
@@ -41,7 +41,7 @@ export function isERC4337RelayerOption(relayerOption: RelayerOption): relayerOpt
 
 type TransactionBase = {
   id: string
-  wallet: Address.Address
+  wallet: Address.Checksummed
   requests: TransactionRequest[]
   source: string
   envelope: Envelope.Envelope<Payload.Calls | Payload.Calls4337_07>

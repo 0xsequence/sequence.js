@@ -1,6 +1,7 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { Kinds } from '../types/signer.js'
 import { Signatures } from '../signatures.js'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { Devices } from '../devices.js'
 import { Handler } from './handler.js'
 import { SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
@@ -18,7 +19,7 @@ export class DevicesHandler implements Handler {
   }
 
   async status(
-    address: Address.Address,
+    address: Address.Checksummed,
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady> {

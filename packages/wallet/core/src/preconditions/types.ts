@@ -1,4 +1,4 @@
-import { Address } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
 
 export interface Precondition {
   type(): string
@@ -7,7 +7,7 @@ export interface Precondition {
 
 export class NativeBalancePrecondition implements Precondition {
   constructor(
-    public readonly address: Address.Address,
+    public readonly address: Address.Checksummed,
     public readonly min?: bigint,
     public readonly max?: bigint,
   ) {}
@@ -29,8 +29,8 @@ export class NativeBalancePrecondition implements Precondition {
 
 export class Erc20BalancePrecondition implements Precondition {
   constructor(
-    public readonly address: Address.Address,
-    public readonly token: Address.Address,
+    public readonly address: Address.Checksummed,
+    public readonly token: Address.Checksummed,
     public readonly min?: bigint,
     public readonly max?: bigint,
   ) {}
@@ -55,9 +55,9 @@ export class Erc20BalancePrecondition implements Precondition {
 
 export class Erc20ApprovalPrecondition implements Precondition {
   constructor(
-    public readonly address: Address.Address,
-    public readonly token: Address.Address,
-    public readonly operator: Address.Address,
+    public readonly address: Address.Checksummed,
+    public readonly token: Address.Checksummed,
+    public readonly operator: Address.Checksummed,
     public readonly min: bigint,
   ) {}
 
@@ -84,8 +84,8 @@ export class Erc20ApprovalPrecondition implements Precondition {
 
 export class Erc721OwnershipPrecondition implements Precondition {
   constructor(
-    public readonly address: Address.Address,
-    public readonly token: Address.Address,
+    public readonly address: Address.Checksummed,
+    public readonly token: Address.Checksummed,
     public readonly tokenId: bigint,
     public readonly owned?: boolean,
   ) {}
@@ -110,10 +110,10 @@ export class Erc721OwnershipPrecondition implements Precondition {
 
 export class Erc721ApprovalPrecondition implements Precondition {
   constructor(
-    public readonly address: Address.Address,
-    public readonly token: Address.Address,
+    public readonly address: Address.Checksummed,
+    public readonly token: Address.Checksummed,
     public readonly tokenId: bigint,
-    public readonly operator: Address.Address,
+    public readonly operator: Address.Checksummed,
   ) {}
 
   type(): string {
@@ -139,8 +139,8 @@ export class Erc721ApprovalPrecondition implements Precondition {
 
 export class Erc1155BalancePrecondition implements Precondition {
   constructor(
-    public readonly address: Address.Address,
-    public readonly token: Address.Address,
+    public readonly address: Address.Checksummed,
+    public readonly token: Address.Checksummed,
     public readonly tokenId: bigint,
     public readonly min?: bigint,
     public readonly max?: bigint,
@@ -169,10 +169,10 @@ export class Erc1155BalancePrecondition implements Precondition {
 
 export class Erc1155ApprovalPrecondition implements Precondition {
   constructor(
-    public readonly address: Address.Address,
-    public readonly token: Address.Address,
+    public readonly address: Address.Checksummed,
+    public readonly token: Address.Checksummed,
     public readonly tokenId: bigint,
-    public readonly operator: Address.Address,
+    public readonly operator: Address.Checksummed,
     public readonly min: bigint,
   ) {}
 

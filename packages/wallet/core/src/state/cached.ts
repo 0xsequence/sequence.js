@@ -1,7 +1,6 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { MaybePromise, Provider } from './index.js'
-import { Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { normalizeAddressKeys } from './utils.js'
+import { Address, Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
 
 export class Cached implements Provider {
   constructor(
@@ -25,7 +24,7 @@ export class Cached implements Provider {
     return config
   }
 
-  async getDeploy(wallet: Address.Address): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
+  async getDeploy(wallet: Address.Checksummed): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
     const cached = await this.args.cache.getDeploy(wallet)
     if (cached) {
       return cached
@@ -37,24 +36,23 @@ export class Cached implements Provider {
     return deploy
   }
 
-  async getWallets(signer: Address.Address): Promise<{
-    [wallet: Address.Address]: {
+  async getWallets(signer: Address.Checksummed): Promise<{
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
     }
   }> {
     // Get both from cache and source
-    const cached = normalizeAddressKeys(await this.args.cache.getWallets(signer))
-    const source = normalizeAddressKeys(await this.args.source.getWallets(signer))
+    const cached = await this.args.cache.getWallets(signer)
+    const source = await this.args.source.getWallets(signer)
 
     // Merge and deduplicate
     const deduplicated = { ...cached, ...source }
 
     // Sync values to source that are not in cache, and vice versa
-    for (const [walletAddress, data] of Object.entries(deduplicated)) {
-      Address.assert(walletAddress)
-
+    for (const [wallet, data] of Object.entries(deduplicated)) {
+      const walletAddress = Address.checksum(wallet)
       if (!source[walletAddress]) {
         await this.args.source.saveWitnesses(walletAddress, data.chainId, data.payload, {
           type: 'unrecovered-signer',
@@ -75,10 +73,10 @@ export class Cached implements Provider {
   }
 
   async getWalletsForSapient(
-    signer: Address.Address,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): Promise<{
-    [wallet: Address.Address]: {
+    [wallet: Address.Checksummed]: {
       chainId: bigint
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
@@ -91,7 +89,7 @@ export class Cached implements Provider {
 
     // Sync values to source that are not in cache, and vice versa
     for (const [wallet, data] of Object.entries(deduplicated)) {
-      const walletAddress = Address.from(wallet)
+      const walletAddress = Address.checksum(wallet)
       if (!source[walletAddress]) {
         await this.args.source.saveWitnesses(walletAddress, data.chainId, data.payload, {
           type: 'unrecovered-signer',
@@ -112,8 +110,8 @@ export class Cached implements Provider {
   }
 
   async getWitnessFor(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
   ): Promise<{ chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined> {
     const cached = await this.args.cache.getWitnessFor(wallet, signer)
     if (cached) {
@@ -133,8 +131,8 @@ export class Cached implements Provider {
   }
 
   async getWitnessForSapient(
-    wallet: Address.Address,
-    signer: Address.Address,
+    wallet: Address.Checksummed,
+    signer: Address.Checksummed,
     imageHash: Hex.Hex,
   ): Promise<
     { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
@@ -155,7 +153,7 @@ export class Cached implements Provider {
   }
 
   async getConfigurationUpdates(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
@@ -181,7 +179,7 @@ export class Cached implements Provider {
   }
 
   saveWitnesses(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
@@ -190,7 +188,7 @@ export class Cached implements Provider {
   }
 
   saveUpdate(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     configuration: Config.Config,
     signature: Signature.RawSignature,
   ): MaybePromise<void> {
@@ -213,7 +211,7 @@ export class Cached implements Provider {
     | {
         chainId: bigint
         payload: Payload.Parented
-        wallet: Address.Address
+        wallet: Address.Checksummed
       }
     | undefined
   > {
@@ -229,7 +227,7 @@ export class Cached implements Provider {
     return source
   }
 
-  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void> {
+  savePayload(wallet: Address.Checksummed, payload: Payload.Parented, chainId: bigint): MaybePromise<void> {
     return this.args.source.savePayload(wallet, payload, chainId)
   }
 }

@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs'
 import { readStdin } from '../utils.js'
-import { Address, Bytes, Hex } from 'ox'
-import { Extensions } from '@0xsequence/wallet-primitives'
+import { Bytes, Hex } from 'ox'
+import { Address, Extensions } from '@0xsequence/wallet-primitives'
 
 async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.Recovery.RecoveryLeaf[]> {
   if (typeof leavesInput === 'string') {
@@ -14,6 +14,9 @@ async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.R
       throw new Error(`Invalid leaf format: ${leafStr}`)
     }
     const [_, address, requiredDeltaTimeStr, minTimestampStr] = parts
+    if (address === undefined) {
+      throw new Error('no address for recovery leaf')
+    }
     if (!requiredDeltaTimeStr || !minTimestampStr) {
       throw new Error(`Invalid leaf format: ${leafStr}`)
     }
@@ -21,7 +24,7 @@ async function parseLeaves(leavesInput: string | string[]): Promise<Extensions.R
     const minTimestamp = BigInt(minTimestampStr)
     return {
       type: 'leaf',
-      signer: address as Address.Address,
+      signer: Address.checksum(address),
       requiredDeltaTime,
       minTimestamp,
     }
@@ -41,10 +44,10 @@ export async function doEncode(leavesInput: string | string[]): Promise<string> 
   return Bytes.toHex(encoded)
 }
 
-export async function doTrim(leavesInput: string | string[], signer: string): Promise<string> {
+export async function doTrim(leavesInput: string | string[], signer: Address.Checksummed): Promise<string> {
   const leaves = await parseLeaves(leavesInput)
   const topology = Extensions.Recovery.fromRecoveryLeaves(leaves)
-  const trimmed = Extensions.Recovery.trimTopology(topology, signer as Address.Address)
+  const trimmed = Extensions.Recovery.trimTopology(topology, signer)
   const encoded = Extensions.Recovery.encodeTopology(trimmed)
   return Bytes.toHex(encoded)
 }
@@ -152,9 +155,8 @@ const recoveryCommand: CommandModule = {
               .map((line) => line.trim())
               .filter((line) => line)
           }
-          const signer = argv.signer
           try {
-            const encoded = await doTrim(leavesInput, signer)
+            const encoded = await doTrim(leavesInput, Address.checksum(argv.signer))
             console.log(encoded)
           } catch (error) {
             console.error((error as Error).message)
