@@ -44,7 +44,15 @@ import {
   recover,
 } from '../src/signature.js'
 import { packRSY } from '../src/utils.js'
-import { AnyAddressSubdigestLeaf, Config, NestedLeaf, SignerLeaf, SapientSignerLeaf, SubdigestLeaf, Topology } from '../src/config.js'
+import {
+  AnyAddressSubdigestLeaf,
+  Config,
+  NestedLeaf,
+  SignerLeaf,
+  SapientSignerLeaf,
+  SubdigestLeaf,
+  Topology,
+} from '../src/config.js'
 import * as Payload from '../src/payload.js'
 
 describe('Signature', () => {

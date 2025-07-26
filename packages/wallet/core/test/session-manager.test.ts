@@ -1,4 +1,12 @@
-import { Address, Attestation, Extensions, GenericTree, Payload, Permission, SessionConfig } from '@0xsequence/wallet-primitives'
+import {
+  Address,
+  Attestation,
+  Extensions,
+  GenericTree,
+  Payload,
+  Permission,
+  SessionConfig,
+} from '@0xsequence/wallet-primitives'
 import { AbiEvent, AbiFunction, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it } from 'vitest'
 

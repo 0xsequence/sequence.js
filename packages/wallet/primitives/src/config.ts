@@ -420,27 +420,27 @@ type MaybePromise<T> = T | Promise<T>
 export function mergeTopology(a: Topology, b: Topology): Topology {
   if (isNode(a)) {
     if (isNode(b)) {
-    return [mergeTopology(a[0], b[0]), mergeTopology(a[1], b[1])]
+      return [mergeTopology(a[0], b[0]), mergeTopology(a[1], b[1])]
     } else {
-    if (!isNodeLeaf(b)) {
-      throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
-    }
-    const hb = hashConfiguration(b)
-    if (!Bytes.isEqual(hb, hashConfiguration(a))) {
-      throw new Error('Topology mismatch: node hash does not match')
-    }
-    return a
+      if (!isNodeLeaf(b)) {
+        throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
+      }
+      const hb = hashConfiguration(b)
+      if (!Bytes.isEqual(hb, hashConfiguration(a))) {
+        throw new Error('Topology mismatch: node hash does not match')
+      }
+      return a
     }
   } else {
     if (isNode(b)) {
-    if (!isNodeLeaf(a)) {
-      throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
-    }
-    const ha = hashConfiguration(a)
-    if (!Bytes.isEqual(ha, hashConfiguration(b))) {
-      throw new Error('Topology mismatch: node hash does not match')
-    }
-    return b
+      if (!isNodeLeaf(a)) {
+        throw new Error('Topology mismatch: cannot merge node with non-node that is not a node leaf')
+      }
+      const ha = hashConfiguration(a)
+      if (!Bytes.isEqual(ha, hashConfiguration(b))) {
+        throw new Error('Topology mismatch: node hash does not match')
+      }
+      return b
     } else {
       return mergeLeaf(a, b)
     }

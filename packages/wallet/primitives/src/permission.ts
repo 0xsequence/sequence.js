@@ -107,7 +107,7 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 // Decoding
 
 export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions {
-  const signer = checksum( Bytes.toHex(bytes.slice(0, 20)) )
+  const signer = checksum(Bytes.toHex(bytes.slice(0, 20)))
   const chainId = Bytes.toBigInt(bytes.slice(20, 52))
   const valueLimit = Bytes.toBigInt(bytes.slice(52, 84))
   const deadline = Bytes.toBigInt(bytes.slice(84, 92))
@@ -134,7 +134,7 @@ export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions
 
 // Returns the permission and the number of bytes consumed in the permission block
 function decodePermission(bytes: Bytes.Bytes): { permission: Permission; consumed: number } {
-  const target = checksum( Bytes.toHex(bytes.slice(0, 20)) )
+  const target = checksum(Bytes.toHex(bytes.slice(0, 20)))
   const rulesLength = Number(bytes[20]!)
   const rules = []
   let pointer = 21

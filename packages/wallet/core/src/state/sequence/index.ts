@@ -58,39 +58,39 @@ export class Provider implements ProviderInterface {
         ] => {
           Hex.assert(signature.signature)
 
-        switch (signature.type) {
-          case SignatureType.EIP712:
-            return [
-              Address.checksum(wallet),
-              {
-                chainId: BigInt(signature.chainID),
-                payload: fromServicePayload(signature.payload),
-                signature: { type: 'hash', ...oxSignature.from(signature.signature) },
-              },
-            ]
-          case SignatureType.EthSign:
-            return [
-              Address.checksum(wallet),
-              {
-                chainId: BigInt(signature.chainID),
-                payload: fromServicePayload(signature.payload),
-                signature: { type: 'eth_sign', ...oxSignature.from(signature.signature) },
-              },
-            ]
-          case SignatureType.EIP1271:
-            return [
-              Address.checksum(wallet),
-              {
-                chainId: BigInt(signature.chainID),
-                payload: fromServicePayload(signature.payload),
-                signature: { type: 'erc1271', address: signer, data: signature.signature },
-              },
-            ]
-          case SignatureType.Sapient:
-            throw new Error(`unexpected sapient signature by ${signer}`)
-          case SignatureType.SapientCompact:
-            throw new Error(`unexpected compact sapient signature by ${signer}`)
-        }
+          switch (signature.type) {
+            case SignatureType.EIP712:
+              return [
+                Address.checksum(wallet),
+                {
+                  chainId: BigInt(signature.chainID),
+                  payload: fromServicePayload(signature.payload),
+                  signature: { type: 'hash', ...oxSignature.from(signature.signature) },
+                },
+              ]
+            case SignatureType.EthSign:
+              return [
+                Address.checksum(wallet),
+                {
+                  chainId: BigInt(signature.chainID),
+                  payload: fromServicePayload(signature.payload),
+                  signature: { type: 'eth_sign', ...oxSignature.from(signature.signature) },
+                },
+              ]
+            case SignatureType.EIP1271:
+              return [
+                Address.checksum(wallet),
+                {
+                  chainId: BigInt(signature.chainID),
+                  payload: fromServicePayload(signature.payload),
+                  signature: { type: 'erc1271', address: signer, data: signature.signature },
+                },
+              ]
+            case SignatureType.Sapient:
+              throw new Error(`unexpected sapient signature by ${signer}`)
+            case SignatureType.SapientCompact:
+              throw new Error(`unexpected compact sapient signature by ${signer}`)
+          }
         },
       ),
     )

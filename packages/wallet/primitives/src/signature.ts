@@ -201,7 +201,7 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
     if (index + 20 > signature.length) {
       throw new Error('Not enough bytes for checkpointer address')
     }
-    checkpointerAddress = checksum( Bytes.toHex(signature.slice(index, index + 20)) )
+    checkpointerAddress = checksum(Bytes.toHex(signature.slice(index, index + 20)))
     index += 20
 
     if (index + 3 > signature.length) {
@@ -1176,18 +1176,20 @@ async function recoverTopology(
         return {
           topology: {
             type: 'signer',
-            address: checksum( Secp256k1.recoverAddress({
-              payload:
-                topology.signature.type === 'eth_sign'
-                  ? Hash.keccak256(
-                      AbiParameters.encodePacked(
-                        ['string', 'bytes32'],
-                        ['\x19Ethereum Signed Message:\n32', Bytes.toHex(digest)],
-                      ),
-                    )
-                  : digest,
-              signature: topology.signature,
-            }) ),
+            address: checksum(
+              Secp256k1.recoverAddress({
+                payload:
+                  topology.signature.type === 'eth_sign'
+                    ? Hash.keccak256(
+                        AbiParameters.encodePacked(
+                          ['string', 'bytes32'],
+                          ['\x19Ethereum Signed Message:\n32', Bytes.toHex(digest)],
+                        ),
+                      )
+                    : digest,
+                signature: topology.signature,
+              }),
+            ),
             weight: topology.weight,
             signed: true,
             signature: topology.signature,

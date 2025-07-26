@@ -66,22 +66,18 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
         try {
           const allKeys = await store.getAll()
           if (allKeys && allKeys.length > 0) {
-            return allKeys.find((key) => signer === undefined ? key.identitySigner === undefined : Address.isEqual(key.identitySigner, signer))
+            return allKeys.find((key) =>
+              signer === undefined ? key.identitySigner === undefined : Address.isEqual(key.identitySigner, signer),
+            )
           }
           return undefined
         } catch (getAllError) {
-          console.error(
-            `[AuthKeys.getBySigner] Fallback: Error during getAll() for signer ${signer}:`,
-            getAllError,
-          )
+          console.error(`[AuthKeys.getBySigner] Fallback: Error during getAll() for signer ${signer}:`, getAllError)
           throw getAllError
         }
       }
     } catch (error) {
-      console.error(
-        `[AuthKeys.getBySigner attempt #${attempt}] Index query error for signer ${signer}:`,
-        error,
-      )
+      console.error(`[AuthKeys.getBySigner attempt #${attempt}] Index query error for signer ${signer}:`, error)
 
       throw error
     }

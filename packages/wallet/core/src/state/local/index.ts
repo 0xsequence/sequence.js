@@ -141,15 +141,15 @@ export class Provider implements ProviderInterface {
 
   async getWallets(signer: Address.Checksummed) {
     return this.getWalletsGeneric<Signature.SignatureOfSignerLeaf>(
-        await this.store.loadSubdigestsOfSigner(signer),
-        (subdigest) => this.store.loadSignatureOfSubdigest(signer, subdigest),
+      await this.store.loadSubdigestsOfSigner(signer),
+      (subdigest) => this.store.loadSignatureOfSubdigest(signer, subdigest),
     )
   }
 
   async getWalletsForSapient(signer: Address.Checksummed, imageHash: Hex.Hex) {
     return this.getWalletsGeneric<Signature.SignatureOfSapientSignerLeaf>(
-        await this.store.loadSubdigestsOfSapientSigner(signer, imageHash),
-        (subdigest) => this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
+      await this.store.loadSubdigestsOfSapientSigner(signer, imageHash),
+      (subdigest) => this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash),
     )
   }
 
@@ -370,10 +370,12 @@ export class Provider implements ProviderInterface {
     if (Signature.isRawSignerLeaf(topology)) {
       const type = topology.signature.type
       if (type === 'eth_sign' || type === 'hash') {
-        const address = Address.checksum(Secp256k1.recoverAddress({
-          payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
-          signature: topology.signature,
-        }))
+        const address = Address.checksum(
+          Secp256k1.recoverAddress({
+            payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
+            signature: topology.signature,
+          }),
+        )
 
         return this.store.saveSignatureOfSubdigest(address, subdigest, topology.signature)
       }

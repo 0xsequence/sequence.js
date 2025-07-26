@@ -746,7 +746,7 @@ export function decode(packed: Bytes.Bytes, self?: Checksummed): Calls {
       if (pointer + 20 > packed.length) {
         throw new Error('Invalid packed data: not enough bytes for address')
       }
-      to = checksum( Bytes.toHex(packed.slice(pointer, pointer + 20)) )
+      to = checksum(Bytes.toHex(packed.slice(pointer, pointer + 20)))
       pointer += 20
     }
 
@@ -844,7 +844,10 @@ export function fromAbiFormat(decoded: SolidityDecoded): Parented {
       type: 'call',
       nonce: decoded.nonce,
       space: decoded.space,
-      calls: decoded.calls.map((call) => ({ ...call, behaviorOnError: parseBehaviorOnError(Number(call.behaviorOnError)) })),
+      calls: decoded.calls.map((call) => ({
+        ...call,
+        behaviorOnError: parseBehaviorOnError(Number(call.behaviorOnError)),
+      })),
       parentWallets: decoded.parentWallets,
     }
   }

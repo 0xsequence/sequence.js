@@ -418,7 +418,10 @@ export class ChainSessionManager {
         { path: '/request/modify', redirectUrl: this.redirectUrl },
       )
 
-      if (!Address.isEqual(response.walletAddress, this.walletAddress) && !Address.isEqual(response.sessionAddress, sessionAddress)) {
+      if (
+        !Address.isEqual(response.walletAddress, this.walletAddress) &&
+        !Address.isEqual(response.sessionAddress, sessionAddress)
+      ) {
         throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
       }
 

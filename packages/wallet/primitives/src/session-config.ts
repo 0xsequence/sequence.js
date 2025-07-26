@@ -242,12 +242,12 @@ export function decodeLeafFromBytes(bytes: Bytes.Bytes): SessionLeaf {
   if (flag === SESSIONS_FLAG_BLACKLIST) {
     const blacklist: Checksummed[] = []
     for (let i = 1; i < bytes.length; i += 20) {
-      blacklist.push(checksum( Bytes.toHex(bytes.slice(i, i + 20)) ))
+      blacklist.push(checksum(Bytes.toHex(bytes.slice(i, i + 20))))
     }
     return { type: 'implicit-blacklist', blacklist }
   }
   if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
-    return { type: 'identity-signer', identitySigner: checksum( Bytes.toHex(bytes.slice(1, 21)) ) }
+    return { type: 'identity-signer', identitySigner: checksum(Bytes.toHex(bytes.slice(1, 21))) }
   }
   if (flag === SESSIONS_FLAG_PERMISSIONS) {
     return { type: 'session-permissions', ...decodeSessionPermissions(bytes.slice(1)) }
