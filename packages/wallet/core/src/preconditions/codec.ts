@@ -120,13 +120,23 @@ export function decodePrecondition(p: IntentPrecondition): Precondition | undefi
   }
 }
 
+type PreconditionData = {
+  address: Address.Checksummed
+  token: Address.Checksummed
+  operator: Address.Checksummed
+  min: string
+  max: string
+  tokenId: string
+  owned: boolean
+}
+
 export function encodePrecondition(p: Precondition): string {
-  const data: any = {}
+  const data: Partial<PreconditionData> = {}
 
   switch (p.type()) {
     case 'native-balance': {
       const native = p as NativeBalancePrecondition
-      data.address = native.address.toString()
+      data.address = native.address
       if (native.min !== undefined) data.min = native.min.toString()
       if (native.max !== undefined) data.max = native.max.toString()
       break
@@ -134,8 +144,8 @@ export function encodePrecondition(p: Precondition): string {
 
     case 'erc20-balance': {
       const erc20 = p as Erc20BalancePrecondition
-      data.address = erc20.address.toString()
-      data.token = erc20.token.toString()
+      data.address = erc20.address
+      data.token = erc20.token
       if (erc20.min !== undefined) data.min = erc20.min.toString()
       if (erc20.max !== undefined) data.max = erc20.max.toString()
       break
@@ -143,17 +153,17 @@ export function encodePrecondition(p: Precondition): string {
 
     case 'erc20-approval': {
       const erc20 = p as Erc20ApprovalPrecondition
-      data.address = erc20.address.toString()
-      data.token = erc20.token.toString()
-      data.operator = erc20.operator.toString()
+      data.address = erc20.address
+      data.token = erc20.token
+      data.operator = erc20.operator
       data.min = erc20.min.toString()
       break
     }
 
     case 'erc721-ownership': {
       const erc721 = p as Erc721OwnershipPrecondition
-      data.address = erc721.address.toString()
-      data.token = erc721.token.toString()
+      data.address = erc721.address
+      data.token = erc721.token
       data.tokenId = erc721.tokenId.toString()
       if (erc721.owned !== undefined) data.owned = erc721.owned
       break
@@ -161,17 +171,17 @@ export function encodePrecondition(p: Precondition): string {
 
     case 'erc721-approval': {
       const erc721 = p as Erc721ApprovalPrecondition
-      data.address = erc721.address.toString()
-      data.token = erc721.token.toString()
+      data.address = erc721.address
+      data.token = erc721.token
       data.tokenId = erc721.tokenId.toString()
-      data.operator = erc721.operator.toString()
+      data.operator = erc721.operator
       break
     }
 
     case 'erc1155-balance': {
       const erc1155 = p as Erc1155BalancePrecondition
-      data.address = erc1155.address.toString()
-      data.token = erc1155.token.toString()
+      data.address = erc1155.address
+      data.token = erc1155.token
       data.tokenId = erc1155.tokenId.toString()
       if (erc1155.min !== undefined) data.min = erc1155.min.toString()
       if (erc1155.max !== undefined) data.max = erc1155.max.toString()
@@ -180,10 +190,10 @@ export function encodePrecondition(p: Precondition): string {
 
     case 'erc1155-approval': {
       const erc1155 = p as Erc1155ApprovalPrecondition
-      data.address = erc1155.address.toString()
-      data.token = erc1155.token.toString()
+      data.address = erc1155.address
+      data.token = erc1155.token
       data.tokenId = erc1155.tokenId.toString()
-      data.operator = erc1155.operator.toString()
+      data.operator = erc1155.operator
       data.min = erc1155.min.toString()
       break
     }
