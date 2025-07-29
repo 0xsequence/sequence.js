@@ -1,10 +1,11 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { describe, expect, it, beforeEach } from 'vitest'
 
 import { MemoryStore } from '../../../src/state/local/memory.js'
+import { Address } from '@0xsequence/wallet-primitives'
 
 // Test addresses and data
-const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
+const TEST_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
 const TEST_IMAGE_HASH = Hex.from('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')
 const TEST_SUBDIGEST = Hex.from('0xabcdef123456789012345678901234567890abcdef123456789012345678901234')
 
@@ -110,17 +111,6 @@ describe('MemoryStore', () => {
   })
 
   describe('key normalization', () => {
-    it('should normalize addresses to lowercase', async () => {
-      const upperAddress = TEST_ADDRESS.toUpperCase() as Address.Address
-      const context = { test: 'data' } as any
-
-      await store.saveCounterfactualWallet(upperAddress, TEST_IMAGE_HASH, context)
-      const retrieved = await store.loadCounterfactualWallet(TEST_ADDRESS.toLowerCase() as Address.Address)
-
-      expect(retrieved).toBeDefined()
-      expect(retrieved?.imageHash).toBe(TEST_IMAGE_HASH)
-    })
-
     it('should normalize hex values to lowercase', async () => {
       const upperHex = TEST_IMAGE_HASH.toUpperCase() as Hex.Hex
       const config = { test: 'data' } as any

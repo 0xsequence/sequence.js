@@ -1,5 +1,5 @@
-import { Address } from 'ox'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { Address } from '@0xsequence/wallet-primitives'
 
 import {
   decodePrecondition,
@@ -18,9 +18,9 @@ import {
 } from '../../src/preconditions/types.js'
 
 // Test addresses
-const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
-const TOKEN_ADDRESS = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
-const OPERATOR_ADDRESS = Address.from('0x9876543210987654321098765432109876543210')
+const TEST_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
+const TOKEN_ADDRESS = Address.checksum('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
+const OPERATOR_ADDRESS = Address.checksum('0x9876543210987654321098765432109876543210')
 
 describe('Preconditions Codec', () => {
   // Mock console.warn to test error logging
