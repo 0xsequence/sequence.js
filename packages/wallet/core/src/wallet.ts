@@ -1,13 +1,13 @@
 import {
+  Address,
   Config,
   Constants,
   Context,
   Erc6492,
   Payload,
-  Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
+import { AbiFunction, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
 import { UserOperation } from 'ox/erc4337'
@@ -15,7 +15,7 @@ import { UserOperation } from 'ox/erc4337'
 export type WalletOptions = {
   knownContexts: Context.KnownContext[]
   stateProvider: State.Provider
-  guest: Address.Address
+  guest: Address.Checksummed
   unsafe?: boolean
 }
 
@@ -26,9 +26,9 @@ export const DefaultWalletOptions: WalletOptions = {
 }
 
 export type WalletStatus = {
-  address: Address.Address
+  address: Address.Checksummed
   isDeployed: boolean
-  implementation?: Address.Address
+  implementation?: Address.Checksummed
   configuration: Config.Config
   imageHash: Hex.Hex
   /** Pending updates in reverse chronological order (newest first) */
@@ -47,12 +47,12 @@ export type WalletStatusWithOnchain = WalletStatus & {
 }
 
 export class Wallet {
-  public readonly guest: Address.Address
+  public readonly guest: Address.Checksummed
   public readonly stateProvider: State.Provider
   public readonly knownContexts: Context.KnownContext[]
 
   constructor(
-    readonly address: Address.Address,
+    readonly address: Address.Checksummed,
     options?: Partial<WalletOptions>,
   ) {
     const combinedContexts = [...DefaultWalletOptions.knownContexts, ...(options?.knownContexts ?? [])]
@@ -83,14 +83,14 @@ export class Wallet {
     }
 
     await merged.stateProvider.saveWallet(configuration, context)
-    return new Wallet(SequenceAddress.from(configuration, context), merged)
+    return new Wallet(Address.from(configuration, context), merged)
   }
 
   async isDeployed(provider: Provider.Provider): Promise<boolean> {
     return (await provider.request({ method: 'eth_getCode', params: [this.address, 'pending'] })) !== '0x'
   }
 
-  async buildDeployTransaction(): Promise<{ to: Address.Address; data: Hex.Hex }> {
+  async buildDeployTransaction(): Promise<{ to: Address.Checksummed; data: Hex.Hex }> {
     const deployInformation = await this.stateProvider.getDeploy(this.address)
     if (!deployInformation) {
       throw new Error(`cannot find deploy information for ${this.address}`)
@@ -168,7 +168,7 @@ export class Wallet {
     provider?: T,
   ): Promise<T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus> {
     let isDeployed = false
-    let implementation: Address.Address | undefined
+    let implementation: Address.Checksummed | undefined
     let chainId: bigint | undefined
     let imageHash: Hex.Hex
     let updates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }> = []
@@ -201,11 +201,7 @@ export class Wallet {
             method: 'eth_call',
             params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }, 'latest'],
           })
-          .then((res) => {
-            const address = `0x${res.slice(-40)}`
-            Address.assert(address, { strict: false })
-            return address
-          })
+          .then((res) => Address.checksum(`0x${res.slice(-40)}`))
           .catch(() => undefined),
       ])
 
@@ -301,7 +297,7 @@ export class Wallet {
     return BigInt(result)
   }
 
-  async get4337Nonce(provider: Provider.Provider, entrypoint: Address.Address, space: bigint): Promise<bigint> {
+  async get4337Nonce(provider: Provider.Provider, entrypoint: Address.Checksummed, space: bigint): Promise<bigint> {
     const result = await provider.request({
       method: 'eth_call',
       params: [
@@ -318,7 +314,7 @@ export class Wallet {
     return BigInt(result) & 0xffffffffffffffffn
   }
 
-  async get4337Entrypoint(provider: Provider.Provider): Promise<Address.Address | undefined> {
+  async get4337Entrypoint(provider: Provider.Provider): Promise<Address.Checksummed | undefined> {
     const status = await this.getStatus(provider)
     return status.context.capabilities?.erc4337?.entrypoint
   }
@@ -359,7 +355,7 @@ export class Wallet {
 
     // If the wallet is not deployed, then we need to include the initCode on
     // the 4337 transaction
-    let factory: Address.Address | undefined
+    let factory: Address.Checksummed | undefined
     let factoryData: Hex.Hex | undefined
 
     if (!status.isDeployed) {
@@ -409,7 +405,7 @@ export class Wallet {
   async build4337Transaction(
     provider: Provider.Provider,
     envelope: Envelope.Signed<Payload.Calls4337_07>,
-  ): Promise<{ operation: UserOperation.RpcV07; entrypoint: Address.Address }> {
+  ): Promise<{ operation: UserOperation.RpcV07; entrypoint: Address.Checksummed }> {
     const status = await this.getStatus(provider)
 
     const updatedEnvelope = { ...envelope, configuration: status.configuration }

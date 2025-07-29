@@ -1,5 +1,5 @@
-import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { OperationStatus } from './relayer.js'
 
@@ -9,13 +9,13 @@ export interface Bundler {
   id: string
 
   estimateLimits(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     payload: Payload.Calls4337_07,
   ): Promise<{ speed?: 'slow' | 'standard' | 'fast'; payload: Payload.Calls4337_07 }[]>
-  relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }>
+  relay(entrypoint: Address.Checksummed, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }>
   status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
 
-  isAvailable(entrypoint: Address.Address, chainId: bigint): Promise<boolean>
+  isAvailable(entrypoint: Address.Checksummed, chainId: bigint): Promise<boolean>
 }
 
 export function isBundler(relayer: any): relayer is Bundler {

@@ -1,7 +1,7 @@
-import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
+import { AbiFunction, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State } from '../../core/src/index.js'
-import { Attestation, Constants, Extensions, Payload, Permission } from '../../primitives/src/index.js'
+import { Address, Attestation, Constants, Extensions, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
@@ -13,7 +13,7 @@ describe('Sessions (via Manager)', () => {
 
   // Wallet webapp components
   let wdk: {
-    identitySignerAddress: Address.Address
+    identitySignerAddress: Address.Checksummed
     manager: Sequence.Manager
   }
 
@@ -25,7 +25,7 @@ describe('Sessions (via Manager)', () => {
   }
 
   const setupExplicitSession = async (
-    sessionAddress: Address.Address,
+    sessionAddress: Address.Checksummed,
     permissions: Permission.SessionPermissions,
     isModify = false,
   ) => {
@@ -170,8 +170,8 @@ describe('Sessions (via Manager)', () => {
     // Send the transaction
     if (CAN_RUN_LIVE && PRIVATE_KEY) {
       // Load the sender
-      const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
-      const pkRelayer = new Relayer.Standard.PkRelayer(senderPk, provider)
+      Hex.assert(PRIVATE_KEY)
+      const pkRelayer = new Relayer.Standard.PkRelayer(PRIVATE_KEY, provider)
       const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
       console.log('Transaction sent', tx)
       await new Promise((resolve) => setTimeout(resolve, 3000))

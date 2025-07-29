@@ -1,5 +1,6 @@
+import { Address } from '@0xsequence/wallet-primitives'
 import { config as dotenvConfig } from 'dotenv'
-import { Abi, Address, Provider, RpcTransport } from 'ox'
+import { Abi, Hex, Provider, RpcTransport } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'
 import { mockEthereum } from './setup'
 import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'
@@ -8,7 +9,7 @@ import * as Db from '../src/dbs'
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
 
-export const EMITTER_ADDRESS: Address.Address = '0xb7bE532959236170064cf099e1a3395aEf228F44'
+export const EMITTER_ADDRESS: Address.Checksummed = '0xb7bE532959236170064cf099e1a3395aEf228F44'
 export const EMITTER_ABI = Abi.from(['function explicitEmit()', 'function implicitEmit()'])
 
 // Environment variables
@@ -65,7 +66,7 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
 export function newRemoteManager(
   remoteManagerOptions: {
     network: {
-      relayerPk: string
+      relayerPk: Hex.Hex
       bundlerUrl: string
       rpcUrl: string
       chainId: bigint
@@ -84,7 +85,7 @@ export function newRemoteManager(
 
   if (remoteManagerOptions.network.relayerPk) {
     const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))
-    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
+    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk, provider))
   }
 
   if (remoteManagerOptions.network.bundlerUrl) {

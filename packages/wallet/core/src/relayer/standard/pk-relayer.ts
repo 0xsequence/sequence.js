@@ -1,5 +1,5 @@
-import { Payload, Precondition } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
+import { Address, Payload, Precondition } from '@0xsequence/wallet-primitives'
+import { Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
 import { LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
@@ -21,9 +21,8 @@ export class PkRelayer implements Relayer {
           throw new Error('Provider chain id does not match relayer chain id')
         }
 
-        const oxArgs = { ...args, to: args.to as `0x${string}`, data: args.data as `0x${string}` }
         // Estimate gas with a safety buffer
-        const estimatedGas = BigInt(await this.provider.request({ method: 'eth_estimateGas', params: [oxArgs] }))
+        const estimatedGas = BigInt(await this.provider.request({ method: 'eth_estimateGas', params: [args] }))
         const safeGasLimit = estimatedGas > 21000n ? (estimatedGas * 12n) / 10n : 50000n
 
         // Get base fee and priority fee
@@ -51,8 +50,8 @@ export class PkRelayer implements Relayer {
           chainId: Number(chainId),
           type: 'eip1559',
           from: relayerAddress,
-          to: oxArgs.to,
-          data: oxArgs.data,
+          to: args.to,
+          data: args.data,
           gas: safeGasLimit,
           maxFeePerGas: maxFeePerGas,
           maxPriorityFeePerGas: priorityFee,
@@ -72,17 +71,14 @@ export class PkRelayer implements Relayer {
         })
         return tx
       },
-      getBalance: async (address: string): Promise<bigint> => {
+      getBalance: async (address): Promise<bigint> => {
         const balanceHex = await this.provider.request({
           method: 'eth_getBalance',
-          params: [address as Address.Address, 'latest'],
+          params: [address, 'latest'],
         })
         return BigInt(balanceHex)
       },
-      call: async (args: { to: string; data: string }): Promise<string> => {
-        const callArgs = { to: args.to as `0x${string}`, data: args.data as `0x${string}` }
-        return await this.provider.request({ method: 'eth_call', params: [callArgs, 'latest'] })
-      },
+      call: (args) => this.provider.request({ method: 'eth_call', params: [args, 'latest'] }),
       getTransactionReceipt: async (txHash: string, chainId: bigint) => {
         Hex.assert(txHash)
 
@@ -101,20 +97,20 @@ export class PkRelayer implements Relayer {
     })
   }
 
-  async isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
+  async isAvailable(_wallet: Address.Checksummed, chainId: bigint): Promise<boolean> {
     const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
     return providerChainId === chainId
   }
 
   feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     return this.relayer.feeOptions(wallet, chainId, calls)
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
+  async relay(to: Address.Checksummed, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
     const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
     if (providerChainId !== chainId) {
       throw new Error('Provider chain id does not match relayer chain id')

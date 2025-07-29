@@ -1,5 +1,6 @@
 import { Signers } from '@0xsequence/wallet-core'
-import { Address, Hex, Mnemonic } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex, Mnemonic } from 'ox'
 import { Handler } from './handler.js'
 import { Signatures } from '../signatures.js'
 import { Kinds } from '../types/signer.js'
@@ -39,7 +40,7 @@ export class MnemonicHandler implements Handler {
   }
 
   async status(
-    address: Address.Address,
+    address: Address.Checksummed,
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerActionable> {

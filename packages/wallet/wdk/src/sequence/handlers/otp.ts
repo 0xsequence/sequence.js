@@ -1,4 +1,5 @@
-import { Hex, Address } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Hex } from 'ox'
 import { Signers } from '@0xsequence/wallet-core'
 import * as Identity from '@0xsequence/identity-instrument'
 import { Handler } from './handler.js'
@@ -55,7 +56,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
   }
 
   async status(
-    address: Address.Address,
+    address: Address.Checksummed,
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { Address, Bytes, Hex } from 'ox'
+import { Bytes, Hex } from 'ox'
 
+import { checksum } from '../src/address.js'
 import {
   FLAG_RECOVERY_LEAF,
   FLAG_NODE,
@@ -32,15 +33,16 @@ import {
   queuedPayloadHashOf,
   timestampForQueuedPayload,
 } from '../src/extensions/recovery.js'
-import * as Payload from '../src/payload.js'
 import * as GenericTree from '../src/generic-tree.js'
+import * as Payload from '../src/payload.js'
+import { SignatureOfSignerLeafErc1271, SignatureOfSignerLeafHash } from '../src/signature.js'
 
 describe('Recovery', () => {
   // Test data
-  const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
-  const testExtensionAddress = '0x1234567890123456789012345678901234567890' as Address.Address
-  const testNodeHash = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' as Hex.Hex
+  const testAddress = checksum('0x742d35cc6635c0532925a3b8d563a6b35b7f05f1')
+  const testAddress2 = checksum('0x8ba1f109551bd432803012645aac136c776056c0')
+  const testExtensionAddress = checksum('0x1234567890123456789012345678901234567890')
+  const testNodeHash = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef'
 
   const sampleRecoveryLeaf: RecoveryLeaf = {
     type: 'leaf',
@@ -73,8 +75,8 @@ describe('Recovery', () => {
     ],
   }
 
-  const sampleSignature = {
-    type: 'hash' as const,
+  const sampleSignature: SignatureOfSignerLeafHash = {
+    type: 'hash',
     r: 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdefn,
     s: 0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321n,
     yParity: 1,
@@ -365,14 +367,14 @@ describe('Recovery', () => {
       it('should create balanced tree from multiple leaves', () => {
         const leaf3: RecoveryLeaf = {
           type: 'leaf',
-          signer: '0x1111111111111111111111111111111111111111' as Address.Address,
+          signer: checksum('0x1111111111111111111111111111111111111111'),
           requiredDeltaTime: 1800n,
           minTimestamp: 1640995200n,
         }
 
         const leaf4: RecoveryLeaf = {
           type: 'leaf',
-          signer: '0x2222222222222222222222222222222222222222' as Address.Address,
+          signer: checksum('0x2222222222222222222222222222222222222222'),
           requiredDeltaTime: 3600n,
           minTimestamp: 1640995200n,
         }
@@ -421,7 +423,7 @@ describe('Recovery', () => {
 
       it('should return hash when both branches become hashes', () => {
         const branch: Branch = [sampleRecoveryLeaf, sampleRecoveryLeaf2]
-        const thirdAddress = '0x3333333333333333333333333333333333333333' as Address.Address
+        const thirdAddress = checksum('0x3333333333333333333333333333333333333333')
         const result = trimTopology(branch, thirdAddress)
         expect(typeof result).toBe('string')
         expect(result).toMatch(/^0x[a-fA-F0-9]{64}$/)
@@ -649,10 +651,10 @@ describe('Recovery', () => {
       })
 
       it('should encode calldata for ERC-1271 signature', () => {
-        const erc1271Signature = {
-          type: 'erc1271' as const,
+        const erc1271Signature: SignatureOfSignerLeafErc1271 = {
+          type: 'erc1271',
           address: testAddress,
-          data: '0x1234567890abcdef' as Hex.Hex,
+          data: '0x1234567890abcdef',
         }
 
         const recoveryPayload = Payload.toRecovery(samplePayload)
@@ -742,7 +744,7 @@ describe('Recovery', () => {
     describe('timestampForQueuedPayload', () => {
       it('should return timestamp', async () => {
         mockProvider.request.mockResolvedValue('0x61d2b800') // 1641168000 in hex
-        const validPayloadHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex
+        const validPayloadHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
 
         const result = await timestampForQueuedPayload(
           mockProvider,
@@ -766,7 +768,7 @@ describe('Recovery', () => {
 
       it('should handle zero timestamp', async () => {
         mockProvider.request.mockResolvedValue('0x0')
-        const validPayloadHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex
+        const validPayloadHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
 
         const result = await timestampForQueuedPayload(
           mockProvider,
@@ -780,7 +782,7 @@ describe('Recovery', () => {
 
       it('should handle large timestamps', async () => {
         mockProvider.request.mockResolvedValue('0xffffffffffffffff') // Max uint64
-        const validPayloadHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex
+        const validPayloadHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
 
         const result = await timestampForQueuedPayload(
           mockProvider,

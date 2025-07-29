@@ -1,12 +1,13 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
+import { Address } from '@0xsequence/wallet-primitives'
 import { Cached } from '../../src/state/cached.js'
 import type { Provider } from '../../src/state/index.js'
 
 // Test data
-const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
-const TEST_ADDRESS_2 = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
+const TEST_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
+const TEST_ADDRESS_2 = Address.checksum('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
 const TEST_IMAGE_HASH = Hex.from('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')
 const TEST_ROOT_HASH = Hex.from('0xfedcba098765432109876543210987654321098765432109876543210987654321')
 const TEST_OP_HASH = Hex.from('0x1111111111111111111111111111111111111111111111111111111111111111')
@@ -495,8 +496,8 @@ describe('Cached', () => {
     })
 
     it('should handle address normalization correctly', async () => {
-      const cacheData = { [TEST_ADDRESS.toLowerCase()]: mockWalletData }
-      const sourceData = { [TEST_ADDRESS_2.toLowerCase()]: mockWalletData }
+      const cacheData = { [TEST_ADDRESS]: mockWalletData }
+      const sourceData = { [TEST_ADDRESS_2]: mockWalletData }
 
       vi.mocked(mockCache.getWallets).mockResolvedValue(cacheData)
       vi.mocked(mockSource.getWallets).mockResolvedValue(sourceData)

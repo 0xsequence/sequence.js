@@ -1,6 +1,6 @@
 import { Envelope, Wallet } from '@0xsequence/wallet-core'
-import { Payload } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, Provider, RpcTransport } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { Bytes, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import { Message, MessageRequest, MessageRequested, MessageSigned } from './types/message-request.js'
@@ -49,7 +49,7 @@ export interface MessagesInterface {
    * @see {complete} to finalize the signature after it has been signed.
    */
   request(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     message: MessageRequest,
     chainId?: bigint,
     options?: { source?: string },
@@ -129,7 +129,7 @@ export class Messages implements MessagesInterface {
   }
 
   async request(
-    from: Address.Address,
+    from: Address.Checksummed,
     message: MessageRequest,
     chainId?: bigint,
     options?: {

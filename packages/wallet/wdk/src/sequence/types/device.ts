@@ -1,4 +1,4 @@
-import { Address } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
 
 /**
  * Represents a device key that is authorized to sign for a wallet.
@@ -7,7 +7,7 @@ export interface Device {
   /**
    * The on-chain address of the device key.
    */
-  address: Address.Address
+  address: Address.Checksummed
 
   /**
    * True if this is the key for the current local session.

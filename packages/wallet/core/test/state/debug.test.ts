@@ -1,11 +1,11 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
+import { Address } from '@0xsequence/wallet-primitives'
 import { multiplex } from '../../src/state/debug.js'
 
 // Test data
-const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
-const TEST_HEX = Hex.from('0xabcdef123456')
+const TEST_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
 const TEST_UINT8ARRAY = new Uint8Array([171, 205, 239, 18, 52, 86])
 
 describe('State Debug', () => {

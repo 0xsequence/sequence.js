@@ -1,15 +1,21 @@
-import { AbiEvent, AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import {
+  Address,
+  Attestation,
+  Extensions,
+  GenericTree,
+  Payload,
+  Permission,
+  SessionConfig,
+} from '@0xsequence/wallet-primitives'
+import { AbiEvent, AbiFunction, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it } from 'vitest'
 
-import { Attestation, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'
 import { Envelope, Signers, State, Utils, Wallet } from '../src/index.js'
-
 import { EMITTER_FUNCTIONS, EMITTER_ADDRESS, EMITTER_EVENT_TOPICS, LOCAL_RPC_URL, USDC_ADDRESS } from './constants'
-import { Extensions } from '@0xsequence/wallet-primitives'
 
 const { PermissionBuilder, ERC20PermissionBuilder } = Utils
 
-function randomAddress(): Address.Address {
+function randomAddress(): Address.Checksummed {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
 }
 
@@ -298,7 +304,7 @@ describe('SessionManager', () => {
 
   const simulateTransaction = async (
     provider: Provider.Provider,
-    transaction: { to: Address.Address; data: Hex.Hex },
+    transaction: { to: Address.Checksummed; data: Hex.Hex },
     expectedEventTopic?: Hex.Hex,
   ) => {
     console.log('Simulating transaction', transaction)

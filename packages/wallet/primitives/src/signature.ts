@@ -1,4 +1,5 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
+import { AbiFunction, AbiParameters, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
+import { checksum, Checksummed, isChecksummed } from './address.js'
 import {
   Config,
   Leaf,
@@ -52,7 +53,7 @@ export type SignatureOfSignerLeafHash = {
 
 export type SignatureOfSignerLeafErc1271 = {
   type: 'erc1271'
-  address: `0x${string}`
+  address: Checksummed
   data: Hex.Hex
 }
 
@@ -62,7 +63,7 @@ export type SignatureOfSignerLeaf =
   | SignatureOfSignerLeafErc1271
 
 export type SignatureOfSapientSignerLeaf = {
-  address: `0x${string}`
+  address: Checksummed
   data: Hex.Hex
   type: 'sapient' | 'sapient_compact'
 }
@@ -100,7 +101,7 @@ export type RawConfig = {
   threshold: bigint
   checkpoint: bigint
   topology: RawTopology
-  checkpointer?: Address.Address
+  checkpointer?: Checksummed
 }
 
 export type RawSignature = {
@@ -108,7 +109,7 @@ export type RawSignature = {
   checkpointerData?: Bytes.Bytes
   configuration: RawConfig
   suffix?: RawSignature[]
-  erc6492?: { to: Address.Address; data: Bytes.Bytes }
+  erc6492?: { to: Checksummed; data: Bytes.Bytes }
 }
 
 export function isSignatureOfSapientSignerLeaf(signature: any): signature is SignatureOfSapientSignerLeaf {
@@ -143,7 +144,7 @@ export function isRawConfig(configuration: any): configuration is RawConfig {
     typeof configuration.threshold === 'bigint' &&
     typeof configuration.checkpoint === 'bigint' &&
     isRawTopology(configuration.topology) &&
-    (configuration.checkpointer === undefined || Address.validate(configuration.checkpointer))
+    (configuration.checkpointer === undefined || isChecksummed(configuration.checkpointer))
   )
 }
 
@@ -192,7 +193,7 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
 
   const noChainId = (flag & 0x02) === 0x02
 
-  let checkpointerAddress: Address.Address | undefined
+  let checkpointerAddress: Checksummed | undefined
   let checkpointerData: Bytes.Bytes | undefined
 
   // bit [6] => checkpointer address + data
@@ -200,7 +201,7 @@ export function decodeSignature(erc6492Signature: Bytes.Bytes): RawSignature {
     if (index + 20 > signature.length) {
       throw new Error('Not enough bytes for checkpointer address')
     }
-    checkpointerAddress = Bytes.toHex(signature.slice(index, index + 20))
+    checkpointerAddress = checksum(Bytes.toHex(signature.slice(index, index + 20)))
     index += 20
 
     if (index + 3 > signature.length) {
@@ -315,7 +316,7 @@ export function parseBranch(signature: Bytes.Bytes): {
           type: 'hash',
           ...unpackedRSY,
         },
-      } as RawSignerLeaf)
+      })
       continue
     }
 
@@ -332,14 +333,14 @@ export function parseBranch(signature: Bytes.Bytes): {
       if (index + 20 > signature.length) {
         throw new Error('Not enough bytes for address leaf')
       }
-      const addr = Bytes.toHex(signature.slice(index, index + 20))
+      const addr = checksum(Bytes.toHex(signature.slice(index, index + 20)))
       index += 20
 
       nodes.push({
         type: 'signer',
         address: addr,
         weight: BigInt(weight),
-      } as SignerLeaf)
+      })
       continue
     }
 
@@ -356,7 +357,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       if (index + 20 > signature.length) {
         throw new Error('Not enough bytes for ERC1271 signer address')
       }
-      const signer = Bytes.toHex(signature.slice(index, index + 20))
+      const signer = checksum(Bytes.toHex(signature.slice(index, index + 20)))
       index += 20
 
       const sizeSize = (firstByte & 0x0c) >> 2
@@ -380,7 +381,7 @@ export function parseBranch(signature: Bytes.Bytes): {
           address: signer,
           data: Bytes.toHex(subSignature),
         },
-      } as RawSignerLeaf)
+      })
       continue
     }
 
@@ -430,7 +431,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       nodes.push({
         type: 'subdigest',
         digest: Bytes.toHex(hardcoded),
-      } as SubdigestLeaf)
+      })
       continue
     }
 
@@ -479,7 +480,7 @@ export function parseBranch(signature: Bytes.Bytes): {
         tree: subTree,
         weight: BigInt(externalWeight),
         threshold: BigInt(internalThreshold),
-      } as RawNestedLeaf)
+      })
       continue
     }
 
@@ -506,7 +507,7 @@ export function parseBranch(signature: Bytes.Bytes): {
           type: 'eth_sign',
           ...unpackedRSY,
         },
-      } as RawSignerLeaf)
+      })
       continue
     }
 
@@ -520,7 +521,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       nodes.push({
         type: 'any-address-subdigest',
         digest: Bytes.toHex(anyAddressSubdigest),
-      } as AnyAddressSubdigestLeaf)
+      })
       continue
     }
 
@@ -536,7 +537,7 @@ export function parseBranch(signature: Bytes.Bytes): {
       if (index + 20 > signature.length) {
         throw new Error('Not enough bytes for sapient signer address')
       }
-      const address = Bytes.toHex(signature.slice(index, index + 20))
+      const address = checksum(Bytes.toHex(signature.slice(index, index + 20)))
       index += 20
 
       const sizeSize = (firstByte & 0x0c) >> 2
@@ -560,7 +561,7 @@ export function parseBranch(signature: Bytes.Bytes): {
           data: Bytes.toHex(subSignature),
           type: flag === FLAG_SIGNATURE_SAPIENT ? 'sapient' : 'sapient_compact',
         },
-      } as RawSignerLeaf)
+      })
       continue
     }
 
@@ -577,7 +578,7 @@ export function fillLeaves(
   ) => SignatureOfSignerLeaf | SignatureOfSapientSignerLeaf | undefined,
 ): Topology {
   if (isNode(topology)) {
-    return [fillLeaves(topology[0]!, signatureFor), fillLeaves(topology[1]!, signatureFor)] as Topology
+    return [fillLeaves(topology[0]!, signatureFor), fillLeaves(topology[1]!, signatureFor)]
   }
 
   if (isSignerLeaf(topology)) {
@@ -605,7 +606,7 @@ export function fillLeaves(
   }
 
   if (isNestedLeaf(topology)) {
-    return { ...topology, tree: fillLeaves(topology.tree, signatureFor) } as NestedLeaf
+    return { ...topology, tree: fillLeaves(topology.tree, signatureFor) }
   }
 
   if (isNodeLeaf(topology)) {
@@ -896,7 +897,7 @@ function foldNodes(nodes: RawTopology[]): RawTopology {
 
   let tree: RawTopology = nodes[0]!
   for (let i = 1; i < nodes.length; i++) {
-    tree = [tree, nodes[i]!] as RawNode
+    tree = [tree, nodes[i]!]
   }
   return tree
 }
@@ -1070,7 +1071,8 @@ function rawTopologyFromJson(obj: any): RawTopology {
     }
   }
   if (typeof obj === 'string') {
-    return obj as Hex.Hex
+    Hex.assert(obj)
+    return obj
   }
   throw new Error('Invalid raw topology format')
 }
@@ -1105,7 +1107,7 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
 
 export async function recover(
   signature: RawSignature,
-  wallet: Address.Address,
+  wallet: Checksummed,
   chainId: bigint,
   payload: Parented,
   options?: {
@@ -1157,7 +1159,7 @@ export async function recover(
 
 async function recoverTopology(
   topology: RawTopology,
-  wallet: Address.Address,
+  wallet: Checksummed,
   chainId: bigint,
   payload: Parented,
   options?: {
@@ -1174,18 +1176,20 @@ async function recoverTopology(
         return {
           topology: {
             type: 'signer',
-            address: Secp256k1.recoverAddress({
-              payload:
-                topology.signature.type === 'eth_sign'
-                  ? Hash.keccak256(
-                      AbiParameters.encodePacked(
-                        ['string', 'bytes32'],
-                        ['\x19Ethereum Signed Message:\n32', Bytes.toHex(digest)],
-                      ),
-                    )
-                  : digest,
-              signature: topology.signature,
-            }),
+            address: checksum(
+              Secp256k1.recoverAddress({
+                payload:
+                  topology.signature.type === 'eth_sign'
+                    ? Hash.keccak256(
+                        AbiParameters.encodePacked(
+                          ['string', 'bytes32'],
+                          ['\x19Ethereum Signed Message:\n32', Bytes.toHex(digest)],
+                        ),
+                      )
+                    : digest,
+                signature: topology.signature,
+              }),
+            ),
             weight: topology.weight,
             signed: true,
             signature: topology.signature,

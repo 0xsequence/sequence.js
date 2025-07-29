@@ -1,15 +1,15 @@
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import { getWalletsFor, normalizeAddressKeys } from '../../src/state/utils.js'
+import { getWalletsFor } from '../../src/state/utils.js'
 import type { Reader } from '../../src/state/index.js'
 import type { Signer, SapientSigner } from '../../src/signers/index.js'
-import { Payload, Signature } from '@0xsequence/wallet-primitives'
+import { Address, Payload, Signature } from '@0xsequence/wallet-primitives'
 
 // Test addresses
-const TEST_SIGNER_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
-const TEST_WALLET_ADDRESS_1 = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
-const TEST_WALLET_ADDRESS_2 = Address.from('0x9876543210987654321098765432109876543210')
+const TEST_SIGNER_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
+const TEST_WALLET_ADDRESS_1 = Address.checksum('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
+const TEST_WALLET_ADDRESS_2 = Address.checksum('0x9876543210987654321098765432109876543210')
 const TEST_IMAGE_HASH = Hex.from('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')
 
 // Mock data for testing
@@ -52,90 +52,6 @@ describe('State Utils', () => {
   })
   afterEach(() => {
     console.warn = originalWarn
-  })
-
-  describe('normalizeAddressKeys', () => {
-    it('should normalize lowercase addresses to checksum format', () => {
-      const input = {
-        '0x1234567890123456789012345678901234567890': 'signature1',
-        '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd': 'signature2',
-      }
-
-      const result = normalizeAddressKeys(input)
-
-      // Check that addresses are properly checksummed
-      expect(result).toHaveProperty('0x1234567890123456789012345678901234567890', 'signature1')
-      expect(result).toHaveProperty('0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD', 'signature2')
-    })
-
-    it('should normalize uppercase addresses to checksum format', () => {
-      const input = {
-        '0x1234567890123456789012345678901234567890': 'signature1',
-        '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd': 'signature2',
-      }
-
-      const result = normalizeAddressKeys(input)
-
-      expect(result).toHaveProperty('0x1234567890123456789012345678901234567890', 'signature1')
-      expect(result).toHaveProperty('0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD', 'signature2')
-    })
-
-    it('should handle mixed case addresses', () => {
-      const input = {
-        '0x1234567890aBcDeF1234567890123456789012Ab': 'signature1',
-      }
-
-      const result = normalizeAddressKeys(input)
-
-      // Should normalize to proper checksum
-      const normalizedKey = Object.keys(result)[0]
-      expect(normalizedKey).toMatch(/^0x[0-9a-fA-F]{40}$/)
-      expect(result[normalizedKey as Address.Address]).toBe('signature1')
-    })
-
-    it('should handle empty object', () => {
-      const input = {}
-      const result = normalizeAddressKeys(input)
-      expect(result).toEqual({})
-    })
-
-    it('should preserve values for different value types', () => {
-      const input = {
-        '0x1234567890123456789012345678901234567890': { chainId: 1n, payload: mockPayload },
-        '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd': 'string-value',
-        '0x9876543210987654321098765432109876543210': 123,
-      }
-
-      const result = normalizeAddressKeys(input)
-
-      expect(Object.values(result)).toHaveLength(3)
-      expect(Object.values(result)).toContain(input['0x1234567890123456789012345678901234567890'])
-      expect(Object.values(result)).toContain('string-value')
-      expect(Object.values(result)).toContain(123)
-    })
-
-    it('should handle complex nested objects as values', () => {
-      const complexValue = {
-        chainId: 42n,
-        payload: mockPayload,
-        signature: mockRegularSignature,
-        nested: {
-          deep: {
-            value: 'test',
-          },
-        },
-      }
-
-      const input = {
-        '0x1234567890123456789012345678901234567890': complexValue,
-      }
-
-      const result = normalizeAddressKeys(input)
-
-      const normalizedAddress = Object.keys(result)[0] as Address.Address
-      expect(result[normalizedAddress]).toEqual(complexValue)
-      expect(result[normalizedAddress].nested.deep.value).toBe('test')
-    })
   })
 
   describe('getWalletsFor', () => {

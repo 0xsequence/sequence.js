@@ -1,6 +1,6 @@
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Constants, Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
-import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
+import { Abi, AbiFunction, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
 import {
@@ -54,7 +54,7 @@ export interface TransactionsInterface {
    * @returns A promise that resolves to the unique `transactionId` for this new request.
    */
   request(
-    from: Address.Address,
+    from: Address.Checksummed,
     chainId: bigint,
     txs: TransactionRequest[],
     options?: { source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
@@ -243,7 +243,7 @@ export class Transactions implements TransactionsInterface {
   }
 
   async request(
-    from: Address.Address,
+    from: Address.Checksummed,
     chainId: bigint,
     txs: TransactionRequest[],
     options?: {
@@ -432,9 +432,7 @@ export class Transactions implements TransactionsInterface {
         // then we need to prepend the transaction payload with the fee
         const { token, to, value, gasLimit } = selection.feeOption
 
-        Address.assert(to)
-
-        if (token.contractAddress === Constants.ZeroAddress) {
+        if (!token.contractAddress || token.contractAddress === Constants.ZeroAddress) {
           tx.envelope.payload.calls.unshift({
             to,
             value: BigInt(value),
@@ -446,9 +444,8 @@ export class Transactions implements TransactionsInterface {
           })
         } else {
           const [transfer] = Abi.from(['function transfer(address to, uint256 amount) returns (bool)'])
-
           tx.envelope.payload.calls.unshift({
-            to: token.contractAddress as Address.Address,
+            to: Address.checksum(token.contractAddress),
             value: 0n,
             data: AbiFunction.encodeData(transfer, [to, BigInt(value)]),
             gasLimit: BigInt(gasLimit),

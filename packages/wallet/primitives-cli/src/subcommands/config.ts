@@ -1,7 +1,7 @@
 import type { CommandModule } from 'yargs'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { fromPosOrStdin } from '../utils.js'
-import { Signature, Config } from '@0xsequence/wallet-primitives'
+import { Address, Signature, Config } from '@0xsequence/wallet-primitives'
 
 export const PossibleElements = [
   {
@@ -46,36 +46,45 @@ function parseElements(elements: string): Config.Leaf[] {
     const firstElementType = firstElement!.split(':')[0]
     if (firstElementType === 'signer') {
       const [_, address, weight] = firstElement!.split(':')
+      if (address === undefined) {
+        throw new Error('no address for signer')
+      }
+      if (weight === undefined) {
+        throw new Error('no weight for signer')
+      }
       leaves.push({
         type: 'signer',
-        address: Address.from(address!),
-        weight: BigInt(weight!),
+        address: Address.checksum(address),
+        weight: BigInt(weight),
       })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'subdigest') {
       const [_, digest] = firstElement!.split(':')
-      leaves.push({
-        type: 'subdigest',
-        digest: digest as `0x${string}`,
-      })
+      Hex.assert(digest)
+      leaves.push({ type: 'subdigest', digest })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'any-address-subdigest') {
       const [_, digest] = firstElement!.split(':')
-      leaves.push({
-        type: 'any-address-subdigest',
-        digest: digest as `0x${string}`,
-      })
+      Hex.assert(digest)
+      leaves.push({ type: 'any-address-subdigest', digest })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'sapient') {
       const [_, imageHash, address, weight] = firstElement!.split(':')
-      if (!imageHash || !imageHash.startsWith('0x') || imageHash.length !== 66) {
+      Hex.assert(imageHash)
+      if (imageHash.length !== 66) {
         throw new Error(`Invalid image hash: ${imageHash}`)
+      }
+      if (address === undefined) {
+        throw new Error('no address for signer')
+      }
+      if (weight === undefined) {
+        throw new Error('no weight for signer')
       }
       leaves.push({
         type: 'sapient-signer',
-        imageHash: imageHash as `0x${string}`,
-        address: Address.from(address!),
-        weight: BigInt(weight!),
+        imageHash,
+        address: Address.checksum(address),
+        weight: BigInt(weight),
       })
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else if (firstElementType === 'nested') {
@@ -97,7 +106,8 @@ function parseElements(elements: string): Config.Leaf[] {
       remainingElements = remainingElements.slice(endSubElements + 1).trim()
     } else if (firstElementType === 'node') {
       const [_, hash] = firstElement!.split(':')
-      leaves.push(hash as Hex.Hex)
+      Hex.assert(hash)
+      leaves.push(hash)
       remainingElements = remainingElements.slice(firstElement!.length + 1)
     } else {
       throw new Error(`Invalid element: ${firstElement}`)
@@ -120,7 +130,7 @@ export async function createConfig(options: {
     checkpoint: BigInt(options.checkpoint),
     // Starts with empty topology
     topology: Config.flatLeavesToTopology(leaves),
-    checkpointer: options.checkpointer ? Address.from(options.checkpointer) : undefined,
+    checkpointer: options.checkpointer ? Address.checksum(options.checkpointer) : undefined,
   }
 
   return Config.configToJson(config)

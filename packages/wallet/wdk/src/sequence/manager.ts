@@ -2,8 +2,7 @@ import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
-import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
+import { Address, Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
@@ -32,7 +31,7 @@ export type ManagerOptions = {
 
   extensions?: Extensions.Extensions
   context?: Context.Context
-  guest?: Address.Address
+  guest?: Address.Checksummed
 
   encryptedPksDb?: CoreSigners.Pk.Encrypted.EncryptedPksDb
   managerDb?: Db.Wallets
@@ -102,7 +101,7 @@ export const ManagerOptionsDefaults = {
   defaultGuardTopology: {
     // TODO: Move this somewhere else
     type: 'signer',
-    address: '0xf71eC72C8C03a0857DD7601ACeF1e42b85983e99',
+    address: Address.checksum('0xf71eC72C8C03a0857DD7601ACeF1e42b85983e99'),
     weight: 1n,
   } as Config.SignerLeaf,
 
@@ -172,7 +171,7 @@ export type Sequence = {
   readonly context: Context.Context
   readonly context4337: Context.Context
   readonly extensions: Extensions.Extensions
-  readonly guest: Address.Address
+  readonly guest: Address.Checksummed
 
   readonly stateProvider: State.Provider
 

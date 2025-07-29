@@ -1,4 +1,5 @@
-import { Address, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { Address } from '@0xsequence/wallet-primitives'
+import { Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it, vi } from 'vitest'
 import {
   Erc1155ApprovalPrecondition,
@@ -12,9 +13,9 @@ import {
 import { LocalRelayer } from '../src/relayer/standard/local'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
 
-const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
+const ERC20_IMPLICIT_MINT_CONTRACT = Address.checksum('0x041E0CDC028050519C8e6485B2d9840caf63773F')
 
-function randomAddress(): Address.Address {
+function randomAddress(): Address.Checksummed {
   return Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
 }
 
@@ -41,7 +42,7 @@ describe('Preconditions', () => {
 
   const testWalletAddress = randomAddress()
 
-  const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Address) => {
+  const requireContractDeployed = async (provider: Provider.Provider, contract: Address.Checksummed) => {
     const code = await provider.request({ method: 'eth_getCode', params: [contract, 'latest'] })
     if (code === '0x') {
       throw new Error(`Contract ${contract} not deployed`)
@@ -62,7 +63,7 @@ describe('Preconditions', () => {
       type: precondition.type(),
       chainId: chainId.toString(),
       data: JSON.stringify({
-        address: precondition.address.toString(),
+        address: precondition.address,
         min: precondition.min?.toString(),
         max: precondition.max?.toString(),
       }),
@@ -93,8 +94,8 @@ describe('Preconditions', () => {
       type: precondition.type(),
       chainId: chainId.toString(),
       data: JSON.stringify({
-        address: precondition.address.toString(),
-        token: precondition.token.toString(),
+        address: precondition.address,
+        token: precondition.token,
         min: precondition.min?.toString(),
         max: precondition.max?.toString(),
       }),
@@ -126,9 +127,9 @@ describe('Preconditions', () => {
       type: precondition.type(),
       chainId: chainId.toString(),
       data: JSON.stringify({
-        address: precondition.address.toString(),
-        token: precondition.token.toString(),
-        operator: precondition.operator.toString(),
+        address: precondition.address,
+        token: precondition.token,
+        operator: precondition.operator,
         min: precondition.min.toString(),
       }),
     }
@@ -158,8 +159,8 @@ describe('Preconditions', () => {
       type: precondition.type(),
       chainId: chainId.toString(),
       data: JSON.stringify({
-        address: precondition.address.toString(),
-        token: precondition.token.toString(),
+        address: precondition.address,
+        token: precondition.token,
         tokenId: precondition.tokenId.toString(),
         owned: precondition.owned,
       }),
@@ -168,7 +169,7 @@ describe('Preconditions', () => {
     if (!CAN_RUN_LIVE) {
       // Mock the ownerOf call
       ;(provider as any).call.mockResolvedValue(
-        '0x000000000000000000000000' + testWalletAddress.toString().slice(2).toLowerCase(),
+        `0x000000000000000000000000${testWalletAddress.toString().slice(2).toLowerCase()}`,
       )
     }
 
@@ -193,18 +194,16 @@ describe('Preconditions', () => {
       type: precondition.type(),
       chainId: chainId.toString(),
       data: JSON.stringify({
-        address: precondition.address.toString(),
-        token: precondition.token.toString(),
+        address: precondition.address,
+        token: precondition.token,
         tokenId: precondition.tokenId.toString(),
-        operator: precondition.operator.toString(),
+        operator: precondition.operator,
       }),
     }
 
     if (!CAN_RUN_LIVE) {
       // Mock the getApproved call
-      ;(provider as any).call.mockResolvedValue(
-        '0x000000000000000000000000' + operator.toString().slice(2).toLowerCase(),
-      )
+      ;(provider as any).call.mockResolvedValue(`0x000000000000000000000000${operator.slice(2).toLowerCase()}`)
     }
 
     const isValid = await relayer.checkPrecondition(intentPrecondition)
@@ -228,8 +227,8 @@ describe('Preconditions', () => {
       type: precondition.type(),
       chainId: chainId.toString(),
       data: JSON.stringify({
-        address: precondition.address.toString(),
-        token: precondition.token.toString(),
+        address: precondition.address,
+        token: precondition.token,
         tokenId: precondition.tokenId.toString(),
         min: precondition.min?.toString(),
         max: precondition.max?.toString(),
@@ -263,10 +262,10 @@ describe('Preconditions', () => {
       type: precondition.type(),
       chainId: chainId.toString(),
       data: JSON.stringify({
-        address: precondition.address.toString(),
-        token: precondition.token.toString(),
+        address: precondition.address,
+        token: precondition.token,
         tokenId: precondition.tokenId.toString(),
-        operator: precondition.operator.toString(),
+        operator: precondition.operator,
         min: precondition.min.toString(),
       }),
     }

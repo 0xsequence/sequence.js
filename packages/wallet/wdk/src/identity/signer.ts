@@ -1,15 +1,15 @@
-import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
+import { Signature, Hex, Bytes, PersonalMessage } from 'ox'
 import { Signers, State } from '@0xsequence/wallet-core'
 import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
 import { AuthKey } from '../dbs/auth-keys.js'
-import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
+import { Address, Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 import * as Identity from '@0xsequence/identity-instrument'
 
 export function toIdentityAuthKey(authKey: AuthKey): Identity.AuthKey {
   return {
     address: authKey.address,
     keyType: Identity.KeyType.Secp256r1,
-    signer: authKey.identitySigner,
+    signer: authKey.identitySigner ?? '',
     async sign(digest: Bytes.Bytes) {
       const authKeySignature = await window.crypto.subtle.sign(
         {
@@ -30,15 +30,15 @@ export class IdentitySigner implements Signers.Signer {
     readonly authKey: AuthKey,
   ) {}
 
-  get address(): Address.Address {
-    if (!Address.validate(this.authKey.identitySigner)) {
+  get address(): Address.Checksummed {
+    if (!this.authKey.identitySigner) {
       throw new Error('No signer address found')
     }
-    return Address.checksum(this.authKey.identitySigner)
+    return this.authKey.identitySigner
   }
 
   async sign(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     payload: Payload.Parented,
   ): Promise<SequenceSignature.SignatureOfSignerLeaf> {
@@ -55,7 +55,7 @@ export class IdentitySigner implements Signers.Signer {
     }
   }
 
-  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
+  async witness(stateWriter: State.Writer, wallet: Address.Checksummed, extra?: Object): Promise<void> {
     const payload = Payload.fromMessage(
       Hex.fromString(
         JSON.stringify({

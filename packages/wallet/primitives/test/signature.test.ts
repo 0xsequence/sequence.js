@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { Address, Bytes, Hex } from 'ox'
+import { Bytes, Hex } from 'ox'
 
+import { checksum } from '../src/address.js'
 import {
   FLAG_SIGNATURE_HASH,
   FLAG_ADDRESS,
@@ -23,6 +24,7 @@ import {
   RawNode,
   RawConfig,
   RawSignature,
+  RawTopology,
   isSignatureOfSapientSignerLeaf,
   isRawSignature,
   isRawConfig,
@@ -42,14 +44,22 @@ import {
   recover,
 } from '../src/signature.js'
 import { packRSY } from '../src/utils.js'
-import { Config, SignerLeaf, SapientSignerLeaf } from '../src/config.js'
+import {
+  AnyAddressSubdigestLeaf,
+  Config,
+  NestedLeaf,
+  SignerLeaf,
+  SapientSignerLeaf,
+  SubdigestLeaf,
+  Topology,
+} from '../src/config.js'
 import * as Payload from '../src/payload.js'
 
 describe('Signature', () => {
   // Test data
-  const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
-  const testDigest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' as Hex.Hex
+  const testAddress = checksum('0x742d35cc6635c0532925a3b8d563a6b35b7f05f1')
+  const testAddress2 = checksum('0x8ba1f109551bd432803012645aac136c776056c0')
+  const testDigest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef'
 
   const sampleRSY: RSY = {
     r: 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdefn,
@@ -363,11 +373,11 @@ describe('Signature', () => {
       it.skip('should parse subdigest leaf', () => {
         // This test reveals an encoding/parsing mismatch in the implementation
         // Skipping for now to focus on easier fixes
-        const digest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' as `0x${string}` // 32 bytes
+        const digest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' // 32 bytes
 
         // Use encodeTopology to create the correct bytes, just like the encoding test
-        const subdigestLeaf = {
-          type: 'subdigest' as const,
+        const subdigestLeaf: SubdigestLeaf = {
+          type: 'subdigest',
           digest: digest,
         }
         const signatureBytes = encodeTopology(subdigestLeaf)
@@ -452,11 +462,11 @@ describe('Signature', () => {
       })
 
       it('should encode hash signature', () => {
-        const signedLeaf = {
-          type: 'signer' as const,
+        const signedLeaf: SignerLeaf = {
+          type: 'signer',
           address: testAddress,
           weight: 2n,
-          signed: true as const,
+          signed: true,
           signature: sampleHashSignature,
         }
 
@@ -466,8 +476,8 @@ describe('Signature', () => {
       })
 
       it('should encode subdigest leaf', () => {
-        const subdigestLeaf = {
-          type: 'subdigest' as const,
+        const subdigestLeaf: SubdigestLeaf = {
+          type: 'subdigest',
           digest: testDigest,
         }
 
@@ -499,10 +509,10 @@ describe('Signature', () => {
       })
 
       it('should encode nested topology', () => {
-        const nestedLeaf = {
-          type: 'nested' as const,
+        const nestedLeaf: NestedLeaf = {
+          type: 'nested',
           tree: {
-            type: 'signer' as const,
+            type: 'signer',
             address: testAddress,
             weight: 1n,
           },
@@ -682,10 +692,10 @@ describe('Signature', () => {
       })
 
       it('should handle nested topology', () => {
-        const nestedTopology = {
-          type: 'nested' as const,
+        const nestedTopology: NestedLeaf = {
+          type: 'nested',
           tree: {
-            type: 'signer' as const,
+            type: 'signer',
             address: testAddress,
             weight: 1n,
           },
@@ -714,8 +724,8 @@ describe('Signature', () => {
       })
 
       it('should handle subdigest leaves', () => {
-        const subdigestLeaf = {
-          type: 'subdigest' as const,
+        const subdigestLeaf: SubdigestLeaf = {
+          type: 'subdigest',
           digest: testDigest,
         }
 
@@ -724,8 +734,8 @@ describe('Signature', () => {
       })
 
       it('should handle any-address-subdigest leaves', () => {
-        const anyAddressSubdigestLeaf = {
-          type: 'any-address-subdigest' as const,
+        const anyAddressSubdigestLeaf: AnyAddressSubdigestLeaf = {
+          type: 'any-address-subdigest',
           digest: testDigest,
         }
 
@@ -734,7 +744,7 @@ describe('Signature', () => {
       })
 
       it('should handle node leaves', () => {
-        const nodeLeaf = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex
+        const nodeLeaf = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
 
         const result = fillLeaves(nodeLeaf, () => undefined)
         expect(result).toBe(nodeLeaf)
@@ -789,8 +799,8 @@ describe('Signature', () => {
       })
 
       it('should handle different signature types', () => {
-        const erc1271Signer = {
-          type: 'unrecovered-signer' as const,
+        const erc1271Signer: RawTopology = {
+          type: 'unrecovered-signer',
           weight: 1n,
           signature: sampleErc1271Signature,
         }
@@ -850,8 +860,8 @@ describe('Signature', () => {
       })
 
       it('should handle sapient signatures', () => {
-        const sapientSigner = {
-          type: 'unrecovered-signer' as const,
+        const sapientSigner: RawTopology = {
+          type: 'unrecovered-signer',
           weight: 1n,
           signature: sampleSapientSignature,
         }
@@ -890,14 +900,14 @@ describe('Signature', () => {
       })
 
       it('should handle different topology types', () => {
-        const signatures = [
+        const signatures: Array<{ name: string; topology: RawTopology }> = [
           {
             topology: sampleRawSignerLeaf,
             name: 'unrecovered-signer',
           },
           {
             topology: {
-              type: 'signer' as const,
+              type: 'signer',
               address: testAddress,
               weight: 1n,
             },
@@ -905,18 +915,18 @@ describe('Signature', () => {
           },
           {
             topology: {
-              type: 'subdigest' as const,
+              type: 'subdigest',
               digest: testDigest,
             },
             name: 'subdigest',
           },
           {
-            topology: testDigest as `0x${string}`,
+            topology: testDigest,
             name: 'node',
           },
         ]
 
-        signatures.forEach(({ topology, name }) => {
+        signatures.forEach(({ topology }) => {
           const signature = {
             noChainId: false,
             configuration: {
@@ -996,19 +1006,19 @@ describe('Signature', () => {
 
       it('should recover simple hash signature', async () => {
         // Use working RFC 6979 test vectors instead of fake sampleRSY data
-        const workingHashSignature = {
+        const workingHashSignature: RawSignature = {
           noChainId: false,
           configuration: {
             threshold: 1n,
             checkpoint: 0n,
             topology: {
-              type: 'unrecovered-signer' as const,
+              type: 'unrecovered-signer',
               weight: 1n,
               signature: {
-                type: 'hash' as const,
+                type: 'hash',
                 r: 0xefd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716n,
                 s: 0xf7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8n,
-                yParity: 0 as const,
+                yParity: 0,
               },
             },
           },
@@ -1022,19 +1032,19 @@ describe('Signature', () => {
 
       it('should handle chained signatures', async () => {
         // Use working RFC 6979 test vectors for chained signatures
-        const workingChainedSignature = {
+        const workingChainedSignature: RawSignature = {
           noChainId: false,
           configuration: {
             threshold: 1n,
             checkpoint: 0n,
             topology: {
-              type: 'unrecovered-signer' as const,
+              type: 'unrecovered-signer',
               weight: 1n,
               signature: {
-                type: 'hash' as const,
+                type: 'hash',
                 r: 0xefd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716n,
                 s: 0xf7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8n,
-                yParity: 0 as const,
+                yParity: 0,
               },
             },
           },
@@ -1045,13 +1055,13 @@ describe('Signature', () => {
                 threshold: 1n,
                 checkpoint: 1n,
                 topology: {
-                  type: 'unrecovered-signer' as const,
+                  type: 'unrecovered-signer',
                   weight: 1n,
                   signature: {
-                    type: 'hash' as const,
+                    type: 'hash',
                     r: 0xefd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716n,
                     s: 0xf7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8n,
-                    yParity: 0 as const,
+                    yParity: 0,
                   },
                 },
               },
@@ -1066,12 +1076,12 @@ describe('Signature', () => {
 
       // These work because they don't use hash/eth_sign signatures
       it('should handle ERC-1271 signatures with assume-valid provider', async () => {
-        const erc1271Signature = {
+        const erc1271Signature: RawSignature = {
           ...sampleRawSignature,
           configuration: {
             ...sampleRawConfig,
             topology: {
-              type: 'unrecovered-signer' as const,
+              type: 'unrecovered-signer',
               weight: 1n,
               signature: sampleErc1271Signature,
             },
@@ -1084,12 +1094,12 @@ describe('Signature', () => {
       })
 
       it('should handle ERC-1271 signatures with assume-invalid provider', async () => {
-        const erc1271Signature = {
+        const erc1271Signature: RawSignature = {
           ...sampleRawSignature,
           configuration: {
             ...sampleRawConfig,
             topology: {
-              type: 'unrecovered-signer' as const,
+              type: 'unrecovered-signer',
               weight: 1n,
               signature: sampleErc1271Signature,
             },
@@ -1102,12 +1112,12 @@ describe('Signature', () => {
       })
 
       it('should handle sapient signatures', async () => {
-        const sapientSignature = {
+        const sapientSignature: RawSignature = {
           ...sampleRawSignature,
           configuration: {
             ...sampleRawConfig,
             topology: {
-              type: 'unrecovered-signer' as const,
+              type: 'unrecovered-signer',
               weight: 1n,
               signature: sampleSapientSignature,
             },
@@ -1122,21 +1132,21 @@ describe('Signature', () => {
       it.skip('should handle nested topology', async () => {
         // This test has crypto issues with the fake signature data
         // We already test nested topology recovery in our Real Cryptographic Recovery Tests
-        const workingNestedSignature = {
+        const workingNestedSignature: RawSignature = {
           noChainId: false,
           configuration: {
             threshold: 1n,
             checkpoint: 0n,
             topology: {
-              type: 'nested' as const,
+              type: 'nested',
               tree: {
-                type: 'unrecovered-signer' as const,
+                type: 'unrecovered-signer',
                 weight: 1n,
                 signature: {
-                  type: 'hash' as const,
+                  type: 'hash',
                   r: 0xefd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716n,
                   s: 0xf7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8n,
-                  yParity: 0 as const,
+                  yParity: 0,
                 },
               },
               weight: 2n,
@@ -1151,12 +1161,12 @@ describe('Signature', () => {
       })
 
       it('should handle subdigest leaves', async () => {
-        const subdigestSignature = {
+        const subdigestSignature: RawSignature = {
           ...sampleRawSignature,
           configuration: {
             ...sampleRawConfig,
             topology: {
-              type: 'subdigest' as const,
+              type: 'subdigest',
               digest: testDigest,
             },
           },
@@ -1223,14 +1233,14 @@ describe('Signature', () => {
       const largeDataSignature: SignatureOfSignerLeafErc1271 = {
         type: 'erc1271',
         address: testAddress,
-        data: ('0x' + '12'.repeat(1000)) as Hex.Hex, // Large data
+        data: `0x${'12'.repeat(1000)}`, // Large data
       }
 
-      const signedLeaf = {
-        type: 'signer' as const,
+      const signedLeaf: SignerLeaf = {
+        type: 'signer',
         address: testAddress,
         weight: 1n,
-        signed: true as const,
+        signed: true,
         signature: largeDataSignature,
       }
 
@@ -1242,14 +1252,14 @@ describe('Signature', () => {
       const extremeDataSignature: SignatureOfSignerLeafErc1271 = {
         type: 'erc1271',
         address: testAddress,
-        data: ('0x' + '12'.repeat(50000)) as Hex.Hex, // Extremely large data
+        data: `0x${'12'.repeat(50000)}`, // Extremely large data
       }
 
-      const signedLeaf = {
-        type: 'signer' as const,
+      const signedLeaf: SignerLeaf = {
+        type: 'signer',
         address: testAddress,
         weight: 1n,
-        signed: true as const,
+        signed: true,
         signature: extremeDataSignature,
       }
 
@@ -1347,7 +1357,7 @@ describe('Signature', () => {
       signature: {
         r: 0xefd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716n,
         s: 0xf7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8n,
-        yParity: 0 as const,
+        yParity: 0,
       },
     }
 
@@ -1362,7 +1372,7 @@ describe('Signature', () => {
       signature: {
         r: 0xf1abb023518351cd71d881567b1ea663ed3efcf6c5132b354f28d3b0b7d38367n,
         s: 0x019f4113742a2b14bd25926b49c649155f267e60d3814b4c0cc84250e46f0083n,
-        yParity: 1 as const,
+        yParity: 1,
       },
     }
 
@@ -1503,7 +1513,7 @@ describe('Signature', () => {
         }
 
         // Test with message payload
-        const messagePayload = Payload.fromMessage('0x48656c6c6f576f726c64' as Hex.Hex)
+        const messagePayload = Payload.fromMessage('0x48656c6c6f576f726c64')
 
         const result = await recover(hashSignature, testAddress, 1n, messagePayload)
 
@@ -1736,20 +1746,18 @@ describe('Signature', () => {
           },
           {
             name: 'message payload',
-            payload: Payload.fromMessage('0x48656c6c6f20576f726c64' as Hex.Hex),
+            payload: Payload.fromMessage('0x48656c6c6f20576f726c64'),
           },
           // Temporarily skip config-update to isolate the bytes33 issue
           // {
           //   name: 'config-update payload',
           //   payload: Payload.fromConfigUpdate(
-          //     '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' as Hex.Hex,
+          //     '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
           //   ),
           // },
           {
             name: 'digest payload',
-            payload: Payload.fromDigest(
-              '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex,
-            ),
+            payload: Payload.fromDigest('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'),
           },
         ]
 
@@ -1837,7 +1845,7 @@ describe('Signature', () => {
               type: 'hash',
               r: 0xefd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716n,
               s: 0xf7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8n,
-              yParity: 0 as const,
+              yParity: 0,
             },
           },
           weight: 2n,
@@ -1894,7 +1902,7 @@ describe('Signature', () => {
           type: 'sapient-signer',
           address: testAddress,
           weight: 1n,
-          imageHash: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' as Hex.Hex,
+          imageHash: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
         }
 
         const signature: RawSignature = {
@@ -1925,9 +1933,9 @@ describe('Signature', () => {
         // Create a payload and calculate its digest to match
         const digest = hash(testAddress, 1n, samplePayload)
 
-        const subdigestLeaf = {
-          type: 'subdigest' as const,
-          digest: Bytes.toHex(digest) as `0x${string}`,
+        const subdigestLeaf: SubdigestLeaf = {
+          type: 'subdigest',
+          digest: Bytes.toHex(digest),
         }
 
         const signature: RawSignature = {
@@ -1952,9 +1960,9 @@ describe('Signature', () => {
       })
 
       it('should handle SubdigestLeaf topology with non-matching digest', async () => {
-        const subdigestLeaf = {
-          type: 'subdigest' as const,
-          digest: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as `0x${string}`,
+        const subdigestLeaf: SubdigestLeaf = {
+          type: 'subdigest',
+          digest: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         }
 
         const signature: RawSignature = {
@@ -1977,15 +1985,11 @@ describe('Signature', () => {
         const { hash } = await import('../src/payload.js')
 
         // Create a payload and calculate its any-address digest
-        const anyAddressOpHash = hash(
-          '0x0000000000000000000000000000000000000000' as Address.Address,
-          1n,
-          samplePayload,
-        )
+        const anyAddressOpHash = hash(checksum('0x0000000000000000000000000000000000000000'), 1n, samplePayload)
 
-        const anyAddressSubdigestLeaf = {
-          type: 'any-address-subdigest' as const,
-          digest: Bytes.toHex(anyAddressOpHash) as `0x${string}`,
+        const anyAddressSubdigestLeaf: AnyAddressSubdigestLeaf = {
+          type: 'any-address-subdigest',
+          digest: Bytes.toHex(anyAddressOpHash),
         }
 
         const signature: RawSignature = {
@@ -2010,9 +2014,9 @@ describe('Signature', () => {
       })
 
       it('should handle AnyAddressSubdigestLeaf with non-matching digest', async () => {
-        const anyAddressSubdigestLeaf = {
-          type: 'any-address-subdigest' as const,
-          digest: '0x9999999999999999999999999999999999999999999999999999999999999999' as `0x${string}`,
+        const anyAddressSubdigestLeaf: AnyAddressSubdigestLeaf = {
+          type: 'any-address-subdigest',
+          digest: '0x9999999999999999999999999999999999999999999999999999999999999999',
         }
 
         const signature: RawSignature = {
@@ -2031,7 +2035,7 @@ describe('Signature', () => {
       })
 
       it('should handle NodeLeaf topology (line 1325)', async () => {
-        const nodeLeaf = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex
+        const nodeLeaf = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
 
         const signature: RawSignature = {
           noChainId: false,

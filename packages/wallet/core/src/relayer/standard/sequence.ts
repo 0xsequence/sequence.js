@@ -1,6 +1,6 @@
 import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequence/relayer'
-import { Payload } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex } from 'ox'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
+import { AbiFunction, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 
 export class SequenceRelayer implements Relayer {
@@ -14,12 +14,12 @@ export class SequenceRelayer implements Relayer {
     this.service = new Service(host, fetch)
   }
 
-  async isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+  async isAvailable(_wallet: Address.Checksummed, _chainId: bigint): Promise<boolean> {
     return true
   }
 
   async feeOptions(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     _chainId: bigint,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
@@ -32,7 +32,7 @@ export class SequenceRelayer implements Relayer {
     const { options, quote } = await this.service.feeOptions({ wallet, to, data })
 
     return {
-      options,
+      options: options.map((option) => ({ ...option, to: Address.checksum(option.to) })),
       quote: quote ? { _tag: 'FeeQuote', _quote: quote } : undefined,
     }
   }
@@ -42,7 +42,12 @@ export class SequenceRelayer implements Relayer {
     return false
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, _chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
+  async relay(
+    to: Address.Checksummed,
+    data: Hex.Hex,
+    _chainId: bigint,
+    quote?: FeeQuote,
+  ): Promise<{ opHash: Hex.Hex }> {
     const walletAddress = to // TODO: pass wallet address or stop requiring it
 
     const { txnHash } = await this.service.sendMetaTxn({

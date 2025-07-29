@@ -1,4 +1,3 @@
-import { Address } from 'ox'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -13,10 +12,11 @@ import {
   Erc20BalancePrecondition,
   Erc721OwnershipPrecondition,
 } from '../../src/preconditions/types.js'
+import { Address } from '@0xsequence/wallet-primitives'
 
 // Test addresses
-const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
-const TOKEN_ADDRESS = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
+const TEST_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
+const TOKEN_ADDRESS = Address.checksum('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
 
 describe('Preconditions Selectors', () => {
   describe('extractChainID', () => {

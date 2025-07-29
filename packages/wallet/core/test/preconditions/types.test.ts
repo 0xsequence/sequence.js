@@ -1,5 +1,5 @@
-import { Address } from 'ox'
 import { describe, expect, it } from 'vitest'
+import { Address } from '@0xsequence/wallet-primitives'
 
 import {
   NativeBalancePrecondition,
@@ -12,9 +12,9 @@ import {
 } from '../../src/preconditions/types.js'
 
 // Test addresses
-const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
-const TOKEN_ADDRESS = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
-const OPERATOR_ADDRESS = Address.from('0x9876543210987654321098765432109876543210')
+const TEST_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
+const TOKEN_ADDRESS = Address.checksum('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
+const OPERATOR_ADDRESS = Address.checksum('0x9876543210987654321098765432109876543210')
 
 describe('Preconditions Types', () => {
   describe('NativeBalancePrecondition', () => {
@@ -53,7 +53,7 @@ describe('Preconditions Types', () => {
     })
 
     it('should validate address is required', () => {
-      const precondition = new NativeBalancePrecondition('' as Address.Address)
+      const precondition = new NativeBalancePrecondition('' as Address.Checksummed)
 
       const error = precondition.isValid()
       expect(error).toBeInstanceOf(Error)
@@ -88,7 +88,7 @@ describe('Preconditions Types', () => {
     })
 
     it('should validate address is required', () => {
-      const precondition = new Erc20BalancePrecondition('' as Address.Address, TOKEN_ADDRESS)
+      const precondition = new Erc20BalancePrecondition('' as Address.Checksummed, TOKEN_ADDRESS)
 
       const error = precondition.isValid()
       expect(error).toBeInstanceOf(Error)
@@ -96,7 +96,7 @@ describe('Preconditions Types', () => {
     })
 
     it('should validate token address is required', () => {
-      const precondition = new Erc20BalancePrecondition(TEST_ADDRESS, '' as Address.Address)
+      const precondition = new Erc20BalancePrecondition(TEST_ADDRESS, '' as Address.Checksummed)
 
       const error = precondition.isValid()
       expect(error).toBeInstanceOf(Error)

@@ -1,13 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { Address, Hex } from 'ox'
+import { Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Address, Payload } from '@0xsequence/wallet-primitives'
 import { Bundler, isBundler } from '../../src/relayer/bundler.js'
 import { OperationStatus } from '../../src/relayer/relayer.js'
 
 // Test addresses and data
-const TEST_WALLET_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
-const TEST_ENTRYPOINT_ADDRESS = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
+const TEST_WALLET_ADDRESS = Address.checksum('0x1234567890123456789012345678901234567890')
+const TEST_ENTRYPOINT_ADDRESS = Address.checksum('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
 const TEST_CHAIN_ID = 1n
 const TEST_OP_HASH = Hex.from('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')
 
@@ -238,11 +238,11 @@ describe('Bundler', () => {
   describe('Type compatibility', () => {
     it('should work with Address and Hex types from ox', () => {
       // Test that the interfaces work correctly with ox types
-      const address = Address.from('0x1234567890123456789012345678901234567890')
+      const address = Address.checksum('0x1234567890123456789012345678901234567890')
       const hex = Hex.from('0xabcdef')
       const chainId = 1n
 
-      expect(Address.validate(address)).toBe(true)
+      expect(Address.isChecksummed(address)).toBe(true)
       expect(Hex.validate(hex)).toBe(true)
       expect(typeof chainId).toBe('bigint')
     })

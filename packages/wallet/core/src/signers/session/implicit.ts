@@ -1,5 +1,11 @@
-import { Attestation, Payload, Signature as SequenceSignature, SessionSignature } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
+import {
+  Address,
+  Attestation,
+  Payload,
+  Signature as SequenceSignature,
+  SessionSignature,
+} from '@0xsequence/wallet-primitives'
+import { AbiFunction, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { SessionSigner } from './session.js'
 
@@ -8,13 +14,13 @@ export type AttestationParams = Omit<Attestation.Attestation, 'approvedSigner'>
 export class Implicit implements SessionSigner {
   private readonly _privateKey: PkStore
   private readonly _identitySignature: SequenceSignature.RSY
-  public readonly address: Address.Address
+  public readonly address: Address.Checksummed
 
   constructor(
     privateKey: Hex.Hex | PkStore,
     private readonly _attestation: Attestation.Attestation,
     identitySignature: SequenceSignature.RSY | Hex.Hex,
-    private readonly _sessionManager: Address.Address,
+    private readonly _sessionManager: Address.Checksummed,
   ) {
     this._privateKey = typeof privateKey === 'string' ? new MemoryPkStore(privateKey) : privateKey
     this.address = this._privateKey.address()
@@ -28,7 +34,7 @@ export class Implicit implements SessionSigner {
       typeof identitySignature === 'string' ? Signature.fromHex(identitySignature) : identitySignature
   }
 
-  get identitySigner(): Address.Address {
+  get identitySigner(): Address.Checksummed {
     // Recover identity signer from attestions and identity signature
     const attestationHash = Attestation.hash(this._attestation)
     const identityPubKey = Secp256k1.recoverPublicKey({ payload: attestationHash, signature: this._identitySignature })
@@ -36,10 +42,10 @@ export class Implicit implements SessionSigner {
   }
 
   async supportedCall(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     _chainId: bigint,
     call: Payload.Call,
-    _sessionManagerAddress: Address.Address,
+    _sessionManagerAddress: Address.Checksummed,
     provider?: Provider.Provider,
   ): Promise<boolean> {
     if (!provider) {
@@ -83,14 +89,14 @@ export class Implicit implements SessionSigner {
   }
 
   async signCall(
-    wallet: Address.Address,
+    wallet: Address.Checksummed,
     chainId: bigint,
     call: Payload.Call,
     nonce: {
       space: bigint
       nonce: bigint
     },
-    sessionManagerAddress: Address.Address,
+    sessionManagerAddress: Address.Checksummed,
     provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
     const isSupported = await this.supportedCall(wallet, chainId, call, sessionManagerAddress, provider)
