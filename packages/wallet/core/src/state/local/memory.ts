@@ -54,12 +54,12 @@ export class MemoryStore implements Store {
   }
 
   async loadConfig(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
-    const config = this.configs.get(imageHash)
+    const config = this.configs.get(imageHash.toLowerCase() as Hex.Hex)
     return config ? this.deepCopy(config) : undefined
   }
 
   async saveConfig(imageHash: Hex.Hex, config: Config.Config): Promise<void> {
-    this.configs.set(imageHash, this.deepCopy(config))
+    this.configs.set(imageHash.toLowerCase() as Hex.Hex, this.deepCopy(config))
   }
 
   async loadCounterfactualWallet(
