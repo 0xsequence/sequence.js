@@ -14,7 +14,7 @@ export async function doCalculateAddress(options: {
     creationCode: options.creationCode || Context.Dev2.creationCode,
   }
 
-  return Address.from(Bytes.fromHex(options.imageHash), context)
+  return Address.fromDeployConfiguration(Bytes.fromHex(options.imageHash), context)
 }
 
 const addressCommand: CommandModule = {

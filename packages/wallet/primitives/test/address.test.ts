@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Bytes, Hash, Hex } from 'ox'
 
-import { checksum, from, isChecksummed } from '../src/address.js'
+import { checksum, fromDeployConfiguration, isChecksummed } from '../src/address.js'
 import { Context, Dev1, Dev2 } from '../src/context.js'
 import { Config, hashConfiguration } from '../src/config.js'
 
@@ -24,27 +24,27 @@ describe('Address', () => {
 
   describe('from', () => {
     it('should generate deterministic address from Config object', () => {
-      const address = from(sampleConfig, mockContext)
+      const address = fromDeployConfiguration(sampleConfig, mockContext)
 
       // Should return a valid address
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be deterministic - same inputs should produce same output
-      const address2 = from(sampleConfig, mockContext)
+      const address2 = fromDeployConfiguration(sampleConfig, mockContext)
       expect(address).toBe(address2)
     })
 
     it('should generate deterministic address from bytes configuration', () => {
       const configHash = hashConfiguration(sampleConfig)
-      const address = from(configHash, mockContext)
+      const address = fromDeployConfiguration(configHash, mockContext)
 
       // Should return a valid address
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should produce same address as Config object
-      const addressFromConfig = from(sampleConfig, mockContext)
+      const addressFromConfig = fromDeployConfiguration(sampleConfig, mockContext)
       expect(address).toBe(addressFromConfig)
     })
 
@@ -69,15 +69,15 @@ describe('Address', () => {
         },
       }
 
-      const address1 = from(config1, mockContext)
-      const address2 = from(config2, mockContext)
+      const address1 = fromDeployConfiguration(config1, mockContext)
+      const address2 = fromDeployConfiguration(config2, mockContext)
 
       expect(address1).not.toBe(address2)
     })
 
     it('should generate different addresses for different contexts', () => {
-      const address1 = from(sampleConfig, mockContext)
-      const address2 = from(sampleConfig, {
+      const address1 = fromDeployConfiguration(sampleConfig, mockContext)
+      const address2 = fromDeployConfiguration(sampleConfig, {
         factory: checksum('0xFE14B91dE3c5Ca74c4D24608EBcD4B2848aA6010'),
         stage1: checksum('0x300E98ae5bEA4A7291d62Eb0b9feD535E10095dD'),
         creationCode:
@@ -89,7 +89,7 @@ describe('Address', () => {
 
     it('should work with Dev1 context', () => {
       const { stage2, ...dev1Context } = Dev1
-      const address = from(sampleConfig, dev1Context)
+      const address = fromDeployConfiguration(sampleConfig, dev1Context)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
@@ -97,14 +97,14 @@ describe('Address', () => {
 
     it('should work with Dev2 context', () => {
       const { stage2, ...dev2Context } = Dev2
-      const address = from(sampleConfig, dev2Context)
+      const address = fromDeployConfiguration(sampleConfig, dev2Context)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be different from Dev1
       const { stage2: _, ...dev1Context } = Dev1
-      const dev1Address = from(sampleConfig, dev1Context)
+      const dev1Address = fromDeployConfiguration(sampleConfig, dev1Context)
       expect(address).not.toBe(dev1Address)
     })
 
@@ -126,7 +126,7 @@ describe('Address', () => {
         ],
       }
 
-      const address = from(complexConfig, mockContext)
+      const address = fromDeployConfiguration(complexConfig, mockContext)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
@@ -148,7 +148,7 @@ describe('Address', () => {
         },
       }
 
-      const address = from(nestedConfig, mockContext)
+      const address = fromDeployConfiguration(nestedConfig, mockContext)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
@@ -166,7 +166,7 @@ describe('Address', () => {
         },
       }
 
-      const address = from(sapientConfig, mockContext)
+      const address = fromDeployConfiguration(sapientConfig, mockContext)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
@@ -184,7 +184,7 @@ describe('Address', () => {
         },
       }
 
-      const address = from(configWithCheckpointer, mockContext)
+      const address = fromDeployConfiguration(configWithCheckpointer, mockContext)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
@@ -192,13 +192,13 @@ describe('Address', () => {
       // Should be different from config without checkpointer
       const configWithoutCheckpointer = { ...configWithCheckpointer }
       delete configWithoutCheckpointer.checkpointer
-      const addressWithoutCheckpointer = from(configWithoutCheckpointer, mockContext)
+      const addressWithoutCheckpointer = fromDeployConfiguration(configWithoutCheckpointer, mockContext)
       expect(address).not.toBe(addressWithoutCheckpointer)
     })
 
     it('should handle zero hash input', () => {
       const zeroHash = new Uint8Array(32).fill(0)
-      const address = from(zeroHash, mockContext)
+      const address = fromDeployConfiguration(zeroHash, mockContext)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
@@ -206,7 +206,7 @@ describe('Address', () => {
 
     it('should handle maximum hash input', () => {
       const maxHash = new Uint8Array(32).fill(255)
-      const address = from(maxHash, mockContext)
+      const address = fromDeployConfiguration(maxHash, mockContext)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
@@ -223,8 +223,8 @@ describe('Address', () => {
         factory: checksum('0x2222222222222222222222222222222222222222'),
       }
 
-      const address1 = from(sampleConfig, context1)
-      const address2 = from(sampleConfig, context2)
+      const address1 = fromDeployConfiguration(sampleConfig, context1)
+      const address2 = fromDeployConfiguration(sampleConfig, context2)
 
       expect(address1).not.toBe(address2)
     })
@@ -240,8 +240,8 @@ describe('Address', () => {
         stage1: checksum('0x2222222222222222222222222222222222222222'),
       }
 
-      const address1 = from(sampleConfig, context1)
-      const address2 = from(sampleConfig, context2)
+      const address1 = fromDeployConfiguration(sampleConfig, context1)
+      const address2 = fromDeployConfiguration(sampleConfig, context2)
 
       expect(address1).not.toBe(address2)
     })
@@ -250,8 +250,8 @@ describe('Address', () => {
       const context1: typeof mockContext = { ...mockContext, creationCode: '0x1111' }
       const context2: typeof mockContext = { ...mockContext, creationCode: '0x2222' }
 
-      const address1 = from(sampleConfig, context1)
-      const address2 = from(sampleConfig, context2)
+      const address1 = fromDeployConfiguration(sampleConfig, context1)
+      const address2 = fromDeployConfiguration(sampleConfig, context2)
 
       expect(address1).not.toBe(address2)
     })
@@ -271,7 +271,7 @@ describe('Address', () => {
       )
 
       const expectedAddress = checksum(Bytes.toHex(addressHash.subarray(12)))
-      const actualAddress = from(sampleConfig, mockContext)
+      const actualAddress = fromDeployConfiguration(sampleConfig, mockContext)
 
       expect(actualAddress).toBe(expectedAddress)
     })
@@ -279,14 +279,14 @@ describe('Address', () => {
     it('should handle empty creation code', () => {
       const contextWithEmptyCode: typeof mockContext = { ...mockContext, creationCode: '0x' }
 
-      const address = from(sampleConfig, contextWithEmptyCode)
+      const address = fromDeployConfiguration(sampleConfig, contextWithEmptyCode)
 
       expect(isChecksummed(address)).to.be.true
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
     })
 
     it('should be consistent across multiple calls with same inputs', () => {
-      const addresses = Array.from({ length: 10 }, () => from(sampleConfig, mockContext))
+      const addresses = Array.from({ length: 10 }, () => fromDeployConfiguration(sampleConfig, mockContext))
 
       // All addresses should be identical
       addresses.forEach((address) => {

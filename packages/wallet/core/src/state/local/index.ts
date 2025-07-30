@@ -1,13 +1,4 @@
-import {
-  Address,
-  Context,
-  Payload,
-  Signature,
-  Config,
-  Address as SequenceAddress,
-  Extensions,
-  GenericTree,
-} from '@0xsequence/wallet-primitives'
+import { Address, Config, Context, Extensions, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { MemoryStore } from './memory.js'
@@ -77,7 +68,11 @@ export class Provider implements ProviderInterface {
     // Save both the configuration and the deploy hash
     await this.saveConfig(deployConfiguration)
     const imageHash = Config.hashConfiguration(deployConfiguration)
-    await this.saveCounterfactualWallet(SequenceAddress.from(imageHash, context), Hex.fromBytes(imageHash), context)
+    await this.saveCounterfactualWallet(
+      Address.fromDeployConfiguration(imageHash, context),
+      Hex.fromBytes(imageHash),
+      context,
+    )
   }
 
   async saveConfig(config: Config.Config): Promise<void> {
@@ -416,7 +411,7 @@ export class Provider implements ProviderInterface {
 
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): Promise<void> {
     return this.store.saveCounterfactualWallet(
-      SequenceAddress.from(Bytes.fromHex(imageHash), context),
+      Address.fromDeployConfiguration(Bytes.fromHex(imageHash), context),
       imageHash,
       context,
     )

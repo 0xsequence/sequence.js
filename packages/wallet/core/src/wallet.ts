@@ -83,7 +83,7 @@ export class Wallet {
     }
 
     await merged.stateProvider.saveWallet(configuration, context)
-    return new Wallet(Address.from(configuration, context), merged)
+    return new Wallet(Address.fromDeployConfiguration(configuration, context), merged)
   }
 
   async isDeployed(provider: Provider.Provider): Promise<boolean> {

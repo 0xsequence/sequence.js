@@ -20,7 +20,10 @@ export function fromPublicKey(publicKey: PublicKey.PublicKey, options?: Address.
   return checksum(Address.fromPublicKey(publicKey, options))
 }
 
-export function from(configuration: Bytes.Bytes | Config, context: Omit<Context, 'stage2'>): Checksummed {
+export function fromDeployConfiguration(
+  configuration: Bytes.Bytes | Config,
+  context: Omit<Context, 'stage2'>,
+): Checksummed {
   const imageHash = configuration instanceof Uint8Array ? configuration : hashConfiguration(configuration)
 
   return checksum(
