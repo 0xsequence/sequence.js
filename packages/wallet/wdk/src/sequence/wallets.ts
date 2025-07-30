@@ -1065,6 +1065,8 @@ export class Wallets implements WalletsInterface {
     const deviceSigners = Config.getSigners(raw.devicesTopology)
     const loginSigners = Config.getSigners(raw.loginTopology)
 
+    const guardSigners = raw.guardTopology ? Config.getSigners(raw.guardTopology) : undefined
+
     return {
       devices: await this.shared.modules.signers.resolveKinds(wallet, [
         ...deviceSigners.signers,
@@ -1074,6 +1076,12 @@ export class Wallets implements WalletsInterface {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
+      guard: guardSigners
+        ? await this.shared.modules.signers.resolveKinds(wallet, [
+            ...guardSigners.signers,
+            ...guardSigners.sapientSigners,
+          ])
+        : [],
       raw,
     }
   }
@@ -1117,6 +1125,8 @@ export class Wallets implements WalletsInterface {
     const deviceSigners = Config.getSigners(raw.devicesTopology)
     const loginSigners = Config.getSigners(raw.loginTopology)
 
+    const guardSigners = raw.guardTopology ? Config.getSigners(raw.guardTopology) : undefined
+
     return {
       devices: await this.shared.modules.signers.resolveKinds(wallet, [
         ...deviceSigners.signers,
@@ -1126,6 +1136,12 @@ export class Wallets implements WalletsInterface {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
+      guard: guardSigners
+        ? await this.shared.modules.signers.resolveKinds(wallet, [
+            ...guardSigners.signers,
+            ...guardSigners.sapientSigners,
+          ])
+        : [],
       raw,
     }
   }
