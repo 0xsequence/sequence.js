@@ -218,8 +218,6 @@ export class DappClient {
    * for previously established sessions.
    */
   private async _loadStateFromStorage(): Promise<void> {
-    this.emit('sessionsUpdated')
-
     const implicitSession = await this.sequenceStorage.getImplicitSession()
     if (!implicitSession) {
       this.isInitialized = false
