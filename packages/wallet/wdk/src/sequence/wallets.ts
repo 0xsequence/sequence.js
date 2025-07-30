@@ -778,11 +778,6 @@ export class Wallets implements WalletsInterface {
     // Sign witness using the passkey signer
     await loginSigner.signer.witness(this.shared.sequence.stateProvider, wallet.address, loginSigner.extra)
 
-    // Sign witness using the guard signer
-    if (guardTopology) {
-      await this.shared.modules.guard.witness(wallet.address)
-    }
-
     // Save entry in the manager db
     const newWalletEntry = {
       address: wallet.address,
