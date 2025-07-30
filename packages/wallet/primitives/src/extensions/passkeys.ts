@@ -71,7 +71,7 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
     }
 
     const [c, meta] = p2
-    if (!GenericTree.isNode(c) || c.length !== 32) {
+    if (!GenericTree.isNode(c)) {
       throw new Error('Invalid c bytes')
     }
     const cBytes = Hex.toBytes(c)
@@ -98,13 +98,13 @@ export function fromTree(tree: GenericTree.Tree): PublicKey {
       }
 
       metadata = { credentialId }
-    } else if (GenericTree.isNode(meta) && meta.length === 32) {
+    } else if (GenericTree.isNode(meta)) {
       metadata = meta
     } else {
       throw new Error('Invalid metadata node')
     }
   } else {
-    if (!GenericTree.isNode(p2) || p2.length !== 32) {
+    if (!GenericTree.isNode(p2)) {
       throw new Error('Invalid c bytes')
     }
     const p2Bytes = Hex.toBytes(p2)

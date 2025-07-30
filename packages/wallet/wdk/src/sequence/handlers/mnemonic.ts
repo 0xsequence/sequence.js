@@ -66,7 +66,7 @@ export class MnemonicHandler implements Handler {
               return reject('invalid-mnemonic')
             }
 
-            if (signer.address.toLowerCase() !== address.toLowerCase()) {
+            if (!Address.isEqual(signer.address, address)) {
               return reject('wrong-mnemonic')
             }
 

@@ -32,17 +32,7 @@ export class SequenceRelayer implements Relayer {
     const { options, quote } = await this.service.feeOptions({ wallet, to, data })
 
     return {
-      options: options.map(({ token: { contractAddress }, to, value, gasLimit }) => {
-        let token: Address.Address
-        if (contractAddress) {
-          Address.assert(contractAddress)
-          token = contractAddress
-        } else {
-          token = '0x0000000000000000000000000000000000000000'
-        }
-
-        return { token, to, value, gasLimit }
-      }),
+      options,
       quote: quote ? { _tag: 'FeeQuote', _quote: quote } : undefined,
     }
   }

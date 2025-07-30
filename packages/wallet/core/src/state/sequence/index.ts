@@ -2,6 +2,7 @@ import { Config, Constants, Context, GenericTree, Payload, Signature } from '@0x
 import { Address, Bytes, Hex, Signature as oxSignature } from 'ox'
 import { Provider as ProviderInterface } from '../index.js'
 import { Sessions, SignatureType } from './sessions.gen.js'
+import { normalizeAddressKeys } from '../utils.js'
 
 export class Provider implements ProviderInterface {
   private readonly service: Sessions
@@ -47,7 +48,8 @@ export class Provider implements ProviderInterface {
       signature: Signature.SignatureOfSignerLeaf
     }
   }> {
-    const { wallets } = await this.service.wallets({ signer })
+    const result = await this.service.wallets({ signer })
+    const wallets = normalizeAddressKeys(result.wallets)
 
     return Object.fromEntries(
       Object.entries(wallets).map(([wallet, signature]) => {
@@ -101,7 +103,8 @@ export class Provider implements ProviderInterface {
       signature: Signature.SignatureOfSapientSignerLeaf
     }
   }> {
-    const { wallets } = await this.service.wallets({ signer, sapientHash: imageHash })
+    const result = await this.service.wallets({ signer, sapientHash: imageHash })
+    const wallets = normalizeAddressKeys(result.wallets)
 
     return Object.fromEntries(
       Object.entries(wallets).map(
@@ -267,7 +270,7 @@ export class Provider implements ProviderInterface {
         factory: context.factory,
         mainModule: context.stage1,
         mainModuleUpgradable: context.stage2,
-        guestModule: Constants.DefaultGuest,
+        guestModule: Constants.DefaultGuestAddress,
         walletCreationCode: context.creationCode,
       },
     })

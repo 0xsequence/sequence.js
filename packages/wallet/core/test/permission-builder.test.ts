@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import { Permission } from '../../primitives/src/index.js'
 import { Utils } from '../src/index.js'
+import { Constants } from '@0xsequence/wallet-primitives'
 
 const { PermissionBuilder } = Utils
 
@@ -108,10 +109,7 @@ describe('PermissionBuilder', () => {
     })
     // Check the offset matches the encoding by ox
     const abi = AbiFunction.from('function transfer(address to, uint256 value)')
-    const encodedData = AbiFunction.encodeData(abi, [
-      '0x0000000000000000000000000000000000000000',
-      Bytes.toBigInt(BYTES32_MAX),
-    ])
+    const encodedData = AbiFunction.encodeData(abi, [Constants.ZeroAddress, Bytes.toBigInt(BYTES32_MAX)])
     const encodedDataBytes = Bytes.fromHex(encodedData)
     const maskedHex = encodedDataBytes
       .slice(Number(permission.rules[1].offset), Number(permission.rules[1].offset) + 32)
@@ -181,13 +179,13 @@ describe('PermissionBuilder', () => {
     })
     // Check the offset matches the encoding by ox
     const abi = AbiFunction.from('function foo(bytes data, bool flag)')
-    const encodedData = AbiFunction.encodeData(abi, ['0x0000000000000000000000000000000000000000', true])
+    const encodedData = AbiFunction.encodeData(abi, [Constants.ZeroAddress, true])
     const encodedDataBytes = Bytes.fromHex(encodedData)
     const maskedHex = encodedDataBytes
       .slice(Number(permission.rules[1].offset), Number(permission.rules[1].offset) + 32)
       .map((b, i) => b & permission.rules[1].mask[i]!)
     expect(Bytes.toBoolean(maskedHex, { size: 32 })).toEqual(true)
-    const encodedData2 = AbiFunction.encodeData(abi, ['0x0000000000000000000000000000000000000000', false])
+    const encodedData2 = AbiFunction.encodeData(abi, [Constants.ZeroAddress, false])
     const encodedDataBytes2 = Bytes.fromHex(encodedData2)
     const maskedHex2 = encodedDataBytes2
       .slice(Number(permission.rules[1].offset), Number(permission.rules[1].offset) + 32)
