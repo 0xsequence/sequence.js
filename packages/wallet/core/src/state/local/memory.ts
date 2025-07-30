@@ -42,7 +42,7 @@ export class MemoryStore implements Store {
   }
 
   private getSignatureKey(signer: Address.Checksummed, subdigest: Hex.Hex): `${Address.Checksummed}-${Hex.Hex}` {
-    return `${signer}-${subdigest}`
+    return `${signer}-0x${subdigest.slice(2).toLowerCase()}`
   }
 
   private getSapientSignatureKey(
@@ -50,16 +50,16 @@ export class MemoryStore implements Store {
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
   ): `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}` {
-    return `${signer}-${imageHash}-${subdigest}`
+    return `${signer}-0x${imageHash.slice(2).toLowerCase()}-0x${subdigest.slice(2).toLowerCase()}`
   }
 
   async loadConfig(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
-    const config = this.configs.get(imageHash.toLowerCase() as Hex.Hex)
+    const config = this.configs.get(`0x${imageHash.slice(2).toLowerCase()}`)
     return config ? this.deepCopy(config) : undefined
   }
 
   async saveConfig(imageHash: Hex.Hex, config: Config.Config): Promise<void> {
-    this.configs.set(imageHash.toLowerCase() as Hex.Hex, this.deepCopy(config))
+    this.configs.set(`0x${imageHash.slice(2).toLowerCase()}`, this.deepCopy(config))
   }
 
   async loadCounterfactualWallet(
@@ -80,7 +80,7 @@ export class MemoryStore implements Store {
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
   ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed } | undefined> {
-    const payload = this.payloads.get(subdigest)
+    const payload = this.payloads.get(`0x${subdigest.slice(2).toLowerCase()}`)
     return payload ? this.deepCopy(payload) : undefined
   }
 
@@ -88,7 +88,7 @@ export class MemoryStore implements Store {
     subdigest: Hex.Hex,
     payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed },
   ): Promise<void> {
-    this.payloads.set(subdigest, this.deepCopy(payload))
+    this.payloads.set(`0x${subdigest.slice(2).toLowerCase()}`, this.deepCopy(payload))
   }
 
   async loadSubdigestsOfSigner(signer: Address.Checksummed): Promise<Hex.Hex[]> {
@@ -111,16 +111,18 @@ export class MemoryStore implements Store {
     signature: Signature.SignatureOfSignerLeaf,
   ): Promise<void> {
     const key = this.getSignatureKey(signer, subdigest)
+
+    const subdigestKey: Hex.Hex = `0x${subdigest.slice(2).toLowerCase()}`
     this.signatures.set(key, this.deepCopy(signature))
 
     if (!this.signerSubdigests.has(signer)) {
       this.signerSubdigests.set(signer, new Set())
     }
-    this.signerSubdigests.get(signer)!.add(subdigest)
+    this.signerSubdigests.get(signer)!.add(subdigestKey)
   }
 
   async loadSubdigestsOfSapientSigner(signer: Address.Checksummed, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
-    const key = `${signer}-${imageHash}` as const
+    const key: `${Address.Checksummed}-${Hex.Hex}` = `${signer}-0x${imageHash.slice(2).toLowerCase()}`
     const subdigests = this.sapientSignerSubdigests.get(key)
     return subdigests ? Array.from(subdigests) : []
   }
@@ -144,20 +146,21 @@ export class MemoryStore implements Store {
     const key = this.getSapientSignatureKey(signer, subdigest, imageHash)
     this.sapientSignatures.set(key, this.deepCopy(signature))
 
-    const signerKey = `${signer}-${imageHash}` as const
+    const signerKey: `${Address.Checksummed}-${Hex.Hex}` = `${signer}-0x${imageHash.slice(2).toLowerCase()}`
+    const subdigestKey: Hex.Hex = `0x${subdigest.slice(2).toLowerCase()}`
 
     if (!this.sapientSignerSubdigests.has(signerKey)) {
       this.sapientSignerSubdigests.set(signerKey, new Set())
     }
-    this.sapientSignerSubdigests.get(signerKey)!.add(subdigest)
+    this.sapientSignerSubdigests.get(signerKey)!.add(subdigestKey)
   }
 
   async loadTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
-    const tree = this.trees.get(rootHash)
+    const tree = this.trees.get(`0x${rootHash.slice(2).toLowerCase()}`)
     return tree ? this.deepCopy(tree) : undefined
   }
 
   async saveTree(rootHash: Hex.Hex, tree: GenericTree.Tree): Promise<void> {
-    this.trees.set(rootHash, this.deepCopy(tree))
+    this.trees.set(`0x${rootHash.slice(2).toLowerCase()}`, this.deepCopy(tree))
   }
 }

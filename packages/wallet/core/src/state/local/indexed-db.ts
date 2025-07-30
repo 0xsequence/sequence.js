@@ -97,7 +97,7 @@ export class IndexedDbStore implements Store {
   }
 
   private getSignatureKey(signer: Address.Checksummed, subdigest: Hex.Hex): `${Address.Checksummed}-${Hex.Hex}` {
-    return `${signer}-${subdigest}`
+    return `${signer}-0x${subdigest.slice(2).toLowerCase()}`
   }
 
   private getSapientSignatureKey(
@@ -105,15 +105,15 @@ export class IndexedDbStore implements Store {
     subdigest: Hex.Hex,
     imageHash: Hex.Hex,
   ): `${Address.Checksummed}-${Hex.Hex}-${Hex.Hex}` {
-    return `${signer}-${imageHash}-${subdigest}`
+    return `${signer}-0x${imageHash.slice(2).toLowerCase()}-0x${subdigest.slice(2).toLowerCase()}`
   }
 
   async loadConfig(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
-    return this.get<Config.Config>(STORE_CONFIGS, imageHash)
+    return this.get<Config.Config>(STORE_CONFIGS, imageHash.toLowerCase())
   }
 
   async saveConfig(imageHash: Hex.Hex, config: Config.Config): Promise<void> {
-    await this.put(STORE_CONFIGS, imageHash, config)
+    await this.put(STORE_CONFIGS, imageHash.toLowerCase(), config)
   }
 
   async loadCounterfactualWallet(
@@ -133,14 +133,14 @@ export class IndexedDbStore implements Store {
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
   ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed } | undefined> {
-    return this.get(STORE_PAYLOADS, subdigest)
+    return this.get(STORE_PAYLOADS, subdigest.toLowerCase())
   }
 
   async savePayloadOfSubdigest(
     subdigest: Hex.Hex,
     payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Checksummed },
   ): Promise<void> {
-    await this.put(STORE_PAYLOADS, subdigest, payload)
+    await this.put(STORE_PAYLOADS, subdigest.toLowerCase(), payload)
   }
 
   async loadSubdigestsOfSigner(signer: Address.Checksummed): Promise<Hex.Hex[]> {
@@ -167,13 +167,14 @@ export class IndexedDbStore implements Store {
     const key = this.getSignatureKey(signer, subdigest)
     await this.put(STORE_SIGNATURES, key, signature)
 
+    const subdigestKey = subdigest.toLowerCase()
     const dataSet = await this.getSet(STORE_SIGNER_SUBDIGESTS, signer)
-    dataSet.add(subdigest)
+    dataSet.add(subdigestKey)
     await this.putSet(STORE_SIGNER_SUBDIGESTS, signer, dataSet)
   }
 
   async loadSubdigestsOfSapientSigner(signer: Address.Checksummed, imageHash: Hex.Hex): Promise<Hex.Hex[]> {
-    const key = `${signer}-${imageHash}`
+    const key = `${signer}-${imageHash.toLowerCase()}`
     const dataSet = await this.getSet(STORE_SAPIENT_SIGNER_SUBDIGESTS, key)
     return Array.from(dataSet).map((subdigest) => {
       Hex.assert(subdigest)
@@ -199,17 +200,18 @@ export class IndexedDbStore implements Store {
     const fullKey = this.getSapientSignatureKey(signer, subdigest, imageHash)
     await this.put(STORE_SAPIENT_SIGNATURES, fullKey, signature)
 
-    const signerKey = `${signer}-${imageHash}`
+    const signerKey = `${signer}-${imageHash.toLowerCase()}`
+    const subdigestKey = subdigest.toLowerCase()
     const dataSet = await this.getSet(STORE_SAPIENT_SIGNER_SUBDIGESTS, signerKey)
-    dataSet.add(subdigest)
+    dataSet.add(subdigestKey)
     await this.putSet(STORE_SAPIENT_SIGNER_SUBDIGESTS, signerKey, dataSet)
   }
 
   async loadTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
-    return this.get(STORE_TREES, rootHash)
+    return this.get(STORE_TREES, rootHash.toLowerCase())
   }
 
   async saveTree(rootHash: Hex.Hex, tree: GenericTree.Tree): Promise<void> {
-    await this.put(STORE_TREES, rootHash, tree)
+    await this.put(STORE_TREES, rootHash.toLowerCase(), tree)
   }
 }
