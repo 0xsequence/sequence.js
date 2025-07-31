@@ -1,5 +1,5 @@
-import { Address, Attestation } from '@0xsequence/wallet-primitives'
-import { Hex } from 'ox'
+import { Attestation } from '@0xsequence/wallet-primitives'
+import { Address, Hex } from 'ox'
 import { ChainId } from '@0xsequence/network'
 import { jsonReplacers, jsonRevivers } from './index.js'
 import {
@@ -13,7 +13,7 @@ import {
 
 export interface ExplicitSessionData {
   pk: Hex.Hex
-  walletAddress: Address.Checksummed
+  walletAddress: Address.Address
   chainId: ChainId
   loginMethod?: PreferredLoginMethod
   userEmail?: string
@@ -21,7 +21,7 @@ export interface ExplicitSessionData {
 
 export interface ImplicitSessionData {
   pk: Hex.Hex
-  walletAddress: Address.Checksummed
+  walletAddress: Address.Address
   attestation: Attestation.Attestation
   identitySignature: Hex.Hex
   chainId: ChainId

@@ -1,6 +1,6 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
 import { Address, Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { AbiFunction, Address as oxAddress, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
 
@@ -185,10 +185,10 @@ export class ChainSessionManager {
    * This is used when a wallet address is known but the session manager for this chain hasn't been instantiated yet.
    * @param walletAddress The address of the wallet to initialize with.
    */
-  public initializeWithWallet(walletAddress: Address.Checksummed) {
+  public initializeWithWallet(walletAddress: oxAddress.Address) {
     if (this.isInitialized) return
 
-    this.walletAddress = walletAddress
+    this.walletAddress = Address.checksum(walletAddress)
     this.wallet = new Wallet(this.walletAddress, {
       stateProvider: this.stateProvider,
     })
@@ -221,7 +221,7 @@ export class ChainSessionManager {
 
     const allExplicitSessions = await this.sequenceStorage.getExplicitSessions()
     const walletExplicitSessions = allExplicitSessions.filter(
-      (s) => Address.isEqual(s.walletAddress, walletAddr) && s.chainId === this.chainId,
+      (s) => oxAddress.isEqual(s.walletAddress, walletAddr) && s.chainId === this.chainId,
     )
 
     for (const sessionData of walletExplicitSessions) {
@@ -278,7 +278,7 @@ export class ChainSessionManager {
         { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
-      const receivedAddress = connectResponse.walletAddress
+      const receivedAddress = Address.checksum(connectResponse.walletAddress)
       const { attestation, signature, email, loginMethod } = connectResponse
       if (!attestation || !signature)
         throw new InitializationError('Attestation or signature missing for implicit session.')
@@ -357,7 +357,7 @@ export class ChainSessionManager {
         { path: '/request/connect', redirectUrl: this.redirectUrl },
       )
 
-      if (!Address.isEqual(response.walletAddress, this.walletAddress)) {
+      if (!oxAddress.isEqual(response.walletAddress, this.walletAddress)) {
         throw new AddExplicitSessionError('Wallet address mismatch.')
       }
 
@@ -385,7 +385,7 @@ export class ChainSessionManager {
    * @throws {ModifyExplicitSessionError} If modifying the session fails.
    */
   async modifyExplicitSession(
-    sessionAddress: Address.Checksummed,
+    sessionAddress: oxAddress.Address,
     newPermissions: Signers.Session.ExplicitParams,
   ): Promise<void> {
     if (!this.walletAddress) {
@@ -419,8 +419,8 @@ export class ChainSessionManager {
       )
 
       if (
-        !Address.isEqual(response.walletAddress, this.walletAddress) &&
-        !Address.isEqual(response.sessionAddress, sessionAddress)
+        !oxAddress.isEqual(response.walletAddress, this.walletAddress) &&
+        !oxAddress.isEqual(response.sessionAddress, sessionAddress)
       ) {
         throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
       }
@@ -450,7 +450,7 @@ export class ChainSessionManager {
 
     try {
       const connectResponse = response.payload
-      const receivedAddress = connectResponse.walletAddress
+      const receivedAddress = Address.checksum(connectResponse.walletAddress)
       const { email, loginMethod } = connectResponse
 
       if (response.action === RequestActionType.ADD_IMPLICIT_SESSION) {
@@ -758,7 +758,7 @@ export class ChainSessionManager {
         return true
       } else if (response.action === RequestActionType.MODIFY_EXPLICIT_SESSION) {
         const modifyResponse = response.payload as ModifySessionSuccessResponsePayload
-        if (!Address.isEqual(modifyResponse.walletAddress, this.walletAddress!)) {
+        if (!oxAddress.isEqual(modifyResponse.walletAddress, this.walletAddress!)) {
           throw new ModifyExplicitSessionError('Wallet address mismatch on redirect response.')
         }
 

@@ -2,6 +2,7 @@
 import { ChainId } from '@0xsequence/network'
 import { Relayer, Signers } from '@0xsequence/wallet-core'
 import { Address } from '@0xsequence/wallet-primitives'
+import { Address as oxAddress, TypedData } from 'ox'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
@@ -11,13 +12,11 @@ import {
   DappClientExplicitSessionEventListener,
   DappClientSignatureEventListener,
   RandomPrivateKeyFn,
-  RequestActionType,
   SequenceSessionStorage,
   Session,
   Transaction,
   TransportMode,
 } from './types/index.js'
-import { TypedData } from 'ox/TypedData'
 
 export type DappClientEventListener = (data?: any) => void
 
@@ -227,14 +226,14 @@ export class DappClient {
       return
     }
 
-    this.walletAddress = implicitSession.walletAddress
+    this.walletAddress = Address.checksum(implicitSession.walletAddress)
     this.loginMethod = implicitSession.loginMethod ?? null
     this.userEmail = implicitSession.userEmail ?? null
 
     const explicitSessions = await this.sequenceStorage.getExplicitSessions()
     const chainIdsToInitialize = new Set<ChainId>([
       implicitSession.chainId,
-      ...explicitSessions.filter((s) => Address.isEqual(s.walletAddress, this.walletAddress!)).map((s) => s.chainId),
+      ...explicitSessions.filter((s) => oxAddress.isEqual(s.walletAddress, this.walletAddress!)).map((s) => s.chainId),
     ])
 
     const initPromises = Array.from(chainIdsToInitialize).map((chainId) =>
@@ -425,7 +424,7 @@ export class DappClient {
   /**
    * Modifies the permissions of an existing explicit session for a given chain and session address.
    * @param chainId The chain ID on which the explicit session exists. {@link ChainId}
-   * @param sessionAddress The address of the explicit session to modify. {@link Address.Checksummed}
+   * @param sessionAddress The address of the explicit session to modify. {@link Address.Address}
    * @param permissions The new permissions to set for the session. {@link Signers.Session.ExplicitParams}
    *
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
@@ -454,7 +453,7 @@ export class DappClient {
    */
   async modifyExplicitSession(
     chainId: ChainId,
-    sessionAddress: Address.Checksummed,
+    sessionAddress: oxAddress.Address,
     permissions: Signers.Session.ExplicitParams,
   ): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
@@ -589,7 +588,7 @@ export class DappClient {
    *   await dappClient.signTypedData(1, typedData);
    * }
    */
-  async signTypedData(chainId: ChainId, typedData: TypedData): Promise<void> {
+  async signTypedData(chainId: ChainId, typedData: TypedData.TypedData): Promise<void> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
