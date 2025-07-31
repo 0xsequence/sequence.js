@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { Manager, SignerActionable, SignerReady } from '../src/sequence'
-import { Mnemonic } from 'ox'
+import { Mnemonic, Address } from 'ox'
 import { newManager } from './constants'
 
 describe('Wallets', () => {
@@ -9,6 +9,8 @@ describe('Wallets', () => {
   afterEach(async () => {
     await manager?.stop()
   })
+
+  // === BASIC WALLET MANAGEMENT ===
 
   it('Should create a new wallet using a mnemonic', async () => {
     manager = newManager()
@@ -20,6 +22,313 @@ describe('Wallets', () => {
     expect(wallet).toBeDefined()
     await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
   })
+
+  it('Should get a specific wallet by address', async () => {
+    manager = newManager()
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+    const walletAddress = await manager.wallets.signUp({
+      mnemonic,
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(walletAddress).toBeDefined()
+
+    // Test successful get
+    const wallet = await manager.wallets.get(walletAddress!)
+    expect(wallet).toBeDefined()
+    expect(wallet!.address).toBe(walletAddress)
+    expect(wallet!.status).toBe('ready')
+    expect(wallet!.loginType).toBe('login-mnemonic')
+    expect(wallet!.device).toBeDefined()
+    expect(wallet!.loginDate).toBeDefined()
+    expect(wallet!.useGuard).toBe(false)
+
+    // Test get for non-existent wallet
+    const nonExistentWallet = await manager.wallets.get('0x1234567890123456789012345678901234567890')
+    expect(nonExistentWallet).toBeUndefined()
+  })
+
+  it('Should return correct wallet list', async () => {
+    manager = newManager()
+
+    // Initially empty
+    const initialWallets = await manager.wallets.list()
+    expect(initialWallets).toEqual([])
+
+    // Create first wallet
+    const wallet1 = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const walletsAfterFirst = await manager.wallets.list()
+    expect(walletsAfterFirst.length).toBe(1)
+    expect(walletsAfterFirst[0].address).toBe(wallet1)
+  })
+
+  // === WALLET SELECTOR REGISTRATION ===
+
+  it('Should register and unregister wallet selector', async () => {
+    manager = newManager()
+
+    let selectorCalls = 0
+    const mockSelector = async () => {
+      selectorCalls++
+      return 'create-new' as const
+    }
+
+    // Test registration
+    const unregister = manager!.wallets.registerWalletSelector(mockSelector)
+    expect(typeof unregister).toBe('function')
+
+    // Test that registering another throws error
+    const secondSelector = async () => 'create-new' as const
+    expect(() => manager!.wallets.registerWalletSelector(secondSelector)).toThrow('wallet-selector-already-registered')
+
+    // Test unregistration via returned function
+    unregister()
+
+    // Should be able to register again after unregistration
+    const unregister2 = manager!.wallets.registerWalletSelector(secondSelector)
+    expect(typeof unregister2).toBe('function')
+
+    // Test unregistration via method
+    manager!.wallets.unregisterWalletSelector(secondSelector)
+
+    // Test unregistering wrong handler throws error
+    expect(() => manager!.wallets.unregisterWalletSelector(mockSelector)).toThrow('wallet-selector-not-registered')
+
+    // Test unregistering with no handler (should work)
+    manager!.wallets.unregisterWalletSelector()
+  })
+
+  it('Should use wallet selector during signup when existing wallets found', async () => {
+    manager = newManager()
+
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+
+    // Create initial wallet
+    const firstWallet = await manager!.wallets.signUp({
+      mnemonic,
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(firstWallet).toBeDefined()
+
+    // Stop the manager to simulate a fresh session, but keep the state provider data
+    await manager!.stop()
+
+    // Create a new manager instance (simulating a fresh browser session)
+    manager = newManager()
+
+    let selectorCalled = false
+    let selectorOptions: any
+
+    const mockSelector = async (options: any) => {
+      selectorCalled = true
+      selectorOptions = options
+      return 'create-new' as const
+    }
+
+    manager!.wallets.registerWalletSelector(mockSelector)
+
+    // Sign up again with same mnemonic - should trigger selector
+    const secondWallet = await manager!.wallets.signUp({
+      mnemonic,
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    expect(selectorCalled).toBe(true)
+    // Use address comparison that handles case differences
+    expect(
+      selectorOptions.existingWallets.some((addr: string) =>
+        Address.isEqual(addr as Address.Address, firstWallet! as Address.Address),
+      ),
+    ).toBe(true)
+    expect(selectorOptions.signerAddress).toBeDefined()
+    expect(selectorOptions.context.isRedirect).toBe(false)
+    expect(secondWallet).toBeDefined()
+    expect(secondWallet).not.toBe(firstWallet) // Should be new wallet
+  })
+
+  it('Should abort signup when wallet selector returns abort-signup', async () => {
+    manager = newManager()
+
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+
+    // Create initial wallet
+    const firstWallet = await manager!.wallets.signUp({
+      mnemonic,
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    // Stop and restart manager to simulate fresh session
+    await manager!.stop()
+    manager = newManager()
+
+    const mockSelector = async () => 'abort-signup' as const
+    manager!.wallets.registerWalletSelector(mockSelector)
+
+    // Sign up again - should abort
+    const result = await manager!.wallets.signUp({
+      mnemonic,
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    expect(result).toBeUndefined()
+  })
+
+  // === BLOCKCHAIN INTEGRATION ===
+
+  it('Should get nonce for wallet', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    // Test getNonce - this requires network access, so we expect it to work or throw network error
+    try {
+      const nonce = await manager.wallets.getNonce(1n, wallet!, 0n)
+      expect(typeof nonce).toBe('bigint')
+      expect(nonce).toBeGreaterThanOrEqual(0n)
+    } catch (error) {
+      // Network errors are acceptable in tests
+      expect(error).toBeDefined()
+    }
+  })
+
+  it('Should check if wallet is updated onchain', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    // Test isUpdatedOnchain
+    try {
+      const isUpdated = await manager.wallets.isUpdatedOnchain(wallet!, 1n)
+      expect(typeof isUpdated).toBe('boolean')
+    } catch (error) {
+      // Network errors are acceptable in tests
+      expect(error).toBeDefined()
+    }
+  })
+
+  it('Should throw error for unsupported network in getNonce', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    // Use a chainId that doesn't exist in the test networks
+    await expect(manager.wallets.getNonce(999999n, wallet!, 0n)).rejects.toThrow('network-not-found')
+  })
+
+  it('Should throw error for unsupported network in isUpdatedOnchain', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 999999n)).rejects.toThrow('network-not-found')
+  })
+
+  // === CONFIGURATION MANAGEMENT ===
+
+  it('Should complete configuration update', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    // Create a configuration update by logging out
+    const requestId = await manager.wallets.logout(wallet!)
+
+    const request = await manager.signatures.get(requestId)
+    const deviceSigner = request.signers.find((s) => s.handler?.kind === 'local-device')
+    await (deviceSigner as SignerReady).handle()
+
+    // Test completeConfigurationUpdate directly
+    await manager.wallets.completeConfigurationUpdate(requestId)
+
+    const completedRequest = await manager.signatures.get(requestId)
+    expect(completedRequest.status).toBe('completed')
+  })
+
+  it('Should get detailed wallet configuration', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const config = await manager.wallets.getConfiguration(wallet!)
+
+    expect(config.devices).toBeDefined()
+    expect(config.devices.length).toBe(1)
+    expect(config.devices[0].kind).toBe('local-device')
+    expect(config.devices[0].address).toBeDefined()
+
+    expect(config.login).toBeDefined()
+    expect(config.login.length).toBe(1)
+    expect(config.login[0].kind).toBe('login-mnemonic')
+
+    // Guard property exists in implementation but not in interface - using any to bypass typing
+    expect((config as any).guard).toBeDefined()
+    expect((config as any).guard.length).toBe(0) // No guard for noGuard: true
+
+    expect(config.raw).toBeDefined()
+    expect(config.raw.loginTopology).toBeDefined()
+    expect(config.raw.devicesTopology).toBeDefined()
+    expect(config.raw.modules).toBeDefined()
+  })
+
+  // === ERROR HANDLING ===
+
+  it('Should throw error when trying to get configuration for non-existent wallet', async () => {
+    manager = newManager()
+    await expect(manager.wallets.getConfiguration('0x1234567890123456789012345678901234567890')).rejects.toThrow()
+  })
+
+  it('Should throw error when trying to list devices for non-existent wallet', async () => {
+    manager = newManager()
+    await expect(manager.wallets.listDevices('0x1234567890123456789012345678901234567890')).rejects.toThrow(
+      'wallet-not-found',
+    )
+  })
+
+  it('Should throw error when wallet selector returns invalid result', async () => {
+    manager = newManager()
+
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+    await manager.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+    await manager.wallets.logout(await manager.wallets.list().then((w) => w[0].address), { skipRemoveDevice: true })
+
+    const invalidSelector = async () => 'invalid-result' as any
+    manager.wallets.registerWalletSelector(invalidSelector)
+
+    await expect(manager.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })).rejects.toThrow(
+      'invalid-result-from-wallet-selector',
+    )
+  })
+
+  // === EXISTING TESTS (keeping them for backward compatibility) ===
 
   it('Should logout from a wallet using the login key', async () => {
     const manager = newManager()

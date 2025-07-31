@@ -52,6 +52,7 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
     // This assumes options?.someDb is either undefined or a fully constructed DB instance.
     encryptedPksDb: effectiveOptions.encryptedPksDb || new CoreSigners.Pk.Encrypted.EncryptedPksDb('pk-db' + dbSuffix),
     managerDb: effectiveOptions.managerDb || new Db.Wallets('sequence-manager' + dbSuffix),
+    messagesDb: effectiveOptions.messagesDb || new Db.Messages('sequence-messages' + dbSuffix),
     transactionsDb: effectiveOptions.transactionsDb || new Db.Transactions('sequence-transactions' + dbSuffix),
     signaturesDb: effectiveOptions.signaturesDb || new Db.Signatures('sequence-signature-requests' + dbSuffix),
     authCommitmentsDb:
@@ -123,6 +124,7 @@ export function newRemoteManager(
     // This assumes options?.someDb is either undefined or a fully constructed DB instance.
     encryptedPksDb: effectiveOptions.encryptedPksDb || new CoreSigners.Pk.Encrypted.EncryptedPksDb('pk-db' + dbSuffix),
     managerDb: effectiveOptions.managerDb || new Db.Wallets('sequence-manager' + dbSuffix),
+    messagesDb: effectiveOptions.messagesDb || new Db.Messages('sequence-messages' + dbSuffix),
     transactionsDb: effectiveOptions.transactionsDb || new Db.Transactions('sequence-transactions' + dbSuffix),
     signaturesDb: effectiveOptions.signaturesDb || new Db.Signatures('sequence-signature-requests' + dbSuffix),
     authCommitmentsDb:

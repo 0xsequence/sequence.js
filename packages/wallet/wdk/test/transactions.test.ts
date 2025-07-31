@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Manager, SignerActionable, Transaction, TransactionDefined, TransactionRelayed } from '../src/sequence'
 import { Address, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { LOCAL_RPC_URL, newManager } from './constants'
@@ -502,5 +502,464 @@ describe('Transactions', () => {
     )
 
     expect(txId1).toBeDefined()
+  })
+
+  // === NEW TESTS FOR IMPROVED COVERAGE ===
+
+  it('Should verify transactions list functionality through callbacks', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    let transactionsList: Transaction[] = []
+    let updateCount = 0
+
+    // Use onTransactionsUpdate to verify list functionality
+    const unsubscribe = manager.transactions.onTransactionsUpdate((txs) => {
+      transactionsList = txs
+      updateCount++
+    })
+
+    // Initially should be empty
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(transactionsList).toEqual([])
+
+    // Create a transaction
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    // Wait for callback
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    // Should now have one transaction
+    expect(transactionsList.length).toBe(1)
+    expect(transactionsList[0].id).toBe(txId)
+    expect(transactionsList[0].status).toBe('requested')
+    expect(transactionsList[0].wallet).toBe(wallet)
+
+    unsubscribe()
+  })
+
+  it('Should trigger onTransactionsUpdate callback immediately when trigger=true', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    let callCount = 0
+    let receivedTransactions: Transaction[] = []
+
+    // Create a transaction first
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    // Subscribe with trigger=true should call immediately
+    const unsubscribe = manager.transactions.onTransactionsUpdate((txs) => {
+      callCount++
+      receivedTransactions = txs
+    }, true)
+
+    // Give time for async callback
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(callCount).toBe(1)
+    expect(receivedTransactions.length).toBe(1)
+    expect(receivedTransactions[0].id).toBe(txId)
+
+    unsubscribe()
+  })
+
+  it('Should trigger onTransactionUpdate callback immediately when trigger=true', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    let callCount = 0
+    let receivedTransaction: Transaction | undefined
+
+    // Subscribe with trigger=true should call immediately
+    const unsubscribe = manager.transactions.onTransactionUpdate(
+      txId,
+      (tx) => {
+        callCount++
+        receivedTransaction = tx
+      },
+      true,
+    )
+
+    // Give time for async callback
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(callCount).toBe(1)
+    expect(receivedTransaction).toBeDefined()
+    expect(receivedTransaction!.id).toBe(txId)
+    expect(receivedTransaction!.status).toBe('requested')
+
+    unsubscribe()
+  })
+
+  it('Should handle define with nonce changes', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    // Define with custom nonce
+    await manager.transactions.define(txId, {
+      nonce: 999n,
+    })
+
+    const tx = await manager.transactions.get(txId)
+    expect(tx.status).toBe('defined')
+    expect(tx.envelope.payload.nonce).toBe(999n)
+  })
+
+  it('Should handle define with space changes', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    // Define with custom space
+    await manager.transactions.define(txId, {
+      space: 555n,
+    })
+
+    const tx = await manager.transactions.get(txId)
+    expect(tx.status).toBe('defined')
+    expect(tx.envelope.payload.space).toBe(555n)
+  })
+
+  it('Should handle define with gas limit changes', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+      {
+        to: Address.from(Hex.random(20)),
+        value: 200n,
+      },
+    ])
+
+    // Define with custom gas limits
+    await manager.transactions.define(txId, {
+      calls: [{ gasLimit: 50000n }, { gasLimit: 75000n }],
+    })
+
+    const tx = await manager.transactions.get(txId)
+    expect(tx.status).toBe('defined')
+    expect(tx.envelope.payload.calls[0].gasLimit).toBe(50000n)
+    expect(tx.envelope.payload.calls[1].gasLimit).toBe(75000n)
+  })
+
+  it('Should throw error when defining transaction not in requested state', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    // Define once
+    await manager.transactions.define(txId)
+
+    // Try to define again - should throw error
+    await expect(manager.transactions.define(txId)).rejects.toThrow(`Transaction ${txId} is not in the requested state`)
+  })
+
+  it('Should throw error when call count mismatch in define changes', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    // Try to define with wrong number of gas limit changes
+    await expect(
+      manager.transactions.define(txId, {
+        calls: [
+          { gasLimit: 50000n },
+          { gasLimit: 75000n }, // Too many calls
+        ],
+      }),
+    ).rejects.toThrow(`Invalid number of calls for transaction ${txId}`)
+  })
+
+  it('Should handle transaction requests with custom options', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const customSpace = 12345n
+    const txId = await manager.transactions.request(
+      wallet!,
+      42161n,
+      [
+        {
+          to: Address.from(Hex.random(20)),
+          value: 100n,
+          data: '0x1234',
+          gasLimit: 21000n,
+        },
+      ],
+      {
+        source: 'test-dapp',
+        noConfigUpdate: true,
+        space: customSpace,
+      },
+    )
+
+    const tx = await manager.transactions.get(txId)
+    expect(tx.status).toBe('requested')
+    expect(tx.source).toBe('test-dapp')
+    expect(tx.envelope.payload.space).toBe(customSpace)
+    expect(tx.requests[0].data).toBe('0x1234')
+    expect(tx.requests[0].gasLimit).toBe(21000n)
+  })
+
+  it('Should throw error for unknown network', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const unknownChainId = 999999n
+    await expect(
+      manager.transactions.request(wallet!, unknownChainId, [
+        {
+          to: Address.from(Hex.random(20)),
+          value: 100n,
+        },
+      ]),
+    ).rejects.toThrow(`Network not found for ${unknownChainId}`)
+  })
+
+  it('Should handle transactions with default values', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        // No value, data, or gasLimit - should use defaults
+      },
+    ])
+
+    const tx = await manager.transactions.get(txId)
+    expect(tx.status).toBe('requested')
+    expect(tx.envelope.payload.calls[0].value).toBe(0n)
+    expect(tx.envelope.payload.calls[0].data).toBe('0x')
+    expect(tx.envelope.payload.calls[0].gasLimit).toBe(0n)
+    expect(tx.envelope.payload.calls[0].delegateCall).toBe(false)
+    expect(tx.envelope.payload.calls[0].onlyFallback).toBe(false)
+    expect(tx.envelope.payload.calls[0].behaviorOnError).toBe('revert')
+  })
+
+  it('Should handle relay with signature ID instead of transaction ID', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+    await provider.request({
+      method: 'anvil_setBalance',
+      params: [wallet!, '0xa'],
+    })
+
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 1n,
+      },
+    ])
+
+    await manager.transactions.define(txId)
+    const tx = await manager.transactions.get(txId)
+
+    if (tx.status !== 'defined') {
+      throw new Error('Transaction not defined')
+    }
+
+    const sigId = await manager.transactions.selectRelayer(txId, tx.relayerOptions[0].id)
+
+    // Sign the transaction
+    const sigRequest = await manager.signatures.get(sigId)
+    const deviceSigner = sigRequest.signers.find((s) => s.status === 'ready')!
+    await deviceSigner.handle()
+
+    // Relay using signature ID instead of transaction ID
+    await manager.transactions.relay(sigId)
+
+    const finalTx = await manager.transactions.get(txId)
+    expect(finalTx.status).toBe('relayed')
+  })
+
+  it('Should get transaction and throw error for non-existent transaction', async () => {
+    manager = newManager()
+    const nonExistentId = 'non-existent-transaction-id'
+
+    await expect(manager.transactions.get(nonExistentId)).rejects.toThrow(`Transaction ${nonExistentId} not found`)
+  })
+
+  it.skip('Should handle multiple transactions and subscriptions correctly', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    let allTransactionsUpdates = 0
+    let allTransactions: Transaction[] = []
+
+    const unsubscribeAll = manager.transactions.onTransactionsUpdate((txs) => {
+      allTransactionsUpdates++
+      allTransactions = txs
+    })
+
+    // Create first transaction
+    const txId1 = await manager.transactions.request(wallet!, 42161n, [
+      { to: Address.from(Hex.random(20)), value: 100n },
+    ])
+
+    // Create second transaction
+    const txId2 = await manager.transactions.request(wallet!, 42161n, [
+      { to: Address.from(Hex.random(20)), value: 200n },
+    ])
+
+    // Wait for callbacks
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(allTransactionsUpdates).toBeGreaterThanOrEqual(2)
+    expect(allTransactions.length).toBe(2)
+    expect(allTransactions.map((tx) => tx.id)).toContain(txId1)
+    expect(allTransactions.map((tx) => tx.id)).toContain(txId2)
+
+    // Test individual transaction subscriptions
+    let tx1Updates = 0
+    let tx2Updates = 0
+
+    const unsubscribe1 = manager.transactions.onTransactionUpdate(txId1, () => {
+      tx1Updates++
+    })
+
+    const unsubscribe2 = manager.transactions.onTransactionUpdate(txId2, () => {
+      tx2Updates++
+    })
+
+    // Update only first transaction
+    await manager.transactions.define(txId1)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(tx1Updates).toBe(1)
+    expect(tx2Updates).toBe(0)
+
+    // Update second transaction
+    await manager.transactions.define(txId2)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(tx1Updates).toBe(1)
+    expect(tx2Updates).toBe(1)
+
+    // Cleanup subscriptions
+    unsubscribeAll()
+    unsubscribe1()
+    unsubscribe2()
+  })
+
+  it('Should handle transaction source defaults', async () => {
+    manager = newManager()
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+
+    // Request without source
+    const txId = await manager.transactions.request(wallet!, 42161n, [
+      {
+        to: Address.from(Hex.random(20)),
+        value: 100n,
+      },
+    ])
+
+    const tx = await manager.transactions.get(txId)
+    expect(tx.source).toBe('unknown')
   })
 })

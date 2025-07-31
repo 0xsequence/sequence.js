@@ -101,7 +101,6 @@ export class OtpHandler extends IdentityHandler implements Handler {
               resolve(true)
             } catch (e) {
               resolve(false)
-              throw e
             }
           }
 
