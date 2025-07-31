@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Attestation, Payload } from '@0xsequence/wallet-primitives'
+import { Address, Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Signers } from '@0xsequence/wallet-core'
 import { ChainId } from '@0xsequence/network'
-import type { Address } from 'ox/Address'
-import type { Hex } from 'ox/Hex'
+import { Hex } from 'ox'
 import type { TypedData } from 'ox/TypedData'
 
 // --- Public Interfaces and Constants ---
@@ -21,19 +20,19 @@ export type PreferredLoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'm
 // --- Payloads for Transport ---
 
 export interface AddExplicitSessionPayload {
-  sessionAddress: Address
+  sessionAddress: Address.Checksummed
   permissions: Signers.Session.ExplicitParams
   preferredLoginMethod?: PreferredLoginMethod
   email?: string
 }
 export interface ModifySessionPayload {
-  walletAddress: Address
-  sessionAddress: Address
+  walletAddress: Address.Checksummed
+  sessionAddress: Address.Checksummed
   permissions: Signers.Session.ExplicitParams
 }
 
 export interface AddImplicitSessionPayload {
-  sessionAddress: Address
+  sessionAddress: Address.Checksummed
   implicitSessionRedirectUrl?: string
   permissions?: Signers.Session.ExplicitParams
   preferredLoginMethod?: PreferredLoginMethod
@@ -41,43 +40,43 @@ export interface AddImplicitSessionPayload {
 }
 
 export interface SignMessagePayload {
-  address: Address
+  address: Address.Checksummed
   message: string
   chainId: ChainId
 }
 
 export interface SignTypedDataPayload {
-  address: Address
+  address: Address.Checksummed
   typedData: TypedData
   chainId: ChainId
 }
 
 export interface ConnectSuccessResponsePayload {
-  walletAddress: Address
+  walletAddress: Address.Checksummed
   attestation?: Attestation.Attestation
-  signature?: Hex
+  signature?: Hex.Hex
   email?: string
   loginMethod?: PreferredLoginMethod
 }
 
 export interface ModifySessionSuccessResponsePayload {
-  walletAddress: Address
-  sessionAddress: Address
+  walletAddress: Address.Checksummed
+  sessionAddress: Address.Checksummed
 }
 
 export interface SignatureResponse {
-  signature: Hex
-  walletAddress: Address
+  signature: Hex.Hex
+  walletAddress: Address.Checksummed
 }
 
 export interface ExplicitSessionResponsePayload {
-  walletAddress: Address
-  sessionAddress: Address
+  walletAddress: Address.Checksummed
+  sessionAddress: Address.Checksummed
 }
 
 // --- Dapp-facing Types ---
 
-export type RandomPrivateKeyFn = () => Hex | Promise<Hex>
+export type RandomPrivateKeyFn = () => Hex.Hex | Promise<Hex.Hex>
 
 type RequiredKeys = 'to' | 'data' | 'value'
 
@@ -88,7 +87,7 @@ export type Transaction =
     Partial<Omit<Payload.Call, RequiredKeys>>
 
 export type Session = {
-  address: Address
+  address: Address.Checksummed
   isImplicit: boolean
 }
 
@@ -166,14 +165,14 @@ export interface BaseRequest {
 export interface MessageSignatureRequest extends BaseRequest {
   type: 'message_signature'
   message: string
-  address: Address
+  address: Address.Checksummed
   chainId: number
 }
 
 export interface TypedDataSignatureRequest extends BaseRequest {
   type: 'typed_data_signature'
   typedData: unknown
-  address: Address
+  address: Address.Checksummed
   chainId: number
 }
 
