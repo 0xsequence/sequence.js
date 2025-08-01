@@ -11,7 +11,6 @@ import {
   DappClientExplicitSessionEventListener,
   DappClientSignatureEventListener,
   RandomPrivateKeyFn,
-  RequestActionType,
   SequenceSessionStorage,
   Session,
   Transaction,
@@ -52,18 +51,21 @@ const DEFAULT_KEYMACHINE_URL = 'https://v3-keymachine.sequence-dev.app'
  */
 export class DappClient {
   public isInitialized = false
+
   public loginMethod: string | null = null
   public userEmail: string | null = null
+
+  public readonly origin: string
 
   private chainSessionManagers: Map<ChainId, ChainSessionManager> = new Map()
   private transport: DappTransport
   private keymachineUrl: string
   private walletUrl: string
   private sequenceStorage: SequenceStorage
-  private redirectUrl?: string
+  private redirectPath?: string
   private sequenceSessionStorage?: SequenceSessionStorage
   private randomPrivateKeyFn?: RandomPrivateKeyFn
-  private redirectUrlActionHandler?: (url: string) => void
+  private redirectActionHandler?: (url: string) => void
   private canUseIndexedDb: boolean
 
   private isInitializing = false
@@ -75,37 +77,39 @@ export class DappClient {
 
   /**
    * @param walletUrl The URL of the Wallet Webapp.
+   * @param origin The origin of the dapp
    * @param options Configuration options for the client.
    * @param options.transportMode The communication mode to use with the wallet. Defaults to 'popup'.
    * @param options.keymachineUrl The URL of the key management service.
-   * @param options.redirectUrl The URL to redirect back to after a redirect-based flow.
+   * @param options.redirectPath The path to redirect back to after a redirect-based flow. Constructed with origin + redirectPath.
    * @param options.sequenceStorage The storage implementation for persistent session data. Defaults to WebStorage using IndexedDB.
    * @param options.sequenceSessionStorage The storage implementation for temporary data (e.g., pending requests). Defaults to sessionStorage.
    * @param options.randomPrivateKeyFn A function to generate random private keys for new sessions.
-   * @param options.redirectUrlActionHandler A handler to manually control navigation for redirect flows.
+   * @param options.redirectActionHandler A handler to manually control navigation for redirect flows.
    * @param options.canUseIndexedDb A flag to enable or disable the use of IndexedDB for caching.
    */
   constructor(
     walletUrl: string,
+    origin: string,
     options?: {
       transportMode?: TransportMode
       keymachineUrl?: string
-      redirectUrl?: string
+      redirectPath?: string
       sequenceStorage?: SequenceStorage
       sequenceSessionStorage?: SequenceSessionStorage
       randomPrivateKeyFn?: RandomPrivateKeyFn
-      redirectUrlActionHandler?: (url: string) => void
+      redirectActionHandler?: (url: string) => void
       canUseIndexedDb?: boolean
     },
   ) {
     const {
       transportMode = TransportMode.POPUP,
       keymachineUrl = DEFAULT_KEYMACHINE_URL,
-      redirectUrl,
+      redirectPath,
       sequenceStorage = new WebStorage(),
       sequenceSessionStorage,
       randomPrivateKeyFn,
-      redirectUrlActionHandler,
+      redirectActionHandler,
       canUseIndexedDb = true,
     } = options || {}
 
@@ -114,15 +118,16 @@ export class DappClient {
       transportMode,
       undefined,
       sequenceSessionStorage,
-      redirectUrlActionHandler,
+      redirectActionHandler,
     )
-    this.keymachineUrl = keymachineUrl
     this.walletUrl = walletUrl
+    this.origin = origin
+    this.keymachineUrl = keymachineUrl
     this.sequenceStorage = sequenceStorage
-    this.redirectUrl = redirectUrl
+    this.redirectPath = redirectPath
     this.sequenceSessionStorage = sequenceSessionStorage
     this.randomPrivateKeyFn = randomPrivateKeyFn
-    this.redirectUrlActionHandler = redirectUrlActionHandler
+    this.redirectActionHandler = redirectActionHandler
     this.canUseIndexedDb = canUseIndexedDb
   }
 
@@ -324,7 +329,6 @@ export class DappClient {
   /**
    * Initiates a connection with the wallet and creates a new session.
    * @param chainId The primary chain ID for the new session. {@link ChainId}
-   * @param implicitSessionRedirectUrl The URL to redirect back to after a redirect-based login. For popups, this can be the origin.
    * @param permissions (Optional) Permissions to request for an initial explicit session. {@link Signers.Session.ExplicitParams}
    * @param options (Optional) Connection options, such as a preferred login method or email for social or email logins.
    * @throws If the connection process fails. {@link ConnectionError}
@@ -342,7 +346,6 @@ export class DappClient {
    */
   async connect(
     chainId: ChainId,
-    implicitSessionRedirectUrl: string,
     permissions?: Signers.Session.ExplicitParams,
     options: {
       preferredLoginMethod?: 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
@@ -355,7 +358,7 @@ export class DappClient {
 
     try {
       const chainSessionManager = this.getChainSessionManager(chainId)
-      await chainSessionManager.createNewSession(implicitSessionRedirectUrl, permissions, options)
+      await chainSessionManager.createNewSession(this.origin, permissions, options)
 
       // For popup mode, we need to manually update the state and emit an event.
       // For redirect mode, this code won't be reached; the page will navigate away.
@@ -619,7 +622,7 @@ export class DappClient {
       transportMode,
       undefined,
       this.sequenceSessionStorage,
-      this.redirectUrlActionHandler,
+      this.redirectActionHandler,
     )
 
     this.chainSessionManagers.clear()
@@ -656,7 +659,7 @@ export class DappClient {
         this.keymachineUrl,
         this.transport,
         this.sequenceStorage,
-        this.redirectUrl,
+        this.origin + (this.redirectPath ? this.redirectPath : ''),
         this.randomPrivateKeyFn,
         this.canUseIndexedDb,
       )

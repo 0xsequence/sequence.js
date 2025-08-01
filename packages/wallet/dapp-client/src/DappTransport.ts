@@ -35,7 +35,7 @@ export class DappTransport {
   private readonly requestTimeoutMs: number
   private readonly handshakeTimeoutMs: number
   private readonly sequenceSessionStorage: SequenceSessionStorage
-  private readonly redirectUrlActionHandler?: (url: string) => void
+  private readonly redirectActionHandler?: (url: string) => void
 
   public readonly walletOrigin: string
 
@@ -44,7 +44,7 @@ export class DappTransport {
     readonly mode: TransportMode = TransportMode.POPUP,
     popupModeOptions: PopupModeOptions = {},
     sequenceSessionStorage?: SequenceSessionStorage,
-    redirectUrlActionHandler?: (url: string) => void,
+    redirectActionHandler?: (url: string) => void,
   ) {
     try {
       this.walletOrigin = new URL(walletUrl).origin
@@ -72,7 +72,7 @@ export class DappTransport {
       window.addEventListener('message', this.handleMessage)
     }
 
-    this.redirectUrlActionHandler = redirectUrlActionHandler
+    this.redirectActionHandler = redirectActionHandler
   }
 
   get isWalletOpen(): boolean {
@@ -87,17 +87,16 @@ export class DappTransport {
 
   async sendRequest<TResponse = any, TRequest = any>(
     action: string,
+    redirectUrl: string,
     payload?: TRequest,
     options: SendRequestOptions = {},
   ): Promise<TResponse> {
     if (this.mode === TransportMode.REDIRECT) {
-      const redirectUrl = options.redirectUrl || window.location.href
-
       const url = await this.getRequestRedirectUrl(action, payload, redirectUrl, options.path)
-      if (this.redirectUrlActionHandler) {
-        this.redirectUrlActionHandler(url)
+      if (this.redirectActionHandler) {
+        this.redirectActionHandler(url)
       } else {
-        console.info('[DappTransport] No redirectUrlActionHandler provided. Using window.location.href to navigate.')
+        console.info('[DappTransport] No redirectActionHandler provided. Using window.location.href to navigate.')
         window.location.href = url
       }
       return new Promise<TResponse>(() => {})

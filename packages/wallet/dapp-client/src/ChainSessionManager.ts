@@ -53,7 +53,7 @@ export class ChainSessionManager {
 
   private stateProvider: State.Provider
 
-  private readonly redirectUrl?: string
+  private readonly redirectUrl: string
   private readonly randomPrivateKeyFn: RandomPrivateKeyFn
 
   private eventListeners: {
@@ -89,7 +89,7 @@ export class ChainSessionManager {
     keyMachineUrl: string,
     transport: DappTransport,
     sequenceStorage: SequenceStorage,
-    redirectUrl?: string,
+    redirectUrl: string,
     randomPrivateKeyFn?: RandomPrivateKeyFn,
     canUseIndexedDb: boolean = true,
   ) {
@@ -231,13 +231,12 @@ export class ChainSessionManager {
 
   /**
    * Initiates the creation of a new session by sending a request to the wallet.
-   * @param implicitSessionRedirectUrl The URL to redirect to after an implicit session is created.
    * @param permissions (Optional) Permissions for an initial explicit session.
    * @param options (Optional) Additional options like preferred login method.
    * @throws {InitializationError} If a session already exists or the transport fails to initialize.
    */
   async createNewSession(
-    implicitSessionRedirectUrl: string,
+    origin: string,
     permissions?: Signers.Session.ExplicitParams,
     options: {
       preferredLoginMethod?: PreferredLoginMethod
@@ -256,7 +255,7 @@ export class ChainSessionManager {
 
       const payload: AddImplicitSessionPayload = {
         sessionAddress: newSignerAddress,
-        implicitSessionRedirectUrl,
+        origin,
         permissions,
         preferredLoginMethod: options.preferredLoginMethod,
         email: options.preferredLoginMethod === 'email' ? options.email : undefined,
@@ -274,8 +273,9 @@ export class ChainSessionManager {
 
       const connectResponse = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
         RequestActionType.ADD_IMPLICIT_SESSION,
+        this.redirectUrl,
         payload,
-        { path: '/request/connect', redirectUrl: this.redirectUrl },
+        { path: '/request/connect' },
       )
 
       const receivedAddress = Address.from(connectResponse.walletAddress)
@@ -353,8 +353,9 @@ export class ChainSessionManager {
 
       const response = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
         RequestActionType.ADD_EXPLICIT_SESSION,
+        this.redirectUrl,
         payload,
-        { path: '/request/connect', redirectUrl: this.redirectUrl },
+        { path: '/request/connect' },
       )
 
       if (!Address.isEqual(Address.from(response.walletAddress), this.walletAddress)) {
@@ -414,8 +415,9 @@ export class ChainSessionManager {
 
       const response = await this.transport.sendRequest<ModifySessionSuccessResponsePayload>(
         RequestActionType.MODIFY_EXPLICIT_SESSION,
+        this.redirectUrl,
         payload,
-        { path: '/request/modify', redirectUrl: this.redirectUrl },
+        { path: '/request/modify' },
       )
 
       if (
@@ -853,14 +855,12 @@ export class ChainSessionManager {
           chainId: this.chainId,
         })
         await this.sequenceStorage.setPendingRedirectRequest(true)
-        await this.transport.sendRequest(action, payload, {
+        await this.transport.sendRequest(action, this.redirectUrl, payload, {
           path: '/request/sign',
-          redirectUrl: this.redirectUrl,
         })
       } else {
-        const response = await this.transport.sendRequest<SignatureResponse>(action, payload, {
+        const response = await this.transport.sendRequest<SignatureResponse>(action, this.redirectUrl, payload, {
           path: '/request/sign',
-          redirectUrl: this.redirectUrl,
         })
         this.emit('signatureResponse', { action, response })
       }
