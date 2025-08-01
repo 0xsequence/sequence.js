@@ -25,6 +25,7 @@ export interface AddExplicitSessionPayload {
   preferredLoginMethod?: PreferredLoginMethod
   email?: string
 }
+
 export interface ModifySessionPayload {
   walletAddress: Address.Address
   sessionAddress: Address.Address
@@ -33,7 +34,7 @@ export interface ModifySessionPayload {
 
 export interface AddImplicitSessionPayload {
   sessionAddress: Address.Address
-  implicitSessionRedirectUrl?: string
+  origin: string
   permissions?: Signers.Session.ExplicitParams
   preferredLoginMethod?: PreferredLoginMethod
   email?: string
@@ -191,5 +192,4 @@ export interface PendingRequest {
 export interface SendRequestOptions {
   timeout?: number
   path?: string
-  redirectUrl?: string
 }

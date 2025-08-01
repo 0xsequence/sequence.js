@@ -57,18 +57,19 @@ The main entry point for interacting with the Wallet. This client manages user s
 
 Initializes a new instance of the DappClient.
 
-| Parameter                          | Type                        | Description                                                                                  |
-| :--------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------- |
-| `walletUrl`                        | `string`                    | **(Required)** The URL of the Ecosystem Wallet Webapp.                                       |
-| `options`                          | `object`                    | (Optional) An object containing configuration options for the client.                        |
-| `options.transportMode`            | `'popup' \| 'redirect'`     | The communication mode to use with the wallet. Defaults to `'popup'`.                        |
-| `options.keymachineUrl`            | `string`                    | The URL of the key management service. Defaults to the production Sequence Key Machine.      |
-| `options.redirectUrl`              | `string`                    | The URL to redirect back to after a redirect-based flow.                                     |
-| `options.sequenceStorage`          | `SequenceStorage`           | An object for persistent session data storage. Defaults to `WebStorage` (using IndexedDB).   |
-| `options.sequenceSessionStorage`   | `SequenceSessionStorage`    | An object for temporary data storage (e.g., pending requests). Defaults to `sessionStorage`. |
-| `options.randomPrivateKeyFn`       | `() => Hex \| Promise<Hex>` | A function to generate random private keys for new sessions.                                 |
-| `options.redirectUrlActionHandler` | `(url: string) => void`     | A handler to manually control navigation for redirect flows.                                 |
-| `options.canUseIndexedDb`          | `boolean`                   | A flag to enable or disable the use of IndexedDB for caching. Defaults to `true`.            |
+| Parameter                        | Type                        | Description                                                                                  |
+| :------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------- |
+| `walletUrl`                      | `string`                    | **(Required)** The URL of the Ecosystem Wallet Webapp.                                       |
+| `origin`                         | `string`                    | **(Required)** The origin of the dapp.                                                       |
+| `options`                        | `object`                    | (Optional) An object containing configuration options for the client.                        |
+| `options.transportMode`          | `'popup' \| 'redirect'`     | The communication mode to use with the wallet. Defaults to `'popup'`.                        |
+| `options.keymachineUrl`          | `string`                    | The URL of the key management service. Defaults to the production Sequence Key Machine.      |
+| `options.redirectPath`           | `string`                    | The path to redirect back to after a redirect-based flow. Used as origin+path.               |
+| `options.sequenceStorage`        | `SequenceStorage`           | An object for persistent session data storage. Defaults to `WebStorage` (using IndexedDB).   |
+| `options.sequenceSessionStorage` | `SequenceSessionStorage`    | An object for temporary data storage (e.g., pending requests). Defaults to `sessionStorage`. |
+| `options.randomPrivateKeyFn`     | `() => Hex \| Promise<Hex>` | A function to generate random private keys for new sessions.                                 |
+| `options.redirectActionHandler`  | `(url: string) => void`     | A handler to manually control navigation for redirect flows.                                 |
+| `options.canUseIndexedDb`        | `boolean`                   | A flag to enable or disable the use of IndexedDB for caching. Defaults to `true`.            |
 
 ---
 
@@ -100,7 +101,6 @@ Creates and initializes a new user session for a given chain.
 
 - **Parameters:**
   - `chainId`: `ChainId` - The primary chain ID for the new session.
-  - `implicitSessionRedirectUrl`: `string` - The URL to redirect back to after login.
   - `permissions?`: `Signers.Session.ExplicitParams` - (Optional) Permissions to request the user to approve for the new session (Unrestricted permissions if not provided).
   - `options?`: `{ preferredLoginMethod?, email? }` - (Optional) Options for the new session.
 - **Returns:** `Promise<void>`
