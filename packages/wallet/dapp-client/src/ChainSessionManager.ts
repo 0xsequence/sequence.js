@@ -1,5 +1,5 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
@@ -676,17 +676,31 @@ export class ChainSessionManager {
 
       const callsToSend = calls
       if (feeOption) {
-        const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
-        const transferCall: Payload.Call = {
-          to: feeOption.token.contractAddress as `0x${string}`,
-          value: BigInt(0),
-          data: AbiFunction.encodeData(transfer, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
-          gasLimit: BigInt(feeOption.gasLimit),
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert' as const,
+        const valueForwarder = '0xABAAd93EeE2a569cF0632f39B10A9f5D734777ca'
+        if (feeOption.token.contractAddress === Constants.ZeroAddress) {
+          const forwardValue = AbiFunction.from(['function forwardValue(address to, uint256 value)'])
+          callsToSend.unshift({
+            to: valueForwarder,
+            value: BigInt(feeOption.value),
+            data: AbiFunction.encodeData(forwardValue, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          })
+        } else {
+          const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
+          const transferCall: Payload.Call = {
+            to: feeOption.token.contractAddress as `0x${string}`,
+            value: BigInt(0),
+            data: AbiFunction.encodeData(transfer, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          }
+          callsToSend.unshift(transferCall)
         }
-        callsToSend.unshift(transferCall)
       }
       const signedCalls = await this._buildAndSignCalls(callsToSend)
       const hash = await this.relayer.relay(signedCalls.to, signedCalls.data, BigInt(this.chainId))
