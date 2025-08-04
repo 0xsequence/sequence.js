@@ -193,7 +193,7 @@ export class SessionManager implements SapientSigner {
       throw new Error('Repeated usage hashes')
     }
 
-    const data = AbiFunction.encodeData(Constants.INCREMENT_USAGE_LIMIT, [uniqueIncrements])
+    const data = AbiFunction.encodeData(Constants.INCREMENT_USAGE_LIMIT, [increments])
 
     return {
       to: this.address,
