@@ -90,6 +90,7 @@ export type Transaction =
 export type Session = {
   address: Address.Address
   isImplicit: boolean
+  chainId?: ChainId
 }
 
 // --- Event Types ---

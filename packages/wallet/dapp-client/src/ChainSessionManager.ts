@@ -614,6 +614,7 @@ export class ChainSessionManager {
         this.sessions.push({
           address: explicitSigner.address,
           isImplicit: false,
+          chainId: this.chainId,
         })
         return
       } catch (err) {
