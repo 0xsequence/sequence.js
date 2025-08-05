@@ -250,6 +250,7 @@ export class Explicit implements ExplicitSessionSigner {
   ): Promise<UsageLimit[]> {
     const increments: { usageHash: Hex.Hex; increment: bigint }[] = []
     const usageValueHash = this.getValueUsageHash()
+    let valueUsed = 0n
 
     for (const call of calls) {
       // Find matching permission
@@ -281,18 +282,15 @@ export class Explicit implements ExplicitSessionSigner {
         }
       }
 
-      // Check the value
-      if (call.value !== 0n) {
-        const existingIncrement = increments.find((i) => Hex.isEqual(i.usageHash, usageValueHash))
-        if (existingIncrement) {
-          existingIncrement.increment += call.value
-        } else {
-          increments.push({
-            usageHash: usageValueHash,
-            increment: call.value,
-          })
-        }
-      }
+      valueUsed += call.value
+    }
+
+    // Check the value
+    if (valueUsed > 0n) {
+      increments.push({
+        usageHash: usageValueHash,
+        increment: valueUsed,
+      })
     }
 
     // If no increments, return early
