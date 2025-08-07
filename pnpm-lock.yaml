@@ -268,33 +268,30 @@ importers:
         specifier: ^0.7.2
         version: 0.7.2(typescript@5.8.3)
     devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
       '@types/node':
         specifier: ^22.15.29
         version: 22.16.5
-      '@types/yargs':
-        specifier: ^17.0.33
-        version: 17.0.33
-      concurrently:
-        specifier: ^8.2.2
-        version: 8.2.2
-      esbuild:
-        specifier: ^0.25.5
-        version: 0.25.8
+      '@vitest/coverage-v8':
+        specifier: ^3.2.4
+        version: 3.2.4(vitest@3.2.4(@types/node@22.16.5)(happy-dom@17.6.3))
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.6.1
+      fake-indexeddb:
+        specifier: ^6.0.1
+        version: 6.0.1
       happy-dom:
-        specifier: ^17.6.3
+        specifier: ^17.2.2
         version: 17.6.3
-      nodemon:
-        specifier: ^3.1.10
-        version: 3.1.10
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.4(@types/node@22.16.5)(happy-dom@17.6.3)
 
   packages/wallet/primitives:
     dependencies:

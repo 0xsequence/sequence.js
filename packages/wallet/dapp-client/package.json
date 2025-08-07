@@ -9,10 +9,7 @@
   "private": false,
   "scripts": {
     "build": "tsc",
-    "build:esbuild": "esbuild src/index.ts --bundle --platform=node --target=node16 --outfile=dist/index.js",
     "dev": "tsc --watch",
-    "dev:esbuild": "esbuild src/index.ts --bundle --platform=node --target=node16 --outfile=dist/index.js --watch --sourcemap",
-    "lint": "eslint . --max-warnings 0",
     "clean": "rimraf dist"
   },
   "exports": {
@@ -22,15 +19,14 @@
     }
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^22.15.29",
-    "@types/yargs": "^17.0.33",
-    "concurrently": "^8.2.2",
-    "esbuild": "^0.25.5",
-    "happy-dom": "^17.6.3",
-    "nodemon": "^3.1.10",
-    "typescript": "^5.8.3"
+    "@vitest/coverage-v8": "^3.2.4",
+    "dotenv": "^16.5.0",
+    "fake-indexeddb": "^6.0.1",
+    "happy-dom": "^17.2.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
   },
   "dependencies": {
     "@0xsequence/network": "^2.3.23",
