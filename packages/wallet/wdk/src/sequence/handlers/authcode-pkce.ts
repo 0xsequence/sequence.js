@@ -22,7 +22,7 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
   public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
     let challenge = new Identity.AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
     if (signer) {
-      challenge = challenge.withSigner({ address: signer, keyType: Identity.KeyType.Secp256k1 })
+      challenge = challenge.withSigner({ address: signer, keyType: Identity.KeyType.Ethereum_Secp256k1 })
     }
     const { verifier, loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
     if (!state) {
