@@ -37,7 +37,7 @@ export class IdentityInstrument {
   async completeAuth(authKey: AuthKey, challenge: Challenge) {
     const params = {
       ...challenge.getCompleteParams(),
-      signerType: KeyType.Secp256k1,
+      signerType: KeyType.Ethereum_Secp256k1,
     }
     const signature = await authKey.sign(Bytes.fromString(canonicalize(params)))
     return this.rpc.completeAuth({
@@ -54,7 +54,7 @@ export class IdentityInstrument {
     const params = {
       signer: {
         address: authKey.signer,
-        keyType: KeyType.Secp256k1,
+        keyType: KeyType.Ethereum_Secp256k1,
       },
       digest: Hex.fromBytes(digest),
       nonce: Hex.random(16),
