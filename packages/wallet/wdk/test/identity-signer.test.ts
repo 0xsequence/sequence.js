@@ -73,7 +73,7 @@ describe('Identity Signer', () => {
       const result = toIdentityAuthKey(testAuthKey)
 
       expect(result.address).toBe(testAuthKey.address)
-      expect(result.keyType).toBe(KeyType.Secp256r1)
+      expect(result.keyType).toBe(KeyType.WebCrypto_Secp256r1)
       expect(result.signer).toBe(testAuthKey.identitySigner)
       expect(typeof result.sign).toBe('function')
     })

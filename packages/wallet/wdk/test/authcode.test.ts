@@ -571,7 +571,7 @@ describe('AuthCodeHandler', () => {
       expect(mockCommitVerifier).toHaveBeenCalledWith(
         expect.objectContaining({
           address: mockAuthKey.address,
-          keyType: KeyType.Secp256r1,
+          keyType: KeyType.WebCrypto_Secp256r1,
           signer: mockAuthKey.identitySigner,
         }),
         mockChallenge,

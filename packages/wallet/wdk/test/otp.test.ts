@@ -406,7 +406,7 @@ describe('OtpHandler', () => {
       expect(handleResult).toBe(true)
       expect(MockedOtpChallenge.fromSigner).toHaveBeenCalledWith(IdentityType.Email, {
         address: testWallet,
-        keyType: KeyType.Secp256k1,
+        keyType: KeyType.Ethereum_Secp256k1,
       })
       expect(mockCallback).toHaveBeenCalledWith('user@example.com', expect.any(Function))
     })
@@ -478,7 +478,7 @@ describe('OtpHandler', () => {
       expect(mockCommitVerifier).toHaveBeenCalledWith(
         expect.objectContaining({
           address: mockAuthKey.address,
-          keyType: KeyType.Secp256r1,
+          keyType: KeyType.WebCrypto_Secp256r1,
           signer: mockAuthKey.identitySigner,
         }),
         mockChallenge,

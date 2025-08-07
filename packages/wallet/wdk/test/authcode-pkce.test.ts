@@ -159,7 +159,7 @@ describe('AuthCodePkceHandler', () => {
       // Verify nitroCommitVerifier was called with signer in challenge
       expect(handler['nitroCommitVerifier']).toHaveBeenCalledWith(
         expect.objectContaining({
-          signer: { address: signer, keyType: Identity.KeyType.Secp256k1 },
+          signer: { address: signer, keyType: Identity.KeyType.Ethereum_Secp256k1 },
         }),
       )
     })
