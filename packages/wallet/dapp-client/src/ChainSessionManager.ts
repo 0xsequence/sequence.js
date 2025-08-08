@@ -669,7 +669,7 @@ export class ChainSessionManager {
    * @throws {InitializationError} If the session is not initialized.
    * @throws {TransactionError} If the transaction fails at any stage.
    */
-  async buildSignAndSendTransactions(transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<string> {
+  async buildSignAndSendTransactions(transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<Hex.Hex> {
     if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized)
       throw new InitializationError('Session is not initialized.')
     try {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChainId } from '@0xsequence/network'
 import { Relayer, Signers } from '@0xsequence/wallet-core'
-import { Address } from 'ox'
+import { Address, Hex } from 'ox'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
@@ -534,7 +534,11 @@ export class DappClient {
    *
    *   const txHash = await dappClient.sendTransaction(1, [transaction]);
    */
-  async sendTransaction(chainId: ChainId, transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<string> {
+  async sendTransaction(
+    chainId: ChainId,
+    transactions: Transaction[],
+    feeOption?: Relayer.FeeOption,
+  ): Promise<Hex.Hex> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
