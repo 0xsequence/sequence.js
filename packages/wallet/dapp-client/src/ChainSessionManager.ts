@@ -398,6 +398,11 @@ export class ChainSessionManager {
     try {
       if (!this.transport) throw new InitializationError('Transport failed to initialize.')
 
+      const session = this.sessions.find((s) => Address.isEqual(s.address, sessionAddress))
+      if (!session) {
+        throw new ModifyExplicitSessionError('Session not found.')
+      }
+
       const payload: ModifySessionPayload = {
         walletAddress: this.walletAddress,
         sessionAddress: sessionAddress,
@@ -426,6 +431,8 @@ export class ChainSessionManager {
       ) {
         throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
       }
+
+      session.permissions = newPermissions
 
       if (this.transport?.mode === TransportMode.POPUP) {
         this.transport?.closeWallet()
@@ -615,6 +622,7 @@ export class ChainSessionManager {
           address: explicitSigner.address,
           isImplicit: false,
           chainId: this.chainId,
+          permissions,
         })
         return
       } catch (err) {
