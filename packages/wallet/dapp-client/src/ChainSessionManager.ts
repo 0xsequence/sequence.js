@@ -36,7 +36,7 @@ import {
   Transaction,
   TransportMode,
 } from './types/index.js'
-import { CACHE_DB_NAME } from './utils/constants.js'
+import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { TypedData } from 'ox/TypedData'
 
 interface ChainSessionManagerEventMap {
@@ -677,11 +677,10 @@ export class ChainSessionManager {
 
       const callsToSend = calls
       if (feeOption) {
-        const valueForwarder = '0xABAAd93EeE2a569cF0632f39B10A9f5D734777ca'
         if (feeOption.token.contractAddress === Constants.ZeroAddress) {
           const forwardValue = AbiFunction.from(['function forwardValue(address to, uint256 value)'])
           callsToSend.unshift({
-            to: valueForwarder,
+            to: VALUE_FORWARDER_ADDRESS,
             value: BigInt(feeOption.value),
             data: AbiFunction.encodeData(forwardValue, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
             gasLimit: BigInt(feeOption.gasLimit),
