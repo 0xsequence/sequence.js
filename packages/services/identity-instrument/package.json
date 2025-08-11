@@ -25,6 +25,7 @@
     "vitest": "^3.2.1"
   },
   "dependencies": {
+    "json-canonicalize": "^2.0.0",
     "jwt-decode": "^4.0.0",
     "ox": "^0.7.2"
   }

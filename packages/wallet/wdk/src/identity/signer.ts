@@ -8,7 +8,7 @@ import * as Identity from '@0xsequence/identity-instrument'
 export function toIdentityAuthKey(authKey: AuthKey): Identity.AuthKey {
   return {
     address: authKey.address,
-    keyType: Identity.KeyType.Secp256r1,
+    keyType: Identity.KeyType.WebCrypto_Secp256r1,
     signer: authKey.identitySigner,
     async sign(digest: Bytes.Bytes) {
       const authKeySignature = await window.crypto.subtle.sign(

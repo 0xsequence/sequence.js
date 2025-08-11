@@ -32,7 +32,7 @@ describe('IdTokenChallenge', () => {
 
 describe('AuthCodeChallenge', () => {
   const authCode = '1234567890'
-  const signer = { address: '0x26F5B2b3Feed8f02051c0b1c5b40cc088107935e', keyType: KeyType.Secp256k1 }
+  const signer = { address: '0x26F5B2b3Feed8f02051c0b1c5b40cc088107935e', keyType: KeyType.Ethereum_Secp256k1 }
 
   it('returns correct commit params', () => {
     const challenge = new AuthCodeChallenge('https://example.com', 'audience', 'https://dapp.com/redirect', authCode)
@@ -77,7 +77,7 @@ describe('AuthCodePkceChallenge', () => {
   const challenge = new AuthCodePkceChallenge('https://example.com', 'audience', 'https://dapp.com/redirect')
   const authCode = '1234567890'
   const verifier = 'verifier'
-  const signer = { address: '0x26F5B2b3Feed8f02051c0b1c5b40cc088107935e', keyType: KeyType.Secp256k1 }
+  const signer = { address: '0x26F5B2b3Feed8f02051c0b1c5b40cc088107935e', keyType: KeyType.Ethereum_Secp256k1 }
 
   it('returns correct commit params', () => {
     const params = challenge.getCommitParams()
@@ -172,7 +172,7 @@ describe('OtpChallenge', () => {
   })
 
   describe('fromSigner', () => {
-    const signer = { address: '0x26F5B2b3Feed8f02051c0b1c5b40cc088107935e', keyType: KeyType.Secp256k1 }
+    const signer = { address: '0x26F5B2b3Feed8f02051c0b1c5b40cc088107935e', keyType: KeyType.Ethereum_Secp256k1 }
 
     describe('getCommitParams', () => {
       it('returns correct commit params', () => {
@@ -186,7 +186,10 @@ describe('OtpChallenge', () => {
       })
 
       it('throws if signer is not provided', () => {
-        const challenge = OtpChallenge.fromSigner(IdentityType.Email, { address: '', keyType: KeyType.Secp256k1 })
+        const challenge = OtpChallenge.fromSigner(IdentityType.Email, {
+          address: '',
+          keyType: KeyType.Ethereum_Secp256k1,
+        })
         expect(() => challenge.getCommitParams()).toThrow()
       })
     })
