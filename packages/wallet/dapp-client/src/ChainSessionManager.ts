@@ -1,5 +1,5 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
@@ -36,7 +36,7 @@ import {
   Transaction,
   TransportMode,
 } from './types/index.js'
-import { CACHE_DB_NAME } from './utils/constants.js'
+import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { TypedData } from 'ox/TypedData'
 
 interface ChainSessionManagerEventMap {
@@ -398,6 +398,11 @@ export class ChainSessionManager {
     try {
       if (!this.transport) throw new InitializationError('Transport failed to initialize.')
 
+      const session = this.sessions.find((s) => Address.isEqual(s.address, sessionAddress))
+      if (!session) {
+        throw new ModifyExplicitSessionError('Session not found.')
+      }
+
       const payload: ModifySessionPayload = {
         walletAddress: this.walletAddress,
         sessionAddress: sessionAddress,
@@ -426,6 +431,8 @@ export class ChainSessionManager {
       ) {
         throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
       }
+
+      session.permissions = newPermissions
 
       if (this.transport?.mode === TransportMode.POPUP) {
         this.transport?.closeWallet()
@@ -614,6 +621,8 @@ export class ChainSessionManager {
         this.sessions.push({
           address: explicitSigner.address,
           isImplicit: false,
+          chainId: this.chainId,
+          permissions,
         })
         return
       } catch (err) {
@@ -660,7 +669,7 @@ export class ChainSessionManager {
    * @throws {InitializationError} If the session is not initialized.
    * @throws {TransactionError} If the transaction fails at any stage.
    */
-  async buildSignAndSendTransactions(transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<string> {
+  async buildSignAndSendTransactions(transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<Hex.Hex> {
     if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized)
       throw new InitializationError('Session is not initialized.')
     try {
@@ -676,17 +685,30 @@ export class ChainSessionManager {
 
       const callsToSend = calls
       if (feeOption) {
-        const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
-        const transferCall: Payload.Call = {
-          to: feeOption.token.contractAddress as `0x${string}`,
-          value: BigInt(0),
-          data: AbiFunction.encodeData(transfer, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
-          gasLimit: BigInt(feeOption.gasLimit),
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert' as const,
+        if (feeOption.token.contractAddress === Constants.ZeroAddress) {
+          const forwardValue = AbiFunction.from(['function forwardValue(address to, uint256 value)'])
+          callsToSend.unshift({
+            to: VALUE_FORWARDER_ADDRESS,
+            value: BigInt(feeOption.value),
+            data: AbiFunction.encodeData(forwardValue, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          })
+        } else {
+          const transfer = AbiFunction.from(['function transfer(address to, uint256 value)'])
+          const transferCall: Payload.Call = {
+            to: feeOption.token.contractAddress as `0x${string}`,
+            value: BigInt(0),
+            data: AbiFunction.encodeData(transfer, [feeOption.to as Address.Address, BigInt(feeOption.value)]),
+            gasLimit: BigInt(feeOption.gasLimit),
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert' as const,
+          }
+          callsToSend.unshift(transferCall)
         }
-        callsToSend.unshift(transferCall)
       }
       const signedCalls = await this._buildAndSignCalls(callsToSend)
       const hash = await this.relayer.relay(signedCalls.to, signedCalls.data, BigInt(this.chainId))
