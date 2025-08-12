@@ -65,6 +65,7 @@ export type ManagerOptions = {
     fetch?: typeof window.fetch
     verifyAttestation?: boolean
     expectedPcr0?: string[]
+    scope?: string
     email?: {
       enabled: boolean
     }
@@ -445,7 +446,7 @@ export class Manager {
           logTiming: true,
         })
       : ops.identity.fetch
-    const identityInstrument = new IdentityInstrument(ops.identity.url, verifyingFetch)
+    const identityInstrument = new IdentityInstrument(ops.identity.url, ops.identity.scope, verifyingFetch)
 
     if (ops.identity.email?.enabled) {
       this.otpHandler = new OtpHandler(identityInstrument, modules.signatures, shared.databases.authKeys)
