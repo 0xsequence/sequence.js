@@ -687,26 +687,42 @@ export class Wallets implements WalletsInterface {
     // If there is an existing wallet callback, we check if any wallet already exist for this login signer
     if (this.walletSelectionUiHandler) {
       const existingWallets = await State.getWalletsFor(this.shared.sequence.stateProvider, loginSigner.signer)
+
       if (existingWallets.length > 0) {
+        for (const wallet of existingWallets) {
+          const preliminaryEntry: Wallet = {
+            address: wallet.wallet,
+            status: 'logging-in',
+            loginEmail: loginSigner.loginEmail,
+            loginType: loginSigner.extra.signerKind,
+            loginDate: new Date().toISOString(),
+            device: '' as `0x${string}`,
+            useGuard: false,
+          }
+          await this.shared.databases.manager.set(preliminaryEntry)
+        }
+
         const result = await this.walletSelectionUiHandler({
           existingWallets: existingWallets.map((w) => w.wallet),
           signerAddress: await loginSigner.signer.address,
-          context: isAuthCodeArgs(args)
-            ? {
-                isRedirect: args.isRedirect,
-                target: args.target,
-              }
-            : {
-                isRedirect: false,
-              },
+          context: isAuthCodeArgs(args) ? { isRedirect: args.isRedirect, target: args.target } : { isRedirect: false },
         })
 
         if (result === 'abort-signup') {
+          for (const wallet of existingWallets) {
+            const finalEntry = await this.shared.databases.manager.get(wallet.wallet)
+            if (finalEntry && !finalEntry.device) {
+              await this.shared.databases.manager.del(wallet.wallet)
+            }
+          }
           // Abort the signup process
           return undefined
         }
 
         if (result === 'create-new') {
+          for (const wallet of existingWallets) {
+            await this.shared.databases.manager.del(wallet.wallet)
+          }
           // Continue with the signup process
         } else {
           throw new Error('invalid-result-from-wallet-selector')
@@ -867,8 +883,9 @@ export class Wallets implements WalletsInterface {
 
   async login(args: LoginArgs): Promise<string> {
     if (isLoginToWalletArgs(args)) {
-      const prevWallet = await this.has(args.wallet)
-      if (prevWallet) {
+      const existingWallet = await this.get(args.wallet)
+
+      if (existingWallet?.status === 'ready') {
         throw new Error('wallet-already-logged-in')
       }
 
@@ -898,21 +915,20 @@ export class Wallets implements WalletsInterface {
         await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
       }
 
-      const existingEntry = await this.shared.databases.manager.get(args.wallet)
-
-      const walletEntryToUpdate = {
-        ...(existingEntry ?? {}),
+      const walletEntryToUpdate: Wallet = {
+        ...(existingWallet as Wallet),
         address: args.wallet,
         status: 'logging-in' as const,
         loginDate: new Date().toISOString(),
         device: device.address,
-        loginType: 'wallet' as const,
+        loginType: existingWallet?.loginType || 'wallet',
+        loginEmail: existingWallet?.loginEmail,
         useGuard: guardTopology !== undefined,
       }
 
       await this.shared.databases.manager.set(walletEntryToUpdate)
 
-      return this.requestConfigurationUpdate(
+      const requestId = await this.requestConfigurationUpdate(
         args.wallet,
         {
           devicesTopology: nextDevicesTopology,
@@ -921,6 +937,7 @@ export class Wallets implements WalletsInterface {
         'login',
         'wallet-webapp',
       )
+      return requestId
     }
 
     if (isLoginToMnemonicArgs(args)) {
