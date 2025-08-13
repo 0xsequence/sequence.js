@@ -363,18 +363,6 @@ export const BlastSepolia: Network = {
   },
 }
 
-export const BorneTestnet: Network = {
-  name: 'borne-testnet',
-  rpc: getRpcUrl('borne-testnet'),
-  chainId: 94984n,
-  explorer: 'https://subnets-test.avax.network/bornegfdn',
-  nativeCurrency: {
-    name: 'BORNE',
-    symbol: 'BORNE',
-    decimals: 18,
-  },
-}
-
 export const SkaleNebula: Network = {
   name: 'skale-nebula',
   rpc: getRpcUrl('skale-nebula'),
@@ -567,6 +555,18 @@ export const MonadTestnet: Network = {
   },
 }
 
+export const Somnia: Network = {
+  name: 'somnia',
+  rpc: getRpcUrl('somnia'),
+  chainId: 5031n,
+  explorer: 'https://mainnet.somnia.w3us.site/',
+  nativeCurrency: {
+    name: 'SOMI',
+    symbol: 'SOMI',
+    decimals: 18,
+  },
+}
+
 export const SomniaTestnet: Network = {
   name: 'somnia-testnet',
   rpc: getRpcUrl('somnia-testnet'),
@@ -575,18 +575,6 @@ export const SomniaTestnet: Network = {
   nativeCurrency: {
     name: 'STT',
     symbol: 'STT',
-    decimals: 18,
-  },
-}
-
-export const FrequencyTestnet: Network = {
-  name: 'frequency-testnet',
-  rpc: getRpcUrl('frequency-testnet'),
-  chainId: 53716n,
-  explorer: 'https://explorer.frequency.zeeve.net/',
-  nativeCurrency: {
-    name: 'BERA',
-    symbol: 'BERA',
     decimals: 18,
   },
 }
@@ -621,7 +609,6 @@ export const All = [
   ApeChainTestnet,
   Blast,
   BlastSepolia,
-  BorneTestnet,
   SkaleNebula,
   SkaleNebulaTestnet,
   Soneium,
@@ -638,6 +625,6 @@ export const All = [
   Etherlink,
   EtherlinkTestnet,
   MonadTestnet,
+  Somnia,
   SomniaTestnet,
-  FrequencyTestnet,
 ]
