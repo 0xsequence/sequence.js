@@ -1,5 +1,5 @@
 import { Envelope, Wallet } from '@0xsequence/wallet-core'
-import { Network, Payload } from '@0xsequence/wallet-primitives'
+import { Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
 import { Shared } from './manager.js'
@@ -195,7 +195,7 @@ export class Messages implements MessagesInterface {
       if (!network) {
         throw new Error(`Network not found for ${message.envelope.chainId}`)
       }
-      const transport = RpcTransport.fromHttp(Network.getRpcUrl(network))
+      const transport = RpcTransport.fromHttp(network.rpc)
       provider = Provider.from(transport)
     }
 
