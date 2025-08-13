@@ -2056,6 +2056,23 @@ export interface QueueMetaTxnReceiptArgs {
 export interface QueueMetaTxnReceiptReturn {
   status: boolean  
 }
+export interface GetCCTPTransferArgs {
+  id: string
+}
+
+export interface GetCCTPTransferReturn {
+  transfer: CCTPTransfer
+}
+export interface QueueCCTPTransferArgs {
+  sourceTxHash?: string
+  metaTxHash?: string
+  sourceChainId: number
+  destinationChainId: number
+}
+
+export interface QueueCCTPTransferReturn {
+  transfer: CCTPTransfer
+}
 
 //
 // Client
