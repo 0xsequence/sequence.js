@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Signers } from '@0xsequence/wallet-core'
-import { ChainId } from '@0xsequence/network'
 import { Address, Hex } from 'ox'
 import type { TypedData } from 'ox/TypedData'
 
@@ -43,13 +42,13 @@ export interface AddImplicitSessionPayload {
 export interface SignMessagePayload {
   address: Address.Address
   message: string
-  chainId: ChainId
+  chainId: bigint
 }
 
 export interface SignTypedDataPayload {
   address: Address.Address
   typedData: TypedData
-  chainId: ChainId
+  chainId: bigint
 }
 
 export interface ConnectSuccessResponsePayload {
@@ -91,7 +90,7 @@ export type Session = {
   address: Address.Address
   isImplicit: boolean
   permissions?: Signers.Session.ExplicitParams
-  chainId?: ChainId
+  chainId?: bigint
 }
 
 // --- Event Types ---
@@ -117,14 +116,14 @@ export type DappClientSignatureEventListener = (data: {
   action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
   response?: SignatureResponse
   error?: any
-  chainId: number
+  chainId: bigint
 }) => void
 
 export type DappClientExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
   response?: ExplicitSessionResponsePayload
   error?: any
-  chainId: number
+  chainId: bigint
 }) => void
 
 // --- DappTransport Types ---
@@ -169,14 +168,14 @@ export interface MessageSignatureRequest extends BaseRequest {
   type: 'message_signature'
   message: string
   address: Address.Address
-  chainId: number
+  chainId: bigint
 }
 
 export interface TypedDataSignatureRequest extends BaseRequest {
   type: 'typed_data_signature'
   typedData: unknown
   address: Address.Address
-  chainId: number
+  chainId: bigint
 }
 
 export const WalletSize = {

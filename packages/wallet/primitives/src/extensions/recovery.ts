@@ -1,7 +1,8 @@
 import { Abi, AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
-import * as Payload from '../payload.js'
 import * as GenericTree from '../generic-tree.js'
 import { Signature } from '../index.js'
+import * as Network from '../network.js'
+import * as Payload from '../payload.js'
 import { packRSY } from '../utils.js'
 
 export const FLAG_RECOVERY_LEAF = 1

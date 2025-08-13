@@ -1,4 +1,4 @@
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { Constants, Network, Payload } from '@0xsequence/wallet-primitives'
 import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
 import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
@@ -258,7 +258,7 @@ export class Transactions implements TransactionsInterface {
       throw new Error(`Network not found for ${chainId}`)
     }
 
-    const transport = RpcTransport.fromHttp(network.rpc)
+    const transport = RpcTransport.fromHttp(Network.getRpcUrl(network))
     const provider = Provider.from(transport)
     const wallet = new Wallet(from, { stateProvider: this.shared.sequence.stateProvider })
 
@@ -327,11 +327,11 @@ export class Transactions implements TransactionsInterface {
     }
 
     const wallet = new Wallet(tx.wallet, { stateProvider: this.shared.sequence.stateProvider })
-    const provider = Provider.from(
-      RpcTransport.fromHttp(
-        this.shared.sequence.networks.find((network) => network.chainId === tx.envelope.chainId)!.rpc,
-      ),
-    )
+    const network = this.shared.sequence.networks.find((network) => network.chainId === tx.envelope.chainId)
+    if (!network) {
+      throw new Error(`Network not found for ${tx.envelope.chainId}`)
+    }
+    const provider = Provider.from(RpcTransport.fromHttp(Network.getRpcUrl(network)))
 
     // Get relayer and relayer options
     const [allRelayerOptions, allBundlerOptions] = await Promise.all([
@@ -523,7 +523,7 @@ export class Transactions implements TransactionsInterface {
       throw new Error(`Network not found for ${tx.envelope.chainId}`)
     }
 
-    const transport = RpcTransport.fromHttp(network.rpc)
+    const transport = RpcTransport.fromHttp(Network.getRpcUrl(network))
     const provider = Provider.from(transport)
 
     const wallet = new Wallet(tx.wallet, { stateProvider: this.shared.sequence.stateProvider })

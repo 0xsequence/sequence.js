@@ -1,4 +1,4 @@
-import { Config, Constants, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
+import { Config, Constants, Extensions, GenericTree, Network, Payload } from '@0xsequence/wallet-primitives'
 import { Shared } from './manager.js'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { Kinds, RecoverySigner } from './types/signer.js'
@@ -468,7 +468,7 @@ export class Recovery implements RecoveryInterface {
     // Create providers for each network
     const providers = this.shared.sequence.networks.map((network) => ({
       chainId: network.chainId,
-      provider: Provider.from(RpcTransport.fromHttp(network.rpc)),
+      provider: Provider.from(RpcTransport.fromHttp(Network.getRpcUrl(network))),
     }))
 
     const seenInThisRun = new Set<string>()

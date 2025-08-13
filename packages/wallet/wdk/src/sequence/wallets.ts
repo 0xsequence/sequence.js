@@ -1,5 +1,5 @@
 import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wallet-core'
-import { Config, Constants, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Config, Constants, GenericTree, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
@@ -1114,7 +1114,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(Network.getRpcUrl(network)))
     return wallet.getNonce(provider, space)
   }
 
@@ -1129,7 +1129,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(Network.getRpcUrl(network)))
     const status = await walletObject.getStatus(provider)
 
     const onchainConfiguration = await this.shared.sequence.stateProvider.getConfiguration(status.onChainImageHash)
@@ -1174,7 +1174,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(Network.getRpcUrl(network)))
     const onchainStatus = await walletObject.getStatus(provider)
     return onchainStatus.imageHash === onchainStatus.onChainImageHash
   }

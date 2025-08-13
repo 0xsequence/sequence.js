@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChainId } from '@0xsequence/network'
 import { Relayer, Signers } from '@0xsequence/wallet-core'
 import { Address, Hex } from 'ox'
 
@@ -57,7 +56,7 @@ export class DappClient {
 
   public readonly origin: string
 
-  private chainSessionManagers: Map<ChainId, ChainSessionManager> = new Map()
+  private chainSessionManagers: Map<bigint, ChainSessionManager> = new Map()
   private transport: DappTransport
   private keymachineUrl: string
   private walletUrl: string
@@ -235,7 +234,7 @@ export class DappClient {
     this.userEmail = implicitSession.userEmail ?? null
 
     const explicitSessions = await this.sequenceStorage.getExplicitSessions()
-    const chainIdsToInitialize = new Set<ChainId>([
+    const chainIdsToInitialize = new Set<bigint>([
       implicitSession.chainId,
       ...explicitSessions.filter((s) => Address.isEqual(s.walletAddress, this.walletAddress!)).map((s) => s.chainId),
     ])
@@ -328,7 +327,7 @@ export class DappClient {
 
   /**
    * Initiates a connection with the wallet and creates a new session.
-   * @param chainId The primary chain ID for the new session. {@link ChainId}
+   * @param chainId The primary chain ID for the new session.
    * @param permissions (Optional) Permissions to request for an initial explicit session. {@link Signers.Session.ExplicitParams}
    * @param options (Optional) Connection options, such as a preferred login method or email for social or email logins.
    * @throws If the connection process fails. {@link ConnectionError}
@@ -345,7 +344,7 @@ export class DappClient {
    * });
    */
   async connect(
-    chainId: ChainId,
+    chainId: bigint,
     permissions?: Signers.Session.ExplicitParams,
     options: {
       preferredLoginMethod?: 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
@@ -375,7 +374,7 @@ export class DappClient {
    * Adds a new explicit session for a given chain to an existing wallet.
    * @remarks
    * An `explicit session` is a session that can interact with any contract, subject to user-approved permissions.
-   * @param chainId The chain ID on which to add the explicit session. {@link ChainId}
+   * @param chainId The chain ID on which to add the explicit session.
    * @param permissions The permissions to request for the new session. {@link Signers.Session.ExplicitParams}
    *
    * @throws If the session cannot be added. {@link AddExplicitSessionError}
@@ -408,7 +407,7 @@ export class DappClient {
    *   await dappClient.addExplicitSession(1, permissions);
    * }
    */
-  async addExplicitSession(chainId: ChainId, permissions: Signers.Session.ExplicitParams): Promise<void> {
+  async addExplicitSession(chainId: bigint, permissions: Signers.Session.ExplicitParams): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot add an explicit session without an existing wallet.')
 
@@ -425,7 +424,7 @@ export class DappClient {
 
   /**
    * Modifies the permissions of an existing explicit session for a given chain and session address.
-   * @param chainId The chain ID on which the explicit session exists. {@link ChainId}
+   * @param chainId The chain ID on which the explicit session exists.
    * @param sessionAddress The address of the explicit session to modify. {@link Address.Address}
    * @param permissions The new permissions to set for the session. {@link Signers.Session.ExplicitParams}
    *
@@ -454,7 +453,7 @@ export class DappClient {
    * }
    */
   async modifyExplicitSession(
-    chainId: ChainId,
+    chainId: bigint,
     sessionAddress: Address.Address,
     permissions: Signers.Session.ExplicitParams,
   ): Promise<void> {
@@ -474,7 +473,7 @@ export class DappClient {
 
   /**
    * Gets the gas fee options for an array of transactions.
-   * @param chainId The chain ID on which to get the fee options. {@link ChainId}
+   * @param chainId The chain ID on which to get the fee options.
    * @param transactions An array of transactions to get fee options for. These transactions will not be sent.
    * @throws If the fee options cannot be fetched. {@link FeeOptionError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
@@ -501,7 +500,7 @@ export class DappClient {
    *   const txHash = await dappClient.sendTransaction(1, transactions, feeOption);
    * }
    */
-  async getFeeOptions(chainId: ChainId, transactions: Transaction[]): Promise<Relayer.FeeOption[]> {
+  async getFeeOptions(chainId: bigint, transactions: Transaction[]): Promise<Relayer.FeeOption[]> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -511,7 +510,7 @@ export class DappClient {
 
   /**
    * Signs and sends a transaction using an available session signer.
-   * @param chainId The chain ID on which to send the transaction. {@link ChainId}
+   * @param chainId The chain ID on which to send the transaction.
    * @param transactions An array of transactions to be executed atomically in a single batch. {@link Transaction}
    * @param feeOption (Optional) The selected fee option to sponsor the transaction. {@link Relayer.FeeOption}
    * @throws {TransactionError} If the transaction fails to send or confirm.
@@ -534,11 +533,7 @@ export class DappClient {
    *
    *   const txHash = await dappClient.sendTransaction(1, [transaction]);
    */
-  async sendTransaction(
-    chainId: ChainId,
-    transactions: Transaction[],
-    feeOption?: Relayer.FeeOption,
-  ): Promise<Hex.Hex> {
+  async sendTransaction(chainId: bigint, transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<Hex.Hex> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -548,7 +543,7 @@ export class DappClient {
 
   /**
    * Signs a standard message (EIP-191) using an available session signer.
-   * @param chainId The chain ID on which to sign the message. {@link ChainId}
+   * @param chainId The chain ID on which to sign the message.
    * @param message The message to sign.
    * @throws If the message cannot be signed. {@link SigningError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
@@ -566,7 +561,7 @@ export class DappClient {
    *   await dappClient.signMessage(1, message);
    * }
    */
-  async signMessage(chainId: ChainId, message: string): Promise<void> {
+  async signMessage(chainId: bigint, message: string): Promise<void> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -576,7 +571,7 @@ export class DappClient {
 
   /**
    * Signs a typed data object (EIP-712) using an available session signer.
-   * @param chainId The chain ID on which to sign the typed data. {@link ChainId}
+   * @param chainId The chain ID on which to sign the typed data.
    * @param typedData The typed data object to sign.
    * @throws If the typed data cannot be signed. {@link SigningError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
@@ -594,7 +589,7 @@ export class DappClient {
    *   await dappClient.signTypedData(1, typedData);
    * }
    */
-  async signTypedData(chainId: ChainId, typedData: TypedData): Promise<void> {
+  async signTypedData(chainId: bigint, typedData: TypedData): Promise<void> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -652,10 +647,10 @@ export class DappClient {
 
   /**
    * @private Retrieves or creates a ChainSessionManager for a given chain ID.
-   * @param chainId The chain ID to get the ChainSessionManager for. {@link ChainId}
+   * @param chainId The chain ID to get the ChainSessionManager for.
    * @returns The ChainSessionManager for the given chain ID. {@link ChainSessionManager}
    */
-  private getChainSessionManager(chainId: ChainId): ChainSessionManager {
+  private getChainSessionManager(chainId: bigint): ChainSessionManager {
     let chainSessionManager = this.chainSessionManagers.get(chainId)
     if (!chainSessionManager) {
       chainSessionManager = new ChainSessionManager(

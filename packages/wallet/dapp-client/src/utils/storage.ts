@@ -1,6 +1,5 @@
 import { Attestation } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { ChainId } from '@0xsequence/network'
 import { jsonReplacers, jsonRevivers } from './index.js'
 import {
   AddExplicitSessionPayload,
@@ -14,7 +13,7 @@ import {
 export interface ExplicitSessionData {
   pk: Hex.Hex
   walletAddress: Address.Address
-  chainId: ChainId
+  chainId: bigint
   loginMethod?: PreferredLoginMethod
   userEmail?: string
 }
@@ -24,7 +23,7 @@ export interface ImplicitSessionData {
   walletAddress: Address.Address
   attestation: Attestation.Attestation
   identitySignature: Hex.Hex
-  chainId: ChainId
+  chainId: bigint
   loginMethod?: PreferredLoginMethod
   userEmail?: string
 }
@@ -37,7 +36,7 @@ export type PendingPayload =
   | SignTypedDataPayload
 
 export interface PendingRequestContext {
-  chainId: ChainId
+  chainId: bigint
   action: string
   payload: PendingPayload
 }
