@@ -137,11 +137,13 @@ export enum ChainId {
   //MONAD_TESTNET
   MONAD_TESTNET = 10143,
 
-  //SOMNIA_TESTNET
+  //SOMNIA
   SOMNIA_TESTNET = 50312,
+  SOMNIA = 5031,
 
   // INCENTIV TESTNET
   INCENTIV_TESTNET = 11690,
+  INCENTIV_TESTNET_V2 = 28802,
 
   //SEI
   SEI = 1329,
@@ -1139,6 +1141,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     }
   },
 
+  [ChainId.INCENTIV_TESTNET_V2]: {
+    chainId: ChainId.INCENTIV_TESTNET_V2,
+    type: NetworkType.TESTNET,
+    name: 'incentiv-testnet-v2',
+    title: 'Incentiv Testnet v2',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV_TESTNET_V2}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Incentiv Testnet Explorer v2',
+      rootUrl: 'https://explorer.testnet.incentiv.net/'
+    },
+    nativeToken: {
+      symbol: 'TCENT',
+      name: 'TCENT',
+      decimals: 18
+    }
+  },
+
   [ChainId.SEI]: {
     chainId: ChainId.SEI,
     type: NetworkType.MAINNET,
@@ -1171,6 +1191,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'SEI',
       name: 'SEI',
+      decimals: 18
+    }
+  },
+
+  [ChainId.SOMNIA]: {
+    chainId: ChainId.SOMNIA,
+    type: NetworkType.MAINNET,
+    name: 'somnia',
+    title: 'Somnia',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SOMNIA}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Somnia Explorer',
+      rootUrl: 'https://mainnet.somnia.w3us.site/'
+    },
+    nativeToken: {
+      symbol: 'SOMI',
+      name: 'SOMI',
       decimals: 18
     }
   }
