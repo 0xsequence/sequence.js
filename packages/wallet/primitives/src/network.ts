@@ -28,15 +28,10 @@ export interface Network {
 export const ChainId = {
   // Ethereum
   MAINNET: 1n,
-  ROPSTEN: 3n, // network is deprecated
-  RINKEBY: 4n, // network is deprecated
-  GOERLI: 5n, // network is deprecated
-  KOVAN: 42n, // network is deprecated
   SEPOLIA: 11155111n,
 
   // Polygon
   POLYGON: 137n,
-  POLYGON_MUMBAI: 80001n, // network is deprecated
   POLYGON_ZKEVM: 1101n,
   POLYGON_AMOY: 80002n,
 
@@ -46,13 +41,10 @@ export const ChainId = {
 
   // Optimism
   OPTIMISM: 10n,
-  OPTIMISM_KOVAN: 69n, // network is deprecated
-  OPTIMISM_GOERLI: 420n, // network is deprecated
   OPTIMISM_SEPOLIA: 11155420n,
 
   // Arbitrum One
   ARBITRUM: 42161n,
-  ARBITRUM_GOERLI: 421613n, // network is deprecated
   ARBITRUM_SEPOLIA: 421614n,
 
   // Arbitrum Nova
@@ -67,7 +59,6 @@ export const ChainId = {
 
   // BASE
   BASE: 8453n,
-  BASE_GOERLI: 84531n, // network is deprecated
   BASE_SEPOLIA: 84532n,
 
   // HOMEVERSE
@@ -93,9 +84,6 @@ export const ChainId = {
   // Blast
   BLAST: 81457n,
   BLAST_SEPOLIA: 168587773n,
-
-  // Borne
-  BORNE_TESTNET: 94984n,
 
   // SKALE Nebula
   SKALE_NEBULA: 1482601649n,
@@ -165,81 +153,6 @@ export const ALL: Network[] = [
     ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
   },
   {
-    chainId: ChainId.ROPSTEN,
-    type: NetworkType.TESTNET,
-    name: 'ropsten',
-    title: 'Ropsten',
-    rpcUrl: getRpcUrl('ropsten'),
-    logoUrl: getLogoUrl(ChainId.ROPSTEN),
-    blockExplorer: {
-      name: 'Etherscan (Ropsten)',
-      url: 'https://ropsten.etherscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'roETH',
-      name: 'Ropsten Ether',
-      decimals: 18,
-    },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-    deprecated: true,
-  },
-  {
-    chainId: ChainId.RINKEBY,
-    type: NetworkType.TESTNET,
-    name: 'rinkeby',
-    title: 'Rinkeby',
-    rpcUrl: getRpcUrl('rinkeby'),
-    logoUrl: getLogoUrl(ChainId.RINKEBY),
-    blockExplorer: {
-      name: 'Etherscan (Rinkeby)',
-      url: 'https://rinkeby.etherscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'rETH',
-      name: 'Rinkeby Ether',
-      decimals: 18,
-    },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-    deprecated: true,
-  },
-  {
-    chainId: ChainId.GOERLI,
-    type: NetworkType.TESTNET,
-    name: 'goerli',
-    title: 'Goerli',
-    rpcUrl: getRpcUrl('goerli'),
-    logoUrl: getLogoUrl(ChainId.GOERLI),
-    blockExplorer: {
-      name: 'Etherscan (Goerli)',
-      url: 'https://goerli.etherscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'gETH',
-      name: 'Goerli Ether',
-      decimals: 18,
-    },
-    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-    deprecated: true,
-  },
-  {
-    chainId: ChainId.KOVAN,
-    type: NetworkType.TESTNET,
-    name: 'kovan',
-    title: 'Kovan',
-    rpcUrl: getRpcUrl('kovan'),
-    logoUrl: getLogoUrl(ChainId.KOVAN),
-    blockExplorer: {
-      name: 'Etherscan (Kovan)',
-      url: 'https://kovan.etherscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'kETH',
-      name: 'Kovan Ether',
-      decimals: 18,
-    },
-    deprecated: true,
-  },
-  {
     chainId: ChainId.SEPOLIA,
     type: NetworkType.TESTNET,
     name: 'sepolia',
@@ -272,24 +185,6 @@ export const ALL: Network[] = [
       name: 'POL',
       decimals: 18,
     },
-  },
-  {
-    chainId: ChainId.POLYGON_MUMBAI,
-    type: NetworkType.TESTNET,
-    name: 'mumbai',
-    title: 'Polygon Mumbai',
-    rpcUrl: getRpcUrl('mumbai'),
-    logoUrl: getLogoUrl(ChainId.POLYGON_MUMBAI),
-    blockExplorer: {
-      name: 'Polygonscan (Mumbai)',
-      url: 'https://mumbai.polygonscan.com/',
-    },
-    nativeCurrency: {
-      symbol: 'mMATIC',
-      name: 'Mumbai Polygon',
-      decimals: 18,
-    },
-    deprecated: true,
   },
   {
     chainId: ChainId.POLYGON_AMOY,
@@ -377,42 +272,6 @@ export const ALL: Network[] = [
     },
   },
   {
-    chainId: ChainId.OPTIMISM_KOVAN,
-    type: NetworkType.TESTNET,
-    name: 'optimism-kovan',
-    title: 'Optimism Kovan',
-    rpcUrl: getRpcUrl('optimism-kovan'),
-    logoUrl: getLogoUrl(ChainId.OPTIMISM_KOVAN),
-    blockExplorer: {
-      name: 'Etherscan (Optimism Kovan)',
-      url: 'https://kovan-optimistic.etherscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'kETH',
-      name: 'Kovan Ether',
-      decimals: 18,
-    },
-    deprecated: true,
-  },
-  {
-    chainId: ChainId.OPTIMISM_GOERLI,
-    type: NetworkType.TESTNET,
-    name: 'optimism-goerli',
-    title: 'Optimism Goerli',
-    rpcUrl: getRpcUrl('optimism-goerli'),
-    logoUrl: getLogoUrl(ChainId.OPTIMISM_GOERLI),
-    blockExplorer: {
-      name: 'Etherscan (Optimism Goerli)',
-      url: 'https://goerli-optimistic.etherscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'gETH',
-      name: 'Goerli Ether',
-      decimals: 18,
-    },
-    deprecated: true,
-  },
-  {
     chainId: ChainId.OPTIMISM_SEPOLIA,
     type: NetworkType.TESTNET,
     name: 'optimism-sepolia',
@@ -445,24 +304,6 @@ export const ALL: Network[] = [
       name: 'Ether',
       decimals: 18,
     },
-  },
-  {
-    chainId: ChainId.ARBITRUM_GOERLI,
-    type: NetworkType.TESTNET,
-    name: 'arbitrum-goerli',
-    title: 'Arbitrum Goerli',
-    rpcUrl: getRpcUrl('arbitrum-goerli'),
-    logoUrl: getLogoUrl(ChainId.ARBITRUM_GOERLI),
-    blockExplorer: {
-      name: 'Arbiscan (Goerli Testnet)',
-      url: 'https://testnet.arbiscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'gETH',
-      name: 'Goerli Ether',
-      decimals: 18,
-    },
-    deprecated: true,
   },
   {
     chainId: ChainId.ARBITRUM_SEPOLIA,
@@ -565,24 +406,6 @@ export const ALL: Network[] = [
       name: 'Ether',
       decimals: 18,
     },
-  },
-  {
-    chainId: ChainId.BASE_GOERLI,
-    type: NetworkType.TESTNET,
-    name: 'base-goerli',
-    title: 'Base Goerli',
-    rpcUrl: getRpcUrl('base-goerli'),
-    logoUrl: getLogoUrl(ChainId.BASE_GOERLI),
-    blockExplorer: {
-      name: 'Base Goerli Explorer',
-      url: 'https://goerli.basescan.org/',
-    },
-    nativeCurrency: {
-      symbol: 'gETH',
-      name: 'Goerli Ether',
-      decimals: 18,
-    },
-    deprecated: true,
   },
   {
     chainId: ChainId.BASE_SEPOLIA,
@@ -804,24 +627,6 @@ export const ALL: Network[] = [
       name: 'TLOS',
       decimals: 18,
     },
-  },
-  {
-    chainId: ChainId.BORNE_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'borne-testnet',
-    title: 'Borne Testnet',
-    rpcUrl: getRpcUrl('borne-testnet'),
-    logoUrl: getLogoUrl(ChainId.BORNE_TESTNET),
-    blockExplorer: {
-      name: 'Borne Testnet Explorer',
-      url: 'https://subnets-test.avax.network/bornegfdn',
-    },
-    nativeCurrency: {
-      symbol: 'BORNE',
-      name: 'BORNE',
-      decimals: 18,
-    },
-    deprecated: true,
   },
   {
     chainId: ChainId.SKALE_NEBULA,
