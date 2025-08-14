@@ -333,7 +333,7 @@ describe('Identity Authentication Databases', () => {
             rpcUrl: LOCAL_RPC_URL,
             chainId: 42161n,
             blockExplorer: { url: 'https://arbiscan.io' },
-            nativeToken: {
+            nativeCurrency: {
               name: 'Ether',
               symbol: 'ETH',
               decimals: 18,
@@ -368,7 +368,7 @@ describe('Identity Authentication Databases', () => {
             rpcUrl: LOCAL_RPC_URL,
             chainId: 42161n,
             blockExplorer: { url: 'https://arbiscan.io' },
-            nativeToken: {
+            nativeCurrency: {
               name: 'Ether',
               symbol: 'ETH',
               decimals: 18,
@@ -402,7 +402,7 @@ describe('Identity Authentication Databases', () => {
             rpcUrl: LOCAL_RPC_URL,
             chainId: 42161n,
             blockExplorer: { url: 'https://arbiscan.io' },
-            nativeToken: {
+            nativeCurrency: {
               name: 'Ether',
               symbol: 'ETH',
               decimals: 18,

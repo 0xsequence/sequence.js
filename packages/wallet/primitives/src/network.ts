@@ -16,7 +16,7 @@ export interface Network {
   rpcUrl: string
   logoUrl?: string
   blockExplorer?: BlockExplorerConfig
-  nativeToken: {
+  nativeCurrency: {
     symbol: string
     name: string
     decimals: number
@@ -157,7 +157,7 @@ export const ALL: Network[] = [
       name: 'Etherscan',
       url: 'https://etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -175,7 +175,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Ropsten)',
       url: 'https://ropsten.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'roETH',
       name: 'Ropsten Ether',
       decimals: 18,
@@ -194,7 +194,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Rinkeby)',
       url: 'https://rinkeby.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'rETH',
       name: 'Rinkeby Ether',
       decimals: 18,
@@ -213,7 +213,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Goerli)',
       url: 'https://goerli.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'gETH',
       name: 'Goerli Ether',
       decimals: 18,
@@ -232,7 +232,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Kovan)',
       url: 'https://kovan.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'kETH',
       name: 'Kovan Ether',
       decimals: 18,
@@ -250,7 +250,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Sepolia)',
       url: 'https://sepolia.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'sETH',
       name: 'Sepolia Ether',
       decimals: 18,
@@ -267,7 +267,7 @@ export const ALL: Network[] = [
       name: 'Polygonscan',
       url: 'https://polygonscan.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'POL',
       name: 'POL',
       decimals: 18,
@@ -284,7 +284,7 @@ export const ALL: Network[] = [
       name: 'Polygonscan (Mumbai)',
       url: 'https://mumbai.polygonscan.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'mMATIC',
       name: 'Mumbai Polygon',
       decimals: 18,
@@ -302,7 +302,7 @@ export const ALL: Network[] = [
       name: 'OKLink (Amoy)',
       url: 'https://www.oklink.com/amoy/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'aPOL',
       name: 'Amoy POL',
       decimals: 18,
@@ -319,7 +319,7 @@ export const ALL: Network[] = [
       name: 'Polygonscan (zkEVM)',
       url: 'https://zkevm.polygonscan.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -336,7 +336,7 @@ export const ALL: Network[] = [
       name: 'BSCScan',
       url: 'https://bscscan.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'BNB',
       name: 'BNB',
       decimals: 18,
@@ -353,7 +353,7 @@ export const ALL: Network[] = [
       name: 'BSCScan (Testnet)',
       url: 'https://testnet.bscscan.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'tBNB',
       name: 'Testnet BNB',
       decimals: 18,
@@ -370,7 +370,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Optimism)',
       url: 'https://optimistic.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -387,7 +387,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Optimism Kovan)',
       url: 'https://kovan-optimistic.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'kETH',
       name: 'Kovan Ether',
       decimals: 18,
@@ -405,7 +405,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Optimism Goerli)',
       url: 'https://goerli-optimistic.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'gETH',
       name: 'Goerli Ether',
       decimals: 18,
@@ -423,7 +423,7 @@ export const ALL: Network[] = [
       name: 'Etherscan (Optimism Sepolia)',
       url: 'https://sepolia-optimistic.etherscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'sETH',
       name: 'Sepolia Ether',
       decimals: 18,
@@ -440,7 +440,7 @@ export const ALL: Network[] = [
       name: 'Arbiscan',
       url: 'https://arbiscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -457,7 +457,7 @@ export const ALL: Network[] = [
       name: 'Arbiscan (Goerli Testnet)',
       url: 'https://testnet.arbiscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'gETH',
       name: 'Goerli Ether',
       decimals: 18,
@@ -475,7 +475,7 @@ export const ALL: Network[] = [
       name: 'Arbiscan (Sepolia Testnet)',
       url: 'https://sepolia.arbiscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'sETH',
       name: 'Sepolia Ether',
       decimals: 18,
@@ -492,7 +492,7 @@ export const ALL: Network[] = [
       name: 'Arbiscan Nova',
       url: 'https://nova.arbiscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -509,7 +509,7 @@ export const ALL: Network[] = [
       name: 'Snowtrace',
       url: 'https://subnets.avax.network/c-chain/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'AVAX',
       name: 'AVAX',
       decimals: 18,
@@ -526,7 +526,7 @@ export const ALL: Network[] = [
       name: 'Snowtrace (Testnet)',
       url: 'https://subnets-test.avax.network/c-chain/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'tAVAX',
       name: 'Testnet AVAX',
       decimals: 18,
@@ -543,7 +543,7 @@ export const ALL: Network[] = [
       name: 'Gnosis Chain Explorer',
       url: 'https://blockscout.com/xdai/mainnet/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'XDAI',
       name: 'XDAI',
       decimals: 18,
@@ -560,7 +560,7 @@ export const ALL: Network[] = [
       name: 'Base Explorer',
       url: 'https://basescan.org/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -577,7 +577,7 @@ export const ALL: Network[] = [
       name: 'Base Goerli Explorer',
       url: 'https://goerli.basescan.org/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'gETH',
       name: 'Goerli Ether',
       decimals: 18,
@@ -595,7 +595,7 @@ export const ALL: Network[] = [
       name: 'Base Sepolia Explorer',
       url: 'https://base-sepolia.blockscout.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'sETH',
       name: 'Sepolia Ether',
       decimals: 18,
@@ -612,7 +612,7 @@ export const ALL: Network[] = [
       name: 'Oasys Homeverse Explorer',
       url: 'https://explorer.oasys.homeverse.games/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'OAS',
       name: 'OAS',
       decimals: 18,
@@ -629,7 +629,7 @@ export const ALL: Network[] = [
       name: 'Oasys Homeverse Explorer (Testnet)',
       url: 'https://explorer.testnet.oasys.homeverse.games/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'tOAS',
       name: 'Testnet OAS',
       decimals: 18,
@@ -646,7 +646,7 @@ export const ALL: Network[] = [
       name: 'Xai Explorer',
       url: 'https://explorer.xai-chain.net/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'XAI',
       name: 'XAI',
       decimals: 18,
@@ -663,7 +663,7 @@ export const ALL: Network[] = [
       name: 'Xai Sepolia Explorer',
       url: 'https://testnet-explorer-v2.xai-chain.net/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'sXAI',
       name: 'Sepolia XAI',
       decimals: 18,
@@ -680,7 +680,7 @@ export const ALL: Network[] = [
       name: 'B3 Explorer',
       url: 'https://explorer.b3.fun/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -697,7 +697,7 @@ export const ALL: Network[] = [
       name: 'B3 Sepolia Explorer',
       url: 'https://sepolia.explorer.b3.fun/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -714,7 +714,7 @@ export const ALL: Network[] = [
       name: 'APE Chain Explorer',
       url: 'https://apechain.calderaexplorer.xyz/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'APE',
       name: 'ApeCoin',
       decimals: 18,
@@ -731,7 +731,7 @@ export const ALL: Network[] = [
       name: 'APE Chain Explorer',
       url: 'https://curtis.explorer.caldera.xyz/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'APE',
       name: 'ApeCoin',
       decimals: 18,
@@ -748,7 +748,7 @@ export const ALL: Network[] = [
       name: 'Blast Explorer',
       url: 'https://blastscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -765,7 +765,7 @@ export const ALL: Network[] = [
       name: 'Blast Sepolia Explorer',
       url: 'https://sepolia.blastexplorer.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -782,7 +782,7 @@ export const ALL: Network[] = [
       name: 'Telos Explorer',
       url: 'https://explorer.telos.net/network/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'TLOS',
       name: 'TLOS',
       decimals: 18,
@@ -799,7 +799,7 @@ export const ALL: Network[] = [
       name: 'Telos Testnet Explorer',
       url: 'https://explorer-test.telos.net/network',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'TLOS',
       name: 'TLOS',
       decimals: 18,
@@ -816,7 +816,7 @@ export const ALL: Network[] = [
       name: 'Borne Testnet Explorer',
       url: 'https://subnets-test.avax.network/bornegfdn',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'BORNE',
       name: 'BORNE',
       decimals: 18,
@@ -834,7 +834,7 @@ export const ALL: Network[] = [
       name: 'SKALE Nebula Gaming Hub Explorer',
       url: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'sFUEL',
       name: 'SKALE Fuel',
       decimals: 18,
@@ -851,7 +851,7 @@ export const ALL: Network[] = [
       name: 'SKALE Nebula Gaming Hub Testnet Explorer',
       url: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'sFUEL',
       name: 'SKALE Fuel',
       decimals: 18,
@@ -868,7 +868,7 @@ export const ALL: Network[] = [
       name: 'Soneium Explorer',
       url: 'https://soneium.blockscout.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -885,7 +885,7 @@ export const ALL: Network[] = [
       name: 'Soneium Minato Explorer',
       url: 'https://explorer-testnet.soneium.org/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18,
@@ -902,7 +902,7 @@ export const ALL: Network[] = [
       name: 'TOY Testnet Explorer',
       url: 'https://toy-chain-testnet.explorer.caldera.xyz/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'TOY',
       name: 'TOY',
       decimals: 18,
@@ -919,7 +919,7 @@ export const ALL: Network[] = [
       name: 'Immutable zkEVM Explorer',
       url: 'https://explorer.immutable.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'IMX',
       name: 'IMX',
       decimals: 18,
@@ -936,7 +936,7 @@ export const ALL: Network[] = [
       name: 'Immutable zkEVM Testnet Explorer',
       url: 'https://explorer.testnet.immutable.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'IMX',
       name: 'IMX',
       decimals: 18,
@@ -953,7 +953,7 @@ export const ALL: Network[] = [
       name: 'The Root Network Explorer',
       url: 'https://rootscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'XRP',
       name: 'XRP',
       decimals: 18,
@@ -970,7 +970,7 @@ export const ALL: Network[] = [
       name: 'The Root Network Porcini Testnet Explorer',
       url: 'https://porcini.rootscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'XRP',
       name: 'XRP',
       decimals: 18,
@@ -987,7 +987,7 @@ export const ALL: Network[] = [
       name: 'LAOS Explorer',
       url: 'https://blockscout.laos.laosfoundation.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'LAOS',
       name: 'LAOS',
       decimals: 18,
@@ -1004,7 +1004,7 @@ export const ALL: Network[] = [
       name: 'LAOS Sigma Testnet Explorer',
       url: 'https://sigma.explorer.laosnetwork.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'SIGMA',
       name: 'SIGMA',
       decimals: 18,
@@ -1021,7 +1021,7 @@ export const ALL: Network[] = [
       name: 'Moonscan',
       url: 'https://moonscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'GLMR',
       name: 'GLMR',
       decimals: 18,
@@ -1038,7 +1038,7 @@ export const ALL: Network[] = [
       name: 'Moonscan (Moonbase Alpha)',
       url: 'https://moonbase.moonscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'GLMR',
       name: 'GLMR',
       decimals: 18,
@@ -1055,7 +1055,7 @@ export const ALL: Network[] = [
       name: 'Etherlink Explorer',
       url: 'https://explorer.etherlink.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'XTZ',
       name: 'Tez',
       decimals: 18,
@@ -1072,7 +1072,7 @@ export const ALL: Network[] = [
       name: 'Etherlink Testnet Explorer',
       url: 'https://testnet.explorer.etherlink.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'XTZ',
       name: 'Tez',
       decimals: 18,
@@ -1089,7 +1089,7 @@ export const ALL: Network[] = [
       name: 'Monad Testnet Explorer',
       url: 'https://testnet.monadexplorer.com/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'MON',
       name: 'MON',
       decimals: 18,
@@ -1107,7 +1107,7 @@ export const ALL: Network[] = [
       name: 'Somnia Testnet Explorer',
       url: 'https://somnia-testnet.socialscan.io/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'STT',
       name: 'STT',
       decimals: 18,
@@ -1125,7 +1125,7 @@ export const ALL: Network[] = [
       name: 'Incentiv Testnet Explorer',
       url: 'https://explorer.testnet.incentiv.net/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'CENT',
       name: 'CENT',
       decimals: 18,
@@ -1143,7 +1143,7 @@ export const ALL: Network[] = [
       name: 'SEI Explorer',
       url: 'https://seitrace.com/?chain=pacific-1',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'SEI',
       name: 'SEI',
       decimals: 18,
@@ -1161,7 +1161,7 @@ export const ALL: Network[] = [
       name: 'Sei Testnet Explorer',
       url: 'https://seitrace.com/?chain=atlantic-2',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'SEI',
       name: 'SEI',
       decimals: 18,
@@ -1179,7 +1179,7 @@ export const ALL: Network[] = [
       name: 'Somnia Explorer',
       url: 'https://mainnet.somnia.w3us.site/',
     },
-    nativeToken: {
+    nativeCurrency: {
       symbol: 'SOMI',
       name: 'SOMI',
       decimals: 18,
@@ -1199,6 +1199,6 @@ export function getNetworkFromName(networkName: string): Network | undefined {
   return ALL.find((network) => network.name === networkName)
 }
 
-export function getNetworkFromChainId(chainId: ChainId | bigint | number): Network | undefined {
+export function getNetworkFromChainId(chainId: ChainId | bigint | number | string): Network | undefined {
   return ALL.find((network) => network.chainId === BigInt(chainId))
 }

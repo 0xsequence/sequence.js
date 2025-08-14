@@ -85,7 +85,7 @@ describe('Sessions (via Manager)', () => {
           rpcUrl: RPC_URL ?? 'XXX',
           name: 'XXX',
           blockExplorer: { url: 'XXX' },
-          nativeToken: {
+          nativeCurrency: {
             name: 'Ether',
             symbol: 'ETH',
             decimals: 18,

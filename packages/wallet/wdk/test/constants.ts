@@ -42,7 +42,7 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
         rpcUrl: LOCAL_RPC_URL,
         chainId: 42161n,
         blockExplorer: { url: 'https://arbiscan.io/' },
-        nativeToken: {
+        nativeCurrency: {
           name: 'Ether',
           symbol: 'ETH',
           decimals: 18,
@@ -115,7 +115,7 @@ export function newRemoteManager(
         rpcUrl: remoteManagerOptions.network.rpcUrl,
         chainId: remoteManagerOptions.network.chainId,
         blockExplorer: { url: 'https://undefined/' },
-        nativeToken: {
+        nativeCurrency: {
           name: 'Ether',
           symbol: 'ETH',
           decimals: 18,
