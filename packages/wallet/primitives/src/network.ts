@@ -1,630 +1,1009 @@
-export type Network = {
-  name: string
-  rpc: string
-  chainId: bigint
-  explorer: string
-  nativeCurrency: {
-    name: string
-    symbol: string
-    decimals: number
-  }
+export enum NetworkType {
+  MAINNET = 'mainnet',
+  TESTNET = 'testnet',
 }
 
-// Helper function to create RPC URL for a network
+export type BlockExplorerConfig = {
+  name?: string
+  url: string
+}
+
+export interface Network {
+  chainId: bigint
+  type: NetworkType
+  name: string
+  title?: string
+  rpcUrl: string
+  logoUrl?: string
+  blockExplorer?: BlockExplorerConfig
+  nativeCurrency: {
+    symbol: string
+    name: string
+    decimals: number
+  }
+  ensAddress?: string
+  deprecated?: true
+}
+
+export const ChainId = {
+  // Ethereum
+  MAINNET: 1n,
+  SEPOLIA: 11155111n,
+
+  // Polygon
+  POLYGON: 137n,
+  POLYGON_ZKEVM: 1101n,
+  POLYGON_AMOY: 80002n,
+
+  // BSC
+  BSC: 56n,
+  BSC_TESTNET: 97n,
+
+  // Optimism
+  OPTIMISM: 10n,
+  OPTIMISM_SEPOLIA: 11155420n,
+
+  // Arbitrum One
+  ARBITRUM: 42161n,
+  ARBITRUM_SEPOLIA: 421614n,
+
+  // Arbitrum Nova
+  ARBITRUM_NOVA: 42170n,
+
+  // Avalanche
+  AVALANCHE: 43114n,
+  AVALANCHE_TESTNET: 43113n,
+
+  // Gnosis Chain (XDAI)
+  GNOSIS: 100n,
+
+  // BASE
+  BASE: 8453n,
+  BASE_SEPOLIA: 84532n,
+
+  // HOMEVERSE
+  HOMEVERSE_TESTNET: 40875n,
+  HOMEVERSE: 19011n,
+
+  // Xai
+  XAI: 660279n,
+  XAI_SEPOLIA: 37714555429n,
+
+  // TELOS
+  TELOS: 40n,
+  TELOS_TESTNET: 41n,
+
+  // B3 Sepolia
+  B3: 8333n,
+  B3_SEPOLIA: 1993n,
+
+  // APE Chain
+  APECHAIN: 33139n,
+  APECHAIN_TESTNET: 33111n,
+
+  // Blast
+  BLAST: 81457n,
+  BLAST_SEPOLIA: 168587773n,
+
+  // SKALE Nebula
+  SKALE_NEBULA: 1482601649n,
+  SKALE_NEBULA_TESTNET: 37084624n,
+
+  // Soneium Minato
+  SONEIUM_MINATO: 1946n,
+  SONEIUM: 1868n,
+
+  // TOY Testnet
+  TOY_TESTNET: 21000000n,
+
+  // Immutable zkEVM
+  IMMUTABLE_ZKEVM: 13371n,
+  IMMUTABLE_ZKEVM_TESTNET: 13473n,
+
+  // The Root Network
+  ROOT_NETWORK: 7668n,
+  ROOT_NETWORK_PORCINI: 7672n,
+
+  // LAOS
+  LAOS: 6283n,
+  LAOS_SIGMA_TESTNET: 62850n,
+
+  // ETHERLINK
+  ETHERLINK: 42793n,
+  ETHERLINK_TESTNET: 128123n,
+
+  // MOONBEAM
+  MOONBEAM: 1284n,
+  MOONBASE_ALPHA: 1287n,
+
+  // MONAD
+  MONAD_TESTNET: 10143n,
+
+  // SOMNIA
+  SOMNIA_TESTNET: 50312n,
+  SOMNIA: 5031n,
+
+  // INCENTIV
+  INCENTIV_TESTNET: 11690n,
+
+  // SEI
+  SEI: 1329n,
+  SEI_TESTNET: 1328n,
+} as const
+
+export type ChainId = (typeof ChainId)[keyof typeof ChainId]
+
+export const ALL: Network[] = [
+  {
+    chainId: ChainId.MAINNET,
+    type: NetworkType.MAINNET,
+    name: 'mainnet',
+    title: 'Ethereum',
+    rpcUrl: getRpcUrl('mainnet'),
+    logoUrl: getLogoUrl(ChainId.MAINNET),
+    blockExplorer: {
+      name: 'Etherscan',
+      url: 'https://etherscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+    ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+  },
+  {
+    chainId: ChainId.SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'sepolia',
+    title: 'Sepolia',
+    rpcUrl: getRpcUrl('sepolia'),
+    logoUrl: getLogoUrl(ChainId.SEPOLIA),
+    blockExplorer: {
+      name: 'Etherscan (Sepolia)',
+      url: 'https://sepolia.etherscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.POLYGON,
+    type: NetworkType.MAINNET,
+    name: 'polygon',
+    title: 'Polygon',
+    rpcUrl: getRpcUrl('polygon'),
+    logoUrl: getLogoUrl(ChainId.POLYGON),
+    blockExplorer: {
+      name: 'Polygonscan',
+      url: 'https://polygonscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'POL',
+      name: 'POL',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.POLYGON_AMOY,
+    type: NetworkType.TESTNET,
+    name: 'amoy',
+    title: 'Polygon Amoy',
+    rpcUrl: getRpcUrl('amoy'),
+    logoUrl: getLogoUrl(ChainId.POLYGON_AMOY),
+    blockExplorer: {
+      name: 'OKLink (Amoy)',
+      url: 'https://www.oklink.com/amoy/',
+    },
+    nativeCurrency: {
+      symbol: 'aPOL',
+      name: 'Amoy POL',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.POLYGON_ZKEVM,
+    type: NetworkType.MAINNET,
+    name: 'polygon-zkevm',
+    title: 'Polygon zkEVM',
+    rpcUrl: getRpcUrl('polygon-zkevm'),
+    logoUrl: getLogoUrl(ChainId.POLYGON_ZKEVM),
+    blockExplorer: {
+      name: 'Polygonscan (zkEVM)',
+      url: 'https://zkevm.polygonscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.BSC,
+    type: NetworkType.MAINNET,
+    name: 'bsc',
+    title: 'BNB Smart Chain',
+    rpcUrl: getRpcUrl('bsc'),
+    logoUrl: getLogoUrl(ChainId.BSC),
+    blockExplorer: {
+      name: 'BSCScan',
+      url: 'https://bscscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'BNB',
+      name: 'BNB',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.BSC_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'bsc-testnet',
+    title: 'BNB Smart Chain Testnet',
+    rpcUrl: getRpcUrl('bsc-testnet'),
+    logoUrl: getLogoUrl(ChainId.BSC_TESTNET),
+    blockExplorer: {
+      name: 'BSCScan (Testnet)',
+      url: 'https://testnet.bscscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'tBNB',
+      name: 'Testnet BNB',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.OPTIMISM,
+    type: NetworkType.MAINNET,
+    name: 'optimism',
+    title: 'Optimism',
+    rpcUrl: getRpcUrl('optimism'),
+    logoUrl: getLogoUrl(ChainId.OPTIMISM),
+    blockExplorer: {
+      name: 'Etherscan (Optimism)',
+      url: 'https://optimistic.etherscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.OPTIMISM_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'optimism-sepolia',
+    title: 'Optimism Sepolia',
+    rpcUrl: getRpcUrl('optimism-sepolia'),
+    logoUrl: getLogoUrl(ChainId.OPTIMISM_SEPOLIA),
+    blockExplorer: {
+      name: 'Etherscan (Optimism Sepolia)',
+      url: 'https://sepolia-optimistic.etherscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.ARBITRUM,
+    type: NetworkType.MAINNET,
+    name: 'arbitrum',
+    title: 'Arbitrum One',
+    rpcUrl: getRpcUrl('arbitrum'),
+    logoUrl: getLogoUrl(ChainId.ARBITRUM),
+    blockExplorer: {
+      name: 'Arbiscan',
+      url: 'https://arbiscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.ARBITRUM_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'arbitrum-sepolia',
+    title: 'Arbitrum Sepolia',
+    rpcUrl: getRpcUrl('arbitrum-sepolia'),
+    logoUrl: getLogoUrl(ChainId.ARBITRUM_SEPOLIA),
+    blockExplorer: {
+      name: 'Arbiscan (Sepolia Testnet)',
+      url: 'https://sepolia.arbiscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.ARBITRUM_NOVA,
+    type: NetworkType.MAINNET,
+    name: 'arbitrum-nova',
+    title: 'Arbitrum Nova',
+    rpcUrl: getRpcUrl('arbitrum-nova'),
+    logoUrl: getLogoUrl(ChainId.ARBITRUM_NOVA),
+    blockExplorer: {
+      name: 'Arbiscan Nova',
+      url: 'https://nova.arbiscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.AVALANCHE,
+    type: NetworkType.MAINNET,
+    name: 'avalanche',
+    title: 'Avalanche',
+    rpcUrl: getRpcUrl('avalanche'),
+    logoUrl: getLogoUrl(ChainId.AVALANCHE),
+    blockExplorer: {
+      name: 'Snowtrace',
+      url: 'https://subnets.avax.network/c-chain/',
+    },
+    nativeCurrency: {
+      symbol: 'AVAX',
+      name: 'AVAX',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.AVALANCHE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'avalanche-testnet',
+    title: 'Avalanche Testnet',
+    rpcUrl: getRpcUrl('avalanche-testnet'),
+    logoUrl: getLogoUrl(ChainId.AVALANCHE_TESTNET),
+    blockExplorer: {
+      name: 'Snowtrace (Testnet)',
+      url: 'https://subnets-test.avax.network/c-chain/',
+    },
+    nativeCurrency: {
+      symbol: 'tAVAX',
+      name: 'Testnet AVAX',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.GNOSIS,
+    type: NetworkType.MAINNET,
+    name: 'gnosis',
+    title: 'Gnosis Chain',
+    rpcUrl: getRpcUrl('gnosis'),
+    logoUrl: getLogoUrl(ChainId.GNOSIS),
+    blockExplorer: {
+      name: 'Gnosis Chain Explorer',
+      url: 'https://blockscout.com/xdai/mainnet/',
+    },
+    nativeCurrency: {
+      symbol: 'XDAI',
+      name: 'XDAI',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.BASE,
+    type: NetworkType.MAINNET,
+    name: 'base',
+    title: 'Base (Coinbase)',
+    rpcUrl: getRpcUrl('base'),
+    logoUrl: getLogoUrl(ChainId.BASE),
+    blockExplorer: {
+      name: 'Base Explorer',
+      url: 'https://basescan.org/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.BASE_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'base-sepolia',
+    title: 'Base Sepolia',
+    rpcUrl: getRpcUrl('base-sepolia'),
+    logoUrl: getLogoUrl(ChainId.BASE_SEPOLIA),
+    blockExplorer: {
+      name: 'Base Sepolia Explorer',
+      url: 'https://base-sepolia.blockscout.com/',
+    },
+    nativeCurrency: {
+      symbol: 'sETH',
+      name: 'Sepolia Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.HOMEVERSE,
+    type: NetworkType.MAINNET,
+    name: 'homeverse',
+    title: 'Oasys Homeverse',
+    rpcUrl: getRpcUrl('homeverse'),
+    logoUrl: getLogoUrl(ChainId.HOMEVERSE),
+    blockExplorer: {
+      name: 'Oasys Homeverse Explorer',
+      url: 'https://explorer.oasys.homeverse.games/',
+    },
+    nativeCurrency: {
+      symbol: 'OAS',
+      name: 'OAS',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.HOMEVERSE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'homeverse-testnet',
+    title: 'Oasys Homeverse Testnet',
+    rpcUrl: getRpcUrl('homeverse-testnet'),
+    logoUrl: getLogoUrl(ChainId.HOMEVERSE_TESTNET),
+    blockExplorer: {
+      name: 'Oasys Homeverse Explorer (Testnet)',
+      url: 'https://explorer.testnet.oasys.homeverse.games/',
+    },
+    nativeCurrency: {
+      symbol: 'tOAS',
+      name: 'Testnet OAS',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.XAI,
+    type: NetworkType.MAINNET,
+    name: 'xai',
+    title: 'Xai',
+    rpcUrl: getRpcUrl('xai'),
+    logoUrl: getLogoUrl(ChainId.XAI),
+    blockExplorer: {
+      name: 'Xai Explorer',
+      url: 'https://explorer.xai-chain.net/',
+    },
+    nativeCurrency: {
+      symbol: 'XAI',
+      name: 'XAI',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.XAI_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'xai-sepolia',
+    title: 'Xai Sepolia',
+    rpcUrl: getRpcUrl('xai-sepolia'),
+    logoUrl: getLogoUrl(ChainId.XAI_SEPOLIA),
+    blockExplorer: {
+      name: 'Xai Sepolia Explorer',
+      url: 'https://testnet-explorer-v2.xai-chain.net/',
+    },
+    nativeCurrency: {
+      symbol: 'sXAI',
+      name: 'Sepolia XAI',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.B3,
+    type: NetworkType.MAINNET,
+    name: 'b3',
+    title: 'B3',
+    rpcUrl: getRpcUrl('b3'),
+    logoUrl: getLogoUrl(ChainId.B3),
+    blockExplorer: {
+      name: 'B3 Explorer',
+      url: 'https://explorer.b3.fun/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.B3_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'b3-sepolia',
+    title: 'B3 Sepolia',
+    rpcUrl: getRpcUrl('b3-sepolia'),
+    logoUrl: getLogoUrl(ChainId.B3_SEPOLIA),
+    blockExplorer: {
+      name: 'B3 Sepolia Explorer',
+      url: 'https://sepolia.explorer.b3.fun/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.APECHAIN,
+    type: NetworkType.MAINNET,
+    name: 'apechain',
+    title: 'APE Chain',
+    rpcUrl: getRpcUrl('apechain'),
+    logoUrl: getLogoUrl(ChainId.APECHAIN),
+    blockExplorer: {
+      name: 'APE Chain Explorer',
+      url: 'https://apechain.calderaexplorer.xyz/',
+    },
+    nativeCurrency: {
+      symbol: 'APE',
+      name: 'ApeCoin',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.APECHAIN_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'apechain-testnet',
+    title: 'APE Chain Testnet',
+    rpcUrl: getRpcUrl('apechain-testnet'),
+    logoUrl: getLogoUrl(ChainId.APECHAIN_TESTNET),
+    blockExplorer: {
+      name: 'APE Chain Explorer',
+      url: 'https://curtis.explorer.caldera.xyz/',
+    },
+    nativeCurrency: {
+      symbol: 'APE',
+      name: 'ApeCoin',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.BLAST,
+    type: NetworkType.MAINNET,
+    name: 'blast',
+    title: 'Blast',
+    rpcUrl: getRpcUrl('blast'),
+    logoUrl: getLogoUrl(ChainId.BLAST),
+    blockExplorer: {
+      name: 'Blast Explorer',
+      url: 'https://blastscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.BLAST_SEPOLIA,
+    type: NetworkType.TESTNET,
+    name: 'blast-sepolia',
+    title: 'Blast Sepolia',
+    rpcUrl: getRpcUrl('blast-sepolia'),
+    logoUrl: getLogoUrl(ChainId.BLAST_SEPOLIA),
+    blockExplorer: {
+      name: 'Blast Sepolia Explorer',
+      url: 'https://sepolia.blastexplorer.io/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.TELOS,
+    type: NetworkType.MAINNET,
+    name: 'telos',
+    title: 'Telos',
+    rpcUrl: getRpcUrl('telos'),
+    logoUrl: getLogoUrl(ChainId.TELOS),
+    blockExplorer: {
+      name: 'Telos Explorer',
+      url: 'https://explorer.telos.net/network/',
+    },
+    nativeCurrency: {
+      symbol: 'TLOS',
+      name: 'TLOS',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.TELOS_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'telos-testnet',
+    title: 'Telos Testnet',
+    rpcUrl: getRpcUrl('telos-testnet'),
+    logoUrl: getLogoUrl(ChainId.TELOS_TESTNET),
+    blockExplorer: {
+      name: 'Telos Testnet Explorer',
+      url: 'https://explorer-test.telos.net/network',
+    },
+    nativeCurrency: {
+      symbol: 'TLOS',
+      name: 'TLOS',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.SKALE_NEBULA,
+    type: NetworkType.MAINNET,
+    name: 'skale-nebula',
+    title: 'SKALE Nebula Gaming Hub',
+    rpcUrl: getRpcUrl('skale-nebula'),
+    logoUrl: getLogoUrl(ChainId.SKALE_NEBULA),
+    blockExplorer: {
+      name: 'SKALE Nebula Gaming Hub Explorer',
+      url: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/',
+    },
+    nativeCurrency: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.SKALE_NEBULA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-nebula-testnet',
+    title: 'SKALE Nebula Gaming Hub Testnet',
+    rpcUrl: getRpcUrl('skale-nebula-testnet'),
+    logoUrl: getLogoUrl(ChainId.SKALE_NEBULA_TESTNET),
+    blockExplorer: {
+      name: 'SKALE Nebula Gaming Hub Testnet Explorer',
+      url: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/',
+    },
+    nativeCurrency: {
+      symbol: 'sFUEL',
+      name: 'SKALE Fuel',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.SONEIUM,
+    type: NetworkType.MAINNET,
+    name: 'soneium',
+    title: 'Soneium',
+    rpcUrl: getRpcUrl('soneium'),
+    logoUrl: getLogoUrl(ChainId.SONEIUM),
+    blockExplorer: {
+      name: 'Soneium Explorer',
+      url: 'https://soneium.blockscout.com/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.SONEIUM_MINATO,
+    type: NetworkType.TESTNET,
+    name: 'soneium-minato',
+    title: 'Soneium Minato (Testnet)',
+    rpcUrl: getRpcUrl('soneium-minato'),
+    logoUrl: getLogoUrl(ChainId.SONEIUM_MINATO),
+    blockExplorer: {
+      name: 'Soneium Minato Explorer',
+      url: 'https://explorer-testnet.soneium.org/',
+    },
+    nativeCurrency: {
+      symbol: 'ETH',
+      name: 'Ether',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.TOY_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'toy-testnet',
+    title: 'TOY (Testnet)',
+    rpcUrl: getRpcUrl('toy-testnet'),
+    logoUrl: getLogoUrl(ChainId.TOY_TESTNET),
+    blockExplorer: {
+      name: 'TOY Testnet Explorer',
+      url: 'https://toy-chain-testnet.explorer.caldera.xyz/',
+    },
+    nativeCurrency: {
+      symbol: 'TOY',
+      name: 'TOY',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.IMMUTABLE_ZKEVM,
+    type: NetworkType.MAINNET,
+    name: 'immutable-zkevm',
+    title: 'Immutable zkEVM',
+    rpcUrl: getRpcUrl('immutable-zkevm'),
+    logoUrl: getLogoUrl(ChainId.IMMUTABLE_ZKEVM),
+    blockExplorer: {
+      name: 'Immutable zkEVM Explorer',
+      url: 'https://explorer.immutable.com/',
+    },
+    nativeCurrency: {
+      symbol: 'IMX',
+      name: 'IMX',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.IMMUTABLE_ZKEVM_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'immutable-zkevm-testnet',
+    title: 'Immutable zkEVM Testnet',
+    rpcUrl: getRpcUrl('immutable-zkevm-testnet'),
+    logoUrl: getLogoUrl(ChainId.IMMUTABLE_ZKEVM_TESTNET),
+    blockExplorer: {
+      name: 'Immutable zkEVM Testnet Explorer',
+      url: 'https://explorer.testnet.immutable.com/',
+    },
+    nativeCurrency: {
+      symbol: 'IMX',
+      name: 'IMX',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.ROOT_NETWORK,
+    type: NetworkType.MAINNET,
+    name: 'rootnet',
+    title: 'The Root Network',
+    rpcUrl: getRpcUrl('rootnet'),
+    logoUrl: getLogoUrl(ChainId.ROOT_NETWORK),
+    blockExplorer: {
+      name: 'The Root Network Explorer',
+      url: 'https://rootscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'XRP',
+      name: 'XRP',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.ROOT_NETWORK_PORCINI,
+    type: NetworkType.TESTNET,
+    name: 'rootnet-porcini',
+    title: 'The Root Network Porcini Testnet',
+    rpcUrl: getRpcUrl('rootnet-porcini'),
+    logoUrl: getLogoUrl(ChainId.ROOT_NETWORK_PORCINI),
+    blockExplorer: {
+      name: 'The Root Network Porcini Testnet Explorer',
+      url: 'https://porcini.rootscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'XRP',
+      name: 'XRP',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.LAOS,
+    type: NetworkType.MAINNET,
+    name: 'laos',
+    title: 'LAOS',
+    rpcUrl: getRpcUrl('laos'),
+    logoUrl: getLogoUrl(ChainId.LAOS),
+    blockExplorer: {
+      name: 'LAOS Explorer',
+      url: 'https://blockscout.laos.laosfoundation.io/',
+    },
+    nativeCurrency: {
+      symbol: 'LAOS',
+      name: 'LAOS',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.LAOS_SIGMA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'laos-sigma-testnet',
+    title: 'LAOS Sigma Testnet',
+    rpcUrl: getRpcUrl('laos-sigma-testnet'),
+    logoUrl: getLogoUrl(ChainId.LAOS_SIGMA_TESTNET),
+    blockExplorer: {
+      name: 'LAOS Sigma Testnet Explorer',
+      url: 'https://sigma.explorer.laosnetwork.io/',
+    },
+    nativeCurrency: {
+      symbol: 'SIGMA',
+      name: 'SIGMA',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.MOONBEAM,
+    type: NetworkType.MAINNET,
+    name: 'moonbeam',
+    title: 'Moonbeam',
+    rpcUrl: getRpcUrl('moonbeam'),
+    logoUrl: getLogoUrl(ChainId.MOONBEAM),
+    blockExplorer: {
+      name: 'Moonscan',
+      url: 'https://moonscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'GLMR',
+      name: 'GLMR',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.MOONBASE_ALPHA,
+    type: NetworkType.TESTNET,
+    name: 'moonbase-alpha',
+    title: 'Moonbase Alpha',
+    rpcUrl: getRpcUrl('moonbase-alpha'),
+    logoUrl: getLogoUrl(ChainId.MOONBASE_ALPHA),
+    blockExplorer: {
+      name: 'Moonscan (Moonbase Alpha)',
+      url: 'https://moonbase.moonscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'GLMR',
+      name: 'GLMR',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.ETHERLINK,
+    type: NetworkType.MAINNET,
+    name: 'etherlink',
+    title: 'Etherlink',
+    rpcUrl: getRpcUrl('etherlink'),
+    logoUrl: getLogoUrl(ChainId.ETHERLINK),
+    blockExplorer: {
+      name: 'Etherlink Explorer',
+      url: 'https://explorer.etherlink.com/',
+    },
+    nativeCurrency: {
+      symbol: 'XTZ',
+      name: 'Tez',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.ETHERLINK_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'etherlink-testnet',
+    title: 'Etherlink Testnet',
+    rpcUrl: getRpcUrl('etherlink-testnet'),
+    logoUrl: getLogoUrl(ChainId.ETHERLINK_TESTNET),
+    blockExplorer: {
+      name: 'Etherlink Testnet Explorer',
+      url: 'https://testnet.explorer.etherlink.com/',
+    },
+    nativeCurrency: {
+      symbol: 'XTZ',
+      name: 'Tez',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.MONAD_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'monad-testnet',
+    title: 'Monad Testnet',
+    rpcUrl: getRpcUrl('monad-testnet'),
+    logoUrl: getLogoUrl(ChainId.MONAD_TESTNET),
+    blockExplorer: {
+      name: 'Monad Testnet Explorer',
+      url: 'https://testnet.monadexplorer.com/',
+    },
+    nativeCurrency: {
+      symbol: 'MON',
+      name: 'MON',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.SOMNIA_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'somnia-testnet',
+    title: 'Somnia Testnet',
+    rpcUrl: getRpcUrl('somnia-testnet'),
+    logoUrl: getLogoUrl(ChainId.SOMNIA_TESTNET),
+    blockExplorer: {
+      name: 'Somnia Testnet Explorer',
+      url: 'https://somnia-testnet.socialscan.io/',
+    },
+    nativeCurrency: {
+      symbol: 'STT',
+      name: 'STT',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.INCENTIV_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'incentiv-testnet',
+    title: 'Incentiv Testnet',
+    rpcUrl: getRpcUrl('incentiv-testnet'),
+    logoUrl: getLogoUrl(ChainId.INCENTIV_TESTNET),
+    blockExplorer: {
+      name: 'Incentiv Testnet Explorer',
+      url: 'https://explorer.testnet.incentiv.net/',
+    },
+    nativeCurrency: {
+      symbol: 'CENT',
+      name: 'CENT',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.SEI,
+    type: NetworkType.MAINNET,
+    name: 'sei',
+    title: 'Sei',
+    rpcUrl: getRpcUrl('sei'),
+    logoUrl: getLogoUrl(ChainId.SEI),
+    blockExplorer: {
+      name: 'SEI Explorer',
+      url: 'https://seitrace.com/?chain=pacific-1',
+    },
+    nativeCurrency: {
+      symbol: 'SEI',
+      name: 'SEI',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.SEI_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'sei-testnet',
+    title: 'Sei Testnet',
+    rpcUrl: getRpcUrl('sei-testnet'),
+    logoUrl: getLogoUrl(ChainId.SEI_TESTNET),
+    blockExplorer: {
+      name: 'Sei Testnet Explorer',
+      url: 'https://seitrace.com/?chain=atlantic-2',
+    },
+    nativeCurrency: {
+      symbol: 'SEI',
+      name: 'SEI',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.SOMNIA,
+    type: NetworkType.MAINNET,
+    name: 'somnia',
+    title: 'Somnia',
+    rpcUrl: getRpcUrl('somnia'),
+    logoUrl: getLogoUrl(ChainId.SOMNIA),
+    blockExplorer: {
+      name: 'Somnia Explorer',
+      url: 'https://mainnet.somnia.w3us.site/',
+    },
+    nativeCurrency: {
+      symbol: 'SOMI',
+      name: 'SOMI',
+      decimals: 18,
+    },
+  },
+]
+
 function getRpcUrl(networkName: string): string {
   return `https://nodes.sequence.app/${networkName}`
 }
 
-export const Mainnet: Network = {
-  name: 'mainnet',
-  rpc: getRpcUrl('mainnet'),
-  chainId: 1n,
-  explorer: 'https://etherscan.io/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
+function getLogoUrl(chainId: ChainId): string {
+  return `https://assets.sequence.info/images/networks/medium/${chainId}.webp`
 }
 
-export const Sepolia: Network = {
-  name: 'sepolia',
-  rpc: getRpcUrl('sepolia'),
-  chainId: 11155111n,
-  explorer: 'https://sepolia.etherscan.io/',
-  nativeCurrency: {
-    name: 'Sepolia Ether',
-    symbol: 'sETH',
-    decimals: 18,
-  },
+export function getNetworkFromName(networkName: string): Network | undefined {
+  return ALL.find((network) => network.name === networkName)
 }
 
-export const Polygon: Network = {
-  name: 'polygon',
-  rpc: getRpcUrl('polygon'),
-  chainId: 137n,
-  explorer: 'https://polygonscan.com/',
-  nativeCurrency: {
-    name: 'POL',
-    symbol: 'POL',
-    decimals: 18,
-  },
+export function getNetworkFromChainId(chainId: ChainId | bigint | number | string): Network | undefined {
+  return ALL.find((network) => network.chainId === BigInt(chainId))
 }
-
-export const PolygonAmoy: Network = {
-  name: 'amoy',
-  rpc: getRpcUrl('amoy'),
-  chainId: 80002n,
-  explorer: 'https://www.oklink.com/amoy/',
-  nativeCurrency: {
-    name: 'Amoy POL',
-    symbol: 'aPOL',
-    decimals: 18,
-  },
-}
-
-export const PolygonZkEVM: Network = {
-  name: 'polygon-zkevm',
-  rpc: getRpcUrl('polygon-zkevm'),
-  chainId: 1101n,
-  explorer: 'https://zkevm.polygonscan.com/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const BSC: Network = {
-  name: 'bsc',
-  rpc: getRpcUrl('bsc'),
-  chainId: 56n,
-  explorer: 'https://bscscan.com/',
-  nativeCurrency: {
-    name: 'BNB',
-    symbol: 'BNB',
-    decimals: 18,
-  },
-}
-
-export const BSCTestnet: Network = {
-  name: 'bsc-testnet',
-  rpc: getRpcUrl('bsc-testnet'),
-  chainId: 97n,
-  explorer: 'https://testnet.bscscan.com/',
-  nativeCurrency: {
-    name: 'Testnet BNB',
-    symbol: 'tBNB',
-    decimals: 18,
-  },
-}
-
-export const Optimism: Network = {
-  name: 'optimism',
-  rpc: getRpcUrl('optimism'),
-  chainId: 10n,
-  explorer: 'https://optimistic.etherscan.io/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const OptimismSepolia: Network = {
-  name: 'optimism-sepolia',
-  rpc: getRpcUrl('optimism-sepolia'),
-  chainId: 11155420n,
-  explorer: 'https://sepolia-optimistic.etherscan.io/',
-  nativeCurrency: {
-    name: 'Sepolia Ether',
-    symbol: 'sETH',
-    decimals: 18,
-  },
-}
-
-export const Arbitrum: Network = {
-  name: 'arbitrum',
-  rpc: getRpcUrl('arbitrum'),
-  chainId: 42161n,
-  explorer: 'https://arbiscan.io/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const ArbitrumSepolia: Network = {
-  name: 'arbitrum-sepolia',
-  rpc: getRpcUrl('arbitrum-sepolia'),
-  chainId: 421614n,
-  explorer: 'https://sepolia.arbiscan.io/',
-  nativeCurrency: {
-    name: 'Sepolia Ether',
-    symbol: 'sETH',
-    decimals: 18,
-  },
-}
-
-export const ArbitrumNova: Network = {
-  name: 'arbitrum-nova',
-  rpc: getRpcUrl('arbitrum-nova'),
-  chainId: 42170n,
-  explorer: 'https://nova.arbiscan.io/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const Avalanche: Network = {
-  name: 'avalanche',
-  rpc: getRpcUrl('avalanche'),
-  chainId: 43114n,
-  explorer: 'https://subnets.avax.network/c-chain/',
-  nativeCurrency: {
-    name: 'AVAX',
-    symbol: 'AVAX',
-    decimals: 18,
-  },
-}
-
-export const AvalancheTestnet: Network = {
-  name: 'avalanche-testnet',
-  rpc: getRpcUrl('avalanche-testnet'),
-  chainId: 43113n,
-  explorer: 'https://subnets-test.avax.network/c-chain/',
-  nativeCurrency: {
-    name: 'Testnet AVAX',
-    symbol: 'tAVAX',
-    decimals: 18,
-  },
-}
-
-export const Gnosis: Network = {
-  name: 'gnosis',
-  rpc: getRpcUrl('gnosis'),
-  chainId: 100n,
-  explorer: 'https://blockscout.com/xdai/mainnet/',
-  nativeCurrency: {
-    name: 'XDAI',
-    symbol: 'XDAI',
-    decimals: 18,
-  },
-}
-
-export const Base: Network = {
-  name: 'base',
-  rpc: getRpcUrl('base'),
-  chainId: 8453n,
-  explorer: 'https://basescan.org/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const BaseSepolia: Network = {
-  name: 'base-sepolia',
-  rpc: getRpcUrl('base-sepolia'),
-  chainId: 84532n,
-  explorer: 'https://base-sepolia.blockscout.com/',
-  nativeCurrency: {
-    name: 'Sepolia Ether',
-    symbol: 'sETH',
-    decimals: 18,
-  },
-}
-
-export const Homeverse: Network = {
-  name: 'homeverse',
-  rpc: getRpcUrl('homeverse'),
-  chainId: 19011n,
-  explorer: 'https://explorer.oasys.homeverse.games/',
-  nativeCurrency: {
-    name: 'OAS',
-    symbol: 'OAS',
-    decimals: 18,
-  },
-}
-
-export const HomeverseTestnet: Network = {
-  name: 'homeverse-testnet',
-  rpc: getRpcUrl('homeverse-testnet'),
-  chainId: 40875n,
-  explorer: 'https://explorer.testnet.oasys.homeverse.games/',
-  nativeCurrency: {
-    name: 'Testnet OAS',
-    symbol: 'tOAS',
-    decimals: 18,
-  },
-}
-
-export const Xai: Network = {
-  name: 'xai',
-  rpc: getRpcUrl('xai'),
-  chainId: 660279n,
-  explorer: 'https://explorer.xai-chain.net/',
-  nativeCurrency: {
-    name: 'XAI',
-    symbol: 'XAI',
-    decimals: 18,
-  },
-}
-
-export const XaiSepolia: Network = {
-  name: 'xai-sepolia',
-  rpc: getRpcUrl('xai-sepolia'),
-  chainId: 37714555429n,
-  explorer: 'https://testnet-explorer-v2.xai-chain.net/',
-  nativeCurrency: {
-    name: 'Sepolia XAI',
-    symbol: 'sXAI',
-    decimals: 18,
-  },
-}
-
-export const Telos: Network = {
-  name: 'telos',
-  rpc: getRpcUrl('telos'),
-  chainId: 40n,
-  explorer: 'https://explorer.telos.net/network/',
-  nativeCurrency: {
-    name: 'TLOS',
-    symbol: 'TLOS',
-    decimals: 18,
-  },
-}
-
-export const TelosTestnet: Network = {
-  name: 'telos-testnet',
-  rpc: getRpcUrl('telos-testnet'),
-  chainId: 41n,
-  explorer: 'https://explorer-test.telos.net/network',
-  nativeCurrency: {
-    name: 'TLOS',
-    symbol: 'TLOS',
-    decimals: 18,
-  },
-}
-
-export const B3: Network = {
-  name: 'b3',
-  rpc: getRpcUrl('b3'),
-  chainId: 8333n,
-  explorer: 'https://explorer.b3.fun/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const B3Sepolia: Network = {
-  name: 'b3-sepolia',
-  rpc: getRpcUrl('b3-sepolia'),
-  chainId: 1993n,
-  explorer: 'https://sepolia.explorer.b3.fun/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const ApeChain: Network = {
-  name: 'apechain',
-  rpc: getRpcUrl('apechain'),
-  chainId: 33139n,
-  explorer: 'https://apechain.calderaexplorer.xyz/',
-  nativeCurrency: {
-    name: 'ApeCoin',
-    symbol: 'APE',
-    decimals: 18,
-  },
-}
-
-export const ApeChainTestnet: Network = {
-  name: 'apechain-testnet',
-  rpc: getRpcUrl('apechain-testnet'),
-  chainId: 33111n,
-  explorer: 'https://curtis.explorer.caldera.xyz/',
-  nativeCurrency: {
-    name: 'ApeCoin',
-    symbol: 'APE',
-    decimals: 18,
-  },
-}
-
-export const Blast: Network = {
-  name: 'blast',
-  rpc: getRpcUrl('blast'),
-  chainId: 81457n,
-  explorer: 'https://blastscan.io/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const BlastSepolia: Network = {
-  name: 'blast-sepolia',
-  rpc: getRpcUrl('blast-sepolia'),
-  chainId: 168587773n,
-  explorer: 'https://sepolia.blastexplorer.io/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const SkaleNebula: Network = {
-  name: 'skale-nebula',
-  rpc: getRpcUrl('skale-nebula'),
-  chainId: 1482601649n,
-  explorer: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/',
-  nativeCurrency: {
-    name: 'SKALE Fuel',
-    symbol: 'sFUEL',
-    decimals: 18,
-  },
-}
-
-export const SkaleNebulaTestnet: Network = {
-  name: 'skale-nebula-testnet',
-  rpc: getRpcUrl('skale-nebula-testnet'),
-  chainId: 37084624n,
-  explorer: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/',
-  nativeCurrency: {
-    name: 'SKALE Fuel',
-    symbol: 'sFUEL',
-    decimals: 18,
-  },
-}
-
-export const Soneium: Network = {
-  name: 'soneium',
-  rpc: getRpcUrl('soneium'),
-  chainId: 1868n,
-  explorer: 'https://soneium.blockscout.com/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const SoneiumMinato: Network = {
-  name: 'soneium-minato',
-  rpc: getRpcUrl('soneium-minato'),
-  chainId: 1946n,
-  explorer: 'https://explorer-testnet.soneium.org/',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-}
-
-export const ToyTestnet: Network = {
-  name: 'toy-testnet',
-  rpc: getRpcUrl('toy-testnet'),
-  chainId: 21000000n,
-  explorer: 'https://toy-chain-testnet.explorer.caldera.xyz/',
-  nativeCurrency: {
-    name: 'TOY',
-    symbol: 'TOY',
-    decimals: 18,
-  },
-}
-
-export const ImmutableZkEVM: Network = {
-  name: 'immutable-zkevm',
-  rpc: getRpcUrl('immutable-zkevm'),
-  chainId: 13371n,
-  explorer: 'https://explorer.immutable.com/',
-  nativeCurrency: {
-    name: 'IMX',
-    symbol: 'IMX',
-    decimals: 18,
-  },
-}
-
-export const ImmutableZkEVMTestnet: Network = {
-  name: 'immutable-zkevm-testnet',
-  rpc: getRpcUrl('immutable-zkevm-testnet'),
-  chainId: 13473n,
-  explorer: 'https://explorer.testnet.immutable.com/',
-  nativeCurrency: {
-    name: 'IMX',
-    symbol: 'IMX',
-    decimals: 18,
-  },
-}
-
-export const RootNetwork: Network = {
-  name: 'rootnet',
-  rpc: getRpcUrl('rootnet'),
-  chainId: 7668n,
-  explorer: 'https://rootscan.io/',
-  nativeCurrency: {
-    name: 'XRP',
-    symbol: 'XRP',
-    decimals: 18,
-  },
-}
-
-export const RootNetworkPorcini: Network = {
-  name: 'rootnet-porcini',
-  rpc: getRpcUrl('rootnet-porcini'),
-  chainId: 7672n,
-  explorer: 'https://porcini.rootscan.io/',
-  nativeCurrency: {
-    name: 'XRP',
-    symbol: 'XRP',
-    decimals: 18,
-  },
-}
-
-export const Laos: Network = {
-  name: 'laos',
-  rpc: getRpcUrl('laos'),
-  chainId: 6283n,
-  explorer: 'https://blockscout.laos.laosfoundation.io/',
-  nativeCurrency: {
-    name: 'LAOS',
-    symbol: 'LAOS',
-    decimals: 18,
-  },
-}
-
-export const LaosSigmaTestnet: Network = {
-  name: 'laos-sigma-testnet',
-  rpc: getRpcUrl('laos-sigma-testnet'),
-  chainId: 62850n,
-  explorer: 'https://sigma.explorer.laosnetwork.io/',
-  nativeCurrency: {
-    name: 'SIGMA',
-    symbol: 'SIGMA',
-    decimals: 18,
-  },
-}
-
-export const Moonbeam: Network = {
-  name: 'moonbeam',
-  rpc: getRpcUrl('moonbeam'),
-  chainId: 1284n,
-  explorer: 'https://moonscan.io/',
-  nativeCurrency: {
-    name: 'GLMR',
-    symbol: 'GLMR',
-    decimals: 18,
-  },
-}
-
-export const MoonbaseAlpha: Network = {
-  name: 'moonbase-alpha',
-  rpc: getRpcUrl('moonbase-alpha'),
-  chainId: 1287n,
-  explorer: 'https://moonbase.moonscan.io/',
-  nativeCurrency: {
-    name: 'GLMR',
-    symbol: 'GLMR',
-    decimals: 18,
-  },
-}
-
-export const Etherlink: Network = {
-  name: 'etherlink',
-  rpc: getRpcUrl('etherlink'),
-  chainId: 42793n,
-  explorer: 'https://explorer.etherlink.com/',
-  nativeCurrency: {
-    name: 'Tez',
-    symbol: 'XTZ',
-    decimals: 18,
-  },
-}
-
-export const EtherlinkTestnet: Network = {
-  name: 'etherlink-testnet',
-  rpc: getRpcUrl('etherlink-testnet'),
-  chainId: 128123n,
-  explorer: 'https://testnet.explorer.etherlink.com/',
-  nativeCurrency: {
-    name: 'Tez',
-    symbol: 'XTZ',
-    decimals: 18,
-  },
-}
-
-export const MonadTestnet: Network = {
-  name: 'monad-testnet',
-  rpc: getRpcUrl('monad-testnet'),
-  chainId: 10143n,
-  explorer: 'https://testnet.monadexplorer.com/',
-  nativeCurrency: {
-    name: 'MON',
-    symbol: 'MON',
-    decimals: 18,
-  },
-}
-
-export const Somnia: Network = {
-  name: 'somnia',
-  rpc: getRpcUrl('somnia'),
-  chainId: 5031n,
-  explorer: 'https://mainnet.somnia.w3us.site/',
-  nativeCurrency: {
-    name: 'SOMI',
-    symbol: 'SOMI',
-    decimals: 18,
-  },
-}
-
-export const SomniaTestnet: Network = {
-  name: 'somnia-testnet',
-  rpc: getRpcUrl('somnia-testnet'),
-  chainId: 50312n,
-  explorer: 'https://somnia-testnet.socialscan.io/',
-  nativeCurrency: {
-    name: 'STT',
-    symbol: 'STT',
-    decimals: 18,
-  },
-}
-
-export const All = [
-  Mainnet,
-  Sepolia,
-  Polygon,
-  PolygonAmoy,
-  PolygonZkEVM,
-  BSC,
-  BSCTestnet,
-  Optimism,
-  OptimismSepolia,
-  Arbitrum,
-  ArbitrumSepolia,
-  ArbitrumNova,
-  Avalanche,
-  AvalancheTestnet,
-  Gnosis,
-  Base,
-  BaseSepolia,
-  Homeverse,
-  HomeverseTestnet,
-  Xai,
-  XaiSepolia,
-  Telos,
-  TelosTestnet,
-  B3,
-  B3Sepolia,
-  ApeChain,
-  ApeChainTestnet,
-  Blast,
-  BlastSepolia,
-  SkaleNebula,
-  SkaleNebulaTestnet,
-  Soneium,
-  SoneiumMinato,
-  ToyTestnet,
-  ImmutableZkEVM,
-  ImmutableZkEVMTestnet,
-  RootNetwork,
-  RootNetworkPorcini,
-  Laos,
-  LaosSigmaTestnet,
-  Moonbeam,
-  MoonbaseAlpha,
-  Etherlink,
-  EtherlinkTestnet,
-  MonadTestnet,
-  Somnia,
-  SomniaTestnet,
-]

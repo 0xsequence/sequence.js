@@ -1,10 +1,9 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Attestation, Constants, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
 
-import { ChainId } from '@0xsequence/network'
 import {
   AddExplicitSessionError,
   FeeOptionError,
@@ -67,7 +66,7 @@ export class ChainSessionManager {
   private wallet: Wallet | null = null
   private provider: Provider.Provider | null = null
   private relayer: Relayer.Standard.Rpc.RpcRelayer
-  private readonly chainId: ChainId
+  private readonly chainId: bigint
   public transport: DappTransport | null = null
   private sequenceStorage: SequenceStorage
   public isInitialized: boolean = false
@@ -85,7 +84,7 @@ export class ChainSessionManager {
    * @param canUseIndexedDb (Optional) A flag to enable or disable IndexedDB for caching.
    */
   constructor(
-    chainId: ChainId,
+    chainId: bigint,
     keyMachineUrl: string,
     transport: DappTransport,
     sequenceStorage: SequenceStorage,

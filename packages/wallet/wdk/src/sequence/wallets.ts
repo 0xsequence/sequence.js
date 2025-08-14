@@ -2,14 +2,14 @@ import { Wallet as CoreWallet, Envelope, Signers, State } from '@0xsequence/wall
 import { Config, Constants, GenericTree, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
+import { AuthCodeHandler } from './handlers/authcode.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
+import { Device } from './types/device.js'
 import { Action } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
-import { AuthCodeHandler } from './handlers/authcode.js'
-import { Device } from './types/device.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple'
@@ -1114,7 +1114,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
     return wallet.getNonce(provider, space)
   }
 
@@ -1129,7 +1129,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
     const status = await walletObject.getStatus(provider)
 
     const onchainConfiguration = await this.shared.sequence.stateProvider.getConfiguration(status.onChainImageHash)
@@ -1174,7 +1174,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
     const onchainStatus = await walletObject.getStatus(provider)
     return onchainStatus.imageHash === onchainStatus.onChainImageHash
   }

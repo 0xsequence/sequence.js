@@ -100,7 +100,7 @@ export const ManagerOptionsDefaults = {
   dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
 
   stateProvider: new State.Sequence.Provider(),
-  networks: Network.All,
+  networks: Network.ALL,
   relayers: () => [Relayer.Standard.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
   bundlers: [],
 

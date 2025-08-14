@@ -22,7 +22,7 @@ import { RECOVER_SAPIENT_SIGNATURE, RECOVER_SAPIENT_SIGNATURE_COMPACT, IS_VALID_
 import { wrap, decode } from './erc-6492.js'
 import { fromConfigUpdate, hash, Parented } from './payload.js'
 import { minBytesFor, packRSY, unpackRSY } from './utils.js'
-import { Constants } from './index.js'
+import { Constants, Network } from './index.js'
 
 export const FLAG_SIGNATURE_HASH = 0
 export const FLAG_ADDRESS = 1

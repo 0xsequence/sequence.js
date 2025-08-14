@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { allNetworks } from '@0xsequence/network'
+import { Network } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex } from 'ox'
 import { NODES_URL, RELAYER_URL } from './constants.js'
 
@@ -117,8 +117,8 @@ function applyTemplate(template: string, values: Record<string, string>) {
   })
 }
 
-export const getNetwork = (chainId: number) => {
-  const network = allNetworks.find((network) => network.chainId === chainId)
+export const getNetwork = (chainId: Network.ChainId | bigint | number) => {
+  const network = Network.getNetworkFromChainId(chainId)
 
   if (!network) {
     throw new Error(`Network with chainId ${chainId} not found`)
@@ -127,7 +127,7 @@ export const getNetwork = (chainId: number) => {
   return network
 }
 
-export const getRpcUrl = (chainId: number) => {
+export const getRpcUrl = (chainId: Network.ChainId | bigint | number) => {
   const network = getNetwork(chainId)
 
   const url = applyTemplate(NODES_URL, { network: network.name })
@@ -135,7 +135,7 @@ export const getRpcUrl = (chainId: number) => {
   return url
 }
 
-export const getRelayerUrl = (chainId: number) => {
+export const getRelayerUrl = (chainId: Network.ChainId | bigint | number) => {
   const network = getNetwork(chainId)
 
   const url = applyTemplate(RELAYER_URL, { network: network.name })
@@ -143,9 +143,9 @@ export const getRelayerUrl = (chainId: number) => {
   return url
 }
 
-export const getExplorerUrl = (chainId: number, txHash: string) => {
+export const getExplorerUrl = (chainId: Network.ChainId | bigint | number, txHash: string) => {
   const network = getNetwork(chainId)
-  const explorerUrl = network.blockExplorer?.rootUrl
+  const explorerUrl = network.blockExplorer?.url
   if (!explorerUrl) {
     throw new Error(`Explorer URL not found for chainId ${chainId}`)
   }

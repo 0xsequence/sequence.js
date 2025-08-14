@@ -5,6 +5,7 @@ import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import * as Db from '../src/dbs'
 import { LOCAL_RPC_URL } from './constants'
 import { State } from '@0xsequence/wallet-core'
+import { Network } from '@0xsequence/wallet-primitives'
 
 describe('Identity Authentication Databases', () => {
   let manager: Manager | undefined
@@ -328,9 +329,10 @@ describe('Identity Authentication Databases', () => {
         networks: [
           {
             name: 'Test Network',
-            rpc: LOCAL_RPC_URL,
+            type: Network.NetworkType.MAINNET,
+            rpcUrl: LOCAL_RPC_URL,
             chainId: 42161n,
-            explorer: 'https://arbiscan.io',
+            blockExplorer: { url: 'https://arbiscan.io' },
             nativeCurrency: {
               name: 'Ether',
               symbol: 'ETH',
@@ -362,9 +364,10 @@ describe('Identity Authentication Databases', () => {
         networks: [
           {
             name: 'Test Network',
-            rpc: LOCAL_RPC_URL,
+            type: Network.NetworkType.MAINNET,
+            rpcUrl: LOCAL_RPC_URL,
             chainId: 42161n,
-            explorer: 'https://arbiscan.io',
+            blockExplorer: { url: 'https://arbiscan.io' },
             nativeCurrency: {
               name: 'Ether',
               symbol: 'ETH',
@@ -395,9 +398,10 @@ describe('Identity Authentication Databases', () => {
         networks: [
           {
             name: 'Test Network',
-            rpc: LOCAL_RPC_URL,
+            type: Network.NetworkType.MAINNET,
+            rpcUrl: LOCAL_RPC_URL,
             chainId: 42161n,
-            explorer: 'https://arbiscan.io',
+            blockExplorer: { url: 'https://arbiscan.io' },
             nativeCurrency: {
               name: 'Ether',
               symbol: 'ETH',
