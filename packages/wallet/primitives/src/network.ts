@@ -10,11 +10,11 @@ export type BlockExplorerConfig = {
 }
 
 export interface Network {
-  chainId: ChainId
+  chainId: bigint
   type: NetworkType
   name: string
   title?: string
-  rpc: string
+  rpcUrl: string
   logoUrl?: string
   blockExplorer?: BlockExplorerConfig
   nativeToken: {
@@ -156,7 +156,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'mainnet',
     title: 'Ethereum',
-    rpc: getRpcUrl('mainnet'),
+    rpcUrl: getRpcUrl('mainnet'),
     logoUrl: getLogoUrl(ChainId.MAINNET),
     blockExplorer: {
       name: 'Etherscan',
@@ -174,7 +174,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'ropsten',
     title: 'Ropsten',
-    rpc: getRpcUrl('ropsten'),
+    rpcUrl: getRpcUrl('ropsten'),
     logoUrl: getLogoUrl(ChainId.ROPSTEN),
     blockExplorer: {
       name: 'Etherscan (Ropsten)',
@@ -193,7 +193,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'rinkeby',
     title: 'Rinkeby',
-    rpc: getRpcUrl('rinkeby'),
+    rpcUrl: getRpcUrl('rinkeby'),
     logoUrl: getLogoUrl(ChainId.RINKEBY),
     blockExplorer: {
       name: 'Etherscan (Rinkeby)',
@@ -212,7 +212,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'goerli',
     title: 'Goerli',
-    rpc: getRpcUrl('goerli'),
+    rpcUrl: getRpcUrl('goerli'),
     logoUrl: getLogoUrl(ChainId.GOERLI),
     blockExplorer: {
       name: 'Etherscan (Goerli)',
@@ -231,7 +231,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'kovan',
     title: 'Kovan',
-    rpc: getRpcUrl('kovan'),
+    rpcUrl: getRpcUrl('kovan'),
     logoUrl: getLogoUrl(ChainId.KOVAN),
     blockExplorer: {
       name: 'Etherscan (Kovan)',
@@ -249,7 +249,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'sepolia',
     title: 'Sepolia',
-    rpc: getRpcUrl('sepolia'),
+    rpcUrl: getRpcUrl('sepolia'),
     logoUrl: getLogoUrl(ChainId.SEPOLIA),
     blockExplorer: {
       name: 'Etherscan (Sepolia)',
@@ -266,7 +266,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'polygon',
     title: 'Polygon',
-    rpc: getRpcUrl('polygon'),
+    rpcUrl: getRpcUrl('polygon'),
     logoUrl: getLogoUrl(ChainId.POLYGON),
     blockExplorer: {
       name: 'Polygonscan',
@@ -283,7 +283,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'mumbai',
     title: 'Polygon Mumbai',
-    rpc: getRpcUrl('mumbai'),
+    rpcUrl: getRpcUrl('mumbai'),
     logoUrl: getLogoUrl(ChainId.POLYGON_MUMBAI),
     blockExplorer: {
       name: 'Polygonscan (Mumbai)',
@@ -301,7 +301,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'amoy',
     title: 'Polygon Amoy',
-    rpc: getRpcUrl('amoy'),
+    rpcUrl: getRpcUrl('amoy'),
     logoUrl: getLogoUrl(ChainId.POLYGON_AMOY),
     blockExplorer: {
       name: 'OKLink (Amoy)',
@@ -318,7 +318,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'polygon-zkevm',
     title: 'Polygon zkEVM',
-    rpc: getRpcUrl('polygon-zkevm'),
+    rpcUrl: getRpcUrl('polygon-zkevm'),
     logoUrl: getLogoUrl(ChainId.POLYGON_ZKEVM),
     blockExplorer: {
       name: 'Polygonscan (zkEVM)',
@@ -335,7 +335,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'bsc',
     title: 'BNB Smart Chain',
-    rpc: getRpcUrl('bsc'),
+    rpcUrl: getRpcUrl('bsc'),
     logoUrl: getLogoUrl(ChainId.BSC),
     blockExplorer: {
       name: 'BSCScan',
@@ -352,7 +352,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'bsc-testnet',
     title: 'BNB Smart Chain Testnet',
-    rpc: getRpcUrl('bsc-testnet'),
+    rpcUrl: getRpcUrl('bsc-testnet'),
     logoUrl: getLogoUrl(ChainId.BSC_TESTNET),
     blockExplorer: {
       name: 'BSCScan (Testnet)',
@@ -369,7 +369,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'optimism',
     title: 'Optimism',
-    rpc: getRpcUrl('optimism'),
+    rpcUrl: getRpcUrl('optimism'),
     logoUrl: getLogoUrl(ChainId.OPTIMISM),
     blockExplorer: {
       name: 'Etherscan (Optimism)',
@@ -386,7 +386,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'optimism-kovan',
     title: 'Optimism Kovan',
-    rpc: getRpcUrl('optimism-kovan'),
+    rpcUrl: getRpcUrl('optimism-kovan'),
     logoUrl: getLogoUrl(ChainId.OPTIMISM_KOVAN),
     blockExplorer: {
       name: 'Etherscan (Optimism Kovan)',
@@ -404,7 +404,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'optimism-goerli',
     title: 'Optimism Goerli',
-    rpc: getRpcUrl('optimism-goerli'),
+    rpcUrl: getRpcUrl('optimism-goerli'),
     logoUrl: getLogoUrl(ChainId.OPTIMISM_GOERLI),
     blockExplorer: {
       name: 'Etherscan (Optimism Goerli)',
@@ -422,7 +422,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'optimism-sepolia',
     title: 'Optimism Sepolia',
-    rpc: getRpcUrl('optimism-sepolia'),
+    rpcUrl: getRpcUrl('optimism-sepolia'),
     logoUrl: getLogoUrl(ChainId.OPTIMISM_SEPOLIA),
     blockExplorer: {
       name: 'Etherscan (Optimism Sepolia)',
@@ -439,7 +439,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'arbitrum',
     title: 'Arbitrum One',
-    rpc: getRpcUrl('arbitrum'),
+    rpcUrl: getRpcUrl('arbitrum'),
     logoUrl: getLogoUrl(ChainId.ARBITRUM),
     blockExplorer: {
       name: 'Arbiscan',
@@ -456,7 +456,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'arbitrum-goerli',
     title: 'Arbitrum Goerli',
-    rpc: getRpcUrl('arbitrum-goerli'),
+    rpcUrl: getRpcUrl('arbitrum-goerli'),
     logoUrl: getLogoUrl(ChainId.ARBITRUM_GOERLI),
     blockExplorer: {
       name: 'Arbiscan (Goerli Testnet)',
@@ -474,7 +474,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'arbitrum-sepolia',
     title: 'Arbitrum Sepolia',
-    rpc: getRpcUrl('arbitrum-sepolia'),
+    rpcUrl: getRpcUrl('arbitrum-sepolia'),
     logoUrl: getLogoUrl(ChainId.ARBITRUM_SEPOLIA),
     blockExplorer: {
       name: 'Arbiscan (Sepolia Testnet)',
@@ -491,7 +491,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'arbitrum-nova',
     title: 'Arbitrum Nova',
-    rpc: getRpcUrl('arbitrum-nova'),
+    rpcUrl: getRpcUrl('arbitrum-nova'),
     logoUrl: getLogoUrl(ChainId.ARBITRUM_NOVA),
     blockExplorer: {
       name: 'Arbiscan Nova',
@@ -508,7 +508,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'avalanche',
     title: 'Avalanche',
-    rpc: getRpcUrl('avalanche'),
+    rpcUrl: getRpcUrl('avalanche'),
     logoUrl: getLogoUrl(ChainId.AVALANCHE),
     blockExplorer: {
       name: 'Snowtrace',
@@ -525,7 +525,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'avalanche-testnet',
     title: 'Avalanche Testnet',
-    rpc: getRpcUrl('avalanche-testnet'),
+    rpcUrl: getRpcUrl('avalanche-testnet'),
     logoUrl: getLogoUrl(ChainId.AVALANCHE_TESTNET),
     blockExplorer: {
       name: 'Snowtrace (Testnet)',
@@ -542,7 +542,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'gnosis',
     title: 'Gnosis Chain',
-    rpc: getRpcUrl('gnosis'),
+    rpcUrl: getRpcUrl('gnosis'),
     logoUrl: getLogoUrl(ChainId.GNOSIS),
     blockExplorer: {
       name: 'Gnosis Chain Explorer',
@@ -559,7 +559,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'base',
     title: 'Base (Coinbase)',
-    rpc: getRpcUrl('base'),
+    rpcUrl: getRpcUrl('base'),
     logoUrl: getLogoUrl(ChainId.BASE),
     blockExplorer: {
       name: 'Base Explorer',
@@ -576,7 +576,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'base-goerli',
     title: 'Base Goerli',
-    rpc: getRpcUrl('base-goerli'),
+    rpcUrl: getRpcUrl('base-goerli'),
     logoUrl: getLogoUrl(ChainId.BASE_GOERLI),
     blockExplorer: {
       name: 'Base Goerli Explorer',
@@ -594,7 +594,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'base-sepolia',
     title: 'Base Sepolia',
-    rpc: getRpcUrl('base-sepolia'),
+    rpcUrl: getRpcUrl('base-sepolia'),
     logoUrl: getLogoUrl(ChainId.BASE_SEPOLIA),
     blockExplorer: {
       name: 'Base Sepolia Explorer',
@@ -611,7 +611,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'homeverse',
     title: 'Oasys Homeverse',
-    rpc: getRpcUrl('homeverse'),
+    rpcUrl: getRpcUrl('homeverse'),
     logoUrl: getLogoUrl(ChainId.HOMEVERSE),
     blockExplorer: {
       name: 'Oasys Homeverse Explorer',
@@ -628,7 +628,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'homeverse-testnet',
     title: 'Oasys Homeverse Testnet',
-    rpc: getRpcUrl('homeverse-testnet'),
+    rpcUrl: getRpcUrl('homeverse-testnet'),
     logoUrl: getLogoUrl(ChainId.HOMEVERSE_TESTNET),
     blockExplorer: {
       name: 'Oasys Homeverse Explorer (Testnet)',
@@ -645,7 +645,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'xai',
     title: 'Xai',
-    rpc: getRpcUrl('xai'),
+    rpcUrl: getRpcUrl('xai'),
     logoUrl: getLogoUrl(ChainId.XAI),
     blockExplorer: {
       name: 'Xai Explorer',
@@ -662,7 +662,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'xai-sepolia',
     title: 'Xai Sepolia',
-    rpc: getRpcUrl('xai-sepolia'),
+    rpcUrl: getRpcUrl('xai-sepolia'),
     logoUrl: getLogoUrl(ChainId.XAI_SEPOLIA),
     blockExplorer: {
       name: 'Xai Sepolia Explorer',
@@ -679,7 +679,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'b3',
     title: 'B3',
-    rpc: getRpcUrl('b3'),
+    rpcUrl: getRpcUrl('b3'),
     logoUrl: getLogoUrl(ChainId.B3),
     blockExplorer: {
       name: 'B3 Explorer',
@@ -696,7 +696,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'b3-sepolia',
     title: 'B3 Sepolia',
-    rpc: getRpcUrl('b3-sepolia'),
+    rpcUrl: getRpcUrl('b3-sepolia'),
     logoUrl: getLogoUrl(ChainId.B3_SEPOLIA),
     blockExplorer: {
       name: 'B3 Sepolia Explorer',
@@ -713,7 +713,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'apechain',
     title: 'APE Chain',
-    rpc: getRpcUrl('apechain'),
+    rpcUrl: getRpcUrl('apechain'),
     logoUrl: getLogoUrl(ChainId.APECHAIN),
     blockExplorer: {
       name: 'APE Chain Explorer',
@@ -730,7 +730,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'apechain-testnet',
     title: 'APE Chain Testnet',
-    rpc: getRpcUrl('apechain-testnet'),
+    rpcUrl: getRpcUrl('apechain-testnet'),
     logoUrl: getLogoUrl(ChainId.APECHAIN_TESTNET),
     blockExplorer: {
       name: 'APE Chain Explorer',
@@ -747,7 +747,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'blast',
     title: 'Blast',
-    rpc: getRpcUrl('blast'),
+    rpcUrl: getRpcUrl('blast'),
     logoUrl: getLogoUrl(ChainId.BLAST),
     blockExplorer: {
       name: 'Blast Explorer',
@@ -764,7 +764,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'blast-sepolia',
     title: 'Blast Sepolia',
-    rpc: getRpcUrl('blast-sepolia'),
+    rpcUrl: getRpcUrl('blast-sepolia'),
     logoUrl: getLogoUrl(ChainId.BLAST_SEPOLIA),
     blockExplorer: {
       name: 'Blast Sepolia Explorer',
@@ -781,7 +781,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'telos',
     title: 'Telos',
-    rpc: getRpcUrl('telos'),
+    rpcUrl: getRpcUrl('telos'),
     logoUrl: getLogoUrl(ChainId.TELOS),
     blockExplorer: {
       name: 'Telos Explorer',
@@ -798,7 +798,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'telos-testnet',
     title: 'Telos Testnet',
-    rpc: getRpcUrl('telos-testnet'),
+    rpcUrl: getRpcUrl('telos-testnet'),
     logoUrl: getLogoUrl(ChainId.TELOS_TESTNET),
     blockExplorer: {
       name: 'Telos Testnet Explorer',
@@ -815,7 +815,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'borne-testnet',
     title: 'Borne Testnet',
-    rpc: getRpcUrl('borne-testnet'),
+    rpcUrl: getRpcUrl('borne-testnet'),
     logoUrl: getLogoUrl(ChainId.BORNE_TESTNET),
     blockExplorer: {
       name: 'Borne Testnet Explorer',
@@ -833,7 +833,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'skale-nebula',
     title: 'SKALE Nebula Gaming Hub',
-    rpc: getRpcUrl('skale-nebula'),
+    rpcUrl: getRpcUrl('skale-nebula'),
     logoUrl: getLogoUrl(ChainId.SKALE_NEBULA),
     blockExplorer: {
       name: 'SKALE Nebula Gaming Hub Explorer',
@@ -850,7 +850,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'skale-nebula-testnet',
     title: 'SKALE Nebula Gaming Hub Testnet',
-    rpc: getRpcUrl('skale-nebula-testnet'),
+    rpcUrl: getRpcUrl('skale-nebula-testnet'),
     logoUrl: getLogoUrl(ChainId.SKALE_NEBULA_TESTNET),
     blockExplorer: {
       name: 'SKALE Nebula Gaming Hub Testnet Explorer',
@@ -867,7 +867,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'soneium',
     title: 'Soneium',
-    rpc: getRpcUrl('soneium'),
+    rpcUrl: getRpcUrl('soneium'),
     logoUrl: getLogoUrl(ChainId.SONEIUM),
     blockExplorer: {
       name: 'Soneium Explorer',
@@ -884,7 +884,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'soneium-minato',
     title: 'Soneium Minato (Testnet)',
-    rpc: getRpcUrl('soneium-minato'),
+    rpcUrl: getRpcUrl('soneium-minato'),
     logoUrl: getLogoUrl(ChainId.SONEIUM_MINATO),
     blockExplorer: {
       name: 'Soneium Minato Explorer',
@@ -901,7 +901,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'toy-testnet',
     title: 'TOY (Testnet)',
-    rpc: getRpcUrl('toy-testnet'),
+    rpcUrl: getRpcUrl('toy-testnet'),
     logoUrl: getLogoUrl(ChainId.TOY_TESTNET),
     blockExplorer: {
       name: 'TOY Testnet Explorer',
@@ -918,7 +918,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'immutable-zkevm',
     title: 'Immutable zkEVM',
-    rpc: getRpcUrl('immutable-zkevm'),
+    rpcUrl: getRpcUrl('immutable-zkevm'),
     logoUrl: getLogoUrl(ChainId.IMMUTABLE_ZKEVM),
     blockExplorer: {
       name: 'Immutable zkEVM Explorer',
@@ -935,7 +935,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'immutable-zkevm-testnet',
     title: 'Immutable zkEVM Testnet',
-    rpc: getRpcUrl('immutable-zkevm-testnet'),
+    rpcUrl: getRpcUrl('immutable-zkevm-testnet'),
     logoUrl: getLogoUrl(ChainId.IMMUTABLE_ZKEVM_TESTNET),
     blockExplorer: {
       name: 'Immutable zkEVM Testnet Explorer',
@@ -952,7 +952,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'rootnet',
     title: 'The Root Network',
-    rpc: getRpcUrl('rootnet'),
+    rpcUrl: getRpcUrl('rootnet'),
     logoUrl: getLogoUrl(ChainId.ROOT_NETWORK),
     blockExplorer: {
       name: 'The Root Network Explorer',
@@ -969,7 +969,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'rootnet-porcini',
     title: 'The Root Network Porcini Testnet',
-    rpc: getRpcUrl('rootnet-porcini'),
+    rpcUrl: getRpcUrl('rootnet-porcini'),
     logoUrl: getLogoUrl(ChainId.ROOT_NETWORK_PORCINI),
     blockExplorer: {
       name: 'The Root Network Porcini Testnet Explorer',
@@ -986,7 +986,7 @@ export const ALL: Network[] = [
     type: NetworkType.LOCAL,
     name: 'hardhat',
     title: 'Hardhat (local testnet)',
-    rpc: 'http://localhost:8545',
+    rpcUrl: 'http://localhost:8545',
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
@@ -998,7 +998,7 @@ export const ALL: Network[] = [
     type: NetworkType.LOCAL,
     name: 'hardhat2',
     title: 'Hardhat (local testnet)',
-    rpc: 'http://localhost:8545',
+    rpcUrl: 'http://localhost:8545',
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
@@ -1010,7 +1010,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'laos',
     title: 'LAOS',
-    rpc: getRpcUrl('laos'),
+    rpcUrl: getRpcUrl('laos'),
     logoUrl: getLogoUrl(ChainId.LAOS),
     blockExplorer: {
       name: 'LAOS Explorer',
@@ -1027,7 +1027,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'laos-sigma-testnet',
     title: 'LAOS Sigma Testnet',
-    rpc: getRpcUrl('laos-sigma-testnet'),
+    rpcUrl: getRpcUrl('laos-sigma-testnet'),
     logoUrl: getLogoUrl(ChainId.LAOS_SIGMA_TESTNET),
     blockExplorer: {
       name: 'LAOS Sigma Testnet Explorer',
@@ -1044,7 +1044,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'moonbeam',
     title: 'Moonbeam',
-    rpc: getRpcUrl('moonbeam'),
+    rpcUrl: getRpcUrl('moonbeam'),
     logoUrl: getLogoUrl(ChainId.MOONBEAM),
     blockExplorer: {
       name: 'Moonscan',
@@ -1061,7 +1061,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'moonbase-alpha',
     title: 'Moonbase Alpha',
-    rpc: getRpcUrl('moonbase-alpha'),
+    rpcUrl: getRpcUrl('moonbase-alpha'),
     logoUrl: getLogoUrl(ChainId.MOONBASE_ALPHA),
     blockExplorer: {
       name: 'Moonscan (Moonbase Alpha)',
@@ -1078,7 +1078,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'etherlink',
     title: 'Etherlink',
-    rpc: getRpcUrl('etherlink'),
+    rpcUrl: getRpcUrl('etherlink'),
     logoUrl: getLogoUrl(ChainId.ETHERLINK),
     blockExplorer: {
       name: 'Etherlink Explorer',
@@ -1095,7 +1095,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'etherlink-testnet',
     title: 'Etherlink Testnet',
-    rpc: getRpcUrl('etherlink-testnet'),
+    rpcUrl: getRpcUrl('etherlink-testnet'),
     logoUrl: getLogoUrl(ChainId.ETHERLINK_TESTNET),
     blockExplorer: {
       name: 'Etherlink Testnet Explorer',
@@ -1112,7 +1112,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'monad-testnet',
     title: 'Monad Testnet',
-    rpc: getRpcUrl('monad-testnet'),
+    rpcUrl: getRpcUrl('monad-testnet'),
     logoUrl: getLogoUrl(ChainId.MONAD_TESTNET),
     blockExplorer: {
       name: 'Monad Testnet Explorer',
@@ -1130,7 +1130,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'somnia-testnet',
     title: 'Somnia Testnet',
-    rpc: getRpcUrl('somnia-testnet'),
+    rpcUrl: getRpcUrl('somnia-testnet'),
     logoUrl: getLogoUrl(ChainId.SOMNIA_TESTNET),
     blockExplorer: {
       name: 'Somnia Testnet Explorer',
@@ -1148,7 +1148,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'incentiv-testnet',
     title: 'Incentiv Testnet',
-    rpc: getRpcUrl('incentiv-testnet'),
+    rpcUrl: getRpcUrl('incentiv-testnet'),
     logoUrl: getLogoUrl(ChainId.INCENTIV_TESTNET),
     blockExplorer: {
       name: 'Incentiv Testnet Explorer',
@@ -1166,7 +1166,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'sei',
     title: 'Sei',
-    rpc: getRpcUrl('sei'),
+    rpcUrl: getRpcUrl('sei'),
     logoUrl: getLogoUrl(ChainId.SEI),
     blockExplorer: {
       name: 'SEI Explorer',
@@ -1184,7 +1184,7 @@ export const ALL: Network[] = [
     type: NetworkType.TESTNET,
     name: 'sei-testnet',
     title: 'Sei Testnet',
-    rpc: getRpcUrl('sei-testnet'),
+    rpcUrl: getRpcUrl('sei-testnet'),
     logoUrl: getLogoUrl(ChainId.SEI_TESTNET),
     blockExplorer: {
       name: 'Sei Testnet Explorer',
@@ -1202,7 +1202,7 @@ export const ALL: Network[] = [
     type: NetworkType.MAINNET,
     name: 'somnia',
     title: 'Somnia',
-    rpc: getRpcUrl('somnia'),
+    rpcUrl: getRpcUrl('somnia'),
     logoUrl: getLogoUrl(ChainId.SOMNIA),
     blockExplorer: {
       name: 'Somnia Explorer',

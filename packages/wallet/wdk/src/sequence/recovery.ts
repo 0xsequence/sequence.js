@@ -468,7 +468,7 @@ export class Recovery implements RecoveryInterface {
     // Create providers for each network
     const providers = this.shared.sequence.networks.map((network) => ({
       chainId: network.chainId,
-      provider: Provider.from(RpcTransport.fromHttp(network.rpc)),
+      provider: Provider.from(RpcTransport.fromHttp(network.rpcUrl)),
     }))
 
     const seenInThisRun = new Set<string>()

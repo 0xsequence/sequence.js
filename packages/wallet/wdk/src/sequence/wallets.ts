@@ -1114,7 +1114,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
     return wallet.getNonce(provider, space)
   }
 
@@ -1129,7 +1129,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
     const status = await walletObject.getStatus(provider)
 
     const onchainConfiguration = await this.shared.sequence.stateProvider.getConfiguration(status.onChainImageHash)
@@ -1174,7 +1174,7 @@ export class Wallets implements WalletsInterface {
       throw new Error('network-not-found')
     }
 
-    const provider = Provider.from(RpcTransport.fromHttp(network.rpc))
+    const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
     const onchainStatus = await walletObject.getStatus(provider)
     return onchainStatus.imageHash === onchainStatus.onChainImageHash
   }

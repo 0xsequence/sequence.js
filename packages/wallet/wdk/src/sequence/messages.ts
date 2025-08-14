@@ -195,7 +195,7 @@ export class Messages implements MessagesInterface {
       if (!network) {
         throw new Error(`Network not found for ${message.envelope.chainId}`)
       }
-      const transport = RpcTransport.fromHttp(network.rpc)
+      const transport = RpcTransport.fromHttp(network.rpcUrl)
       provider = Provider.from(transport)
     }
 

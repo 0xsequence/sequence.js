@@ -1,7 +1,7 @@
 import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State } from '../../core/src/index.js'
-import { Attestation, Constants, Extensions, Payload, Permission } from '../../primitives/src/index.js'
+import { Attestation, Constants, Extensions, Network, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 
@@ -81,10 +81,11 @@ describe('Sessions (via Manager)', () => {
       networks: [
         {
           chainId,
-          rpc: RPC_URL ?? 'XXX',
+          type: Network.NetworkType.MAINNET,
+          rpcUrl: RPC_URL ?? 'XXX',
           name: 'XXX',
-          explorer: 'XXX',
-          nativeCurrency: {
+          blockExplorer: { url: 'XXX' },
+          nativeToken: {
             name: 'Ether',
             symbol: 'ETH',
             decimals: 18,

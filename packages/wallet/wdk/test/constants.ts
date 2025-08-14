@@ -4,6 +4,7 @@ import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence
 import { mockEthereum } from './setup'
 import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'
 import * as Db from '../src/dbs'
+import { Network } from '@0xsequence/wallet-primitives'
 
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
@@ -37,10 +38,11 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
     networks: [
       {
         name: 'Arbitrum (local fork)',
-        rpc: LOCAL_RPC_URL,
+        type: Network.NetworkType.MAINNET,
+        rpcUrl: LOCAL_RPC_URL,
         chainId: 42161n,
-        explorer: 'https://arbiscan.io/',
-        nativeCurrency: {
+        blockExplorer: { url: 'https://arbiscan.io/' },
+        nativeToken: {
           name: 'Ether',
           symbol: 'ETH',
           decimals: 18,
@@ -109,10 +111,11 @@ export function newRemoteManager(
     networks: [
       {
         name: 'Remote Test Network',
-        rpc: remoteManagerOptions.network.rpcUrl,
+        type: Network.NetworkType.MAINNET,
+        rpcUrl: remoteManagerOptions.network.rpcUrl,
         chainId: remoteManagerOptions.network.chainId,
-        explorer: 'https://undefined/',
-        nativeCurrency: {
+        blockExplorer: { url: 'https://undefined/' },
+        nativeToken: {
           name: 'Ether',
           symbol: 'ETH',
           decimals: 18,
