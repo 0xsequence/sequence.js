@@ -1,7 +1,6 @@
 export enum NetworkType {
   MAINNET = 'mainnet',
   TESTNET = 'testnet',
-  LOCAL = 'local',
 }
 
 export type BlockExplorerConfig = {
@@ -116,10 +115,6 @@ export const ChainId = {
   // The Root Network
   ROOT_NETWORK: 7668n,
   ROOT_NETWORK_PORCINI: 7672n,
-
-  // HARDHAT TESTNETS
-  HARDHAT: 31337n,
-  HARDHAT_2: 31338n,
 
   // LAOS
   LAOS: 6283n,
@@ -978,30 +973,6 @@ export const ALL: Network[] = [
     nativeToken: {
       symbol: 'XRP',
       name: 'XRP',
-      decimals: 18,
-    },
-  },
-  {
-    chainId: ChainId.HARDHAT,
-    type: NetworkType.LOCAL,
-    name: 'hardhat',
-    title: 'Hardhat (local testnet)',
-    rpcUrl: 'http://localhost:8545',
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18,
-    },
-  },
-  {
-    chainId: ChainId.HARDHAT_2,
-    type: NetworkType.LOCAL,
-    name: 'hardhat2',
-    title: 'Hardhat (local testnet)',
-    rpcUrl: 'http://localhost:8545',
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
       decimals: 18,
     },
   },
