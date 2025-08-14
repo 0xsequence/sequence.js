@@ -12,6 +12,7 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
   "exports": {
