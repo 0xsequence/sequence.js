@@ -145,7 +145,7 @@ export const getRelayerUrl = (chainId: Network.ChainId | bigint | number) => {
 
 export const getExplorerUrl = (chainId: Network.ChainId | bigint | number, txHash: string) => {
   const network = getNetwork(chainId)
-  const explorerUrl = network.blockExplorer?.rootUrl
+  const explorerUrl = network.blockExplorer?.url
   if (!explorerUrl) {
     throw new Error(`Explorer URL not found for chainId ${chainId}`)
   }

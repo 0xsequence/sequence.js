@@ -6,7 +6,7 @@ export enum NetworkType {
 
 export type BlockExplorerConfig = {
   name?: string
-  rootUrl: string
+  url: string
 }
 
 export interface Network {
@@ -160,7 +160,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MAINNET}.webp`,
     blockExplorer: {
       name: 'Etherscan',
-      rootUrl: 'https://etherscan.io/',
+      url: 'https://etherscan.io/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -178,7 +178,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROPSTEN}.webp`,
     blockExplorer: {
       name: 'Etherscan (Ropsten)',
-      rootUrl: 'https://ropsten.etherscan.io/',
+      url: 'https://ropsten.etherscan.io/',
     },
     nativeToken: {
       symbol: 'roETH',
@@ -197,7 +197,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.RINKEBY}.webp`,
     blockExplorer: {
       name: 'Etherscan (Rinkeby)',
-      rootUrl: 'https://rinkeby.etherscan.io/',
+      url: 'https://rinkeby.etherscan.io/',
     },
     nativeToken: {
       symbol: 'rETH',
@@ -216,7 +216,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.GOERLI}.webp`,
     blockExplorer: {
       name: 'Etherscan (Goerli)',
-      rootUrl: 'https://goerli.etherscan.io/',
+      url: 'https://goerli.etherscan.io/',
     },
     nativeToken: {
       symbol: 'gETH',
@@ -235,7 +235,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.KOVAN}.webp`,
     blockExplorer: {
       name: 'Etherscan (Kovan)',
-      rootUrl: 'https://kovan.etherscan.io/',
+      url: 'https://kovan.etherscan.io/',
     },
     nativeToken: {
       symbol: 'kETH',
@@ -253,7 +253,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEPOLIA}.webp`,
     blockExplorer: {
       name: 'Etherscan (Sepolia)',
-      rootUrl: 'https://sepolia.etherscan.io/',
+      url: 'https://sepolia.etherscan.io/',
     },
     nativeToken: {
       symbol: 'sETH',
@@ -270,7 +270,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON}.webp`,
     blockExplorer: {
       name: 'Polygonscan',
-      rootUrl: 'https://polygonscan.com/',
+      url: 'https://polygonscan.com/',
     },
     nativeToken: {
       symbol: 'POL',
@@ -287,7 +287,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_MUMBAI}.webp`,
     blockExplorer: {
       name: 'Polygonscan (Mumbai)',
-      rootUrl: 'https://mumbai.polygonscan.com/',
+      url: 'https://mumbai.polygonscan.com/',
     },
     nativeToken: {
       symbol: 'mMATIC',
@@ -305,7 +305,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_AMOY}.webp`,
     blockExplorer: {
       name: 'OKLink (Amoy)',
-      rootUrl: 'https://www.oklink.com/amoy/',
+      url: 'https://www.oklink.com/amoy/',
     },
     nativeToken: {
       symbol: 'aPOL',
@@ -322,7 +322,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_ZKEVM}.webp`,
     blockExplorer: {
       name: 'Polygonscan (zkEVM)',
-      rootUrl: 'https://zkevm.polygonscan.com/',
+      url: 'https://zkevm.polygonscan.com/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -339,7 +339,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BSC}.webp`,
     blockExplorer: {
       name: 'BSCScan',
-      rootUrl: 'https://bscscan.com/',
+      url: 'https://bscscan.com/',
     },
     nativeToken: {
       symbol: 'BNB',
@@ -356,7 +356,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BSC_TESTNET}.webp`,
     blockExplorer: {
       name: 'BSCScan (Testnet)',
-      rootUrl: 'https://testnet.bscscan.com/',
+      url: 'https://testnet.bscscan.com/',
     },
     nativeToken: {
       symbol: 'tBNB',
@@ -373,7 +373,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM}.webp`,
     blockExplorer: {
       name: 'Etherscan (Optimism)',
-      rootUrl: 'https://optimistic.etherscan.io/',
+      url: 'https://optimistic.etherscan.io/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -390,7 +390,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_KOVAN}.webp`,
     blockExplorer: {
       name: 'Etherscan (Optimism Kovan)',
-      rootUrl: 'https://kovan-optimistic.etherscan.io/',
+      url: 'https://kovan-optimistic.etherscan.io/',
     },
     nativeToken: {
       symbol: 'kETH',
@@ -408,7 +408,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_GOERLI}.webp`,
     blockExplorer: {
       name: 'Etherscan (Optimism Goerli)',
-      rootUrl: 'https://goerli-optimistic.etherscan.io/',
+      url: 'https://goerli-optimistic.etherscan.io/',
     },
     nativeToken: {
       symbol: 'gETH',
@@ -426,7 +426,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.OPTIMISM_SEPOLIA}.webp`,
     blockExplorer: {
       name: 'Etherscan (Optimism Sepolia)',
-      rootUrl: 'https://sepolia-optimistic.etherscan.io/',
+      url: 'https://sepolia-optimistic.etherscan.io/',
     },
     nativeToken: {
       symbol: 'sETH',
@@ -443,7 +443,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM}.webp`,
     blockExplorer: {
       name: 'Arbiscan',
-      rootUrl: 'https://arbiscan.io/',
+      url: 'https://arbiscan.io/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -460,7 +460,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM_GOERLI}.webp`,
     blockExplorer: {
       name: 'Arbiscan (Goerli Testnet)',
-      rootUrl: 'https://testnet.arbiscan.io/',
+      url: 'https://testnet.arbiscan.io/',
     },
     nativeToken: {
       symbol: 'gETH',
@@ -478,7 +478,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM_SEPOLIA}.webp`,
     blockExplorer: {
       name: 'Arbiscan (Sepolia Testnet)',
-      rootUrl: 'https://sepolia.arbiscan.io/',
+      url: 'https://sepolia.arbiscan.io/',
     },
     nativeToken: {
       symbol: 'sETH',
@@ -495,7 +495,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARBITRUM_NOVA}.webp`,
     blockExplorer: {
       name: 'Arbiscan Nova',
-      rootUrl: 'https://nova.arbiscan.io/',
+      url: 'https://nova.arbiscan.io/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -512,7 +512,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.AVALANCHE}.webp`,
     blockExplorer: {
       name: 'Snowtrace',
-      rootUrl: 'https://subnets.avax.network/c-chain/',
+      url: 'https://subnets.avax.network/c-chain/',
     },
     nativeToken: {
       symbol: 'AVAX',
@@ -529,7 +529,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.AVALANCHE_TESTNET}.webp`,
     blockExplorer: {
       name: 'Snowtrace (Testnet)',
-      rootUrl: 'https://subnets-test.avax.network/c-chain/',
+      url: 'https://subnets-test.avax.network/c-chain/',
     },
     nativeToken: {
       symbol: 'tAVAX',
@@ -546,7 +546,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.GNOSIS}.webp`,
     blockExplorer: {
       name: 'Gnosis Chain Explorer',
-      rootUrl: 'https://blockscout.com/xdai/mainnet/',
+      url: 'https://blockscout.com/xdai/mainnet/',
     },
     nativeToken: {
       symbol: 'XDAI',
@@ -563,7 +563,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BASE}.webp`,
     blockExplorer: {
       name: 'Base Explorer',
-      rootUrl: 'https://basescan.org/',
+      url: 'https://basescan.org/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -580,7 +580,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BASE_GOERLI}.webp`,
     blockExplorer: {
       name: 'Base Goerli Explorer',
-      rootUrl: 'https://goerli.basescan.org/',
+      url: 'https://goerli.basescan.org/',
     },
     nativeToken: {
       symbol: 'gETH',
@@ -598,7 +598,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BASE_SEPOLIA}.webp`,
     blockExplorer: {
       name: 'Base Sepolia Explorer',
-      rootUrl: 'https://base-sepolia.blockscout.com/',
+      url: 'https://base-sepolia.blockscout.com/',
     },
     nativeToken: {
       symbol: 'sETH',
@@ -615,7 +615,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE}.webp`,
     blockExplorer: {
       name: 'Oasys Homeverse Explorer',
-      rootUrl: 'https://explorer.oasys.homeverse.games/',
+      url: 'https://explorer.oasys.homeverse.games/',
     },
     nativeToken: {
       symbol: 'OAS',
@@ -632,7 +632,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE_TESTNET}.webp`,
     blockExplorer: {
       name: 'Oasys Homeverse Explorer (Testnet)',
-      rootUrl: 'https://explorer.testnet.oasys.homeverse.games/',
+      url: 'https://explorer.testnet.oasys.homeverse.games/',
     },
     nativeToken: {
       symbol: 'tOAS',
@@ -649,7 +649,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI}.webp`,
     blockExplorer: {
       name: 'Xai Explorer',
-      rootUrl: 'https://explorer.xai-chain.net/',
+      url: 'https://explorer.xai-chain.net/',
     },
     nativeToken: {
       symbol: 'XAI',
@@ -666,7 +666,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI_SEPOLIA}.webp`,
     blockExplorer: {
       name: 'Xai Sepolia Explorer',
-      rootUrl: 'https://testnet-explorer-v2.xai-chain.net/',
+      url: 'https://testnet-explorer-v2.xai-chain.net/',
     },
     nativeToken: {
       symbol: 'sXAI',
@@ -683,7 +683,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3}.webp`,
     blockExplorer: {
       name: 'B3 Explorer',
-      rootUrl: 'https://explorer.b3.fun/',
+      url: 'https://explorer.b3.fun/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -700,7 +700,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
     blockExplorer: {
       name: 'B3 Sepolia Explorer',
-      rootUrl: 'https://sepolia.explorer.b3.fun/',
+      url: 'https://sepolia.explorer.b3.fun/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -717,7 +717,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APECHAIN}.webp`,
     blockExplorer: {
       name: 'APE Chain Explorer',
-      rootUrl: 'https://apechain.calderaexplorer.xyz/',
+      url: 'https://apechain.calderaexplorer.xyz/',
     },
     nativeToken: {
       symbol: 'APE',
@@ -734,7 +734,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.APECHAIN_TESTNET}.webp`,
     blockExplorer: {
       name: 'APE Chain Explorer',
-      rootUrl: 'https://curtis.explorer.caldera.xyz/',
+      url: 'https://curtis.explorer.caldera.xyz/',
     },
     nativeToken: {
       symbol: 'APE',
@@ -751,7 +751,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST}.webp`,
     blockExplorer: {
       name: 'Blast Explorer',
-      rootUrl: 'https://blastscan.io/',
+      url: 'https://blastscan.io/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -768,7 +768,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST_SEPOLIA}.webp`,
     blockExplorer: {
       name: 'Blast Sepolia Explorer',
-      rootUrl: 'https://sepolia.blastexplorer.io/',
+      url: 'https://sepolia.blastexplorer.io/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -785,7 +785,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS}.webp`,
     blockExplorer: {
       name: 'Telos Explorer',
-      rootUrl: 'https://explorer.telos.net/network/',
+      url: 'https://explorer.telos.net/network/',
     },
     nativeToken: {
       symbol: 'TLOS',
@@ -802,7 +802,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TELOS_TESTNET}.webp`,
     blockExplorer: {
       name: 'Telos Testnet Explorer',
-      rootUrl: 'https://explorer-test.telos.net/network',
+      url: 'https://explorer-test.telos.net/network',
     },
     nativeToken: {
       symbol: 'TLOS',
@@ -819,7 +819,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BORNE_TESTNET}.webp`,
     blockExplorer: {
       name: 'Borne Testnet Explorer',
-      rootUrl: 'https://subnets-test.avax.network/bornegfdn',
+      url: 'https://subnets-test.avax.network/bornegfdn',
     },
     nativeToken: {
       symbol: 'BORNE',
@@ -837,7 +837,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA}.webp`,
     blockExplorer: {
       name: 'SKALE Nebula Gaming Hub Explorer',
-      rootUrl: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/',
+      url: 'https://green-giddy-denebola.explorer.mainnet.skalenodes.com/',
     },
     nativeToken: {
       symbol: 'sFUEL',
@@ -854,7 +854,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
     blockExplorer: {
       name: 'SKALE Nebula Gaming Hub Testnet Explorer',
-      rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/',
+      url: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/',
     },
     nativeToken: {
       symbol: 'sFUEL',
@@ -871,7 +871,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM}.webp`,
     blockExplorer: {
       name: 'Soneium Explorer',
-      rootUrl: 'https://soneium.blockscout.com/',
+      url: 'https://soneium.blockscout.com/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -888,7 +888,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONEIUM_MINATO}.webp`,
     blockExplorer: {
       name: 'Soneium Minato Explorer',
-      rootUrl: 'https://explorer-testnet.soneium.org/',
+      url: 'https://explorer-testnet.soneium.org/',
     },
     nativeToken: {
       symbol: 'ETH',
@@ -905,7 +905,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TOY_TESTNET}.webp`,
     blockExplorer: {
       name: 'TOY Testnet Explorer',
-      rootUrl: 'https://toy-chain-testnet.explorer.caldera.xyz/',
+      url: 'https://toy-chain-testnet.explorer.caldera.xyz/',
     },
     nativeToken: {
       symbol: 'TOY',
@@ -922,7 +922,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM}.webp`,
     blockExplorer: {
       name: 'Immutable zkEVM Explorer',
-      rootUrl: 'https://explorer.immutable.com/',
+      url: 'https://explorer.immutable.com/',
     },
     nativeToken: {
       symbol: 'IMX',
@@ -939,7 +939,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM_TESTNET}.webp`,
     blockExplorer: {
       name: 'Immutable zkEVM Testnet Explorer',
-      rootUrl: 'https://explorer.testnet.immutable.com/',
+      url: 'https://explorer.testnet.immutable.com/',
     },
     nativeToken: {
       symbol: 'IMX',
@@ -956,7 +956,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK}.webp`,
     blockExplorer: {
       name: 'The Root Network Explorer',
-      rootUrl: 'https://rootscan.io/',
+      url: 'https://rootscan.io/',
     },
     nativeToken: {
       symbol: 'XRP',
@@ -973,7 +973,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROOT_NETWORK_PORCINI}.webp`,
     blockExplorer: {
       name: 'The Root Network Porcini Testnet Explorer',
-      rootUrl: 'https://porcini.rootscan.io/',
+      url: 'https://porcini.rootscan.io/',
     },
     nativeToken: {
       symbol: 'XRP',
@@ -1014,7 +1014,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS}.webp`,
     blockExplorer: {
       name: 'LAOS Explorer',
-      rootUrl: 'https://blockscout.laos.laosfoundation.io/',
+      url: 'https://blockscout.laos.laosfoundation.io/',
     },
     nativeToken: {
       symbol: 'LAOS',
@@ -1031,7 +1031,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.LAOS_SIGMA_TESTNET}.webp`,
     blockExplorer: {
       name: 'LAOS Sigma Testnet Explorer',
-      rootUrl: 'https://sigma.explorer.laosnetwork.io/',
+      url: 'https://sigma.explorer.laosnetwork.io/',
     },
     nativeToken: {
       symbol: 'SIGMA',
@@ -1048,7 +1048,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBEAM}.webp`,
     blockExplorer: {
       name: 'Moonscan',
-      rootUrl: 'https://moonscan.io/',
+      url: 'https://moonscan.io/',
     },
     nativeToken: {
       symbol: 'GLMR',
@@ -1065,7 +1065,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBASE_ALPHA}.webp`,
     blockExplorer: {
       name: 'Moonscan (Moonbase Alpha)',
-      rootUrl: 'https://moonbase.moonscan.io/',
+      url: 'https://moonbase.moonscan.io/',
     },
     nativeToken: {
       symbol: 'GLMR',
@@ -1082,7 +1082,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK}.webp`,
     blockExplorer: {
       name: 'Etherlink Explorer',
-      rootUrl: 'https://explorer.etherlink.com/',
+      url: 'https://explorer.etherlink.com/',
     },
     nativeToken: {
       symbol: 'XTZ',
@@ -1099,7 +1099,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK_TESTNET}.webp`,
     blockExplorer: {
       name: 'Etherlink Testnet Explorer',
-      rootUrl: 'https://testnet.explorer.etherlink.com/',
+      url: 'https://testnet.explorer.etherlink.com/',
     },
     nativeToken: {
       symbol: 'XTZ',
@@ -1116,7 +1116,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD_TESTNET}.webp`,
     blockExplorer: {
       name: 'Monad Testnet Explorer',
-      rootUrl: 'https://testnet.monadexplorer.com/',
+      url: 'https://testnet.monadexplorer.com/',
     },
     nativeToken: {
       symbol: 'MON',
@@ -1134,7 +1134,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SOMNIA_TESTNET}.webp`,
     blockExplorer: {
       name: 'Somnia Testnet Explorer',
-      rootUrl: 'https://somnia-testnet.socialscan.io/',
+      url: 'https://somnia-testnet.socialscan.io/',
     },
     nativeToken: {
       symbol: 'STT',
@@ -1152,7 +1152,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV_TESTNET}.webp`,
     blockExplorer: {
       name: 'Incentiv Testnet Explorer',
-      rootUrl: 'https://explorer.testnet.incentiv.net/',
+      url: 'https://explorer.testnet.incentiv.net/',
     },
     nativeToken: {
       symbol: 'CENT',
@@ -1170,7 +1170,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEI}.webp`,
     blockExplorer: {
       name: 'SEI Explorer',
-      rootUrl: 'https://seitrace.com/?chain=pacific-1',
+      url: 'https://seitrace.com/?chain=pacific-1',
     },
     nativeToken: {
       symbol: 'SEI',
@@ -1188,7 +1188,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEI_TESTNET}.webp`,
     blockExplorer: {
       name: 'Sei Testnet Explorer',
-      rootUrl: 'https://seitrace.com/?chain=atlantic-2',
+      url: 'https://seitrace.com/?chain=atlantic-2',
     },
     nativeToken: {
       symbol: 'SEI',
@@ -1206,7 +1206,7 @@ export const ALL: Network[] = [
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SOMNIA}.webp`,
     blockExplorer: {
       name: 'Somnia Explorer',
-      rootUrl: 'https://mainnet.somnia.w3us.site/',
+      url: 'https://mainnet.somnia.w3us.site/',
     },
     nativeToken: {
       symbol: 'SOMI',
