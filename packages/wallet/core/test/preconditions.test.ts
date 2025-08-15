@@ -19,7 +19,7 @@ function randomAddress(): Address.Address {
 }
 
 describe('Preconditions', () => {
-  const getProvider = async (): Promise<{ provider: Provider.Provider; chainId: bigint }> => {
+  const getProvider = async (): Promise<{ provider: Provider.Provider; chainId: number }> => {
     let provider: Provider.Provider
     let chainId = 1n
     if (CAN_RUN_LIVE) {

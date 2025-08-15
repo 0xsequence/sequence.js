@@ -124,7 +124,7 @@ export class DevHttpProvider implements Provider {
 
   async getWallets(signer: Address.Address): Promise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
     }
@@ -138,7 +138,7 @@ export class DevHttpProvider implements Provider {
     imageHash: Hex.Hex,
   ): Promise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
     }
@@ -152,7 +152,7 @@ export class DevHttpProvider implements Provider {
     signer: Address.Address,
   ): Promise<
     | {
-        chainId: bigint
+        chainId: number
         payload: Payload.Parented
         signature: Signature.SignatureOfSignerLeaf
       }
@@ -168,7 +168,7 @@ export class DevHttpProvider implements Provider {
     imageHash: Hex.Hex,
   ): Promise<
     | {
-        chainId: bigint
+        chainId: number
         payload: Payload.Parented
         signature: Signature.SignatureOfSapientSignerLeaf
       }
@@ -200,7 +200,7 @@ export class DevHttpProvider implements Provider {
 
   async saveWitnesses(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
   ): Promise<void> {
@@ -231,7 +231,7 @@ export class DevHttpProvider implements Provider {
 
   async getPayload(opHash: Hex.Hex): Promise<
     | {
-        chainId: bigint
+        chainId: number
         payload: Payload.Parented
         wallet: Address.Address
       }
@@ -239,7 +239,7 @@ export class DevHttpProvider implements Provider {
   > {
     return this.request<
       | {
-          chainId: bigint
+          chainId: number
           payload: Payload.Parented
           wallet: Address.Address
         }
@@ -247,7 +247,7 @@ export class DevHttpProvider implements Provider {
     >('GET', `/payload/${opHash}`)
   }
 
-  async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+  async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): Promise<void> {
     return this.request<void>('POST', '/payload', { wallet, payload, chainId })
   }
 }

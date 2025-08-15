@@ -71,7 +71,7 @@ export function newRemoteManager(
       relayerPk: string
       bundlerUrl: string
       rpcUrl: string
-      chainId: bigint
+      chainId: number
     }
     tag?: string
   },

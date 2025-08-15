@@ -36,7 +36,7 @@ export interface RecoveryInterface {
    *   with the signing UI and `completePayload`.
    * @see {completePayload} for the next step.
    */
-  queuePayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls): Promise<string>
+  queuePayload(wallet: Address.Address, chainId: number, payload: Payload.Calls): Promise<string>
 
   /**
    * Finalizes a queued recovery payload request and returns the transaction data needed to start the timelock on-chain.
@@ -359,7 +359,7 @@ export class Recovery implements RecoveryInterface {
       }))
   }
 
-  async queuePayload(wallet: Address.Address, chainId: bigint, payload: Payload.Calls) {
+  async queuePayload(wallet: Address.Address, chainId: number, payload: Payload.Calls) {
     const signers = await this.getSigners(wallet)
     if (!signers) {
       throw new Error('recovery-signers-not-found')

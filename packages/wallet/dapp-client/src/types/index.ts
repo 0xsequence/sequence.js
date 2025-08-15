@@ -42,13 +42,13 @@ export interface AddImplicitSessionPayload {
 export interface SignMessagePayload {
   address: Address.Address
   message: string
-  chainId: bigint
+  chainId: number
 }
 
 export interface SignTypedDataPayload {
   address: Address.Address
   typedData: TypedData
-  chainId: bigint
+  chainId: number
 }
 
 export interface ConnectSuccessResponsePayload {
@@ -90,7 +90,7 @@ export type Session = {
   address: Address.Address
   isImplicit: boolean
   permissions?: Signers.Session.ExplicitParams
-  chainId?: bigint
+  chainId?: number
 }
 
 // --- Event Types ---
@@ -116,14 +116,14 @@ export type DappClientSignatureEventListener = (data: {
   action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
   response?: SignatureResponse
   error?: any
-  chainId: bigint
+  chainId: number
 }) => void
 
 export type DappClientExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
   response?: ExplicitSessionResponsePayload
   error?: any
-  chainId: bigint
+  chainId: number
 }) => void
 
 // --- DappTransport Types ---
@@ -168,14 +168,14 @@ export interface MessageSignatureRequest extends BaseRequest {
   type: 'message_signature'
   message: string
   address: Address.Address
-  chainId: bigint
+  chainId: number
 }
 
 export interface TypedDataSignatureRequest extends BaseRequest {
   type: 'typed_data_signature'
   typedData: unknown
   address: Address.Address
-  chainId: bigint
+  chainId: number
 }
 
 export const WalletSize = {

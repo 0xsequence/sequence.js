@@ -8,7 +8,7 @@ import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from
 describe('Sessions (via Manager)', () => {
   // Shared components
   let provider: Provider.Provider
-  let chainId: bigint
+  let chainId: number
   let stateProvider: State.Provider
 
   // Wallet webapp components

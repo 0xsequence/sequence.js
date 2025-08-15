@@ -16,10 +16,10 @@ import {
 type GenericProviderTransactionReceipt = 'success' | 'failed' | 'unknown'
 
 export interface GenericProvider {
-  sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: bigint): Promise<string | undefined>
+  sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: number): Promise<string | undefined>
   getBalance(address: Address.Address): Promise<bigint>
   call(args: { to: Address.Address; data: Hex.Hex }): Promise<string>
-  getTransactionReceipt(txHash: Hex.Hex, chainId: bigint): Promise<GenericProviderTransactionReceipt>
+  getTransactionReceipt(txHash: Hex.Hex, chainId: number): Promise<GenericProviderTransactionReceipt>
 }
 
 export class LocalRelayer implements Relayer {
@@ -29,7 +29,7 @@ export class LocalRelayer implements Relayer {
 
   constructor(public readonly provider: GenericProvider) {}
 
-  isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+  isAvailable(_wallet: Address.Address, _chainId: number): Promise<boolean> {
     return Promise.resolve(true)
   }
 
@@ -49,7 +49,7 @@ export class LocalRelayer implements Relayer {
 
   feeOptions(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     return Promise.resolve({ options: [] })
@@ -72,7 +72,7 @@ export class LocalRelayer implements Relayer {
   async relay(
     to: Address.Address,
     data: Hex.Hex,
-    chainId: bigint,
+    chainId: number,
     quote?: FeeQuote,
     preconditions?: IntentPrecondition[],
     checkInterval: number = 5000,
@@ -151,7 +151,7 @@ export class LocalRelayer implements Relayer {
     })
   }
 
-  async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
+  async status(opHash: Hex.Hex, chainId: number): Promise<OperationStatus> {
     const receipt = await this.provider.getTransactionReceipt(opHash, chainId)
     if (receipt === 'unknown') {
       // Could be pending but we don't know
@@ -272,7 +272,7 @@ export class LocalRelayer implements Relayer {
 export class EIP1193ProviderAdapter implements GenericProvider {
   constructor(private readonly provider: EIP1193Provider) {}
 
-  private async trySwitchChain(chainId: bigint) {
+  private async trySwitchChain(chainId: number) {
     try {
       await this.provider.request({
         method: 'wallet_switchEthereumChain',
@@ -288,7 +288,7 @@ export class EIP1193ProviderAdapter implements GenericProvider {
     }
   }
 
-  async sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: bigint) {
+  async sendTransaction(args: { to: Address.Address; data: Hex.Hex }, chainId: number) {
     const accounts: Address.Address[] = await this.provider.request({ method: 'eth_requestAccounts' })
     const from = accounts[0]
 
@@ -328,7 +328,7 @@ export class EIP1193ProviderAdapter implements GenericProvider {
     })
   }
 
-  async getTransactionReceipt(txHash: Hex.Hex, chainId: bigint) {
+  async getTransactionReceipt(txHash: Hex.Hex, chainId: number) {
     await this.trySwitchChain(chainId)
 
     const rpcReceipt = await this.provider.request({ method: 'eth_getTransactionReceipt', params: [txHash] })

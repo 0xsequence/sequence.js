@@ -12,7 +12,7 @@ export interface Signer {
 
   sign: (
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
   ) => Config.SignerSignature<Signature.SignatureOfSignerLeaf>
 }
@@ -23,7 +23,7 @@ export interface SapientSigner {
 
   signSapient: (
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
   ) => Config.SignerSignature<Signature.SignatureOfSapientSignerLeaf>

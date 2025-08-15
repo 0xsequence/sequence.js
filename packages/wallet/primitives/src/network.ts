@@ -26,6 +26,8 @@ export interface Network {
 }
 
 export const ChainId = {
+  NONE: 0,
+
   // Ethereum
   MAINNET: 1,
   SEPOLIA: 11155111,

@@ -223,7 +223,7 @@ export class Passkey implements SapientSigner, Witnessable {
 
   async signSapient(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
   ): Promise<SignatureTypes.SignatureOfSapientSignerLeaf> {
@@ -274,8 +274,8 @@ export class Passkey implements SapientSigner, Witnessable {
       ),
     )
 
-    const signature = await this.signSapient(wallet, 0n, payload, this.imageHash)
-    await stateWriter.saveWitnesses(wallet, 0n, payload, {
+    const signature = await this.signSapient(wallet, 0, payload, this.imageHash)
+    await stateWriter.saveWitnesses(wallet, 0, payload, {
       type: 'unrecovered-signer',
       weight: 1n,
       signature,

@@ -39,7 +39,7 @@ export class Cached implements Provider {
 
   async getWallets(signer: Address.Address): Promise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
     }
@@ -79,7 +79,7 @@ export class Cached implements Provider {
     imageHash: Hex.Hex,
   ): Promise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
     }
@@ -114,7 +114,7 @@ export class Cached implements Provider {
   async getWitnessFor(
     wallet: Address.Address,
     signer: Address.Address,
-  ): Promise<{ chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined> {
+  ): Promise<{ chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined> {
     const cached = await this.args.cache.getWitnessFor(wallet, signer)
     if (cached) {
       return cached
@@ -137,7 +137,7 @@ export class Cached implements Provider {
     signer: Address.Address,
     imageHash: Hex.Hex,
   ): Promise<
-    { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
+    { chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
   > {
     const cached = await this.args.cache.getWitnessForSapient(wallet, signer, imageHash)
     if (cached) {
@@ -182,7 +182,7 @@ export class Cached implements Provider {
 
   saveWitnesses(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
   ): MaybePromise<void> {
@@ -211,7 +211,7 @@ export class Cached implements Provider {
 
   async getPayload(opHash: Hex.Hex): Promise<
     | {
-        chainId: bigint
+        chainId: number
         payload: Payload.Parented
         wallet: Address.Address
       }
@@ -229,7 +229,7 @@ export class Cached implements Provider {
     return source
   }
 
-  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void> {
+  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void> {
     return this.args.source.savePayload(wallet, payload, chainId)
   }
 }

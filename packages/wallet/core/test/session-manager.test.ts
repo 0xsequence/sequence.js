@@ -273,7 +273,7 @@ describe('SessionManager', () => {
     sessionManager: Signers.SessionManager,
     calls: Payload.Call[],
     provider: Provider.Provider,
-    chainId: bigint,
+    chainId: number,
   ) => {
     // Prepare the transaction
     const envelope = await wallet.prepareTransaction(provider, calls)

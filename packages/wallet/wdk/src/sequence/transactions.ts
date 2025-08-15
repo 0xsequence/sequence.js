@@ -55,7 +55,7 @@ export interface TransactionsInterface {
    */
   request(
     from: Address.Address,
-    chainId: bigint,
+    chainId: number,
     txs: TransactionRequest[],
     options?: { source?: string; noConfigUpdate?: boolean; unsafe?: boolean; space?: bigint },
   ): Promise<string>
@@ -244,7 +244,7 @@ export class Transactions implements TransactionsInterface {
 
   async request(
     from: Address.Address,
-    chainId: bigint,
+    chainId: number,
     txs: TransactionRequest[],
     options?: {
       source?: string

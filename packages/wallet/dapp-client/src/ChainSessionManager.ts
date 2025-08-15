@@ -66,7 +66,7 @@ export class ChainSessionManager {
   private wallet: Wallet | null = null
   private provider: Provider.Provider | null = null
   private relayer: Relayer.Standard.Rpc.RpcRelayer
-  private readonly chainId: bigint
+  private readonly chainId: number
   public transport: DappTransport | null = null
   private sequenceStorage: SequenceStorage
   public isInitialized: boolean = false
@@ -84,7 +84,7 @@ export class ChainSessionManager {
    * @param canUseIndexedDb (Optional) A flag to enable or disable IndexedDB for caching.
    */
   constructor(
-    chainId: bigint,
+    chainId: number,
     keyMachineUrl: string,
     transport: DappTransport,
     sequenceStorage: SequenceStorage,
@@ -653,7 +653,7 @@ export class ChainSessionManager {
     }))
     try {
       const signedCall = await this._buildAndSignCalls(callsToSend)
-      const feeOptions = await this.relayer.feeOptions(signedCall.to, BigInt(this.chainId), callsToSend)
+      const feeOptions = await this.relayer.feeOptions(signedCall.to, this.chainId, callsToSend)
       return feeOptions.options
     } catch (err) {
       throw new FeeOptionError(`Failed to get fee options: ${err instanceof Error ? err.message : String(err)}`)
@@ -710,8 +710,8 @@ export class ChainSessionManager {
         }
       }
       const signedCalls = await this._buildAndSignCalls(callsToSend)
-      const hash = await this.relayer.relay(signedCalls.to, signedCalls.data, BigInt(this.chainId))
-      const status = await this._waitForTransactionReceipt(hash.opHash, BigInt(this.chainId))
+      const hash = await this.relayer.relay(signedCalls.to, signedCalls.data, this.chainId)
+      const status = await this._waitForTransactionReceipt(hash.opHash, this.chainId)
       if (status.status === 'confirmed') {
         return status.transactionHash
       } else {
@@ -906,11 +906,7 @@ export class ChainSessionManager {
       throw new InitializationError('Session not fully initialized.')
 
     try {
-      const preparedIncrement = await this.sessionManager.prepareIncrement(
-        this.wallet.address,
-        BigInt(this.chainId),
-        calls,
-      )
+      const preparedIncrement = await this.sessionManager.prepareIncrement(this.wallet.address, this.chainId, calls)
       if (preparedIncrement) calls.push(preparedIncrement)
 
       const envelope = await this.wallet.prepareTransaction(this.provider, calls, {
@@ -925,7 +921,7 @@ export class ChainSessionManager {
 
       const signature = await this.sessionManager.signSapient(
         this.wallet.address,
-        BigInt(this.chainId),
+        this.chainId,
         parentedEnvelope,
         imageHash,
       )
@@ -947,7 +943,7 @@ export class ChainSessionManager {
    * @param chainId The chain ID of the transaction.
    * @returns The final status of the transaction.
    */
-  private async _waitForTransactionReceipt(opHash: `0x${string}`, chainId: bigint): Promise<Relayer.OperationStatus> {
+  private async _waitForTransactionReceipt(opHash: `0x${string}`, chainId: number): Promise<Relayer.OperationStatus> {
     try {
       while (true) {
         const currentStatus = await this.relayer.status(opHash, chainId)

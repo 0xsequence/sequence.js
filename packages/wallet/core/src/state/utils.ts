@@ -5,7 +5,7 @@ import { isSapientSigner, SapientSigner, Signer } from '../signers/index.js'
 
 export type WalletWithWitness<S extends Signer | SapientSigner> = {
   wallet: Address.Address
-  chainId: bigint
+  chainId: number
   payload: Payload.Parented
   signature: S extends SapientSigner ? Signature.SignatureOfSapientSignerLeaf : Signature.SignatureOfSignerLeaf
 }
@@ -31,7 +31,7 @@ async function retrieveWallets<S extends Signer | SapientSigner>(
   signer: S,
 ): Promise<{
   [wallet: `0x${string}`]: {
-    chainId: bigint
+    chainId: number
     payload: Payload.Parented
     signature: S extends SapientSigner ? Signature.SignatureOfSapientSignerLeaf : Signature.SignatureOfSignerLeaf
   }

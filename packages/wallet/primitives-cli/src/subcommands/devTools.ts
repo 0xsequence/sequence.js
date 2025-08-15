@@ -122,7 +122,7 @@ async function generateSessionsTopology(
     return {
       type: 'session-permissions',
       signer: randomAddress(options),
-      chainId: randomBigInt(1000000000000000000n, options),
+      chainId: Number(randomBigInt(1000000000000000000n, options)),
       valueLimit: randomBigInt(100n, options),
       deadline: randomBigInt(1000n, options),
       permissions: permissions as [Permission.Permission, ...Permission.Permission[]],
