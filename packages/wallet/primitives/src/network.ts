@@ -9,7 +9,7 @@ export type BlockExplorerConfig = {
 }
 
 export interface Network {
-  chainId: bigint
+  chainId: number
   type: NetworkType
   name: string
   title?: string
@@ -27,108 +27,108 @@ export interface Network {
 
 export const ChainId = {
   // Ethereum
-  MAINNET: 1n,
-  SEPOLIA: 11155111n,
+  MAINNET: 1,
+  SEPOLIA: 11155111,
 
   // Polygon
-  POLYGON: 137n,
-  POLYGON_ZKEVM: 1101n,
-  POLYGON_AMOY: 80002n,
+  POLYGON: 137,
+  POLYGON_ZKEVM: 1101,
+  POLYGON_AMOY: 80002,
 
   // BSC
-  BSC: 56n,
-  BSC_TESTNET: 97n,
+  BSC: 56,
+  BSC_TESTNET: 97,
 
   // Optimism
-  OPTIMISM: 10n,
-  OPTIMISM_SEPOLIA: 11155420n,
+  OPTIMISM: 10,
+  OPTIMISM_SEPOLIA: 11155420,
 
   // Arbitrum One
-  ARBITRUM: 42161n,
-  ARBITRUM_SEPOLIA: 421614n,
+  ARBITRUM: 42161,
+  ARBITRUM_SEPOLIA: 421614,
 
   // Arbitrum Nova
-  ARBITRUM_NOVA: 42170n,
+  ARBITRUM_NOVA: 42170,
 
   // Avalanche
-  AVALANCHE: 43114n,
-  AVALANCHE_TESTNET: 43113n,
+  AVALANCHE: 43114,
+  AVALANCHE_TESTNET: 43113,
 
   // Gnosis Chain (XDAI)
-  GNOSIS: 100n,
+  GNOSIS: 100,
 
   // BASE
-  BASE: 8453n,
-  BASE_SEPOLIA: 84532n,
+  BASE: 8453,
+  BASE_SEPOLIA: 84532,
 
   // HOMEVERSE
-  HOMEVERSE_TESTNET: 40875n,
-  HOMEVERSE: 19011n,
+  HOMEVERSE_TESTNET: 40875,
+  HOMEVERSE: 19011,
 
   // Xai
-  XAI: 660279n,
-  XAI_SEPOLIA: 37714555429n,
+  XAI: 660279,
+  XAI_SEPOLIA: 37714555429,
 
   // TELOS
-  TELOS: 40n,
-  TELOS_TESTNET: 41n,
+  TELOS: 40,
+  TELOS_TESTNET: 41,
 
   // B3 Sepolia
-  B3: 8333n,
-  B3_SEPOLIA: 1993n,
+  B3: 8333,
+  B3_SEPOLIA: 1993,
 
   // APE Chain
-  APECHAIN: 33139n,
-  APECHAIN_TESTNET: 33111n,
+  APECHAIN: 33139,
+  APECHAIN_TESTNET: 33111,
 
   // Blast
-  BLAST: 81457n,
-  BLAST_SEPOLIA: 168587773n,
+  BLAST: 81457,
+  BLAST_SEPOLIA: 168587773,
 
   // SKALE Nebula
-  SKALE_NEBULA: 1482601649n,
-  SKALE_NEBULA_TESTNET: 37084624n,
+  SKALE_NEBULA: 1482601649,
+  SKALE_NEBULA_TESTNET: 37084624,
 
   // Soneium Minato
-  SONEIUM_MINATO: 1946n,
-  SONEIUM: 1868n,
+  SONEIUM_MINATO: 1946,
+  SONEIUM: 1868,
 
   // TOY Testnet
-  TOY_TESTNET: 21000000n,
+  TOY_TESTNET: 21000000,
 
   // Immutable zkEVM
-  IMMUTABLE_ZKEVM: 13371n,
-  IMMUTABLE_ZKEVM_TESTNET: 13473n,
+  IMMUTABLE_ZKEVM: 13371,
+  IMMUTABLE_ZKEVM_TESTNET: 13473,
 
   // The Root Network
-  ROOT_NETWORK: 7668n,
-  ROOT_NETWORK_PORCINI: 7672n,
+  ROOT_NETWORK: 7668,
+  ROOT_NETWORK_PORCINI: 7672,
 
   // LAOS
-  LAOS: 6283n,
-  LAOS_SIGMA_TESTNET: 62850n,
+  LAOS: 6283,
+  LAOS_SIGMA_TESTNET: 62850,
 
   // ETHERLINK
-  ETHERLINK: 42793n,
-  ETHERLINK_TESTNET: 128123n,
+  ETHERLINK: 42793,
+  ETHERLINK_TESTNET: 128123,
 
   // MOONBEAM
-  MOONBEAM: 1284n,
-  MOONBASE_ALPHA: 1287n,
+  MOONBEAM: 1284,
+  MOONBASE_ALPHA: 1287,
 
   // MONAD
-  MONAD_TESTNET: 10143n,
+  MONAD_TESTNET: 10143,
 
   // SOMNIA
-  SOMNIA_TESTNET: 50312n,
-  SOMNIA: 5031n,
+  SOMNIA_TESTNET: 50312,
+  SOMNIA: 5031,
 
   // INCENTIV
-  INCENTIV_TESTNET: 11690n,
+  INCENTIV_TESTNET: 11690,
 
   // SEI
-  SEI: 1329n,
-  SEI_TESTNET: 1328n,
+  SEI: 1329,
+  SEI_TESTNET: 1328,
 } as const
 
 export type ChainId = (typeof ChainId)[keyof typeof ChainId]
@@ -1004,6 +1004,6 @@ export function getNetworkFromName(networkName: string): Network | undefined {
   return ALL.find((network) => network.name === networkName)
 }
 
-export function getNetworkFromChainId(chainId: ChainId | bigint | number | string): Network | undefined {
-  return ALL.find((network) => network.chainId === BigInt(chainId))
+export function getNetworkFromChainId(chainId: ChainId | number | bigint | string): Network | undefined {
+  return ALL.find((network) => network.chainId === Number(chainId))
 }
