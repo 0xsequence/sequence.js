@@ -56,7 +56,7 @@ export class DappClient {
 
   public readonly origin: string
 
-  private chainSessionManagers: Map<bigint, ChainSessionManager> = new Map()
+  private chainSessionManagers: Map<number, ChainSessionManager> = new Map()
   private transport: DappTransport
   private keymachineUrl: string
   private walletUrl: string
@@ -234,7 +234,7 @@ export class DappClient {
     this.userEmail = implicitSession.userEmail ?? null
 
     const explicitSessions = await this.sequenceStorage.getExplicitSessions()
-    const chainIdsToInitialize = new Set<bigint>([
+    const chainIdsToInitialize = new Set([
       implicitSession.chainId,
       ...explicitSessions.filter((s) => Address.isEqual(s.walletAddress, this.walletAddress!)).map((s) => s.chainId),
     ])
@@ -344,7 +344,7 @@ export class DappClient {
    * });
    */
   async connect(
-    chainId: bigint,
+    chainId: number,
     permissions?: Signers.Session.ExplicitParams,
     options: {
       preferredLoginMethod?: 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
@@ -399,7 +399,7 @@ export class DappClient {
    * if (dappClient.isInitialized) {
    *   // Allow Dapp (Session Signer) to transfer "amount" of USDC
    *   const permissions: Signers.Session.ExplicitParams = {
-   *    chainId: BigInt(chainId),
+   *    chainId: Number(chainId),
    *    valueLimit: 0n, // Not allowed to transfer native tokens (ETH, etc)
    *    deadline: BigInt(Date.now() + 1000 * 60 * 5000), // 5000 minutes from now
    *    permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, amount)]
@@ -407,7 +407,7 @@ export class DappClient {
    *   await dappClient.addExplicitSession(1, permissions);
    * }
    */
-  async addExplicitSession(chainId: bigint, permissions: Signers.Session.ExplicitParams): Promise<void> {
+  async addExplicitSession(chainId: number, permissions: Signers.Session.ExplicitParams): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot add an explicit session without an existing wallet.')
 
@@ -444,7 +444,7 @@ export class DappClient {
    *   const sessionAddress = '0x...';
    *   // We create a new permission object where we can increase the granted transfer amount limit
    *   const permissions: Signers.Session.ExplicitParams = {
-   *     chainId: BigInt(chainId),
+   *     chainId: Number(chainId),
    *     valueLimit: 0n,
    *     deadline: BigInt(Date.now() + 1000 * 60 * 5000),
    *     permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, amount)]
@@ -453,7 +453,7 @@ export class DappClient {
    * }
    */
   async modifyExplicitSession(
-    chainId: bigint,
+    chainId: number,
     sessionAddress: Address.Address,
     permissions: Signers.Session.ExplicitParams,
   ): Promise<void> {
@@ -500,7 +500,7 @@ export class DappClient {
    *   const txHash = await dappClient.sendTransaction(1, transactions, feeOption);
    * }
    */
-  async getFeeOptions(chainId: bigint, transactions: Transaction[]): Promise<Relayer.FeeOption[]> {
+  async getFeeOptions(chainId: number, transactions: Transaction[]): Promise<Relayer.FeeOption[]> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -533,7 +533,7 @@ export class DappClient {
    *
    *   const txHash = await dappClient.sendTransaction(1, [transaction]);
    */
-  async sendTransaction(chainId: bigint, transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<Hex.Hex> {
+  async sendTransaction(chainId: number, transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<Hex.Hex> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -561,7 +561,7 @@ export class DappClient {
    *   await dappClient.signMessage(1, message);
    * }
    */
-  async signMessage(chainId: bigint, message: string): Promise<void> {
+  async signMessage(chainId: number, message: string): Promise<void> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -589,7 +589,7 @@ export class DappClient {
    *   await dappClient.signTypedData(1, typedData);
    * }
    */
-  async signTypedData(chainId: bigint, typedData: TypedData): Promise<void> {
+  async signTypedData(chainId: number, typedData: TypedData): Promise<void> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -650,7 +650,7 @@ export class DappClient {
    * @param chainId The chain ID to get the ChainSessionManager for.
    * @returns The ChainSessionManager for the given chain ID. {@link ChainSessionManager}
    */
-  private getChainSessionManager(chainId: bigint): ChainSessionManager {
+  private getChainSessionManager(chainId: number): ChainSessionManager {
     let chainSessionManager = this.chainSessionManagers.get(chainId)
     if (!chainSessionManager) {
       chainSessionManager = new ChainSessionManager(

@@ -10,7 +10,7 @@ export interface Reader {
 
   getWallets(signer: Address.Address): MaybePromise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
     }
@@ -21,7 +21,7 @@ export interface Reader {
     imageHash: Hex.Hex,
   ): MaybePromise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
     }
@@ -31,7 +31,7 @@ export interface Reader {
     wallet: Address.Address,
     signer: Address.Address,
   ): MaybePromise<
-    { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined
+    { chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined
   >
 
   getWitnessForSapient(
@@ -39,7 +39,7 @@ export interface Reader {
     signer: Address.Address,
     imageHash: Hex.Hex,
   ): MaybePromise<
-    { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
+    { chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
   >
 
   getConfigurationUpdates(
@@ -51,7 +51,7 @@ export interface Reader {
   getTree(rootHash: Hex.Hex): MaybePromise<GenericTree.Tree | undefined>
   getPayload(
     opHash: Hex.Hex,
-  ): MaybePromise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined>
+  ): MaybePromise<{ chainId: number; payload: Payload.Parented; wallet: Address.Address } | undefined>
 }
 
 export interface Writer {
@@ -59,7 +59,7 @@ export interface Writer {
 
   saveWitnesses(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
   ): MaybePromise<void>
@@ -74,7 +74,7 @@ export interface Writer {
 
   saveConfiguration(config: Config.Config): MaybePromise<void>
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void>
-  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): MaybePromise<void>
+  savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void>
 }
 
 export type MaybePromise<T> = T | Promise<T>

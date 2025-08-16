@@ -40,7 +40,7 @@ describe('Wallet', async () => {
     describe(type, async () => {
       it('should sign a message', async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-        const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+        const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
         const signer = createRandomSigner()
         const wallet = await getWallet(
@@ -88,7 +88,7 @@ describe('Wallet', async () => {
 
       it('should sign a typed data message', async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-        const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+        const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
         const signer = createRandomSigner()
         const wallet = await getWallet(

@@ -331,7 +331,7 @@ describe('Identity Authentication Databases', () => {
             name: 'Test Network',
             type: Network.NetworkType.MAINNET,
             rpcUrl: LOCAL_RPC_URL,
-            chainId: 42161n,
+            chainId: Network.ChainId.ARBITRUM,
             blockExplorer: { url: 'https://arbiscan.io' },
             nativeCurrency: {
               name: 'Ether',
@@ -366,7 +366,7 @@ describe('Identity Authentication Databases', () => {
             name: 'Test Network',
             type: Network.NetworkType.MAINNET,
             rpcUrl: LOCAL_RPC_URL,
-            chainId: 42161n,
+            chainId: Network.ChainId.ARBITRUM,
             blockExplorer: { url: 'https://arbiscan.io' },
             nativeCurrency: {
               name: 'Ether',
@@ -400,7 +400,7 @@ describe('Identity Authentication Databases', () => {
             name: 'Test Network',
             type: Network.NetworkType.MAINNET,
             rpcUrl: LOCAL_RPC_URL,
-            chainId: 42161n,
+            chainId: Network.ChainId.ARBITRUM,
             blockExplorer: { url: 'https://arbiscan.io' },
             nativeCurrency: {
               name: 'Ether',

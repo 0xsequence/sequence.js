@@ -180,7 +180,7 @@ export function encodeSessionCallSignatures(
 
 export function hashCallWithReplayProtection(
   call: Payload.Call,
-  chainId: bigint,
+  chainId: number,
   space: bigint,
   nonce: bigint,
 ): Hex.Hex {

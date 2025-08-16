@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { IdentityInstrument, IdentityType, KeyType, OtpChallenge } from '@0xsequence/identity-instrument'
 import { OtpHandler } from '../src/sequence/handlers/otp'
 import { Signatures } from '../src/sequence/signatures'
@@ -95,7 +95,7 @@ describe('OtpHandler', () => {
       id: 'test-request-id',
       envelope: {
         wallet: testWallet,
-        chainId: 42161n,
+        chainId: Network.ChainId.ARBITRUM,
         payload: Payload.fromMessage(Hex.fromString('Test message')),
       },
     } as BaseSignatureRequest

@@ -13,7 +13,7 @@ import {
 export interface ExplicitSessionData {
   pk: Hex.Hex
   walletAddress: Address.Address
-  chainId: bigint
+  chainId: number
   loginMethod?: PreferredLoginMethod
   userEmail?: string
 }
@@ -23,7 +23,7 @@ export interface ImplicitSessionData {
   walletAddress: Address.Address
   attestation: Attestation.Attestation
   identitySignature: Hex.Hex
-  chainId: bigint
+  chainId: number
   loginMethod?: PreferredLoginMethod
   userEmail?: string
 }
@@ -36,7 +36,7 @@ export type PendingPayload =
   | SignTypedDataPayload
 
 export interface PendingRequestContext {
-  chainId: bigint
+  chainId: number
   action: string
   payload: PendingPayload
 }

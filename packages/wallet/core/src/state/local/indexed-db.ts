@@ -124,13 +124,13 @@ export class IndexedDbStore implements Store {
 
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
-  ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Address } | undefined> {
+  ): Promise<{ content: Payload.Parented; chainId: number; wallet: Address.Address } | undefined> {
     return this.get(STORE_PAYLOADS, subdigest.toLowerCase())
   }
 
   async savePayloadOfSubdigest(
     subdigest: Hex.Hex,
-    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Address },
+    payload: { content: Payload.Parented; chainId: number; wallet: Address.Address },
   ): Promise<void> {
     await this.put(STORE_PAYLOADS, subdigest.toLowerCase(), payload)
   }

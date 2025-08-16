@@ -476,7 +476,7 @@ describe('Passkey Signers', () => {
       vi.spyOn(Payload, 'hash').mockReturnValue(new Uint8Array([1, 2, 3, 4]))
 
       const mockPayload = Payload.fromMessage(Hex.fromString('test message'))
-      const result = await passkey.signSapient(mockWallet, 1n, mockPayload, mockImageHash)
+      const result = await passkey.signSapient(mockWallet, 1, mockPayload, mockImageHash)
 
       expect(result).toEqual({
         address: mockExtensions.passkeys,
@@ -519,7 +519,7 @@ describe('Passkey Signers', () => {
       vi.spyOn(Payload, 'hash').mockReturnValue(new Uint8Array([1, 2, 3, 4]))
 
       const mockPayload = Payload.fromMessage(Hex.fromString('test message'))
-      await passkey.signSapient(mockWallet, 1n, mockPayload, mockImageHash)
+      await passkey.signSapient(mockWallet, 1, mockPayload, mockImageHash)
 
       expect(WebAuthnP256.sign).toHaveBeenCalledWith({
         challenge: expect.any(String),
@@ -564,7 +564,7 @@ describe('Passkey Signers', () => {
       const [wallet, chainId, payload, witness] = vi.mocked(mockStateWriter.saveWitnesses).mock.calls[0]
 
       expect(wallet).toBe(mockWallet)
-      expect(chainId).toBe(0n)
+      expect(chainId).toBe(0)
 
       // Check the payload contains the witness message
       const messagePayload = payload as { type: 'message'; message: Hex.Hex }
@@ -618,7 +618,7 @@ describe('Passkey Signers', () => {
 
       expect(signSapientSpy).toHaveBeenCalledWith(
         mockWallet,
-        0n,
+        0,
         expect.any(Object), // The payload
         passkey.imageHash,
       )
@@ -636,7 +636,7 @@ describe('Passkey Signers', () => {
       const wrongImageHash = '0x9999999999999999999999999999999999999999999999999999999999999999' as Hex.Hex
       const mockPayload = Payload.fromMessage(Hex.fromString('test message'))
 
-      await expect(passkey.signSapient(mockWallet, 1n, mockPayload, wrongImageHash)).rejects.toThrow(
+      await expect(passkey.signSapient(mockWallet, 1, mockPayload, wrongImageHash)).rejects.toThrow(
         'Unexpected image hash',
       )
     })

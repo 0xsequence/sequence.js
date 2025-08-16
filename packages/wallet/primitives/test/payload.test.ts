@@ -50,12 +50,13 @@ import {
   toAbiFormat,
 } from '../src/payload.js'
 import * as Attestation from '../src/attestation.js'
+import { ChainId } from '../src/network.js'
 
 describe('Payload', () => {
   // Test data
   const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
   const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
-  const testChainId = 1n
+  const testChainId = ChainId.MAINNET
   const testImageHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex
   const testDigest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef' as Hex.Hex
   const testMessage = '0x48656c6c6f20576f726c64' as Hex.Hex // "Hello World" in hex
@@ -423,8 +424,8 @@ describe('Payload', () => {
       })
 
       it('should produce different hashes for different chain IDs', () => {
-        const hash1 = hash(testAddress, 1n, sampleCalls)
-        const hash2 = hash(testAddress, 137n, sampleCalls)
+        const hash1 = hash(testAddress, ChainId.MAINNET, sampleCalls)
+        const hash2 = hash(testAddress, ChainId.POLYGON, sampleCalls)
         expect(hash1).not.toEqual(hash2)
       })
     })
@@ -559,7 +560,7 @@ describe('Payload', () => {
       it('should produce different results for different inputs', () => {
         const result1 = to4337Message(sampleCalls4337, testAddress, testChainId)
         const result2 = to4337Message(sampleCalls4337, testAddress2, testChainId)
-        const result3 = to4337Message(sampleCalls4337, testAddress, 137n)
+        const result3 = to4337Message(sampleCalls4337, testAddress, ChainId.POLYGON)
 
         expect(result1).not.toBe(result2)
         expect(result1).not.toBe(result3)
@@ -606,7 +607,7 @@ describe('Payload', () => {
       })
 
       it('should handle zero chain ID', () => {
-        const result = encodeSapient(0n, sampleCalls)
+        const result = encodeSapient(0, sampleCalls)
         expect(result.noChainId).toBe(true)
       })
 

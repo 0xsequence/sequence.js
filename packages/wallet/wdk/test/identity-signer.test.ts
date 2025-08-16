@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex, Bytes } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
 import { State } from '@0xsequence/wallet-core'
 import { IdentitySigner, toIdentityAuthKey } from '../src/identity/signer'
@@ -161,13 +161,12 @@ describe('Identity Signer', () => {
     describe('sign()', () => {
       it('Should sign payload and return signature', async () => {
         const testPayload = Payload.fromMessage(Hex.fromString('Test message'))
-        const chainId = 42161n
         const mockSignatureHex =
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b'
 
         mockSignFn.mockResolvedValueOnce(mockSignatureHex)
 
-        const result = await identitySigner.sign(testWallet, chainId, testPayload)
+        const result = await identitySigner.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
 
         expect(result).toBeDefined()
         expect(result.type).toBe('hash')
@@ -188,13 +187,12 @@ describe('Identity Signer', () => {
 
       it('Should handle different chainIds correctly', async () => {
         const testPayload = Payload.fromMessage(Hex.fromString('Mainnet message'))
-        const mainnetChainId = 1n
         const mockSignatureHex =
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b'
 
         mockSignFn.mockResolvedValueOnce(mockSignatureHex)
 
-        await identitySigner.sign(testWallet, mainnetChainId, testPayload)
+        await identitySigner.sign(testWallet, Network.ChainId.MAINNET, testPayload)
 
         expect(mockSignFn).toHaveBeenCalledOnce()
         // The digest should be different for different chainIds
@@ -219,7 +217,7 @@ describe('Identity Signer', () => {
 
         mockSignFn.mockResolvedValueOnce(mockSignatureHex)
 
-        const result = await identitySigner.sign(testWallet, 42161n, transactionPayload)
+        const result = await identitySigner.sign(testWallet, Network.ChainId.ARBITRUM, transactionPayload)
 
         expect(result).toBeDefined()
         expect(result.type).toBe('hash')
@@ -231,7 +229,7 @@ describe('Identity Signer', () => {
 
         mockSignFn.mockRejectedValueOnce(new Error('Identity service unavailable'))
 
-        await expect(identitySigner.sign(testWallet, 42161n, testPayload)).rejects.toThrow(
+        await expect(identitySigner.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
           'Identity service unavailable',
         )
       })
@@ -322,7 +320,7 @@ describe('Identity Signer', () => {
         const [wallet, chainId, payload, witness] = mockSaveWitnesses.mock.calls[0]
 
         expect(wallet).toBe(testWallet)
-        expect(chainId).toBe(0n) // Witness signatures use chainId 0
+        expect(chainId).toBe(0) // Witness signatures use chainId 0
         expect(payload.type).toBe('message')
         expect(witness.type).toBe('unrecovered-signer')
         expect(witness.weight).toBe(1n)
@@ -422,7 +420,7 @@ describe('Identity Signer', () => {
 
         // First, sign a regular payload
         const payload = Payload.fromMessage(Hex.fromString('User authentication request'))
-        const payloadSignature = await identitySigner.sign(testWallet, 1n, payload)
+        const payloadSignature = await identitySigner.sign(testWallet, Network.ChainId.MAINNET, payload)
 
         expect(payloadSignature.type).toBe('hash')
 
@@ -463,8 +461,8 @@ describe('Identity Signer', () => {
           },
         ])
 
-        const messageResult = await identitySigner.sign(testWallet, 42161n, messagePayload)
-        const transactionResult = await identitySigner.sign(testWallet, 42161n, transactionPayload)
+        const messageResult = await identitySigner.sign(testWallet, Network.ChainId.ARBITRUM, messagePayload)
+        const transactionResult = await identitySigner.sign(testWallet, Network.ChainId.ARBITRUM, transactionPayload)
 
         expect(messageResult.type).toBe('hash')
         expect(transactionResult.type).toBe('hash')
@@ -518,8 +516,8 @@ describe('Identity Signer', () => {
         const payload = Payload.fromMessage(Hex.fromString('Edge case test'))
 
         // Should work with edge case addresses
-        const zeroResult = await identitySigner.sign(zeroWallet, 1n, payload)
-        const maxResult = await identitySigner.sign(maxWallet, 1n, payload)
+        const zeroResult = await identitySigner.sign(zeroWallet, Network.ChainId.MAINNET, payload)
+        const maxResult = await identitySigner.sign(maxWallet, Network.ChainId.MAINNET, payload)
 
         expect(zeroResult.type).toBe('hash')
         expect(maxResult.type).toBe('hash')

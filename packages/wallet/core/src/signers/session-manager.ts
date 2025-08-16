@@ -101,7 +101,7 @@ export class SessionManager implements SapientSigner {
     })
   }
 
-  async findSignersForCalls(wallet: Address.Address, chainId: bigint, calls: Payload.Call[]): Promise<SessionSigner[]> {
+  async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
     // Only use signers that match the topology
     const topology = await this.topology
     const identitySigner = SessionConfig.getIdentitySigner(topology)
@@ -153,7 +153,7 @@ export class SessionManager implements SapientSigner {
 
   async prepareIncrement(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     calls: Payload.Call[],
   ): Promise<Payload.Call | null> {
     if (calls.length === 0) {
@@ -208,7 +208,7 @@ export class SessionManager implements SapientSigner {
 
   async signSapient(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
   ): Promise<SignatureTypes.SignatureOfSapientSignerLeaf> {
@@ -285,7 +285,7 @@ export class SessionManager implements SapientSigner {
 
   async isValidSapientSignature(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     signature: SignatureTypes.SignatureOfSapientSignerLeaf,
   ): Promise<boolean> {

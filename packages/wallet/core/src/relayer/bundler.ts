@@ -13,9 +13,9 @@ export interface Bundler {
     payload: Payload.Calls4337_07,
   ): Promise<{ speed?: 'slow' | 'standard' | 'fast'; payload: Payload.Calls4337_07 }[]>
   relay(entrypoint: Address.Address, userOperation: UserOperation.RpcV07): Promise<{ opHash: Hex.Hex }>
-  status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus>
+  status(opHash: Hex.Hex, chainId: number): Promise<OperationStatus>
 
-  isAvailable(entrypoint: Address.Address, chainId: bigint): Promise<boolean>
+  isAvailable(entrypoint: Address.Address, chainId: number): Promise<boolean>
 }
 
 export function isBundler(relayer: any): relayer is Bundler {

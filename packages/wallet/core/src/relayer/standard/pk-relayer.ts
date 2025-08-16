@@ -16,7 +16,7 @@ export class PkRelayer implements Relayer {
     const relayerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
     this.relayer = new LocalRelayer({
       sendTransaction: async (args, chainId) => {
-        const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+        const providerChainId = Number(await this.provider.request({ method: 'eth_chainId' }))
         if (providerChainId !== chainId) {
           throw new Error('Provider chain id does not match relayer chain id')
         }
@@ -83,10 +83,10 @@ export class PkRelayer implements Relayer {
         const callArgs = { to: args.to as `0x${string}`, data: args.data as `0x${string}` }
         return await this.provider.request({ method: 'eth_call', params: [callArgs, 'latest'] })
       },
-      getTransactionReceipt: async (txHash: string, chainId: bigint) => {
+      getTransactionReceipt: async (txHash: string, chainId: number) => {
         Hex.assert(txHash)
 
-        const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+        const providerChainId = Number(await this.provider.request({ method: 'eth_chainId' }))
         if (providerChainId !== chainId) {
           throw new Error('Provider chain id does not match relayer chain id')
         }
@@ -101,28 +101,28 @@ export class PkRelayer implements Relayer {
     })
   }
 
-  async isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
-    const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+  async isAvailable(_wallet: Address.Address, chainId: number): Promise<boolean> {
+    const providerChainId = Number(await this.provider.request({ method: 'eth_chainId' }))
     return providerChainId === chainId
   }
 
   feeOptions(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     return this.relayer.feeOptions(wallet, chainId, calls)
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, chainId: bigint, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
-    const providerChainId = BigInt(await this.provider.request({ method: 'eth_chainId' }))
+  async relay(to: Address.Address, data: Hex.Hex, chainId: number, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
+    const providerChainId = Number(await this.provider.request({ method: 'eth_chainId' }))
     if (providerChainId !== chainId) {
       throw new Error('Provider chain id does not match relayer chain id')
     }
     return this.relayer.relay(to, data, chainId)
   }
 
-  status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
+  status(opHash: Hex.Hex, chainId: number): Promise<OperationStatus> {
     return this.relayer.status(opHash, chainId)
   }
 

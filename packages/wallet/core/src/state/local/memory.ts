@@ -5,7 +5,7 @@ import { Store } from './index.js'
 export class MemoryStore implements Store {
   private configs = new Map<`0x${string}`, Config.Config>()
   private counterfactualWallets = new Map<`0x${string}`, { imageHash: Hex.Hex; context: Context.Context }>()
-  private payloads = new Map<`0x${string}`, { content: Payload.Parented; chainId: bigint; wallet: Address.Address }>()
+  private payloads = new Map<`0x${string}`, { content: Payload.Parented; chainId: number; wallet: Address.Address }>()
   private signerSubdigests = new Map<string, Set<string>>()
   private signatures = new Map<`0x${string}`, Signature.SignatureOfSignerLeaf>()
 
@@ -68,14 +68,14 @@ export class MemoryStore implements Store {
 
   async loadPayloadOfSubdigest(
     subdigest: Hex.Hex,
-  ): Promise<{ content: Payload.Parented; chainId: bigint; wallet: Address.Address } | undefined> {
+  ): Promise<{ content: Payload.Parented; chainId: number; wallet: Address.Address } | undefined> {
     const payload = this.payloads.get(subdigest.toLowerCase() as `0x${string}`)
     return payload ? this.deepCopy(payload) : undefined
   }
 
   async savePayloadOfSubdigest(
     subdigest: Hex.Hex,
-    payload: { content: Payload.Parented; chainId: bigint; wallet: Address.Address },
+    payload: { content: Payload.Parented; chainId: number; wallet: Address.Address },
   ): Promise<void> {
     this.payloads.set(subdigest.toLowerCase() as `0x${string}`, this.deepCopy(payload))
   }

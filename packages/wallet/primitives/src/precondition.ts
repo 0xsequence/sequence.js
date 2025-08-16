@@ -91,12 +91,12 @@ export function createPrecondition<T extends AnyPrecondition>(precondition: T): 
 export interface IntentPrecondition<T extends AnyPrecondition = AnyPrecondition> {
   type: T['type']
   data: Omit<T, 'type'>
-  chainId?: bigint
+  chainId?: number
 }
 
 export function createIntentPrecondition<T extends AnyPrecondition>(
   precondition: T,
-  chainId?: bigint,
+  chainId?: number,
 ): IntentPrecondition<T> {
   const { type, ...data } = precondition
 

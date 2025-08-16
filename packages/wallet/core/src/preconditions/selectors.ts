@@ -1,14 +1,14 @@
 import { Precondition, NativeBalancePrecondition, Erc20BalancePrecondition } from './types.js'
 import { IntentPrecondition, decodePreconditions } from './codec.js'
 
-export function extractChainID(precondition: IntentPrecondition): bigint | undefined {
+export function extractChainID(precondition: IntentPrecondition): number | undefined {
   if (!precondition) {
     return undefined
   }
 
   try {
     const data = JSON.parse(precondition.data)
-    return data.chainID ? BigInt(data.chainID) : undefined
+    return data.chainID ? Number(data.chainID) : undefined
   } catch (e) {
     return undefined
   }

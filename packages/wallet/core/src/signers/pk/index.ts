@@ -40,7 +40,7 @@ export class Pk implements SignerInterface, Witnessable {
 
   async sign(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: PayloadTypes.Parented,
   ): Promise<SignatureTypes.SignatureOfSignerLeaf> {
     const hash = Payload.hash(wallet, chainId, payload)
@@ -65,8 +65,8 @@ export class Pk implements SignerInterface, Witnessable {
       ),
     )
 
-    const signature = await this.sign(wallet, 0n, payload)
-    await stateWriter.saveWitnesses(wallet, 0n, payload, {
+    const signature = await this.sign(wallet, 0, payload)
+    await stateWriter.saveWitnesses(wallet, 0, payload, {
       type: 'unrecovered-signer',
       weight: 1n,
       signature,

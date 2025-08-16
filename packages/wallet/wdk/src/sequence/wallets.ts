@@ -316,7 +316,7 @@ export interface WalletsInterface {
    * @param space A unique identifier for a transaction category or flow, typically a large random number.
    * @returns A promise that resolves to the `bigint` nonce for the given space.
    */
-  getNonce(chainId: bigint, address: Address.Address, space: bigint): Promise<bigint>
+  getNonce(chainId: number, address: Address.Address, space: bigint): Promise<bigint>
 
   /**
    * Checks if the wallet's on-chain configuration is up to date for a given chain.
@@ -329,7 +329,7 @@ export interface WalletsInterface {
    * @param chainId The chain ID of the network to check against.
    * @returns A promise that resolves to `true` if the wallet is up to date on the given chain, or `false` otherwise.
    */
-  isUpdatedOnchain(wallet: Address.Address, chainId: bigint): Promise<boolean>
+  isUpdatedOnchain(wallet: Address.Address, chainId: number): Promise<boolean>
 }
 
 export function isLoginToWalletArgs(args: LoginArgs): args is LoginToWalletArgs {
@@ -1103,7 +1103,7 @@ export class Wallets implements WalletsInterface {
     }
   }
 
-  async getNonce(chainId: bigint, address: Address.Address, space: bigint) {
+  async getNonce(chainId: number, address: Address.Address, space: bigint) {
     const wallet = new CoreWallet(address, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -1118,7 +1118,7 @@ export class Wallets implements WalletsInterface {
     return wallet.getNonce(provider, space)
   }
 
-  async getOnchainConfiguration(wallet: Address.Address, chainId: bigint) {
+  async getOnchainConfiguration(wallet: Address.Address, chainId: number) {
     const walletObject = new CoreWallet(wallet, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,
@@ -1163,7 +1163,7 @@ export class Wallets implements WalletsInterface {
     }
   }
 
-  async isUpdatedOnchain(wallet: Address.Address, chainId: bigint) {
+  async isUpdatedOnchain(wallet: Address.Address, chainId: number) {
     const walletObject = new CoreWallet(wallet, {
       stateProvider: this.shared.sequence.stateProvider,
       guest: this.shared.sequence.guest,

@@ -7,7 +7,7 @@ export type QueuedRecoveryPayload = {
   recoveryModule: Address.Address
   wallet: Address.Address
   signer: Address.Address
-  chainId: bigint
+  chainId: number
   startTimestamp: bigint
   endTimestamp: bigint
   payloadHash: Hex.Hex

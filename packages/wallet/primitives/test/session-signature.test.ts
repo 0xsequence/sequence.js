@@ -18,12 +18,13 @@ import { RSY } from '../src/signature.js'
 import { Attestation } from '../src/attestation.js'
 import { SessionsTopology } from '../src/session-config.js'
 import * as Payload from '../src/payload.js'
+import { ChainId } from '../src/network.js'
 
 describe('Session Signature', () => {
   // Test data
   const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
   const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
-  const testChainId = 1n
+  const testChainId = ChainId.MAINNET
   const testSpace = 0n
   const testNonce = 1n
 
@@ -85,7 +86,7 @@ describe('Session Signature', () => {
     {
       type: 'session-permissions',
       signer: testAddress1,
-      chainId: 1n,
+      chainId: ChainId.MAINNET,
       valueLimit: 1000000000000000000n,
       deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
       permissions: [
@@ -318,7 +319,7 @@ describe('Session Signature', () => {
           {
             type: 'session-permissions',
             signer: testAddress1,
-            chainId: 1n,
+            chainId: ChainId.MAINNET,
             valueLimit: 1000000000000000000n,
             deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
             permissions: [
@@ -403,8 +404,8 @@ describe('Session Signature', () => {
       })
 
       it('should produce different hashes for different chain IDs', () => {
-        const hash1 = hashCallWithReplayProtection(sampleCall, 1n, testSpace, testNonce)
-        const hash2 = hashCallWithReplayProtection(sampleCall, 2n, testSpace, testNonce)
+        const hash1 = hashCallWithReplayProtection(sampleCall, ChainId.MAINNET, testSpace, testNonce)
+        const hash2 = hashCallWithReplayProtection(sampleCall, ChainId.POLYGON, testSpace, testNonce)
 
         expect(hash1).not.toBe(hash2)
       })
@@ -443,7 +444,7 @@ describe('Session Signature', () => {
       })
 
       it('should handle large numbers', () => {
-        const largeChainId = 2n ** 32n
+        const largeChainId = Number.MAX_SAFE_INTEGER
         const largeSpace = 2n ** 16n
         const largeNonce = 2n ** 24n
 
@@ -452,7 +453,7 @@ describe('Session Signature', () => {
       })
 
       it('should handle zero values', () => {
-        const result = hashCallWithReplayProtection(sampleCall, 0n, 0n, 0n)
+        const result = hashCallWithReplayProtection(sampleCall, 0, 0n, 0n)
         expect(result).toMatch(/^0x[0-9a-f]{64}$/)
       })
 
@@ -572,7 +573,7 @@ describe('Session Signature', () => {
         {
           type: 'session-permissions',
           signer: testAddress1,
-          chainId: 1n,
+          chainId: ChainId.MAINNET,
           valueLimit: 1000000000000000000n,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
           permissions: [

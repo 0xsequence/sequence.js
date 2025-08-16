@@ -28,13 +28,13 @@ export class PimlicoBundler implements Bundler {
     this.bundlerRpcUrl = bundlerRpcUrl
   }
 
-  async isAvailable(entrypoint: Address.Address, chainId: bigint): Promise<boolean> {
+  async isAvailable(entrypoint: Address.Address, chainId: number): Promise<boolean> {
     const [bundlerChainId, supportedEntryPoints] = await Promise.all([
       this.bundlerRpc<string>('eth_chainId', []),
       this.bundlerRpc<Address.Address[]>('eth_supportedEntryPoints', []),
     ])
 
-    if (chainId !== BigInt(bundlerChainId)) {
+    if (chainId !== Number(bundlerChainId)) {
       return false
     }
 
@@ -103,7 +103,7 @@ export class PimlicoBundler implements Bundler {
     }
   }
 
-  async status(opHash: Hex.Hex, _chainId: bigint): Promise<OperationStatus> {
+  async status(opHash: Hex.Hex, _chainId: number): Promise<OperationStatus> {
     try {
       type PimlicoStatusResp = {
         status: 'not_found' | 'not_submitted' | 'submitted' | 'rejected' | 'included' | 'failed' | 'reverted'

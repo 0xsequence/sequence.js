@@ -15,6 +15,7 @@ import {
   createPrecondition,
   createIntentPrecondition,
 } from '../src/precondition.js'
+import { ChainId } from '../src/network.js'
 
 describe('Precondition', () => {
   // Test data
@@ -24,7 +25,7 @@ describe('Precondition', () => {
   const testTokenId = 123n
   const testMinAmount = 1000000000000000000n // 1 ETH
   const testMaxAmount = 10000000000000000000n // 10 ETH
-  const testChainId = 1n
+  const testChainId = ChainId.MAINNET
 
   // Sample preconditions for each type
   const sampleNativeBalance: NativeBalancePrecondition = {
@@ -371,8 +372,8 @@ describe('Precondition', () => {
       })
 
       it('should handle zero chain ID', () => {
-        const result = createIntentPrecondition(sampleNativeBalance, 0n)
-        expect(result.chainId).toBe(0n)
+        const result = createIntentPrecondition(sampleNativeBalance, ChainId.NONE)
+        expect(result.chainId).toBe(ChainId.NONE)
       })
 
       it('should exclude undefined chain ID from result', () => {
@@ -552,7 +553,7 @@ describe('Precondition', () => {
     })
 
     it('should handle different chain IDs', () => {
-      const chainIds = [0n, 1n, 137n, 42161n, 10n, 2n ** 64n - 1n]
+      const chainIds = [ChainId.NONE, ChainId.MAINNET, ChainId.POLYGON, ChainId.ARBITRUM, ChainId.OPTIMISM]
 
       chainIds.forEach((chainId) => {
         const result = createIntentPrecondition(sampleNativeBalance, chainId)
@@ -614,11 +615,11 @@ describe('Precondition', () => {
     })
 
     it('should create intent precondition for multi-chain scenario', () => {
-      const polygonPrecondition = createIntentPrecondition(sampleNativeBalance, 137n)
-      const arbitrumPrecondition = createIntentPrecondition(sampleErc20Balance, 42161n)
+      const polygonPrecondition = createIntentPrecondition(sampleNativeBalance, ChainId.POLYGON)
+      const arbitrumPrecondition = createIntentPrecondition(sampleErc20Balance, ChainId.ARBITRUM)
 
-      expect(polygonPrecondition.chainId).toBe(137n)
-      expect(arbitrumPrecondition.chainId).toBe(42161n)
+      expect(polygonPrecondition.chainId).toBe(ChainId.POLYGON)
+      expect(arbitrumPrecondition.chainId).toBe(ChainId.ARBITRUM)
     })
   })
 
@@ -640,12 +641,12 @@ describe('Precondition', () => {
       expect(createdPreconditions).toHaveLength(7)
 
       // Create intent preconditions with different chain IDs
-      const intentPreconditions = createdPreconditions.map((p, index) => createIntentPrecondition(p, BigInt(index + 1)))
+      const intentPreconditions = createdPreconditions.map((p, index) => createIntentPrecondition(p, index + 1))
       expect(intentPreconditions).toHaveLength(7)
 
       // Verify all have correct chain IDs
       intentPreconditions.forEach((intent, index) => {
-        expect(intent.chainId).toBe(BigInt(index + 1))
+        expect(intent.chainId).toBe(index + 1)
         expect(isValidPreconditionType(intent.type)).toBe(true)
       })
     })

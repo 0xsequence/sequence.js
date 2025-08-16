@@ -44,6 +44,7 @@ import {
 import { packRSY } from '../src/utils.js'
 import { Config, SignerLeaf, SapientSignerLeaf } from '../src/config.js'
 import * as Payload from '../src/payload.js'
+import { ChainId } from '../src/network.js'
 
 describe('Signature', () => {
   // Test data
@@ -1014,7 +1015,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(workingHashSignature, testAddress, 1n, samplePayload)
+        const result = await recover(workingHashSignature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.configuration).toBeDefined()
         expect(result.weight).toBeGreaterThan(0n)
@@ -1059,7 +1060,7 @@ describe('Signature', () => {
           ],
         }
 
-        const result = await recover(workingChainedSignature, testAddress, 1n, samplePayload)
+        const result = await recover(workingChainedSignature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.configuration).toBeDefined()
       })
@@ -1078,7 +1079,9 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(erc1271Signature, testAddress, 1n, samplePayload, { provider: 'assume-valid' })
+        const result = await recover(erc1271Signature, testAddress, ChainId.MAINNET, samplePayload, {
+          provider: 'assume-valid',
+        })
 
         expect(result.weight).toBe(1n)
       })
@@ -1097,7 +1100,7 @@ describe('Signature', () => {
         }
 
         await expect(
-          recover(erc1271Signature, testAddress, 1n, samplePayload, { provider: 'assume-invalid' }),
+          recover(erc1271Signature, testAddress, ChainId.MAINNET, samplePayload, { provider: 'assume-invalid' }),
         ).rejects.toThrow('unable to validate signer')
       })
 
@@ -1115,7 +1118,7 @@ describe('Signature', () => {
         }
 
         await expect(
-          recover(sapientSignature, testAddress, 1n, samplePayload, { provider: 'assume-valid' }),
+          recover(sapientSignature, testAddress, ChainId.MAINNET, samplePayload, { provider: 'assume-valid' }),
         ).rejects.toThrow('unable to validate sapient signer')
       })
 
@@ -1145,7 +1148,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(workingNestedSignature, testAddress, 1n, samplePayload)
+        const result = await recover(workingNestedSignature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.configuration).toBeDefined()
       })
@@ -1162,7 +1165,9 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(subdigestSignature, testAddress, 1n, samplePayload, { provider: 'assume-valid' })
+        const result = await recover(subdigestSignature, testAddress, ChainId.MAINNET, samplePayload, {
+          provider: 'assume-valid',
+        })
 
         expect(result.configuration).toBeDefined()
         // Weight should be 0 unless digest matches
@@ -1179,7 +1184,9 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(binaryTreeSignature, testAddress, 1n, samplePayload, { provider: 'assume-valid' })
+        const result = await recover(binaryTreeSignature, testAddress, ChainId.MAINNET, samplePayload, {
+          provider: 'assume-valid',
+        })
 
         expect(result.configuration).toBeDefined()
         expect(result.weight).toBeGreaterThan(0n)
@@ -1433,7 +1440,7 @@ describe('Signature', () => {
         ])
 
         // Test with real Secp256k1.recoverAddress! This covers lines 1106+
-        const result = await recover(hashSignature, testAddress, 1n, testPayload)
+        const result = await recover(hashSignature, testAddress, ChainId.MAINNET, testPayload)
 
         // Verify the signature was actually recovered (not assumed valid)
         expect(result.configuration.topology).toHaveProperty('type', 'signer')
@@ -1478,7 +1485,7 @@ describe('Signature', () => {
         ])
 
         // Test real eth_sign recovery
-        const result = await recover(ethSignSignature, testAddress, 1n, testPayload)
+        const result = await recover(ethSignSignature, testAddress, ChainId.MAINNET, testPayload)
 
         expect(result.configuration.topology).toHaveProperty('type', 'signer')
         expect(result.weight).toBe(1n)
@@ -1505,7 +1512,7 @@ describe('Signature', () => {
         // Test with message payload
         const messagePayload = Payload.fromMessage('0x48656c6c6f576f726c64' as Hex.Hex)
 
-        const result = await recover(hashSignature, testAddress, 1n, messagePayload)
+        const result = await recover(hashSignature, testAddress, ChainId.MAINNET, messagePayload)
 
         expect(result.configuration.topology).toHaveProperty('type', 'signer')
         expect(result.weight).toBe(1n)
@@ -1546,7 +1553,7 @@ describe('Signature', () => {
         ])
 
         // Test with real provider - this covers uncovered lines 1200+!
-        const result = await recover(erc1271Signature, testAddress, 1n, testPayload, {
+        const result = await recover(erc1271Signature, testAddress, ChainId.MAINNET, testPayload, {
           provider: mockProvider as any,
         })
 
@@ -1608,7 +1615,7 @@ describe('Signature', () => {
 
         // Should throw for invalid signature
         await expect(
-          recover(erc1271Signature, testAddress, 1n, testPayload, {
+          recover(erc1271Signature, testAddress, ChainId.MAINNET, testPayload, {
             provider: mockProvider as any,
           }),
         ).rejects.toThrow('invalid signer')
@@ -1650,7 +1657,7 @@ describe('Signature', () => {
         ])
 
         // This covers the encode() helper function in lines 1335-1399!
-        const result = await recover(sapientSignature, testAddress, 1n, testPayload, {
+        const result = await recover(sapientSignature, testAddress, ChainId.MAINNET, testPayload, {
           provider: mockProvider as any,
         })
 
@@ -1699,7 +1706,7 @@ describe('Signature', () => {
           },
         ])
 
-        const result = await recover(sapientCompactSignature, testAddress, 1n, testPayload, {
+        const result = await recover(sapientCompactSignature, testAddress, ChainId.MAINNET, testPayload, {
           provider: mockProvider as any,
         })
 
@@ -1772,7 +1779,7 @@ describe('Signature', () => {
           }
 
           // This exercises the encode function for different payload types
-          const result = await recover(sapientSignature, testAddress, 1n, payload, {
+          const result = await recover(sapientSignature, testAddress, ChainId.MAINNET, payload, {
             provider: mockProvider as any,
           })
 
@@ -1817,7 +1824,7 @@ describe('Signature', () => {
             },
           ])
 
-          const result = await recover(sapientSignature, testAddress, 1n, testPayload, {
+          const result = await recover(sapientSignature, testAddress, ChainId.MAINNET, testPayload, {
             provider: mockProvider as any,
           })
 
@@ -1853,7 +1860,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.weight).toBeGreaterThanOrEqual(0n)
         if (typeof result.configuration.topology === 'object' && 'type' in result.configuration.topology) {
@@ -1877,7 +1884,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.weight).toBe(0n) // SignerLeaf without signature returns 0 weight
         if (typeof result.configuration.topology === 'object' && 'type' in result.configuration.topology) {
@@ -1906,7 +1913,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.weight).toBe(0n) // SapientSignerLeaf without signature returns 0 weight
         if (typeof result.configuration.topology === 'object' && 'type' in result.configuration.topology) {
@@ -1923,7 +1930,7 @@ describe('Signature', () => {
         const { hash } = await import('../src/payload.js')
 
         // Create a payload and calculate its digest to match
-        const digest = hash(testAddress, 1n, samplePayload)
+        const digest = hash(testAddress, ChainId.MAINNET, samplePayload)
 
         const subdigestLeaf = {
           type: 'subdigest' as const,
@@ -1939,7 +1946,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         // Should return max weight when digest matches
         expect(result.weight).toBe(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn)
@@ -1966,7 +1973,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         // Should return 0 weight when digest doesn't match
         expect(result.weight).toBe(0n)
@@ -1979,7 +1986,7 @@ describe('Signature', () => {
         // Create a payload and calculate its any-address digest
         const anyAddressOpHash = hash(
           '0x0000000000000000000000000000000000000000' as Address.Address,
-          1n,
+          ChainId.MAINNET,
           samplePayload,
         )
 
@@ -1997,7 +2004,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         // Should return max weight when any-address digest matches
         expect(result.weight).toBe(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn)
@@ -2024,7 +2031,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         // Should return 0 weight when any-address digest doesn't match
         expect(result.weight).toBe(0n)
@@ -2042,7 +2049,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.weight).toBe(0n) // NodeLeaf returns 0 weight
         expect(result.configuration.topology).toBe(nodeLeaf)
@@ -2063,7 +2070,7 @@ describe('Signature', () => {
           },
         }
 
-        const result = await recover(signature, testAddress, 1n, samplePayload)
+        const result = await recover(signature, testAddress, ChainId.MAINNET, samplePayload)
 
         expect(result.weight).toBe(0n) // Both signers without signatures = 0 weight
         expect(Array.isArray(result.configuration.topology)).toBe(true)
@@ -2122,7 +2129,7 @@ describe('Signature', () => {
         ])
 
         // Test chained signature recovery - this covers the suffix handling in recover()
-        const result = await recover(chainedSignature, testAddress, 1n, testPayload)
+        const result = await recover(chainedSignature, testAddress, ChainId.MAINNET, testPayload)
 
         expect(result.weight).toBeGreaterThanOrEqual(0n)
         expect(result.configuration).toBeDefined()
@@ -2164,7 +2171,7 @@ describe('Signature', () => {
           },
         ])
 
-        const result = await recover(nestedSignature, testAddress, 1n, testPayload)
+        const result = await recover(nestedSignature, testAddress, ChainId.MAINNET, testPayload)
 
         expect(result.weight).toBeGreaterThanOrEqual(0n)
         if (typeof result.configuration.topology === 'object' && 'type' in result.configuration.topology) {

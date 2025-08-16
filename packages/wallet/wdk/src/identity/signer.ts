@@ -39,7 +39,7 @@ export class IdentitySigner implements Signers.Signer {
 
   async sign(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
   ): Promise<SequenceSignature.SignatureOfSignerLeaf> {
     const payloadHash = Payload.hash(wallet, chainId, payload)
@@ -68,8 +68,8 @@ export class IdentitySigner implements Signers.Signer {
       ),
     )
 
-    const signature = await this.sign(wallet, 0n, payload)
-    await stateWriter.saveWitnesses(wallet, 0n, payload, {
+    const signature = await this.sign(wallet, 0, payload)
+    await stateWriter.saveWitnesses(wallet, 0, payload, {
       type: 'unrecovered-signer',
       weight: 1n,
       signature,

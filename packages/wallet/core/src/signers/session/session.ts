@@ -7,7 +7,7 @@ export interface SessionSigner {
   /// Check if the signer supports the call
   supportedCall: (
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     call: Payload.Call,
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
@@ -16,7 +16,7 @@ export interface SessionSigner {
   /// Sign the call. Will throw if the call is not supported.
   signCall: (
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     call: Payload.Call,
     nonce: {
       space: bigint
@@ -35,7 +35,7 @@ export type UsageLimit = {
 export interface ExplicitSessionSigner extends SessionSigner {
   prepareIncrements: (
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     calls: Payload.Call[],
     sessionManagerAddress: Address.Address,
     provider: Provider.Provider,

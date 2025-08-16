@@ -2,6 +2,7 @@ import { Address, Hex } from 'ox'
 import { describe, expect, it, beforeEach } from 'vitest'
 
 import { MemoryStore } from '../../../src/state/local/memory.js'
+import { Network } from '@0xsequence/wallet-primitives'
 
 // Test addresses and data
 const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
@@ -45,7 +46,7 @@ describe('MemoryStore', () => {
     it('should save and load payloads', async () => {
       const payload = {
         content: { test: 'payload' } as any,
-        chainId: 1n,
+        chainId: Network.ChainId.MAINNET,
         wallet: TEST_ADDRESS,
       }
 
@@ -78,7 +79,7 @@ describe('MemoryStore', () => {
     it('should create independent copies', async () => {
       const originalData = {
         content: { nested: { array: [1, 2, 3] } } as any,
-        chainId: 1n,
+        chainId: Network.ChainId.MAINNET,
         wallet: TEST_ADDRESS,
       }
 
@@ -206,7 +207,7 @@ describe('MemoryStore', () => {
           null: null,
           undefined: undefined,
         } as any,
-        chainId: 1n,
+        chainId: Network.ChainId.MAINNET,
         wallet: TEST_ADDRESS,
       }
 

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex, Bytes, PublicKey, Secp256k1 } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Payload, Network } from '@0xsequence/wallet-primitives'
 import { Pk, MemoryPkStore, PkStore } from '../src/signers/pk/index.js'
 import { State } from '../src/index.js'
 
 describe('Private Key Signers', () => {
   const testPrivateKey = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex.Hex
   const testWallet = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as Address.Address
-  const testChainId = 42161n
+  const testChainId = Network.ChainId.ARBITRUM
 
   describe('MemoryPkStore', () => {
     let memoryStore: MemoryPkStore
@@ -146,7 +146,7 @@ describe('Private Key Signers', () => {
         const [wallet, chainId, payload, witness] = vi.mocked(mockStateWriter.saveWitnesses).mock.calls[0]
 
         expect(wallet).toBe(testWallet)
-        expect(chainId).toBe(0n)
+        expect(chainId).toBe(0)
         // Cast witness to RawLeaf since we know it's an unrecovered-signer leaf
         const rawLeaf = witness as { type: 'unrecovered-signer'; weight: bigint; signature: any }
         expect(rawLeaf.type).toBe('unrecovered-signer')
