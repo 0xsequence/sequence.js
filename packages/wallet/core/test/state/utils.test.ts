@@ -4,7 +4,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { getWalletsFor, normalizeAddressKeys } from '../../src/state/utils.js'
 import type { Reader } from '../../src/state/index.js'
 import type { Signer, SapientSigner } from '../../src/signers/index.js'
-import { Payload, Signature } from '@0xsequence/wallet-primitives'
+import { Network, Payload, Signature } from '@0xsequence/wallet-primitives'
 
 // Test addresses
 const TEST_SIGNER_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
@@ -184,12 +184,12 @@ describe('State Utils', () => {
 
       const mockWalletsData = {
         [TEST_WALLET_ADDRESS_1]: {
-          chainId: 1n,
+          chainId: Network.ChainId.MAINNET,
           payload: mockPayload,
           signature: mockRegularSignature,
         },
         [TEST_WALLET_ADDRESS_2]: {
-          chainId: 42n,
+          chainId: 42,
           payload: mockPayload,
           signature: mockRegularSignature,
         },
@@ -205,14 +205,14 @@ describe('State Utils', () => {
 
       expect(result[0]).toEqual({
         wallet: TEST_WALLET_ADDRESS_1,
-        chainId: 1n,
+        chainId: Network.ChainId.MAINNET,
         payload: mockPayload,
         signature: mockRegularSignature,
       })
 
       expect(result[1]).toEqual({
         wallet: TEST_WALLET_ADDRESS_2,
-        chainId: 42n,
+        chainId: 42,
         payload: mockPayload,
         signature: mockRegularSignature,
       })
@@ -224,7 +224,7 @@ describe('State Utils', () => {
 
       const mockWalletsData = {
         [TEST_WALLET_ADDRESS_1]: {
-          chainId: 1n,
+          chainId: Network.ChainId.MAINNET,
           payload: mockPayload,
           signature: mockSapientSignature,
         },
@@ -240,7 +240,7 @@ describe('State Utils', () => {
 
       expect(result[0]).toEqual({
         wallet: TEST_WALLET_ADDRESS_1,
-        chainId: 1n,
+        chainId: Network.ChainId.MAINNET,
         payload: mockPayload,
         signature: mockSapientSignature,
       })
@@ -287,7 +287,7 @@ describe('State Utils', () => {
 
       const mockWalletsData = {
         [TEST_WALLET_ADDRESS_1]: {
-          chainId: 1n,
+          chainId: Network.ChainId.MAINNET,
           payload: mockPayload,
           signature: mockRegularSignature,
         },
@@ -314,7 +314,7 @@ describe('State Utils', () => {
 
       const mockWalletsData = {
         [TEST_WALLET_ADDRESS_1]: {
-          chainId: 1n,
+          chainId: Network.ChainId.MAINNET,
           payload: mockPayload,
           signature: mockSapientSignature,
         },
@@ -335,7 +335,7 @@ describe('State Utils', () => {
       // Mock data with invalid hex (this would normally cause Hex.assert to throw)
       const mockWalletsDataWithInvalidHex = {
         'not-a-valid-hex-address': {
-          chainId: 1n,
+          chainId: Network.ChainId.MAINNET,
           payload: mockPayload,
           signature: mockRegularSignature,
         },
@@ -378,7 +378,7 @@ describe('State Utils', () => {
 
       const mockWalletsData = {
         [TEST_WALLET_ADDRESS_1]: {
-          chainId: 42161n, // Arbitrum
+          chainId: Network.ChainId.ARBITRUM,
           payload: specificPayload,
           signature: specificSignature,
         },
@@ -391,7 +391,7 @@ describe('State Utils', () => {
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
         wallet: TEST_WALLET_ADDRESS_1,
-        chainId: 42161n,
+        chainId: Network.ChainId.ARBITRUM,
         payload: specificPayload,
         signature: specificSignature,
       })
