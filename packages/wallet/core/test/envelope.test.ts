@@ -67,7 +67,7 @@ const mockSapientSignatureData: Signature.SignatureOfSapientSignerLeaf = {
 // Create test envelope
 const testEnvelope: Envelope.Envelope<Payload.Calls> = {
   wallet: TEST_WALLET,
-  chainId: 1n,
+  chainId: 1,
   configuration: mockConfig,
   payload: mockPayload,
 }
@@ -529,7 +529,7 @@ describe('Envelope', () => {
     it('should set noChainId to true when chainId is 0', () => {
       const zeroChainEnvelope = {
         ...testEnvelope,
-        chainId: 0n,
+        chainId: 0,
       }
 
       const signedEnvelope = Envelope.toSigned(zeroChainEnvelope, [])
