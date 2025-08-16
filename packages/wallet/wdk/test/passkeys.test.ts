@@ -490,7 +490,7 @@ describe('PasskeysHandler', () => {
         ...testRequest,
         envelope: {
           ...testRequest.envelope,
-          payload: Payload.fromCall(Network.ChainId.ARBITRUM, 0n, [
+          payload: Payload.fromCall(0n, 0n, [
             {
               to: '0x1234567890123456789012345678901234567890' as Address.Address,
               value: 0n,
