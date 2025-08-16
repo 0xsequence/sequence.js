@@ -3,7 +3,7 @@ import { Manager } from '../src/sequence'
 import { Guard } from '../src/sequence/guard'
 import { GuardHandler } from '../src/sequence/handlers/guard'
 import { Address, Hex, Signature } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { Kinds } from '../src/sequence/types/signer'
 import { newManager } from './constants'
 
@@ -46,7 +46,7 @@ describe('Guard', () => {
         }),
       })
 
-      const result = await guard.sign(testWallet, 42161n, testPayload)
+      const result = await guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
 
       expect(result).toBeDefined()
       expect(result.type).toBe('hash')
@@ -63,13 +63,13 @@ describe('Guard', () => {
       expect(options.headers['Content-Type']).toBe('application/json')
 
       const requestBody = JSON.parse(options.body)
-      expect(requestBody.request.chainId).toBe(42161)
+      expect(requestBody.request.chainId).toBe(Network.ChainId.ARBITRUM)
       expect(requestBody.request.msg).toBeDefined()
       expect(requestBody.request.auxData).toBeDefined()
     })
 
     it('Should handle custom chainId in sign request', async () => {
-      const customChainId = 1n // Ethereum mainnet
+      const customChainId = Network.ChainId.MAINNET
 
       mockFetch.mockResolvedValueOnce({
         json: async () => ({
@@ -80,13 +80,15 @@ describe('Guard', () => {
       await guard.sign(testWallet, customChainId, testPayload)
 
       const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(requestBody.request.chainId).toBe(1)
+      expect(requestBody.request.chainId).toBe(Network.ChainId.MAINNET)
     })
 
     it('Should throw error when guard service fails', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
-      await expect(guard.sign(testWallet, 42161n, testPayload)).rejects.toThrow('Error signing with guard')
+      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
+        'Error signing with guard',
+      )
     })
 
     it('Should throw error when guard service returns invalid response', async () => {
@@ -96,7 +98,9 @@ describe('Guard', () => {
         },
       })
 
-      await expect(guard.sign(testWallet, 42161n, testPayload)).rejects.toThrow('Error signing with guard')
+      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
+        'Error signing with guard',
+      )
     })
 
     it('Should include proper headers and signer address in request', async () => {
@@ -119,7 +123,7 @@ describe('Guard', () => {
         }),
       })
 
-      await customGuard.sign(testWallet, 42161n, testPayload)
+      await customGuard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
 
       const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
       expect(requestBody.signer).toBe(mockGuardAddress)
@@ -134,7 +138,7 @@ describe('Guard', () => {
         }),
       })
 
-      await guard.sign(testWallet, 42161n, testPayload)
+      await guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
 
       const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
       expect(requestBody.request.auxData).toBeDefined()
@@ -170,7 +174,7 @@ describe('Guard', () => {
       const [wallet, chainId, payload, witness] = mockSaveWitnesses.mock.calls[0]
 
       expect(wallet).toBe(testWallet)
-      expect(chainId).toBe(0n)
+      expect(chainId).toBe(0)
       expect(payload).toBeDefined()
       expect(witness.type).toBe('unrecovered-signer')
       expect(witness.weight).toBe(1n)
@@ -235,7 +239,7 @@ describe('Guard', () => {
         id: 'test-request-id',
         envelope: {
           wallet: testWallet,
-          chainId: 42161n,
+          chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
         },
       }
@@ -269,7 +273,7 @@ describe('Guard', () => {
         id: 'test-request-id',
         envelope: {
           wallet: testWallet,
-          chainId: 42161n,
+          chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
         },
       }
@@ -296,7 +300,7 @@ describe('Guard', () => {
         id: 'test-request-id',
         envelope: {
           wallet: testWallet,
-          chainId: 42161n,
+          chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
         },
       }
@@ -329,7 +333,7 @@ describe('Guard', () => {
         }),
       })
 
-      await customGuard.sign(testWallet, 42161n, testPayload)
+      await customGuard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
 
       expect(mockFetch.mock.calls[0][0]).toContain(customGuardUrl)
 
@@ -358,7 +362,9 @@ describe('Guard', () => {
         }),
       })
 
-      await expect(guard.sign(testWallet, 42161n, testPayload)).rejects.toThrow('Error signing with guard')
+      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
+        'Error signing with guard',
+      )
     })
 
     it('Should handle network timeout errors', async () => {
@@ -366,7 +372,9 @@ describe('Guard', () => {
         () => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 100)),
       )
 
-      await expect(guard.sign(testWallet, 42161n, testPayload)).rejects.toThrow('Error signing with guard')
+      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
+        'Error signing with guard',
+      )
     })
 
     it('Should handle HTTP error responses', async () => {
@@ -378,7 +386,9 @@ describe('Guard', () => {
         }),
       })
 
-      await expect(guard.sign(testWallet, 42161n, testPayload)).rejects.toThrow('Error signing with guard')
+      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
+        'Error signing with guard',
+      )
     })
   })
 
@@ -404,7 +414,7 @@ describe('Guard', () => {
         }),
       })
 
-      const result = await guard.sign(testWallet, 42161n, transactionPayload)
+      const result = await guard.sign(testWallet, Network.ChainId.ARBITRUM, transactionPayload)
 
       expect(result).toBeDefined()
       expect(result.type).toBe('hash')
@@ -427,7 +437,7 @@ describe('Guard', () => {
         }),
       })
 
-      const result = await guard.sign(testWallet, 42161n, messagePayload)
+      const result = await guard.sign(testWallet, Network.ChainId.ARBITRUM, messagePayload)
 
       expect(result).toBeDefined()
       expect(result.type).toBe('hash')
