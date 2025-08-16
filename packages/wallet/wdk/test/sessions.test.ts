@@ -61,14 +61,14 @@ describe('Sessions (via Manager)', () => {
           },
         }),
       )
-      chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      chainId = Number(await provider.request({ method: 'eth_chainId' }))
     } else {
       provider = vi.mocked<Provider.Provider>({
         request: vi.fn(),
         on: vi.fn(),
         removeListener: vi.fn(),
       })
-      chainId = 1n
+      chainId = Network.ChainId.MAINNET
     }
 
     // Create state provider

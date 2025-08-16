@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Manager, SignerActionable, SignerReady } from '../src/sequence'
 import { Mnemonic, Address } from 'ox'
 import { newManager } from './constants'
+import { Network } from '@0xsequence/wallet-primitives'
 
 describe('Wallets', () => {
   let manager: Manager | undefined
@@ -195,7 +196,7 @@ describe('Wallets', () => {
 
     // Test getNonce - this requires network access, so we expect it to work or throw network error
     try {
-      const nonce = await manager.wallets.getNonce(1n, wallet!, 0n)
+      const nonce = await manager.wallets.getNonce(Network.ChainId.MAINNET, wallet!, 0n)
       expect(typeof nonce).toBe('bigint')
       expect(nonce).toBeGreaterThanOrEqual(0n)
     } catch (error) {
@@ -215,7 +216,7 @@ describe('Wallets', () => {
 
     // Test isUpdatedOnchain
     try {
-      const isUpdated = await manager.wallets.isUpdatedOnchain(wallet!, 1n)
+      const isUpdated = await manager.wallets.isUpdatedOnchain(wallet!, Network.ChainId.MAINNET)
       expect(typeof isUpdated).toBe('boolean')
     } catch (error) {
       // Network errors are acceptable in tests
@@ -232,7 +233,7 @@ describe('Wallets', () => {
     })
 
     // Use a chainId that doesn't exist in the test networks
-    await expect(manager.wallets.getNonce(999999n, wallet!, 0n)).rejects.toThrow('network-not-found')
+    await expect(manager.wallets.getNonce(999999, wallet!, 0n)).rejects.toThrow('network-not-found')
   })
 
   it('Should throw error for unsupported network in isUpdatedOnchain', async () => {
@@ -243,7 +244,7 @@ describe('Wallets', () => {
       noGuard: true,
     })
 
-    await expect(manager.wallets.isUpdatedOnchain(wallet!, 999999n)).rejects.toThrow('network-not-found')
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, 999999)).rejects.toThrow('network-not-found')
   })
 
   // === CONFIGURATION MANAGEMENT ===
