@@ -1,6 +1,6 @@
 import { Address, Hex } from 'ox'
 import { describe, expect, it } from 'vitest'
-import { Config, Payload, Signature } from '@0xsequence/wallet-primitives'
+import { Config, Network, Payload, Signature } from '@0xsequence/wallet-primitives'
 
 import * as Envelope from '../src/envelope.js'
 
@@ -67,7 +67,7 @@ const mockSapientSignatureData: Signature.SignatureOfSapientSignerLeaf = {
 // Create test envelope
 const testEnvelope: Envelope.Envelope<Payload.Calls> = {
   wallet: TEST_WALLET,
-  chainId: 1,
+  chainId: Network.ChainId.MAINNET,
   configuration: mockConfig,
   payload: mockPayload,
 }

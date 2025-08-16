@@ -101,7 +101,7 @@ describe('State Utils', () => {
 
     it('should preserve values for different value types', () => {
       const input = {
-        '0x1234567890123456789012345678901234567890': { chainId: 1n, payload: mockPayload },
+        '0x1234567890123456789012345678901234567890': { chainId: Network.ChainId.MAINNET, payload: mockPayload },
         '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd': 'string-value',
         '0x9876543210987654321098765432109876543210': 123,
       }
@@ -116,7 +116,7 @@ describe('State Utils', () => {
 
     it('should handle complex nested objects as values', () => {
       const complexValue = {
-        chainId: 42n,
+        chainId: 42,
         payload: mockPayload,
         signature: mockRegularSignature,
         nested: {
