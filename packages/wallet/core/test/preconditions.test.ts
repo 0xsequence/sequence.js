@@ -11,6 +11,7 @@ import {
 } from '../src/preconditions/types'
 import { LocalRelayer } from '../src/relayer/standard/local'
 import { CAN_RUN_LIVE, RPC_URL } from './constants'
+import { Network } from '@0xsequence/wallet-primitives'
 
 const ERC20_IMPLICIT_MINT_CONTRACT = '0x041E0CDC028050519C8e6485B2d9840caf63773F'
 
@@ -21,10 +22,10 @@ function randomAddress(): Address.Address {
 describe('Preconditions', () => {
   const getProvider = async (): Promise<{ provider: Provider.Provider; chainId: number }> => {
     let provider: Provider.Provider
-    let chainId = 1n
+    let chainId: number = Network.ChainId.MAINNET
     if (CAN_RUN_LIVE) {
       provider = Provider.from(RpcTransport.fromHttp(RPC_URL!!))
-      chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      chainId = Number(await provider.request({ method: 'eth_chainId' }))
     } else {
       provider = {
         request: vi.fn(),
