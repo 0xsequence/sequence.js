@@ -1839,6 +1839,53 @@ export interface GetIntentConfigReturn {
 }
 export interface ListCurrencyGroupsArgs {
 }
+export interface GetIntentCallsPayloadsArgs {
+  userAddress: string
+  destinationChainId: number
+  destinationTokenAddress: string
+  destinationTokenAmount: string
+  destinationToAddress: string
+  originChainId: number
+  originTokenAddress: string
+  originTokenAmount: string
+  destinationCallData?: string
+  destinationCallValue?: string
+  provider?: string
+  addressOverrides?: AddressOverrides
+  destinationSalt?: string
+  takerFee?: TakerFee
+  slippageTolerance?: number
+  tradeType?: TradeType
+}
+
+export interface GetIntentCallsPayloadsReturn {
+  calls: Array<IntentCallsPayload>
+  preconditions: Array<IntentPrecondition>
+  metaTxns: Array<MetaTxn>
+  trailsFee: TrailsFee
+  quote: IntentQuote
+  originIntentAddress: string
+  destinationIntentAddress: string
+}
+export interface CommitIntentConfigArgs {
+  originIntentAddress: string
+  destinationIntentAddress: string
+  mainSigner: string
+  calls: Array<IntentCallsPayload>
+  preconditions: Array<IntentPrecondition>
+  addressOverrides?: AddressOverrides
+}
+
+export interface CommitIntentConfigReturn {
+  config: IntentConfig
+}
+export interface GetIntentConfigArgs {
+  intentAddress: string
+}
+
+export interface GetIntentConfigReturn {
+  config: IntentConfig
+}
 export interface ListCurrencyGroupsArgs {}
 
 export interface ListCurrencyGroupsReturn {
