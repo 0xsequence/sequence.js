@@ -235,6 +235,27 @@ export class Sessions implements SessionsInterface {
       throw new Error('No identity handler found')
     }
 
+    // Get the full login topology to find the imageHash if it's a sapient signer
+    const { loginTopology } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
+
+    let identityTopology: Config.Topology
+
+    // Check if the identity signer is a sapient signer and construct the correct leaf
+    if (Config.isSapientSignerLeaf(loginTopology) && Address.isEqual(loginTopology.address, identitySignerAddress)) {
+      identityTopology = {
+        type: 'sapient-signer',
+        address: identitySignerAddress,
+        imageHash: loginTopology.imageHash,
+        weight: 1n,
+      }
+    } else {
+      identityTopology = {
+        type: 'signer',
+        address: identitySignerAddress,
+        weight: 1n,
+      }
+    }
+
     // Create the attestation to sign
     let identityType: IdentityType | undefined
     let issuerHash: Hex.Hex = '0x'
@@ -261,11 +282,7 @@ export class Sessions implements SessionsInterface {
     const configuration: Config.Config = {
       threshold: 1n,
       checkpoint: 0n,
-      topology: {
-        type: 'signer',
-        address: identitySignerAddress,
-        weight: 1n,
-      },
+      topology: identityTopology,
     }
     const envelope: Envelope.Envelope<Payload.SessionImplicitAuthorize> = {
       payload: {
