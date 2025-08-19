@@ -33,7 +33,7 @@ export type WalletStatus = {
   imageHash: Hex.Hex
   /** Pending updates in reverse chronological order (newest first) */
   pendingUpdates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>
-  chainId?: bigint
+  chainId?: number
   counterFactual: {
     context: Context.KnownContext | Context.Context
     imageHash: Hex.Hex
@@ -124,7 +124,7 @@ export class Wallet {
 
     const imageHash = Config.hashConfiguration(configuration)
     const blankEnvelope = (
-      await Promise.all([this.prepareBlankEnvelope(0n), this.stateProvider.saveConfiguration(configuration)])
+      await Promise.all([this.prepareBlankEnvelope(0), this.stateProvider.saveConfiguration(configuration)])
     )[0]
 
     return {
@@ -169,7 +169,7 @@ export class Wallet {
   ): Promise<T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus> {
     let isDeployed = false
     let implementation: Address.Address | undefined
-    let chainId: bigint | undefined
+    let chainId: number | undefined
     let imageHash: Hex.Hex
     let updates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }> = []
     let onChainImageHash: Hex.Hex | undefined
@@ -209,7 +209,7 @@ export class Wallet {
           .catch(() => undefined),
       ])
 
-      chainId = BigInt(requests[0])
+      chainId = Number(requests[0])
       isDeployed = requests[1]
       implementation = requests[2]
 
@@ -402,7 +402,7 @@ export class Wallet {
         factory,
         factoryData,
       },
-      ...(await this.prepareBlankEnvelope(BigInt(chainId))),
+      ...(await this.prepareBlankEnvelope(Number(chainId))),
     }
   }
 
@@ -490,7 +490,7 @@ export class Wallet {
         nonce,
         calls,
       },
-      ...(await this.prepareBlankEnvelope(BigInt(chainId))),
+      ...(await this.prepareBlankEnvelope(Number(chainId))),
     }
   }
 
@@ -564,7 +564,7 @@ export class Wallet {
 
   async prepareMessageSignature(
     message: string | Hex.Hex | Payload.TypedDataToSign,
-    chainId: bigint,
+    chainId: number,
   ): Promise<Envelope.Envelope<Payload.Message>> {
     let encodedMessage: Hex.Hex
     if (typeof message !== 'string') {
@@ -597,7 +597,7 @@ export class Wallet {
     return encoded
   }
 
-  private async prepareBlankEnvelope(chainId: bigint) {
+  private async prepareBlankEnvelope(chainId: number) {
     const status = await this.getStatus()
 
     return {

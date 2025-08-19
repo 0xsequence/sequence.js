@@ -37,7 +37,7 @@ export class Implicit implements SessionSigner {
 
   async supportedCall(
     wallet: Address.Address,
-    _chainId: bigint,
+    _chainId: number,
     call: Payload.Call,
     _sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
@@ -84,7 +84,7 @@ export class Implicit implements SessionSigner {
 
   async signCall(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     call: Payload.Call,
     nonce: {
       space: bigint

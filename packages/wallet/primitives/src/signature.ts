@@ -1106,7 +1106,7 @@ function rawSignatureOfLeafFromJson(obj: any): SignatureOfSignerLeaf | Signature
 export async function recover(
   signature: RawSignature,
   wallet: Address.Address,
-  chainId: bigint,
+  chainId: number,
   payload: Parented,
   options?: {
     provider?: Provider.Provider | { provider: Provider.Provider; block: number } | 'assume-valid' | 'assume-invalid'
@@ -1129,7 +1129,7 @@ export async function recover(
       const recovered = await recover(
         subsignature,
         wallet,
-        subsignature.noChainId ? 0n : chainId,
+        subsignature.noChainId ? 0 : chainId,
         fromConfigUpdate(Bytes.toHex(hashConfiguration(configuration))),
         options,
       )
@@ -1158,7 +1158,7 @@ export async function recover(
 async function recoverTopology(
   topology: RawTopology,
   wallet: Address.Address,
-  chainId: bigint,
+  chainId: number,
   payload: Parented,
   options?: {
     provider?: Provider.Provider | { provider: Provider.Provider; block: number } | 'assume-valid' | 'assume-invalid'
@@ -1333,7 +1333,7 @@ async function recoverTopology(
 }
 
 function encode(
-  chainId: bigint,
+  chainId: number,
   payload: Parented,
 ): Exclude<AbiFunction.encodeData.Args<typeof RECOVER_SAPIENT_SIGNATURE>, []>[0][0] {
   switch (payload.type) {

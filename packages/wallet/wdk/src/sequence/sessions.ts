@@ -274,7 +274,7 @@ export class Sessions implements SessionsInterface {
         attestation,
       },
       wallet: walletAddress,
-      chainId: 0n,
+      chainId: 0,
       configuration,
     }
 

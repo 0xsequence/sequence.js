@@ -14,13 +14,13 @@ export class SequenceRelayer implements Relayer {
     this.service = new Service(host, fetch)
   }
 
-  async isAvailable(_wallet: Address.Address, _chainId: bigint): Promise<boolean> {
+  async isAvailable(_wallet: Address.Address, _chainId: number): Promise<boolean> {
     return true
   }
 
   async feeOptions(
     wallet: Address.Address,
-    _chainId: bigint,
+    _chainId: number,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     const to = wallet // TODO: this might be the guest module
@@ -42,7 +42,7 @@ export class SequenceRelayer implements Relayer {
     return false
   }
 
-  async relay(to: Address.Address, data: Hex.Hex, _chainId: bigint, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
+  async relay(to: Address.Address, data: Hex.Hex, _chainId: number, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
     const walletAddress = to // TODO: pass wallet address or stop requiring it
 
     const { txnHash } = await this.service.sendMetaTxn({
@@ -53,7 +53,7 @@ export class SequenceRelayer implements Relayer {
     return { opHash: `0x${txnHash}` }
   }
 
-  async status(opHash: Hex.Hex, _chainId: bigint): Promise<OperationStatus> {
+  async status(opHash: Hex.Hex, _chainId: number): Promise<OperationStatus> {
     try {
       const {
         receipt: { status, revertReason, txnReceipt },

@@ -22,12 +22,13 @@ import {
   sessionPermissionsFromParsed,
   permissionFromJson,
 } from '../src/permission.js'
+import { ChainId } from '../src/network.js'
 
 describe('Permission', () => {
   // Test data
   const testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
   const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
-  const testChainId = 1n
+  const testChainId = ChainId.MAINNET
   const testValueLimit = 1000000000000000000n // 1 ETH
   const testDeadline = 1893456000n // Jan 1, 2030
 
@@ -67,7 +68,7 @@ describe('Permission', () => {
 
   const complexSessionPermissions: SessionPermissions = {
     signer: testAddress2,
-    chainId: 137n, // Polygon
+    chainId: ChainId.POLYGON, // Polygon
     valueLimit: 5000000000000000000n, // 5 ETH
     deadline: testDeadline,
     permissions: [samplePermission, complexPermission],
@@ -290,7 +291,7 @@ describe('Permission', () => {
       })
 
       it('should handle different chain IDs', () => {
-        const chainIds = [1n, 137n, 42161n, 10n] // Mainnet, Polygon, Arbitrum, Optimism
+        const chainIds = [ChainId.MAINNET, ChainId.POLYGON, ChainId.ARBITRUM, ChainId.OPTIMISM]
 
         chainIds.forEach((chainId) => {
           const sessionPermissions: SessionPermissions = {
@@ -684,7 +685,7 @@ describe('Permission', () => {
     it('should handle zero values correctly', () => {
       const zeroValueSessionPermissions: SessionPermissions = {
         signer: testAddress,
-        chainId: 0n,
+        chainId: 0,
         valueLimit: 0n,
         deadline: 0n,
         permissions: [samplePermission],
@@ -693,7 +694,7 @@ describe('Permission', () => {
       const encoded = encodeSessionPermissions(zeroValueSessionPermissions)
       const decoded = decodeSessionPermissions(encoded)
 
-      expect(decoded.chainId).toBe(0n)
+      expect(decoded.chainId).toBe(0)
       expect(decoded.valueLimit).toBe(0n)
       expect(decoded.deadline).toBe(0n)
     })
@@ -701,7 +702,7 @@ describe('Permission', () => {
     it('should handle maximum values correctly', () => {
       const maxValueSessionPermissions: SessionPermissions = {
         signer: testAddress,
-        chainId: 2n ** 256n - 1n,
+        chainId: Number.MAX_SAFE_INTEGER,
         valueLimit: 2n ** 256n - 1n,
         deadline: 2n ** 64n - 1n,
         permissions: [samplePermission],
@@ -710,7 +711,7 @@ describe('Permission', () => {
       const encoded = encodeSessionPermissions(maxValueSessionPermissions)
       const decoded = decodeSessionPermissions(encoded)
 
-      expect(decoded.chainId).toBe(2n ** 256n - 1n)
+      expect(decoded.chainId).toBe(Number.MAX_SAFE_INTEGER)
       expect(decoded.valueLimit).toBe(2n ** 256n - 1n)
       expect(decoded.deadline).toBe(2n ** 64n - 1n)
     })
@@ -804,7 +805,7 @@ describe('Permission', () => {
     it('should maintain precision for large numbers', () => {
       const largeNumbers: SessionPermissions = {
         signer: testAddress,
-        chainId: 999999999999999999n,
+        chainId: Number.MAX_SAFE_INTEGER,
         valueLimit: 123456789012345678901234567890n,
         deadline: 18446744073709551615n, // Max uint64
         permissions: [samplePermission],

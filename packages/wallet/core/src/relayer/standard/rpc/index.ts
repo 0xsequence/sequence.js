@@ -62,13 +62,13 @@ export class RpcRelayer implements Relayer {
     })
   }
 
-  isAvailable(_wallet: Address.Address, chainId: bigint): Promise<boolean> {
-    return Promise.resolve(BigInt(this.chainId) === chainId)
+  isAvailable(_wallet: Address.Address, chainId: number): Promise<boolean> {
+    return Promise.resolve(this.chainId === chainId)
   }
 
   async feeOptions(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     const callsStruct: Payload.Calls = { type: 'call', space: 0n, nonce: 0n, calls: calls }
@@ -103,7 +103,7 @@ export class RpcRelayer implements Relayer {
     walletAddress: Address.Address,
     to: Address.Address,
     data: Hex.Hex,
-    chainId: bigint,
+    chainId: number,
     quote?: FeeQuote,
     preconditions?: IntentPrecondition[],
   ): Promise<{ opHash: Hex.Hex }> {
@@ -131,7 +131,7 @@ export class RpcRelayer implements Relayer {
   async relay(
     to: Address.Address,
     data: Hex.Hex,
-    chainId: bigint,
+    chainId: number,
     quote?: FeeQuote,
     preconditions?: IntentPrecondition[],
   ): Promise<{ opHash: Hex.Hex }> {
@@ -156,7 +156,7 @@ export class RpcRelayer implements Relayer {
     return { opHash: `0x${result.txnHash}` }
   }
 
-  async status(opHash: Hex.Hex, chainId: bigint): Promise<OperationStatus> {
+  async status(opHash: Hex.Hex, chainId: number): Promise<OperationStatus> {
     try {
       const cleanedOpHash = opHash.startsWith('0x') ? opHash.substring(2) : opHash
       const result = await this.client.getMetaTxnReceipt({ metaTxID: cleanedOpHash })

@@ -512,7 +512,7 @@ export class Manager {
     return this.shared.sequence.networks
   }
 
-  public getNetwork(chainId: bigint): Network.Network | undefined {
+  public getNetwork(chainId: number): Network.Network | undefined {
     return this.shared.sequence.networks.find((n) => n.chainId === chainId)
   }
 

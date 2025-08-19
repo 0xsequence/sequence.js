@@ -22,7 +22,7 @@ export type Permission = {
 
 export type SessionPermissions = {
   signer: Address.Address
-  chainId: bigint
+  chainId: number
   valueLimit: bigint
   deadline: bigint // uint64
   permissions: [Permission, ...Permission[]]
@@ -107,7 +107,7 @@ function encodeParameterRule(rule: ParameterRule): Bytes.Bytes {
 
 export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions {
   const signer = Bytes.toHex(bytes.slice(0, 20))
-  const chainId = Bytes.toBigInt(bytes.slice(20, 52))
+  const chainId = Bytes.toNumber(bytes.slice(20, 52))
   const valueLimit = Bytes.toBigInt(bytes.slice(52, 84))
   const deadline = Bytes.toBigInt(bytes.slice(84, 92))
   const permissionsLength = Number(bytes[92]!)
@@ -260,7 +260,7 @@ export function sessionPermissionsFromJson(json: string): SessionPermissions {
 export function sessionPermissionsFromParsed(parsed: any): SessionPermissions {
   return {
     signer: Address.from(parsed.signer),
-    chainId: BigInt(parsed.chainId),
+    chainId: Number(parsed.chainId),
     valueLimit: BigInt(parsed.valueLimit),
     deadline: BigInt(parsed.deadline),
     permissions: parsed.permissions.map(permissionFromParsed),

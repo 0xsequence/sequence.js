@@ -25,7 +25,7 @@ describe('SessionManager', () => {
     'should load from state',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       let topology = SessionConfig.emptySessionsTopology(identityAddress)
       // Add random signer to the topology
@@ -172,7 +172,7 @@ describe('SessionManager', () => {
       }
 
       // Sign the transaction
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
       const signature = await sessionManager.signSapient(wallet.address, chainId, payload, imageHash)
 
       expect(signature.type).toBe('sapient')
@@ -188,12 +188,12 @@ describe('SessionManager', () => {
 
   const shouldCreateAndSignWithExplicitSession = async (useChainId: boolean) => {
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-    const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+    const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
     // Create explicit signer
     const explicitPrivateKey = Secp256k1.randomPrivateKey()
     const explicitPermissions: Signers.Session.ExplicitParams = {
-      chainId: useChainId ? chainId : 0n,
+      chainId: useChainId ? chainId : 0,
       valueLimit: 1000000000000000000n, // 1 ETH
       deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
       permissions: [PermissionBuilder.for(EMITTER_ADDRESS).allowAll().build()],
@@ -273,7 +273,7 @@ describe('SessionManager', () => {
     sessionManager: Signers.SessionManager,
     calls: Payload.Call[],
     provider: Provider.Provider,
-    chainId: bigint,
+    chainId: number,
   ) => {
     // Prepare the transaction
     const envelope = await wallet.prepareTransaction(provider, calls)
@@ -336,7 +336,7 @@ describe('SessionManager', () => {
     async () => {
       // Check the contracts have been deployed
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       // Create an implicit signer
       const implicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -408,7 +408,7 @@ describe('SessionManager', () => {
     'signs a payload using an explicit session',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -476,7 +476,7 @@ describe('SessionManager', () => {
     'signs a payload using an explicit session',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -561,7 +561,7 @@ describe('SessionManager', () => {
     'signs an ERC20 approve using an explicit session',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -657,7 +657,7 @@ describe('SessionManager', () => {
     'signs a payload sending value using an explicit session',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -760,7 +760,7 @@ describe('SessionManager', () => {
     'signs a payload sending two transactions with cumulative rules using an explicit session',
     async () => {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()

@@ -40,7 +40,7 @@ export function newManager(options?: ManagerOptions, noEthereumMock?: boolean, t
         name: 'Arbitrum (local fork)',
         type: Network.NetworkType.MAINNET,
         rpcUrl: LOCAL_RPC_URL,
-        chainId: 42161n,
+        chainId: Network.ChainId.ARBITRUM,
         blockExplorer: { url: 'https://arbiscan.io/' },
         nativeCurrency: {
           name: 'Ether',
@@ -71,7 +71,7 @@ export function newRemoteManager(
       relayerPk: string
       bundlerUrl: string
       rpcUrl: string
-      chainId: bigint
+      chainId: number
     }
     tag?: string
   },

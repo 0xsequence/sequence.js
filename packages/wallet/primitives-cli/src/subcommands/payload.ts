@@ -60,7 +60,7 @@ export async function doConvertToJson(payload: string): Promise<string> {
   return json
 }
 
-export async function doHash(wallet: string, chainId: bigint, payload: string): Promise<string> {
+export async function doHash(wallet: string, chainId: number, payload: string): Promise<string> {
   const decoded = AbiParameters.decode(
     [{ type: 'tuple', name: 'payload', components: DecodedAbi }],
     payload as Hex.Hex,
@@ -147,7 +147,7 @@ const payloadCommand: CommandModule = {
         },
         async (argv) => {
           const payload = await fromPosOrStdin(argv, 'payload')
-          const result = await doHash(argv.wallet, BigInt(argv.chainId), payload)
+          const result = await doHash(argv.wallet, Number(argv.chainId), payload)
           console.log(result)
         },
       )

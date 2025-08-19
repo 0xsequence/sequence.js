@@ -43,7 +43,7 @@ export class Provider implements ProviderInterface {
 
   async getWallets(signer: Address.Address): Promise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSignerLeaf
     }
@@ -61,7 +61,7 @@ export class Provider implements ProviderInterface {
             return [
               wallet,
               {
-                chainId: BigInt(signature.chainID),
+                chainId: Number(signature.chainID),
                 payload: fromServicePayload(signature.payload),
                 signature: { type: 'hash', ...oxSignature.from(signature.signature) },
               },
@@ -70,7 +70,7 @@ export class Provider implements ProviderInterface {
             return [
               wallet,
               {
-                chainId: BigInt(signature.chainID),
+                chainId: Number(signature.chainID),
                 payload: fromServicePayload(signature.payload),
                 signature: { type: 'eth_sign', ...oxSignature.from(signature.signature) },
               },
@@ -79,7 +79,7 @@ export class Provider implements ProviderInterface {
             return [
               wallet,
               {
-                chainId: BigInt(signature.chainID),
+                chainId: Number(signature.chainID),
                 payload: fromServicePayload(signature.payload),
                 signature: { type: 'erc1271', address: signer, data: signature.signature },
               },
@@ -98,7 +98,7 @@ export class Provider implements ProviderInterface {
     imageHash: Hex.Hex,
   ): Promise<{
     [wallet: Address.Address]: {
-      chainId: bigint
+      chainId: number
       payload: Payload.Parented
       signature: Signature.SignatureOfSapientSignerLeaf
     }
@@ -110,7 +110,7 @@ export class Provider implements ProviderInterface {
       Object.entries(wallets).map(
         ([wallet, signature]): [
           Address.Address,
-          { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf },
+          { chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf },
         ] => {
           Address.assert(wallet)
           Hex.assert(signature.signature)
@@ -126,7 +126,7 @@ export class Provider implements ProviderInterface {
               return [
                 wallet,
                 {
-                  chainId: BigInt(signature.chainID),
+                  chainId: Number(signature.chainID),
                   payload: fromServicePayload(signature.payload),
                   signature: { type: 'sapient', address: signer, data: signature.signature },
                 },
@@ -135,7 +135,7 @@ export class Provider implements ProviderInterface {
               return [
                 wallet,
                 {
-                  chainId: BigInt(signature.chainID),
+                  chainId: Number(signature.chainID),
                   payload: fromServicePayload(signature.payload),
                   signature: { type: 'sapient_compact', address: signer, data: signature.signature },
                 },
@@ -149,7 +149,7 @@ export class Provider implements ProviderInterface {
   async getWitnessFor(
     wallet: Address.Address,
     signer: Address.Address,
-  ): Promise<{ chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined> {
+  ): Promise<{ chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSignerLeaf } | undefined> {
     try {
       const { witness } = await this.service.witness({ signer, wallet })
 
@@ -158,19 +158,19 @@ export class Provider implements ProviderInterface {
       switch (witness.type) {
         case SignatureType.EIP712:
           return {
-            chainId: BigInt(witness.chainID),
+            chainId: Number(witness.chainID),
             payload: fromServicePayload(witness.payload),
             signature: { type: 'hash', ...oxSignature.from(witness.signature) },
           }
         case SignatureType.EthSign:
           return {
-            chainId: BigInt(witness.chainID),
+            chainId: Number(witness.chainID),
             payload: fromServicePayload(witness.payload),
             signature: { type: 'eth_sign', ...oxSignature.from(witness.signature) },
           }
         case SignatureType.EIP1271:
           return {
-            chainId: BigInt(witness.chainID),
+            chainId: Number(witness.chainID),
             payload: fromServicePayload(witness.payload),
             signature: { type: 'erc1271', address: signer, data: witness.signature },
           }
@@ -187,7 +187,7 @@ export class Provider implements ProviderInterface {
     signer: Address.Address,
     imageHash: Hex.Hex,
   ): Promise<
-    { chainId: bigint; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
+    { chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
   > {
     try {
       const { witness } = await this.service.witness({ signer, wallet, sapientHash: imageHash })
@@ -203,13 +203,13 @@ export class Provider implements ProviderInterface {
           throw new Error(`unexpected erc-1271 signature by ${signer}`)
         case SignatureType.Sapient:
           return {
-            chainId: BigInt(witness.chainID),
+            chainId: Number(witness.chainID),
             payload: fromServicePayload(witness.payload),
             signature: { type: 'sapient', address: signer, data: witness.signature },
           }
         case SignatureType.SapientCompact:
           return {
-            chainId: BigInt(witness.chainID),
+            chainId: Number(witness.chainID),
             payload: fromServicePayload(witness.payload),
             signature: { type: 'sapient_compact', address: signer, data: witness.signature },
           }
@@ -230,7 +230,7 @@ export class Provider implements ProviderInterface {
         Hex.assert(signature)
 
         const decoded = Signature.decodeSignature(Hex.toBytes(signature))
-        const { configuration } = await Signature.recover(decoded, wallet, 0n, Payload.fromConfigUpdate(toImageHash))
+        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(toImageHash))
 
         return { imageHash: toImageHash, signature: { ...decoded, configuration } }
       }),
@@ -249,7 +249,7 @@ export class Provider implements ProviderInterface {
 
   async getPayload(
     opHash: Hex.Hex,
-  ): Promise<{ chainId: bigint; payload: Payload.Parented; wallet: Address.Address } | undefined> {
+  ): Promise<{ chainId: number; payload: Payload.Parented; wallet: Address.Address } | undefined> {
     const { version, payload, wallet, chainID } = await this.service.payload({ digest: opHash })
 
     if (version !== 3) {
@@ -258,7 +258,7 @@ export class Provider implements ProviderInterface {
 
     Address.assert(wallet)
 
-    return { payload: fromServicePayload(payload), wallet, chainId: BigInt(chainID) }
+    return { payload: fromServicePayload(payload), wallet, chainId: Number(chainID) }
   }
 
   async saveWallet(deployConfiguration: Config.Config, context: Context.Context): Promise<void> {
@@ -278,7 +278,7 @@ export class Provider implements ProviderInterface {
 
   async saveWitnesses(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
   ): Promise<void> {
@@ -344,7 +344,7 @@ export class Provider implements ProviderInterface {
     // TODO: save deploy hash even if we don't have its configuration
   }
 
-  async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: bigint): Promise<void> {
+  async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): Promise<void> {
     await this.service.savePayload({
       version: 3,
       payload: getServicePayload(payload),

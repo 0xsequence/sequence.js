@@ -34,6 +34,7 @@ import {
 } from '../src/extensions/recovery.js'
 import * as Payload from '../src/payload.js'
 import * as GenericTree from '../src/generic-tree.js'
+import { ChainId } from '../src/network.js'
 
 describe('Recovery', () => {
   // Test data
@@ -611,22 +612,22 @@ describe('Recovery', () => {
   describe('Recovery Payload Handling', () => {
     describe('hashRecoveryPayload', () => {
       it('should hash recovery payload', () => {
-        const hash = hashRecoveryPayload(samplePayload, testAddress, 1n, false)
+        const hash = hashRecoveryPayload(samplePayload, testAddress, ChainId.MAINNET, false)
         expect(hash).toMatch(/^0x[a-fA-F0-9]{64}$/)
         expect(hash).toHaveLength(66)
       })
 
       it('should hash with no chain ID', () => {
-        const hash = hashRecoveryPayload(samplePayload, testAddress, 1n, true)
+        const hash = hashRecoveryPayload(samplePayload, testAddress, ChainId.MAINNET, true)
         expect(hash).toMatch(/^0x[a-fA-F0-9]{64}$/)
         expect(hash).toHaveLength(66)
       })
 
       it('should produce different hashes for different parameters', () => {
-        const hash1 = hashRecoveryPayload(samplePayload, testAddress, 1n, false)
-        const hash2 = hashRecoveryPayload(samplePayload, testAddress, 2n, false)
-        const hash3 = hashRecoveryPayload(samplePayload, testAddress2, 1n, false)
-        const hash4 = hashRecoveryPayload(samplePayload, testAddress, 1n, true)
+        const hash1 = hashRecoveryPayload(samplePayload, testAddress, 1, false)
+        const hash2 = hashRecoveryPayload(samplePayload, testAddress, 2, false)
+        const hash3 = hashRecoveryPayload(samplePayload, testAddress2, 1, false)
+        const hash4 = hashRecoveryPayload(samplePayload, testAddress, 1, true)
 
         expect(hash1).not.toBe(hash2) // Different chain ID
         expect(hash1).not.toBe(hash3) // Different wallet
@@ -634,8 +635,8 @@ describe('Recovery', () => {
       })
 
       it('should be deterministic', () => {
-        const hash1 = hashRecoveryPayload(samplePayload, testAddress, 1n, false)
-        const hash2 = hashRecoveryPayload(samplePayload, testAddress, 1n, false)
+        const hash1 = hashRecoveryPayload(samplePayload, testAddress, ChainId.MAINNET, false)
+        const hash2 = hashRecoveryPayload(samplePayload, testAddress, ChainId.MAINNET, false)
         expect(hash1).toBe(hash2)
       })
     })

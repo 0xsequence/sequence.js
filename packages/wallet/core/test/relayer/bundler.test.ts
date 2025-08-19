@@ -1,14 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { Address, Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { Bundler, isBundler } from '../../src/relayer/bundler.js'
 import { OperationStatus } from '../../src/relayer/relayer.js'
 
 // Test addresses and data
 const TEST_WALLET_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
 const TEST_ENTRYPOINT_ADDRESS = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
-const TEST_CHAIN_ID = 1n
+const TEST_CHAIN_ID = Network.ChainId.MAINNET
 const TEST_OP_HASH = Hex.from('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')
 
 describe('Bundler', () => {

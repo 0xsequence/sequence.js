@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { Manager, SignerActionable } from '../src/sequence'
 import { Mnemonic } from 'ox'
 import { newManager } from './constants'
+import { Network } from '@0xsequence/wallet-primitives'
 
 describe('Messages', () => {
   let manager: Manager
@@ -350,8 +351,7 @@ describe('Messages', () => {
     })
 
     const testMessage = 'Message with chainId for network lookup'
-    // Use the test network chainId (42161n - Arbitrum)
-    const signatureId = await manager.messages.request(wallet!, testMessage, 42161n)
+    const signatureId = await manager.messages.request(wallet!, testMessage, Network.ChainId.ARBITRUM)
 
     const unregisterUI = manager.registerMnemonicUI(async (respond) => {
       await respond(mnemonic)
@@ -384,7 +384,7 @@ describe('Messages', () => {
 
     const testMessage = 'Message with unsupported chainId'
     // Use an unsupported chainId
-    const signatureId = await manager.messages.request(wallet!, testMessage, 999999n)
+    const signatureId = await manager.messages.request(wallet!, testMessage, 999999)
 
     const unregisterUI = manager.registerMnemonicUI(async (respond) => {
       await respond(mnemonic)

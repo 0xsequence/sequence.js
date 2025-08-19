@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex, Bytes } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { IdentityInstrument, IdentityType, KeyType, AuthCodeChallenge } from '@0xsequence/identity-instrument'
 import { AuthCodeHandler } from '../src/sequence/handlers/authcode'
 import { Signatures } from '../src/sequence/signatures'
@@ -121,7 +121,7 @@ describe('AuthCodeHandler', () => {
       id: 'test-request-id',
       envelope: {
         wallet: testWallet,
-        chainId: 42161n,
+        chainId: Network.ChainId.ARBITRUM,
         payload: Payload.fromMessage(Hex.fromString('Test message')),
       },
     } as BaseSignatureRequest

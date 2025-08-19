@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Manager, SignerActionable, Transaction, TransactionDefined, TransactionRelayed } from '../src/sequence'
 import { Address, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { LOCAL_RPC_URL, newManager } from './constants'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Payload, Network } from '@0xsequence/wallet-primitives'
 
 describe('Transactions', () => {
   let manager: Manager | undefined
@@ -29,7 +29,7 @@ describe('Transactions', () => {
     })
 
     const recipient = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: recipient,
         value: 9n,
@@ -142,7 +142,7 @@ describe('Transactions', () => {
 
     // Send a transaction
     const recipient = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: recipient,
         value: 9n,
@@ -218,7 +218,7 @@ describe('Transactions', () => {
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to,
         value: 9n,
@@ -248,7 +248,7 @@ describe('Transactions', () => {
     await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to,
       },
@@ -316,7 +316,7 @@ describe('Transactions', () => {
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to,
       },
@@ -337,7 +337,7 @@ describe('Transactions', () => {
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to,
       },
@@ -360,7 +360,7 @@ describe('Transactions', () => {
     })
 
     const to = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to,
       },
@@ -407,15 +407,15 @@ describe('Transactions', () => {
     const rDeviceSigner = rSigRequest.signers.find((s) => s.status === 'ready')!
     await rDeviceSigner.handle()
 
-    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, Network.ChainId.ARBITRUM)).resolves.toBeTruthy()
 
     await manager.recovery.completeUpdate(rSigId!)
 
     // It should no longer be updated onchain
-    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeFalsy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, Network.ChainId.ARBITRUM)).resolves.toBeFalsy()
 
     const randomAddress = Address.from(Hex.random(20))
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: randomAddress,
       },
@@ -460,7 +460,7 @@ describe('Transactions', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // The onchain configuration should be updated
-    await expect(manager.wallets.isUpdatedOnchain(wallet!, 42161n)).resolves.toBeTruthy()
+    await expect(manager.wallets.isUpdatedOnchain(wallet!, Network.ChainId.ARBITRUM)).resolves.toBeTruthy()
   })
 
   it('Should reject unsafe transactions in safe mode (call to self)', async () => {
@@ -471,7 +471,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId1 = manager.transactions.request(wallet!, 42161n, [
+    const txId1 = manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: wallet!,
       },
@@ -490,7 +490,7 @@ describe('Transactions', () => {
 
     const txId1 = await manager.transactions.request(
       wallet!,
-      42161n,
+      Network.ChainId.ARBITRUM,
       [
         {
           to: wallet!,
@@ -528,7 +528,7 @@ describe('Transactions', () => {
     expect(transactionsList).toEqual([])
 
     // Create a transaction
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -559,7 +559,7 @@ describe('Transactions', () => {
     let receivedTransactions: Transaction[] = []
 
     // Create a transaction first
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -590,7 +590,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -629,7 +629,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -654,7 +654,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -679,7 +679,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -709,7 +709,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -731,7 +731,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,
@@ -760,7 +760,7 @@ describe('Transactions', () => {
     const customSpace = 12345n
     const txId = await manager.transactions.request(
       wallet!,
-      42161n,
+      Network.ChainId.ARBITRUM,
       [
         {
           to: Address.from(Hex.random(20)),
@@ -792,7 +792,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const unknownChainId = 999999n
+    const unknownChainId = 999999
     await expect(
       manager.transactions.request(wallet!, unknownChainId, [
         {
@@ -811,7 +811,7 @@ describe('Transactions', () => {
       noGuard: true,
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         // No value, data, or gasLimit - should use defaults
@@ -842,7 +842,7 @@ describe('Transactions', () => {
       params: [wallet!, '0xa'],
     })
 
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 1n,
@@ -894,12 +894,12 @@ describe('Transactions', () => {
     })
 
     // Create first transaction
-    const txId1 = await manager.transactions.request(wallet!, 42161n, [
+    const txId1 = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       { to: Address.from(Hex.random(20)), value: 100n },
     ])
 
     // Create second transaction
-    const txId2 = await manager.transactions.request(wallet!, 42161n, [
+    const txId2 = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       { to: Address.from(Hex.random(20)), value: 200n },
     ])
 
@@ -952,7 +952,7 @@ describe('Transactions', () => {
     })
 
     // Request without source
-    const txId = await manager.transactions.request(wallet!, 42161n, [
+    const txId = await manager.transactions.request(wallet!, Network.ChainId.ARBITRUM, [
       {
         to: Address.from(Hex.random(20)),
         value: 100n,

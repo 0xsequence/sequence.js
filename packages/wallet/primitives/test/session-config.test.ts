@@ -39,6 +39,7 @@ import {
   emptySessionsTopology,
 } from '../src/session-config.js'
 import { SessionPermissions } from '../src/permission.js'
+import { ChainId } from '../src/network.js'
 
 describe('Session Config', () => {
   // Test data
@@ -62,7 +63,7 @@ describe('Session Config', () => {
 
   const sampleSessionPermissions: SessionPermissions = {
     signer: testAddress1,
-    chainId: 1n,
+    chainId: ChainId.MAINNET,
     valueLimit: 1000000000000000000n, // 1 ETH
     deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
     permissions: [samplePermission],
@@ -266,7 +267,7 @@ describe('Session Config', () => {
         const anotherSession: SessionPermissionsLeaf = {
           type: 'session-permissions',
           signer: testAddress2,
-          chainId: 1n,
+          chainId: ChainId.MAINNET,
           valueLimit: 500000000000000000n,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 1800),
           permissions: [samplePermission],
@@ -581,7 +582,7 @@ describe('Session Config', () => {
       it('should add new session to topology', () => {
         const newSession: SessionPermissions = {
           signer: testAddress2,
-          chainId: 1n,
+          chainId: ChainId.MAINNET,
           valueLimit: 500000000000000000n,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 1800),
           permissions: [samplePermission],
@@ -633,7 +634,7 @@ describe('Session Config', () => {
         const expiredSession: SessionPermissionsLeaf = {
           type: 'session-permissions',
           signer: testAddress2,
-          chainId: 1n,
+          chainId: ChainId.MAINNET,
           valueLimit: 1000000000000000000n,
           deadline: BigInt(Math.floor(Date.now() / 1000) - 3600), // Expired 1 hour ago
           permissions: [samplePermission],
@@ -662,7 +663,7 @@ describe('Session Config', () => {
         const expiredSession: SessionPermissionsLeaf = {
           type: 'session-permissions',
           signer: testAddress1,
-          chainId: 1n,
+          chainId: ChainId.MAINNET,
           valueLimit: 1000000000000000000n,
           deadline: BigInt(Math.floor(Date.now() / 1000) - 3600), // Expired
           permissions: [samplePermission],
@@ -853,7 +854,7 @@ describe('Session Config', () => {
     it('should handle large session permissions', () => {
       const largePermissions: SessionPermissions = {
         signer: testAddress1,
-        chainId: 1n,
+        chainId: ChainId.MAINNET,
         valueLimit: 2n ** 256n - 1n, // Maximum uint256
         deadline: BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 3600), // 1 year from now
         permissions: [samplePermission],
@@ -879,7 +880,7 @@ describe('Session Config', () => {
       // Add a session
       const session: SessionPermissions = {
         signer: testAddress2,
-        chainId: 1n,
+        chainId: ChainId.MAINNET,
         valueLimit: 1000000000000000000n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
         permissions: [samplePermission],

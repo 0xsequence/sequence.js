@@ -3,7 +3,7 @@ import { Address, Hex } from 'ox'
 
 export type Envelope<T extends Payload.Payload> = {
   readonly wallet: Address.Address
-  readonly chainId: bigint
+  readonly chainId: number
   readonly configuration: Config.Config
   readonly payload: T
 }
@@ -67,7 +67,7 @@ export function encodeSignature(envelope: Signed<Payload.Payload>): Signature.Ra
     (s) => signatureForLeaf(envelope, s)?.signature,
   )
   return {
-    noChainId: envelope.chainId === 0n,
+    noChainId: envelope.chainId === 0,
     configuration: { ...envelope.configuration, topology },
   }
 }

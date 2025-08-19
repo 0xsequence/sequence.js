@@ -13,6 +13,7 @@ import {
   Erc20BalancePrecondition,
   Erc721OwnershipPrecondition,
 } from '../../src/preconditions/types.js'
+import { Network } from '@0xsequence/wallet-primitives'
 
 // Test addresses
 const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
@@ -31,7 +32,7 @@ describe('Preconditions Selectors', () => {
       }
 
       const chainId = extractChainID(precondition)
-      expect(chainId).toBe(1n)
+      expect(chainId).toBe(Network.ChainId.MAINNET)
     })
 
     it('should extract large chainID values', () => {
@@ -44,7 +45,7 @@ describe('Preconditions Selectors', () => {
       }
 
       const chainId = extractChainID(precondition)
-      expect(chainId).toBe(42161n)
+      expect(chainId).toBe(Network.ChainId.ARBITRUM)
     })
 
     it('should return undefined when chainID is not present', () => {
@@ -113,7 +114,7 @@ describe('Preconditions Selectors', () => {
       }
 
       const chainId = extractChainID(precondition)
-      expect(chainId).toBe(0n) // chainID '0' becomes 0n bigint
+      expect(chainId).toBe(0)
     })
   })
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { Address, Hex } from 'ox'
-import { Payload, Precondition } from '@0xsequence/wallet-primitives'
+import { Network, Payload, Precondition } from '@0xsequence/wallet-primitives'
 import {
   Relayer,
   isRelayer,
@@ -20,7 +20,7 @@ import { FeeTokenType } from '../../src/relayer/standard/rpc/index.js'
 const TEST_WALLET_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
 const TEST_TO_ADDRESS = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
 const TEST_DATA = Hex.from('0x12345678')
-const TEST_CHAIN_ID = 1n
+const TEST_CHAIN_ID = Network.ChainId.MAINNET
 const TEST_OP_HASH = Hex.from('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')
 
 describe('Relayer', () => {
@@ -134,7 +134,7 @@ describe('Relayer', () => {
     it('should accept valid fee option objects', () => {
       const feeOption: FeeOption = {
         token: {
-          chainId: 1,
+          chainId: Network.ChainId.MAINNET,
           name: 'Ethereum',
           symbol: 'ETH',
           decimals: 18,

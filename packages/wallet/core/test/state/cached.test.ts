@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 import { Cached } from '../../src/state/cached.js'
 import type { Provider } from '../../src/state/index.js'
+import { Network } from '@0xsequence/wallet-primitives'
 
 // Test data
 const TEST_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
@@ -33,13 +34,13 @@ const mockSapientSignature = {
 } as any
 
 const mockWalletData = {
-  chainId: 1n,
+  chainId: Network.ChainId.MAINNET,
   payload: mockPayload,
   signature: mockSignature,
 }
 
 const mockSapientWalletData = {
-  chainId: 1n,
+  chainId: Network.ChainId.MAINNET,
   payload: mockPayload,
   signature: mockSapientSignature,
 }
@@ -276,7 +277,7 @@ describe('Cached', () => {
 
   describe('getWitnessFor', () => {
     const mockWitness = {
-      chainId: 1n,
+      chainId: Network.ChainId.MAINNET,
       payload: mockPayload,
       signature: mockSignature,
     }
@@ -307,7 +308,7 @@ describe('Cached', () => {
 
   describe('getWitnessForSapient', () => {
     const mockSapientWitness = {
-      chainId: 1n,
+      chainId: Network.ChainId.MAINNET,
       payload: mockPayload,
       signature: mockSapientSignature,
     }
@@ -364,7 +365,7 @@ describe('Cached', () => {
 
   describe('getPayload', () => {
     const mockPayloadData = {
-      chainId: 1n,
+      chainId: Network.ChainId.MAINNET,
       payload: mockPayload,
       wallet: TEST_ADDRESS,
     }
@@ -417,9 +418,14 @@ describe('Cached', () => {
     })
 
     it('should forward saveWitnesses to source', async () => {
-      await cached.saveWitnesses(TEST_ADDRESS, 1n, mockPayload, mockSignatures)
+      await cached.saveWitnesses(TEST_ADDRESS, Network.ChainId.MAINNET, mockPayload, mockSignatures)
 
-      expect(mockSource.saveWitnesses).toHaveBeenCalledWith(TEST_ADDRESS, 1n, mockPayload, mockSignatures)
+      expect(mockSource.saveWitnesses).toHaveBeenCalledWith(
+        TEST_ADDRESS,
+        Network.ChainId.MAINNET,
+        mockPayload,
+        mockSignatures,
+      )
       expect(mockCache.saveWitnesses).not.toHaveBeenCalled()
     })
 
@@ -453,9 +459,9 @@ describe('Cached', () => {
     })
 
     it('should forward savePayload to source', async () => {
-      await cached.savePayload(TEST_ADDRESS, mockPayload, 1n)
+      await cached.savePayload(TEST_ADDRESS, mockPayload, Network.ChainId.MAINNET)
 
-      expect(mockSource.savePayload).toHaveBeenCalledWith(TEST_ADDRESS, mockPayload, 1n)
+      expect(mockSource.savePayload).toHaveBeenCalledWith(TEST_ADDRESS, mockPayload, Network.ChainId.MAINNET)
       expect(mockCache.savePayload).not.toHaveBeenCalled()
     })
   })

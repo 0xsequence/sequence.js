@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Manager, QueuedRecoveryPayload, SignerReady, TransactionDefined } from '../src/sequence'
 import { Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { LOCAL_RPC_URL, newManager } from './constants'
 
 describe('Recovery', () => {
@@ -54,7 +54,7 @@ describe('Recovery', () => {
     })
 
     // Create a new recovery payload
-    const requestId2 = await manager.recovery.queuePayload(wallet!, 42161n, {
+    const requestId2 = await manager.recovery.queuePayload(wallet!, Network.ChainId.ARBITRUM, {
       type: 'call',
       space: Bytes.toBigInt(Bytes.random(20)),
       nonce: 0n,
@@ -139,7 +139,7 @@ describe('Recovery', () => {
     // Send this transaction as any other regular transaction
     const requestId3 = await manager.transactions.request(
       wallet!,
-      42161n,
+      Network.ChainId.ARBITRUM,
       (recoveryPayload!.payload as Payload.Calls).calls,
       {
         noConfigUpdate: true,

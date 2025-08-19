@@ -348,11 +348,11 @@ export function fromRecoveryLeaves(leaves: RecoveryLeaf[]): Tree {
 export function hashRecoveryPayload(
   payload: Payload.MayRecoveryPayload,
   wallet: Address.Address,
-  chainId: bigint,
+  chainId: number,
   noChainId: boolean,
 ): Hex.Hex {
   const recoveryPayload = Payload.toRecovery(payload)
-  return Hex.fromBytes(Payload.hash(wallet, noChainId ? 0n : chainId, recoveryPayload))
+  return Hex.fromBytes(Payload.hash(wallet, noChainId ? 0 : chainId, recoveryPayload))
 }
 
 /**

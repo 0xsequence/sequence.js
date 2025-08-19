@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex } from 'ox'
-import { Payload } from '@0xsequence/wallet-primitives'
+import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { Signers, State } from '@0xsequence/wallet-core'
 import { Extensions } from '@0xsequence/wallet-primitives'
 import { PasskeysHandler } from '../src/sequence/handlers/passkeys'
@@ -92,7 +92,7 @@ describe('PasskeysHandler', () => {
       id: 'test-request-id',
       envelope: {
         wallet: testWallet,
-        chainId: 42161n,
+        chainId: Network.ChainId.ARBITRUM,
         payload: Payload.fromMessage(Hex.fromString('Test message')),
       },
     } as BaseSignatureRequest
@@ -124,7 +124,7 @@ describe('PasskeysHandler', () => {
     }
 
     const mockWitness = {
-      chainId: 42161n,
+      chainId: Network.ChainId.ARBITRUM,
       payload: Payload.fromMessage(Hex.fromString(JSON.stringify(witnessMessage))),
       signature: {
         type: 'sapient-signer-leaf' as const,
@@ -490,7 +490,7 @@ describe('PasskeysHandler', () => {
         ...testRequest,
         envelope: {
           ...testRequest.envelope,
-          payload: Payload.fromCall(42161n, 0n, [
+          payload: Payload.fromCall(0n, 0n, [
             {
               to: '0x1234567890123456789012345678901234567890' as Address.Address,
               value: 0n,
@@ -530,7 +530,7 @@ describe('PasskeysHandler', () => {
         ...testRequest,
         envelope: {
           ...testRequest.envelope,
-          chainId: 137n, // Polygon
+          chainId: Network.ChainId.POLYGON, // Polygon
         },
       }
 
@@ -547,7 +547,7 @@ describe('PasskeysHandler', () => {
 
       expect(mockSignSapient).toHaveBeenCalledWith(
         polygonRequest.envelope.wallet,
-        137n,
+        Network.ChainId.POLYGON,
         polygonRequest.envelope.payload,
         testImageHash,
       )
@@ -599,7 +599,7 @@ describe('PasskeysHandler', () => {
         ...testRequest,
         envelope: {
           ...testRequest.envelope,
-          chainId: 0n,
+          chainId: 0,
         },
       }
 

@@ -8,7 +8,7 @@ export class Guard {
 
   async sign(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Payload,
   ): Promise<SequenceSignature.SignatureOfSignerLeafHash> {
     const digest = Payload.hash(wallet, chainId, payload)
@@ -17,7 +17,7 @@ export class Guard {
 
     const auxData = AbiParameters.encode(AbiParameters.from(['address', 'uint256', 'bytes', 'bytes']), [
       Address.from(wallet),
-      chainId,
+      BigInt(chainId),
       serialized,
       '0x',
     ])
@@ -66,9 +66,9 @@ export class Guard {
       ),
     )
 
-    const signature = await this.sign(wallet, 0n, payload)
+    const signature = await this.sign(wallet, 0, payload)
 
-    await this.shared.sequence.stateProvider.saveWitnesses(wallet, 0n, payload, {
+    await this.shared.sequence.stateProvider.saveWitnesses(wallet, 0, payload, {
       type: 'unrecovered-signer',
       weight: 1n,
       signature,
