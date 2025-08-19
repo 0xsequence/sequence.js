@@ -34,7 +34,7 @@ export class PasskeysHandler implements Handler {
     request: BaseSignatureRequest,
   ): Promise<SignerActionable | SignerUnavailable> {
     const base = { address, imageHash, handler: this }
-    if (address.toLowerCase() !== this.extensions.passkeys.toLowerCase()) {
+    if (address.toLowerCase() !== this.extensions.passkeys?.toLowerCase()) {
       console.warn(
         'PasskeySigner: status address does not match passkey module address',
         address,
