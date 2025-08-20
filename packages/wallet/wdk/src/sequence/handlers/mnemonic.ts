@@ -11,6 +11,7 @@ export class MnemonicHandler implements Handler {
   kind = Kinds.LoginMnemonic
 
   private onPromptMnemonic: undefined | ((respond: RespondFn) => Promise<void>)
+  private readySigners = new Map<Address.Address, Signers.Pk.Pk>()
 
   constructor(private readonly signatures: Signatures) {}
 
@@ -23,6 +24,10 @@ export class MnemonicHandler implements Handler {
 
   public unregisterUI() {
     this.onPromptMnemonic = undefined
+  }
+
+  public addReadySigner(signer: Signers.Pk.Pk) {
+    this.readySigners.set(signer.address.toLowerCase() as Address.Address, signer)
   }
 
   onStatusChange(_cb: () => void): () => void {
@@ -42,7 +47,35 @@ export class MnemonicHandler implements Handler {
     address: Address.Address,
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
-  ): Promise<SignerUnavailable | SignerActionable> {
+  ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
+    // Check if we have a cached signer for this address
+    const signer = this.readySigners.get(address.toLowerCase() as Address.Address)
+
+    if (signer) {
+      return {
+        address,
+        handler: this,
+        status: 'ready',
+        handle: async () => {
+          const signature = await signer.sign(
+            request.envelope.wallet,
+            request.envelope.chainId,
+            request.envelope.payload,
+          )
+
+          await this.signatures.addSignature(request.id, {
+            address,
+            signature,
+          })
+
+          // Remove the ready signer after use
+          this.readySigners.delete(address.toLowerCase() as Address.Address)
+
+          return true
+        },
+      }
+    }
+
     const onPromptMnemonic = this.onPromptMnemonic
     if (!onPromptMnemonic) {
       return {

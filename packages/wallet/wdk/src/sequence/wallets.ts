@@ -956,6 +956,10 @@ export class Wallets implements WalletsInterface {
         throw new Error('wallet-not-found')
       }
 
+      // Ready the signer on the handler so it can be used to complete the login configuration update
+      const mnemonicHandler = this.shared.handlers.get(Kinds.LoginMnemonic) as MnemonicHandler
+      mnemonicHandler.addReadySigner(mnemonicSigner)
+
       return this.login({ wallet })
     }
 
