@@ -3,9 +3,9 @@ import { Address, Hex } from 'ox'
 import { jsonReplacers, jsonRevivers } from './index.js'
 import {
   AddExplicitSessionPayload,
-  AddImplicitSessionPayload,
+  CreateNewSessionPayload,
   ModifySessionPayload,
-  PreferredLoginMethod,
+  LoginMethod,
   SignMessagePayload,
   SignTypedDataPayload,
 } from '../types/index.js'
@@ -14,7 +14,7 @@ export interface ExplicitSessionData {
   pk: Hex.Hex
   walletAddress: Address.Address
   chainId: number
-  loginMethod?: PreferredLoginMethod
+  loginMethod?: LoginMethod
   userEmail?: string
 }
 
@@ -24,12 +24,12 @@ export interface ImplicitSessionData {
   attestation: Attestation.Attestation
   identitySignature: Hex.Hex
   chainId: number
-  loginMethod?: PreferredLoginMethod
+  loginMethod?: LoginMethod
   userEmail?: string
 }
 
 export type PendingPayload =
-  | AddImplicitSessionPayload
+  | CreateNewSessionPayload
   | AddExplicitSessionPayload
   | ModifySessionPayload
   | SignMessagePayload

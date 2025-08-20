@@ -7,21 +7,30 @@ import type { TypedData } from 'ox/TypedData'
 // --- Public Interfaces and Constants ---
 
 export const RequestActionType = {
+  CREATE_NEW_SESSION: 'createNewSession',
   ADD_EXPLICIT_SESSION: 'addExplicitSession',
   MODIFY_EXPLICIT_SESSION: 'modifyExplicitSession',
-  ADD_IMPLICIT_SESSION: 'addImplicitSession',
   SIGN_MESSAGE: 'signMessage',
   SIGN_TYPED_DATA: 'signTypedData',
 } as const
 
-export type PreferredLoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
+export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
 
 // --- Payloads for Transport ---
+
+export interface CreateNewSessionPayload {
+  sessionAddress: Address.Address
+  origin: string
+  permissions?: Signers.Session.ExplicitParams
+  includeImplicitSession?: boolean
+  preferredLoginMethod?: LoginMethod
+  email?: string
+}
 
 export interface AddExplicitSessionPayload {
   sessionAddress: Address.Address
   permissions: Signers.Session.ExplicitParams
-  preferredLoginMethod?: PreferredLoginMethod
+  preferredLoginMethod?: LoginMethod
   email?: string
 }
 
@@ -29,14 +38,6 @@ export interface ModifySessionPayload {
   walletAddress: Address.Address
   sessionAddress: Address.Address
   permissions: Signers.Session.ExplicitParams
-}
-
-export interface AddImplicitSessionPayload {
-  sessionAddress: Address.Address
-  origin: string
-  permissions?: Signers.Session.ExplicitParams
-  preferredLoginMethod?: PreferredLoginMethod
-  email?: string
 }
 
 export interface SignMessagePayload {
@@ -55,8 +56,8 @@ export interface ConnectSuccessResponsePayload {
   walletAddress: string
   attestation?: Attestation.Attestation
   signature?: Hex.Hex
-  email?: string
-  loginMethod?: PreferredLoginMethod
+  userEmail?: string
+  loginMethod?: LoginMethod
 }
 
 export interface ModifySessionSuccessResponsePayload {

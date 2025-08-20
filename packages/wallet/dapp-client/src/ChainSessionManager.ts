@@ -14,17 +14,17 @@ import {
   TransactionError,
   WalletRedirectError,
 } from './utils/errors.js'
-import { ImplicitSessionData, SequenceStorage } from './utils/storage.js'
+import { SequenceStorage } from './utils/storage.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
 
 import {
   AddExplicitSessionPayload,
-  AddImplicitSessionPayload,
+  CreateNewSessionPayload,
   ConnectSuccessResponsePayload,
   ExplicitSessionEventListener,
   ModifySessionPayload,
   ModifySessionSuccessResponsePayload,
-  PreferredLoginMethod,
+  LoginMethod,
   RandomPrivateKeyFn,
   RequestActionType,
   Session,
@@ -71,7 +71,7 @@ export class ChainSessionManager {
   private sequenceStorage: SequenceStorage
   public isInitialized: boolean = false
   private isInitializing: boolean = false
-  public loginMethod: PreferredLoginMethod | null = null
+  public loginMethod: LoginMethod | null = null
   public userEmail: string | null = null
 
   /**
@@ -166,8 +166,14 @@ export class ChainSessionManager {
 
     try {
       const implicitSession = await this.sequenceStorage.getImplicitSession()
-      if (implicitSession) {
-        await this._loadSessionFromStorage(implicitSession)
+      const explicitSessions = await this.sequenceStorage.getExplicitSessions()
+      const walletAddress = implicitSession?.walletAddress || explicitSessions[0]?.walletAddress
+
+      if (walletAddress) {
+        this.walletAddress = walletAddress
+        this.loginMethod = implicitSession?.loginMethod || explicitSessions[0]?.loginMethod || null
+        this.userEmail = implicitSession?.userEmail || explicitSessions[0]?.userEmail || null
+        await this._loadSessionFromStorage(walletAddress)
       }
     } catch (err) {
       await this._resetStateAndClearCredentials()
@@ -200,16 +206,17 @@ export class ChainSessionManager {
 
   /**
    * @private Loads implicit and explicit sessions from storage for the current wallet address.
-   * @param implicitSession The main implicit session data, which contains the wallet address.
+   * @param walletAddress The walletAddress for all sessions.
    */
-  private async _loadSessionFromStorage(implicitSession: ImplicitSessionData) {
-    const walletAddr = Address.from(implicitSession.walletAddress)
-    this.initializeWithWallet(walletAddr)
+  private async _loadSessionFromStorage(walletAddress: Address.Address) {
+    this.initializeWithWallet(walletAddress)
 
-    if (implicitSession.chainId === this.chainId) {
+    const implicitSession = await this.sequenceStorage.getImplicitSession()
+
+    if (implicitSession && implicitSession.chainId === this.chainId) {
       await this._initializeImplicitSessionInternal(
         implicitSession.pk,
-        walletAddr,
+        walletAddress,
         implicitSession.attestation,
         implicitSession.identitySignature,
         false,
@@ -220,11 +227,16 @@ export class ChainSessionManager {
 
     const allExplicitSessions = await this.sequenceStorage.getExplicitSessions()
     const walletExplicitSessions = allExplicitSessions.filter(
-      (s) => Address.isEqual(Address.from(s.walletAddress), walletAddr) && s.chainId === this.chainId,
+      (s) => Address.isEqual(Address.from(s.walletAddress), walletAddress) && s.chainId === this.chainId,
     )
 
     for (const sessionData of walletExplicitSessions) {
-      await this._initializeExplicitSessionInternal(sessionData.pk, true)
+      await this._initializeExplicitSessionInternal(
+        sessionData.pk,
+        sessionData.loginMethod,
+        sessionData.userEmail,
+        true,
+      )
     }
   }
 
@@ -238,8 +250,9 @@ export class ChainSessionManager {
     origin: string,
     permissions?: Signers.Session.ExplicitParams,
     options: {
-      preferredLoginMethod?: PreferredLoginMethod
+      preferredLoginMethod?: LoginMethod
       email?: string
+      includeImplicitSession?: boolean
     } = {},
   ): Promise<void> {
     if (this.isInitialized) {
@@ -252,10 +265,11 @@ export class ChainSessionManager {
     try {
       if (!this.transport) throw new InitializationError('Transport failed to initialize.')
 
-      const payload: AddImplicitSessionPayload = {
+      const payload: CreateNewSessionPayload = {
         sessionAddress: newSignerAddress,
         origin,
         permissions,
+        includeImplicitSession: options.includeImplicitSession ?? false,
         preferredLoginMethod: options.preferredLoginMethod,
         email: options.preferredLoginMethod === 'email' ? options.email : undefined,
       }
@@ -264,40 +278,41 @@ export class ChainSessionManager {
         await this.sequenceStorage.saveTempSessionPk(newPk)
         await this.sequenceStorage.savePendingRequest({
           chainId: this.chainId,
-          action: RequestActionType.ADD_IMPLICIT_SESSION,
+          action: RequestActionType.CREATE_NEW_SESSION,
           payload,
         })
         await this.sequenceStorage.setPendingRedirectRequest(true)
       }
 
       const connectResponse = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
-        RequestActionType.ADD_IMPLICIT_SESSION,
+        RequestActionType.CREATE_NEW_SESSION,
         this.redirectUrl,
         payload,
         { path: '/request/connect' },
       )
 
       const receivedAddress = Address.from(connectResponse.walletAddress)
-      const { attestation, signature, email, loginMethod } = connectResponse
-      if (!attestation || !signature)
-        throw new InitializationError('Attestation or signature missing for implicit session.')
+      const { attestation, signature, userEmail, loginMethod } = connectResponse
 
-      await this._resetStateAndClearCredentials()
+      if (attestation && signature) {
+        await this._resetStateAndClearCredentials()
 
-      this.initializeWithWallet(receivedAddress)
+        this.initializeWithWallet(receivedAddress)
 
-      await this._initializeImplicitSessionInternal(
-        newPk,
-        receivedAddress,
-        attestation,
-        signature,
-        true,
-        loginMethod,
-        email,
-      )
+        await this._initializeImplicitSessionInternal(
+          newPk,
+          receivedAddress,
+          attestation,
+          signature,
+          true,
+          loginMethod,
+          userEmail,
+        )
+      }
 
       if (permissions) {
-        await this._initializeExplicitSessionInternal(newPk, true)
+        this.initializeWithWallet(receivedAddress)
+        await this._initializeExplicitSessionInternal(newPk, loginMethod, userEmail, true)
         await this.sequenceStorage.saveExplicitSession({
           pk: newPk,
           walletAddress: receivedAddress,
@@ -365,11 +380,13 @@ export class ChainSessionManager {
         this.transport?.closeWallet()
       }
 
-      await this._initializeExplicitSessionInternal(newPk, true)
+      await this._initializeExplicitSessionInternal(newPk, response.loginMethod, response.userEmail, true)
       await this.sequenceStorage.saveExplicitSession({
         pk: newPk,
         walletAddress: this.walletAddress,
         chainId: this.chainId,
+        loginMethod: response.loginMethod,
+        userEmail: response.userEmail,
       })
     } catch (err) {
       if (this.transport?.mode === TransportMode.POPUP) this.transport.closeWallet()
@@ -459,34 +476,37 @@ export class ChainSessionManager {
     try {
       const connectResponse = response.payload
       const receivedAddress = Address.from(connectResponse.walletAddress)
-      const { email, loginMethod } = connectResponse
+      const { userEmail, loginMethod } = connectResponse
 
-      if (response.action === RequestActionType.ADD_IMPLICIT_SESSION) {
+      if (response.action === RequestActionType.CREATE_NEW_SESSION) {
         const { attestation, signature } = connectResponse
-        if (!attestation || !signature) throw new WalletRedirectError('Attestation or signature missing.')
 
         const savedRequest = await this.sequenceStorage.peekPendingRequest()
-        const savedPayload = savedRequest?.payload as AddImplicitSessionPayload | undefined
+        const savedPayload = savedRequest?.payload as CreateNewSessionPayload | undefined
         await this._resetStateAndClearCredentials()
 
         this.initializeWithWallet(receivedAddress)
 
-        await this._initializeImplicitSessionInternal(
-          tempPk,
-          receivedAddress,
-          attestation,
-          signature,
-          true,
-          loginMethod,
-          email,
-        )
+        if (attestation && signature) {
+          await this._initializeImplicitSessionInternal(
+            tempPk,
+            receivedAddress,
+            attestation,
+            signature,
+            true,
+            loginMethod,
+            userEmail,
+          )
+        }
 
         if (savedRequest && savedPayload && savedPayload.permissions) {
-          await this._initializeExplicitSessionInternal(tempPk, true)
+          await this._initializeExplicitSessionInternal(tempPk, loginMethod, userEmail, true)
           await this.sequenceStorage.saveExplicitSession({
             pk: tempPk,
             walletAddress: receivedAddress,
             chainId: this.chainId,
+            loginMethod,
+            userEmail,
           })
         }
       } else if (response.action === RequestActionType.ADD_EXPLICIT_SESSION) {
@@ -494,11 +514,18 @@ export class ChainSessionManager {
           throw new InitializationError('Received an explicit session for a wallet that is not active.')
         }
 
-        await this._initializeExplicitSessionInternal(tempPk, true)
+        await this._initializeExplicitSessionInternal(
+          tempPk,
+          this.loginMethod ?? undefined,
+          this.userEmail ?? undefined,
+          true,
+        )
         await this.sequenceStorage.saveExplicitSession({
           pk: tempPk,
           walletAddress: receivedAddress,
           chainId: this.chainId,
+          loginMethod: this.loginMethod ?? undefined,
+          userEmail: this.userEmail ?? undefined,
         })
 
         const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: tempPk }))
@@ -548,7 +575,7 @@ export class ChainSessionManager {
     attestation: Attestation.Attestation,
     identitySignature: Hex.Hex,
     saveSession: boolean = false,
-    loginMethod?: PreferredLoginMethod,
+    loginMethod?: LoginMethod,
     userEmail?: string,
   ): Promise<void> {
     if (!this.sessionManager) throw new InitializationError('Manager not instantiated for implicit session.')
@@ -588,9 +615,16 @@ export class ChainSessionManager {
    * @private Initializes an explicit session signer and adds it to the session manager.
    * It retries fetching permissions from the network if allowed.
    * @param pk The private key of the session.
+   * @param loginMethod The login method used for the session.
+   * @param userEmail The email associated with the session.
    * @param allowRetries Whether to retry fetching permissions on failure.
    */
-  private async _initializeExplicitSessionInternal(pk: Hex.Hex, allowRetries: boolean = false): Promise<void> {
+  private async _initializeExplicitSessionInternal(
+    pk: Hex.Hex,
+    loginMethod?: LoginMethod,
+    userEmail?: string,
+    allowRetries: boolean = false,
+  ): Promise<void> {
     if (!this.provider || !this.wallet)
       throw new InitializationError('Manager core components not ready for explicit session.')
 
@@ -753,7 +787,7 @@ export class ChainSessionManager {
 
     if ('payload' in response && response.payload) {
       if (
-        response.action === RequestActionType.ADD_IMPLICIT_SESSION ||
+        response.action === RequestActionType.CREATE_NEW_SESSION ||
         response.action === RequestActionType.ADD_EXPLICIT_SESSION
       ) {
         return this._handleRedirectConnectionResponse(response)
