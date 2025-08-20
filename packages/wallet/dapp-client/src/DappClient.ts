@@ -9,6 +9,7 @@ import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
   DappClientSignatureEventListener,
+  LoginMethod,
   RandomPrivateKeyFn,
   SequenceSessionStorage,
   Session,
@@ -223,27 +224,28 @@ export class DappClient {
    */
   private async _loadStateFromStorage(): Promise<void> {
     const implicitSession = await this.sequenceStorage.getImplicitSession()
-    if (!implicitSession) {
+
+    const explicitSessions = await this.sequenceStorage.getExplicitSessions()
+    const chainIdsToInitialize = new Set([
+      ...(implicitSession?.chainId !== undefined ? [implicitSession.chainId] : []),
+      ...explicitSessions.map((s) => s.chainId),
+    ])
+
+    if (chainIdsToInitialize.size === 0) {
       this.isInitialized = false
       this.emit('sessionsUpdated')
       return
     }
 
-    this.walletAddress = implicitSession.walletAddress
-    this.loginMethod = implicitSession.loginMethod ?? null
-    this.userEmail = implicitSession.userEmail ?? null
-
-    const explicitSessions = await this.sequenceStorage.getExplicitSessions()
-    const chainIdsToInitialize = new Set([
-      implicitSession.chainId,
-      ...explicitSessions.filter((s) => Address.isEqual(s.walletAddress, this.walletAddress!)).map((s) => s.chainId),
-    ])
-
     const initPromises = Array.from(chainIdsToInitialize).map((chainId) =>
       this.getChainSessionManager(chainId).initialize(),
     )
 
-    await Promise.all(initPromises)
+    const result = await Promise.all(initPromises)
+
+    this.walletAddress = implicitSession?.walletAddress || explicitSessions[0]?.walletAddress || null
+    this.loginMethod = result[0]?.loginMethod || null
+    this.userEmail = result[0]?.userEmail || null
 
     this.isInitialized = true
     this.emit('sessionsUpdated')
@@ -347,8 +349,9 @@ export class DappClient {
     chainId: number,
     permissions?: Signers.Session.ExplicitParams,
     options: {
-      preferredLoginMethod?: 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
+      preferredLoginMethod?: LoginMethod
       email?: string
+      includeImplicitSession?: boolean
     } = {},
   ): Promise<void> {
     if (this.isInitialized) {

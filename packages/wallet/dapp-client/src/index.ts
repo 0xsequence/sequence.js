@@ -1,7 +1,7 @@
 export { DappClient } from './DappClient.js'
 export type { DappClientEventListener } from './DappClient.js'
 export type {
-  PreferredLoginMethod,
+  LoginMethod,
   Transaction,
   SignatureResponse,
   ChainSessionManagerEvent,
@@ -10,7 +10,7 @@ export type {
   Session,
   SignMessagePayload,
   AddExplicitSessionPayload,
-  AddImplicitSessionPayload,
+  CreateNewSessionPayload,
   SignTypedDataPayload,
   ConnectSuccessResponsePayload,
   ModifySessionSuccessResponsePayload,
