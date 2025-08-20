@@ -158,6 +158,8 @@ export function findSignerLeaf(
     if (Address.isEqual(configuration.address, address)) {
       return configuration
     }
+  } else if (isNestedLeaf(configuration)) {
+    return findSignerLeaf(configuration.tree, address)
   }
   return undefined
 }
