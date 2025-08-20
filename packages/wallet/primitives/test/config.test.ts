@@ -82,6 +82,13 @@ describe('Config', () => {
     checkpointer: testAddress1,
   }
 
+  const sampleConfigWithNestedLeaf: Config = {
+    threshold: 2n,
+    checkpoint: 100n,
+    topology: sampleNestedLeaf,
+    checkpointer: testAddress1,
+  }
+
   describe('Type Guards', () => {
     describe('isSignerLeaf', () => {
       it('should return true for valid signer leaf', () => {
@@ -291,6 +298,11 @@ describe('Config', () => {
     it('should find sapient signer in node topology', () => {
       const result = findSignerLeaf(sampleNode, testAddress2)
       expect(result).toEqual(sampleSapientSignerLeaf)
+    })
+
+    it('should find signer in nested topology', () => {
+      const result = findSignerLeaf(sampleConfigWithNestedLeaf, testAddress1)
+      expect(result).toEqual(sampleSignerLeaf)
     })
 
     it('should return undefined for non-existent signer', () => {
