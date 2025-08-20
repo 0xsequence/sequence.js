@@ -594,12 +594,14 @@ describe('Wallets', () => {
 
     const mnemonicSigner = request.signers.find((signer) => signer.handler?.kind === 'login-mnemonic')
     expect(mnemonicSigner).toBeDefined()
-    expect(mnemonicSigner?.status).toBe('actionable')
+    expect(mnemonicSigner?.status).toBe('ready')
 
     const result = await (mnemonicSigner as SignerActionable).handle()
     expect(result).toBe(true)
 
-    expect(signRequests).toBe(1)
+    // The sign request should be completed immediately because the signer is ready
+    // and not trigger the onPromptMnemonic callback
+    expect(signRequests).toBe(0)
     unregistedUI()
 
     await manager.wallets.completeLogin(requestId!)
