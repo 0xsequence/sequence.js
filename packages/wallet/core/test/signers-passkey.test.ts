@@ -6,7 +6,7 @@ import {
   PasskeyOptions,
   isWitnessMessage,
   WitnessMessage,
-  CreaetePasskeyOptions,
+  CreatePasskeyOptions,
 } from '../src/signers/passkey.js'
 import { State } from '../src/index.js'
 
@@ -386,7 +386,7 @@ describe('Passkey Signers', () => {
       vi.mocked(WebAuthnP256.createCredential).mockResolvedValue(mockCredential as any)
       vi.spyOn(Extensions.Passkeys, 'toTree').mockReturnValue({} as any)
 
-      const options: CreaetePasskeyOptions = {
+      const options: CreatePasskeyOptions = {
         credentialName: 'Custom Credential Name',
       }
 
@@ -409,7 +409,7 @@ describe('Passkey Signers', () => {
       vi.mocked(WebAuthnP256.createCredential).mockResolvedValue(mockCredential as any)
       vi.spyOn(Extensions.Passkeys, 'toTree').mockReturnValue({} as any)
 
-      const options: CreaetePasskeyOptions = {
+      const options: CreatePasskeyOptions = {
         embedMetadata: true,
       }
 
@@ -435,7 +435,7 @@ describe('Passkey Signers', () => {
       vi.mocked(WebAuthnP256.createCredential).mockResolvedValue(mockCredential as any)
       vi.spyOn(Extensions.Passkeys, 'toTree').mockReturnValue(mockTree as any)
 
-      const options: CreaetePasskeyOptions = {
+      const options: CreatePasskeyOptions = {
         stateProvider: mockStateProvider,
       }
 

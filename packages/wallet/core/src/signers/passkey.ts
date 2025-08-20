@@ -13,7 +13,7 @@ export type PasskeyOptions = {
   metadata?: Extensions.Passkeys.PasskeyMetadata
 }
 
-export type CreaetePasskeyOptions = {
+export type CreatePasskeyOptions = {
   stateProvider?: State.Provider
   requireUserVerification?: boolean
   credentialName?: string
@@ -93,7 +93,7 @@ export class Passkey implements SapientSigner, Witnessable {
     })
   }
 
-  static async create(extensions: Pick<Extensions.Extensions, 'passkeys'>, options?: CreaetePasskeyOptions) {
+  static async create(extensions: Pick<Extensions.Extensions, 'passkeys'>, options?: CreatePasskeyOptions) {
     const name = options?.credentialName ?? `Sequence (${Date.now()})`
 
     const credential = await WebAuthnP256.createCredential({
