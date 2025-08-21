@@ -287,7 +287,7 @@ export class SessionManager implements SapientSigner {
 
   async signEnvelope(
     wallet: Address.Address,
-    chainId: bigint,
+    chainId: number,
     payload: Payload.Parented,
     imageHash: Hex.Hex,
     guard?: GuardSigner,

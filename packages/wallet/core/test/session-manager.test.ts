@@ -265,7 +265,7 @@ describe('SessionManager', () => {
       }
 
       // Sign the transaction
-      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const chainId = Number(await provider.request({ method: 'eth_chainId' }))
       const signatures = await sessionManager.signEnvelope(
         wallet.address,
         chainId,

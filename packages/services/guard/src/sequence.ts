@@ -13,14 +13,14 @@ export class GuardSigner implements IGuardSigner {
     this.address = address
   }
 
-  async sign(wallet: Address.Address, chainId: bigint, digest: Bytes.Bytes, message: Hex.Hex) {
+  async sign(wallet: Address.Address, chainId: number, digest: Bytes.Bytes, message: Hex.Hex) {
     if (!this.guard || !this.address) {
       throw new Error('Guard not initialized')
     }
 
     const auxData = AbiParameters.encode(AbiParameters.from(['address', 'uint256', 'bytes', 'bytes']), [
       wallet,
-      chainId,
+      BigInt(chainId),
       message,
       '0x',
     ])
@@ -29,7 +29,7 @@ export class GuardSigner implements IGuardSigner {
       const res = await this.guard.signWith({
         signer: this.address,
         request: {
-          chainId: Number(chainId),
+          chainId: chainId,
           msg: Hex.fromBytes(digest),
           auxData,
         },

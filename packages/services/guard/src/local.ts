@@ -9,7 +9,7 @@ export class GuardSigner implements IGuardSigner {
     this.address = Address.fromPublicKey(publicKey)
   }
 
-  async sign(wallet: Address.Address, chainId: bigint, digest: Bytes.Bytes, message: Hex.Hex) {
+  async sign(wallet: Address.Address, chainId: number, digest: Bytes.Bytes, message: Hex.Hex) {
     return Secp256k1.sign({ privateKey: this.privateKey, payload: digest })
   }
 }

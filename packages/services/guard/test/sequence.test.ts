@@ -41,7 +41,7 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        const result = await guard.sign(testWallet, 42161n, testMessageDigest, testMessage)
+        const result = await guard.sign(testWallet, 42161, testMessageDigest, testMessage)
 
         expect(result).toBeDefined()
         expect(result.r).toBeDefined()
@@ -63,7 +63,7 @@ describe('Sequence', () => {
       })
 
       it('Should handle custom chainId in sign request', async () => {
-        const customChainId = 1n // Ethereum mainnet
+        const customChainId = 1 // Ethereum mainnet
 
         mockFetch.mockResolvedValueOnce({
           json: async () => ({
@@ -85,7 +85,7 @@ describe('Sequence', () => {
       it('Should throw error when guard service fails', async () => {
         mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
-        await expect(guard.sign(testWallet, 42161n, testMessageDigest, testMessage)).rejects.toThrow(
+        await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
           'Error signing with guard',
         )
       })
@@ -101,7 +101,7 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        await expect(guard.sign(testWallet, 42161n, testMessageDigest, testMessage)).rejects.toThrow(
+        await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
           'Error signing with guard',
         )
       })
@@ -121,7 +121,7 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        await customGuard.sign(testWallet, 42161n, testMessageDigest, testMessage)
+        await customGuard.sign(testWallet, 42161, testMessageDigest, testMessage)
 
         const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(requestBody.signer).toBe(mockGuardAddress)
@@ -139,7 +139,7 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        await guard.sign(testWallet, 42161n, testMessageDigest, testMessage)
+        await guard.sign(testWallet, 42161, testMessageDigest, testMessage)
 
         const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(requestBody.request.auxData).toBeDefined()
@@ -161,7 +161,7 @@ describe('Sequence', () => {
             ok: true,
           })
 
-          await expect(guard.sign(testWallet, 42161n, testMessageDigest, testMessage)).rejects.toThrow(
+          await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
             'Error signing with guard',
           )
         })
@@ -171,7 +171,7 @@ describe('Sequence', () => {
             () => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 100)),
           )
 
-          await expect(guard.sign(testWallet, 42161n, testMessageDigest, testMessage)).rejects.toThrow(
+          await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
             'Error signing with guard',
           )
         })
@@ -189,7 +189,7 @@ describe('Sequence', () => {
               }),
           })
 
-          await expect(guard.sign(testWallet, 42161n, testMessageDigest, testMessage)).rejects.toThrow(
+          await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
             'Error signing with guard',
           )
         })
