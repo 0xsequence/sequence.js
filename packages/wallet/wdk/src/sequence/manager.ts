@@ -117,7 +117,7 @@ export const ManagerOptionsDefaults = {
   defaultSessionsTopology: {
     // TODO: Move this somewhere else
     type: 'sapient-signer',
-    weight: 255n,
+    weight: 1n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash' | 'address'>,
 
   defaultRecoverySettings: {
