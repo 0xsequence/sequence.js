@@ -120,6 +120,10 @@ importers:
         version: 5.8.3
 
   packages/services/guard:
+    dependencies:
+      ox:
+        specifier: ^0.7.2
+        version: 0.7.2(typescript@5.8.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -130,6 +134,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.4(@types/node@22.16.5)(happy-dom@17.6.3)
 
   packages/services/identity-instrument:
     dependencies:
@@ -218,6 +225,9 @@ importers:
 
   packages/wallet/core:
     dependencies:
+      '@0xsequence/guard':
+        specifier: workspace:^
+        version: link:../../services/guard
       '@0xsequence/relayer':
         specifier: workspace:^
         version: link:../../services/relayer
@@ -258,6 +268,9 @@ importers:
 
   packages/wallet/dapp-client:
     dependencies:
+      '@0xsequence/guard':
+        specifier: workspace:^
+        version: link:../../services/guard
       '@0xsequence/wallet-core':
         specifier: workspace:^
         version: link:../core
@@ -351,6 +364,9 @@ importers:
 
   packages/wallet/wdk:
     dependencies:
+      '@0xsequence/guard':
+        specifier: workspace:^
+        version: link:../../services/guard
       '@0xsequence/identity-instrument':
         specifier: workspace:^
         version: link:../../services/identity-instrument
