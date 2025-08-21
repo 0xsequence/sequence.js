@@ -6,9 +6,11 @@ import {
   SessionSignature,
   Signature as SignatureTypes,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Hex, Provider } from 'ox'
+import { GuardSigner } from '@0xsequence/guard'
+import { AbiFunction, Address, Hex, Provider, TypedData } from 'ox'
 import * as State from '../state/index.js'
 import { Wallet } from '../wallet.js'
+import * as Envelope from '../envelope.js'
 import { SapientSigner } from './index.js'
 import { Explicit, Implicit, isExplicitSessionSigner, SessionSigner, UsageLimit } from './session/index.js'
 
@@ -281,6 +283,48 @@ export class SessionManager implements SapientSigner {
       address: this.address,
       data: Hex.from(encodedSignature),
     }
+  }
+
+  async signEnvelope(
+    wallet: Address.Address,
+    chainId: bigint,
+    payload: Payload.Parented,
+    imageHash: Hex.Hex,
+    guard?: GuardSigner,
+  ): Promise<(Envelope.SapientSignature | Envelope.Signature)[]> {
+    const signature = await this.signSapient(wallet, chainId, payload, imageHash)
+    const sapientSignature: Envelope.SapientSignature = {
+      imageHash,
+      signature,
+    }
+    const signatures: (Envelope.SapientSignature | Envelope.Signature)[] = [sapientSignature]
+
+    // TODO: check whether guard signature is even needed for this wallet based on the topology
+    if (guard) {
+      // Important: guard is not a sapient signer, so we need to unparent the payload
+      const unparentedPayload = {
+        ...payload,
+        parentWallets: undefined,
+      }
+      const digest = Payload.hash(wallet, chainId, unparentedPayload)
+      const typedData = Payload.toTyped(wallet, chainId, unparentedPayload)
+      const serialized = Hex.fromString(TypedData.serialize(typedData))
+
+      try {
+        const guardSignature = await guard.sign(wallet, chainId, digest, serialized)
+        signatures.push({
+          address: guard.address,
+          signature: {
+            type: 'hash',
+            ...guardSignature,
+          },
+        })
+      } catch (error) {
+        // We don't throw here because we may have reached threshold with the sapient signature alone
+        console.error('failed to sign with guard', error)
+      }
+    }
+    return signatures
   }
 
   async isValidSapientSignature(
