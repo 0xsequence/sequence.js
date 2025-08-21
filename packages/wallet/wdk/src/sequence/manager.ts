@@ -3,7 +3,8 @@ import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
+import * as Guard from '@0xsequence/guard'
+import { Address, Secp256k1 } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
@@ -26,7 +27,6 @@ import { Signers } from './signers.js'
 import { Transactions, TransactionsInterface } from './transactions.js'
 import { Kinds } from './types/signer.js'
 import { Wallets, WalletsInterface } from './wallets.js'
-import { Guard } from './guard.js'
 import { GuardHandler } from './handlers/guard.js'
 
 export type ManagerOptions = {
@@ -198,7 +198,7 @@ export type Sequence = {
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
-  readonly guard: Guard
+  readonly guard: Guard.GuardSigner
   readonly wallets: Wallets
   readonly sessions: Sessions
   readonly signers: Signers
@@ -403,7 +403,9 @@ export class Manager {
       cron: new Cron(shared),
       logger: new Logger(shared),
       devices: new Devices(shared),
-      guard: new Guard(shared),
+      guard: shared.sequence.guardUrl
+        ? new Guard.Sequence.GuardSigner(shared.sequence.guardUrl, shared.sequence.guardAddress)
+        : new Guard.Local.GuardSigner(Secp256k1.randomPrivateKey()),
       wallets: new Wallets(shared),
       sessions: new Sessions(shared),
       signers: new Signers(shared),

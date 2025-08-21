@@ -302,6 +302,7 @@ export interface WalletsInterface {
   getConfiguration(wallet: Address.Address): Promise<{
     devices: SignerWithKind[]
     login: SignerWithKind[]
+    guard?: SignerWithKind
     raw: any
   }>
 
@@ -1097,12 +1098,10 @@ export class Wallets implements WalletsInterface {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
-      guard: guardSigners
-        ? await this.shared.modules.signers.resolveKinds(wallet, [
-            ...guardSigners.signers,
-            ...guardSigners.sapientSigners,
-          ])
-        : [],
+      guard:
+        guardSigners && guardSigners.signers.length > 0
+          ? (await this.shared.modules.signers.resolveKinds(wallet, guardSigners.signers))[0]
+          : undefined,
       raw,
     }
   }
