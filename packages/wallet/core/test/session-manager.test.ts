@@ -5,7 +5,8 @@ import { Attestation, GenericTree, Payload, Permission, SessionConfig } from '..
 import { Envelope, Signers, State, Utils, Wallet } from '../src/index.js'
 
 import { EMITTER_FUNCTIONS, EMITTER_ADDRESS, EMITTER_EVENT_TOPICS, LOCAL_RPC_URL, USDC_ADDRESS } from './constants'
-import { Extensions } from '@0xsequence/wallet-primitives'
+import { Extensions, Signature } from '@0xsequence/wallet-primitives'
+import * as Guard from '@0xsequence/guard'
 
 const { PermissionBuilder, ERC20PermissionBuilder } = Utils
 
@@ -182,6 +183,124 @@ describe('SessionManager', () => {
       // Check if the signature is valid
       const isValid = await sessionManager.isValidSapientSignature(wallet.address, chainId, payload, signature)
       expect(isValid).toBe(true)
+    },
+    timeout,
+  )
+
+  it(
+    'should create and sign with an implicit session with guard',
+    async () => {
+      const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+
+      // Create guard signer
+      const guardPrivateKey = Secp256k1.randomPrivateKey()
+      const guardSigner = new Guard.Local.GuardSigner(guardPrivateKey)
+
+      // Create implicit signer
+      const implicitPrivateKey = Secp256k1.randomPrivateKey()
+      const implicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: implicitPrivateKey }))
+      // -- This is sent to the wallet (somehow)--
+      const attestation: Attestation.Attestation = {
+        approvedSigner: implicitAddress,
+        identityType: new Uint8Array(4),
+        issuerHash: new Uint8Array(32),
+        audienceHash: new Uint8Array(32),
+        applicationData: new Uint8Array(),
+        authData: {
+          redirectUrl: 'https://example.com',
+          issuedAt: BigInt(Math.floor(Date.now() / 1000)),
+        },
+      }
+      const identitySignature = Secp256k1.sign({
+        payload: Attestation.hash(attestation),
+        privateKey: identityPrivateKey,
+      })
+      const topology = SessionConfig.emptySessionsTopology(identityAddress)
+      await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+      const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+      // -- Back in dapp --
+      const implicitSigner = new Signers.Session.Implicit(
+        implicitPrivateKey,
+        attestation,
+        identitySignature,
+        implicitAddress,
+      )
+      const wallet = await Wallet.fromConfiguration(
+        {
+          threshold: 2n,
+          checkpoint: 0n,
+          topology: [
+            { type: 'sapient-signer', address: Extensions.Dev1.sessions, weight: 1n, imageHash },
+            { type: 'signer', address: guardSigner.address, weight: 1n },
+          ],
+        },
+        {
+          stateProvider,
+        },
+      )
+      const sessionManager = new Signers.SessionManager(wallet, {
+        provider,
+        sessionManagerAddress: Extensions.Dev1.sessions,
+      }).withImplicitSigner(implicitSigner)
+
+      // Create a test transaction
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_FUNCTIONS[1]), // Implicit emit
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+      const payload: Payload.Calls = {
+        type: 'call',
+        nonce: 0n,
+        space: 0n,
+        calls: [call],
+      }
+      const parentedPayload: Payload.Parented = {
+        ...payload,
+        parentWallets: [wallet.address],
+      }
+
+      // Sign the transaction
+      const chainId = BigInt(await provider.request({ method: 'eth_chainId' }))
+      const signatures = await sessionManager.signEnvelope(
+        wallet.address,
+        chainId,
+        parentedPayload,
+        imageHash,
+        guardSigner,
+      )
+
+      expect(signatures.length).toBe(2)
+
+      const sapientSignature = signatures[0] as Envelope.SapientSignature
+      expect(sapientSignature.signature.type).toBe('sapient')
+      expect(sapientSignature.signature.address).toBe(sessionManager.address)
+      expect(sapientSignature.signature.data).toBeDefined()
+
+      const guardSignature = signatures[1] as Envelope.Signature
+      expect(guardSignature.signature.type).toBe('hash')
+      expect(guardSignature.address).toBe(guardSigner.address)
+
+      // Check if the signatures are valid
+      const isSapientSignatureValid = await sessionManager.isValidSapientSignature(
+        wallet.address,
+        chainId,
+        parentedPayload,
+        sapientSignature.signature,
+      )
+      expect(isSapientSignatureValid).toBe(true)
+
+      const digest = Payload.hash(wallet.address, chainId, payload)
+      const isGuardSignatureValid = Secp256k1.verify({
+        address: guardSigner.address,
+        payload: digest,
+        signature: guardSignature.signature as Signature.SignatureOfSignerLeafHash,
+      })
+      expect(isGuardSignatureValid).toBe(true)
     },
     timeout,
   )
