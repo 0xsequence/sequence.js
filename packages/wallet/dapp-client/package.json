@@ -30,6 +30,7 @@
     "vitest": "^3.2.1"
   },
   "dependencies": {
+    "@0xsequence/guard": "workspace:^",
     "@0xsequence/wallet-core": "workspace:^",
     "@0xsequence/wallet-primitives": "workspace:^",
     "ox": "^0.7.2"

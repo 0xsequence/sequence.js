@@ -10,6 +10,7 @@ import {
   DappClientExplicitSessionEventListener,
   DappClientSignatureEventListener,
   LoginMethod,
+  GuardConfig,
   RandomPrivateKeyFn,
   SequenceSessionStorage,
   Session,
@@ -54,6 +55,7 @@ export class DappClient {
 
   public loginMethod: string | null = null
   public userEmail: string | null = null
+  public guard?: GuardConfig
 
   public readonly origin: string
 
@@ -246,6 +248,7 @@ export class DappClient {
     this.walletAddress = implicitSession?.walletAddress || explicitSessions[0]?.walletAddress || null
     this.loginMethod = result[0]?.loginMethod || null
     this.userEmail = result[0]?.userEmail || null
+    this.guard = implicitSession?.guard
 
     this.isInitialized = true
     this.emit('sessionsUpdated')
@@ -656,12 +659,14 @@ export class DappClient {
   private getChainSessionManager(chainId: number): ChainSessionManager {
     let chainSessionManager = this.chainSessionManagers.get(chainId)
     if (!chainSessionManager) {
+      console.log('[DappClient] Creating new ChainSessionManager for chain', chainId, 'with guard', this.guard)
       chainSessionManager = new ChainSessionManager(
         chainId,
         this.keymachineUrl,
         this.transport,
         this.sequenceStorage,
         this.origin + (this.redirectPath ? this.redirectPath : ''),
+        this.guard,
         this.randomPrivateKeyFn,
         this.canUseIndexedDb,
       )

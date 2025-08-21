@@ -1,5 +1,6 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
 import { Attestation, Constants, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import * as Guard from '@0xsequence/guard'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 
 import { DappTransport } from './DappTransport.js'
@@ -22,6 +23,7 @@ import {
   CreateNewSessionPayload,
   ConnectSuccessResponsePayload,
   ExplicitSessionEventListener,
+  GuardConfig,
   ModifySessionPayload,
   ModifySessionSuccessResponsePayload,
   LoginMethod,
@@ -51,6 +53,7 @@ export class ChainSessionManager {
   private readonly instanceId: string
 
   private stateProvider: State.Provider
+  private guard?: Guard.GuardSigner
 
   private readonly redirectUrl: string
   private readonly randomPrivateKeyFn: RandomPrivateKeyFn
@@ -80,6 +83,7 @@ export class ChainSessionManager {
    * @param transport The transport mechanism for communicating with the wallet.
    * @param sequenceStorage The storage implementation for persistent session data.
    * @param redirectUrl (Optional) The URL to redirect back to after a redirect-based flow.
+   * @param guard (Optional) The guard config to use for the session.
    * @param randomPrivateKeyFn (Optional) A function to generate random private keys.
    * @param canUseIndexedDb (Optional) A flag to enable or disable IndexedDB for caching.
    */
@@ -89,6 +93,7 @@ export class ChainSessionManager {
     transport: DappTransport,
     sequenceStorage: SequenceStorage,
     redirectUrl: string,
+    guard?: GuardConfig,
     randomPrivateKeyFn?: RandomPrivateKeyFn,
     canUseIndexedDb: boolean = true,
   ) {
@@ -106,6 +111,7 @@ export class ChainSessionManager {
     } else {
       this.stateProvider = new State.Sequence.Provider(keyMachineUrl)
     }
+    this.guard = guard ? new Guard.Sequence.GuardSigner(guard.url, guard.address) : undefined
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
     this.relayer = new Relayer.Standard.Rpc.RpcRelayer(getRelayerUrl(chainId), Number(this.chainId), getRpcUrl(chainId))
 
@@ -189,6 +195,7 @@ export class ChainSessionManager {
    * Initializes the manager with a known wallet address, without loading sessions from storage.
    * This is used when a wallet address is known but the session manager for this chain hasn't been instantiated yet.
    * @param walletAddress The address of the wallet to initialize with.
+   * @param guard (Optional) The guard config to use for the session.
    */
   public initializeWithWallet(walletAddress: Address.Address) {
     if (this.isInitialized) return
@@ -222,6 +229,7 @@ export class ChainSessionManager {
         false,
         implicitSession.loginMethod,
         implicitSession.userEmail,
+        implicitSession.guard,
       )
     }
 
@@ -307,6 +315,7 @@ export class ChainSessionManager {
           true,
           loginMethod,
           userEmail,
+          connectResponse.guard,
         )
       }
 
@@ -496,6 +505,7 @@ export class ChainSessionManager {
             true,
             loginMethod,
             userEmail,
+            connectResponse.guard,
           )
         }
 
@@ -568,6 +578,7 @@ export class ChainSessionManager {
    * @param saveSession Whether to persist the session in storage.
    * @param loginMethod The login method used.
    * @param userEmail The email associated with the session.
+   * @param guard (Optional) The guard config to use for the session.
    */
   private async _initializeImplicitSessionInternal(
     pk: Hex.Hex,
@@ -577,6 +588,7 @@ export class ChainSessionManager {
     saveSession: boolean = false,
     loginMethod?: LoginMethod,
     userEmail?: string,
+    guard?: GuardConfig,
   ): Promise<void> {
     if (!this.sessionManager) throw new InitializationError('Manager not instantiated for implicit session.')
     try {
@@ -603,9 +615,11 @@ export class ChainSessionManager {
           chainId: this.chainId,
           loginMethod,
           userEmail,
+          guard,
         })
       if (loginMethod) this.loginMethod = loginMethod
       if (userEmail) this.userEmail = userEmail
+      if (guard) this.guard = new Guard.Sequence.GuardSigner(guard.url, guard.address)
     } catch (err) {
       throw new InitializationError(`Implicit session init failed: ${err}`)
     }
@@ -953,17 +967,15 @@ export class ChainSessionManager {
       const imageHash = await this.sessionManager.imageHash
       if (imageHash === undefined) throw new SessionConfigError('Session manager image hash is undefined')
 
-      const signature = await this.sessionManager.signSapient(
+      // TODO: in the future, guard may require 2FA here, how do we want to handle this?
+      const signatures = await this.sessionManager.signEnvelope(
         this.wallet.address,
         this.chainId,
         parentedEnvelope,
         imageHash,
+        this.guard,
       )
-      const sapientSignature: Envelope.SapientSignature = {
-        imageHash,
-        signature,
-      }
-      const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
+      const signedEnvelope = Envelope.toSigned(envelope, signatures)
 
       return await this.wallet.buildTransaction(this.provider, signedEnvelope)
     } catch (err) {
