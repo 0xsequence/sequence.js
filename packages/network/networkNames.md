@@ -32,6 +32,7 @@ You can use this file as a reference to look up the correct network name slug a 
 | Base (Coinbase) | 8453 | base |
 | Monad Testnet | 10143 | monad-testnet |
 | Incentiv Testnet | 11690 | incentiv-testnet |
+| Incentiv Testnet v2 | 28802 | incentiv-testnet-v2 |
 | Immutable zkEVM | 13371 | immutable-zkevm |
 | Immutable zkEVM Testnet | 13473 | immutable-zkevm-testnet |
 | Oasys Homeverse | 19011 | homeverse |
