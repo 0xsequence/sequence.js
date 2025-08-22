@@ -147,7 +147,13 @@ export enum ChainId {
 
   //SEI
   SEI = 1329,
-  SEI_TESTNET = 1328
+  SEI_TESTNET = 1328,
+
+  // Katana
+  KATANA = 747474,
+
+  // SANDBOX
+  SANDBOX_TESTNET = 6252
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1209,6 +1215,42 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'SOMI',
       name: 'SOMI',
+      decimals: 18
+    }
+  },
+
+  [ChainId.KATANA]: {
+    chainId: ChainId.KATANA,
+    type: NetworkType.MAINNET,
+    name: 'katana',
+    title: 'Katana',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.KATANA}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Katana',
+      rootUrl: 'https://katanascan.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.SANDBOX_TESTNET]: {
+    chainId: ChainId.SANDBOX_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'sandbox-testnet',
+    title: 'Sandbox testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SANDBOX_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Sandbox testnet',
+      rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz'
+    },
+    nativeToken: {
+      symbol: 'SAND',
+      name: 'SAND',
       decimals: 18
     }
   }
