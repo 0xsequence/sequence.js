@@ -127,18 +127,22 @@ export const getNetwork = (chainId: Network.ChainId | bigint | number) => {
   return network
 }
 
-export const getRpcUrl = (chainId: Network.ChainId | bigint | number) => {
+export const getRpcUrl = (chainId: Network.ChainId | bigint | number, nodesUrl: string, projectAccessKey: string) => {
   const network = getNetwork(chainId)
 
-  const url = applyTemplate(NODES_URL, { network: network.name })
+  let url = applyTemplate(nodesUrl, { network: network.name })
+
+  if (nodesUrl.includes('sequence')) {
+    url = `${url}/${projectAccessKey}`
+  }
 
   return url
 }
 
-export const getRelayerUrl = (chainId: Network.ChainId | bigint | number) => {
+export const getRelayerUrl = (chainId: Network.ChainId | bigint | number, relayerUrl: string) => {
   const network = getNetwork(chainId)
 
-  const url = applyTemplate(RELAYER_URL, { network: network.name })
+  const url = applyTemplate(relayerUrl, { network: network.name })
 
   return url
 }
