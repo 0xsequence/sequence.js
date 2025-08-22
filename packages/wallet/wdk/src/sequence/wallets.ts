@@ -17,11 +17,19 @@ export type StartSignUpWithRedirectArgs = {
   metadata: { [key: string]: string }
 }
 
+export type SignupStatus =
+  | { type: 'login-signer-created'; address: Address.Address }
+  | { type: 'device-signer-created'; address: Address.Address }
+  | { type: 'wallet-created'; address: Address.Address }
+  | { type: 'signup-completed' }
+  | { type: 'signup-aborted' }
+
 export type CommonSignupArgs = {
   use4337?: boolean
   noGuard?: boolean
   noSessionManager?: boolean
   noRecovery?: boolean
+  onStatusChange?: (status: SignupStatus) => void
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
@@ -684,6 +692,8 @@ export class Wallets implements WalletsInterface {
   async signUp(args: SignupArgs): Promise<Address.Address | undefined> {
     const loginSigner = await this.prepareSignUp(args)
 
+    args.onStatusChange?.({ type: 'login-signer-created', address: await loginSigner.signer.address })
+
     // If there is an existing wallet callback, we check if any wallet already exist for this login signer
     if (this.walletSelectionUiHandler) {
       const existingWallets = await State.getWalletsFor(this.shared.sequence.stateProvider, loginSigner.signer)
@@ -715,6 +725,9 @@ export class Wallets implements WalletsInterface {
               await this.shared.databases.manager.del(wallet.wallet)
             }
           }
+
+          args.onStatusChange?.({ type: 'signup-aborted' })
+
           // Abort the signup process
           return undefined
         }
@@ -734,6 +747,8 @@ export class Wallets implements WalletsInterface {
 
     // Create the first session
     const device = await this.shared.modules.devices.create()
+
+    args.onStatusChange?.({ type: 'device-signer-created', address: device.address })
 
     if (!args.noGuard && !this.shared.sequence.defaultGuardTopology) {
       throw new Error('guard is required for signup')
@@ -786,6 +801,8 @@ export class Wallets implements WalletsInterface {
       context,
     })
 
+    args.onStatusChange?.({ type: 'wallet-created', address: wallet.address })
+
     this.shared.modules.logger.log('Created new sequence wallet:', wallet.address)
 
     // Sign witness using device signer
@@ -812,6 +829,8 @@ export class Wallets implements WalletsInterface {
       // Re-throw the error if you want the operation to fail loudly, or handle it
       throw error
     }
+
+    args.onStatusChange?.({ type: 'signup-completed' })
 
     return wallet.address
   }
