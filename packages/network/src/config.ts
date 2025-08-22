@@ -145,5 +145,6 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.INCENTIV_TESTNET),
   createNetworkConfig(ChainId.SEI),
   createNetworkConfig(ChainId.SEI_TESTNET),
+  createNetworkConfig(ChainId.INCENTIV_TESTNET_V2),
   ...hardhatNetworks
 ])
