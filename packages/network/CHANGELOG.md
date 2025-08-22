@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.24
+
+### Patch Changes
+
+- Add Incentiv Testnet v2
+- Updated dependencies
+  - @0xsequence/indexer@2.3.24
+  - @0xsequence/relayer@2.3.24
+  - @0xsequence/utils@2.3.24
+  - @0xsequence/core@2.3.24
+
 ## 2.3.23
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.24
+
+### Patch Changes
+
+- Add Incentiv Testnet v2
+- Updated dependencies
+  - @0xsequence/waas@2.3.24
+
 ## 2.3.23
 
 ### Patch Changes

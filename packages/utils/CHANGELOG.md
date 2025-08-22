@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.24
+
+### Patch Changes
+
+- Add Incentiv Testnet v2
+
 ## 2.3.23
 
 ### Patch Changes
