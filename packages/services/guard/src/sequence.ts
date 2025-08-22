@@ -1,29 +1,30 @@
-import { Address, Hex, Signature, AbiParameters, Bytes } from 'ox'
-import { Fetch, Guard } from './client/guard.gen.js'
-import { GuardSigner as IGuardSigner } from './index.js'
+import { Address, Hex, Signature, Bytes, Hash } from 'ox'
+import * as Client from './client/guard.gen.js'
+import * as Types from './types.js'
 
-export class GuardSigner implements IGuardSigner {
-  private readonly guard?: Guard
+export class Guard implements Types.Guard {
+  private readonly guard?: Client.Guard
   public readonly address: Address.Address
 
-  constructor(hostname: string, address: Address.Address, fetch?: Fetch) {
+  constructor(hostname: string, address: Address.Address, fetch?: Client.Fetch) {
     if (hostname && address) {
-      this.guard = new Guard(hostname, fetch ?? window.fetch)
+      this.guard = new Client.Guard(hostname, fetch ?? window.fetch)
     }
     this.address = address
   }
 
-  async sign(wallet: Address.Address, chainId: number, digest: Bytes.Bytes, message: Hex.Hex) {
+  async signPayload(
+    wallet: Address.Address,
+    chainId: number,
+    type: Client.PayloadType,
+    data: Bytes.Bytes,
+    signatures?: Client.Signature[],
+  ) {
     if (!this.guard || !this.address) {
       throw new Error('Guard not initialized')
     }
 
-    const auxData = AbiParameters.encode(AbiParameters.from(['address', 'uint256', 'bytes', 'bytes']), [
-      wallet,
-      BigInt(chainId),
-      message,
-      '0x',
-    ])
+    const digest = Hash.keccak256(data)
 
     try {
       const res = await this.guard.signWith({
@@ -31,7 +32,10 @@ export class GuardSigner implements IGuardSigner {
         request: {
           chainId: chainId,
           msg: Hex.fromBytes(digest),
-          auxData,
+          wallet,
+          payloadType: type,
+          payloadData: Hex.fromBytes(data),
+          signatures,
         },
       })
 

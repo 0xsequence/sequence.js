@@ -1,7 +1,8 @@
-import { Address, Hex, Bytes, Secp256k1 } from 'ox'
-import { GuardSigner as IGuardSigner } from './index.js'
+import { Address, Hex, Bytes, Secp256k1, Hash } from 'ox'
+import * as Client from './client/guard.gen.js'
+import * as Types from './types.js'
 
-export class GuardSigner implements IGuardSigner {
+export class Guard implements Types.Guard {
   public readonly address: Address.Address
 
   constructor(private readonly privateKey: Hex.Hex) {
@@ -9,7 +10,14 @@ export class GuardSigner implements IGuardSigner {
     this.address = Address.fromPublicKey(publicKey)
   }
 
-  async sign(wallet: Address.Address, chainId: number, digest: Bytes.Bytes, message: Hex.Hex) {
+  async signPayload(
+    wallet: Address.Address,
+    chainId: number,
+    type: Client.PayloadType,
+    data: Bytes.Bytes,
+    signatures?: Client.Signature[],
+  ) {
+    const digest = Hash.keccak256(data)
     return Secp256k1.sign({ privateKey: this.privateKey, payload: digest })
   }
 }
