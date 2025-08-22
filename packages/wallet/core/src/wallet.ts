@@ -135,7 +135,7 @@ export class Wallet {
 
   async submitUpdate(
     envelope: Envelope.Signed<Payload.ConfigUpdate>,
-    options?: { validateSave?: boolean },
+    options?: { noValidateSave?: boolean },
   ): Promise<void> {
     const [status, newConfig] = await Promise.all([
       this.getStatus(),
@@ -156,7 +156,7 @@ export class Wallet {
     const signature = Envelope.encodeSignature(updatedEnvelope)
     await this.stateProvider.saveUpdate(this.address, newConfig, signature)
 
-    if (options?.validateSave) {
+    if (!options?.noValidateSave) {
       const status = await this.getStatus()
       if (Hex.from(Config.hashConfiguration(status.configuration)) !== envelope.payload.imageHash) {
         throw new Error('configuration not saved')
