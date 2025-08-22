@@ -4,7 +4,7 @@ import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
 import * as Guard from '@0xsequence/guard'
-import { Address, Secp256k1 } from 'ox'
+import { Address, Hex, Secp256k1 } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
@@ -106,6 +106,7 @@ export const ManagerOptionsDefaults = {
 
   guardUrl: 'https://dev-guard.sequence.app',
   guardAddress: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a' as Address.Address, // TODO: change to the actual guard address
+  guardPrivateKey: '0046e54c861e7d4e1dcd952d86ab6462dedabc55dcf00ac3a99dcce59f516370' as Hex.Hex,
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -193,12 +194,13 @@ export type Sequence = {
 
   readonly guardUrl: string
   readonly guardAddress: Address.Address
+  readonly guardPrivateKey: Hex.Hex
 }
 
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
-  readonly guard: Guard.GuardSigner
+  readonly guard: CoreSigners.Guard
   readonly wallets: Wallets
   readonly sessions: Sessions
   readonly signers: Signers
@@ -380,6 +382,7 @@ export class Manager {
 
         guardUrl: ops.guardUrl,
         guardAddress: ops.guardAddress,
+        guardPrivateKey: ops.guardPrivateKey,
       },
 
       databases: {
@@ -403,9 +406,11 @@ export class Manager {
       cron: new Cron(shared),
       logger: new Logger(shared),
       devices: new Devices(shared),
-      guard: shared.sequence.guardUrl
-        ? new Guard.Sequence.GuardSigner(shared.sequence.guardUrl, shared.sequence.guardAddress)
-        : new Guard.Local.GuardSigner(Secp256k1.randomPrivateKey()),
+      guard: new CoreSigners.Guard(
+        shared.sequence.guardUrl
+          ? new Guard.Sequence.Guard(shared.sequence.guardUrl, shared.sequence.guardAddress)
+          : new Guard.Local.Guard(shared.sequence.guardPrivateKey || Secp256k1.randomPrivateKey()),
+      ),
       wallets: new Wallets(shared),
       sessions: new Sessions(shared),
       signers: new Signers(shared),
