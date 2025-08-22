@@ -290,9 +290,7 @@ describe('Wallets', () => {
     expect(config.login.length).toBe(1)
     expect(config.login[0].kind).toBe('login-mnemonic')
 
-    // Guard property exists in implementation but not in interface - using any to bypass typing
-    expect((config as any).guard).toBeDefined()
-    expect((config as any).guard.length).toBe(0) // No guard for noGuard: true
+    expect(config.guard).not.toBeDefined() // No guard for noGuard: true
 
     expect(config.raw).toBeDefined()
     expect(config.raw.loginTopology).toBeDefined()

@@ -32,6 +32,7 @@
     "vitest": "^3.2.1"
   },
   "dependencies": {
+    "@0xsequence/guard": "workspace:^",
     "@0xsequence/identity-instrument": "workspace:^",
     "@0xsequence/tee-verifier": "^0.1.2",
     "@0xsequence/wallet-core": "workspace:^",

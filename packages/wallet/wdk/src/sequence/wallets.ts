@@ -310,6 +310,7 @@ export interface WalletsInterface {
   getConfiguration(wallet: Address.Address): Promise<{
     devices: SignerWithKind[]
     login: SignerWithKind[]
+    guard?: SignerWithKind
     raw: any
   }>
 
@@ -438,12 +439,12 @@ function toConfig(
     return {
       checkpoint: checkpoint,
       threshold: 2n,
-      topology: [[[loginTopology, devicesTopology], guardTopology], toModulesTopology(modules)],
+      topology: [[[loginTopology, devicesTopology], guardTopology], toModulesTopology(modules, guardTopology)],
     }
   }
 }
 
-function toModulesTopology(modules: Config.SapientSignerLeaf[]): Config.Topology {
+function toModulesTopology(modules: Config.SapientSignerLeaf[], guardTopology?: Config.Topology): Config.Topology {
   // We always include a modules topology, even if there are no modules
   // in that case we just add a signer with address 0 and no weight
   if (modules.length === 0) {
@@ -452,6 +453,26 @@ function toModulesTopology(modules: Config.SapientSignerLeaf[]): Config.Topology
       address: Constants.ZeroAddress,
       weight: 0n,
     } as Config.SignerLeaf
+  }
+
+  // If we have a guard, we need to add it as a signer to each of the modules
+  // (excluding recovery)
+  if (guardTopology) {
+    const leaves = modules.map((module) => {
+      // Leave out the recovery module (which has weight 255)
+      if (module.weight === 255n) {
+        return module
+      }
+
+      return {
+        type: 'nested',
+        weight: 255n,
+        threshold: module.weight + 1n,
+        tree: [Config.flatLeavesToTopology([module]), guardTopology],
+      } as Config.NestedLeaf
+    })
+
+    return Config.flatLeavesToTopology(leaves)
   }
 
   return Config.flatLeavesToTopology(modules)
@@ -469,6 +490,9 @@ function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLea
     if (topology.address !== Constants.ZeroAddress) {
       throw new Error('signer-leaf-not-allowed-in-modules-topology')
     }
+  } else if (Config.isNestedLeaf(topology) && Config.isNode(topology.tree)) {
+    // This module is wrapped with a guard, it's always going to be the first element
+    modules = [...modules, ...fromModulesTopology(topology.tree[0])]
   } else {
     throw new Error('unknown-modules-topology-format')
   }
@@ -1116,12 +1140,10 @@ export class Wallets implements WalletsInterface {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
-      guard: guardSigners
-        ? await this.shared.modules.signers.resolveKinds(wallet, [
-            ...guardSigners.signers,
-            ...guardSigners.sapientSigners,
-          ])
-        : [],
+      guard:
+        guardSigners && guardSigners.signers.length > 0
+          ? (await this.shared.modules.signers.resolveKinds(wallet, guardSigners.signers))[0]
+          : undefined,
       raw,
     }
   }

@@ -22,7 +22,7 @@ jobs:
 
       - name: Prepare dist branch
         run: |
-          PACKAGES=("services/identity-instrument" "services/relayer" "wallet/core" "wallet/primitives" "wallet/wdk" "wallet/dapp-client")
+          PACKAGES=("services/guard" "services/identity-instrument" "services/relayer" "wallet/core" "wallet/primitives" "wallet/wdk" "wallet/dapp-client")
 
           for PACKAGE in "${PACKAGES[@]}"; do
             BRANCH="dists/$PACKAGE"
@@ -50,6 +50,7 @@ jobs:
               const repo = "github:0xsequence/sequence.js";
 
               const versions = {
+                "@0xsequence/guard": `${repo}#dists/services/guard`,
                 "@0xsequence/identity-instrument": `${repo}#dists/services/identity-instrument`,
                 "@0xsequence/relayer": `${repo}#dists/services/relayer`,
                 "@0xsequence/wallet-core": `${repo}#dists/wallet/core`,
