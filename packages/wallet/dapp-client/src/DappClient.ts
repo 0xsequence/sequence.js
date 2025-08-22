@@ -671,8 +671,8 @@ export class DappClient {
       chainSessionManager = new ChainSessionManager(
         chainId,
         this.transport,
-        this.keymachineUrl,
         this.projectAccessKey,
+        this.keymachineUrl,
         this.nodesUrl,
         this.relayerUrl,
         this.sequenceStorage,
