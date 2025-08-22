@@ -16,6 +16,11 @@ export const RequestActionType = {
 
 export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
 
+export interface GuardConfig {
+  url: string
+  address: Address.Address
+}
+
 // --- Payloads for Transport ---
 
 export interface CreateNewSessionPayload {
@@ -58,6 +63,7 @@ export interface ConnectSuccessResponsePayload {
   signature?: Hex.Hex
   userEmail?: string
   loginMethod?: LoginMethod
+  guard?: GuardConfig
 }
 
 export interface ModifySessionSuccessResponsePayload {
