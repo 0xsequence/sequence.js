@@ -477,14 +477,11 @@ function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLea
     modules = [...fromModulesTopology(topology[0]), ...fromModulesTopology(topology[1])]
   } else if (Config.isSapientSignerLeaf(topology)) {
     modules.push(topology)
+  } else if (Config.isNestedLeaf(topology)) {
+    modules = [...modules, ...fromModulesTopology(topology.tree)]
   } else if (Config.isSignerLeaf(topology)) {
-    // This signals that the wallet has no modules, so we just ignore it
-    if (topology.address !== Constants.ZeroAddress) {
-      throw new Error('signer-leaf-not-allowed-in-modules-topology')
-    }
-  } else if (Config.isNestedLeaf(topology) && Config.isNode(topology.tree)) {
-    // This module is wrapped with a guard, it's always going to be the first element
-    modules = [...modules, ...fromModulesTopology(topology.tree[0])]
+    // Ignore non-sapient signers, as they are not modules
+    return []
   } else {
     throw new Error('unknown-modules-topology-format')
   }
