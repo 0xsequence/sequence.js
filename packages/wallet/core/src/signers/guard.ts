@@ -1,4 +1,4 @@
-import { Address, Bytes, TypedData, Signature } from 'ox'
+import { Address, Bytes, TypedData, Signature, Hash } from 'ox'
 import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import * as GuardService from '@0xsequence/guard'
 import * as Envelope from '../envelope.js'
@@ -14,14 +14,15 @@ export class Guard {
     }
 
     const payloadType = toGuardType(envelope.payload)
-    const payloadData = toGuardPayload(envelope.wallet, envelope.chainId, unparentedPayload)
+    const { message, digest } = toGuardPayload(envelope.wallet, envelope.chainId, unparentedPayload)
     const previousSignatures = envelope.signatures.map(toGuardSignature)
 
     const signature = await this.guard.signPayload(
       envelope.wallet,
       envelope.chainId,
       payloadType,
-      payloadData,
+      digest,
+      message,
       previousSignatures,
     )
     return {
@@ -48,12 +49,18 @@ function toGuardType(type: Payload.Payload): GuardService.PayloadType {
   throw new Error(`Payload type not supported by Guard: ${type.type}`)
 }
 
-function toGuardPayload(wallet: Address.Address, chainId: number, payload: Payload.Payload): Bytes.Bytes {
+function toGuardPayload(wallet: Address.Address, chainId: number, payload: Payload.Payload) {
   if (Payload.isSessionImplicitAuthorize(payload)) {
-    return Attestation.encode(payload.attestation)
+    return {
+      message: Bytes.fromString(Attestation.toJson(payload.attestation)),
+      digest: Hash.keccak256(Attestation.encode(payload.attestation)),
+    }
   }
   const typedData = Payload.toTyped(wallet, chainId, payload)
-  return Bytes.fromString(TypedData.serialize(typedData))
+  return {
+    message: Bytes.fromString(TypedData.serialize(typedData)),
+    digest: Bytes.fromHex(TypedData.getSignPayload(typedData)),
+  }
 }
 
 function toGuardSignature(signature: Envelope.Signature | Envelope.SapientSignature): GuardService.Signature {
