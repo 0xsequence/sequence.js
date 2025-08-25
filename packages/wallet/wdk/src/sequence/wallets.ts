@@ -7,7 +7,7 @@ import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
 import { Device } from './types/device.js'
-import { Action } from './types/index.js'
+import { Action, Module } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
 
@@ -418,8 +418,8 @@ function toConfig(
   checkpoint: bigint,
   loginTopology: Config.Topology,
   devicesTopology: Config.Topology,
-  modules: Config.SapientSignerLeaf[],
-  guardTopology?: Config.Topology,
+  modules: Module[],
+  guardTopology?: Config.NestedLeaf,
 ): Config.Config {
   if (!guardTopology) {
     return {
@@ -431,12 +431,12 @@ function toConfig(
     return {
       checkpoint: checkpoint,
       threshold: 2n,
-      topology: [[[loginTopology, devicesTopology], guardTopology], toModulesTopology(modules, guardTopology)],
+      topology: [[[loginTopology, devicesTopology], guardTopology], toModulesTopology(modules)],
     }
   }
 }
 
-function toModulesTopology(modules: Config.SapientSignerLeaf[], guardTopology?: Config.Topology): Config.Topology {
+function toModulesTopology(modules: Module[]): Config.Topology {
   // We always include a modules topology, even if there are no modules
   // in that case we just add a signer with address 0 and no weight
   if (modules.length === 0) {
@@ -447,38 +447,43 @@ function toModulesTopology(modules: Config.SapientSignerLeaf[], guardTopology?: 
     } as Config.SignerLeaf
   }
 
-  // If we have a guard, we need to add it as a signer to each of the modules
-  // (excluding recovery)
-  if (guardTopology) {
-    const leaves = modules.map((module) => {
-      // Leave out the recovery module (which has weight 255)
-      if (module.weight === 255n) {
-        return module
-      }
-
+  const leaves = modules.map((module) => {
+    if (module.guardLeaf) {
       return {
         type: 'nested',
-        weight: 255n,
-        threshold: module.weight + 1n,
-        tree: [Config.flatLeavesToTopology([module]), guardTopology],
+        weight: module.weight,
+        threshold: module.sapientLeaf.weight + module.guardLeaf.weight,
+        tree: [module.sapientLeaf, module.guardLeaf],
       } as Config.NestedLeaf
-    })
+    } else {
+      return module.sapientLeaf
+    }
+  })
 
-    return Config.flatLeavesToTopology(leaves)
-  }
-
-  return Config.flatLeavesToTopology(modules)
+  return Config.flatLeavesToTopology(leaves)
 }
 
-function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLeaf[] {
-  let modules: Config.SapientSignerLeaf[] = []
+function fromModulesTopology(topology: Config.Topology): Module[] {
+  let modules: Module[] = []
 
   if (Config.isNode(topology)) {
     modules = [...fromModulesTopology(topology[0]), ...fromModulesTopology(topology[1])]
   } else if (Config.isSapientSignerLeaf(topology)) {
-    modules.push(topology)
-  } else if (Config.isNestedLeaf(topology)) {
-    modules = [...modules, ...fromModulesTopology(topology.tree)]
+    modules.push({
+      sapientLeaf: topology,
+      weight: topology.weight,
+    })
+  } else if (
+    Config.isNestedLeaf(topology) &&
+    Config.isNode(topology.tree) &&
+    Config.isSapientSignerLeaf(topology.tree[0]) &&
+    Config.isNestedLeaf(topology.tree[1])
+  ) {
+    modules.push({
+      sapientLeaf: topology.tree[0],
+      weight: topology.weight,
+      guardLeaf: topology.tree[1],
+    })
   } else if (Config.isSignerLeaf(topology)) {
     // Ignore non-sapient signers, as they are not modules
     return []
@@ -492,8 +497,8 @@ function fromModulesTopology(topology: Config.Topology): Config.SapientSignerLea
 function fromConfig(config: Config.Config): {
   loginTopology: Config.Topology
   devicesTopology: Config.Topology
-  modules: Config.SapientSignerLeaf[]
-  guardTopology?: Config.Topology
+  modules: Module[]
+  guardTopology?: Config.NestedLeaf
 } {
   if (config.threshold === 1n) {
     if (Config.isNode(config.topology) && Config.isNode(config.topology[0])) {
@@ -506,7 +511,12 @@ function fromConfig(config: Config.Config): {
       throw new Error('unknown-config-format')
     }
   } else if (config.threshold === 2n) {
-    if (Config.isNode(config.topology) && Config.isNode(config.topology[0]) && Config.isNode(config.topology[0][0])) {
+    if (
+      Config.isNode(config.topology) &&
+      Config.isNode(config.topology[0]) &&
+      Config.isNode(config.topology[0][0]) &&
+      Config.isNestedLeaf(config.topology[0][1])
+    ) {
       return {
         loginTopology: config.topology[0][0][0],
         devicesTopology: config.topology[0][0][1],
@@ -771,10 +781,10 @@ export class Wallets implements WalletsInterface {
     const devicesTopology = buildCappedTree([{ address: device.address }])
     const guardTopology = args.noGuard
       ? undefined
-      : buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology)
+      : (buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology) as Config.NestedLeaf)
 
     // Add modules
-    let modules: Config.SapientSignerLeaf[] = []
+    let modules: Module[] = []
 
     if (!args.noSessionManager) {
       //  Calculate image hash with the identity signer
@@ -784,11 +794,23 @@ export class Wallets implements WalletsInterface {
       this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
       // Prepare the configuration leaf
       const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
-      modules.push({
+      const signer = {
         ...ManagerOptionsDefaults.defaultSessionsTopology,
         address: this.shared.sequence.extensions.sessions,
         imageHash: sessionsImageHash,
-      })
+      }
+      if (guardTopology) {
+        modules.push({
+          sapientLeaf: signer,
+          weight: 255n,
+          guardLeaf: guardTopology,
+        })
+      } else {
+        modules.push({
+          sapientLeaf: signer,
+          weight: 255n,
+        })
+      }
     }
 
     if (!args.noRecovery) {

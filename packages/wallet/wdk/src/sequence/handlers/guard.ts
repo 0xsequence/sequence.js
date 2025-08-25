@@ -21,6 +21,15 @@ export class GuardHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
+    if (request.envelope.signatures.length === 0) {
+      return {
+        address,
+        handler: this,
+        status: 'unavailable',
+        reason: 'must-not-sign-first',
+      }
+    }
+
     // TODO: check if 2FA is required. If it is, return 'actionable'
 
     return {

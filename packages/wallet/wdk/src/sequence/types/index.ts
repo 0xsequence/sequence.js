@@ -28,3 +28,4 @@ export type {
   TransactionRequested,
 } from './transaction-request.js'
 export type { Wallet } from './wallet.js'
+export type { Module } from './module.js'
