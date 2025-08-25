@@ -17,14 +17,13 @@ export class Guard implements Types.Guard {
     wallet: Address.Address,
     chainId: number,
     type: Client.PayloadType,
-    data: Bytes.Bytes,
+    digest: Bytes.Bytes,
+    message: Bytes.Bytes,
     signatures?: Client.Signature[],
   ) {
     if (!this.guard || !this.address) {
       throw new Error('Guard not initialized')
     }
-
-    const digest = Hash.keccak256(data)
 
     try {
       const res = await this.guard.signWith({
@@ -34,7 +33,7 @@ export class Guard implements Types.Guard {
           msg: Hex.fromBytes(digest),
           wallet,
           payloadType: type,
-          payloadData: Hex.fromBytes(data),
+          payloadData: Hex.fromBytes(message),
           signatures,
         },
       })

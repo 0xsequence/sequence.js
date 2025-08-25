@@ -14,10 +14,10 @@ export class Guard implements Types.Guard {
     wallet: Address.Address,
     chainId: number,
     type: Client.PayloadType,
-    data: Bytes.Bytes,
+    digest: Bytes.Bytes,
+    message: Bytes.Bytes,
     signatures?: Client.Signature[],
   ) {
-    const digest = Hash.keccak256(data)
     return Secp256k1.sign({ privateKey: this.privateKey, payload: digest })
   }
 }

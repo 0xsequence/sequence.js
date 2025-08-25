@@ -8,7 +8,8 @@ export interface Guard {
     wallet: Address.Address,
     chainId: number,
     type: Client.PayloadType,
-    data: Bytes.Bytes,
+    digest: Bytes.Bytes,
+    message: Bytes.Bytes,
     signatures?: Client.Signature[],
   ): Promise<Signature.Signature>
 }
