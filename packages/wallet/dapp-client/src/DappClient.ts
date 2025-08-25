@@ -248,7 +248,7 @@ export class DappClient {
     this.walletAddress = implicitSession?.walletAddress || explicitSessions[0]?.walletAddress || null
     this.loginMethod = result[0]?.loginMethod || null
     this.userEmail = result[0]?.userEmail || null
-    this.guard = implicitSession?.guard
+    this.guard = implicitSession?.guard || explicitSessions[0]?.guard
 
     this.isInitialized = true
     this.emit('sessionsUpdated')

@@ -17,6 +17,7 @@ export interface ExplicitSessionData {
   chainId: number
   loginMethod?: LoginMethod
   userEmail?: string
+  guard?: GuardConfig
 }
 
 export interface ImplicitSessionData {
