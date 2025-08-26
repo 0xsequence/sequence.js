@@ -4,7 +4,11 @@ import * as GuardService from '@0xsequence/guard'
 import * as Envelope from '../envelope.js'
 
 export class Guard {
-  constructor(private readonly guard: GuardService.Guard) {}
+  public readonly address: Address.Address
+
+  constructor(private readonly guard: GuardService.Guard) {
+    this.address = this.guard.address
+  }
 
   async signEnvelope<T extends Payload.Payload>(envelope: Envelope.Signed<T>): Promise<Envelope.Signature> {
     // Important: guard must always sign without parent wallets, even if the payload is parented

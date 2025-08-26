@@ -4,6 +4,7 @@ import * as Guard from '@0xsequence/guard'
 import { GuardHandler } from '../src/sequence/handlers/guard'
 import { Address, Bytes, Hex, TypedData } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
+import { Signers } from '@0xsequence/wallet-core'
 import { Kinds } from '../src/sequence/types/signer'
 import { newManager } from './constants'
 
@@ -13,7 +14,7 @@ global.fetch = mockFetch
 
 describe('GuardHandler', () => {
   let manager: Manager
-  let guard: Guard.GuardSigner
+  let guard: Signers.Guard
   let testWallet: Address.Address
   let testPayload: Payload.Payload
   let testMessageDigest: Bytes.Bytes
@@ -40,11 +41,42 @@ describe('GuardHandler', () => {
   // === GUARD HANDLER INTEGRATION ===
 
   describe('GuardHandler Integration', () => {
+    const previousSignature = {
+      type: 'hash',
+      address: '0x1234567890123456789012345678901234567890' as Address.Address,
+      signature: {
+        type: 'hash',
+        r: 1n,
+        s: 2n,
+        yParity: 0,
+      },
+    }
+
     it('Should create guard handler with correct kind', () => {
       const signatures = (manager as any).shared.modules.signatures
       const guardHandler = new GuardHandler(signatures, guard)
 
       expect(guardHandler.kind).toBe(Kinds.Guard) // Use the actual constant
+    })
+
+    it('Should return unavailable status if no signatures present', async () => {
+      const signatures = (manager as any).shared.modules.signatures
+      const guardHandler = new GuardHandler(signatures, guard)
+
+      const mockRequest = {
+        id: 'test-request-id',
+        envelope: {
+          wallet: testWallet,
+          chainId: Network.ChainId.ARBITRUM,
+          payload: testPayload,
+          signatures: [],
+        },
+      }
+
+      const status = await guardHandler.status(testWallet, undefined, mockRequest as any)
+
+      expect(status.status).toBe('unavailable')
+      expect((status as any).reason).toBe('must-not-sign-first')
     })
 
     it('Should return ready status for guard signer', async () => {
@@ -57,6 +89,7 @@ describe('GuardHandler', () => {
           wallet: testWallet,
           chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
+          signatures: [previousSignature],
         },
       }
 
@@ -96,6 +129,7 @@ describe('GuardHandler', () => {
           wallet: testWallet,
           chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
+          signatures: [previousSignature],
         },
       }
 
@@ -123,6 +157,7 @@ describe('GuardHandler', () => {
           wallet: testWallet,
           chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
+          signatures: [previousSignature],
         },
       }
 
@@ -145,7 +180,7 @@ describe('GuardHandler', () => {
         `guard_url_${Date.now()}`,
       )
 
-      const customGuard = (customManager as any).shared.modules.guard as Guard.GuardSigner
+      const customGuard = (customManager as any).shared.modules.guard as Signers.Guard
 
       mockFetch.mockResolvedValueOnce({
         json: async () => ({
@@ -158,7 +193,24 @@ describe('GuardHandler', () => {
         ok: true,
       })
 
-      await customGuard.sign(testWallet, Network.ChainId.ARBITRUM, testMessageDigest, testMessage)
+      await customGuard.signEnvelope({
+        payload: {
+          type: 'config-update',
+          imageHash: '0x123456789012345678901234567890123456789012345678901234567890123' as Hex.Hex,
+        },
+        wallet: testWallet,
+        chainId: Network.ChainId.ARBITRUM,
+        configuration: {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: {
+            type: 'signer',
+            address: '0x1234567890123456789012345678901234567890' as Address.Address,
+            weight: 1n,
+          },
+        },
+        signatures: [],
+      })
 
       expect(mockFetch.mock.calls[0][0]).toContain(customGuardUrl)
 
