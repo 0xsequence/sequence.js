@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { GuardSigner } from '../src/sequence'
+import { Guard } from '../src/sequence'
+import { PayloadType } from '../src/client/guard.gen'
 import { Address, Bytes, Hex } from 'ox'
 
 // Mock fetch globally for guard API calls
@@ -8,16 +9,16 @@ global.fetch = mockFetch
 
 describe('Sequence', () => {
   describe('GuardSigner', () => {
-    let guard: GuardSigner
+    let guard: Guard
     let testWallet: Address.Address
-    let testMessage: Hex.Hex
+    let testMessage: Bytes.Bytes
     let testMessageDigest: Bytes.Bytes
 
     beforeEach(() => {
       vi.clearAllMocks()
-      guard = new GuardSigner('https://guard.sequence.app', '0x1234567890123456789012345678901234567890', fetch)
+      guard = new Guard('https://guard.sequence.app', '0xaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae', fetch)
       testWallet = '0x1234567890123456789012345678901234567890' as Address.Address
-      testMessage = Hex.fromString('Test message')
+      testMessage = Bytes.fromString('Test message')
       testMessageDigest = Bytes.fromHex('0x1234567890abcdef1234567890abcdef1234567890')
     })
 
@@ -41,7 +42,13 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        const result = await guard.sign(testWallet, 42161, testMessageDigest, testMessage)
+        const result = await guard.signPayload(
+          testWallet,
+          42161,
+          PayloadType.ConfigUpdate,
+          testMessageDigest,
+          testMessage,
+        )
 
         expect(result).toBeDefined()
         expect(result.r).toBeDefined()
@@ -57,9 +64,12 @@ describe('Sequence', () => {
         expect(options.headers['Content-Type']).toBe('application/json')
 
         const requestBody = JSON.parse(options.body)
+        expect(requestBody.signer).toBe('0xaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae')
         expect(requestBody.request.chainId).toBe(42161)
-        expect(requestBody.request.msg).toBeDefined()
-        expect(requestBody.request.auxData).toBeDefined()
+        expect(requestBody.request.msg).toBe(Hex.fromBytes(testMessageDigest).toString())
+        expect(requestBody.request.payloadType).toBe(PayloadType.ConfigUpdate)
+        expect(requestBody.request.payloadData).toBe(Hex.fromBytes(testMessage).toString())
+        expect(requestBody.request.wallet).toBe(testWallet)
       })
 
       it('Should handle custom chainId in sign request', async () => {
@@ -76,7 +86,7 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        await guard.sign(testWallet, customChainId, testMessageDigest, testMessage)
+        await guard.signPayload(testWallet, 1, PayloadType.ConfigUpdate, testMessageDigest, testMessage)
 
         const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(requestBody.request.chainId).toBe(1)
@@ -85,9 +95,9 @@ describe('Sequence', () => {
       it('Should throw error when guard service fails', async () => {
         mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
-        await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
-          'Error signing with guard',
-        )
+        await expect(
+          guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
+        ).rejects.toThrow('Error signing with guard')
       })
 
       it('Should throw error when guard service returns invalid response', async () => {
@@ -101,14 +111,14 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
-          'Error signing with guard',
-        )
+        await expect(
+          guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
+        ).rejects.toThrow('Error signing with guard')
       })
 
       it('Should include proper headers and signer address in request', async () => {
         const mockGuardAddress = '0x9876543210987654321098765432109876543210' as Address.Address
-        const customGuard = new GuardSigner('https://guard.sequence.app', mockGuardAddress, fetch)
+        const customGuard = new Guard('https://guard.sequence.app', mockGuardAddress, fetch)
 
         mockFetch.mockResolvedValueOnce({
           json: async () => ({
@@ -121,30 +131,10 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        await customGuard.sign(testWallet, 42161, testMessageDigest, testMessage)
+        await customGuard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage)
 
         const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(requestBody.signer).toBe(mockGuardAddress)
-      })
-
-      it('Should properly encode auxiliary data with wallet, chainId, and serialized data', async () => {
-        mockFetch.mockResolvedValueOnce({
-          json: async () => ({
-            sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
-          }),
-          text: async () =>
-            JSON.stringify({
-              sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
-            }),
-          ok: true,
-        })
-
-        await guard.sign(testWallet, 42161, testMessageDigest, testMessage)
-
-        const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-        expect(requestBody.request.auxData).toBeDefined()
-        expect(typeof requestBody.request.auxData).toBe('string')
-        expect(requestBody.request.auxData.startsWith('0x')).toBe(true)
       })
 
       describe('Error Handling', () => {
@@ -161,9 +151,9 @@ describe('Sequence', () => {
             ok: true,
           })
 
-          await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
-            'Error signing with guard',
-          )
+          await expect(
+            guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
+          ).rejects.toThrow('Error signing with guard')
         })
 
         it('Should handle network timeout errors', async () => {
@@ -171,9 +161,9 @@ describe('Sequence', () => {
             () => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 100)),
           )
 
-          await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
-            'Error signing with guard',
-          )
+          await expect(
+            guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
+          ).rejects.toThrow('Error signing with guard')
         })
 
         it('Should handle HTTP error responses', async () => {
@@ -189,9 +179,9 @@ describe('Sequence', () => {
               }),
           })
 
-          await expect(guard.sign(testWallet, 42161, testMessageDigest, testMessage)).rejects.toThrow(
-            'Error signing with guard',
-          )
+          await expect(
+            guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
+          ).rejects.toThrow('Error signing with guard')
         })
       })
     })
