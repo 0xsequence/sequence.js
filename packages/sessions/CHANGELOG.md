@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.25
+
+### Patch Changes
+
+- Add Katana, Sandbox Testnet
+- Updated dependencies
+  - @0xsequence/migration@2.3.25
+  - @0xsequence/replacer@2.3.25
+  - @0xsequence/utils@2.3.25
+  - @0xsequence/core@2.3.25
+
 ## 2.3.24
 
 ### Patch Changes

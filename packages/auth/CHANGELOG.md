@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 2.3.25
+
+### Patch Changes
+
+- Add Katana, Sandbox Testnet
+- Updated dependencies
+  - @0xsequence/migration@2.3.25
+  - @0xsequence/metadata@2.3.25
+  - @0xsequence/sessions@2.3.25
+  - @0xsequence/account@2.3.25
+  - @0xsequence/indexer@2.3.25
+  - @0xsequence/network@2.3.25
+  - @0xsequence/signhub@2.3.25
+  - @0xsequence/wallet@2.3.25
+  - @0xsequence/utils@2.3.25
+  - @0xsequence/core@2.3.25
+  - @0xsequence/abi@2.3.25
+  - @0xsequence/api@2.3.25
+
 ## 2.3.24
 
 ### Patch Changes

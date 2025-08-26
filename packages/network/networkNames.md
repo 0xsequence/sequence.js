@@ -25,6 +25,7 @@ You can use this file as a reference to look up the correct network name slug a 
 | Soneium Minato (Testnet) | 1946 | soneium-minato |
 | B3 Sepolia | 1993 | b3-sepolia |
 | Somnia | 5031 | somnia |
+| Sandbox testnet | 6252 | sandbox-testnet |
 | LAOS | 6283 | laos |
 | The Root Network | 7668 | rootnet |
 | The Root Network Porcini Testnet | 7672 | rootnet-porcini |
@@ -55,6 +56,7 @@ You can use this file as a reference to look up the correct network name slug a 
 | Etherlink Testnet | 128123 | etherlink-testnet |
 | Arbitrum Sepolia | 421614 | arbitrum-sepolia |
 | Xai | 660279 | xai |
+| Katana | 747474 | katana |
 | Sepolia | 11155111 | sepolia |
 | Optimism Sepolia | 11155420 | optimism-sepolia |
 | TOY (Testnet) | 21000000 | toy-testnet |

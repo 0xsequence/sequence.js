@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.25
+
+### Patch Changes
+
+- Add Katana, Sandbox Testnet
+- Updated dependencies
+  - @0xsequence/waas@2.3.25
+
 ## 2.3.24
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.25
+
+### Patch Changes
+
+- Add Katana, Sandbox Testnet
+
 ## 2.3.24
 
 ### Patch Changes
