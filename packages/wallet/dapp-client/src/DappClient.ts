@@ -18,6 +18,7 @@ import {
   TransportMode,
 } from './types/index.js'
 import { TypedData } from 'ox/TypedData'
+import { KEYMACHINE_URL, NODES_URL, RELAYER_URL } from './utils/constants.js'
 
 export type DappClientEventListener = (data?: any) => void
 
@@ -26,8 +27,6 @@ interface DappClientEventMap {
   signatureResponse: DappClientSignatureEventListener
   explicitSessionResponse: DappClientExplicitSessionEventListener
 }
-
-const DEFAULT_KEYMACHINE_URL = 'https://v3-keymachine.sequence-dev.app'
 
 /**
  * The main entry point for interacting with the Wallet.
@@ -60,9 +59,13 @@ export class DappClient {
   public readonly origin: string
 
   private chainSessionManagers: Map<number, ChainSessionManager> = new Map()
-  private transport: DappTransport
-  private keymachineUrl: string
+
   private walletUrl: string
+  private transport: DappTransport
+  private projectAccessKey: string
+  private nodesUrl: string
+  private relayerUrl: string
+  private keymachineUrl: string
   private sequenceStorage: SequenceStorage
   private redirectPath?: string
   private sequenceSessionStorage?: SequenceSessionStorage
@@ -80,10 +83,13 @@ export class DappClient {
   /**
    * @param walletUrl The URL of the Wallet Webapp.
    * @param origin The origin of the dapp
+   * @param projectAccessKey Your project access key from sequence.build. Used for services like relayer and nodes.
    * @param options Configuration options for the client.
    * @param options.transportMode The communication mode to use with the wallet. Defaults to 'popup'.
-   * @param options.keymachineUrl The URL of the key management service.
    * @param options.redirectPath The path to redirect back to after a redirect-based flow. Constructed with origin + redirectPath.
+   * @param options.nodesUrl The URL template for the nodes service. Use `{network}` as a placeholder for the network name. Defaults to the Sequence nodes ('https://nodes.sequence.app/{network}').
+   * @param options.relayerUrl The URL template for the relayer service. Use `{network}` as a placeholder for the network name. Defaults to the Sequence relayer ('https://dev-{network}-relayer.sequence.app').
+   * @param options.keymachineUrl The URL of the key management service.
    * @param options.sequenceStorage The storage implementation for persistent session data. Defaults to WebStorage using IndexedDB.
    * @param options.sequenceSessionStorage The storage implementation for temporary data (e.g., pending requests). Defaults to sessionStorage.
    * @param options.randomPrivateKeyFn A function to generate random private keys for new sessions.
@@ -93,10 +99,13 @@ export class DappClient {
   constructor(
     walletUrl: string,
     origin: string,
+    projectAccessKey: string,
     options?: {
       transportMode?: TransportMode
-      keymachineUrl?: string
       redirectPath?: string
+      keymachineUrl?: string
+      nodesUrl?: string
+      relayerUrl?: string
       sequenceStorage?: SequenceStorage
       sequenceSessionStorage?: SequenceSessionStorage
       randomPrivateKeyFn?: RandomPrivateKeyFn
@@ -106,7 +115,7 @@ export class DappClient {
   ) {
     const {
       transportMode = TransportMode.POPUP,
-      keymachineUrl = DEFAULT_KEYMACHINE_URL,
+      keymachineUrl = KEYMACHINE_URL,
       redirectPath,
       sequenceStorage = new WebStorage(),
       sequenceSessionStorage,
@@ -123,6 +132,9 @@ export class DappClient {
       redirectActionHandler,
     )
     this.walletUrl = walletUrl
+    this.projectAccessKey = projectAccessKey
+    this.nodesUrl = options?.nodesUrl || NODES_URL
+    this.relayerUrl = options?.relayerUrl || RELAYER_URL
     this.origin = origin
     this.keymachineUrl = keymachineUrl
     this.sequenceStorage = sequenceStorage
@@ -661,8 +673,11 @@ export class DappClient {
     if (!chainSessionManager) {
       chainSessionManager = new ChainSessionManager(
         chainId,
-        this.keymachineUrl,
         this.transport,
+        this.projectAccessKey,
+        this.keymachineUrl,
+        this.nodesUrl,
+        this.relayerUrl,
         this.sequenceStorage,
         this.origin + (this.redirectPath ? this.redirectPath : ''),
         this.guard,

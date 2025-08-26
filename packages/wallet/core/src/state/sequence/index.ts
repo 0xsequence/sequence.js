@@ -1,8 +1,15 @@
-import { Config, Constants, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Bytes, Hex, Signature as oxSignature } from 'ox'
-import { Provider as ProviderInterface } from '../index.js'
+import { Config, Constants, Context, Extensions, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
+import {
+  AbiFunction,
+  Address,
+  Bytes,
+  Hex,
+  Provider as oxProvider,
+  Signature as oxSignature,
+  TransactionRequest,
+} from 'ox'
+import { normalizeAddressKeys, Provider as ProviderInterface } from '../index.js'
 import { Sessions, SignatureType } from './sessions.gen.js'
-import { normalizeAddressKeys } from '../utils.js'
 
 export class Provider implements ProviderInterface {
   private readonly service: Sessions
@@ -230,7 +237,10 @@ export class Provider implements ProviderInterface {
         Hex.assert(signature)
 
         const decoded = Signature.decodeSignature(Hex.toBytes(signature))
-        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(toImageHash))
+
+        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(toImageHash), {
+          provider: passkeySignatureValidator,
+        })
 
         return { imageHash: toImageHash, signature: { ...decoded, configuration } }
       }),
@@ -353,6 +363,55 @@ export class Provider implements ProviderInterface {
     })
   }
 }
+
+const passkeySigners = [Extensions.Dev1.passkeys, Extensions.Dev2.passkeys].map(Address.checksum)
+
+const recoverSapientSignatureCompactSignature =
+  'function recoverSapientSignatureCompact(bytes32 _digest, bytes _signature) view returns (bytes32)'
+
+const recoverSapientSignatureCompactFunction = AbiFunction.from(recoverSapientSignatureCompactSignature)
+
+class PasskeySignatureValidator implements oxProvider.Provider {
+  request: oxProvider.Provider['request'] = (({ method, params }: { method: string; params: unknown }) => {
+    switch (method) {
+      case 'eth_call':
+        const transaction: TransactionRequest.Rpc = (params as any)[0]
+
+        if (!transaction.data?.startsWith(AbiFunction.getSelector(recoverSapientSignatureCompactFunction))) {
+          throw new Error(
+            `unknown selector ${transaction.data?.slice(0, 10)}, expected selector ${AbiFunction.getSelector(recoverSapientSignatureCompactFunction)} for ${recoverSapientSignatureCompactSignature}`,
+          )
+        }
+
+        if (!passkeySigners.includes(transaction.to ? Address.checksum(transaction.to) : '0x')) {
+          throw new Error(`unknown passkey signer ${transaction.to}`)
+        }
+
+        const [digest, signature] = AbiFunction.decodeData(recoverSapientSignatureCompactFunction, transaction.data)
+
+        const decoded = Extensions.Passkeys.decode(Hex.toBytes(signature))
+
+        if (Extensions.Passkeys.isValidSignature(digest, decoded)) {
+          return Extensions.Passkeys.rootFor(decoded.publicKey)
+        } else {
+          throw new Error(`invalid passkey signature ${signature} for digest ${digest}`)
+        }
+
+      default:
+        throw new Error(`method ${method} not implemented`)
+    }
+  }) as any
+
+  on(event: string) {
+    throw new Error(`unable to listen for ${event}: not implemented`)
+  }
+
+  removeListener(event: string) {
+    throw new Error(`unable to remove listener for ${event}: not implemented`)
+  }
+}
+
+const passkeySignatureValidator = new PasskeySignatureValidator()
 
 type ServiceConfig = {
   threshold: number | string

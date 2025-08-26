@@ -17,11 +17,19 @@ export type StartSignUpWithRedirectArgs = {
   metadata: { [key: string]: string }
 }
 
+export type SignupStatus =
+  | { type: 'login-signer-created'; address: Address.Address }
+  | { type: 'device-signer-created'; address: Address.Address }
+  | { type: 'wallet-created'; address: Address.Address }
+  | { type: 'signup-completed' }
+  | { type: 'signup-aborted' }
+
 export type CommonSignupArgs = {
   use4337?: boolean
   noGuard?: boolean
   noSessionManager?: boolean
   noRecovery?: boolean
+  onStatusChange?: (status: SignupStatus) => void
 }
 
 export type PasskeySignupArgs = CommonSignupArgs & {
@@ -534,6 +542,8 @@ function fromConfig(config: Config.Config): {
 export class Wallets implements WalletsInterface {
   private walletSelectionUiHandler: WalletSelectionUiHandler | null = null
 
+  private pendingMnemonicOrPasskeyLogin?: typeof Kinds.LoginMnemonic | typeof Kinds.LoginPasskey
+
   constructor(private readonly shared: Shared) {}
 
   public async has(wallet: Address.Address): Promise<boolean> {
@@ -715,6 +725,8 @@ export class Wallets implements WalletsInterface {
   async signUp(args: SignupArgs): Promise<Address.Address | undefined> {
     const loginSigner = await this.prepareSignUp(args)
 
+    args.onStatusChange?.({ type: 'login-signer-created', address: await loginSigner.signer.address })
+
     // If there is an existing wallet callback, we check if any wallet already exist for this login signer
     if (this.walletSelectionUiHandler) {
       const existingWallets = await State.getWalletsFor(this.shared.sequence.stateProvider, loginSigner.signer)
@@ -746,6 +758,9 @@ export class Wallets implements WalletsInterface {
               await this.shared.databases.manager.del(wallet.wallet)
             }
           }
+
+          args.onStatusChange?.({ type: 'signup-aborted' })
+
           // Abort the signup process
           return undefined
         }
@@ -765,6 +780,8 @@ export class Wallets implements WalletsInterface {
 
     // Create the first session
     const device = await this.shared.modules.devices.create()
+
+    args.onStatusChange?.({ type: 'device-signer-created', address: device.address })
 
     if (!args.noGuard && !this.shared.sequence.defaultGuardTopology) {
       throw new Error('guard is required for signup')
@@ -829,6 +846,8 @@ export class Wallets implements WalletsInterface {
       context,
     })
 
+    args.onStatusChange?.({ type: 'wallet-created', address: wallet.address })
+
     this.shared.modules.logger.log('Created new sequence wallet:', wallet.address)
 
     // Sign witness using device signer
@@ -855,6 +874,8 @@ export class Wallets implements WalletsInterface {
       // Re-throw the error if you want the operation to fail loudly, or handle it
       throw error
     }
+
+    args.onStatusChange?.({ type: 'signup-completed' })
 
     return wallet.address
   }
@@ -926,61 +947,67 @@ export class Wallets implements WalletsInterface {
 
   async login(args: LoginArgs): Promise<string> {
     if (isLoginToWalletArgs(args)) {
-      const existingWallet = await this.get(args.wallet)
+      try {
+        const existingWallet = await this.get(args.wallet)
 
-      if (existingWallet?.status === 'ready') {
-        throw new Error('wallet-already-logged-in')
+        if (existingWallet?.status === 'ready') {
+          throw new Error('wallet-already-logged-in')
+        }
+
+        const device = await this.shared.modules.devices.create()
+        const { devicesTopology, modules, guardTopology } = await this.getConfigurationParts(args.wallet)
+
+        // Witness the wallet
+        await this.shared.modules.devices.witness(device.address, args.wallet)
+
+        // Add device to devices topology
+        const prevDevices = Config.getSigners(devicesTopology)
+        if (prevDevices.sapientSigners.length > 0) {
+          throw new Error('found-sapient-signer-in-devices-topology')
+        }
+
+        if (!prevDevices.isComplete) {
+          throw new Error('devices-topology-incomplete')
+        }
+
+        const nextDevicesTopology = buildCappedTree([
+          ...prevDevices.signers.filter((x) => x !== Constants.ZeroAddress).map((x) => ({ address: x })),
+          ...prevDevices.sapientSigners.map((x) => ({ address: x.address, imageHash: x.imageHash })),
+          { address: device.address },
+        ])
+
+        if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
+          await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
+        }
+
+        const walletEntryToUpdate: Wallet = {
+          ...(existingWallet as Wallet),
+          address: args.wallet,
+          status: 'logging-in' as const,
+          loginDate: new Date().toISOString(),
+          device: device.address,
+          loginType: existingWallet?.loginType || this.pendingMnemonicOrPasskeyLogin || 'wallet',
+          loginEmail: existingWallet?.loginEmail,
+          useGuard: guardTopology !== undefined,
+        }
+
+        await this.shared.databases.manager.set(walletEntryToUpdate)
+
+        const requestId = await this.requestConfigurationUpdate(
+          args.wallet,
+          {
+            devicesTopology: nextDevicesTopology,
+            modules,
+          },
+          'login',
+          'wallet-webapp',
+        )
+        return requestId
+      } catch (error) {
+        throw error
+      } finally {
+        this.pendingMnemonicOrPasskeyLogin = undefined
       }
-
-      const device = await this.shared.modules.devices.create()
-      const { devicesTopology, modules, guardTopology } = await this.getConfigurationParts(args.wallet)
-
-      // Witness the wallet
-      await this.shared.modules.devices.witness(device.address, args.wallet)
-
-      // Add device to devices topology
-      const prevDevices = Config.getSigners(devicesTopology)
-      if (prevDevices.sapientSigners.length > 0) {
-        throw new Error('found-sapient-signer-in-devices-topology')
-      }
-
-      if (!prevDevices.isComplete) {
-        throw new Error('devices-topology-incomplete')
-      }
-
-      const nextDevicesTopology = buildCappedTree([
-        ...prevDevices.signers.filter((x) => x !== Constants.ZeroAddress).map((x) => ({ address: x })),
-        ...prevDevices.sapientSigners.map((x) => ({ address: x.address, imageHash: x.imageHash })),
-        { address: device.address },
-      ])
-
-      if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
-        await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
-      }
-
-      const walletEntryToUpdate: Wallet = {
-        ...(existingWallet as Wallet),
-        address: args.wallet,
-        status: 'logging-in' as const,
-        loginDate: new Date().toISOString(),
-        device: device.address,
-        loginType: existingWallet?.loginType || 'wallet',
-        loginEmail: existingWallet?.loginEmail,
-        useGuard: guardTopology !== undefined,
-      }
-
-      await this.shared.databases.manager.set(walletEntryToUpdate)
-
-      const requestId = await this.requestConfigurationUpdate(
-        args.wallet,
-        {
-          devicesTopology: nextDevicesTopology,
-          modules,
-        },
-        'login',
-        'wallet-webapp',
-      )
-      return requestId
     }
 
     if (isLoginToMnemonicArgs(args)) {
@@ -1002,6 +1029,7 @@ export class Wallets implements WalletsInterface {
       // Ready the signer on the handler so it can be used to complete the login configuration update
       const mnemonicHandler = this.shared.handlers.get(Kinds.LoginMnemonic) as MnemonicHandler
       mnemonicHandler.addReadySigner(mnemonicSigner)
+      this.pendingMnemonicOrPasskeyLogin = Kinds.LoginMnemonic
 
       return this.login({ wallet })
     }
@@ -1024,6 +1052,7 @@ export class Wallets implements WalletsInterface {
       if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
         throw new Error('wallet-not-found')
       }
+      this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
 
       return this.login({ wallet })
     }

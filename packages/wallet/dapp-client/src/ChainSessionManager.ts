@@ -1,7 +1,8 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
-import { Attestation, Constants, Extensions, Network, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import * as Guard from '@0xsequence/guard'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { TypedData } from 'ox/TypedData'
 
 import { DappTransport } from './DappTransport.js'
 
@@ -38,7 +39,6 @@ import {
   GuardConfig,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
-import { TypedData } from 'ox/TypedData'
 
 interface ChainSessionManagerEventMap {
   signatureResponse: SignatureEventListener
@@ -89,8 +89,11 @@ export class ChainSessionManager {
    */
   constructor(
     chainId: number,
-    keyMachineUrl: string,
     transport: DappTransport,
+    projectAccessKey: string,
+    keyMachineUrl: string,
+    nodesUrl: string,
+    relayerUrl: string,
     sequenceStorage: SequenceStorage,
     redirectUrl: string,
     guard?: GuardConfig,
@@ -100,7 +103,7 @@ export class ChainSessionManager {
     this.instanceId = `manager-${Math.random().toString(36).substring(2, 9)}`
     console.log(`ChainSessionManager instance created: ${this.instanceId} for chain ${chainId}`)
 
-    const rpcUrl = getRpcUrl(chainId)
+    const rpcUrl = getRpcUrl(chainId, nodesUrl, projectAccessKey)
     this.chainId = chainId
 
     if (canUseIndexedDb) {
@@ -113,7 +116,11 @@ export class ChainSessionManager {
     }
     this.guard = guard
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
-    this.relayer = new Relayer.Standard.Rpc.RpcRelayer(getRelayerUrl(chainId), Number(this.chainId), getRpcUrl(chainId))
+    this.relayer = new Relayer.Standard.Rpc.RpcRelayer(
+      getRelayerUrl(chainId, relayerUrl),
+      this.chainId,
+      getRpcUrl(chainId, nodesUrl, projectAccessKey),
+    )
 
     this.transport = transport
     this.sequenceStorage = sequenceStorage
