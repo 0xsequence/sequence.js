@@ -10,6 +10,7 @@ import { Device } from './types/device.js'
 import { Action } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
+import { PasskeyLoginOptimizer } from './passkey-login-optimizer.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple'
@@ -832,6 +833,21 @@ export class Wallets implements WalletsInterface {
       throw error
     }
 
+    // Store passkey credential ID mapping if this is a passkey signup
+    if (args.kind === 'passkey' && loginSigner.signer instanceof Signers.Passkey.Passkey) {
+      try {
+        await this.shared.databases.passkeyCredentials.storeCredential(
+          loginSigner.signer.credentialId,
+          loginSigner.signer.publicKey,
+          wallet.address,
+        )
+        this.shared.modules.logger.log('Stored passkey credential mapping for wallet:', wallet.address)
+      } catch (error) {
+        console.error('[Wallets/signUp] Error saving passkey mapping:', error)
+        // Don't throw the error as this is not critical to the signup process
+      }
+    }
+
     args.onStatusChange?.({ type: 'signup-completed' })
 
     return wallet.address
@@ -992,26 +1008,47 @@ export class Wallets implements WalletsInterface {
     }
 
     if (isLoginToPasskeyArgs(args)) {
-      const passkeySigner = await Signers.Passkey.Passkey.find(
-        this.shared.sequence.stateProvider,
-        this.shared.sequence.extensions,
-      )
-      if (!passkeySigner) {
-        throw new Error('no-passkey-found')
-      }
+      // Use optimized login that avoids the discovery WebAuthn call
+      const optimizer = new PasskeyLoginOptimizer(this.shared)
 
-      const wallets = await State.getWalletsFor(this.shared.sequence.stateProvider, passkeySigner)
-      if (wallets.length === 0) {
-        throw new Error('no-wallets-found')
-      }
+      try {
+        const { selectedWallet, passkeySigner } = await optimizer.loginWithStoredCredentials(args.selectWallet)
 
-      const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
-        throw new Error('wallet-not-found')
-      }
-      this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
+        // Store the passkey signer for later use during signing
+        const passkeysHandler = this.shared.handlers.get(Kinds.LoginPasskey)
+        if (passkeysHandler && 'addReadySigner' in passkeysHandler) {
+          ;(passkeysHandler as any).addReadySigner(passkeySigner)
+        }
 
-      return this.login({ wallet })
+        this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
+
+        this.shared.modules.logger.log('Optimized passkey login - skipped discovery interaction')
+        return this.login({ wallet: selectedWallet })
+      } catch (error) {
+        // Fallback to original method if optimization fails
+        this.shared.modules.logger.log('Optimized passkey login failed, falling back to discovery method:', error)
+
+        const passkeySigner = await Signers.Passkey.Passkey.find(
+          this.shared.sequence.stateProvider,
+          this.shared.sequence.extensions,
+        )
+        if (!passkeySigner) {
+          throw new Error('no-passkey-found')
+        }
+
+        const wallets = await State.getWalletsFor(this.shared.sequence.stateProvider, passkeySigner)
+        if (wallets.length === 0) {
+          throw new Error('no-wallets-found')
+        }
+
+        const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
+        if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
+          throw new Error('wallet-not-found')
+        }
+        this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
+
+        return this.login({ wallet })
+      }
     }
 
     throw new Error('invalid-login-args')

@@ -44,6 +44,7 @@ export type ManagerOptions = {
   authCommitmentsDb?: Db.AuthCommitments
   authKeysDb?: Db.AuthKeys
   recoveryDb?: Db.Recovery
+  passkeyCredentialsDb?: Db.PasskeyCredentials
 
   dbPruningInterval?: number
 
@@ -96,6 +97,7 @@ export const ManagerOptionsDefaults = {
   authCommitmentsDb: new Db.AuthCommitments(),
   recoveryDb: new Db.Recovery(),
   authKeysDb: new Db.AuthKeys(),
+  passkeyCredentialsDb: new Db.PasskeyCredentials(),
 
   dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
 
@@ -172,6 +174,7 @@ export type Databases = {
   readonly authCommitments: Db.AuthCommitments
   readonly authKeys: Db.AuthKeys
   readonly recovery: Db.Recovery
+  readonly passkeyCredentials: Db.PasskeyCredentials
 
   readonly pruningInterval: number
 }
@@ -391,6 +394,7 @@ export class Manager {
         authCommitments: ops.authCommitmentsDb,
         authKeys: ops.authKeysDb,
         recovery: ops.recoveryDb,
+        passkeyCredentials: ops.passkeyCredentialsDb,
 
         pruningInterval: ops.dbPruningInterval,
       },

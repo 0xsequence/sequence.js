@@ -8,6 +8,7 @@ import { SignerActionable, SignerUnavailable, BaseSignatureRequest } from '../ty
 
 export class PasskeysHandler implements Handler {
   kind = Kinds.LoginPasskey
+  private readySigners = new Map<string, Signers.Passkey.Passkey>()
 
   constructor(
     private readonly signatures: Signatures,
@@ -17,6 +18,11 @@ export class PasskeysHandler implements Handler {
 
   onStatusChange(cb: () => void): () => void {
     return () => {}
+  }
+
+  public addReadySigner(signer: Signers.Passkey.Passkey) {
+    // Use credentialId as key to match specific passkey instances
+    this.readySigners.set(signer.credentialId, signer)
   }
 
   private async loadPasskey(wallet: Address.Address, imageHash: Hex.Hex): Promise<Signers.Passkey.Passkey | undefined> {
@@ -48,7 +54,22 @@ export class PasskeysHandler implements Handler {
       return status
     }
 
-    const passkey = imageHash && (await this.loadPasskey(request.envelope.wallet, imageHash))
+    // First check if we have a ready signer that matches the imageHash
+    let passkey: Signers.Passkey.Passkey | undefined
+
+    // Look for a ready signer with matching imageHash
+    for (const readySigner of this.readySigners.values()) {
+      if (imageHash && readySigner.imageHash === imageHash) {
+        passkey = readySigner
+        break
+      }
+    }
+
+    // If no ready signer found, fall back to loading from witness
+    if (!passkey && imageHash) {
+      passkey = await this.loadPasskey(request.envelope.wallet, imageHash)
+    }
+
     if (!passkey) {
       console.warn('PasskeySigner: status failed to load passkey', address, imageHash)
       const status: SignerUnavailable = {
@@ -57,6 +78,11 @@ export class PasskeysHandler implements Handler {
         reason: 'unknown-error',
       }
       return status
+    }
+
+    // At this point, we know imageHash is defined because we have a passkey
+    if (!imageHash) {
+      throw new Error('imageHash is required for passkey operations')
     }
 
     const status: SignerActionable = {
