@@ -1242,11 +1242,11 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.SANDBOX_TESTNET,
     type: NetworkType.TESTNET,
     name: 'sandbox-testnet',
-    title: 'Sandbox testnet',
+    title: 'Sandbox Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SANDBOX_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'Sandbox testnet',
+      name: 'Sandbox Testnet Explorer',
       rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz',
     },
     nativeToken: {
