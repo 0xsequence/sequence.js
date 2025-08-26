@@ -993,7 +993,6 @@ export class ChainSessionManager {
       }
       const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
-      // TODO: check whether guard signature is even needed for this wallet based on the topology
       if (this.guard && !Envelope.reachedThreshold(signedEnvelope)) {
         // TODO: this might fail if 2FA is required
         const guard = new Signers.Guard(new Guard.Sequence.Guard(this.guard.url, this.guard.address))
