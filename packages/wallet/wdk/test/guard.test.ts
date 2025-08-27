@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Manager } from '../src/sequence'
-import { Guard } from '../src/sequence/guard'
+import * as Guard from '@0xsequence/guard'
 import { GuardHandler } from '../src/sequence/handlers/guard'
-import { Address, Hex, Signature } from 'ox'
+import { Address, Bytes, Hex, TypedData } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
+import { Signers } from '@0xsequence/wallet-core'
 import { Kinds } from '../src/sequence/types/signer'
 import { newManager } from './constants'
 
@@ -11,11 +12,13 @@ import { newManager } from './constants'
 const mockFetch = vi.fn()
 global.fetch = mockFetch
 
-describe('Guard', () => {
+describe('GuardHandler', () => {
   let manager: Manager
-  let guard: Guard
+  let guard: Signers.Guard
   let testWallet: Address.Address
   let testPayload: Payload.Payload
+  let testMessageDigest: Bytes.Bytes
+  let testMessage: Hex.Hex
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -26,6 +29,8 @@ describe('Guard', () => {
 
     testWallet = '0x1234567890123456789012345678901234567890' as Address.Address
     testPayload = Payload.fromMessage(Hex.fromString('Test message'))
+    testMessage = TypedData.encode(Payload.toTyped(testWallet, Network.ChainId.ARBITRUM, testPayload))
+    testMessageDigest = Payload.hash(testWallet, Network.ChainId.ARBITRUM, testPayload)
   })
 
   afterEach(async () => {
@@ -33,202 +38,45 @@ describe('Guard', () => {
     vi.resetAllMocks()
   })
 
-  // === CORE GUARD FUNCTIONALITY ===
-
-  describe('sign()', () => {
-    it('Should successfully sign a payload with guard service', async () => {
-      const mockSignature =
-        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b'
-
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: mockSignature,
-        }),
-      })
-
-      const result = await guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
-
-      expect(result).toBeDefined()
-      expect(result.type).toBe('hash')
-      expect(result.r).toBeDefined()
-      expect(result.s).toBeDefined()
-      expect(result.yParity).toBeDefined()
-
-      // Verify API call was made correctly
-      expect(mockFetch).toHaveBeenCalledOnce()
-      const [url, options] = mockFetch.mock.calls[0]
-
-      expect(url).toContain('/rpc/Guard/SignWith')
-      expect(options.method).toBe('POST')
-      expect(options.headers['Content-Type']).toBe('application/json')
-
-      const requestBody = JSON.parse(options.body)
-      expect(requestBody.request.chainId).toBe(Network.ChainId.ARBITRUM)
-      expect(requestBody.request.msg).toBeDefined()
-      expect(requestBody.request.auxData).toBeDefined()
-    })
-
-    it('Should handle custom chainId in sign request', async () => {
-      const customChainId = Network.ChainId.MAINNET
-
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
-        }),
-      })
-
-      await guard.sign(testWallet, customChainId, testPayload)
-
-      const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(requestBody.request.chainId).toBe(Network.ChainId.MAINNET)
-    })
-
-    it('Should throw error when guard service fails', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network error'))
-
-      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
-        'Error signing with guard',
-      )
-    })
-
-    it('Should throw error when guard service returns invalid response', async () => {
-      mockFetch.mockResolvedValueOnce({
-        json: async () => {
-          throw new Error('Invalid JSON')
-        },
-      })
-
-      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
-        'Error signing with guard',
-      )
-    })
-
-    it('Should include proper headers and signer address in request', async () => {
-      const mockGuardAddress = '0x9876543210987654321098765432109876543210' as Address.Address
-
-      // Create manager with custom guard address
-      const customManager = newManager(
-        {
-          guardAddress: mockGuardAddress,
-        },
-        undefined,
-        `guard_custom_${Date.now()}`,
-      )
-
-      const customGuard = (customManager as any).shared.modules.guard
-
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
-        }),
-      })
-
-      await customGuard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
-
-      const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(requestBody.signer).toBe(mockGuardAddress)
-
-      await customManager.stop()
-    })
-
-    it('Should properly encode auxiliary data with wallet, chainId, and serialized data', async () => {
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
-        }),
-      })
-
-      await guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
-
-      const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(requestBody.request.auxData).toBeDefined()
-      expect(typeof requestBody.request.auxData).toBe('string')
-      expect(requestBody.request.auxData.startsWith('0x')).toBe(true)
-    })
-  })
-
-  describe('witness()', () => {
-    it('Should create and save witness signature for wallet', async () => {
-      const mockSignature =
-        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b'
-
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: mockSignature,
-        }),
-      })
-
-      // Mock the state provider saveWitnesses method
-      const mockSaveWitnesses = vi.fn()
-      ;(manager as any).shared.sequence.stateProvider.saveWitnesses = mockSaveWitnesses
-
-      await guard.witness(testWallet)
-
-      // Verify guard sign was called with chainId 0 (witness signatures use chainId 0)
-      expect(mockFetch).toHaveBeenCalledOnce()
-      const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(requestBody.request.chainId).toBe(0)
-
-      // Verify witness was saved
-      expect(mockSaveWitnesses).toHaveBeenCalledOnce()
-      const [wallet, chainId, payload, witness] = mockSaveWitnesses.mock.calls[0]
-
-      expect(wallet).toBe(testWallet)
-      expect(chainId).toBe(0)
-      expect(payload).toBeDefined()
-      expect(witness.type).toBe('unrecovered-signer')
-      expect(witness.weight).toBe(1n)
-      expect(witness.signature).toBeDefined()
-    })
-
-    it('Should create consent payload with correct structure', async () => {
-      const mockSignature =
-        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b'
-
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: mockSignature,
-        }),
-      })
-
-      const mockSaveWitnesses = vi.fn()
-      ;(manager as any).shared.sequence.stateProvider.saveWitnesses = mockSaveWitnesses
-
-      await guard.witness(testWallet)
-
-      // Extract the payload that was signed
-      const [, , payload] = mockSaveWitnesses.mock.calls[0]
-
-      // Verify it's a message payload
-      expect(payload.type).toBe('message')
-
-      // Parse the message content to verify consent structure
-      const messageHex = payload.message
-      const messageString = Hex.toString(messageHex)
-      const consentData = JSON.parse(messageString)
-
-      expect(consentData.action).toBe('consent-to-be-part-of-wallet')
-      expect(consentData.wallet).toBe(testWallet)
-      expect(consentData.signer).toBeDefined()
-      expect(consentData.timestamp).toBeDefined()
-      expect(consentData.extra.signerKind).toBe(Kinds.Guard) // Use the actual constant
-    })
-
-    it('Should handle witness creation failure gracefully', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Guard service unavailable'))
-
-      await expect(guard.witness(testWallet)).rejects.toThrow('Error signing with guard')
-    })
-  })
-
   // === GUARD HANDLER INTEGRATION ===
 
   describe('GuardHandler Integration', () => {
+    const previousSignature = {
+      type: 'hash',
+      address: '0x1234567890123456789012345678901234567890' as Address.Address,
+      signature: {
+        type: 'hash',
+        r: 1n,
+        s: 2n,
+        yParity: 0,
+      },
+    }
+
     it('Should create guard handler with correct kind', () => {
       const signatures = (manager as any).shared.modules.signatures
       const guardHandler = new GuardHandler(signatures, guard)
 
       expect(guardHandler.kind).toBe(Kinds.Guard) // Use the actual constant
+    })
+
+    it('Should return unavailable status if no signatures present', async () => {
+      const signatures = (manager as any).shared.modules.signatures
+      const guardHandler = new GuardHandler(signatures, guard)
+
+      const mockRequest = {
+        id: 'test-request-id',
+        envelope: {
+          wallet: testWallet,
+          chainId: Network.ChainId.ARBITRUM,
+          payload: testPayload,
+          signatures: [],
+        },
+      }
+
+      const status = await guardHandler.status(testWallet, undefined, mockRequest as any)
+
+      expect(status.status).toBe('unavailable')
+      expect((status as any).reason).toBe('must-not-sign-first')
     })
 
     it('Should return ready status for guard signer', async () => {
@@ -241,6 +89,7 @@ describe('Guard', () => {
           wallet: testWallet,
           chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
+          signatures: [previousSignature],
         },
       }
 
@@ -263,6 +112,11 @@ describe('Guard', () => {
         json: async () => ({
           sig: mockSignature,
         }),
+        text: async () =>
+          JSON.stringify({
+            sig: mockSignature,
+          }),
+        ok: true,
       })
 
       // Mock the addSignature method
@@ -275,6 +129,7 @@ describe('Guard', () => {
           wallet: testWallet,
           chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
+          signatures: [previousSignature],
         },
       }
 
@@ -286,7 +141,7 @@ describe('Guard', () => {
 
       const [requestId, signatureData] = mockAddSignature.mock.calls[0]
       expect(requestId).toBe('test-request-id')
-      expect(signatureData.address).toBe(testWallet)
+      expect(signatureData.address).toBe(guard.address)
       expect(signatureData.signature).toBeDefined()
     })
 
@@ -302,6 +157,7 @@ describe('Guard', () => {
           wallet: testWallet,
           chainId: Network.ChainId.ARBITRUM,
           payload: testPayload,
+          signatures: [previousSignature],
         },
       }
 
@@ -310,7 +166,6 @@ describe('Guard', () => {
       await expect((status as any).handle()).rejects.toThrow('Error signing with guard')
     })
   })
-
   // === CONFIGURATION TESTING ===
 
   describe('Guard Configuration', () => {
@@ -325,15 +180,37 @@ describe('Guard', () => {
         `guard_url_${Date.now()}`,
       )
 
-      const customGuard = (customManager as any).shared.modules.guard
+      const customGuard = (customManager as any).shared.modules.guard as Signers.Guard
 
       mockFetch.mockResolvedValueOnce({
         json: async () => ({
           sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
         }),
+        text: async () =>
+          JSON.stringify({
+            sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
+          }),
+        ok: true,
       })
 
-      await customGuard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)
+      await customGuard.signEnvelope({
+        payload: {
+          type: 'config-update',
+          imageHash: '0x123456789012345678901234567890123456789012345678901234567890123' as Hex.Hex,
+        },
+        wallet: testWallet,
+        chainId: Network.ChainId.ARBITRUM,
+        configuration: {
+          threshold: 1n,
+          checkpoint: 0n,
+          topology: {
+            type: 'signer',
+            address: '0x1234567890123456789012345678901234567890' as Address.Address,
+            weight: 1n,
+          },
+        },
+        signatures: [],
+      })
 
       expect(mockFetch.mock.calls[0][0]).toContain(customGuardUrl)
 
@@ -348,99 +225,6 @@ describe('Guard', () => {
       const sharedConfig = (manager as any).shared.sequence
       expect(sharedConfig.guardUrl).toBeDefined()
       expect(sharedConfig.guardAddress).toBeDefined()
-    })
-  })
-
-  // === ERROR HANDLING ===
-
-  describe('Error Handling', () => {
-    it('Should handle malformed guard service response', async () => {
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          // Missing 'sig' field
-          error: 'Invalid request',
-        }),
-      })
-
-      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
-        'Error signing with guard',
-      )
-    })
-
-    it('Should handle network timeout errors', async () => {
-      mockFetch.mockImplementationOnce(
-        () => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 100)),
-      )
-
-      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
-        'Error signing with guard',
-      )
-    })
-
-    it('Should handle HTTP error responses', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: async () => ({
-          error: 'Internal server error',
-        }),
-      })
-
-      await expect(guard.sign(testWallet, Network.ChainId.ARBITRUM, testPayload)).rejects.toThrow(
-        'Error signing with guard',
-      )
-    })
-  })
-
-  // === INTEGRATION WITH REAL PAYLOADS ===
-
-  describe('Real Payload Integration', () => {
-    it('Should handle transaction payloads', async () => {
-      const transactionPayload = Payload.fromCall(1n, 0n, [
-        {
-          to: '0x1234567890123456789012345678901234567890' as Address.Address,
-          value: 1000000000000000000n, // 1 ETH in wei
-          data: '0x',
-          gasLimit: 21000n,
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert',
-        },
-      ])
-
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
-        }),
-      })
-
-      const result = await guard.sign(testWallet, Network.ChainId.ARBITRUM, transactionPayload)
-
-      expect(result).toBeDefined()
-      expect(result.type).toBe('hash')
-      expect(mockFetch).toHaveBeenCalledOnce()
-    })
-
-    it('Should handle message payloads with different content', async () => {
-      const complexMessage = JSON.stringify({
-        user: 'test@example.com',
-        action: 'authenticate',
-        timestamp: Date.now(),
-        data: { permissions: ['read', 'write'] },
-      })
-
-      const messagePayload = Payload.fromMessage(Hex.fromString(complexMessage))
-
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          sig: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b',
-        }),
-      })
-
-      const result = await guard.sign(testWallet, Network.ChainId.ARBITRUM, messagePayload)
-
-      expect(result).toBeDefined()
-      expect(result.type).toBe('hash')
     })
   })
 })

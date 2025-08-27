@@ -3,7 +3,8 @@ import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
+import * as Guard from '@0xsequence/guard'
+import { Address, Hex, Secp256k1 } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
@@ -26,7 +27,6 @@ import { Signers } from './signers.js'
 import { Transactions, TransactionsInterface } from './transactions.js'
 import { Kinds } from './types/signer.js'
 import { Wallets, WalletsInterface } from './wallets.js'
-import { Guard } from './guard.js'
 import { GuardHandler } from './handlers/guard.js'
 
 export type ManagerOptions = {
@@ -106,6 +106,7 @@ export const ManagerOptionsDefaults = {
 
   guardUrl: 'https://dev-guard.sequence.app',
   guardAddress: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a' as Address.Address, // TODO: change to the actual guard address
+  guardPrivateKey: '0046e54c861e7d4e1dcd952d86ab6462dedabc55dcf00ac3a99dcce59f516370' as Hex.Hex,
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -117,7 +118,7 @@ export const ManagerOptionsDefaults = {
   defaultSessionsTopology: {
     // TODO: Move this somewhere else
     type: 'sapient-signer',
-    weight: 255n,
+    weight: 1n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash' | 'address'>,
 
   defaultRecoverySettings: {
@@ -193,12 +194,13 @@ export type Sequence = {
 
   readonly guardUrl: string
   readonly guardAddress: Address.Address
+  readonly guardPrivateKey: Hex.Hex
 }
 
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
-  readonly guard: Guard
+  readonly guard: CoreSigners.Guard
   readonly wallets: Wallets
   readonly sessions: Sessions
   readonly signers: Signers
@@ -380,6 +382,7 @@ export class Manager {
 
         guardUrl: ops.guardUrl,
         guardAddress: ops.guardAddress,
+        guardPrivateKey: ops.guardPrivateKey,
       },
 
       databases: {
@@ -403,7 +406,11 @@ export class Manager {
       cron: new Cron(shared),
       logger: new Logger(shared),
       devices: new Devices(shared),
-      guard: new Guard(shared),
+      guard: new CoreSigners.Guard(
+        shared.sequence.guardUrl
+          ? new Guard.Sequence.Guard(shared.sequence.guardUrl, shared.sequence.guardAddress)
+          : new Guard.Local.Guard(shared.sequence.guardPrivateKey || Secp256k1.randomPrivateKey()),
+      ),
       wallets: new Wallets(shared),
       sessions: new Sessions(shared),
       signers: new Signers(shared),

@@ -9,6 +9,7 @@ import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
   DappClientSignatureEventListener,
+  GuardConfig,
   LoginMethod,
   RandomPrivateKeyFn,
   SequenceSessionStorage,
@@ -53,6 +54,7 @@ export class DappClient {
 
   public loginMethod: string | null = null
   public userEmail: string | null = null
+  public guard?: GuardConfig
 
   public readonly origin: string
 
@@ -258,6 +260,7 @@ export class DappClient {
     this.walletAddress = implicitSession?.walletAddress || explicitSessions[0]?.walletAddress || null
     this.loginMethod = result[0]?.loginMethod || null
     this.userEmail = result[0]?.userEmail || null
+    this.guard = implicitSession?.guard || explicitSessions.find((s) => !!s.guard)?.guard
 
     this.isInitialized = true
     this.emit('sessionsUpdated')
@@ -677,6 +680,7 @@ export class DappClient {
         this.relayerUrl,
         this.sequenceStorage,
         this.origin + (this.redirectPath ? this.redirectPath : ''),
+        this.guard,
         this.randomPrivateKeyFn,
         this.canUseIndexedDb,
       )

@@ -31,6 +31,7 @@
     "vitest": "^3.2.1"
   },
   "dependencies": {
+    "@0xsequence/guard": "workspace:^",
     "@0xsequence/relayer": "workspace:^",
     "@0xsequence/wallet-primitives": "workspace:^",
     "mipd": "^0.0.7",

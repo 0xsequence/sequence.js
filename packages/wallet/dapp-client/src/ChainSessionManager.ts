@@ -1,5 +1,6 @@
 import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
 import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
+import * as Guard from '@0xsequence/guard'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { TypedData } from 'ox/TypedData'
 
@@ -35,6 +36,7 @@ import {
   SignTypedDataPayload,
   Transaction,
   TransportMode,
+  GuardConfig,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 
@@ -73,6 +75,7 @@ export class ChainSessionManager {
   private isInitializing: boolean = false
   public loginMethod: LoginMethod | null = null
   public userEmail: string | null = null
+  private guard?: GuardConfig
 
   /**
    * @param chainId The ID of the chain this manager is responsible for.
@@ -80,6 +83,7 @@ export class ChainSessionManager {
    * @param transport The transport mechanism for communicating with the wallet.
    * @param sequenceStorage The storage implementation for persistent session data.
    * @param redirectUrl (Optional) The URL to redirect back to after a redirect-based flow.
+   * @param guard (Optional) The guard config to use for the session.
    * @param randomPrivateKeyFn (Optional) A function to generate random private keys.
    * @param canUseIndexedDb (Optional) A flag to enable or disable IndexedDB for caching.
    */
@@ -92,6 +96,7 @@ export class ChainSessionManager {
     relayerUrl: string,
     sequenceStorage: SequenceStorage,
     redirectUrl: string,
+    guard?: GuardConfig,
     randomPrivateKeyFn?: RandomPrivateKeyFn,
     canUseIndexedDb: boolean = true,
   ) {
@@ -109,6 +114,7 @@ export class ChainSessionManager {
     } else {
       this.stateProvider = new State.Sequence.Provider(keyMachineUrl)
     }
+    this.guard = guard
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
     this.relayer = new Relayer.Standard.Rpc.RpcRelayer(
       getRelayerUrl(chainId, relayerUrl),
@@ -242,6 +248,7 @@ export class ChainSessionManager {
         sessionData.pk,
         sessionData.loginMethod,
         sessionData.userEmail,
+        sessionData.guard,
         true,
       )
     }
@@ -299,7 +306,7 @@ export class ChainSessionManager {
       )
 
       const receivedAddress = Address.from(connectResponse.walletAddress)
-      const { attestation, signature, userEmail, loginMethod } = connectResponse
+      const { attestation, signature, userEmail, loginMethod, guard } = connectResponse
 
       if (attestation && signature) {
         await this._resetStateAndClearCredentials()
@@ -314,16 +321,18 @@ export class ChainSessionManager {
           true,
           loginMethod,
           userEmail,
+          guard,
         )
       }
 
       if (permissions) {
         this.initializeWithWallet(receivedAddress)
-        await this._initializeExplicitSessionInternal(newPk, loginMethod, userEmail, true)
+        await this._initializeExplicitSessionInternal(newPk, loginMethod, userEmail, guard, true)
         await this.sequenceStorage.saveExplicitSession({
           pk: newPk,
           walletAddress: receivedAddress,
           chainId: this.chainId,
+          guard,
         })
       }
 
@@ -387,13 +396,20 @@ export class ChainSessionManager {
         this.transport?.closeWallet()
       }
 
-      await this._initializeExplicitSessionInternal(newPk, response.loginMethod, response.userEmail, true)
+      await this._initializeExplicitSessionInternal(
+        newPk,
+        response.loginMethod,
+        response.userEmail,
+        response.guard,
+        true,
+      )
       await this.sequenceStorage.saveExplicitSession({
         pk: newPk,
         walletAddress: this.walletAddress,
         chainId: this.chainId,
         loginMethod: response.loginMethod,
         userEmail: response.userEmail,
+        guard: response.guard,
       })
     } catch (err) {
       if (this.transport?.mode === TransportMode.POPUP) this.transport.closeWallet()
@@ -483,7 +499,7 @@ export class ChainSessionManager {
     try {
       const connectResponse = response.payload
       const receivedAddress = Address.from(connectResponse.walletAddress)
-      const { userEmail, loginMethod } = connectResponse
+      const { userEmail, loginMethod, guard } = connectResponse
 
       if (response.action === RequestActionType.CREATE_NEW_SESSION) {
         const { attestation, signature } = connectResponse
@@ -503,17 +519,19 @@ export class ChainSessionManager {
             true,
             loginMethod,
             userEmail,
+            guard,
           )
         }
 
         if (savedRequest && savedPayload && savedPayload.permissions) {
-          await this._initializeExplicitSessionInternal(tempPk, loginMethod, userEmail, true)
+          await this._initializeExplicitSessionInternal(tempPk, loginMethod, userEmail, guard, true)
           await this.sequenceStorage.saveExplicitSession({
             pk: tempPk,
             walletAddress: receivedAddress,
             chainId: this.chainId,
             loginMethod,
             userEmail,
+            guard,
           })
         }
       } else if (response.action === RequestActionType.ADD_EXPLICIT_SESSION) {
@@ -525,6 +543,7 @@ export class ChainSessionManager {
           tempPk,
           this.loginMethod ?? undefined,
           this.userEmail ?? undefined,
+          this.guard ?? undefined,
           true,
         )
         await this.sequenceStorage.saveExplicitSession({
@@ -533,6 +552,7 @@ export class ChainSessionManager {
           chainId: this.chainId,
           loginMethod: this.loginMethod ?? undefined,
           userEmail: this.userEmail ?? undefined,
+          guard: this.guard ?? undefined,
         })
 
         const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: tempPk }))
@@ -575,6 +595,7 @@ export class ChainSessionManager {
    * @param saveSession Whether to persist the session in storage.
    * @param loginMethod The login method used.
    * @param userEmail The email associated with the session.
+   * @param guard The guard configuration.
    */
   private async _initializeImplicitSessionInternal(
     pk: Hex.Hex,
@@ -584,6 +605,7 @@ export class ChainSessionManager {
     saveSession: boolean = false,
     loginMethod?: LoginMethod,
     userEmail?: string,
+    guard?: GuardConfig,
   ): Promise<void> {
     if (!this.sessionManager) throw new InitializationError('Manager not instantiated for implicit session.')
     try {
@@ -610,9 +632,11 @@ export class ChainSessionManager {
           chainId: this.chainId,
           loginMethod,
           userEmail,
+          guard,
         })
       if (loginMethod) this.loginMethod = loginMethod
       if (userEmail) this.userEmail = userEmail
+      if (guard) this.guard = guard
     } catch (err) {
       throw new InitializationError(`Implicit session init failed: ${err}`)
     }
@@ -630,6 +654,7 @@ export class ChainSessionManager {
     pk: Hex.Hex,
     loginMethod?: LoginMethod,
     userEmail?: string,
+    guard?: GuardConfig,
     allowRetries: boolean = false,
   ): Promise<void> {
     if (!this.provider || !this.wallet)
@@ -664,6 +689,9 @@ export class ChainSessionManager {
           chainId: this.chainId,
           permissions,
         })
+
+        if (guard && !this.guard) this.guard = guard
+
         return
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err))
@@ -971,6 +999,13 @@ export class ChainSessionManager {
         signature,
       }
       const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
+
+      if (this.guard && !Envelope.reachedThreshold(signedEnvelope)) {
+        // TODO: this might fail if 2FA is required
+        const guard = new Signers.Guard(new Guard.Sequence.Guard(this.guard.url, this.guard.address))
+        const guardSignature = await guard.signEnvelope(signedEnvelope)
+        signedEnvelope.signatures.push(guardSignature)
+      }
 
       return await this.wallet.buildTransaction(this.provider, signedEnvelope)
     } catch (err) {

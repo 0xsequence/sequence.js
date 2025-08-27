@@ -2,6 +2,7 @@ export { DappClient } from './DappClient.js'
 export type { DappClientEventListener } from './DappClient.js'
 export type {
   LoginMethod,
+  GuardConfig,
   Transaction,
   SignatureResponse,
   ChainSessionManagerEvent,

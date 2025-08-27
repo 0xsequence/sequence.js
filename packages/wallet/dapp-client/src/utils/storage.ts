@@ -8,6 +8,7 @@ import {
   LoginMethod,
   SignMessagePayload,
   SignTypedDataPayload,
+  GuardConfig,
 } from '../types/index.js'
 
 export interface ExplicitSessionData {
@@ -16,6 +17,7 @@ export interface ExplicitSessionData {
   chainId: number
   loginMethod?: LoginMethod
   userEmail?: string
+  guard?: GuardConfig
 }
 
 export interface ImplicitSessionData {
@@ -26,6 +28,7 @@ export interface ImplicitSessionData {
   chainId: number
   loginMethod?: LoginMethod
   userEmail?: string
+  guard?: GuardConfig
 }
 
 export type PendingPayload =

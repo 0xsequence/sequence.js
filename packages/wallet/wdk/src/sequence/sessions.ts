@@ -187,8 +187,10 @@ export class Sessions implements SessionsInterface {
 
   async getTopology(walletAddress: Address.Address, fixMissing = false): Promise<SessionConfig.SessionsTopology> {
     const { loginTopology, modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
-    const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
-    if (!managerLeaf) {
+    const managerModule = modules.find((m) =>
+      Address.isEqual(m.sapientLeaf.address, this.shared.sequence.extensions.sessions),
+    )
+    if (!managerModule) {
       if (fixMissing) {
         // Create the default session manager leaf
         if (!Config.isSignerLeaf(loginTopology) && !Config.isSapientSignerLeaf(loginTopology)) {
@@ -203,12 +205,15 @@ export class Sessions implements SessionsInterface {
           address: this.shared.sequence.extensions.sessions,
           imageHash,
         }
-        modules.push(leaf)
+        modules.push({
+          sapientLeaf: leaf,
+          weight: 255n,
+        })
         return SessionConfig.configurationTreeToSessionsTopology(sessionsConfigTree)
       }
       throw new Error('Session manager not found')
     }
-    const imageHash = managerLeaf.imageHash
+    const imageHash = managerModule.sapientLeaf.imageHash
     const tree = await this.shared.sequence.stateProvider.getTree(imageHash)
     if (!tree) {
       throw new Error('Session topology not found')
@@ -397,17 +402,22 @@ export class Sessions implements SessionsInterface {
 
     // Find the session manager in the old configuration
     const { modules } = await this.shared.modules.wallets.getConfigurationParts(walletAddress)
-    const managerLeaf = modules.find((leaf) => Address.isEqual(leaf.address, this.shared.sequence.extensions.sessions))
-    if (!managerLeaf) {
+    const managerModule = modules.find((m) =>
+      Address.isEqual(m.sapientLeaf.address, this.shared.sequence.extensions.sessions),
+    )
+    if (!managerModule) {
       // Missing. Add it
       modules.push({
-        ...ManagerOptionsDefaults.defaultSessionsTopology,
-        address: this.shared.sequence.extensions.sessions,
-        imageHash: newImageHash,
+        sapientLeaf: {
+          ...ManagerOptionsDefaults.defaultSessionsTopology,
+          address: this.shared.sequence.extensions.sessions,
+          imageHash: newImageHash,
+        },
+        weight: 255n,
       })
     } else {
       // Update the configuration to use the new session manager image hash
-      managerLeaf.imageHash = newImageHash
+      managerModule.sapientLeaf.imageHash = newImageHash
     }
 
     return this.shared.modules.wallets.requestConfigurationUpdate(

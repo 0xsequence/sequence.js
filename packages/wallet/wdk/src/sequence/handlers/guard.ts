@@ -1,6 +1,6 @@
 import { Address, Hex } from 'ox'
+import { Signers } from '@0xsequence/wallet-core'
 import { Handler } from './handler.js'
-import { Guard } from '../guard.js'
 import { BaseSignatureRequest, SignerUnavailable, SignerReady, SignerActionable, Kinds } from '../types/index.js'
 import { Signatures } from '../signatures.js'
 
@@ -9,7 +9,7 @@ export class GuardHandler implements Handler {
 
   constructor(
     private readonly signatures: Signatures,
-    private readonly guard: Guard,
+    private readonly guard: Signers.Guard,
   ) {}
 
   onStatusChange(cb: () => void): () => void {
@@ -21,6 +21,15 @@ export class GuardHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
+    if (request.envelope.signatures.length === 0) {
+      return {
+        address,
+        handler: this,
+        status: 'unavailable',
+        reason: 'must-not-sign-first',
+      }
+    }
+
     // TODO: check if 2FA is required. If it is, return 'actionable'
 
     return {
@@ -28,15 +37,8 @@ export class GuardHandler implements Handler {
       handler: this,
       status: 'ready',
       handle: async () => {
-        const signature = await this.guard.sign(
-          request.envelope.wallet,
-          request.envelope.chainId,
-          request.envelope.payload,
-        )
-        await this.signatures.addSignature(request.id, {
-          address,
-          signature,
-        })
+        const signature = await this.guard.signEnvelope(request.envelope)
+        await this.signatures.addSignature(request.id, signature)
         return true
       },
     }

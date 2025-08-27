@@ -6,6 +6,7 @@ export * as Pk from './pk/index.js'
 export * as Passkey from './passkey.js'
 export * as Session from './session/index.js'
 export * from './session-manager.js'
+export * from './guard.js'
 
 export interface Signer {
   readonly address: MaybePromise<Address.Address>
