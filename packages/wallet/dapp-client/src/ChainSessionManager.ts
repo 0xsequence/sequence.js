@@ -333,6 +333,8 @@ export class ChainSessionManager {
           walletAddress: receivedAddress,
           chainId: this.chainId,
           guard,
+          loginMethod,
+          userEmail,
         })
       }
 
