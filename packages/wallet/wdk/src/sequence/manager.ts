@@ -108,7 +108,7 @@ export const ManagerOptionsDefaults = {
 
   guardUrl: 'https://dev-guard.sequence.app',
   guardAddress: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a' as Address.Address, // TODO: change to the actual guard address
-  guardPrivateKey: '0046e54c861e7d4e1dcd952d86ab6462dedabc55dcf00ac3a99dcce59f516370' as Hex.Hex,
+  guardPrivateKey: '0x0046e54c861e7d4e1dcd952d86ab6462dedabc55dcf00ac3a99dcce59f516370' as Hex.Hex,
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
