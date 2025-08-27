@@ -11,3 +11,6 @@ export { Signatures } from './signatures.js'
 export { Transactions } from './transactions.js'
 export { Wallets } from './wallets.js'
 export { Recovery } from './recovery.js'
+
+export type { PasskeyCredential } from './passkey-credentials.js'
+export { PasskeyCredentials } from './passkey-credentials.js'
