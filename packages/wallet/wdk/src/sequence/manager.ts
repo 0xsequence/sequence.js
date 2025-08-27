@@ -28,6 +28,7 @@ import { Transactions, TransactionsInterface } from './transactions.js'
 import { Kinds } from './types/signer.js'
 import { Wallets, WalletsInterface } from './wallets.js'
 import { GuardHandler } from './handlers/guard.js'
+import { PasskeyCredential } from '../dbs/index.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -525,6 +526,10 @@ export class Manager {
 
   public getNetwork(chainId: number): Network.Network | undefined {
     return this.shared.sequence.networks.find((n) => n.chainId === chainId)
+  }
+
+  public async getPasskeyCredentials(): Promise<PasskeyCredential[]> {
+    return this.shared.databases.passkeyCredentials.list()
   }
 
   // DBs
