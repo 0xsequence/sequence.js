@@ -2120,6 +2120,36 @@ export interface QueueCCTPTransferArgs {
 export interface QueueCCTPTransferReturn {
   transfer: CCTPTransfer
 }
+export interface QueueIntentConfigExecutionArgs {
+  intentConfigId: number
+}
+
+export interface QueueIntentConfigExecutionReturn {
+  status: boolean
+}
+export interface GetIntentConfigExecutionStatusArgs {
+  intentConfigId: number
+}
+
+export interface GetIntentConfigExecutionStatusReturn {
+  executionStatus: string
+}
+export interface ListIntentConfigsArgs {
+  page?: Page
+  executionStatus?: string
+}
+
+export interface ListIntentConfigsReturn {
+  page: Page
+  intentConfigs: Array<IntentConfig>
+}
+export interface QueueMetaTxnReceiptArgs {
+  metaTxID: string
+}
+
+export interface QueueMetaTxnReceiptReturn {
+  status: boolean
+}
 
 //
 // Client
