@@ -16,8 +16,12 @@ export type {
   ConnectSuccessResponsePayload,
   ModifySessionSuccessResponsePayload,
   ModifySessionPayload,
-  DappClientSignatureEventListener,
+  DappClientWalletActionEventListener,
   DappClientExplicitSessionEventListener,
+  TransactionRequest,
+  SendRawTransactionPayload,
+  SendRawTransactionSuccessResponse,
+  WalletActionResponse,
 } from './types/index.js'
 export { RequestActionType, TransportMode } from './types/index.js'
 export {
