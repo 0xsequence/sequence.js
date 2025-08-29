@@ -4,7 +4,7 @@ import { Address, Hex } from 'ox'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
-import { InitializationError } from './utils/errors.js'
+import { InitializationError, SigningError } from './utils/errors.js'
 import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
@@ -12,8 +12,12 @@ import {
   GuardConfig,
   LoginMethod,
   RandomPrivateKeyFn,
+  RequestActionType,
   SequenceSessionStorage,
   Session,
+  SignatureResponse,
+  SignMessagePayload,
+  SignTypedDataPayload,
   Transaction,
   TransportMode,
 } from './types/index.js'
@@ -334,7 +338,18 @@ export class DappClient {
     const { action } = response
     const chainId = pendingRequest?.chainId
 
-    if (chainId) {
+    if (action === RequestActionType.SIGN_MESSAGE || action === RequestActionType.SIGN_TYPED_DATA) {
+      if (chainId === undefined) {
+        throw new InitializationError('Could not find a chainId for the pending signature request.')
+      }
+      const eventPayload = {
+        action,
+        response: 'payload' in response ? response.payload : undefined,
+        error: 'error' in response ? response.error : undefined,
+        chainId,
+      }
+      this.emit('signatureResponse', eventPayload)
+    } else if (chainId !== undefined) {
       const chainSessionManager = this.getChainSessionManager(chainId)
       await chainSessionManager.handleRedirectResponse(response)
     } else {
@@ -564,7 +579,7 @@ export class DappClient {
    * @param chainId The chain ID on which to sign the message.
    * @param message The message to sign.
    * @throws If the message cannot be signed. {@link SigningError}
-   * @throws If the client or relevant chain is not initialized. {@link InitializationError}
+   * @throws If the client is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is delivered via the `signatureResponse` event listener.
    *
@@ -580,11 +595,17 @@ export class DappClient {
    * }
    */
   async signMessage(chainId: number, message: string): Promise<void> {
-    if (!this.isInitialized) throw new InitializationError('Not initialized')
-    const chainSessionManager = this.getChainSessionManager(chainId)
-    if (!chainSessionManager.isInitialized)
-      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
-    return await chainSessionManager.signMessage(message)
+    if (!this.isInitialized || !this.walletAddress) throw new InitializationError('Not initialized')
+    const payload: SignMessagePayload = {
+      address: this.walletAddress,
+      message,
+      chainId: chainId,
+    }
+    try {
+      await this._requestSignature(RequestActionType.SIGN_MESSAGE, payload, chainId)
+    } catch (err) {
+      throw new SigningError(`Signing message failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   /**
@@ -592,7 +613,7 @@ export class DappClient {
    * @param chainId The chain ID on which to sign the typed data.
    * @param typedData The typed data object to sign.
    * @throws If the typed data cannot be signed. {@link SigningError}
-   * @throws If the client or relevant chain is not initialized. {@link InitializationError}
+   * @throws If the client is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is returned in the `signatureResponse` event listener.
    *
@@ -608,11 +629,17 @@ export class DappClient {
    * }
    */
   async signTypedData(chainId: number, typedData: TypedData): Promise<void> {
-    if (!this.isInitialized) throw new InitializationError('Not initialized')
-    const chainSessionManager = this.getChainSessionManager(chainId)
-    if (!chainSessionManager.isInitialized)
-      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
-    return await chainSessionManager.signTypedData(typedData)
+    if (!this.isInitialized || !this.walletAddress) throw new InitializationError('Not initialized')
+    const payload: SignTypedDataPayload = {
+      address: this.walletAddress,
+      typedData,
+      chainId: chainId,
+    }
+    try {
+      await this._requestSignature(RequestActionType.SIGN_TYPED_DATA, payload, chainId)
+    } catch (err) {
+      throw new SigningError(`Signing typed data failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   /**
@@ -663,6 +690,44 @@ export class DappClient {
     }
   }
 
+  private async _requestSignature(
+    action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA'],
+    payload: SignMessagePayload | SignTypedDataPayload,
+    chainId: number,
+  ): Promise<void> {
+    if (!this.isInitialized || !this.walletAddress) {
+      throw new InitializationError('Session not initialized. Cannot request signature.')
+    }
+
+    try {
+      const redirectUrl = this.origin + (this.redirectPath ? this.redirectPath : '')
+      if (this.transport.mode === TransportMode.REDIRECT) {
+        await this.sequenceStorage.savePendingRequest({
+          action,
+          payload,
+          chainId: chainId,
+        })
+        await this.sequenceStorage.setPendingRedirectRequest(true)
+        await this.transport.sendRequest(action, redirectUrl, payload, {
+          path: '/request/sign',
+        })
+      } else {
+        const response = await this.transport.sendRequest<SignatureResponse>(action, redirectUrl, payload, {
+          path: '/request/sign',
+        })
+        this.emit('signatureResponse', { action, response, chainId })
+      }
+    } catch (err) {
+      const error = new SigningError(err instanceof Error ? err.message : String(err))
+      this.emit('signatureResponse', { action, error, chainId })
+      throw error
+    } finally {
+      if (this.transport.mode === TransportMode.POPUP) {
+        this.transport.closeWallet()
+      }
+    }
+  }
+
   /**
    * @private Retrieves or creates a ChainSessionManager for a given chain ID.
    * @param chainId The chain ID to get the ChainSessionManager for.
@@ -685,10 +750,6 @@ export class DappClient {
         this.canUseIndexedDb,
       )
       this.chainSessionManagers.set(chainId, chainSessionManager)
-
-      chainSessionManager.on('signatureResponse', (data) => {
-        this.emit('signatureResponse', { ...data, chainId })
-      })
 
       chainSessionManager.on('explicitSessionResponse', (data) => {
         this.emit('explicitSessionResponse', { ...data, chainId })

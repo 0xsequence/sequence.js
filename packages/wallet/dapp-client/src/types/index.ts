@@ -102,13 +102,7 @@ export type Session = {
 
 // --- Event Types ---
 
-export type ChainSessionManagerEvent = 'signatureResponse' | 'sessionsUpdated' | 'explicitSessionResponse'
-
-export type SignatureEventListener = (data: {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
-  response?: SignatureResponse
-  error?: any
-}) => void
+export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionResponse'
 
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
