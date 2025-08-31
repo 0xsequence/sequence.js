@@ -13,7 +13,7 @@ import {
   LoginMethod,
   RandomPrivateKeyFn,
   RequestActionType,
-  SendRawTransactionPayload,
+  SendWalletTransactionPayload,
   SequenceSessionStorage,
   Session,
   SignMessagePayload,
@@ -339,7 +339,7 @@ export class DappClient {
     if (
       action === RequestActionType.SIGN_MESSAGE ||
       action === RequestActionType.SIGN_TYPED_DATA ||
-      action === RequestActionType.SEND_RAW_TRANSACTION
+      action === RequestActionType.SEND_WALLET_TRANSACTION
     ) {
       if (chainId === undefined) {
         throw new InitializationError('Could not find a chainId for the pending signature request.')
@@ -645,7 +645,7 @@ export class DappClient {
   }
 
   /**
-   * Sends a raw transaction to be signed and submitted by the wallet.
+   * Sends transaction data to be signed and submitted by the wallet.
    * @param chainId The chain ID on which to send the transaction.
    * @param transactionRequest The transaction request object.
    * @throws If the transaction cannot be sent. {@link TransactionError}
@@ -653,17 +653,19 @@ export class DappClient {
    *
    * @returns A promise that resolves when the sending process is initiated. The transaction hash is delivered via the `walletActionResponse` event listener.
    */
-  async sendRawTransaction(chainId: number, transactionRequest: TransactionRequest): Promise<void> {
+  async sendWalletTransaction(chainId: number, transactionRequest: TransactionRequest): Promise<void> {
     if (!this.isInitialized || !this.walletAddress) throw new InitializationError('Not initialized')
-    const payload: SendRawTransactionPayload = {
+    const payload: SendWalletTransactionPayload = {
       address: this.walletAddress,
       transactionRequest,
       chainId: chainId,
     }
     try {
-      await this._requestWalletAction(RequestActionType.SEND_RAW_TRANSACTION, payload, chainId)
+      await this._requestWalletAction(RequestActionType.SEND_WALLET_TRANSACTION, payload, chainId)
     } catch (err) {
-      throw new TransactionError(`Sending raw transaction failed: ${err instanceof Error ? err.message : String(err)}`)
+      throw new TransactionError(
+        `Sending transaction data to wallet failed: ${err instanceof Error ? err.message : String(err)}`,
+      )
     }
   }
 
@@ -716,8 +718,8 @@ export class DappClient {
   }
 
   private async _requestWalletAction(
-    action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA' | 'SEND_RAW_TRANSACTION'],
-    payload: SignMessagePayload | SignTypedDataPayload | SendRawTransactionPayload,
+    action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA' | 'SEND_WALLET_TRANSACTION'],
+    payload: SignMessagePayload | SignTypedDataPayload | SendWalletTransactionPayload,
     chainId: number,
   ): Promise<void> {
     if (!this.isInitialized || !this.walletAddress) {
@@ -726,7 +728,7 @@ export class DappClient {
 
     try {
       const redirectUrl = this.origin + (this.redirectPath ? this.redirectPath : '')
-      const path = action === RequestActionType.SEND_RAW_TRANSACTION ? '/request/transaction' : '/request/sign'
+      const path = action === RequestActionType.SEND_WALLET_TRANSACTION ? '/request/transaction' : '/request/sign'
 
       if (this.transport.mode === TransportMode.REDIRECT) {
         await this.sequenceStorage.savePendingRequest({

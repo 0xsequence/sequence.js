@@ -1,10 +1,11 @@
+import { Permission } from '@0xsequence/wallet-primitives'
 export { DappClient } from './DappClient.js'
 export type { DappClientEventListener } from './DappClient.js'
 export type {
   LoginMethod,
   GuardConfig,
   Transaction,
-  SignatureResponse,
+  SignatureSuccessResponse,
   ChainSessionManagerEvent,
   SequenceSessionStorage,
   RandomPrivateKeyFn,
@@ -19,8 +20,8 @@ export type {
   DappClientWalletActionEventListener,
   DappClientExplicitSessionEventListener,
   TransactionRequest,
-  SendRawTransactionPayload,
-  SendRawTransactionSuccessResponse,
+  SendWalletTransactionPayload,
+  SendWalletTransactionSuccessResponse,
   WalletActionResponse,
 } from './types/index.js'
 export { RequestActionType, TransportMode } from './types/index.js'
@@ -42,3 +43,6 @@ export type {
   PendingPayload,
 } from './utils/storage.js'
 export { WebStorage } from './utils/storage.js'
+
+export { Permission } from '@0xsequence/wallet-primitives'
+export { Signers } from '@0xsequence/wallet-core'

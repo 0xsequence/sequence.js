@@ -12,7 +12,7 @@ export const RequestActionType = {
   MODIFY_EXPLICIT_SESSION: 'modifyExplicitSession',
   SIGN_MESSAGE: 'signMessage',
   SIGN_TYPED_DATA: 'signTypedData',
-  SEND_RAW_TRANSACTION: 'sendRawTransaction',
+  SEND_WALLET_TRANSACTION: 'sendWalletTransaction',
 } as const
 
 export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
@@ -65,7 +65,7 @@ export type TransactionRequest = {
   gasLimit?: bigint
 }
 
-export interface SendRawTransactionPayload {
+export interface SendWalletTransactionPayload {
   address: Address.Address
   transactionRequest: TransactionRequest
   chainId: number
@@ -85,17 +85,17 @@ export interface ModifySessionSuccessResponsePayload {
   sessionAddress: string
 }
 
-export interface SignatureResponse {
+export interface SignatureSuccessResponse {
   signature: Hex.Hex
   walletAddress: string
 }
 
-export interface SendRawTransactionSuccessResponse {
+export interface SendWalletTransactionSuccessResponse {
   transactionHash: Hex.Hex
   walletAddress: string
 }
 
-export type WalletActionResponse = SignatureResponse | SendRawTransactionSuccessResponse
+export type WalletActionResponse = SignatureSuccessResponse | SendWalletTransactionSuccessResponse
 
 export interface ExplicitSessionResponsePayload {
   walletAddress: string
@@ -135,7 +135,7 @@ export type ExplicitSessionEventListener = (data: {
 export type DappClientEventListener = (data?: any) => void
 
 export type DappClientWalletActionEventListener = (data: {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA' | 'SEND_RAW_TRANSACTION']
+  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA' | 'SEND_WALLET_TRANSACTION']
   response?: WalletActionResponse
   error?: any
   chainId: number
