@@ -9,6 +9,7 @@ import {
   SignMessagePayload,
   SignTypedDataPayload,
   GuardConfig,
+  SendWalletTransactionPayload,
 } from '../types/index.js'
 
 export interface ExplicitSessionData {
@@ -37,6 +38,7 @@ export type PendingPayload =
   | ModifySessionPayload
   | SignMessagePayload
   | SignTypedDataPayload
+  | SendWalletTransactionPayload
 
 export interface PendingRequestContext {
   chainId: number

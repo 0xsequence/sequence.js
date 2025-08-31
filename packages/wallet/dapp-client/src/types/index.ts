@@ -12,6 +12,7 @@ export const RequestActionType = {
   MODIFY_EXPLICIT_SESSION: 'modifyExplicitSession',
   SIGN_MESSAGE: 'signMessage',
   SIGN_TYPED_DATA: 'signTypedData',
+  SEND_WALLET_TRANSACTION: 'sendWalletTransaction',
 } as const
 
 export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
@@ -57,6 +58,19 @@ export interface SignTypedDataPayload {
   chainId: number
 }
 
+export type TransactionRequest = {
+  to: Address.Address
+  value?: bigint
+  data?: Hex.Hex
+  gasLimit?: bigint
+}
+
+export interface SendWalletTransactionPayload {
+  address: Address.Address
+  transactionRequest: TransactionRequest
+  chainId: number
+}
+
 export interface ConnectSuccessResponsePayload {
   walletAddress: string
   attestation?: Attestation.Attestation
@@ -71,10 +85,17 @@ export interface ModifySessionSuccessResponsePayload {
   sessionAddress: string
 }
 
-export interface SignatureResponse {
+export interface SignatureSuccessResponse {
   signature: Hex.Hex
   walletAddress: string
 }
+
+export interface SendWalletTransactionSuccessResponse {
+  transactionHash: Hex.Hex
+  walletAddress: string
+}
+
+export type WalletActionResponse = SignatureSuccessResponse | SendWalletTransactionSuccessResponse
 
 export interface ExplicitSessionResponsePayload {
   walletAddress: string
@@ -102,13 +123,7 @@ export type Session = {
 
 // --- Event Types ---
 
-export type ChainSessionManagerEvent = 'signatureResponse' | 'sessionsUpdated' | 'explicitSessionResponse'
-
-export type SignatureEventListener = (data: {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
-  response?: SignatureResponse
-  error?: any
-}) => void
+export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionResponse'
 
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
@@ -119,9 +134,9 @@ export type ExplicitSessionEventListener = (data: {
 // A generic listener for events from the DappClient
 export type DappClientEventListener = (data?: any) => void
 
-export type DappClientSignatureEventListener = (data: {
-  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA']
-  response?: SignatureResponse
+export type DappClientWalletActionEventListener = (data: {
+  action: (typeof RequestActionType)['SIGN_MESSAGE' | 'SIGN_TYPED_DATA' | 'SEND_WALLET_TRANSACTION']
+  response?: WalletActionResponse
   error?: any
   chainId: number
 }) => void
