@@ -544,6 +544,20 @@ export class DappClient {
   }
 
   /**
+   * Checks if the current session has permission to execute a set of transactions on a specific chain.
+   * @param chainId The chain ID on which to check the permissions.
+   * @param transactions An array of transactions to check permissions for.
+   * @returns A promise that resolves to true if the session has permission, otherwise false.
+   */
+  async hasPermission(chainId: number, transactions: Transaction[]): Promise<boolean> {
+    const chainSessionManager = this.chainSessionManagers.get(chainId)
+    if (!chainSessionManager || !chainSessionManager.isInitialized) {
+      return false
+    }
+    return await chainSessionManager.hasPermission(transactions)
+  }
+
+  /**
    * Signs and sends a transaction using an available session signer.
    * @param chainId The chain ID on which to send the transaction.
    * @param transactions An array of transactions to be executed atomically in a single batch. {@link Transaction}

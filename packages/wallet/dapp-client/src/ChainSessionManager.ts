@@ -700,6 +700,42 @@ export class ChainSessionManager {
   }
 
   /**
+   * Checks if the current session has permission to execute a set of transactions.
+   * @param transactions The transactions to check permissions for.
+   * @returns A promise that resolves to true if the session has permission, false otherwise.
+   */
+  async hasPermission(transactions: Transaction[]): Promise<boolean> {
+    if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized) {
+      return false
+    }
+
+    try {
+      const calls: Payload.Call[] = transactions.map((tx) => ({
+        to: tx.to,
+        value: tx.value,
+        data: tx.data,
+        gasLimit: tx.gasLimit ?? BigInt(0),
+        delegateCall: tx.delegateCall ?? false,
+        onlyFallback: tx.onlyFallback ?? false,
+        behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
+      }))
+
+      // Attempt to prepare and sign the transaction. If this succeeds, the session
+      // has the necessary permissions. We don't relay the transaction.
+      await this._buildAndSignCalls(calls)
+      return true
+    } catch (error) {
+      // If building or signing fails, it indicates a lack of permissions or another issue.
+      // For the purpose of this check, we treat it as a permission failure.
+      console.warn(
+        `Permission check failed for chain ${this.chainId}:`,
+        error instanceof Error ? error.message : String(error),
+      )
+      return false
+    }
+  }
+
+  /**
    * Fetches fee options for a set of transactions.
    * @param calls The transactions to estimate fees for.
    * @returns A promise that resolves with an array of fee options.
