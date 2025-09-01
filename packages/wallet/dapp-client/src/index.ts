@@ -1,4 +1,3 @@
-import { Permission } from '@0xsequence/wallet-primitives'
 export { DappClient } from './DappClient.js'
 export type { DappClientEventListener } from './DappClient.js'
 export type {
@@ -44,5 +43,5 @@ export type {
 } from './utils/storage.js'
 export { WebStorage } from './utils/storage.js'
 
-export { Permission } from '@0xsequence/wallet-primitives'
-export { Signers } from '@0xsequence/wallet-core'
+export { Permission, Extensions, SessionConfig } from '@0xsequence/wallet-primitives'
+export { Signers, Wallet, Utils, Relayer } from '@0xsequence/wallet-core'
