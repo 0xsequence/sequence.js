@@ -646,7 +646,7 @@ export function addToImplicitBlacklist(topology: SessionsTopology, address: Addr
     return topology
   }
   blacklist.push(address)
-  blacklist.sort() // keep sorted so on-chain binary search works as expected
+  blacklist.sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1)) // keep sorted so on-chain binary search works as expected
   return topology
 }
 
