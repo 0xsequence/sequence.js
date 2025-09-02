@@ -1084,6 +1084,12 @@ export class Wallets implements WalletsInterface {
           throw new Error('no-wallets-found')
         }
 
+        // Store discovered credentials for future optimized logins
+        await optimizer.storeDiscoveredCredentials(
+          passkeySigner,
+          wallets.map((w) => w.wallet),
+        )
+
         const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
         if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
           throw new Error('wallet-not-found')

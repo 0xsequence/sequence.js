@@ -1,6 +1,5 @@
 import { Address } from 'ox'
 import { Signers } from '@0xsequence/wallet-core'
-import { Extensions } from '@0xsequence/wallet-primitives'
 import type { Shared } from './manager.js'
 
 /**
@@ -43,6 +42,43 @@ export class PasskeyLoginOptimizer {
     return {
       selectedWallet,
       passkeySigner,
+    }
+  }
+
+  /**
+   * Store discovered passkey credentials for future optimized logins
+   * This is called during fallback flows when we discover credentials through Passkey.find()
+   */
+  async storeDiscoveredCredentials(
+    passkeySigner: Signers.Passkey.Passkey,
+    walletAddresses: Address.Address[],
+  ): Promise<void> {
+    try {
+      // Store credentials for each wallet address associated with this passkey
+      for (const walletAddress of walletAddresses) {
+        // Check if we already have this credential stored to avoid duplicates
+        const existingCredential = await this.shared.databases.passkeyCredentials.getByCredentialId(
+          passkeySigner.credentialId,
+        )
+
+        if (!existingCredential || !Address.isEqual(existingCredential.walletAddress, walletAddress)) {
+          await this.shared.databases.passkeyCredentials.storeCredential(
+            passkeySigner.credentialId,
+            passkeySigner.publicKey,
+            walletAddress,
+          )
+
+          this.shared.modules.logger.log(
+            'Stored discovered passkey credential for wallet:',
+            walletAddress,
+            'credentialId:',
+            passkeySigner.credentialId,
+          )
+        }
+      }
+    } catch (error) {
+      // Don't fail the login if credential storage fails
+      this.shared.modules.logger.log('Failed to store discovered passkey credentials:', error)
     }
   }
 }
