@@ -35,6 +35,7 @@ export type CommonSignupArgs = {
 
 export type PasskeySignupArgs = CommonSignupArgs & {
   kind: 'passkey'
+  name?: string
 }
 
 export type MnemonicSignupArgs = CommonSignupArgs & {
@@ -617,6 +618,7 @@ export class Wallets implements WalletsInterface {
       case 'passkey':
         const passkeySigner = await Signers.Passkey.Passkey.create(this.shared.sequence.extensions, {
           stateProvider: this.shared.sequence.stateProvider,
+          credentialName: args.name,
         })
         this.shared.modules.logger.log('Created new passkey signer:', passkeySigner.address)
 
