@@ -1096,6 +1096,15 @@ export class Wallets implements WalletsInterface {
         if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
           throw new Error('wallet-not-found')
         }
+
+        // Update lastLoginAt for the selected wallet's credential
+        try {
+          await this.shared.databases.passkeyCredentials.updateLastLogin(passkeySigner.credentialId)
+        } catch (error) {
+          // Don't fail login if lastLoginAt update fails
+          this.shared.modules.logger.log('Failed to update passkey lastLoginAt during fallback login:', error)
+        }
+
         this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
 
         return this.login({ wallet })

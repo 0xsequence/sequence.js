@@ -10,6 +10,7 @@ export type PasskeyCredential = {
   publicKey: Extensions.Passkeys.PublicKey
   walletAddress: Address.Address
   createdAt: string
+  lastLoginAt?: string
 }
 
 export class PasskeyCredentials extends Generic<PasskeyCredential, 'credentialId'> {
@@ -54,13 +55,29 @@ export class PasskeyCredentials extends Generic<PasskeyCredential, 'credentialId
     publicKey: Extensions.Passkeys.PublicKey,
     walletAddress: Address.Address,
   ): Promise<void> {
+    const now = new Date().toISOString()
     const credential: PasskeyCredential = {
       credentialId,
       publicKey,
       walletAddress,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      lastLoginAt: now, // Set initially on creation
     }
 
     await this.set(credential)
+  }
+
+  /**
+   * Update the lastLoginAt timestamp for a passkey credential
+   */
+  async updateLastLogin(credentialId: string): Promise<void> {
+    const existingCredential = await this.getByCredentialId(credentialId)
+    if (existingCredential) {
+      const updatedCredential: PasskeyCredential = {
+        ...existingCredential,
+        lastLoginAt: new Date().toISOString(),
+      }
+      await this.set(updatedCredential)
+    }
   }
 }
