@@ -32,7 +32,7 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
   async handleOpenDB(): Promise<void> {
     const authKeys = await this.list()
     for (const authKey of authKeys) {
-      this.scheduleExpiration(authKey)
+      await this.scheduleExpiration(authKey)
     }
   }
 
