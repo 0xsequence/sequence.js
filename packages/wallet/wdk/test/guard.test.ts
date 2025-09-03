@@ -59,6 +59,25 @@ describe('GuardHandler', () => {
       expect(guardHandler.kind).toBe(Kinds.Guard) // Use the actual constant
     })
 
+    it('Should return unavailable status if no UI is registered', async () => {
+      const signatures = (manager as any).shared.modules.signatures
+      const guardHandler = new GuardHandler(signatures, guard)
+
+      const mockRequest = {
+        id: 'test-request-id',
+        envelope: {
+          wallet: testWallet,
+          chainId: Network.ChainId.ARBITRUM,
+          payload: testPayload,
+          signatures: [previousSignature],
+        },
+      }
+
+      const status = await guardHandler.status(testWallet, undefined, mockRequest as any)
+      expect(status.status).toBe('unavailable')
+      expect((status as any).reason).toBe('guard-ui-not-registered')
+    })
+
     it('Should return unavailable status if no signatures present', async () => {
       const signatures = (manager as any).shared.modules.signatures
       const guardHandler = new GuardHandler(signatures, guard)
@@ -72,6 +91,8 @@ describe('GuardHandler', () => {
           signatures: [],
         },
       }
+
+      guardHandler.registerUI(vi.fn())
 
       const status = await guardHandler.status(testWallet, undefined, mockRequest as any)
 
@@ -92,6 +113,8 @@ describe('GuardHandler', () => {
           signatures: [previousSignature],
         },
       }
+
+      guardHandler.registerUI(vi.fn())
 
       const status = await guardHandler.status(testWallet, undefined, mockRequest as any)
 
@@ -118,6 +141,8 @@ describe('GuardHandler', () => {
           }),
         ok: true,
       })
+
+      guardHandler.registerUI(vi.fn())
 
       // Mock the addSignature method
       const mockAddSignature = vi.fn()
@@ -161,11 +186,75 @@ describe('GuardHandler', () => {
         },
       }
 
+      guardHandler.registerUI(vi.fn())
+
       const status = await guardHandler.status(testWallet, undefined, mockRequest as any)
 
       await expect((status as any).handle()).rejects.toThrow('Error signing with guard')
     })
+
+    it('Should handle 2FA', async () => {
+      const signatures = (manager as any).shared.modules.signatures
+      const guardHandler = new GuardHandler(signatures, guard)
+
+      const mock2FAError = {
+        code: 6600,
+      }
+      const mockSignature =
+        '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b'
+
+      mockFetch
+        .mockResolvedValueOnce({
+          json: async () => mock2FAError,
+          text: async () => JSON.stringify(mock2FAError),
+          ok: false,
+        })
+        .mockResolvedValueOnce({
+          json: async () => ({
+            sig: mockSignature,
+          }),
+          text: async () =>
+            JSON.stringify({
+              sig: mockSignature,
+            }),
+          ok: true,
+        })
+
+      // Mock the addSignature method
+      const mockAddSignature = vi.fn()
+      signatures.addSignature = mockAddSignature
+
+      const mockCallback = vi.fn().mockImplementation(async (codeType, respond) => {
+        expect(codeType).toBe('TOTP')
+        await respond('123456')
+      })
+
+      guardHandler.registerUI(mockCallback)
+
+      const mockRequest = {
+        id: 'test-request-id',
+        envelope: {
+          wallet: testWallet,
+          chainId: Network.ChainId.ARBITRUM,
+          payload: testPayload,
+          signatures: [previousSignature],
+        },
+      }
+
+      const status = await guardHandler.status(testWallet, undefined, mockRequest as any)
+      const result = await (status as any).handle()
+
+      expect(result).toBe(true)
+      expect(mockCallback).toHaveBeenCalledOnce()
+      expect(mockAddSignature).toHaveBeenCalledOnce()
+
+      const [requestId, signatureData] = mockAddSignature.mock.calls[0]
+      expect(requestId).toBe('test-request-id')
+      expect(signatureData.address).toBe(guard.address)
+      expect(signatureData.signature).toBeDefined()
+    })
   })
+
   // === CONFIGURATION TESTING ===
 
   describe('Guard Configuration', () => {
