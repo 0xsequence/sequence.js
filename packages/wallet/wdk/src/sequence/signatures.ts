@@ -121,6 +121,18 @@ export interface SignaturesInterface {
     requestId: string,
     callback: (request: SignatureRequest) => void,
   ): () => void
+
+  /**
+   * Convenience: listen for completion of a specific request.
+   * Disposes automatically when the request resolves (completed or cancelled).
+   */
+  onComplete(requestId: string, callback: (request: SignatureRequest) => void): () => void
+
+  /**
+   * Convenience: listen for cancellation of a specific request.
+   * Disposes automatically when the request resolves (completed or cancelled).
+   */
+  onCancel(requestId: string, callback: (request: SignatureRequest) => void): () => void
 }
 
 export class Signatures implements SignaturesInterface {
@@ -315,6 +327,14 @@ export class Signatures implements SignaturesInterface {
       disposed = true
       unsubscribe()
     }
+  }
+
+  onComplete(requestId: string, callback: (request: SignatureRequest) => void): () => void {
+    return this.onSignatureRequestStatus('completed', requestId, callback)
+  }
+
+  onCancel(requestId: string, callback: (request: SignatureRequest) => void): () => void {
+    return this.onSignatureRequestStatus('cancelled', requestId, callback)
   }
 
   async complete(requestId: string) {

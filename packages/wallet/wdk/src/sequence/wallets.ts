@@ -1021,6 +1021,12 @@ export class Wallets implements WalletsInterface {
           'login',
           'wallet-webapp',
         )
+
+        this.shared.modules.signatures.onCancel(requestId, async (request) => {
+          this.shared.modules.logger.log('Login cancelled', request)
+          await this.shared.databases.manager.del(args.wallet)
+        })
+
         return requestId
       } catch (error) {
         throw error
