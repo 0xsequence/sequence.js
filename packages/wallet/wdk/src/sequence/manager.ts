@@ -512,6 +512,12 @@ export class Manager {
     return this.otpHandler?.registerUI(onPromptOtp) || (() => {})
   }
 
+  public registerGuardUI(
+    onPromptOtp: (codeType: 'TOTP' | 'PIN', respond: (otp: string) => Promise<void>) => Promise<void>,
+  ) {
+    return this.guardHandler?.registerUI(onPromptOtp) || (() => {})
+  }
+
   public async setRedirectPrefix(prefix: string) {
     this.shared.handlers.forEach((handler) => {
       if (handler instanceof AuthCodeHandler) {

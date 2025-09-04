@@ -123,12 +123,17 @@ export type Session = {
 
 // --- Event Types ---
 
-export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionResponse'
+export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionResponse' | 'guardCodeRequired'
 
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
   response?: ExplicitSessionResponsePayload
   error?: any
+}) => void
+
+export type GuardCodeRequiredEventListener = (data: {
+  codeType: 'TOTP' | 'PIN'
+  respond: (code: string) => Promise<void>
 }) => void
 
 // A generic listener for events from the DappClient
@@ -146,6 +151,11 @@ export type DappClientExplicitSessionEventListener = (data: {
   response?: ExplicitSessionResponsePayload
   error?: any
   chainId: number
+}) => void
+
+export type DappClientGuardCodeRequiredEventListener = (data: {
+  codeType: 'TOTP' | 'PIN'
+  respond: (code: string) => Promise<void>
 }) => void
 
 // --- DappTransport Types ---

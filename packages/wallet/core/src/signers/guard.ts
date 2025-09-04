@@ -3,6 +3,11 @@ import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import * as GuardService from '@0xsequence/guard'
 import * as Envelope from '../envelope.js'
 
+type GuardToken = {
+  id: 'TOTP' | 'PIN'
+  code: string
+}
+
 export class Guard {
   public readonly address: Address.Address
 
@@ -10,7 +15,10 @@ export class Guard {
     this.address = this.guard.address
   }
 
-  async signEnvelope<T extends Payload.Payload>(envelope: Envelope.Signed<T>): Promise<Envelope.Signature> {
+  async signEnvelope<T extends Payload.Payload>(
+    envelope: Envelope.Signed<T>,
+    token?: GuardToken,
+  ): Promise<Envelope.Signature> {
     // Important: guard must always sign without parent wallets, even if the payload is parented
     const unparentedPayload = {
       ...envelope.payload,
@@ -28,6 +36,7 @@ export class Guard {
       digest,
       message,
       previousSignatures,
+      token ? { id: token.id, token: token.code } : undefined,
     )
     return {
       address: this.guard.address,

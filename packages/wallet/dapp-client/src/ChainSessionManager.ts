@@ -31,11 +31,13 @@ import {
   Transaction,
   TransportMode,
   GuardConfig,
+  GuardCodeRequiredEventListener,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 
 interface ChainSessionManagerEventMap {
   explicitSessionResponse: ExplicitSessionEventListener
+  guardCodeRequired: GuardCodeRequiredEventListener
 }
 
 /**
@@ -924,9 +926,8 @@ export class ChainSessionManager {
       const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
       if (this.guard && !Envelope.reachedThreshold(signedEnvelope)) {
-        // TODO: this might fail if 2FA is required
         const guard = new Signers.Guard(new Guard.Sequence.Guard(this.guard.url, this.guard.address))
-        const guardSignature = await guard.signEnvelope(signedEnvelope)
+        const guardSignature = await this._signWithGuard(guard, signedEnvelope)
         signedEnvelope.signatures.push(guardSignature)
       }
 
@@ -934,6 +935,45 @@ export class ChainSessionManager {
     } catch (err) {
       throw new TransactionError(`Transaction failed building: ${err instanceof Error ? err.message : String(err)}`)
     }
+  }
+
+  private _signWithGuard(
+    guard: Signers.Guard,
+    signedEnvelope: Envelope.Signed<Payload.Payload>,
+  ): Promise<Envelope.Signature> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const guardSignature = await guard.signEnvelope(signedEnvelope)
+        resolve(guardSignature)
+      } catch (e) {
+        if (e instanceof Guard.AuthRequiredError) {
+          const timeout = setTimeout(
+            () => {
+              reject(new Error('Timed out waiting for guard code'))
+            },
+            5 * 60 * 1000,
+          ) // 5 minutes should probably be enough
+
+          const respond = async (code: string) => {
+            try {
+              const guardSignature = await guard.signEnvelope(signedEnvelope, { id: e.id, code })
+              resolve(guardSignature)
+            } catch (e) {
+              reject(e)
+            } finally {
+              clearTimeout(timeout)
+            }
+          }
+
+          this.emit('guardCodeRequired', {
+            codeType: e.id,
+            respond,
+          })
+        } else {
+          reject(e)
+        }
+      }
+    })
   }
 
   /**
