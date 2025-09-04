@@ -10,7 +10,7 @@ import { Device } from './types/device.js'
 import { Action, Module } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
-import { PasskeyLoginOptimizer } from './passkey-login-optimizer.js'
+import { PasskeysHandler } from './handlers/passkeys.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple'
@@ -75,6 +75,7 @@ export type LoginToMnemonicArgs = {
 
 export type LoginToPasskeyArgs = {
   kind: 'passkey'
+  credentialId?: string
   selectWallet: (wallets: Address.Address[]) => Promise<Address.Address>
 }
 
@@ -881,7 +882,7 @@ export class Wallets implements WalletsInterface {
     // Store passkey credential ID mapping if this is a passkey signup
     if (args.kind === 'passkey' && loginSigner.signer instanceof Signers.Passkey.Passkey) {
       try {
-        await this.shared.databases.passkeyCredentials.storeCredential(
+        await this.shared.databases.passkeyCredentials.saveCredential(
           loginSigner.signer.credentialId,
           loginSigner.signer.publicKey,
           wallet.address,
@@ -1053,62 +1054,79 @@ export class Wallets implements WalletsInterface {
     }
 
     if (isLoginToPasskeyArgs(args)) {
-      // Use optimized login that avoids the discovery WebAuthn call
-      const optimizer = new PasskeyLoginOptimizer(this.shared)
+      let passkeySigner: Signers.Passkey.Passkey
 
-      try {
-        const { selectedWallet, passkeySigner } = await optimizer.loginWithStoredCredentials(args.selectWallet)
+      if (args.credentialId) {
+        // Application-controlled login: use the provided credentialId
+        this.shared.modules.logger.log('Using provided credentialId for passkey login:', args.credentialId)
 
-        // Store the passkey signer for later use during signing
-        const passkeysHandler = this.shared.handlers.get(Kinds.LoginPasskey)
-        if (passkeysHandler && 'addReadySigner' in passkeysHandler) {
-          ;(passkeysHandler as any).addReadySigner(passkeySigner)
+        const credential = await this.shared.databases.passkeyCredentials.getByCredentialId(args.credentialId)
+        if (!credential) {
+          throw new Error('credential-not-found')
         }
 
-        this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
+        // Create passkey signer from stored credential
+        passkeySigner = new Signers.Passkey.Passkey({
+          credentialId: credential.credentialId,
+          publicKey: credential.publicKey,
+          extensions: this.shared.sequence.extensions,
+          embedMetadata: false,
+          metadata: { credentialId: credential.credentialId },
+        })
+      } else {
+        // Default discovery behavior: use WebAuthn discovery
+        this.shared.modules.logger.log('No credentialId provided, using discovery method')
 
-        this.shared.modules.logger.log('Optimized passkey login - skipped discovery interaction')
-        return this.login({ wallet: selectedWallet })
-      } catch (error) {
-        // Fallback to original method if optimization fails
-        this.shared.modules.logger.log('Optimized passkey login failed, falling back to discovery method:', error)
-
-        const passkeySigner = await Signers.Passkey.Passkey.find(
+        const foundPasskeySigner = await Signers.Passkey.Passkey.find(
           this.shared.sequence.stateProvider,
           this.shared.sequence.extensions,
         )
-        if (!passkeySigner) {
+        if (!foundPasskeySigner) {
           throw new Error('no-passkey-found')
         }
+        passkeySigner = foundPasskeySigner
+      }
 
-        const wallets = await State.getWalletsFor(this.shared.sequence.stateProvider, passkeySigner)
-        if (wallets.length === 0) {
-          throw new Error('no-wallets-found')
-        }
+      const wallets = await State.getWalletsFor(this.shared.sequence.stateProvider, passkeySigner)
+      if (wallets.length === 0) {
+        throw new Error('no-wallets-found')
+      }
 
-        // Store discovered credentials for future optimized logins
-        await optimizer.storeDiscoveredCredentials(
-          passkeySigner,
-          wallets.map((w) => w.wallet),
+      const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
+      if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
+        throw new Error('wallet-not-found')
+      }
+
+      // Store discovered credential
+      try {
+        const existingCredential = await this.shared.databases.passkeyCredentials.getByCredentialId(
+          passkeySigner.credentialId,
         )
 
-        const wallet = await args.selectWallet(wallets.map((w) => w.wallet))
-        if (!wallets.some((w) => Address.isEqual(w.wallet, wallet))) {
-          throw new Error('wallet-not-found')
+        if (!existingCredential) {
+          await this.shared.databases.passkeyCredentials.saveCredential(
+            passkeySigner.credentialId,
+            passkeySigner.publicKey,
+            wallet,
+          )
+        } else {
+          await this.shared.databases.passkeyCredentials.updateCredential(passkeySigner.credentialId, {
+            lastLoginAt: new Date().toISOString(),
+            walletAddress: wallet,
+          })
         }
-
-        // Update lastLoginAt for the selected wallet's credential
-        try {
-          await this.shared.databases.passkeyCredentials.updateLastLogin(passkeySigner.credentialId)
-        } catch (error) {
-          // Don't fail login if lastLoginAt update fails
-          this.shared.modules.logger.log('Failed to update passkey lastLoginAt during fallback login:', error)
-        }
-
-        this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
-
-        return this.login({ wallet })
+      } catch (error) {
+        // Don't fail login if credential storage fails
+        this.shared.modules.logger.log('Failed to store discovered passkey credential:', error)
       }
+
+      // Store the passkey signer for later use during signing
+      const passkeysHandler = this.shared.handlers.get(Kinds.LoginPasskey) as PasskeysHandler
+      passkeysHandler.addReadySigner(passkeySigner)
+
+      this.pendingMnemonicOrPasskeyLogin = Kinds.LoginPasskey
+
+      return this.login({ wallet })
     }
 
     throw new Error('invalid-login-args')
