@@ -2,7 +2,7 @@ import { Abi } from 'ox'
 
 export const ZeroAddress = '0x0000000000000000000000000000000000000000' as const
 
-export const DefaultGuestAddress = '0xf3c7175460BeD3340A1c4dc700fD6C8Cd3F56250' as const
+export const DefaultGuestAddress = '0x0000000000601fcA38f0cCA649453F6739436d6C' as const
 
 // ERC1271
 export const IS_VALID_SIGNATURE = Abi.from([

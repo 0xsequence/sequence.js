@@ -85,9 +85,9 @@ export type ManagerOptions = {
 export const ManagerOptionsDefaults = {
   verbose: false,
 
-  extensions: Extensions.Dev1,
-  context: Context.Dev1,
-  context4337: Context.Dev2_4337,
+  extensions: Extensions.Rc3,
+  context: Context.Rc3,
+  context4337: Context.Rc3_4337,
   guest: Constants.DefaultGuestAddress,
 
   encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
