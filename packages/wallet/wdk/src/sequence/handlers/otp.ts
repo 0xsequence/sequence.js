@@ -47,7 +47,14 @@ export class OtpHandler extends IdentityHandler implements Handler {
           )
           resolve({ signer, email: returnedEmail })
         } catch (e) {
-          reject(e)
+          // TODO: this should be AnswerIncorrectError
+          if (e instanceof Identity.Client.ProofVerificationFailedError) {
+            // Keep the top level promise unresolved so that respond can be retried
+            throw e
+          } else {
+            reject(e)
+            throw e
+          }
         }
       }
       await onPromptOtp(loginHint, respond)
@@ -100,7 +107,14 @@ export class OtpHandler extends IdentityHandler implements Handler {
               await this.nitroCompleteAuth(challenge.withAnswer(codeChallenge, otp))
               resolve(true)
             } catch (e) {
-              resolve(false)
+              // TODO: this should be AnswerIncorrectError
+              if (e instanceof Identity.Client.ProofVerificationFailedError) {
+                // Keep the handle promise unresolved so that respond can be retried
+                throw e
+              } else {
+                resolve(false)
+                throw e
+              }
             }
           }
 
