@@ -1,4 +1,10 @@
-import { Attestation, Payload, Signature as SequenceSignature, SessionSignature } from '@0xsequence/wallet-primitives'
+import {
+  Attestation,
+  Extensions,
+  Payload,
+  Signature as SequenceSignature,
+  SessionSignature,
+} from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { SessionSigner } from './session.js'
@@ -85,19 +91,20 @@ export class Implicit implements SessionSigner {
   async signCall(
     wallet: Address.Address,
     chainId: number,
-    call: Payload.Call,
-    nonce: {
-      space: bigint
-      nonce: bigint
-    },
+    payload: Payload.Calls,
+    callIdx: number,
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
+    const call = payload.calls[callIdx]!
     const isSupported = await this.supportedCall(wallet, chainId, call, sessionManagerAddress, provider)
     if (!isSupported) {
       throw new Error('Unsupported call')
     }
-    const callHash = SessionSignature.hashCallWithReplayProtection(call, chainId, nonce.space, nonce.nonce)
+    const useDeprecatedHash =
+      Address.isEqual(sessionManagerAddress, Extensions.Dev1.sessions) ||
+      Address.isEqual(sessionManagerAddress, Extensions.Dev2.sessions)
+    const callHash = SessionSignature.hashCallWithReplayProtection(payload, callIdx, chainId, useDeprecatedHash)
     const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       attestation: this._attestation,

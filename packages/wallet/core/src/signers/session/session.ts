@@ -17,11 +17,8 @@ export interface SessionSigner {
   signCall: (
     wallet: Address.Address,
     chainId: number,
-    call: Payload.Call,
-    nonce: {
-      space: bigint
-      nonce: bigint
-    },
+    payload: Payload.Calls,
+    callIdx: number,
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ) => Promise<SessionSignature.SessionCallSignature>
