@@ -461,6 +461,17 @@ describe('Session Signature', () => {
         expect(hash1).not.toBe(hash2)
       })
 
+      it('should NOT produce different hashes for same call at different index if skipCallIdx is true', () => {
+        // This is ONLY for backward compatibility with Dev1 and Dev2
+        // This is exploitable and should not be used in practice
+        const payload = { ...samplePayload, calls: [sampleCall, sampleCall] }
+
+        const hash1 = hashCallWithReplayProtection(payload, 0, testChainId, true)
+        const hash2 = hashCallWithReplayProtection(payload, 1, testChainId, true)
+
+        expect(hash1).toBe(hash2)
+      })
+
       it('should be deterministic', () => {
         const hash1 = hashCallWithReplayProtection(samplePayload, 0, testChainId)
         const hash2 = hashCallWithReplayProtection(samplePayload, 0, testChainId)
