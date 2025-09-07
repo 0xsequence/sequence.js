@@ -269,13 +269,19 @@ export class SessionManager implements SapientSigner {
     const implicitSigners: Address.Address[] = []
     await Promise.all(
       signers.map(async (signer) => {
+        const address = await signer.address
         if (isExplicitSessionSigner(signer)) {
-          explicitSigners.push(await signer.address)
+          if (!explicitSigners.find((a) => Address.isEqual(a, address))) {
+            explicitSigners.push(address)
+          }
         } else {
-          implicitSigners.push(await signer.address)
+          if (!implicitSigners.find((a) => Address.isEqual(a, address))) {
+            implicitSigners.push(address)
+          }
         }
       }),
     )
+
     const encodedSignature = SessionSignature.encodeSessionCallSignatures(
       signatures,
       await this.topology,
