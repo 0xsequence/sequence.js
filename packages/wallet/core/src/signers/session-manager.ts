@@ -20,6 +20,8 @@ export type SessionManagerOptions = {
   provider?: Provider.Provider
 }
 
+const MAX_SPACE = 2n ** 80n - 1n
+
 export class SessionManager implements SapientSigner {
   public readonly stateProvider: State.Provider
   public readonly address: Address.Address
@@ -229,6 +231,11 @@ export class SessionManager implements SapientSigner {
     // }
     if (!Payload.isCalls(payload) || payload.calls.length === 0) {
       throw new Error('Only calls are supported')
+    }
+
+    // Check space
+    if (payload.space > MAX_SPACE) {
+      throw new Error(`Space ${payload.space} is too large`)
     }
 
     const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
