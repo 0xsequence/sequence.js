@@ -162,6 +162,7 @@ export class Explicit implements ExplicitSessionSigner {
     provider?: Provider.Provider,
   ): Promise<boolean> {
     if (
+      Address.isEqual(call.to, sessionManagerAddress) &&
       Hex.size(call.data) > 4 &&
       Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
     ) {
@@ -187,6 +188,7 @@ export class Explicit implements ExplicitSessionSigner {
     const call = payload.calls[callIdx]!
     let permissionIndex: number
     if (
+      Address.isEqual(call.to, sessionManagerAddress) &&
       Hex.size(call.data) > 4 &&
       Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
     ) {
