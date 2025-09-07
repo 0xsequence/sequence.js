@@ -946,7 +946,8 @@ export class Account {
     quote?: FeeQuote,
     pstatus?: AccountStatus,
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
-    projectAccessKey?: string
+    projectAccessKey?: string,
+    waitForReceipt?: boolean
   ): Promise<ethers.TransactionResponse> {
     if (!Array.isArray(signedBundle)) {
       return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback, projectAccessKey)
@@ -957,7 +958,7 @@ export class Account {
     const decoratedBundle = await this.decorateTransactions(signedBundle, status, chainId)
     callback?.(decoratedBundle)
 
-    return this.relayer(chainId).relay(decoratedBundle, quote, undefined, projectAccessKey)
+    return this.relayer(chainId).relay(decoratedBundle, quote, waitForReceipt, projectAccessKey)
   }
 
   async fillGasLimits(
@@ -1047,7 +1048,8 @@ export class Account {
     options?: {
       nonceSpace?: ethers.BigNumberish
       serial?: boolean
-      projectAccessKey?: string
+      projectAccessKey?: string,
+      waitForReceipt?: boolean
     }
   ): Promise<ethers.TransactionResponse | undefined> {
     const status = await this.status(chainId)
@@ -1064,7 +1066,7 @@ export class Account {
     }
     bundles.push(...childBundles.filter(b => b.transactions.length > 0))
 
-    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback, options?.projectAccessKey)
+    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback, options?.projectAccessKey, options?.waitForReceipt)
   }
 
   async signTypedData(
