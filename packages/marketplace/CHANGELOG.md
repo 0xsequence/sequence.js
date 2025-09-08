@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.27
+
+### Patch Changes
+
+- Minor fix for return types in relay
+
 ## 2.3.26
 
 ### Patch Changes

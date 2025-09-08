@@ -1,5 +1,24 @@
 # @0xsequence/auth
 
+## 2.3.27
+
+### Patch Changes
+
+- Minor fix for return types in relay
+- Updated dependencies
+  - @0xsequence/migration@2.3.27
+  - @0xsequence/metadata@2.3.27
+  - @0xsequence/sessions@2.3.27
+  - @0xsequence/account@2.3.27
+  - @0xsequence/indexer@2.3.27
+  - @0xsequence/network@2.3.27
+  - @0xsequence/signhub@2.3.27
+  - @0xsequence/wallet@2.3.27
+  - @0xsequence/utils@2.3.27
+  - @0xsequence/core@2.3.27
+  - @0xsequence/abi@2.3.27
+  - @0xsequence/api@2.3.27
+
 ## 2.3.26
 
 ### Patch Changes

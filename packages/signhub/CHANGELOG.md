@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.3.27
+
+### Patch Changes
+
+- Minor fix for return types in relay
+- Updated dependencies
+  - @0xsequence/core@2.3.27
+
 ## 2.3.26
 
 ### Patch Changes

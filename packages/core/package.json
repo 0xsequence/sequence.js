@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/core",
-  "version": "2.3.26",
+  "version": "2.3.27",
   "description": "core primitives for interacting with the sequence wallet contracts",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/core",
   "source": "src/index.ts",
