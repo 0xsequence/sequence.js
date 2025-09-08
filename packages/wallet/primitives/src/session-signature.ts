@@ -179,17 +179,19 @@ export function encodeSessionCallSignatures(
 // Helper
 
 export function hashCallWithReplayProtection(
-  call: Payload.Call,
+  payload: Payload.Calls,
+  callIdx: number,
   chainId: number,
-  space: bigint,
-  nonce: bigint,
+  skipCallIdx: boolean = false, // Deprecated. Dev1 and Dev2 support
 ): Hex.Hex {
+  const call = payload.calls[callIdx]!
   return Hex.fromBytes(
     Hash.keccak256(
       Bytes.concat(
-        Bytes.fromNumber(Number(chainId), { size: 32 }),
-        Bytes.fromNumber(Number(space), { size: 32 }),
-        Bytes.fromNumber(Number(nonce), { size: 32 }),
+        Bytes.fromNumber(chainId, { size: 32 }),
+        Bytes.fromNumber(payload.space, { size: 32 }),
+        Bytes.fromNumber(payload.nonce, { size: 32 }),
+        skipCallIdx ? Bytes.from([]) : Bytes.fromNumber(callIdx, { size: 32 }),
         Bytes.fromHex(Payload.hashCall(call)),
       ),
     ),

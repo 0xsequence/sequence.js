@@ -899,7 +899,19 @@ export class ChainSessionManager {
 
     try {
       const preparedIncrement = await this.sessionManager.prepareIncrement(this.wallet.address, this.chainId, calls)
-      if (preparedIncrement) calls.push(preparedIncrement)
+      if (preparedIncrement) {
+        if (
+          Address.isEqual(this.sessionManager.address, Extensions.Dev1.sessions) ||
+          Address.isEqual(this.sessionManager.address, Extensions.Dev2.sessions)
+        ) {
+          // Last call
+          calls.push(preparedIncrement)
+          //FIXME Maybe this should throw since it's exploitable..?
+        } else {
+          // First call
+          calls.unshift(preparedIncrement)
+        }
+      }
 
       const envelope = await this.wallet.prepareTransaction(this.provider, calls, {
         noConfigUpdate: true,
