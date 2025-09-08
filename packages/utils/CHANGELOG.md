@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.26
+
+### Patch Changes
+
+- Expose waitForReceipt for AccountSigner
+
 ## 2.3.25
 
 ### Patch Changes

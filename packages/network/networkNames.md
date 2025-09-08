@@ -25,7 +25,7 @@ You can use this file as a reference to look up the correct network name slug a 
 | Soneium Minato (Testnet) | 1946 | soneium-minato |
 | B3 Sepolia | 1993 | b3-sepolia |
 | Somnia | 5031 | somnia |
-| Sandbox testnet | 6252 | sandbox-testnet |
+| Sandbox Testnet | 6252 | sandbox-testnet |
 | LAOS | 6283 | laos |
 | The Root Network | 7668 | rootnet |
 | The Root Network Porcini Testnet | 7672 | rootnet-porcini |

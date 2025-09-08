@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.26
+
+### Patch Changes
+
+- Expose waitForReceipt for AccountSigner
+- Updated dependencies
+  - @0xsequence/waas@2.3.26
+
 ## 2.3.25
 
 ### Patch Changes

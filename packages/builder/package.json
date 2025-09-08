@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/builder",
-  "version": "2.3.25",
+  "version": "2.3.26",
   "description": "builder sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/builder",
   "source": "src/index.ts",

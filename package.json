@@ -104,5 +104,5 @@
       "glob-parent@<5.1.2": ">=5.1.2"
     }
   },
-  "packageManager": "pnpm@10.11.1"
+  "packageManager": "pnpm@10.15.1"
 }
