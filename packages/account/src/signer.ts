@@ -149,6 +149,7 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
     txs: commons.transaction.Transactionish,
     options?: {
       simulateForFeeOptions?: boolean
+      projectAccessKey?: string
       waitForReceipt?: boolean
     }
   ): Promise<ethers.TransactionResponse> {
@@ -172,6 +173,7 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
       undefined,
       {
         nonceSpace: this.options?.nonceSpace,
+        projectAccessKey: options?.projectAccessKey,
         waitForReceipt: options?.waitForReceipt
       }
     ) as Promise<ethers.TransactionResponse> // Will always have a transaction response
