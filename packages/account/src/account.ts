@@ -948,7 +948,7 @@ export class Account {
     callback?: (bundle: commons.transaction.IntendedTransactionBundle) => void,
     projectAccessKey?: string,
     waitForReceipt?: boolean
-  ): Promise<ethers.TransactionResponse> {
+  ): Promise<commons.transaction.TransactionResponse> {
     if (!Array.isArray(signedBundle)) {
       return this.sendSignedTransactions([signedBundle], chainId, quote, pstatus, callback, projectAccessKey)
     }
@@ -1050,8 +1050,8 @@ export class Account {
       serial?: boolean
       projectAccessKey?: string,
       waitForReceipt?: boolean
-    }
-  ): Promise<ethers.TransactionResponse | undefined> {
+    } 
+  ): Promise<commons.transaction.TransactionResponse | undefined> {
     const status = await this.status(chainId)
 
     const predecorated = skipPreDecorate ? txs : await this.predecorateTransactions(txs, status, chainId)
