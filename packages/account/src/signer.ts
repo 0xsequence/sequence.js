@@ -152,7 +152,7 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
       projectAccessKey?: string
       waitForReceipt?: boolean
     }
-  ): Promise<ethers.TransactionResponse> {
+  ): Promise<commons.transaction.TransactionResponse> {
     const prepare = await this.account.prepareTransactions({
       txs,
       chainId: this.chainId,
@@ -176,7 +176,7 @@ export class AccountSigner implements ethers.AbstractSigner<ethers.Provider> {
         projectAccessKey: options?.projectAccessKey,
         waitForReceipt: options?.waitForReceipt
       }
-    ) as Promise<ethers.TransactionResponse> // Will always have a transaction response
+    ) as Promise<commons.transaction.TransactionResponse> // Will always have a transaction response
   }
 
   getBalance(blockTag?: ethers.BlockTag | undefined): Promise<bigint> {
