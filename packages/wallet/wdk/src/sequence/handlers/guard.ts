@@ -4,6 +4,7 @@ import * as Guard from '@0xsequence/guard'
 import { Handler } from './handler.js'
 import { BaseSignatureRequest, SignerUnavailable, SignerReady, SignerActionable, Kinds } from '../types/index.js'
 import { Signatures } from '../signatures.js'
+import { GuardRole, Guards } from '../guards.js'
 
 export class GuardHandler implements Handler {
   kind = Kinds.Guard
@@ -14,7 +15,7 @@ export class GuardHandler implements Handler {
 
   constructor(
     private readonly signatures: Signatures,
-    private readonly guard: Signers.Guard,
+    private readonly guards: Guards,
   ) {}
 
   public registerUI(
@@ -39,6 +40,26 @@ export class GuardHandler implements Handler {
     _imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
+    const guardInfo = this.guards.getByAddress(address)
+    if (!guardInfo) {
+      return {
+        address,
+        handler: this,
+        status: 'unavailable',
+        reason: 'guard-not-found',
+      }
+    }
+
+    const [role, guard] = guardInfo
+    if (role !== GuardRole.Wallet) {
+      return {
+        address,
+        handler: this,
+        status: 'unavailable',
+        reason: 'not-wallet-guard',
+      }
+    }
+
     const onPromptCode = this.onPromptCode
     if (!onPromptCode) {
       return {
@@ -65,14 +86,14 @@ export class GuardHandler implements Handler {
       handle: () =>
         new Promise(async (resolve, reject) => {
           try {
-            const signature = await this.guard.signEnvelope(request.envelope)
+            const signature = await guard.signEnvelope(request.envelope)
             await this.signatures.addSignature(request.id, signature)
             resolve(true)
           } catch (e) {
             if (e instanceof Guard.AuthRequiredError) {
               const respond = async (code: string) => {
                 try {
-                  const signature = await this.guard.signEnvelope(request.envelope, { id: e.id, code })
+                  const signature = await guard.signEnvelope(request.envelope, { id: e.id, code })
                   await this.signatures.addSignature(request.id, signature)
                   resolve(true)
                 } catch (e) {
