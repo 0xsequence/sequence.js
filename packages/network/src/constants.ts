@@ -143,7 +143,7 @@ export enum ChainId {
 
 
   // INCENTIV TESTNET
-  INCENTIV_TESTNET = 11690,
+  INCENTIV_TESTNET = 11690, // deprecated
   INCENTIV_TESTNET_V2 = 28802,
 
   //SEI
@@ -1146,6 +1146,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'CENT',
       decimals: 18,
     },
+    deprecated: true,
   },
 
   [ChainId.INCENTIV_TESTNET_V2]: {
