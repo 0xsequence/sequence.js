@@ -1864,6 +1864,7 @@ export interface GetIntentCallsPayloadsReturn {
   metaTxns: Array<MetaTxn>
   trailsFee: TrailsFee
   quote: IntentQuote
+  feeQuote?: string
   originIntentAddress: string
   destinationIntentAddress: string
 }
