@@ -1,5 +1,14 @@
 # @0xsequence/tests
 
+## 2.3.28
+
+### Patch Changes
+
+- Deprecate Incentiv Testnet v1
+- Updated dependencies
+  - @0xsequence/utils@2.3.28
+  - @0xsequence/core@2.3.28
+
 ## 2.3.27
 
 ### Patch Changes

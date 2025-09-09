@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/network",
-  "version": "2.3.27",
+  "version": "2.3.28",
   "description": "network sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/network",
   "source": "src/index.ts",

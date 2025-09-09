@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 2.3.28
+
+### Patch Changes
+
+- Deprecate Incentiv Testnet v1
+
 ## 2.3.27
 
 ### Patch Changes
