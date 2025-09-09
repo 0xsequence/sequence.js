@@ -7,6 +7,7 @@ import { Signatures } from '../signatures.js'
 import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
 import { Kinds } from '../types/signer.js'
 import { IdentityHandler } from './identity.js'
+import { AnswerIncorrectError, ChallengeExpiredError, TooManyAttemptsError } from '../errors.js'
 
 type RespondFn = (otp: string) => Promise<void>
 
@@ -37,28 +38,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
     }
 
     const challenge = Identity.OtpChallenge.fromRecipient(this.identityType, email)
-    const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
-
-    return new Promise(async (resolve, reject) => {
-      const respond = async (otp: string) => {
-        try {
-          const { signer, email: returnedEmail } = await this.nitroCompleteAuth(
-            challenge.withAnswer(codeChallenge, otp),
-          )
-          resolve({ signer, email: returnedEmail })
-        } catch (e) {
-          // TODO: this should be AnswerIncorrectError
-          if (e instanceof Identity.Client.ProofVerificationFailedError) {
-            // Keep the top level promise unresolved so that respond can be retried
-            throw e
-          } else {
-            reject(e)
-            throw e
-          }
-        }
-      }
-      await onPromptOtp(loginHint, respond)
-    })
+    return await this.handleAuth(challenge, onPromptOtp)
   }
 
   async status(
@@ -94,32 +74,55 @@ export class OtpHandler extends IdentityHandler implements Handler {
       handler: this,
       status: 'actionable',
       message: 'request-otp',
-      handle: () =>
-        new Promise(async (resolve, reject) => {
-          const challenge = Identity.OtpChallenge.fromSigner(this.identityType, {
-            address,
-            keyType: Identity.KeyType.Ethereum_Secp256k1,
-          })
-          const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
+      handle: async () => {
+        const challenge = Identity.OtpChallenge.fromSigner(this.identityType, {
+          address,
+          keyType: Identity.KeyType.Ethereum_Secp256k1,
+        })
+        try {
+          await this.handleAuth(challenge, onPromptOtp)
+          return true
+        } catch (e) {
+          return false
+        }
+      },
+    }
+  }
 
-          const respond = async (otp: string) => {
-            try {
-              await this.nitroCompleteAuth(challenge.withAnswer(codeChallenge, otp))
-              resolve(true)
-            } catch (e) {
-              // TODO: this should be AnswerIncorrectError
-              if (e instanceof Identity.Client.ProofVerificationFailedError) {
-                // Keep the handle promise unresolved so that respond can be retried
-                throw e
-              } else {
-                resolve(false)
-                throw e
-              }
+  private handleAuth(
+    challenge: Identity.OtpChallenge,
+    onPromptOtp: (recipient: string, respond: RespondFn) => Promise<void>,
+  ): Promise<{ signer: Signers.Signer & Signers.Witnessable; email: string }> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
+
+        const respond = async (otp: string) => {
+          try {
+            const { signer, email: returnedEmail } = await this.nitroCompleteAuth(
+              challenge.withAnswer(codeChallenge, otp),
+            )
+            resolve({ signer, email: returnedEmail })
+          } catch (e) {
+            if (e instanceof Identity.Client.AnswerIncorrectError) {
+              // Keep the handle promise unresolved so that respond can be retried
+              throw new AnswerIncorrectError()
+            } else if (e instanceof Identity.Client.ChallengeExpiredError) {
+              reject(e)
+              throw new ChallengeExpiredError()
+            } else if (e instanceof Identity.Client.TooManyAttemptsError) {
+              reject(e)
+              throw new TooManyAttemptsError()
+            } else {
+              reject(e)
             }
           }
+        }
 
-          await onPromptOtp(loginHint, respond)
-        }),
-    }
+        await onPromptOtp(loginHint, respond)
+      } catch (e) {
+        reject(e)
+      }
+    })
   }
 }
