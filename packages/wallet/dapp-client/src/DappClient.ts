@@ -8,7 +8,6 @@ import { InitializationError, SigningError, TransactionError } from './utils/err
 import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
-  DappClientGuardCodeRequiredEventListener,
   DappClientWalletActionEventListener,
   GuardConfig,
   LoginMethod,
@@ -33,7 +32,6 @@ interface DappClientEventMap {
   sessionsUpdated: () => void
   walletActionResponse: DappClientWalletActionEventListener
   explicitSessionResponse: DappClientExplicitSessionEventListener
-  guardCodeRequired: DappClientGuardCodeRequiredEventListener
 }
 
 /**
@@ -796,10 +794,6 @@ export class DappClient {
 
       chainSessionManager.on('explicitSessionResponse', (data) => {
         this.emit('explicitSessionResponse', { ...data, chainId })
-      })
-
-      chainSessionManager.on('guardCodeRequired', (data) => {
-        this.emit('guardCodeRequired', { ...data })
       })
     }
     return chainSessionManager
