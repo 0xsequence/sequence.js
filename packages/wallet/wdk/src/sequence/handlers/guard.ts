@@ -100,8 +100,8 @@ export class GuardHandler implements Handler {
                   reject(e)
                 }
               }
+
               await onPromptCode(e.id, respond)
-              resolve(true)
             } else {
               reject(e)
             }
