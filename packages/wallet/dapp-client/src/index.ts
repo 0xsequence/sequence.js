@@ -22,7 +22,6 @@ export type {
   SendWalletTransactionPayload,
   SendWalletTransactionSuccessResponse,
   WalletActionResponse,
-  DappClientGuardCodeRequiredEventListener,
 } from './types/index.js'
 export { RequestActionType, TransportMode } from './types/index.js'
 export {
