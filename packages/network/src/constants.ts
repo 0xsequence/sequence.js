@@ -142,7 +142,6 @@ export enum ChainId {
   SOMNIA = 5031,
 
   // INCENTIV TESTNET
-  INCENTIV_TESTNET = 11690,
   INCENTIV_TESTNET_V2 = 28802,
 
   //SEI
@@ -1125,24 +1124,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'STT',
       name: 'STT',
-      decimals: 18
-    }
-  },
-
-  [ChainId.INCENTIV_TESTNET]: {
-    chainId: ChainId.INCENTIV_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'incentiv-testnet',
-    title: 'Incentiv Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Incentiv Testnet Explorer',
-      rootUrl: 'https://explorer.testnet.incentiv.net/'
-    },
-    nativeToken: {
-      symbol: 'CENT',
-      name: 'CENT',
       decimals: 18
     }
   },
