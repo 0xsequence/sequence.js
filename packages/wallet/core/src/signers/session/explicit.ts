@@ -246,11 +246,14 @@ export class Explicit implements ExplicitSessionSigner {
     chainId: number,
     calls: Payload.Call[],
     sessionManagerAddress: Address.Address,
-    provider?: Provider.Provider,
+    provider: Provider.Provider,
   ): Promise<UsageLimit[]> {
     const increments: { usageHash: Hex.Hex; increment: bigint }[] = []
     const usageValueHash = this.getValueUsageHash()
-    let valueUsed = 0n
+
+    // Always read the current value usage
+    const currentUsage = await this.readCurrentUsageLimit(wallet, sessionManagerAddress, usageValueHash, provider)
+    let valueUsed = currentUsage.usageAmount
 
     for (const call of calls) {
       // Find matching permission
@@ -285,26 +288,13 @@ export class Explicit implements ExplicitSessionSigner {
       valueUsed += call.value
     }
 
-    // Check the value
-    if (valueUsed > 0n) {
-      increments.push({
-        usageHash: usageValueHash,
-        increment: valueUsed,
-      })
-    }
-
     // If no increments, return early
-    if (increments.length === 0) {
+    if (increments.length === 0 && valueUsed === 0n) {
       return []
     }
 
-    // Provider is required if we have increments
-    if (!provider) {
-      throw new Error('Provider required for cumulative rules')
-    }
-
     // Apply current usage limit to each increment
-    return Promise.all(
+    const updatedIncrements = await Promise.all(
       increments.map(async ({ usageHash, increment }) => {
         if (increment === 0n) return null
 
@@ -324,5 +314,15 @@ export class Explicit implements ExplicitSessionSigner {
         }
       }),
     ).then((results) => results.filter((r): r is UsageLimit => r !== null))
+
+    // Finally, add the value usage if it's non-zero
+    if (valueUsed > 0n) {
+      updatedIncrements.push({
+        usageHash: usageValueHash,
+        usageAmount: valueUsed,
+      })
+    }
+
+    return updatedIncrements
   }
 }

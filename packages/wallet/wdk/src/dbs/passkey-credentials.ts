@@ -10,6 +10,7 @@ export type PasskeyCredential = {
   publicKey: Extensions.Passkeys.PublicKey
   walletAddress: Address.Address
   createdAt: string
+  lastLoginAt?: string
 }
 
 export class PasskeyCredentials extends Generic<PasskeyCredential, 'credentialId'> {
@@ -21,22 +22,10 @@ export class PasskeyCredentials extends Generic<PasskeyCredential, 'credentialId
         _event: IDBVersionChangeEvent,
       ) => {
         if (!db.objectStoreNames.contains(TABLE_NAME)) {
-          const store = db.createObjectStore(TABLE_NAME)
-
-          // Create an index on walletAddress for efficient lookups
-          store.createIndex('walletAddress', 'walletAddress', { unique: false })
+          db.createObjectStore(TABLE_NAME)
         }
       },
     ])
-  }
-
-  /**
-   * Get all passkey credentials for a specific wallet address
-   */
-  async getByWallet(walletAddress: Address.Address): Promise<PasskeyCredential[]> {
-    const store = await this.getStore('readonly')
-    const index = store.index('walletAddress')
-    return index.getAll(walletAddress)
   }
 
   /**
@@ -49,18 +38,31 @@ export class PasskeyCredentials extends Generic<PasskeyCredential, 'credentialId
   /**
    * Store a new passkey credential
    */
-  async storeCredential(
+  async saveCredential(
     credentialId: string,
     publicKey: Extensions.Passkeys.PublicKey,
     walletAddress: Address.Address,
   ): Promise<void> {
+    const now = new Date().toISOString()
     const credential: PasskeyCredential = {
       credentialId,
       publicKey,
       walletAddress,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      lastLoginAt: now, // Set initially on creation
     }
 
     await this.set(credential)
+  }
+
+  async updateCredential(
+    credentialId: string,
+    { lastLoginAt, walletAddress }: { lastLoginAt: string; walletAddress: Address.Address },
+  ): Promise<void> {
+    const existingCredential = await this.getByCredentialId(credentialId)
+    if (existingCredential) {
+      const updatedCredential: PasskeyCredential = { ...existingCredential, lastLoginAt, walletAddress }
+      await this.set(updatedCredential)
+    }
   }
 }

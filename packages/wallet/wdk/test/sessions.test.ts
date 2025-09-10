@@ -217,7 +217,7 @@ describe('Sessions (via Manager)', () => {
       })
 
       // At this point the wallet should NOT have a session topology
-      expect(wdk.manager.sessions.getTopology(walletAddress)).rejects.toThrow('Session manager not found')
+      await expect(wdk.manager.sessions.getTopology(walletAddress)).rejects.toThrow('Session manager not found')
 
       // Create the explicit session signer
       const e = await dapp.pkStore.generateAndStore()
@@ -267,6 +267,10 @@ describe('Sessions (via Manager)', () => {
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
             // Nonce is 0
             return Promise.resolve('0x00')
+          }
+          if (method === 'eth_call' && params[0].data?.startsWith(AbiFunction.getSelector(Constants.GET_LIMIT_USAGE))) {
+            // Return 0 for usage limit (no usage yet)
+            return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
           }
         })
       }
@@ -338,6 +342,10 @@ describe('Sessions (via Manager)', () => {
             // Nonce is 0
             return Promise.resolve('0x00')
           }
+          if (method === 'eth_call' && params[0].data?.startsWith(AbiFunction.getSelector(Constants.GET_LIMIT_USAGE))) {
+            // Return 0 for usage limit (no usage yet)
+            return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
+          }
         })
       }
 
@@ -408,6 +416,10 @@ describe('Sessions (via Manager)', () => {
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
             // Nonce is 0
             return Promise.resolve('0x00')
+          }
+          if (method === 'eth_call' && params[0].data?.startsWith(AbiFunction.getSelector(Constants.GET_LIMIT_USAGE))) {
+            // Return 0 for usage limit (no usage yet)
+            return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
           }
         })
       }

@@ -8,6 +8,7 @@ import {
   IdentityType,
   AuthMode,
 } from './identity-instrument.gen.js'
+export * as Client from './identity-instrument.gen.js'
 import { Challenge } from './challenge.js'
 
 export type { CommitVerifierReturn, CompleteAuthReturn }

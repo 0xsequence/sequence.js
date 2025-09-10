@@ -45,7 +45,7 @@ export interface SignaturesInterface {
   /**
    * Cancel a specific signature request.
    *
-   * @param requestId
+   * @param requestId The ID of the request to cancel
    */
   cancel(requestId: string): Promise<void>
 
@@ -88,6 +88,51 @@ export interface SignaturesInterface {
    * @returns A function that, when called, will unsubscribe the listener.
    */
   onSignatureRequestsUpdate(cb: (requests: BaseSignatureRequest[]) => void, trigger?: boolean): () => void
+
+  /**
+   * Listen for a specific terminal status on a signature request.
+   *
+   * This provides a targeted way to handle request completion or cancellation and automatically
+   * disposes the listener when any terminal state is reached.
+   *
+   * @param status The terminal status to listen for ('completed' or 'cancelled').
+   * @param requestId The ID of the signature request to monitor.
+   * @param callback Function to execute when the status is reached.
+   * @returns A function that, when called, will unsubscribe the listener.
+   *
+   * The listener automatically disposes after any terminal state is reached,
+   * ensuring no memory leaks from one-time status listeners.
+   *
+   * @example
+   * ```typescript
+   * // Listen for completion (auto-disposes when resolved)
+   * signatures.onSignatureRequestStatus('completed', requestId, (request) => {
+   *   console.log('Request completed!', request)
+   * })
+   *
+   * // Listen for cancellation (auto-disposes when resolved)
+   * signatures.onSignatureRequestStatus('cancelled', requestId, (request) => {
+   *   console.log('Request cancelled')
+   * })
+   * ```
+   */
+  onSignatureRequestStatus(
+    status: 'completed' | 'cancelled',
+    requestId: string,
+    callback: (request: SignatureRequest) => void,
+  ): () => void
+
+  /**
+   * Convenience: listen for completion of a specific request.
+   * Disposes automatically when the request resolves (completed or cancelled).
+   */
+  onComplete(requestId: string, callback: (request: SignatureRequest) => void): () => void
+
+  /**
+   * Convenience: listen for cancellation of a specific request.
+   * Disposes automatically when the request resolves (completed or cancelled).
+   */
+  onCancel(requestId: string, callback: (request: SignatureRequest) => void): () => void
 }
 
 export class Signatures implements SignaturesInterface {
@@ -246,6 +291,50 @@ export class Signatures implements SignaturesInterface {
     }
 
     return undo
+  }
+
+  onSignatureRequestStatus(
+    status: 'completed' | 'cancelled',
+    requestId: string,
+    callback: (request: SignatureRequest) => void,
+  ): () => void {
+    let disposed = false
+
+    const unsubscribe = this.onSignatureRequestUpdate(
+      requestId,
+      (request) => {
+        if (disposed) return
+
+        const currentStatus = request.status
+
+        // Check if we've reached a terminal state
+        if (currentStatus === 'completed' || currentStatus === 'cancelled') {
+          // Fire callback if this is the status we're listening for
+          if (currentStatus === status) {
+            callback(request)
+          }
+
+          // Always dispose after any terminal state is reached
+          disposed = true
+          setTimeout(() => unsubscribe(), 0) // Dispose after callback completes
+        }
+      },
+      undefined, // No error callback needed
+      false, // Don't trigger immediately
+    )
+
+    return () => {
+      disposed = true
+      unsubscribe()
+    }
+  }
+
+  onComplete(requestId: string, callback: (request: SignatureRequest) => void): () => void {
+    return this.onSignatureRequestStatus('completed', requestId, callback)
+  }
+
+  onCancel(requestId: string, callback: (request: SignatureRequest) => void): () => void {
+    return this.onSignatureRequestStatus('cancelled', requestId, callback)
   }
 
   async complete(requestId: string) {
