@@ -5,6 +5,9 @@
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/abi",
   "author": "Sequence Platforms Inc.",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
