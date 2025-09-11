@@ -228,6 +228,7 @@ export class ChainSessionManager {
         false,
         implicitSession.loginMethod,
         implicitSession.userEmail,
+        implicitSession.guard,
       )
     }
 
@@ -923,9 +924,10 @@ export class ChainSessionManager {
       }
       const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
-      if (this.guard && !Envelope.reachedThreshold(signedEnvelope)) {
-        // TODO: this might fail if 2FA is required
-        const guard = new Signers.Guard(new Guard.Sequence.Guard(this.guard.url, this.guard.address))
+      if (!Envelope.reachedThreshold(signedEnvelope) && this.guard?.moduleAddresses.has(signature.address)) {
+        const guard = new Signers.Guard(
+          new Guard.Sequence.Guard(this.guard.url, this.guard.moduleAddresses.get(signature.address)!),
+        )
         const guardSignature = await guard.signEnvelope(signedEnvelope)
         signedEnvelope.signatures.push(guardSignature)
       }

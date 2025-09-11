@@ -11,6 +11,7 @@ import { Action, Module } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
 import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
 import { PasskeysHandler } from './handlers/passkeys.js'
+import { GuardRole } from './guards.js'
 
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple'
@@ -303,8 +304,10 @@ export interface WalletsInterface {
   /**
    * Retrieves the full, resolved configuration of a wallet.
    *
-   * This method provides a detailed view of the wallet's structure, including lists of
-   * login signers and device signers with their "kind" (e.g., 'local-device', 'login-passkey') resolved.
+   * This method provides a detailed view of the wallet's structure, including lists of login signers,
+   * device signers and a guard signer with their "kind" (e.g., 'local-device', 'login-passkey') resolved.
+   * Additionally, each module with a guard signer will have its guard signer resolved in the `moduleGuards` map,
+   * where the key is the module address and the value is the guard signer.
    * It also includes the raw, low-level configuration topology.
    *
    * @param wallet The address of the wallet.
@@ -313,7 +316,8 @@ export interface WalletsInterface {
   getConfiguration(wallet: Address.Address): Promise<{
     devices: SignerWithKind[]
     login: SignerWithKind[]
-    guard?: SignerWithKind
+    walletGuard?: SignerWithKind
+    moduleGuards: Map<`0x${string}`, SignerWithKind>
     raw: any
   }>
 
@@ -800,9 +804,8 @@ export class Wallets implements WalletsInterface {
       },
     ])
     const devicesTopology = buildCappedTree([{ address: device.address }])
-    const guardTopology = args.noGuard
-      ? undefined
-      : (buildCappedTreeFromTopology(1n, this.shared.sequence.defaultGuardTopology) as Config.NestedLeaf)
+    const walletGuardTopology = args.noGuard ? undefined : this.shared.modules.guards.topology(GuardRole.Wallet)
+    const sessionsGuardTopology = args.noGuard ? undefined : this.shared.modules.guards.topology(GuardRole.Sessions)
 
     // Add modules
     let modules: Module[] = []
@@ -820,11 +823,11 @@ export class Wallets implements WalletsInterface {
         address: this.shared.sequence.extensions.sessions,
         imageHash: sessionsImageHash,
       }
-      if (guardTopology) {
+      if (sessionsGuardTopology) {
         modules.push({
           sapientLeaf: signer,
           weight: 255n,
-          guardLeaf: guardTopology,
+          guardLeaf: sessionsGuardTopology,
         })
       } else {
         modules.push({
@@ -839,7 +842,7 @@ export class Wallets implements WalletsInterface {
     }
 
     // Create initial configuration
-    const initialConfiguration = toConfig(0n, loginTopology, devicesTopology, modules, guardTopology)
+    const initialConfiguration = toConfig(0n, loginTopology, devicesTopology, modules, walletGuardTopology)
     console.log('initialConfiguration', initialConfiguration)
 
     // Create wallet
@@ -1236,7 +1239,22 @@ export class Wallets implements WalletsInterface {
     const deviceSigners = Config.getSigners(raw.devicesTopology)
     const loginSigners = Config.getSigners(raw.loginTopology)
 
-    const guardSigners = raw.guardTopology ? Config.getSigners(raw.guardTopology) : undefined
+    const walletGuardSigners = raw.guardTopology ? Config.getSigners(raw.guardTopology) : undefined
+
+    const moduleGuards = (
+      await Promise.all(
+        raw.modules
+          .filter((m) => m.guardLeaf)
+          .map((m) => ({ moduleAddress: m.sapientLeaf.address, guardSigners: Config.getSigners(m.guardLeaf!).signers }))
+          .filter(({ guardSigners }) => guardSigners && guardSigners.length > 0)
+          .map(async ({ moduleAddress, guardSigners }) => ({
+            moduleAddress,
+            guardSigners: await this.shared.modules.signers.resolveKinds(wallet, guardSigners),
+          })),
+      )
+    )
+      .filter(({ guardSigners }) => guardSigners && guardSigners.length > 0)
+      .map(({ moduleAddress, guardSigners }) => [moduleAddress, guardSigners[0]]) as [Address.Address, SignerWithKind][]
 
     return {
       devices: await this.shared.modules.signers.resolveKinds(wallet, [
@@ -1247,10 +1265,11 @@ export class Wallets implements WalletsInterface {
         ...loginSigners.signers,
         ...loginSigners.sapientSigners,
       ]),
-      guard:
-        guardSigners && guardSigners.signers.length > 0
-          ? (await this.shared.modules.signers.resolveKinds(wallet, guardSigners.signers))[0]
+      walletGuard:
+        walletGuardSigners && walletGuardSigners.signers.length > 0
+          ? (await this.shared.modules.signers.resolveKinds(wallet, walletGuardSigners.signers))[0]
           : undefined,
+      moduleGuards: new Map<`0x${string}`, SignerWithKind>(moduleGuards),
       raw,
     }
   }

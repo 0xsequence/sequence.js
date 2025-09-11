@@ -19,7 +19,7 @@ export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
 
 export interface GuardConfig {
   url: string
-  address: Address.Address
+  moduleAddresses: Map<Address.Address, Address.Address>
 }
 
 // --- Payloads for Transport ---
