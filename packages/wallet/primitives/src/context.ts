@@ -40,6 +40,25 @@ export const Dev2_4337: Context = {
   },
 }
 
+export const Rc3: Context = {
+  factory: '0x00000000000018A77519fcCCa060c2537c9D6d3F',
+  stage1: '0x00000000000084fA81809Dd337311297C5594d62',
+  stage2: '0x7438718F9E4b9B834e305A620EEeCf2B9E6eBE79',
+  creationCode: '0x6041600e3d396021805130553df33d3d36153402601f57363d3d373d363d30545af43d82803e903d91601f57fd5bf3',
+}
+
+export const Rc3_4337: Context = {
+  factory: '0x00000000000018A77519fcCCa060c2537c9D6d3F',
+  stage1: '0x0000000000005A02E3218e820EA45102F84A35C7',
+  stage2: '0x7706aaC0cc2C42C01CE17136F7475b0E46F2ABA1',
+  creationCode: '0x6041600e3d396021805130553df33d3d36153402601f57363d3d373d363d30545af43d82803e903d91601f57fd5bf3',
+  capabilities: {
+    erc4337: {
+      entrypoint: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+    },
+  },
+}
+
 export type KnownContext = Context & {
   name: string
   development: boolean
@@ -49,6 +68,8 @@ export const KnownContexts: KnownContext[] = [
   { name: 'Dev1', development: true, ...Dev1 },
   { name: 'Dev2', development: true, ...Dev2 },
   { name: 'Dev2_4337', development: true, ...Dev2_4337 },
+  { name: 'Rc3', development: true, ...Rc3 },
+  { name: 'Rc3_4337', development: true, ...Rc3_4337 },
 ]
 
 export function isKnownContext(context: Context): context is KnownContext {

@@ -1,4 +1,4 @@
-import { Payload, Permission, SessionSignature, Constants, Network } from '@0xsequence/wallet-primitives'
+import { Payload, Permission, SessionSignature, Constants, Network, Extensions } from '@0xsequence/wallet-primitives'
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { ExplicitSessionSigner, UsageLimit } from './session.js'
@@ -162,6 +162,7 @@ export class Explicit implements ExplicitSessionSigner {
     provider?: Provider.Provider,
   ): Promise<boolean> {
     if (
+      Address.isEqual(call.to, sessionManagerAddress) &&
       Hex.size(call.data) > 4 &&
       Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
     ) {
@@ -179,16 +180,15 @@ export class Explicit implements ExplicitSessionSigner {
   async signCall(
     wallet: Address.Address,
     chainId: number,
-    call: Payload.Call,
-    nonce: {
-      space: bigint
-      nonce: bigint
-    },
+    payload: Payload.Calls,
+    callIdx: number,
     sessionManagerAddress: Address.Address,
     provider?: Provider.Provider,
   ): Promise<SessionSignature.SessionCallSignature> {
+    const call = payload.calls[callIdx]!
     let permissionIndex: number
     if (
+      Address.isEqual(call.to, sessionManagerAddress) &&
       Hex.size(call.data) > 4 &&
       Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
     ) {
@@ -209,7 +209,10 @@ export class Explicit implements ExplicitSessionSigner {
     }
 
     // Sign it
-    const callHash = SessionSignature.hashCallWithReplayProtection(call, chainId, nonce.space, nonce.nonce)
+    const useDeprecatedHash =
+      Address.isEqual(sessionManagerAddress, Extensions.Dev1.sessions) ||
+      Address.isEqual(sessionManagerAddress, Extensions.Dev2.sessions)
+    const callHash = SessionSignature.hashCallWithReplayProtection(payload, callIdx, chainId, useDeprecatedHash)
     const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       permissionIndex: BigInt(permissionIndex),
