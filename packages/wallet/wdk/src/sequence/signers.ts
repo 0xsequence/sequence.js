@@ -37,7 +37,7 @@ export class Signers {
       return Kinds.Recovery
     }
     if (
-      Array.from(this.shared.sequence.guardAddresses.values()).some((guardAddress) =>
+      Array.from(Object.values(this.shared.sequence.guardAddresses)).some((guardAddress) =>
         Address.isEqual(guardAddress, address),
       )
     ) {

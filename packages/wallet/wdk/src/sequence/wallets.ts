@@ -804,8 +804,8 @@ export class Wallets implements WalletsInterface {
       },
     ])
     const devicesTopology = buildCappedTree([{ address: device.address }])
-    const walletGuardTopology = args.noGuard ? undefined : this.shared.modules.guards.topology(GuardRole.Wallet)
-    const sessionsGuardTopology = args.noGuard ? undefined : this.shared.modules.guards.topology(GuardRole.Sessions)
+    const walletGuardTopology = args.noGuard ? undefined : this.shared.modules.guards.topology('wallet')
+    const sessionsGuardTopology = args.noGuard ? undefined : this.shared.modules.guards.topology('sessions')
 
     // Add modules
     let modules: Module[] = []

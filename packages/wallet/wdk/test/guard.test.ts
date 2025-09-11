@@ -72,11 +72,7 @@ describe('GuardHandler', () => {
         },
       }
 
-      const status = await guardHandler.status(
-        guards.getByRole(GuardRole.Wallet).address,
-        undefined,
-        mockRequest as any,
-      )
+      const status = await guardHandler.status(guards.getByRole('wallet').address, undefined, mockRequest as any)
       expect(status.status).toBe('unavailable')
       expect((status as any).reason).toBe('guard-ui-not-registered')
     })
@@ -97,11 +93,7 @@ describe('GuardHandler', () => {
 
       guardHandler.registerUI(vi.fn())
 
-      const status = await guardHandler.status(
-        guards.getByRole(GuardRole.Wallet).address,
-        undefined,
-        mockRequest as any,
-      )
+      const status = await guardHandler.status(guards.getByRole('wallet').address, undefined, mockRequest as any)
 
       expect(status.status).toBe('unavailable')
       expect((status as any).reason).toBe('must-not-sign-first')
@@ -123,14 +115,10 @@ describe('GuardHandler', () => {
 
       guardHandler.registerUI(vi.fn())
 
-      const status = await guardHandler.status(
-        guards.getByRole(GuardRole.Wallet).address,
-        undefined,
-        mockRequest as any,
-      )
+      const status = await guardHandler.status(guards.getByRole('wallet').address, undefined, mockRequest as any)
 
       expect(status.status).toBe('ready')
-      expect(status.address).toBe(guards.getByRole(GuardRole.Wallet).address)
+      expect(status.address).toBe(guards.getByRole('wallet').address)
       expect(status.handler).toBe(guardHandler)
       expect(typeof (status as any).handle).toBe('function')
     })
@@ -169,11 +157,7 @@ describe('GuardHandler', () => {
         },
       }
 
-      const status = await guardHandler.status(
-        guards.getByRole(GuardRole.Wallet).address,
-        undefined,
-        mockRequest as any,
-      )
+      const status = await guardHandler.status(guards.getByRole('wallet').address, undefined, mockRequest as any)
       const result = await (status as any).handle()
 
       expect(result).toBe(true)
@@ -181,7 +165,7 @@ describe('GuardHandler', () => {
 
       const [requestId, signatureData] = mockAddSignature.mock.calls[0]
       expect(requestId).toBe('test-request-id')
-      expect(signatureData.address).toBe(guards.getByRole(GuardRole.Wallet).address)
+      expect(signatureData.address).toBe(guards.getByRole('wallet').address)
       expect(signatureData.signature).toBeDefined()
     })
 
@@ -203,11 +187,7 @@ describe('GuardHandler', () => {
 
       guardHandler.registerUI(vi.fn())
 
-      const status = await guardHandler.status(
-        guards.getByRole(GuardRole.Wallet).address,
-        undefined,
-        mockRequest as any,
-      )
+      const status = await guardHandler.status(guards.getByRole('wallet').address, undefined, mockRequest as any)
 
       await expect((status as any).handle()).rejects.toThrow('Error signing with guard')
     })
@@ -260,11 +240,7 @@ describe('GuardHandler', () => {
         },
       }
 
-      const status = await guardHandler.status(
-        guards.getByRole(GuardRole.Wallet).address,
-        undefined,
-        mockRequest as any,
-      )
+      const status = await guardHandler.status(guards.getByRole('wallet').address, undefined, mockRequest as any)
       const result = await (status as any).handle()
 
       expect(result).toBe(true)
@@ -273,7 +249,7 @@ describe('GuardHandler', () => {
 
       const [requestId, signatureData] = mockAddSignature.mock.calls[0]
       expect(requestId).toBe('test-request-id')
-      expect(signatureData.address).toBe(guards.getByRole(GuardRole.Wallet).address)
+      expect(signatureData.address).toBe(guards.getByRole('wallet').address)
       expect(signatureData.signature).toBeDefined()
     })
   })
@@ -305,7 +281,7 @@ describe('GuardHandler', () => {
         ok: true,
       })
 
-      await customGuard.getByRole(GuardRole.Wallet).signEnvelope({
+      await customGuard.getByRole('wallet').signEnvelope({
         payload: {
           type: 'config-update',
           imageHash: '0x123456789012345678901234567890123456789012345678901234567890123' as Hex.Hex,

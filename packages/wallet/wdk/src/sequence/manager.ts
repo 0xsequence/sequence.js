@@ -3,8 +3,7 @@ import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
-import * as Guard from '@0xsequence/guard'
-import { Address, Hex, Secp256k1 } from 'ox'
+import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
@@ -55,7 +54,7 @@ export type ManagerOptions = {
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
   bundlers?: Relayer.Bundler[]
   guardUrl?: string
-  guardAddresses?: Map<GuardRole, Address.Address>
+  guardAddresses?: Record<GuardRole, Address.Address>
 
   defaultGuardTopology?: Config.SignerLeaf
   defaultRecoverySettings?: RecoverySettings
@@ -109,10 +108,10 @@ export const ManagerOptionsDefaults = {
   bundlers: [],
 
   guardUrl: 'https://dev-guard.sequence.app',
-  guardAddresses: new Map([
-    [GuardRole.Wallet, '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a' as Address.Address],
-    [GuardRole.Sessions, '0x18002Fc09deF9A47437cc64e270843dE094f5984' as Address.Address],
-  ]), // TODO: change to the actual guard address
+  guardAddresses: {
+    wallet: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a',
+    sessions: '0x18002Fc09deF9A47437cc64e270843dE094f5984',
+  } as Record<GuardRole, Address.Address>, // TODO: change to the actual guard address
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
@@ -200,7 +199,7 @@ export type Sequence = {
   readonly defaultRecoverySettings: RecoverySettings
 
   readonly guardUrl: string
-  readonly guardAddresses: Map<GuardRole, Address.Address>
+  readonly guardAddresses: Record<GuardRole, Address.Address>
 }
 
 export type Modules = {

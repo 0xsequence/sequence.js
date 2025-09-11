@@ -4,16 +4,13 @@ import * as Guard from '@0xsequence/guard'
 import { Signers } from '@0xsequence/wallet-core'
 import { Config } from '@0xsequence/wallet-primitives'
 
-export enum GuardRole {
-  Wallet = 'wallet',
-  Sessions = 'sessions',
-}
+export type GuardRole = 'wallet' | 'sessions'
 
 export class Guards {
   constructor(private readonly shared: Shared) {}
 
-  getByRole(role: GuardRole) {
-    const guardAddress = this.shared.sequence.guardAddresses.get(role)
+  getByRole(role: GuardRole): Signers.Guard {
+    const guardAddress = this.shared.sequence.guardAddresses[role]
     if (!guardAddress) {
       throw new Error(`Guard address for role ${role} not found`)
     }
@@ -22,8 +19,9 @@ export class Guards {
   }
 
   getByAddress(address: Address.Address): [GuardRole, Signers.Guard] | undefined {
-    for (const [role, guardAddress] of this.shared.sequence.guardAddresses.entries()) {
-      if (guardAddress === address) {
+    const roles = Object.entries(this.shared.sequence.guardAddresses) as [GuardRole, Address.Address][]
+    for (const [role, guardAddress] of roles) {
+      if (Address.isEqual(guardAddress, address)) {
         return [role, this.getByRole(role)]
       }
     }
@@ -31,7 +29,7 @@ export class Guards {
   }
 
   topology(role: GuardRole): Config.NestedLeaf | undefined {
-    const guardAddress = this.shared.sequence.guardAddresses.get(role)
+    const guardAddress = this.shared.sequence.guardAddresses[role]
     if (!guardAddress) {
       return undefined
     }

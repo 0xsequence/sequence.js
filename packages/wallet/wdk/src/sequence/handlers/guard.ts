@@ -1,5 +1,4 @@
 import { Address, Hex } from 'ox'
-import { Signers } from '@0xsequence/wallet-core'
 import * as Guard from '@0xsequence/guard'
 import { Handler } from './handler.js'
 import { BaseSignatureRequest, SignerUnavailable, SignerReady, SignerActionable, Kinds } from '../types/index.js'
@@ -51,7 +50,7 @@ export class GuardHandler implements Handler {
     }
 
     const [role, guard] = guardInfo
-    if (role !== GuardRole.Wallet) {
+    if (role !== 'wallet') {
       return {
         address,
         handler: this,
