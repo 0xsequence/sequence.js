@@ -460,13 +460,21 @@ export class Recovery implements RecoveryInterface {
     }
   }
 
-  async getQueuedRecoveryPayloads(wallet?: Address.Address): Promise<QueuedRecoveryPayload[]> {
-    const all = await this.shared.databases.recovery.list()
-    if (wallet) {
+  async getQueuedRecoveryPayloads(wallet?: Address.Address, chainId?: number): Promise<QueuedRecoveryPayload[]> {
+    // If no wallet is provided, always use the database
+    if (!wallet) {
+      return this.shared.databases.recovery.list()
+    }
+
+    // If the wallet is logged in, then we can expect to have all the payloads in the database
+    // because the cronjob keeps it updated
+    if (await this.shared.modules.wallets.get(wallet)) {
+      const all = await this.shared.databases.recovery.list()
       return all.filter((p) => Address.isEqual(p.wallet, wallet))
     }
 
-    return all
+    // If not, then we must fetch them from the chain
+    return this.fetchQueuedPayloads(wallet, chainId)
   }
 
   onQueuedPayloadsUpdate(
@@ -503,12 +511,14 @@ export class Recovery implements RecoveryInterface {
     }
   }
 
-  async fetchQueuedPayloads(wallet: Address.Address): Promise<QueuedRecoveryPayload[]> {
+  async fetchQueuedPayloads(wallet: Address.Address, chainId?: number): Promise<QueuedRecoveryPayload[]> {
     // Create providers for each network
-    const providers = this.shared.sequence.networks.map((network) => ({
-      chainId: network.chainId,
-      provider: Provider.from(RpcTransport.fromHttp(network.rpcUrl)),
-    }))
+    const providers = this.shared.sequence.networks
+      .filter((network) => (chainId ? network.chainId === chainId : true))
+      .map((network) => ({
+        chainId: network.chainId,
+        provider: Provider.from(RpcTransport.fromHttp(network.rpcUrl)),
+      }))
 
     // See if they have any recover signers
     const signers = await this.getSigners(wallet)
