@@ -903,7 +903,8 @@ export class ChainSessionManager {
       if (preparedIncrement) {
         if (
           Address.isEqual(this.sessionManager.address, Extensions.Dev1.sessions) ||
-          Address.isEqual(this.sessionManager.address, Extensions.Dev2.sessions)
+          Address.isEqual(this.sessionManager.address, Extensions.Dev2.sessions) ||
+          Address.isEqual(this.sessionManager.address, Extensions.Rc3.sessions)
         ) {
           // Last call
           calls.push(preparedIncrement)
