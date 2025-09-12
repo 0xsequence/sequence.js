@@ -126,11 +126,13 @@ export const ChainId = {
   SOMNIA: 5031,
 
   // INCENTIV
-  INCENTIV_TESTNET: 11690,
+  INCENTIV_TESTNET_V2: 28802,
 
-  // SEI
-  SEI: 1329,
-  SEI_TESTNET: 1328,
+  // KATANA
+  KATANA: 747474,
+
+  // SANDBOX
+  SANDBOX_TESTNET: 6252,
 } as const
 
 export type ChainId = (typeof ChainId)[keyof typeof ChainId]
@@ -904,6 +906,24 @@ export const ALL: Network[] = [
   },
 
   {
+    chainId: ChainId.SOMNIA,
+    type: NetworkType.MAINNET,
+    name: 'somnia',
+    title: 'Somnia',
+    rpcUrl: getRpcUrl('somnia'),
+    logoUrl: getLogoUrl(ChainId.SOMNIA),
+    blockExplorer: {
+      name: 'Somnia Explorer',
+      url: 'https://mainnet.somnia.w3us.site/',
+    },
+    nativeCurrency: {
+      symbol: 'SOMI',
+      name: 'SOMI',
+      decimals: 18,
+    },
+  },
+
+  {
     chainId: ChainId.SOMNIA_TESTNET,
     type: NetworkType.TESTNET,
     name: 'somnia-testnet',
@@ -922,73 +942,55 @@ export const ALL: Network[] = [
   },
 
   {
-    chainId: ChainId.INCENTIV_TESTNET,
+    chainId: ChainId.INCENTIV_TESTNET_V2,
     type: NetworkType.TESTNET,
-    name: 'incentiv-testnet',
+    name: 'incentiv-testnet-v2',
     title: 'Incentiv Testnet',
-    rpcUrl: getRpcUrl('incentiv-testnet'),
-    logoUrl: getLogoUrl(ChainId.INCENTIV_TESTNET),
+    rpcUrl: getRpcUrl('incentiv-testnet-v2'),
+    logoUrl: getLogoUrl(ChainId.INCENTIV_TESTNET_V2),
     blockExplorer: {
       name: 'Incentiv Testnet Explorer',
       url: 'https://explorer.testnet.incentiv.net/',
     },
     nativeCurrency: {
-      symbol: 'CENT',
-      name: 'CENT',
+      symbol: 'TCENT',
+      name: 'TCENT',
       decimals: 18,
     },
   },
 
   {
-    chainId: ChainId.SEI,
+    chainId: ChainId.KATANA,
     type: NetworkType.MAINNET,
-    name: 'sei',
-    title: 'Sei',
-    rpcUrl: getRpcUrl('sei'),
-    logoUrl: getLogoUrl(ChainId.SEI),
+    name: 'katana',
+    title: 'Katana',
+    rpcUrl: getRpcUrl('katana'),
+    logoUrl: getLogoUrl(ChainId.KATANA),
     blockExplorer: {
-      name: 'SEI Explorer',
-      url: 'https://seitrace.com/?chain=pacific-1',
+      name: 'Katana Explorer',
+      url: 'https://katanascan.com/',
     },
     nativeCurrency: {
-      symbol: 'SEI',
-      name: 'SEI',
+      symbol: 'ETH',
+      name: 'ETH',
       decimals: 18,
     },
   },
 
   {
-    chainId: ChainId.SEI_TESTNET,
+    chainId: ChainId.SANDBOX_TESTNET,
     type: NetworkType.TESTNET,
-    name: 'sei-testnet',
-    title: 'Sei Testnet',
-    rpcUrl: getRpcUrl('sei-testnet'),
-    logoUrl: getLogoUrl(ChainId.SEI_TESTNET),
+    name: 'sandbox-testnet',
+    title: 'Sandbox Testnet',
+    rpcUrl: getRpcUrl('sandbox-testnet'),
+    logoUrl: getLogoUrl(ChainId.SANDBOX_TESTNET),
     blockExplorer: {
-      name: 'Sei Testnet Explorer',
-      url: 'https://seitrace.com/?chain=atlantic-2',
+      name: 'Sandbox Testnet Explorer',
+      url: 'https://sandbox-testnet.explorer.caldera.xyz/',
     },
     nativeCurrency: {
-      symbol: 'SEI',
-      name: 'SEI',
-      decimals: 18,
-    },
-  },
-
-  {
-    chainId: ChainId.SOMNIA,
-    type: NetworkType.MAINNET,
-    name: 'somnia',
-    title: 'Somnia',
-    rpcUrl: getRpcUrl('somnia'),
-    logoUrl: getLogoUrl(ChainId.SOMNIA),
-    blockExplorer: {
-      name: 'Somnia Explorer',
-      url: 'https://mainnet.somnia.w3us.site/',
-    },
-    nativeCurrency: {
-      symbol: 'SOMI',
-      name: 'SOMI',
+      symbol: 'SAND',
+      name: 'SAND',
       decimals: 18,
     },
   },
