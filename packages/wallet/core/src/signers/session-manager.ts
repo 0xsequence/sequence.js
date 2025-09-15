@@ -147,7 +147,6 @@ export class SessionManager implements SapientSigner {
         }
       }
       if (!supported) {
-        console.error('No signer supported for call', call)
         throw new Error('No signer supported for call')
       }
     }
