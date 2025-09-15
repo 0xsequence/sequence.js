@@ -713,21 +713,20 @@ export class ChainSessionManager {
     try {
       const calls: Payload.Call[] = transactions.map((tx) => ({
         to: tx.to,
-        value: tx.value,
-        data: tx.data,
-        gasLimit: tx.gasLimit ?? BigInt(0),
+        value: tx.value ?? 0n,
+        data: tx.data ?? '0x',
+        gasLimit: tx.gasLimit ?? 0n,
         delegateCall: tx.delegateCall ?? false,
         onlyFallback: tx.onlyFallback ?? false,
         behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
       }))
 
-      // Attempt to prepare and sign the transaction. If this succeeds, the session
-      // has the necessary permissions. We don't relay the transaction.
-      await this._buildAndSignCalls(calls)
+      // Directly check if there are signers with the necessary permissions for all calls.
+      // This will throw an error if any call is not supported.
+      await this.sessionManager.findSignersForCalls(this.wallet.address, this.chainId, calls)
       return true
     } catch (error) {
-      // If building or signing fails, it indicates a lack of permissions or another issue.
-      // For the purpose of this check, we treat it as a permission failure.
+      // An error from findSignersForCalls indicates a permission failure.
       console.warn(
         `Permission check failed for chain ${this.chainId}:`,
         error instanceof Error ? error.message : String(error),
