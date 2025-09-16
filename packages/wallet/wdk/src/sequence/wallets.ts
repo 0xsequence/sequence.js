@@ -817,8 +817,9 @@ export class Wallets implements WalletsInterface {
     let modules: Module[] = []
 
     if (!args.noSessionManager) {
-      //  Calculate image hash with the identity signer
-      const sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
+      // Calculate image hash with the identity and device signer
+      let sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
+      sessionsTopology = SessionConfig.addIdentitySigner(sessionsTopology, device.address)
       // Store this tree in the state provider
       const sessionsConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionsTopology)
       this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
@@ -1006,6 +1007,10 @@ export class Wallets implements WalletsInterface {
 
         if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
           await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
+        }
+
+        if (this.shared.modules.sessions.hasSessionModule(modules)) {
+          await this.shared.modules.sessions.addIdentitySignerToModules(modules, device.address)
         }
 
         const walletEntryToUpdate: Wallet = {
@@ -1374,6 +1379,11 @@ export class Wallets implements WalletsInterface {
     // Remove the device from the recovery module's topology as well.
     if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
       await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, deviceToRemove)
+    }
+
+    // Remove the device from the session module's topology as well.
+    if (this.shared.modules.sessions.hasSessionModule(modules)) {
+      await this.shared.modules.sessions.removeIdentitySignerFromModules(modules, deviceToRemove)
     }
 
     // Request the configuration update.
