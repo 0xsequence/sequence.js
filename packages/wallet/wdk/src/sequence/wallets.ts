@@ -554,11 +554,17 @@ export class Wallets implements WalletsInterface {
   constructor(private readonly shared: Shared) {}
 
   public async has(wallet: Address.Address): Promise<boolean> {
-    return this.shared.databases.manager.get(wallet).then((r) => r !== undefined)
+    return this.get(wallet).then((r) => r !== undefined)
   }
 
   public async get(walletAddress: Address.Address): Promise<Wallet | undefined> {
-    return await this.shared.databases.manager.get(walletAddress)
+    // Fetch the checksummed version first, if it does not exist, try the lowercase version
+    const wallet = await this.shared.databases.manager.get(Address.checksum(walletAddress))
+    if (wallet) {
+      return wallet
+    }
+
+    return this.shared.databases.manager.get(walletAddress.toLowerCase() as `0x${string}`)
   }
 
   public async list(): Promise<Wallet[]> {
