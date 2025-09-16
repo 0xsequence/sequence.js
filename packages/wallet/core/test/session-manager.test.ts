@@ -232,7 +232,6 @@ for (const extension of ALL_EXTENSIONS) {
       const topology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
         ...explicitPermissions,
         signer: explicitSigner.address,
-        chainId,
       })
       await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
       const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
@@ -355,7 +354,7 @@ for (const extension of ALL_EXTENSIONS) {
 
         // Sign the transaction
         expect(sessionManager.signSapient(wallet.address, chainId, payload, imageHash)).rejects.toThrow(
-          'No signer supported for call',
+          'No signers match the topology',
         )
       },
       timeout,

@@ -3,6 +3,7 @@ import {
   Extensions,
   Payload,
   Signature as SequenceSignature,
+  SessionConfig,
   SessionSignature,
 } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
@@ -39,6 +40,21 @@ export class Implicit implements SessionSigner {
     const attestationHash = Attestation.hash(this._attestation)
     const identityPubKey = Secp256k1.recoverPublicKey({ payload: attestationHash, signature: this._identitySignature })
     return Address.fromPublicKey(identityPubKey)
+  }
+
+  isValid(sessionTopology: SessionConfig.SessionsTopology, _chainId: number): boolean {
+    const implicitSigner = SessionConfig.getIdentitySigner(sessionTopology)
+    if (!implicitSigner) {
+      return false
+    }
+    if (!Address.isEqual(implicitSigner, this.identitySigner)) {
+      return false
+    }
+    const blacklist = SessionConfig.getImplicitBlacklist(sessionTopology)
+    if (blacklist?.some((b) => Address.isEqual(b, this.address))) {
+      return false
+    }
+    return true
   }
 
   async supportedCall(

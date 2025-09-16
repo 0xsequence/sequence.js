@@ -1,4 +1,11 @@
-import { Payload, Permission, SessionSignature, Constants, Network, Extensions } from '@0xsequence/wallet-primitives'
+import {
+  Constants,
+  Extensions,
+  Payload,
+  Permission,
+  SessionConfig,
+  SessionSignature,
+} from '@0xsequence/wallet-primitives'
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { ExplicitSessionSigner, UsageLimit } from './session.js'
@@ -22,9 +29,51 @@ export class Explicit implements ExplicitSessionSigner {
     }
   }
 
-  hasExpired(): boolean {
+  isValid(sessionTopology: SessionConfig.SessionsTopology, chainId: number): boolean {
     // Equality is considered expired
-    return this.sessionPermissions.deadline <= BigInt(Math.floor(Date.now() / 1000))
+    if (this.sessionPermissions.deadline <= BigInt(Math.floor(Date.now() / 1000))) {
+      return false
+    }
+    if (this.sessionPermissions.chainId !== 0 && this.sessionPermissions.chainId !== chainId) {
+      return false
+    }
+    const explicitPermission = SessionConfig.getSessionPermissions(sessionTopology, this.address)
+    if (!explicitPermission) {
+      return false
+    }
+
+    // Validate permission in configuration matches permission in signer
+    if (
+      explicitPermission.deadline !== this.sessionPermissions.deadline ||
+      explicitPermission.chainId !== this.sessionPermissions.chainId ||
+      explicitPermission.valueLimit !== this.sessionPermissions.valueLimit ||
+      explicitPermission.permissions.length !== this.sessionPermissions.permissions.length
+    ) {
+      return false
+    }
+    // Validate permission rules
+    for (const [index, permission] of explicitPermission.permissions.entries()) {
+      const signerPermission = this.sessionPermissions.permissions[index]!
+      if (
+        !Address.isEqual(permission.target, signerPermission.target) ||
+        permission.rules.length !== signerPermission.rules.length
+      ) {
+        return false
+      }
+      for (const [ruleIndex, rule] of permission.rules.entries()) {
+        const signerRule = signerPermission.rules[ruleIndex]!
+        if (
+          rule.cumulative !== signerRule.cumulative ||
+          rule.operation !== signerRule.operation ||
+          !Bytes.isEqual(rule.value, signerRule.value) ||
+          rule.offset !== signerRule.offset ||
+          !Bytes.isEqual(rule.mask, signerRule.mask)
+        ) {
+          return false
+        }
+      }
+    }
+    return true
   }
 
   async findSupportedPermission(
@@ -173,11 +222,6 @@ export class Explicit implements ExplicitSessionSigner {
     ) {
       // Can sign increment usage calls
       return true
-    }
-
-    // Check permission deadline
-    if (this.hasExpired()) {
-      return false
     }
 
     const permission = await this.findSupportedPermission(wallet, chainId, call, sessionManagerAddress, provider)

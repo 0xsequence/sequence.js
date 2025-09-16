@@ -1,8 +1,11 @@
-import { Payload, SessionSignature } from '@0xsequence/wallet-primitives'
+import { Payload, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider } from 'ox'
 
 export interface SessionSigner {
   address: Address.Address | Promise<Address.Address>
+
+  /// Check if the signer is valid for the given topology and chainId
+  isValid: (sessionTopology: SessionConfig.SessionsTopology, chainId: number) => boolean
 
   /// Check if the signer supports the call
   supportedCall: (
@@ -30,8 +33,6 @@ export type UsageLimit = {
 }
 
 export interface ExplicitSessionSigner extends SessionSigner {
-  hasExpired: () => boolean
-
   prepareIncrements: (
     wallet: Address.Address,
     chainId: number,
@@ -42,5 +43,5 @@ export interface ExplicitSessionSigner extends SessionSigner {
 }
 
 export function isExplicitSessionSigner(signer: SessionSigner): signer is ExplicitSessionSigner {
-  return 'prepareIncrements' in signer && 'hasExpired' in signer
+  return 'prepareIncrements' in signer
 }

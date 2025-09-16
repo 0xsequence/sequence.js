@@ -104,6 +104,21 @@ export class SessionManager implements SapientSigner {
     })
   }
 
+  async listSignerValidity(chainId: number): Promise<{ signer: Address.Address; isValid: boolean }[]> {
+    const topology = await this.topology
+    const signerStatus = new Map<Address.Address, boolean>()
+    for (const signer of this._implicitSigners) {
+      signerStatus.set(signer.address, signer.isValid(topology, chainId))
+    }
+    for (const signer of this._explicitSigners) {
+      signerStatus.set(signer.address, signer.isValid(topology, chainId))
+    }
+    return Array.from(signerStatus.entries()).map(([signer, isValid]) => ({
+      signer,
+      isValid,
+    }))
+  }
+
   async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
     // Only use signers that match the topology
     const topology = await this.topology
@@ -111,18 +126,8 @@ export class SessionManager implements SapientSigner {
     if (!identitySigner) {
       throw new Error('Identity signer not found')
     }
-    const blacklist = SessionConfig.getImplicitBlacklist(topology)
-    const validImplicitSigners = this._implicitSigners.filter(
-      (signer) =>
-        Address.isEqual(signer.identitySigner, identitySigner) &&
-        // Blacklist must exist for implicit signers to be used
-        blacklist &&
-        !blacklist.some((b) => Address.isEqual(b, signer.address)),
-    )
-    const topologyExplicitSigners = SessionConfig.getExplicitSigners(topology)
-    const validExplicitSigners = this._explicitSigners.filter((signer) =>
-      topologyExplicitSigners.some((s) => Address.isEqual(s, signer.address)),
-    )
+    const validImplicitSigners = this._implicitSigners.filter((signer) => signer.isValid(topology, chainId))
+    const validExplicitSigners = this._explicitSigners.filter((signer) => signer.isValid(topology, chainId))
 
     // Prioritize implicit signers
     const availableSigners = [...validImplicitSigners, ...validExplicitSigners]
