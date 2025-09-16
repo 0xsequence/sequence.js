@@ -7,11 +7,11 @@ import {
 } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
-import { SessionSigner } from './session.js'
+import { ImplicitSessionSigner } from './session.js'
 
 export type AttestationParams = Omit<Attestation.Attestation, 'approvedSigner'>
 
-export class Implicit implements SessionSigner {
+export class Implicit implements ImplicitSessionSigner {
   private readonly _privateKey: PkStore
   private readonly _identitySignature: SequenceSignature.RSY
   public readonly address: Address.Address

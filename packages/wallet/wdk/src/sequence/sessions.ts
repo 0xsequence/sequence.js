@@ -14,6 +14,8 @@ import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
 import { Actions } from './types/signature-request.js'
+import { Kinds } from './types/index.js'
+import { Handler } from './handlers/index.js'
 
 export type AuthorizeImplicitSessionArgs = {
   target: string
@@ -227,17 +229,32 @@ export class Sessions implements SessionsInterface {
     args: AuthorizeImplicitSessionArgs,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress)
-    const identitySignerAddress = SessionConfig.getIdentitySigner(topology)
-    if (!identitySignerAddress) {
-      throw new Error('No identity signer address found')
+    const identitySigners = SessionConfig.getIdentitySigners(topology)
+    if (!identitySigners) {
+      throw new Error('No identity signers found')
     }
-    const identityKind = await this.shared.modules.signers.kindOf(walletAddress, identitySignerAddress)
-    if (!identityKind) {
-      throw new Error('No identity handler kind found')
+    let handler: Handler | undefined
+    let identitySignerAddress: Address.Address | undefined
+    for (const identitySigner of identitySigners) {
+      const identityKind = await this.shared.modules.signers.kindOf(walletAddress, identitySigner)
+      if (!identityKind) {
+        console.warn('No identity handler kind found for', identitySigner)
+        continue
+      }
+      if (identityKind === Kinds.LoginPasskey) {
+        console.warn('Implicit sessions do not support passkeys', identitySigner)
+        continue
+      }
+      const iHandler = this.shared.handlers.get(identityKind)
+      if (iHandler) {
+        handler = iHandler
+        identitySignerAddress = identitySigner
+        break
+      }
     }
-    const handler = this.shared.handlers.get(identityKind)
-    if (!handler) {
-      throw new Error('No identity handler found')
+
+    if (!handler || !identitySignerAddress) {
+      throw new Error('No identity handler or address found')
     }
 
     // Create the attestation to sign
