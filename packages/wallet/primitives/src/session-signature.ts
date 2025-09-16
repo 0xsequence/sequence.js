@@ -3,6 +3,7 @@ import { Attestation, encode, encodeForJson, fromParsed, toJson } from './attest
 import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {
   encodeSessionsTopology,
+  getIdentitySigners,
   isCompleteSessionsTopology,
   minimiseSessionsTopology,
   SessionsTopology,
@@ -103,11 +104,21 @@ function rsyFromRsvStr(sigStr: string): RSY {
 
 // Usage
 
+/**
+ * Encodes a list of session call signatures into a bytes array for contract validation.
+ * @param callSignatures The list of session call signatures to encode.
+ * @param topology The complete session topology.
+ * @param explicitSigners The list of explicit signers to encode. Others will be hashed into nodes.
+ * @param implicitSigners The list of implicit signers to encode. Others will be hashed into nodes.
+ * @param identitySigner  The identity signer to encode. Others will be hashed into nodes.
+ * @returns The encoded session call signatures.
+ */
 export function encodeSessionCallSignatures(
   callSignatures: SessionCallSignature[],
   topology: SessionsTopology,
   explicitSigners: Address.Address[] = [],
   implicitSigners: Address.Address[] = [],
+  identitySigner?: Address.Address,
 ): Bytes.Bytes {
   const parts: Bytes.Bytes[] = []
 
@@ -117,8 +128,23 @@ export function encodeSessionCallSignatures(
     throw new Error('Incomplete topology')
   }
 
+  if (implicitSigners.length > 0 && !identitySigner) {
+    console.warn('Encodings using implicit signers without identity signer may encode incorrectly')
+  }
+
+  // Check the topology contains exactly one identity signer
+  const identitySigners = getIdentitySigners(topology)
+  if (identitySigner) {
+    if (!identitySigners.some((s) => Address.isEqual(s, identitySigner!))) {
+      throw new Error('Identity signer not found')
+    }
+  } else {
+    // Grab the first one
+    identitySigner = identitySigners[0]!
+  }
+
   // Optimise the configuration tree by rolling unused signers into nodes.
-  topology = minimiseSessionsTopology(topology, explicitSigners, implicitSigners)
+  topology = minimiseSessionsTopology(topology, explicitSigners, implicitSigners, identitySigner)
 
   // Session topology
   const encodedTopology = encodeSessionsTopology(topology)

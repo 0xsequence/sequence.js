@@ -398,6 +398,13 @@ describe('Session Signature', () => {
           'Invalid call signature',
         )
       })
+
+      it('should throw for identity signer not found', () => {
+        const callSignatures = [sampleExplicitSignature]
+        expect(() => encodeSessionCallSignatures(callSignatures, completeTopology, [], [], testAddress2)).toThrow(
+          'Identity signer not found',
+        )
+      })
     })
   })
 

@@ -11,12 +11,11 @@ import {
   IdentitySignerLeaf,
   SessionPermissionsLeaf,
   SessionNode,
-  SessionLeaf,
   SessionBranch,
   SessionsTopology,
   isSessionsTopology,
   isCompleteSessionsTopology,
-  getIdentitySigner,
+  getIdentitySigners,
   getImplicitBlacklist,
   getImplicitBlacklistLeaf,
   getSessionPermissions,
@@ -152,9 +151,9 @@ describe('Session Config', () => {
         expect(isCompleteSessionsTopology(duplicateBlacklist)).toBe(false)
       })
 
-      it('should return false for topology with multiple identity signers', () => {
+      it('should return true for topology with multiple identity signers', () => {
         const duplicateIdentity = [sampleBlacklistLeaf, sampleIdentitySignerLeaf, sampleIdentitySignerLeaf]
-        expect(isCompleteSessionsTopology(duplicateIdentity)).toBe(false)
+        expect(isCompleteSessionsTopology(duplicateIdentity)).toBe(true)
       })
 
       it('should return false for invalid topology', () => {
@@ -165,29 +164,29 @@ describe('Session Config', () => {
   })
 
   describe('Topology Queries', () => {
-    describe('getIdentitySigner', () => {
+    describe('getIdentitySigners', () => {
       it('should return identity signer from identity signer leaf', () => {
-        const result = getIdentitySigner(sampleIdentitySignerLeaf)
-        expect(result).toBe(testAddress1)
+        const result = getIdentitySigners(sampleIdentitySignerLeaf)
+        expect(result).toEqual([testAddress1])
       })
 
       it('should return identity signer from branch', () => {
-        const result = getIdentitySigner(sampleCompleteTopology)
-        expect(result).toBe(testAddress1)
+        const result = getIdentitySigners(sampleCompleteTopology)
+        expect(result).toEqual([testAddress1])
       })
 
-      it('should return null when no identity signer present', () => {
-        const result = getIdentitySigner(sampleSessionPermissionsLeaf)
-        expect(result).toBe(null)
+      it('should return empty array when no identity signer present', () => {
+        const result = getIdentitySigners(sampleSessionPermissionsLeaf)
+        expect(result).toEqual([])
       })
 
-      it('should throw for multiple identity signers', () => {
+      it('should return multiple identity signers', () => {
         const multipleIdentity = [
           sampleIdentitySignerLeaf,
           sampleIdentitySignerLeaf,
           sampleBlacklistLeaf,
         ] as SessionBranch
-        expect(() => getIdentitySigner(multipleIdentity)).toThrow('Multiple identity signers')
+        expect(getIdentitySigners(multipleIdentity)).toEqual([testAddress1, testAddress1])
       })
     })
 
@@ -619,9 +618,9 @@ describe('Session Config', () => {
         expect(isSessionsTopology(result)).toBe(true)
 
         const blacklist = getImplicitBlacklist(result)
-        const identitySigner = getIdentitySigner(result)
+        const identitySigners = getIdentitySigners(result)
         expect(blacklist).toBeTruthy()
-        expect(identitySigner).toBeTruthy()
+        expect(identitySigners).toBeTruthy()
       })
 
       it('should throw when missing blacklist or identity signer', () => {
@@ -796,8 +795,8 @@ describe('Session Config', () => {
 
         expect(isCompleteSessionsTopology(result)).toBe(true)
 
-        const identitySigner = getIdentitySigner(result)
-        expect(identitySigner).toBe(testAddress1)
+        const identitySigners = getIdentitySigners(result)
+        expect(identitySigners).toEqual([testAddress1])
 
         const blacklist = getImplicitBlacklist(result)
         expect(blacklist).toEqual([])
@@ -837,8 +836,8 @@ describe('Session Config', () => {
       expect(isSessionsTopology(nestedTopology)).toBe(true)
       expect(isCompleteSessionsTopology(nestedTopology)).toBe(true)
 
-      const identitySigner = getIdentitySigner(nestedTopology)
-      expect(identitySigner).toBe(testAddress1)
+      const identitySigners = getIdentitySigners(nestedTopology)
+      expect(identitySigners).toEqual([testAddress1])
 
       const blacklist = getImplicitBlacklist(nestedTopology)
       expect(blacklist).toContain(testAddress2)
@@ -902,7 +901,7 @@ describe('Session Config', () => {
       expect(isCompleteSessionsTopology(deserialized)).toBe(true)
 
       // Verify data integrity
-      expect(getIdentitySigner(deserialized)).toBe(testAddress1)
+      expect(getIdentitySigners(deserialized)).toEqual([testAddress1])
       expect(getImplicitBlacklist(deserialized)).toContain(testAddress3)
       expect(getSessionPermissions(deserialized, testAddress2)).toBeTruthy()
     })
