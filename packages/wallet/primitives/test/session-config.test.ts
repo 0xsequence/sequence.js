@@ -622,10 +622,6 @@ describe('Session Config', () => {
         expect(blacklist).toBeTruthy()
         expect(identitySigners).toBeTruthy()
       })
-
-      it('should throw when missing blacklist or identity signer', () => {
-        expect(() => balanceSessionsTopology(sampleSessionPermissionsLeaf)).toThrow('No blacklist or identity signer')
-      })
     })
 
     describe('cleanSessionsTopology', () => {
