@@ -30,6 +30,8 @@ export type UsageLimit = {
 }
 
 export interface ExplicitSessionSigner extends SessionSigner {
+  hasExpired: () => boolean
+
   prepareIncrements: (
     wallet: Address.Address,
     chainId: number,
@@ -40,5 +42,5 @@ export interface ExplicitSessionSigner extends SessionSigner {
 }
 
 export function isExplicitSessionSigner(signer: SessionSigner): signer is ExplicitSessionSigner {
-  return 'prepareIncrements' in signer
+  return 'prepareIncrements' in signer && 'hasExpired' in signer
 }

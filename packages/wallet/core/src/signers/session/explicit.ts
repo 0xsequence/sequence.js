@@ -22,6 +22,11 @@ export class Explicit implements ExplicitSessionSigner {
     }
   }
 
+  hasExpired(): boolean {
+    // Equality is considered expired
+    return this.sessionPermissions.deadline <= BigInt(Math.floor(Date.now() / 1000))
+  }
+
   async findSupportedPermission(
     wallet: Address.Address,
     chainId: number,
@@ -168,6 +173,11 @@ export class Explicit implements ExplicitSessionSigner {
     ) {
       // Can sign increment usage calls
       return true
+    }
+
+    // Check permission deadline
+    if (this.hasExpired()) {
+      return false
     }
 
     const permission = await this.findSupportedPermission(wallet, chainId, call, sessionManagerAddress, provider)
