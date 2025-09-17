@@ -8,7 +8,7 @@ import {
 } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex, Provider, Secp256k1, Signature } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
-import { SessionSigner } from './session.js'
+import { SessionSigner, SessionSignerValidity } from './session.js'
 
 export type AttestationParams = Omit<Attestation.Attestation, 'approvedSigner'>
 
@@ -42,10 +42,7 @@ export class Implicit implements SessionSigner {
     return Address.fromPublicKey(identityPubKey)
   }
 
-  isValid(
-    sessionTopology: SessionConfig.SessionsTopology,
-    _chainId: number,
-  ): { isValid: boolean; invalidReason?: string } {
+  isValid(sessionTopology: SessionConfig.SessionsTopology, _chainId: number): SessionSignerValidity {
     const implicitSigner = SessionConfig.getIdentitySigner(sessionTopology)
     if (!implicitSigner) {
       return { isValid: false, invalidReason: 'Identity signer not found' }

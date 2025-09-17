@@ -8,7 +8,7 @@ import {
 } from '@0xsequence/wallet-primitives'
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
-import { ExplicitSessionSigner, UsageLimit } from './session.js'
+import { ExplicitSessionSigner, SessionSignerValidity, UsageLimit } from './session.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
@@ -29,10 +29,7 @@ export class Explicit implements ExplicitSessionSigner {
     }
   }
 
-  isValid(
-    sessionTopology: SessionConfig.SessionsTopology,
-    chainId: number,
-  ): { isValid: boolean; invalidReason?: string } {
+  isValid(sessionTopology: SessionConfig.SessionsTopology, chainId: number): SessionSignerValidity {
     // Equality is considered expired
     if (this.sessionPermissions.deadline <= BigInt(Math.floor(Date.now() / 1000))) {
       return { isValid: false, invalidReason: 'Expired' }

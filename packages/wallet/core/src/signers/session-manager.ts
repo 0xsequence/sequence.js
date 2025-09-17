@@ -11,7 +11,14 @@ import { AbiFunction, Address, Hex, Provider } from 'ox'
 import * as State from '../state/index.js'
 import { Wallet } from '../wallet.js'
 import { SapientSigner } from './index.js'
-import { Explicit, Implicit, isExplicitSessionSigner, SessionSigner, UsageLimit } from './session/index.js'
+import {
+  Explicit,
+  Implicit,
+  isExplicitSessionSigner,
+  SessionSigner,
+  SessionSignerInvalidReason,
+  UsageLimit,
+} from './session/index.js'
 
 export type SessionManagerOptions = {
   sessionManagerAddress: Address.Address
@@ -106,9 +113,9 @@ export class SessionManager implements SapientSigner {
 
   async listSignerValidity(
     chainId: number,
-  ): Promise<{ signer: Address.Address; isValid: boolean; invalidReason?: string }[]> {
+  ): Promise<{ signer: Address.Address; isValid: boolean; invalidReason?: SessionSignerInvalidReason }[]> {
     const topology = await this.topology
-    const signerStatus = new Map<Address.Address, { isValid: boolean; invalidReason?: string }>()
+    const signerStatus = new Map<Address.Address, { isValid: boolean; invalidReason?: SessionSignerInvalidReason }>()
     for (const signer of this._implicitSigners) {
       signerStatus.set(signer.address, signer.isValid(topology, chainId))
     }
