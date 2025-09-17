@@ -159,8 +159,25 @@ export class Cached implements Provider {
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
-    // TODO: Cache this
-    return this.args.source.getConfigurationUpdates(wallet, fromImageHash, options)
+    //FIXME This will not get new updates.
+    // We need a mechanism to detect when there are new updates we haven't cached.
+    // We need to be able to do this WITHOUT having to fetch all updates from the source.
+    const cached = await this.args.cache.getConfigurationUpdates(wallet, fromImageHash, options)
+    if (cached.length > 0) {
+      return cached
+    }
+    const source = await this.args.source.getConfigurationUpdates(wallet, fromImageHash, options)
+    if (source.length > 0) {
+      const promises = source.map(async (update) => {
+        const config = await this.args.cache.getConfiguration(update.imageHash)
+        if (!config) {
+          return
+        }
+        return this.args.cache.saveUpdate(wallet, config, update.signature)
+      })
+      await Promise.all(promises)
+    }
+    return source
   }
 
   async getTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
@@ -173,40 +190,6 @@ export class Cached implements Provider {
       await this.args.cache.saveTree(source)
     }
     return source
-  }
-
-  // Write methods are not cached, they are directly forwarded to the source
-  saveWallet(deployConfiguration: Config.Config, context: Context.Context): MaybePromise<void> {
-    return this.args.source.saveWallet(deployConfiguration, context)
-  }
-
-  saveWitnesses(
-    wallet: Address.Address,
-    chainId: number,
-    payload: Payload.Parented,
-    signatures: Signature.RawTopology,
-  ): MaybePromise<void> {
-    return this.args.source.saveWitnesses(wallet, chainId, payload, signatures)
-  }
-
-  saveUpdate(
-    wallet: Address.Address,
-    configuration: Config.Config,
-    signature: Signature.RawSignature,
-  ): MaybePromise<void> {
-    return this.args.source.saveUpdate(wallet, configuration, signature)
-  }
-
-  saveTree(tree: GenericTree.Tree): MaybePromise<void> {
-    return this.args.source.saveTree(tree)
-  }
-
-  saveConfiguration(config: Config.Config): MaybePromise<void> {
-    return this.args.source.saveConfiguration(config)
-  }
-
-  saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void> {
-    return this.args.source.saveDeploy(imageHash, context)
   }
 
   async getPayload(opHash: Hex.Hex): Promise<
@@ -229,7 +212,57 @@ export class Cached implements Provider {
     return source
   }
 
+  saveWallet(deployConfiguration: Config.Config, context: Context.Context): MaybePromise<void> {
+    return Promise.all([
+      this.args.cache.saveWallet(deployConfiguration, context),
+      this.args.source.saveWallet(deployConfiguration, context),
+    ]).then(() => undefined)
+  }
+
+  saveWitnesses(
+    wallet: Address.Address,
+    chainId: number,
+    payload: Payload.Parented,
+    signatures: Signature.RawTopology,
+  ): MaybePromise<void> {
+    return Promise.all([
+      this.args.cache.saveWitnesses(wallet, chainId, payload, signatures),
+      this.args.source.saveWitnesses(wallet, chainId, payload, signatures),
+    ]).then(() => undefined)
+  }
+
+  saveUpdate(
+    wallet: Address.Address,
+    configuration: Config.Config,
+    signature: Signature.RawSignature,
+  ): MaybePromise<void> {
+    return Promise.all([
+      this.args.cache.saveUpdate(wallet, configuration, signature),
+      this.args.source.saveUpdate(wallet, configuration, signature),
+    ]).then(() => undefined)
+  }
+
+  saveTree(tree: GenericTree.Tree): MaybePromise<void> {
+    return Promise.all([this.args.cache.saveTree(tree), this.args.source.saveTree(tree)]).then(() => undefined)
+  }
+
+  saveConfiguration(config: Config.Config): MaybePromise<void> {
+    return Promise.all([this.args.cache.saveConfiguration(config), this.args.source.saveConfiguration(config)]).then(
+      () => undefined,
+    )
+  }
+
+  saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void> {
+    return Promise.all([
+      this.args.cache.saveDeploy(imageHash, context),
+      this.args.source.saveDeploy(imageHash, context),
+    ]).then(() => undefined)
+  }
+
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void> {
-    return this.args.source.savePayload(wallet, payload, chainId)
+    return Promise.all([
+      this.args.cache.savePayload(wallet, payload, chainId),
+      this.args.source.savePayload(wallet, payload, chainId),
+    ]).then(() => undefined)
   }
 }
