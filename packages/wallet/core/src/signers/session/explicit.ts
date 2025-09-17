@@ -1,7 +1,14 @@
-import { Payload, Permission, SessionSignature, Constants, Network, Extensions } from '@0xsequence/wallet-primitives'
+import {
+  Constants,
+  Extensions,
+  Payload,
+  Permission,
+  SessionConfig,
+  SessionSignature,
+} from '@0xsequence/wallet-primitives'
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
-import { ExplicitSessionSigner, UsageLimit } from './session.js'
+import { ExplicitSessionSigner, SessionSignerValidity, UsageLimit } from './session.js'
 
 export type ExplicitParams = Omit<Permission.SessionPermissions, 'signer'>
 
@@ -20,6 +27,53 @@ export class Explicit implements ExplicitSessionSigner {
       ...sessionPermissions,
       signer: this.address,
     }
+  }
+
+  isValid(sessionTopology: SessionConfig.SessionsTopology, chainId: number): SessionSignerValidity {
+    // Equality is considered expired
+    if (this.sessionPermissions.deadline <= BigInt(Math.floor(Date.now() / 1000))) {
+      return { isValid: false, invalidReason: 'Expired' }
+    }
+    if (this.sessionPermissions.chainId !== 0 && this.sessionPermissions.chainId !== chainId) {
+      return { isValid: false, invalidReason: 'Chain ID mismatch' }
+    }
+    const explicitPermission = SessionConfig.getSessionPermissions(sessionTopology, this.address)
+    if (!explicitPermission) {
+      return { isValid: false, invalidReason: 'Permission not found' }
+    }
+
+    // Validate permission in configuration matches permission in signer
+    if (
+      explicitPermission.deadline !== this.sessionPermissions.deadline ||
+      explicitPermission.chainId !== this.sessionPermissions.chainId ||
+      explicitPermission.valueLimit !== this.sessionPermissions.valueLimit ||
+      explicitPermission.permissions.length !== this.sessionPermissions.permissions.length
+    ) {
+      return { isValid: false, invalidReason: 'Permission mismatch' }
+    }
+    // Validate permission rules
+    for (const [index, permission] of explicitPermission.permissions.entries()) {
+      const signerPermission = this.sessionPermissions.permissions[index]!
+      if (
+        !Address.isEqual(permission.target, signerPermission.target) ||
+        permission.rules.length !== signerPermission.rules.length
+      ) {
+        return { isValid: false, invalidReason: 'Permission rule mismatch' }
+      }
+      for (const [ruleIndex, rule] of permission.rules.entries()) {
+        const signerRule = signerPermission.rules[ruleIndex]!
+        if (
+          rule.cumulative !== signerRule.cumulative ||
+          rule.operation !== signerRule.operation ||
+          !Bytes.isEqual(rule.value, signerRule.value) ||
+          rule.offset !== signerRule.offset ||
+          !Bytes.isEqual(rule.mask, signerRule.mask)
+        ) {
+          return { isValid: false, invalidReason: 'Permission rule mismatch' }
+        }
+      }
+    }
+    return { isValid: true }
   }
 
   async findSupportedPermission(

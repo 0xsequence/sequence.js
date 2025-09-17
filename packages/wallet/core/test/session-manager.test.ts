@@ -232,7 +232,6 @@ for (const extension of ALL_EXTENSIONS) {
       const topology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
         ...explicitPermissions,
         signer: explicitSigner.address,
-        chainId,
       })
       await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
       const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
@@ -293,6 +292,70 @@ for (const extension of ALL_EXTENSIONS) {
       'should create and sign with an explicit session with 0 chainId',
       async () => {
         await shouldCreateAndSignWithExplicitSession(false)
+      },
+      timeout,
+    )
+
+    it(
+      'should fail to sign with an expired explicit session',
+      async () => {
+        const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+        const chainId = 0
+
+        // Create explicit signer
+        const explicitPrivateKey = Secp256k1.randomPrivateKey()
+        const explicitPermissions: Signers.Session.ExplicitParams = {
+          chainId,
+          valueLimit: 1000000000000000000n, // 1 ETH
+          deadline: BigInt(Math.floor(Date.now() / 1000) - 3600), // 1 hour ago
+          permissions: [PermissionBuilder.for(EMITTER_ADDRESS).allowAll().build()],
+        }
+        const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, explicitPermissions)
+        // Create the topology and wallet
+        const topology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+          ...explicitPermissions,
+          signer: explicitSigner.address,
+          chainId,
+        })
+        await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+        const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
+        const wallet = await Wallet.fromConfiguration(
+          {
+            threshold: 1n,
+            checkpoint: 0n,
+            topology: { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+          },
+          {
+            stateProvider,
+          },
+        )
+        // Create the session manager
+        const sessionManager = new Signers.SessionManager(wallet, {
+          provider,
+          sessionManagerAddress: extension.sessions,
+        }).withExplicitSigner(explicitSigner)
+
+        // Create a test transaction within permissions
+        const call: Payload.Call = {
+          to: EMITTER_ADDRESS,
+          value: 0n,
+          data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        }
+        const payload: Payload.Calls = {
+          type: 'call',
+          nonce: 0n,
+          space: 0n,
+          calls: [call],
+        }
+
+        // Sign the transaction
+        expect(sessionManager.signSapient(wallet.address, chainId, payload, imageHash)).rejects.toThrow(
+          'No signers match the topology',
+        )
       },
       timeout,
     )
