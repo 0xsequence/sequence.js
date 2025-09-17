@@ -80,6 +80,11 @@ export interface ConnectSuccessResponsePayload {
   guard?: GuardConfig
 }
 
+export interface AddExplicitSessionSuccessResponsePayload {
+  walletAddress: string
+  sessionAddress: string
+}
+
 export interface ModifySessionSuccessResponsePayload {
   walletAddress: string
   sessionAddress: string
@@ -96,11 +101,6 @@ export interface SendWalletTransactionSuccessResponse {
 }
 
 export type WalletActionResponse = SignatureSuccessResponse | SendWalletTransactionSuccessResponse
-
-export interface ExplicitSessionResponsePayload {
-  walletAddress: string
-  sessionAddress: string
-}
 
 // --- Dapp-facing Types ---
 
@@ -127,7 +127,7 @@ export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionRespo
 
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
-  response?: ExplicitSessionResponsePayload
+  response?: AddExplicitSessionSuccessResponsePayload | ModifySessionSuccessResponsePayload
   error?: any
 }) => void
 
@@ -143,7 +143,7 @@ export type DappClientWalletActionEventListener = (data: {
 
 export type DappClientExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
-  response?: ExplicitSessionResponsePayload
+  response?: AddExplicitSessionSuccessResponsePayload | ModifySessionSuccessResponsePayload
   error?: any
   chainId: number
 }) => void

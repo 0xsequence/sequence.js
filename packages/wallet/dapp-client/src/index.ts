@@ -11,6 +11,7 @@ export type {
   Session,
   SignMessagePayload,
   AddExplicitSessionPayload,
+  AddExplicitSessionSuccessResponsePayload,
   CreateNewSessionPayload,
   SignTypedDataPayload,
   ConnectSuccessResponsePayload,
