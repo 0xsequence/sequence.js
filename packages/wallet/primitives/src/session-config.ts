@@ -75,7 +75,7 @@ export function isCompleteSessionsTopology(topology: any): topology is SessionsT
   if (!isSessionsTopology(topology)) {
     return false
   }
-  // Check the topology contains exactly one identity signer and one blacklist
+  // Check the topology contains at least one identity signer and exactly one blacklist
   const { identitySignerCount, blacklistCount } = checkIsCompleteSessionsBranch(topology)
   return identitySignerCount >= 1 && blacklistCount === 1
 }
