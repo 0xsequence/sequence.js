@@ -650,7 +650,7 @@ export function minimiseSessionsTopology(
   identitySigner?: Address.Address,
 ): SessionsTopology {
   if (isSessionsBranch(topology)) {
-    const branches = topology.map((b) => minimiseSessionsTopology(b, explicitSigners, implicitSigners))
+    const branches = topology.map((b) => minimiseSessionsTopology(b, explicitSigners, implicitSigners, identitySigner))
     // If all branches are nodes, the branch can be a node too
     if (branches.every((b) => isSessionsNode(b))) {
       return Hash.keccak256(Bytes.concat(...branches.map((b) => Hex.toBytes(b))), { as: 'Hex' })
