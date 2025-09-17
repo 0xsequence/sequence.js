@@ -5,7 +5,13 @@ export interface SessionSigner {
   address: Address.Address | Promise<Address.Address>
 
   /// Check if the signer is valid for the given topology and chainId
-  isValid: (sessionTopology: SessionConfig.SessionsTopology, chainId: number) => boolean
+  isValid: (
+    sessionTopology: SessionConfig.SessionsTopology,
+    chainId: number,
+  ) => {
+    isValid: boolean
+    invalidReason?: string
+  }
 
   /// Check if the signer supports the call
   supportedCall: (

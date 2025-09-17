@@ -104,18 +104,21 @@ export class SessionManager implements SapientSigner {
     })
   }
 
-  async listSignerValidity(chainId: number): Promise<{ signer: Address.Address; isValid: boolean }[]> {
+  async listSignerValidity(
+    chainId: number,
+  ): Promise<{ signer: Address.Address; isValid: boolean; invalidReason?: string }[]> {
     const topology = await this.topology
-    const signerStatus = new Map<Address.Address, boolean>()
+    const signerStatus = new Map<Address.Address, { isValid: boolean; invalidReason?: string }>()
     for (const signer of this._implicitSigners) {
       signerStatus.set(signer.address, signer.isValid(topology, chainId))
     }
     for (const signer of this._explicitSigners) {
       signerStatus.set(signer.address, signer.isValid(topology, chainId))
     }
-    return Array.from(signerStatus.entries()).map(([signer, isValid]) => ({
+    return Array.from(signerStatus.entries()).map(([signer, { isValid, invalidReason }]) => ({
       signer,
       isValid,
+      invalidReason,
     }))
   }
 
@@ -126,8 +129,8 @@ export class SessionManager implements SapientSigner {
     if (!identitySigner) {
       throw new Error('Identity signer not found')
     }
-    const validImplicitSigners = this._implicitSigners.filter((signer) => signer.isValid(topology, chainId))
-    const validExplicitSigners = this._explicitSigners.filter((signer) => signer.isValid(topology, chainId))
+    const validImplicitSigners = this._implicitSigners.filter((signer) => signer.isValid(topology, chainId).isValid)
+    const validExplicitSigners = this._explicitSigners.filter((signer) => signer.isValid(topology, chainId).isValid)
 
     // Prioritize implicit signers
     const availableSigners = [...validImplicitSigners, ...validExplicitSigners]

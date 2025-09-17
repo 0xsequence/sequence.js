@@ -29,17 +29,20 @@ export class Explicit implements ExplicitSessionSigner {
     }
   }
 
-  isValid(sessionTopology: SessionConfig.SessionsTopology, chainId: number): boolean {
+  isValid(
+    sessionTopology: SessionConfig.SessionsTopology,
+    chainId: number,
+  ): { isValid: boolean; invalidReason?: string } {
     // Equality is considered expired
     if (this.sessionPermissions.deadline <= BigInt(Math.floor(Date.now() / 1000))) {
-      return false
+      return { isValid: false, invalidReason: 'Expired' }
     }
     if (this.sessionPermissions.chainId !== 0 && this.sessionPermissions.chainId !== chainId) {
-      return false
+      return { isValid: false, invalidReason: 'Chain ID mismatch' }
     }
     const explicitPermission = SessionConfig.getSessionPermissions(sessionTopology, this.address)
     if (!explicitPermission) {
-      return false
+      return { isValid: false, invalidReason: 'Permission not found' }
     }
 
     // Validate permission in configuration matches permission in signer
@@ -49,7 +52,7 @@ export class Explicit implements ExplicitSessionSigner {
       explicitPermission.valueLimit !== this.sessionPermissions.valueLimit ||
       explicitPermission.permissions.length !== this.sessionPermissions.permissions.length
     ) {
-      return false
+      return { isValid: false, invalidReason: 'Permission mismatch' }
     }
     // Validate permission rules
     for (const [index, permission] of explicitPermission.permissions.entries()) {
@@ -58,7 +61,7 @@ export class Explicit implements ExplicitSessionSigner {
         !Address.isEqual(permission.target, signerPermission.target) ||
         permission.rules.length !== signerPermission.rules.length
       ) {
-        return false
+        return { isValid: false, invalidReason: 'Permission rule mismatch' }
       }
       for (const [ruleIndex, rule] of permission.rules.entries()) {
         const signerRule = signerPermission.rules[ruleIndex]!
@@ -69,11 +72,11 @@ export class Explicit implements ExplicitSessionSigner {
           rule.offset !== signerRule.offset ||
           !Bytes.isEqual(rule.mask, signerRule.mask)
         ) {
-          return false
+          return { isValid: false, invalidReason: 'Permission rule mismatch' }
         }
       }
     }
-    return true
+    return { isValid: true }
   }
 
   async findSupportedPermission(

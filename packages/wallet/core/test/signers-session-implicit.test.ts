@@ -78,7 +78,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when topology has no identity signer', () => {
@@ -89,7 +89,8 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Identity signer not found')
     })
 
     it('should return false when identity signer does not match', () => {
@@ -101,7 +102,8 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Identity signer mismatch')
     })
 
     it('should return true regardless of chainId', () => {
@@ -111,10 +113,10 @@ describe('Implicit Session', () => {
       const implicitSigner = createImplicitSigner(attestation, identitySignature)
 
       // Test with different chainIds
-      expect(implicitSigner.isValid(topology, 1)).toBe(true)
-      expect(implicitSigner.isValid(topology, 137)).toBe(true)
-      expect(implicitSigner.isValid(topology, 42161)).toBe(true)
-      expect(implicitSigner.isValid(topology, 999999)).toBe(true)
+      expect(implicitSigner.isValid(topology, 1).isValid).toBe(true)
+      expect(implicitSigner.isValid(topology, 137).isValid).toBe(true)
+      expect(implicitSigner.isValid(topology, 42161).isValid).toBe(true)
+      expect(implicitSigner.isValid(topology, 999999).isValid).toBe(true)
     })
 
     it('should return true with different identity types', () => {
@@ -128,7 +130,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true with different issuer hashes', () => {
@@ -142,7 +144,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true with different audience hashes', () => {
@@ -156,7 +158,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true with different application data', () => {
@@ -170,7 +172,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true with different redirect URLs', () => {
@@ -187,7 +189,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true with different issued times', () => {
@@ -205,7 +207,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when identity signature is invalid', () => {
@@ -220,7 +222,8 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Identity signer mismatch')
     })
 
     it('should return false when attestation is issued in the future', () => {
@@ -269,7 +272,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should handle edge case with empty identity type', () => {
@@ -283,7 +286,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should handle edge case with empty application data', () => {
@@ -297,7 +300,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should handle edge case with empty redirect URL', () => {
@@ -314,7 +317,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true with complex topology structure', () => {
@@ -349,7 +352,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should verify identity signer recovery works correctly', () => {
@@ -363,7 +366,7 @@ describe('Implicit Session', () => {
       expect(recoveredIdentitySigner).toBe(identityAddress)
 
       const result = implicitSigner.isValid(topology, 1)
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should handle signature as hex string', () => {
@@ -381,7 +384,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when implicit signer is in blacklist', () => {
@@ -398,7 +401,8 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Blacklisted')
     })
 
     it('should return true when implicit signer is not in blacklist', () => {
@@ -416,7 +420,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true when blacklist is empty', () => {
@@ -427,7 +431,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when implicit signer is in blacklist with multiple entries', () => {
@@ -444,7 +448,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
     })
 
     it('should return true when implicit signer is not in blacklist with multiple entries', () => {
@@ -461,7 +465,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when implicit signer is in blacklist even with valid identity signer', () => {
@@ -478,7 +482,7 @@ describe('Implicit Session', () => {
 
       const result = implicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
     })
   })
 })

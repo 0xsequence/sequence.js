@@ -54,7 +54,7 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when session is expired', () => {
@@ -67,7 +67,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Expired')
     })
 
     it('should return false when session deadline equals current time', () => {
@@ -80,7 +81,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Expired')
     })
 
     it('should return false when chainId does not match (session has specific chainId)', () => {
@@ -93,7 +95,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 2) // Different chainId
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Chain ID mismatch')
     })
 
     it('should return true when session chainId is 0 (any chain)', () => {
@@ -106,7 +109,7 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 999) // Any chainId
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when session signer is not found in topology', () => {
@@ -120,7 +123,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission not found')
     })
 
     it('should return false when topology has no explicit sessions', () => {
@@ -130,7 +134,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission not found')
     })
 
     it('should return false when deadline does not match', () => {
@@ -144,7 +149,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission mismatch')
     })
 
     it('should return false when chainId does not match in topology', () => {
@@ -158,7 +164,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission mismatch')
     })
 
     it('should return false when valueLimit does not match', () => {
@@ -172,7 +179,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission mismatch')
     })
 
     it('should return false when permissions length does not match', () => {
@@ -200,7 +208,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission mismatch')
     })
 
     it('should return false when permission target does not match', () => {
@@ -219,7 +228,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should return false when permission rules length does not match', () => {
@@ -247,7 +257,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should return false when rule cumulative does not match', () => {
@@ -271,7 +282,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should return false when rule operation does not match', () => {
@@ -295,7 +307,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should return false when rule value does not match', () => {
@@ -319,7 +332,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should return false when rule offset does not match', () => {
@@ -343,7 +357,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should return false when rule mask does not match', () => {
@@ -367,7 +382,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should return false when topology permission deadline is expired', () => {
@@ -381,7 +397,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission mismatch')
     })
 
     it('should return false when topology permission chainId does not match', () => {
@@ -395,7 +412,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission mismatch')
     })
 
     it('should return true with complex permission rules', () => {
@@ -430,7 +448,7 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return true with multiple permissions', () => {
@@ -470,7 +488,7 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
 
     it('should return false when one of multiple permissions does not match', () => {
@@ -520,7 +538,8 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false)
+      expect(result.isValid).toBe(false)
+      expect(result.invalidReason).toBe('Permission rule mismatch')
     })
 
     it('should handle edge case with zero deadline', () => {
@@ -533,7 +552,7 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(false) // Zero deadline should be considered expired
+      expect(result.isValid).toBe(false) // Zero deadline should be considered expired
     })
 
     it('should handle edge case with very large deadline', () => {
@@ -546,7 +565,7 @@ describe('Explicit Session', () => {
 
       const result = explicitSigner.isValid(topology, 1)
 
-      expect(result).toBe(true)
+      expect(result.isValid).toBe(true)
     })
   })
 })

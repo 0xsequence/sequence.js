@@ -42,19 +42,22 @@ export class Implicit implements SessionSigner {
     return Address.fromPublicKey(identityPubKey)
   }
 
-  isValid(sessionTopology: SessionConfig.SessionsTopology, _chainId: number): boolean {
+  isValid(
+    sessionTopology: SessionConfig.SessionsTopology,
+    _chainId: number,
+  ): { isValid: boolean; invalidReason?: string } {
     const implicitSigner = SessionConfig.getIdentitySigner(sessionTopology)
     if (!implicitSigner) {
-      return false
+      return { isValid: false, invalidReason: 'Identity signer not found' }
     }
     if (!Address.isEqual(implicitSigner, this.identitySigner)) {
-      return false
+      return { isValid: false, invalidReason: 'Identity signer mismatch' }
     }
     const blacklist = SessionConfig.getImplicitBlacklist(sessionTopology)
     if (blacklist?.some((b) => Address.isEqual(b, this.address))) {
-      return false
+      return { isValid: false, invalidReason: 'Blacklisted' }
     }
-    return true
+    return { isValid: true }
   }
 
   async supportedCall(
