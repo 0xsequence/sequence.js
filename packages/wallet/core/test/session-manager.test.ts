@@ -52,12 +52,7 @@ for (const extension of ALL_EXTENSIONS) {
   describe(`SessionManager (${extension.name})`, () => {
     const timeout = 30000
 
-    const identityPrivateKey = Secp256k1.randomPrivateKey()
-    const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
-
-    const stateProvider = new State.Local.Provider()
-
-    const createImplicitSigner = async (redirectUrl: string, signingKey?: Hex.Hex) => {
+    const createImplicitSigner = async (redirectUrl: string, signingKey: Hex.Hex) => {
       const implicitPrivateKey = Secp256k1.randomPrivateKey()
       const implicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: implicitPrivateKey }))
       const attestation: Attestation.Attestation = {
@@ -73,7 +68,7 @@ for (const extension of ALL_EXTENSIONS) {
       }
       const identitySignature = Secp256k1.sign({
         payload: Attestation.hash(attestation),
-        privateKey: signingKey ?? identityPrivateKey,
+        privateKey: signingKey,
       })
       return new Signers.Session.Implicit(implicitPrivateKey, attestation, identitySignature, implicitAddress)
     }
@@ -83,6 +78,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
 
         let topology = SessionConfig.emptySessionsTopology(identityAddress)
         // Add random signer to the topology
@@ -166,6 +166,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
 
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
         // Create implicit signer
         const implicitPrivateKey = Secp256k1.randomPrivateKey()
         const implicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: implicitPrivateKey }))
@@ -199,7 +204,11 @@ for (const extension of ALL_EXTENSIONS) {
           {
             threshold: 1n,
             checkpoint: 0n,
-            topology: { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+            topology: [
+              { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+              // Include a random node leaf (bytes32) to prevent image hash collision
+              Hex.random(32),
+            ],
           },
           {
             stateProvider,
@@ -248,8 +257,13 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
 
-        const implicitSigner1 = await createImplicitSigner('https://example.com')
-        const implicitSigner2 = await createImplicitSigner('https://another-example.com')
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
+        const implicitSigner1 = await createImplicitSigner('https://example.com', identityPrivateKey)
+        const implicitSigner2 = await createImplicitSigner('https://another-example.com', identityPrivateKey)
         const topology = SessionConfig.emptySessionsTopology(identityAddress)
         await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(topology))
         const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(topology))
@@ -257,7 +271,11 @@ for (const extension of ALL_EXTENSIONS) {
           {
             threshold: 1n,
             checkpoint: 0n,
-            topology: { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+            topology: [
+              { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+              // Include a random node leaf (bytes32) to prevent image hash collision
+              Hex.random(32),
+            ],
           },
           {
             stateProvider,
@@ -318,6 +336,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
 
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
         const identityPrivateKey2 = Secp256k1.randomPrivateKey()
         const identityAddress2 = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey2 }))
 
@@ -331,7 +354,11 @@ for (const extension of ALL_EXTENSIONS) {
           {
             threshold: 1n,
             checkpoint: 0n,
-            topology: { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+            topology: [
+              { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+              // Include a random node leaf (bytes32) to prevent image hash collision
+              Hex.random(32),
+            ],
           },
           {
             stateProvider,
@@ -385,6 +412,11 @@ for (const extension of ALL_EXTENSIONS) {
       const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
       const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
+      // Create unique identity and state provider for this test
+      const identityPrivateKey = Secp256k1.randomPrivateKey()
+      const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+      const stateProvider = new State.Local.Provider()
+
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
       const explicitPermissions: Signers.Session.ExplicitParams = {
@@ -405,7 +437,11 @@ for (const extension of ALL_EXTENSIONS) {
         {
           threshold: 1n,
           checkpoint: 0n,
-          topology: { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+          topology: [
+            { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+            // Include a random node leaf (bytes32) to prevent image hash collision
+            Hex.random(32),
+          ],
         },
         {
           stateProvider,
@@ -596,6 +632,11 @@ for (const extension of ALL_EXTENSIONS) {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
         // Create an implicit signer
         const implicitPrivateKey = Secp256k1.randomPrivateKey()
         const implicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: implicitPrivateKey }))
@@ -668,6 +709,11 @@ for (const extension of ALL_EXTENSIONS) {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
         const sessionPermission: Signers.Session.ExplicitParams = {
@@ -735,6 +781,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
 
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -822,6 +873,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
 
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -920,6 +976,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
 
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -1025,6 +1086,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
 
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
@@ -1144,6 +1210,11 @@ for (const extension of ALL_EXTENSIONS) {
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
 
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
