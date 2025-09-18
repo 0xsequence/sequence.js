@@ -198,14 +198,36 @@ export class Provider implements ProviderInterface {
     return
   }
 
+  async getLatestImageHash(wallet: Address.Address): Promise<Hex.Hex | undefined> {
+    const deployHash = await this.getDeploy(wallet)
+    if (!deployHash) {
+      return undefined
+    }
+    const configUpdates = await this.getConfigurationUpdates(wallet, deployHash.imageHash, { allUpdates: true })
+    if (configUpdates.length === 0) {
+      return deployHash.imageHash
+    }
+    return configUpdates[configUpdates.length - 1]!.imageHash
+  }
+
   async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean },
+    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
   ): Promise<{ imageHash: Hex.Hex; signature: Signature.RawSignature }[]> {
     let fromConfig = await this.store.loadConfig(fromImageHash)
     if (!fromConfig) {
       return []
+    }
+
+    // If toImageHash is provided, load its config to get the target checkpoint
+    //TODO Pass this recursively to avoid loading the config multiple times
+    let toConfig: Config.Config | undefined
+    if (options?.toImageHash) {
+      toConfig = await this.store.loadConfig(options.toImageHash)
+      if (!toConfig) {
+        throw new Error(`toImageHash ${options.toImageHash} not found`)
+      }
     }
 
     const { signers, sapientSigners } = Config.getSigners(fromConfig)
@@ -236,7 +258,16 @@ export class Provider implements ProviderInterface {
       | undefined
 
     const nextCandidatesSorted = nextCandidates
-      .filter((c) => c!.config && c!.config.checkpoint > fromConfig.checkpoint)
+      .filter((c) => {
+        if (!c!.config || c!.config.checkpoint <= fromConfig.checkpoint) {
+          return false
+        }
+        // If toImageHash is provided, don't exceed its checkpoint
+        if (toConfig && c!.config.checkpoint > toConfig.checkpoint) {
+          return false
+        }
+        return true
+      })
       .sort((a, b) =>
         // If we are looking for the longest path, sort by ascending checkpoint
         // because we want to find the smalles jump, and we should start with the
@@ -325,13 +356,28 @@ export class Provider implements ProviderInterface {
           },
         },
       }
+
+      // If we found the target toImageHash, return early
+      if (options?.toImageHash && Hex.isEqual(candidate.nextImageHash, options.toImageHash)) {
+        break
+      }
     }
 
     if (!best) {
       return []
     }
 
-    const nextStep = await this.getConfigurationUpdates(wallet, best.nextImageHash, { allUpdates: true })
+    // If we found the target toImageHash, return just this update
+    if (options?.toImageHash && Hex.isEqual(best.nextImageHash, options.toImageHash)) {
+      return [
+        {
+          imageHash: best.nextImageHash,
+          signature: best.signature,
+        },
+      ]
+    }
+
+    const nextStep = await this.getConfigurationUpdates(wallet, best.nextImageHash, options)
 
     return [
       {

@@ -178,6 +178,10 @@ export class DevHttpProvider implements Provider {
     return this.request('GET', `/witness/sapient/${wallet}/${signer}/${imageHash}`)
   }
 
+  async getLatestImageHash(wallet: Address.Address): Promise<Hex.Hex | undefined> {
+    return this.request('GET', `/latest-image-hash/${wallet}`)
+  }
+
   async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
