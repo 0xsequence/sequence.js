@@ -154,20 +154,34 @@ export class Cached implements Provider {
     return source
   }
 
+  async getLatestImageHash(wallet: Address.Address): Promise<Hex.Hex | undefined> {
+    // Always fetch from source
+    return await this.args.source.getLatestImageHash(wallet)
+  }
+
   async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean },
+    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
-    //FIXME This will not get new updates.
-    // We need a mechanism to detect when there are new updates we haven't cached.
-    // We need to be able to do this WITHOUT having to fetch all updates from the source.
+    if (options?.toImageHash && options?.allUpdates) {
+      //FIXME Is this correct?
+      throw new Error('toImageHash and allUpdates cannot be used together')
+    }
+
     const cached = await this.args.cache.getConfigurationUpdates(wallet, fromImageHash, options)
     if (cached.length > 0) {
-      return cached
+      const toImageHash = options?.toImageHash ?? (await this.getLatestImageHash(wallet))
+      // Only use the cached updates they are up to date
+      if (!toImageHash || Hex.isEqual(cached[cached.length - 1]!.imageHash, toImageHash)) {
+        return cached
+      }
     }
-    const source = await this.args.source.getConfigurationUpdates(wallet, fromImageHash, options)
+    // If the cached updates are not up to date, fetch from source
+    const cachedFromImageHash = cached.length > 0 ? cached[cached.length - 1]!.imageHash : fromImageHash
+    const source = await this.args.source.getConfigurationUpdates(wallet, cachedFromImageHash, options)
     if (source.length > 0) {
+      // Save the config updates to cache
       const promises = source.map(async (update) => {
         const config = await this.args.cache.getConfiguration(update.imageHash)
         if (!config) {
@@ -177,7 +191,7 @@ export class Cached implements Provider {
       })
       await Promise.all(promises)
     }
-    return source
+    return [...cached, ...source]
   }
 
   async getTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {

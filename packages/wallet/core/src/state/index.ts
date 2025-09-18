@@ -42,13 +42,16 @@ export interface Reader {
     { chainId: number; payload: Payload.Parented; signature: Signature.SignatureOfSapientSignerLeaf } | undefined
   >
 
+  getLatestImageHash(wallet: Address.Address): MaybePromise<Hex.Hex | undefined>
+
   getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean },
+    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
   ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>>
 
   getTree(rootHash: Hex.Hex): MaybePromise<GenericTree.Tree | undefined>
+
   getPayload(
     opHash: Hex.Hex,
   ): MaybePromise<{ chainId: number; payload: Payload.Parented; wallet: Address.Address } | undefined>
@@ -73,7 +76,9 @@ export interface Writer {
   saveTree(tree: GenericTree.Tree): MaybePromise<void>
 
   saveConfiguration(config: Config.Config): MaybePromise<void>
+
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void>
+
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void>
 }
 
