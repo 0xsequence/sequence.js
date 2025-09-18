@@ -183,15 +183,21 @@ export class Cached implements Provider {
     if (source.length > 0) {
       // Save the config updates to cache
       const promises = source.map(async (update) => {
-        const config = await this.args.cache.getConfiguration(update.imageHash)
+        let config = await this.args.cache.getConfiguration(update.imageHash)
         if (!config) {
-          return
+          config = await this.args.source.getConfiguration(update.imageHash)
+          if (config) {
+            await this.args.cache.saveConfiguration(config)
+          }
         }
-        return this.args.cache.saveUpdate(wallet, config, update.signature)
+        if (config) {
+          return this.args.cache.saveUpdate(wallet, config, update.signature)
+        }
       })
       await Promise.all(promises)
     }
-    return [...cached, ...source]
+    const result = [...cached, ...source]
+    return result
   }
 
   async getTree(rootHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
