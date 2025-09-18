@@ -394,11 +394,39 @@ for (const extension of ALL_EXTENSIONS) {
       expectedEventTopic?: Hex.Hex,
     ) => {
       console.log('Simulating transaction', transaction)
+
+      // Create a unique account for this transaction to avoid nonce conflicts
+      const uniquePrivateKey = Secp256k1.randomPrivateKey()
+      const uniqueAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: uniquePrivateKey }))
+
+      // Fund the unique account
+      await provider.request({
+        method: 'anvil_setBalance',
+        params: [uniqueAddress, Hex.fromNumber(1000000000000000000n)], // 1 ETH
+      })
+
+      // Impersonate the account for transaction sending
+      await provider.request({
+        method: 'anvil_impersonateAccount',
+        params: [uniqueAddress],
+      })
+
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
-        params: [transaction],
+        params: [
+          {
+            ...transaction,
+            from: uniqueAddress,
+          },
+        ],
       })
       console.log('Transaction hash:', txHash)
+
+      // Stop impersonating
+      await provider.request({
+        method: 'anvil_stopImpersonatingAccount',
+        params: [uniqueAddress],
+      })
 
       // Wait for transaction receipt
       await new Promise((resolve) => setTimeout(resolve, 3000))
