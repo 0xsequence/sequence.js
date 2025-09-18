@@ -592,6 +592,122 @@ describe('Cached', () => {
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockUpdates[0].signature)
         expect(mockSource.getLatestImageHash).not.toHaveBeenCalled()
       })
+
+      it('should fetch config from source when config is missing from cache', async () => {
+        const mockUpdates = [{ imageHash: TEST_IMAGE_HASH, signature: '0x123' }] as any
+        const mockConfigFromSource = { test: 'config-from-source' } as any
+
+        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
+        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
+        vi.mocked(mockCache.getConfiguration).mockResolvedValue(undefined) // Config not in cache
+        vi.mocked(mockSource.getConfiguration).mockResolvedValue(mockConfigFromSource) // Config in source
+
+        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
+
+        expect(result).toStrictEqual(mockUpdates)
+        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
+          allUpdates: true,
+        })
+        // Should fetch config from source when not in cache
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH)
+        // Should save config to cache
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfigFromSource)
+        // Should save update to cache
+        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfigFromSource, mockUpdates[0].signature)
+      })
+
+      it('should handle multiple updates when cache is missing and configs need to be fetched', async () => {
+        const mockUpdates = [
+          { imageHash: TEST_IMAGE_HASH, signature: '0x123' },
+          { imageHash: TEST_IMAGE_HASH_2, signature: '0x456' },
+        ] as any
+        const mockConfig1 = { test: 'config1' } as any
+        const mockConfig2 = { test: 'config2' } as any
+
+        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
+        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
+        // First config not in cache, second config in cache
+        vi.mocked(mockCache.getConfiguration)
+          .mockResolvedValueOnce(undefined) // First call returns undefined
+          .mockResolvedValueOnce(mockConfig2) // Second call returns config
+        vi.mocked(mockSource.getConfiguration).mockResolvedValue(mockConfig1)
+
+        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
+
+        expect(result).toStrictEqual(mockUpdates)
+        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
+          allUpdates: true,
+        })
+        // Should fetch first config from source
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH)
+        // Should save first config to cache
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig1)
+        // Should save both updates to cache
+        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig1, mockUpdates[0].signature)
+        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig2, mockUpdates[1].signature)
+      })
+
+      it('should handle when config is not found in source during update flow', async () => {
+        const mockUpdates = [{ imageHash: TEST_IMAGE_HASH, signature: '0x123' }] as any
+
+        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
+        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
+        vi.mocked(mockCache.getConfiguration).mockResolvedValue(undefined) // Config not in cache
+        vi.mocked(mockSource.getConfiguration).mockResolvedValue(undefined) // Config not in source either
+
+        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
+
+        expect(result).toStrictEqual(mockUpdates)
+        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
+          allUpdates: true,
+        })
+        // Should try to fetch config from source
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH)
+        // Should not save config to cache since it's undefined
+        expect(mockCache.saveConfiguration).not.toHaveBeenCalled()
+        // Should not save update to cache since config is undefined
+        expect(mockCache.saveUpdate).not.toHaveBeenCalled()
+      })
+
+      it('should handle mixed scenario where some configs are in cache and others need to be fetched', async () => {
+        const mockUpdates = [
+          { imageHash: TEST_IMAGE_HASH, signature: '0x123' },
+          { imageHash: TEST_IMAGE_HASH_2, signature: '0x456' },
+          { imageHash: TEST_IMAGE_HASH_3, signature: '0x789' },
+        ] as any
+        const mockConfig1 = { test: 'config1' } as any
+        const mockConfig3 = { test: 'config3' } as any
+
+        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
+        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
+        // Config1 not in cache, Config2 in cache, Config3 not in cache
+        vi.mocked(mockCache.getConfiguration)
+          .mockResolvedValueOnce(undefined) // First call for TEST_IMAGE_HASH
+          .mockResolvedValueOnce(mockConfig) // Second call for TEST_IMAGE_HASH_2 (in cache)
+          .mockResolvedValueOnce(undefined) // Third call for TEST_IMAGE_HASH_3
+        vi.mocked(mockSource.getConfiguration)
+          .mockResolvedValueOnce(mockConfig1) // First config from source
+          .mockResolvedValueOnce(mockConfig3) // Third config from source
+
+        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
+
+        expect(result).toStrictEqual(mockUpdates)
+        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
+          allUpdates: true,
+        })
+        // Should fetch configs from source for missing ones
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH)
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH_3)
+        // Should not fetch config2 since it's in cache
+        expect(mockSource.getConfiguration).not.toHaveBeenCalledWith(TEST_IMAGE_HASH_2)
+        // Should save missing configs to cache
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig1)
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig3)
+        // Should save all updates to cache
+        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig1, mockUpdates[0].signature)
+        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockUpdates[1].signature)
+        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig3, mockUpdates[2].signature)
+      })
     })
 
     describe('edge cases', () => {
