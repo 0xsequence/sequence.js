@@ -800,6 +800,21 @@ describe('Session Config', () => {
         const explicitSigners = getExplicitSigners(result)
         expect(explicitSigners).toEqual([])
       })
+
+      it('should create empty topology with multiple identity signers', () => {
+        const result = emptySessionsTopology([testAddress1, testAddress2])
+
+        expect(isCompleteSessionsTopology(result)).toBe(true)
+
+        const identitySigners = getIdentitySigners(result)
+        expect(identitySigners).toEqual([testAddress1, testAddress2])
+
+        const blacklist = getImplicitBlacklist(result)
+        expect(blacklist).toEqual([])
+
+        const explicitSigners = getExplicitSigners(result)
+        expect(explicitSigners).toEqual([])
+      })
     })
   })
 

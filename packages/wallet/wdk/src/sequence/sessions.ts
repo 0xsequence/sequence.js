@@ -264,6 +264,36 @@ export class Sessions implements SessionsInterface {
     return modules.some((m) => Address.isEqual(m.sapientLeaf.address, this.shared.sequence.extensions.sessions))
   }
 
+  async initSessionModule(modules: Module[], identitySigners: Address.Address[], guardTopology?: Config.NestedLeaf) {
+    if (this.hasSessionModule(modules)) {
+      throw new Error('session-module-already-initialized')
+    }
+
+    if (identitySigners.length === 0) {
+      throw new Error('No identity signers provided')
+    }
+
+    // Calculate image hash with the identity signers
+    const sessionsTopology = SessionConfig.emptySessionsTopology(
+      identitySigners as [Address.Address, ...Address.Address[]],
+    )
+    // Store this tree in the state provider
+    const sessionsConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionsTopology)
+    this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
+    // Prepare the configuration leaf
+    const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
+    const signer = {
+      ...ManagerOptionsDefaults.defaultSessionsTopology,
+      address: this.shared.sequence.extensions.sessions,
+      imageHash: sessionsImageHash,
+    }
+    modules.push({
+      sapientLeaf: signer,
+      weight: 255n,
+      guardLeaf: guardTopology,
+    })
+  }
+
   async addIdentitySignerToModules(modules: Module[], address: Address.Address) {
     if (!this.hasSessionModule(modules)) {
       throw new Error('session-module-not-enabled')

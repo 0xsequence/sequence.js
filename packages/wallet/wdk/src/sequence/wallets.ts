@@ -817,31 +817,12 @@ export class Wallets implements WalletsInterface {
     let modules: Module[] = []
 
     if (!args.noSessionManager) {
-      // Calculate image hash with the identity and device signer
-      let sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
-      sessionsTopology = SessionConfig.addIdentitySigner(sessionsTopology, device.address)
-      // Store this tree in the state provider
-      const sessionsConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionsTopology)
-      this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
-      // Prepare the configuration leaf
-      const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
-      const signer = {
-        ...ManagerOptionsDefaults.defaultSessionsTopology,
-        address: this.shared.sequence.extensions.sessions,
-        imageHash: sessionsImageHash,
+      const identitySigners = [device.address]
+      if (!Signers.isSapientSigner(loginSigner.signer)) {
+        // Add non sapient login signer to the identity signers
+        identitySigners.unshift(loginSignerAddress)
       }
-      if (sessionsGuardTopology) {
-        modules.push({
-          sapientLeaf: signer,
-          weight: 255n,
-          guardLeaf: sessionsGuardTopology,
-        })
-      } else {
-        modules.push({
-          sapientLeaf: signer,
-          weight: 255n,
-        })
-      }
+      await this.shared.modules.sessions.initSessionModule(modules, identitySigners, sessionsGuardTopology)
     }
 
     if (!args.noRecovery) {
