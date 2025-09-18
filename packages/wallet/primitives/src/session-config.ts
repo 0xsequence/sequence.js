@@ -723,15 +723,18 @@ export function removeFromImplicitBlacklist(topology: SessionsTopology, address:
 /**
  *  Generate an empty sessions topology with the given identity signer. No session permission and an empty blacklist
  */
-export function emptySessionsTopology(identitySigner: Address.Address): SessionsTopology {
-  return [
+export function emptySessionsTopology(
+  identitySigner: Address.Address | [Address.Address, ...Address.Address[]],
+): SessionsTopology {
+  if (!Array.isArray(identitySigner)) {
+    return emptySessionsTopology([identitySigner])
+  }
+  const flattenedTopology: SessionLeaf[] = [
     {
       type: 'implicit-blacklist',
       blacklist: [],
     },
-    {
-      type: 'identity-signer',
-      identitySigner,
-    },
+    ...identitySigner.map((signer): IdentitySignerLeaf => ({ type: 'identity-signer', identitySigner: signer })),
   ]
+  return buildBalancedSessionsTopology(flattenedTopology)
 }
