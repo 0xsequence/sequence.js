@@ -21,6 +21,7 @@ export async function doEncodeSessionCallSignatures(
   callSignaturesInput: string[],
   explicitSigners: string[] = [],
   implicitSigners: string[] = [],
+  identitySigner?: string,
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
   const callSignatures = callSignaturesInput.map((s) => SessionSignature.sessionCallSignatureFromJson(s))
@@ -29,6 +30,7 @@ export async function doEncodeSessionCallSignatures(
     sessionTopology,
     explicitSigners as `0x${string}`[],
     implicitSigners as `0x${string}`[],
+    identitySigner as `0x${string}` | undefined,
   )
   return Hex.from(encoded)
 }

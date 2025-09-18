@@ -11,7 +11,14 @@ import { AbiFunction, Address, Hex, Provider } from 'ox'
 import * as State from '../state/index.js'
 import { Wallet } from '../wallet.js'
 import { SapientSigner } from './index.js'
-import { Explicit, Implicit, isExplicitSessionSigner, SessionSigner, UsageLimit } from './session/index.js'
+import {
+  Explicit,
+  Implicit,
+  isExplicitSessionSigner,
+  isImplicitSessionSigner,
+  SessionSigner,
+  UsageLimit,
+} from './session/index.js'
 
 export type SessionManagerOptions = {
   sessionManagerAddress: Address.Address
@@ -107,14 +114,14 @@ export class SessionManager implements SapientSigner {
   async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
     // Only use signers that match the topology
     const topology = await this.topology
-    const identitySigner = SessionConfig.getIdentitySigner(topology)
-    if (!identitySigner) {
-      throw new Error('Identity signer not found')
+    const identitySigners = SessionConfig.getIdentitySigners(topology)
+    if (!identitySigners) {
+      throw new Error('Identity signers not found')
     }
     const blacklist = SessionConfig.getImplicitBlacklist(topology)
     const validImplicitSigners = this._implicitSigners.filter(
       (signer) =>
-        Address.isEqual(signer.identitySigner, identitySigner) &&
+        identitySigners.some((s) => Address.isEqual(s, signer.identitySigner)) &&
         // Blacklist must exist for implicit signers to be used
         blacklist &&
         !blacklist.some((b) => Address.isEqual(b, signer.address)),
@@ -279,6 +286,7 @@ export class SessionManager implements SapientSigner {
     // Encode the signature
     const explicitSigners: Address.Address[] = []
     const implicitSigners: Address.Address[] = []
+    let identitySigner: Address.Address | undefined
     await Promise.all(
       signers.map(async (signer) => {
         const address = await signer.address
@@ -286,9 +294,14 @@ export class SessionManager implements SapientSigner {
           if (!explicitSigners.find((a) => Address.isEqual(a, address))) {
             explicitSigners.push(address)
           }
-        } else {
+        } else if (isImplicitSessionSigner(signer)) {
           if (!implicitSigners.find((a) => Address.isEqual(a, address))) {
             implicitSigners.push(address)
+            if (!identitySigner) {
+              identitySigner = signer.identitySigner
+            } else if (!Address.isEqual(identitySigner, signer.identitySigner)) {
+              throw new Error('Multiple implicit signers with different identity signers')
+            }
           }
         }
       }),
@@ -299,6 +312,7 @@ export class SessionManager implements SapientSigner {
       await this.topology,
       explicitSigners,
       implicitSigners,
+      identitySigner,
     )
 
     return {
