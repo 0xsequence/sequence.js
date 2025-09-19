@@ -342,12 +342,12 @@ export class Sessions implements SessionsInterface {
   async addExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    session: ExplicitSession,
+    explicitSession: ExplicitSession,
     origin?: string,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress, true)
     const newTopology = SessionConfig.addExplicitSession(topology, {
-      ...session,
+      ...explicitSession,
       signer: sessionAddress,
     })
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
