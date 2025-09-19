@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Network } from '@0xsequence/wallet-primitives'
 import { Bytes, Hex } from 'ox'
-import { NODES_URL, RELAYER_URL } from './constants.js'
 
 type JsonReplacer = (key: string, value: any) => any
 type JsonReviver = (key: string, value: any) => any
@@ -37,9 +36,22 @@ function chainRevivers(revivers: JsonReviver[]): JsonReviver {
 }
 
 /**
+ * A JSON replacer that serializes Map objects into a structured object.
+ */
+const mapReplacer: JsonReplacer = (key, value) => {
+  if (value instanceof Map) {
+    return {
+      _isMap: true,
+      data: Array.from(value.entries()),
+    }
+  }
+  return value
+}
+
+/**
  * A JSON replacer that serializes BigInt values into a structured object.
  */
-const bigIntReplacer: JsonReplacer = (_key, value) => {
+const bigIntReplacer: JsonReplacer = (key, value) => {
   if (typeof value === 'bigint') {
     return {
       _isBigInt: true,
@@ -52,11 +64,28 @@ const bigIntReplacer: JsonReplacer = (_key, value) => {
 /**
  * A JSON replacer that serializes Uint8Array values into a structured object.
  */
-const uint8ArrayReplacer: JsonReplacer = (_key, value) => {
+const uint8ArrayReplacer: JsonReplacer = (key, value) => {
   if (value instanceof Uint8Array) {
     return {
       _isUint8Array: true,
       data: Hex.from(value),
+    }
+  }
+  return value
+}
+
+/**
+ * A JSON reviver that deserializes a structured object back into a Map.
+ */
+const mapReviver: JsonReviver = (key, value) => {
+  if (value !== null && typeof value === 'object' && value._isMap === true && Array.isArray(value.data)) {
+    try {
+      // The key-value pairs in value.data will have already been processed
+      // by other revivers in the chain because JSON.parse works bottom-up.
+      return new Map(value.data)
+    } catch (e) {
+      console.error(`Failed to revive Map for key "${key}":`, e)
+      return value // Return original object if revival fails
     }
   }
   return value
@@ -92,9 +121,8 @@ const uint8ArrayReviver: JsonReviver = (key, value) => {
   return value
 }
 
-export const jsonReplacers = chainReplacers([bigIntReplacer, uint8ArrayReplacer])
-
-export const jsonRevivers = chainRevivers([bigIntReviver, uint8ArrayReviver])
+export const jsonRevivers = chainRevivers([mapReviver, bigIntReviver, uint8ArrayReviver])
+export const jsonReplacers = chainReplacers([mapReplacer, bigIntReplacer, uint8ArrayReplacer])
 
 /**
  * Apply a template to a string.

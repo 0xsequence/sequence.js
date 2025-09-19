@@ -19,7 +19,7 @@ export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
 
 export interface GuardConfig {
   url: string
-  address: Address.Address
+  moduleAddresses: Map<Address.Address, Address.Address>
 }
 
 // --- Payloads for Transport ---
@@ -68,6 +68,11 @@ export interface ConnectSuccessResponsePayload {
   userEmail?: string
   loginMethod?: LoginMethod
   guard?: GuardConfig
+}
+
+export interface AddExplicitSessionSuccessResponsePayload {
+  walletAddress: string
+  sessionAddress: string
 }
 
 export interface ModifySessionSuccessResponsePayload {

@@ -114,8 +114,9 @@ describe('Guard Signer', () => {
 
     const signatures = [mockHashSignature, mockEthSignSignature, mockErc1271Signature, mockSapientSignature]
     const signedEnvelope = Envelope.toSigned(envelope, signatures)
+    const token = { id: 'TOTP' as const, code: '123456' }
 
-    const result = await guard.signEnvelope(signedEnvelope)
+    const result = await guard.signEnvelope(signedEnvelope, token)
     expect(result).toEqual({
       address: TEST_ADDRESS_1,
       signature: {
@@ -137,6 +138,7 @@ describe('Guard Signer', () => {
       expectedDigest,
       expectedMessage,
       expectedSignatures,
+      { id: 'TOTP', token: '123456' },
     )
   })
 
@@ -159,8 +161,9 @@ describe('Guard Signer', () => {
 
     const signatures = [mockHashSignature, mockEthSignSignature, mockErc1271Signature, mockSapientSignature]
     const signedEnvelope = Envelope.toSigned(envelope, signatures)
+    const token = { id: 'TOTP' as const, code: '123456' }
 
-    const result = await guard.signEnvelope(signedEnvelope)
+    const result = await guard.signEnvelope(signedEnvelope, token)
     expect(result).toEqual({
       address: TEST_ADDRESS_1,
       signature: {
@@ -182,6 +185,7 @@ describe('Guard Signer', () => {
       expectedDigest,
       expectedMessage,
       expectedSignatures,
+      { id: 'TOTP', token: '123456' },
     )
   })
 
@@ -204,8 +208,9 @@ describe('Guard Signer', () => {
 
     const signatures = [mockHashSignature, mockEthSignSignature, mockErc1271Signature, mockSapientSignature]
     const signedEnvelope = Envelope.toSigned(envelope, signatures)
+    const token = { id: 'TOTP' as const, code: '123456' }
 
-    const result = await guard.signEnvelope(signedEnvelope)
+    const result = await guard.signEnvelope(signedEnvelope, token)
     expect(result).toEqual({
       address: TEST_ADDRESS_1,
       signature: {
@@ -227,6 +232,7 @@ describe('Guard Signer', () => {
       expectedDigest,
       expectedMessage,
       expectedSignatures,
+      { id: 'TOTP', token: '123456' },
     )
   })
 
@@ -263,8 +269,9 @@ describe('Guard Signer', () => {
 
     const signatures = [mockHashSignature, mockEthSignSignature, mockErc1271Signature, mockSapientSignature]
     const signedEnvelope = Envelope.toSigned(envelope, signatures)
+    const token = { id: 'TOTP' as const, code: '123456' }
 
-    const result = await guard.signEnvelope(signedEnvelope)
+    const result = await guard.signEnvelope(signedEnvelope, token)
     expect(result).toEqual({
       address: TEST_ADDRESS_1,
       signature: {
@@ -285,6 +292,7 @@ describe('Guard Signer', () => {
       expectedDigest,
       expectedMessage,
       expectedSignatures,
+      { id: 'TOTP', token: '123456' },
     )
   })
 })

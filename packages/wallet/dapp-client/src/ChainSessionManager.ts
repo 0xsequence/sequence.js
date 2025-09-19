@@ -204,7 +204,7 @@ export class ChainSessionManager {
       stateProvider: this.stateProvider,
     })
     this.sessionManager = new Signers.SessionManager(this.wallet, {
-      sessionManagerAddress: Extensions.Dev1.sessions,
+      sessionManagerAddress: Extensions.Rc3.sessions,
       provider: this.provider!,
     })
     this.isInitialized = true
@@ -228,6 +228,7 @@ export class ChainSessionManager {
         false,
         implicitSession.loginMethod,
         implicitSession.userEmail,
+        implicitSession.guard,
       )
     }
 
@@ -672,7 +673,7 @@ export class ChainSessionManager {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const tempManager = new Signers.SessionManager(this.wallet, {
-          sessionManagerAddress: Extensions.Dev1.sessions,
+          sessionManagerAddress: Extensions.Rc3.sessions,
           provider: this.provider,
         })
         const topology = await tempManager.getTopology()
@@ -725,21 +726,20 @@ export class ChainSessionManager {
     try {
       const calls: Payload.Call[] = transactions.map((tx) => ({
         to: tx.to,
-        value: tx.value,
-        data: tx.data,
-        gasLimit: tx.gasLimit ?? BigInt(0),
+        value: tx.value ?? 0n,
+        data: tx.data ?? '0x',
+        gasLimit: tx.gasLimit ?? 0n,
         delegateCall: tx.delegateCall ?? false,
         onlyFallback: tx.onlyFallback ?? false,
         behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
       }))
 
-      // Attempt to prepare and sign the transaction. If this succeeds, the session
-      // has the necessary permissions. We don't relay the transaction.
-      await this._buildAndSignCalls(calls)
+      // Directly check if there are signers with the necessary permissions for all calls.
+      // This will throw an error if any call is not supported.
+      await this.sessionManager.findSignersForCalls(this.wallet.address, this.chainId, calls)
       return true
     } catch (error) {
-      // If building or signing fails, it indicates a lack of permissions or another issue.
-      // For the purpose of this check, we treat it as a permission failure.
+      // An error from findSignersForCalls indicates a permission failure.
       console.warn(
         `Permission check failed for chain ${this.chainId}:`,
         error instanceof Error ? error.message : String(error),
@@ -915,7 +915,19 @@ export class ChainSessionManager {
 
     try {
       const preparedIncrement = await this.sessionManager.prepareIncrement(this.wallet.address, this.chainId, calls)
-      if (preparedIncrement) calls.push(preparedIncrement)
+      if (preparedIncrement) {
+        if (
+          Address.isEqual(this.sessionManager.address, Extensions.Dev1.sessions) ||
+          Address.isEqual(this.sessionManager.address, Extensions.Dev2.sessions)
+        ) {
+          // Last call
+          calls.push(preparedIncrement)
+          //FIXME Maybe this should throw since it's exploitable..?
+        } else {
+          // First call
+          calls.unshift(preparedIncrement)
+        }
+      }
 
       const envelope = await this.wallet.prepareTransaction(this.provider, calls, {
         noConfigUpdate: true,
@@ -939,9 +951,10 @@ export class ChainSessionManager {
       }
       const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
-      if (this.guard && !Envelope.reachedThreshold(signedEnvelope)) {
-        // TODO: this might fail if 2FA is required
-        const guard = new Signers.Guard(new Guard.Sequence.Guard(this.guard.url, this.guard.address))
+      if (!Envelope.reachedThreshold(signedEnvelope) && this.guard?.moduleAddresses.has(signature.address)) {
+        const guard = new Signers.Guard(
+          new Guard.Sequence.Guard(this.guard.url, this.guard.moduleAddresses.get(signature.address)!),
+        )
         const guardSignature = await guard.signEnvelope(signedEnvelope)
         signedEnvelope.signatures.push(guardSignature)
       }

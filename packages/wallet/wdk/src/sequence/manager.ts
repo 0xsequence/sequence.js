@@ -3,11 +3,11 @@ import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
-import * as Guard from '@0xsequence/guard'
-import { Address, Hex, Secp256k1 } from 'ox'
+import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
+import { Guards, GuardRole } from './guards.js'
 import { AuthCodeHandler } from './handlers/authcode.js'
 import {
   AuthCodePkceHandler,
@@ -54,9 +54,9 @@ export type ManagerOptions = {
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
   bundlers?: Relayer.Bundler[]
   guardUrl?: string
-  guardAddress?: Address.Address
+  guardAddresses?: Record<GuardRole, Address.Address>
 
-  defaultGuardTopology?: Config.Topology
+  defaultGuardTopology?: Config.SignerLeaf
   defaultRecoverySettings?: RecoverySettings
 
   // EIP-6963 support
@@ -85,9 +85,9 @@ export type ManagerOptions = {
 export const ManagerOptionsDefaults = {
   verbose: false,
 
-  extensions: Extensions.Dev1,
-  context: Context.Dev1,
-  context4337: Context.Dev2_4337,
+  extensions: Extensions.Rc3,
+  context: Context.Rc3,
+  context4337: Context.Rc3_4337,
   guest: Constants.DefaultGuestAddress,
 
   encryptedPksDb: new CoreSigners.Pk.Encrypted.EncryptedPksDb(),
@@ -108,13 +108,15 @@ export const ManagerOptionsDefaults = {
   bundlers: [],
 
   guardUrl: 'https://dev-guard.sequence.app',
-  guardAddress: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a' as Address.Address, // TODO: change to the actual guard address
-  guardPrivateKey: '0x0046e54c861e7d4e1dcd952d86ab6462dedabc55dcf00ac3a99dcce59f516370' as Hex.Hex,
+  guardAddresses: {
+    wallet: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a',
+    sessions: '0x18002Fc09deF9A47437cc64e270843dE094f5984',
+  } as Record<GuardRole, Address.Address>, // TODO: change to the actual guard address
 
   defaultGuardTopology: {
     // TODO: Move this somewhere else
     type: 'signer',
-    address: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a', // TODO: change to the actual guard address
+    address: '0x0000000000000000000000000000000000000000', // will be replaced by the actual guard address
     weight: 1n,
   } as Config.SignerLeaf,
 
@@ -193,18 +195,17 @@ export type Sequence = {
   readonly relayers: Relayer.Relayer[]
   readonly bundlers: Relayer.Bundler[]
 
-  readonly defaultGuardTopology: Config.Topology
+  readonly defaultGuardTopology: Config.SignerLeaf
   readonly defaultRecoverySettings: RecoverySettings
 
   readonly guardUrl: string
-  readonly guardAddress: Address.Address
-  readonly guardPrivateKey: Hex.Hex
+  readonly guardAddresses: Record<GuardRole, Address.Address>
 }
 
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
-  readonly guard: CoreSigners.Guard
+  readonly guards: Guards
   readonly wallets: Wallets
   readonly sessions: Sessions
   readonly signers: Signers
@@ -385,8 +386,7 @@ export class Manager {
         defaultRecoverySettings: ops.defaultRecoverySettings,
 
         guardUrl: ops.guardUrl,
-        guardAddress: ops.guardAddress,
-        guardPrivateKey: ops.guardPrivateKey,
+        guardAddresses: ops.guardAddresses,
       },
 
       databases: {
@@ -411,11 +411,7 @@ export class Manager {
       cron: new Cron(shared),
       logger: new Logger(shared),
       devices: new Devices(shared),
-      guard: new CoreSigners.Guard(
-        shared.sequence.guardUrl
-          ? new Guard.Sequence.Guard(shared.sequence.guardUrl, shared.sequence.guardAddress)
-          : new Guard.Local.Guard(shared.sequence.guardPrivateKey || Secp256k1.randomPrivateKey()),
-      ),
+      guards: new Guards(shared),
       wallets: new Wallets(shared),
       sessions: new Sessions(shared),
       signers: new Signers(shared),
@@ -448,7 +444,7 @@ export class Manager {
     this.recoveryHandler = new RecoveryHandler(modules.signatures, modules.recovery)
     shared.handlers.set(Kinds.Recovery, this.recoveryHandler)
 
-    this.guardHandler = new GuardHandler(modules.signatures, modules.guard)
+    this.guardHandler = new GuardHandler(modules.signatures, modules.guards)
     shared.handlers.set(Kinds.Guard, this.guardHandler)
 
     const verifyingFetch = ops.identity.verifyAttestation
@@ -510,6 +506,12 @@ export class Manager {
 
   public registerOtpUI(onPromptOtp: (recipient: string, respond: (otp: string) => Promise<void>) => Promise<void>) {
     return this.otpHandler?.registerUI(onPromptOtp) || (() => {})
+  }
+
+  public registerGuardUI(
+    onPromptOtp: (codeType: 'TOTP' | 'PIN', respond: (otp: string) => Promise<void>) => Promise<void>,
+  ) {
+    return this.guardHandler?.registerUI(onPromptOtp) || (() => {})
   }
 
   public async setRedirectPrefix(prefix: string) {

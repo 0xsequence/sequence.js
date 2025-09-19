@@ -1,6 +1,7 @@
 import {
   Config,
   Constants,
+  Extensions,
   Payload,
   SessionConfig,
   SessionSignature,
@@ -19,6 +20,8 @@ export type SessionManagerOptions = {
   explicitSigners?: Explicit[]
   provider?: Provider.Provider
 }
+
+const MAX_SPACE = 2n ** 80n - 1n
 
 export class SessionManager implements SapientSigner {
   public readonly stateProvider: State.Provider
@@ -144,7 +147,6 @@ export class SessionManager implements SapientSigner {
         }
       }
       if (!supported) {
-        console.error('No signer supported for call', call)
         throw new Error('No signer supported for call')
       }
     }
@@ -231,15 +233,19 @@ export class SessionManager implements SapientSigner {
       throw new Error('Only calls are supported')
     }
 
+    // Check space
+    if (payload.space > MAX_SPACE) {
+      throw new Error(`Space ${payload.space} is too large`)
+    }
+
     const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
     if (signers.length !== payload.calls.length) {
       throw new Error('No signer supported for call')
     }
     const signatures = await Promise.all(
       signers.map(async (signer, i) => {
-        const call = payload.calls[i]!
         try {
-          return signer.signCall(wallet, chainId, call, payload, this.address, this._provider)
+          return signer.signCall(wallet, chainId, payload, i, this.address, this._provider)
         } catch (error) {
           console.error('signSapient error', error)
           throw error
@@ -250,10 +256,23 @@ export class SessionManager implements SapientSigner {
     // Check if the last call is an increment usage call
     const expectedIncrement = await this.prepareIncrement(wallet, chainId, payload.calls)
     if (expectedIncrement) {
-      // This should equal the last call
-      const lastCall = payload.calls[payload.calls.length - 1]!
-      if (!Address.isEqual(expectedIncrement.to, lastCall.to) || !Hex.isEqual(expectedIncrement.data, lastCall.data)) {
-        throw new Error('Expected increment mismatch')
+      let actualIncrement: Payload.Call
+      if (
+        Address.isEqual(this.address, Extensions.Dev1.sessions) ||
+        Address.isEqual(this.address, Extensions.Dev2.sessions)
+      ) {
+        // Last call
+        actualIncrement = payload.calls[payload.calls.length - 1]!
+        //FIXME Maybe this should throw since it's exploitable..?
+      } else {
+        // First call
+        actualIncrement = payload.calls[0]!
+      }
+      if (
+        !Address.isEqual(expectedIncrement.to, actualIncrement.to) ||
+        !Hex.isEqual(expectedIncrement.data, actualIncrement.data)
+      ) {
+        throw new Error('Actual increment call does not match expected increment call')
       }
     }
 
@@ -262,13 +281,19 @@ export class SessionManager implements SapientSigner {
     const implicitSigners: Address.Address[] = []
     await Promise.all(
       signers.map(async (signer) => {
+        const address = await signer.address
         if (isExplicitSessionSigner(signer)) {
-          explicitSigners.push(await signer.address)
+          if (!explicitSigners.find((a) => Address.isEqual(a, address))) {
+            explicitSigners.push(address)
+          }
         } else {
-          implicitSigners.push(await signer.address)
+          if (!implicitSigners.find((a) => Address.isEqual(a, address))) {
+            implicitSigners.push(address)
+          }
         }
       }),
     )
+
     const encodedSignature = SessionSignature.encodeSessionCallSignatures(
       signatures,
       await this.topology,

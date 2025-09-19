@@ -148,6 +148,25 @@ export interface RecoveryInterface {
     cb: (payloads: QueuedRecoveryPayload[]) => void,
     trigger?: boolean,
   ): () => void
+
+  /**
+   * Fetches all queued recovery payloads for a specific wallet from the on-chain recovery contract.
+   *
+   * This method queries the Recovery contract across all configured networks to discover queued payloads
+   * that were initiated by any of the wallet's recovery signers. It checks each recovery signer on each
+   * network and retrieves all their queued payloads, including metadata such as timestamps and execution status.
+   *
+   * Unlike `updateQueuedPayloads`, this method only fetches data for a single wallet and does not update
+   * the local database. It's primarily used internally by `updateQueuedPayloads` but can be called directly
+   * for real-time queries without affecting the cached state.
+   *
+   * @param wallet The address of the wallet to fetch queued payloads for.
+   * @returns A promise that resolves to an array of `QueuedRecoveryPayload` objects representing all
+   *   currently queued recovery actions for the specified wallet across all networks.
+   * @see {QueuedRecoveryPayload} for details on the returned object structure.
+   * @see {updateQueuedPayloads} for the method that fetches payloads for all wallets and updates the database.
+   */
+  fetchQueuedPayloads(wallet: Address.Address): Promise<QueuedRecoveryPayload[]>
 }
 
 export class Recovery implements RecoveryInterface {
@@ -441,13 +460,21 @@ export class Recovery implements RecoveryInterface {
     }
   }
 
-  async getQueuedRecoveryPayloads(wallet?: Address.Address): Promise<QueuedRecoveryPayload[]> {
-    const all = await this.shared.databases.recovery.list()
-    if (wallet) {
+  async getQueuedRecoveryPayloads(wallet?: Address.Address, chainId?: number): Promise<QueuedRecoveryPayload[]> {
+    // If no wallet is provided, always use the database
+    if (!wallet) {
+      return this.shared.databases.recovery.list()
+    }
+
+    // If the wallet is logged in, then we can expect to have all the payloads in the database
+    // because the cronjob keeps it updated
+    if (await this.shared.modules.wallets.get(wallet)) {
+      const all = await this.shared.databases.recovery.list()
       return all.filter((p) => Address.isEqual(p.wallet, wallet))
     }
 
-    return all
+    // If not, then we must fetch them from the chain
+    return this.fetchQueuedPayloads(wallet, chainId)
   }
 
   onQueuedPayloadsUpdate(
@@ -466,89 +493,15 @@ export class Recovery implements RecoveryInterface {
 
   async updateQueuedPayloads(): Promise<void> {
     const wallets = await this.shared.modules.wallets.list()
-    if (wallets.length === 0) {
-      return
-    }
-
-    // Create providers for each network
-    const providers = this.shared.sequence.networks.map((network) => ({
-      chainId: network.chainId,
-      provider: Provider.from(RpcTransport.fromHttp(network.rpcUrl)),
-    }))
-
-    const seenInThisRun = new Set<string>()
 
     for (const wallet of wallets) {
-      // See if they have any recover signers
-      const signers = await this.getSigners(wallet.address)
-      if (!signers || signers.length === 0) {
-        continue
-      }
-
-      // Now we need to fetch, for each signer and network, any queued recovery payloads
-      // TODO: This may benefit from multicall, but it is not urgent, as this happens in the background
-      for (const signer of signers) {
-        for (const { chainId, provider } of providers) {
-          const totalPayloads = await Extensions.Recovery.totalQueuedPayloads(
-            provider,
-            this.shared.sequence.extensions.recovery,
-            wallet.address,
-            signer.address,
-          )
-
-          for (let i = 0n; i < totalPayloads; i++) {
-            const payloadHash = await Extensions.Recovery.queuedPayloadHashOf(
-              provider,
-              this.shared.sequence.extensions.recovery,
-              wallet.address,
-              signer.address,
-              i,
-            )
-
-            const timestamp = await Extensions.Recovery.timestampForQueuedPayload(
-              provider,
-              this.shared.sequence.extensions.recovery,
-              wallet.address,
-              signer.address,
-              payloadHash,
-            )
-
-            const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
-
-            // If ready, we need to check if it was executed already
-            // for this, we check if the wallet nonce for the given space
-            // is greater than the nonce in the payload
-            if (timestamp < Date.now() / 1000 && payload && Payload.isCalls(payload.payload)) {
-              const nonce = await this.shared.modules.wallets.getNonce(chainId, wallet.address, payload.payload.space)
-              if (nonce > i) {
-                continue
-              }
-            }
-
-            // The id is the index + signer address + chainId + wallet address
-            const id = `${i}-${signer.address}-${chainId}-${wallet.address}`
-
-            // Create a new payload
-            const payloadEntry: QueuedRecoveryPayload = {
-              id,
-              index: i,
-              recoveryModule: this.shared.sequence.extensions.recovery,
-              wallet: wallet.address,
-              signer: signer.address,
-              chainId,
-              startTimestamp: timestamp,
-              endTimestamp: timestamp + signer.requiredDeltaTime,
-              payloadHash,
-              payload: payload?.payload,
-            }
-
-            await this.shared.databases.recovery.set(payloadEntry)
-            seenInThisRun.add(payloadEntry.id)
-          }
-        }
+      const payloads = await this.fetchQueuedPayloads(wallet.address)
+      for (const payload of payloads) {
+        await this.shared.databases.recovery.set(payload)
       }
 
       // Delete any unseen queued payloads as they are no longer relevant
+      const seenInThisRun = new Set(payloads.map((p) => p.id))
       const allQueuedPayloads = await this.shared.databases.recovery.list()
       for (const payload of allQueuedPayloads) {
         if (!seenInThisRun.has(payload.id)) {
@@ -556,6 +509,86 @@ export class Recovery implements RecoveryInterface {
         }
       }
     }
+  }
+
+  async fetchQueuedPayloads(wallet: Address.Address, chainId?: number): Promise<QueuedRecoveryPayload[]> {
+    // Create providers for each network
+    const providers = this.shared.sequence.networks
+      .filter((network) => (chainId ? network.chainId === chainId : true))
+      .map((network) => ({
+        chainId: network.chainId,
+        provider: Provider.from(RpcTransport.fromHttp(network.rpcUrl)),
+      }))
+
+    // See if they have any recover signers
+    const signers = await this.getSigners(wallet)
+    if (!signers || signers.length === 0) {
+      return []
+    }
+
+    const payloads: QueuedRecoveryPayload[] = []
+
+    for (const signer of signers) {
+      for (const { chainId, provider } of providers) {
+        const totalPayloads = await Extensions.Recovery.totalQueuedPayloads(
+          provider,
+          this.shared.sequence.extensions.recovery,
+          wallet,
+          signer.address,
+        )
+
+        for (let i = 0n; i < totalPayloads; i++) {
+          const payloadHash = await Extensions.Recovery.queuedPayloadHashOf(
+            provider,
+            this.shared.sequence.extensions.recovery,
+            wallet,
+            signer.address,
+            i,
+          )
+
+          const timestamp = await Extensions.Recovery.timestampForQueuedPayload(
+            provider,
+            this.shared.sequence.extensions.recovery,
+            wallet,
+            signer.address,
+            payloadHash,
+          )
+
+          const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
+
+          // If ready, we need to check if it was executed already
+          // for this, we check if the wallet nonce for the given space
+          // is greater than the nonce in the payload
+          if (timestamp < Date.now() / 1000 && payload && Payload.isCalls(payload.payload)) {
+            const nonce = await this.shared.modules.wallets.getNonce(chainId, wallet, payload.payload.space)
+            if (nonce > i) {
+              continue
+            }
+          }
+
+          // The id is the index + signer address + chainId + wallet address
+          const id = `${i}-${signer.address}-${chainId}-${wallet}`
+
+          // Create a new payload
+          const payloadEntry: QueuedRecoveryPayload = {
+            id,
+            index: i,
+            recoveryModule: this.shared.sequence.extensions.recovery,
+            wallet: wallet,
+            signer: signer.address,
+            chainId,
+            startTimestamp: timestamp,
+            endTimestamp: timestamp + signer.requiredDeltaTime,
+            payloadHash,
+            payload: payload?.payload,
+          }
+
+          payloads.push(payloadEntry)
+        }
+      }
+    }
+
+    return payloads
   }
 
   async encodeRecoverySignature(imageHash: Hex.Hex, signer: Address.Address) {

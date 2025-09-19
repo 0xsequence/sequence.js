@@ -23,7 +23,7 @@ export class RecoveryHandler implements Handler {
     imageHash: Hex.Hex | undefined,
     request: BaseSignatureRequest,
   ): Promise<SignerUnavailable | SignerReady | SignerActionable> {
-    const queued = await this.recovery.getQueuedRecoveryPayloads(request.wallet)
+    const queued = await this.recovery.getQueuedRecoveryPayloads(request.wallet, request.envelope.chainId)
 
     // If there is no queued payload for this request then we are unavailable
     const requestHash = Hex.fromBytes(

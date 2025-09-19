@@ -20,6 +20,7 @@ export class Guard implements Types.Guard {
     digest: Bytes.Bytes,
     message: Bytes.Bytes,
     signatures?: Client.Signature[],
+    token?: Client.AuthToken,
   ) {
     if (!this.guard || !this.address) {
       throw new Error('Guard not initialized')
@@ -36,11 +37,18 @@ export class Guard implements Types.Guard {
           payloadData: Hex.fromBytes(message),
           signatures,
         },
+        token,
       })
 
       Hex.assert(res.sig)
       return Signature.fromHex(res.sig)
     } catch (error) {
+      if (error instanceof Client.RequiresTOTPError) {
+        throw new Types.AuthRequiredError('TOTP')
+      }
+      if (error instanceof Client.RequiresPINError) {
+        throw new Types.AuthRequiredError('PIN')
+      }
       console.error(error)
       throw new Error('Error signing with guard')
     }

@@ -135,7 +135,7 @@ describe('Sessions (via Manager)', () => {
       wallet: coreWallet,
       sessionManager: new CoreSigners.SessionManager(coreWallet, {
         provider,
-        sessionManagerAddress: Extensions.Dev1.sessions,
+        sessionManagerAddress: Extensions.Rc3.sessions,
       }),
     }
   })
@@ -213,7 +213,7 @@ describe('Sessions (via Manager)', () => {
       dapp.wallet = coreWallet
       dapp.sessionManager = new CoreSigners.SessionManager(coreWallet, {
         provider,
-        sessionManagerAddress: Extensions.Dev1.sessions,
+        sessionManagerAddress: Extensions.Rc3.sessions,
       })
 
       // At this point the wallet should NOT have a session topology

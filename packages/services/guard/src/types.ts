@@ -11,5 +11,17 @@ export interface Guard {
     digest: Bytes.Bytes,
     message: Bytes.Bytes,
     signatures?: Client.Signature[],
+    token?: Client.AuthToken,
   ): Promise<Signature.Signature>
+}
+
+export class AuthRequiredError extends Error {
+  public readonly id: 'TOTP' | 'PIN'
+
+  constructor(id: 'TOTP' | 'PIN') {
+    super('auth required')
+    this.id = id
+    this.name = 'AuthRequiredError'
+    Object.setPrototypeOf(this, AuthRequiredError.prototype)
+  }
 }
