@@ -474,15 +474,15 @@ export class DappClient {
    *   await dappClient.addExplicitSession(explicitSession);
    * }
    */
-  async addExplicitSession(session: ExplicitSession): Promise<void> {
+  async addExplicitSession(explicitSession: ExplicitSession): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot add an explicit session without an existing wallet.')
 
-    const chainSessionManager = this.getChainSessionManager(session.chainId)
+    const chainSessionManager = this.getChainSessionManager(explicitSession.chainId)
     if (!chainSessionManager.isInitialized) {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
-    await chainSessionManager.addExplicitSession(session)
+    await chainSessionManager.addExplicitSession(explicitSession)
 
     if (this.transport.mode === TransportMode.POPUP) {
       await this._loadStateFromStorage()
