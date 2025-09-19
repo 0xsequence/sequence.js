@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Attestation, Payload } from '@0xsequence/wallet-primitives'
-import { Signers } from '@0xsequence/wallet-core'
+import { Attestation, Payload, Permission } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import type { TypedData } from 'ox/TypedData'
 
 // --- Public Interfaces and Constants ---
 
 export const RequestActionType = {
-  CREATE_NEW_SESSION: 'createNewSession',
-  ADD_EXPLICIT_SESSION: 'addExplicitSession',
+  CREATE_IMPLICIT_SESSION: 'createImplicitSession',
+  CREATE_EXPLICIT_SESSION: 'createExplicitSession',
   MODIFY_EXPLICIT_SESSION: 'modifyExplicitSession',
+  MODIFY_IMPLICIT_SESSION: 'modifyImplicitSession',
   SIGN_MESSAGE: 'signMessage',
   SIGN_TYPED_DATA: 'signTypedData',
   SEND_WALLET_TRANSACTION: 'sendWalletTransaction',
@@ -25,25 +25,15 @@ export interface GuardConfig {
 // --- Payloads for Transport ---
 
 export interface CreateNewSessionPayload {
-  sessionAddress: Address.Address
-  origin: string
-  permissions?: Signers.Session.ExplicitParams
-  includeImplicitSession?: boolean
-  preferredLoginMethod?: LoginMethod
-  email?: string
-}
-
-export interface AddExplicitSessionPayload {
-  sessionAddress: Address.Address
-  permissions: Signers.Session.ExplicitParams
+  origin?: string
+  session: Session
   preferredLoginMethod?: LoginMethod
   email?: string
 }
 
 export interface ModifySessionPayload {
   walletAddress: Address.Address
-  sessionAddress: Address.Address
-  permissions: Signers.Session.ExplicitParams
+  session: Session
 }
 
 export interface SignMessagePayload {
@@ -102,6 +92,11 @@ export interface SendWalletTransactionSuccessResponse {
 
 export type WalletActionResponse = SignatureSuccessResponse | SendWalletTransactionSuccessResponse
 
+export interface SessionResponsePayload {
+  walletAddress: string
+  sessionAddress: string
+}
+
 // --- Dapp-facing Types ---
 
 export type RandomPrivateKeyFn = () => Hex.Hex | Promise<Hex.Hex>
@@ -115,19 +110,34 @@ export type Transaction =
     Partial<Omit<Payload.Call, RequiredKeys>>
 
 export type Session = {
-  address: Address.Address
+  sessionAddress?: Address.Address
   isImplicit: boolean
-  permissions?: Signers.Session.ExplicitParams
+  valueLimit: bigint
+  deadline: bigint
+  permissions?: Permission.Permission[]
   chainId?: number
 }
+
+export type ExplicitSession = Omit<Session, 'isImplicit'> & {
+  chainId: number
+  permissions: Permission.Permission[]
+}
+
+export type ImplicitSession = Omit<Session, 'isImplicit'>
 
 // --- Event Types ---
 
 export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionResponse'
 
 export type ExplicitSessionEventListener = (data: {
-  action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
-  response?: AddExplicitSessionSuccessResponsePayload | ModifySessionSuccessResponsePayload
+  action: (typeof RequestActionType)['CREATE_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
+  response?: SessionResponsePayload
+  error?: any
+}) => void
+
+export type ImplicitSessionEventListener = (data: {
+  action: (typeof RequestActionType)['CREATE_IMPLICIT_SESSION' | 'MODIFY_IMPLICIT_SESSION']
+  response?: SessionResponsePayload
   error?: any
 }) => void
 
@@ -141,12 +151,9 @@ export type DappClientWalletActionEventListener = (data: {
   chainId: number
 }) => void
 
-export type DappClientExplicitSessionEventListener = (data: {
-  action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
-  response?: AddExplicitSessionSuccessResponsePayload | ModifySessionSuccessResponsePayload
-  error?: any
+export type DappClientExplicitSessionEventListener = ExplicitSessionEventListener & {
   chainId: number
-}) => void
+}
 
 // --- DappTransport Types ---
 
