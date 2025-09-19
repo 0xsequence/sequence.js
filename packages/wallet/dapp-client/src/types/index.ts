@@ -87,7 +87,7 @@ export interface SendWalletTransactionSuccessResponse {
 
 export type WalletActionResponse = SignatureSuccessResponse | SendWalletTransactionSuccessResponse
 
-export interface ExplicitSessionResponsePayload {
+export interface SessionResponsePayload {
   walletAddress: string
   sessionAddress: string
 }
@@ -126,13 +126,13 @@ export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionRespo
 
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['CREATE_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
-  response?: ExplicitSessionResponsePayload
+  response?: SessionResponsePayload
   error?: any
 }) => void
 
 export type ImplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['CREATE_IMPLICIT_SESSION' | 'MODIFY_IMPLICIT_SESSION']
-  response?: ExplicitSessionResponsePayload
+  response?: SessionResponsePayload
   error?: any
 }) => void
 
