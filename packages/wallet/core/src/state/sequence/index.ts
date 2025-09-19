@@ -224,25 +224,46 @@ export class Provider implements ProviderInterface {
     } catch {}
   }
 
+  async getLatestImageHash(wallet: Address.Address): Promise<Hex.Hex | undefined> {
+    const { latestImageHash } = await this.service.latestImageHash({ wallet })
+    Hex.assert(latestImageHash)
+    return latestImageHash
+  }
+
   async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean },
+    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
-    const { updates } = await this.service.configUpdates({ wallet, fromImageHash, allUpdates: options?.allUpdates })
+    const { updates: serviceUpdates } = await this.service.configUpdates({
+      wallet,
+      fromImageHash,
+      allUpdates: options?.allUpdates,
+    })
+    let updates = serviceUpdates.map(({ toImageHash, signature }) => {
+      Hex.assert(toImageHash)
+      Hex.assert(signature)
+      return { imageHash: toImageHash, signature: signature }
+    })
+
+    if (options?.toImageHash) {
+      // toImageHash doesn't exist on the service. Remove all updates after the toImageHash
+      const toIndex = updates.findIndex(({ imageHash }) => Hex.isEqual(imageHash, options.toImageHash!))
+      if (toIndex === -1) {
+        throw new Error(`toImageHash ${options.toImageHash} not found`)
+      }
+      updates = updates.slice(0, toIndex + 1)
+    }
 
     return Promise.all(
-      updates.map(async ({ toImageHash, signature }) => {
-        Hex.assert(toImageHash)
-        Hex.assert(signature)
-
+      updates.map(async ({ imageHash, signature }) => {
         const decoded = Signature.decodeSignature(Hex.toBytes(signature))
 
-        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(toImageHash), {
+        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(imageHash), {
           provider: passkeySignatureValidator,
         })
 
-        return { imageHash: toImageHash, signature: { ...decoded, configuration } }
+        return { imageHash, signature: { ...decoded, configuration } }
       }),
     )
   }
