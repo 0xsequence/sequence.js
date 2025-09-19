@@ -18,7 +18,6 @@ import { SequenceStorage } from './utils/storage.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
 
 import {
-  AddExplicitSessionPayload,
   CreateNewSessionPayload,
   ConnectSuccessResponsePayload,
   ExplicitSessionEventListener,
@@ -31,6 +30,7 @@ import {
   Transaction,
   TransportMode,
   GuardConfig,
+  ExplicitSession,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 
@@ -255,11 +255,10 @@ export class ChainSessionManager {
    */
   async createNewSession(
     origin: string,
-    permissions?: Signers.Session.ExplicitParams,
+    session: Session,
     options: {
       preferredLoginMethod?: LoginMethod
       email?: string
-      includeImplicitSession?: boolean
     } = {},
   ): Promise<void> {
     if (this.isInitialized) {
@@ -273,10 +272,11 @@ export class ChainSessionManager {
       if (!this.transport) throw new InitializationError('Transport failed to initialize.')
 
       const payload: CreateNewSessionPayload = {
-        sessionAddress: newSignerAddress,
         origin,
-        permissions,
-        includeImplicitSession: options.includeImplicitSession ?? false,
+        session: {
+          sessionAddress: newSignerAddress,
+          ...session,
+        },
         preferredLoginMethod: options.preferredLoginMethod,
         email: options.preferredLoginMethod === 'email' ? options.email : undefined,
       }
@@ -285,14 +285,16 @@ export class ChainSessionManager {
         await this.sequenceStorage.saveTempSessionPk(newPk)
         await this.sequenceStorage.savePendingRequest({
           chainId: this.chainId,
-          action: RequestActionType.CREATE_NEW_SESSION,
+          action: session.isImplicit
+            ? RequestActionType.CREATE_IMPLICIT_SESSION
+            : RequestActionType.CREATE_EXPLICIT_SESSION,
           payload,
         })
         await this.sequenceStorage.setPendingRedirectRequest(true)
       }
 
       const connectResponse = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
-        RequestActionType.CREATE_NEW_SESSION,
+        session.isImplicit ? RequestActionType.CREATE_IMPLICIT_SESSION : RequestActionType.CREATE_EXPLICIT_SESSION,
         this.redirectUrl,
         payload,
         { path: '/request/connect' },
@@ -318,7 +320,7 @@ export class ChainSessionManager {
         )
       }
 
-      if (permissions) {
+      if (session) {
         this.initializeWithWallet(receivedAddress)
         await this._initializeExplicitSessionInternal(newPk, loginMethod, userEmail, guard, true)
         await this.sequenceStorage.saveExplicitSession({
@@ -343,11 +345,11 @@ export class ChainSessionManager {
 
   /**
    * Initiates the addition of a new explicit session by sending a request to the wallet.
-   * @param permissions The permissions for the new explicit session.
+   * @param session The explicit session to add.
    * @throws {InitializationError} If the manager is not initialized.
    * @throws {AddExplicitSessionError} If adding the session fails.
    */
-  async addExplicitSession(permissions: Signers.Session.ExplicitParams): Promise<void> {
+  async addExplicitSession(explicitSession: ExplicitSession): Promise<void> {
     if (!this.walletAddress) {
       throw new InitializationError(
         'Cannot add an explicit session without a wallet address. Initialize the manager with a wallet address first.',
@@ -361,23 +363,26 @@ export class ChainSessionManager {
 
       const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: newPk }))
 
-      const payload: AddExplicitSessionPayload = {
-        sessionAddress: newSignerAddress,
-        permissions,
+      const payload: CreateNewSessionPayload = {
+        session: {
+          sessionAddress: newSignerAddress,
+          ...explicitSession,
+          isImplicit: false,
+        },
       }
 
       if (this.transport.mode === TransportMode.REDIRECT) {
         await this.sequenceStorage.saveTempSessionPk(newPk)
         await this.sequenceStorage.savePendingRequest({
           chainId: this.chainId,
-          action: RequestActionType.ADD_EXPLICIT_SESSION,
+          action: RequestActionType.CREATE_EXPLICIT_SESSION,
           payload,
         })
         await this.sequenceStorage.setPendingRedirectRequest(true)
       }
 
       const response = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
-        RequestActionType.ADD_EXPLICIT_SESSION,
+        RequestActionType.CREATE_EXPLICIT_SESSION,
         this.redirectUrl,
         payload,
         { path: '/request/connect' },
@@ -419,10 +424,7 @@ export class ChainSessionManager {
    * @throws {InitializationError} If the manager is not initialized.
    * @throws {ModifyExplicitSessionError} If modifying the session fails.
    */
-  async modifyExplicitSession(
-    sessionAddress: Address.Address,
-    newPermissions: Signers.Session.ExplicitParams,
-  ): Promise<void> {
+  async modifyExplicitSession(explicitSession: ExplicitSession): Promise<void> {
     if (!this.walletAddress) {
       throw new InitializationError(
         'Cannot modify an explicit session without a wallet address. Initialize the manager with a wallet address first.',
@@ -432,15 +434,21 @@ export class ChainSessionManager {
     try {
       if (!this.transport) throw new InitializationError('Transport failed to initialize.')
 
-      const session = this.sessions.find((s) => Address.isEqual(s.address, sessionAddress))
+      if (!explicitSession.sessionAddress) {
+        throw new ModifyExplicitSessionError('Session address is required.')
+      }
+
+      const session = this.sessions.find((s) => Address.isEqual(s.sessionAddress!, explicitSession.sessionAddress!))
       if (!session) {
         throw new ModifyExplicitSessionError('Session not found.')
       }
 
       const payload: ModifySessionPayload = {
         walletAddress: this.walletAddress,
-        sessionAddress: sessionAddress,
-        permissions: newPermissions,
+        session: {
+          ...explicitSession,
+          isImplicit: false,
+        },
       }
 
       if (this.transport.mode === TransportMode.REDIRECT) {
@@ -461,12 +469,12 @@ export class ChainSessionManager {
 
       if (
         !Address.isEqual(Address.from(response.walletAddress), this.walletAddress) &&
-        !Address.isEqual(Address.from(response.sessionAddress), sessionAddress)
+        !Address.isEqual(Address.from(response.sessionAddress), explicitSession.sessionAddress)
       ) {
         throw new ModifyExplicitSessionError('Wallet or session address mismatch.')
       }
 
-      session.permissions = newPermissions
+      session.permissions = explicitSession.permissions
 
       if (this.transport?.mode === TransportMode.POPUP) {
         this.transport?.closeWallet()
@@ -496,7 +504,7 @@ export class ChainSessionManager {
       const receivedAddress = Address.from(connectResponse.walletAddress)
       const { userEmail, loginMethod, guard } = connectResponse
 
-      if (response.action === RequestActionType.CREATE_NEW_SESSION) {
+      if (response.action === RequestActionType.CREATE_IMPLICIT_SESSION) {
         const { attestation, signature } = connectResponse
 
         const savedRequest = await this.sequenceStorage.peekPendingRequest()
@@ -518,7 +526,7 @@ export class ChainSessionManager {
           )
         }
 
-        if (savedRequest && savedPayload && savedPayload.permissions) {
+        if (savedRequest && savedPayload && savedPayload.session) {
           await this._initializeExplicitSessionInternal(tempPk, loginMethod, userEmail, guard, true)
           await this.sequenceStorage.saveExplicitSession({
             pk: tempPk,
@@ -529,7 +537,7 @@ export class ChainSessionManager {
             guard,
           })
         }
-      } else if (response.action === RequestActionType.ADD_EXPLICIT_SESSION) {
+      } else if (response.action === RequestActionType.CREATE_EXPLICIT_SESSION) {
         if (!this.walletAddress || !Address.isEqual(receivedAddress, this.walletAddress)) {
           throw new InitializationError('Received an explicit session for a wallet that is not active.')
         }
@@ -553,7 +561,7 @@ export class ChainSessionManager {
         const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: tempPk }))
 
         this.emit('explicitSessionResponse', {
-          action: RequestActionType.ADD_EXPLICIT_SESSION,
+          action: RequestActionType.CREATE_EXPLICIT_SESSION,
           response: {
             walletAddress: receivedAddress,
             sessionAddress: newSignerAddress,
@@ -613,8 +621,11 @@ export class ChainSessionManager {
       this.sessionManager = this.sessionManager.withImplicitSigner(implicitSigner)
 
       this.sessions.push({
-        address: implicitSigner.address,
+        sessionAddress: implicitSigner.address,
         isImplicit: true,
+        valueLimit: BigInt(0),
+        deadline: BigInt(0),
+        permissions: [],
       })
 
       this.walletAddress = address
@@ -679,10 +690,12 @@ export class ChainSessionManager {
         this.sessionManager = this.sessionManager.withExplicitSigner(explicitSigner)
 
         this.sessions.push({
-          address: explicitSigner.address,
+          sessionAddress: explicitSigner.address,
           isImplicit: false,
           chainId: this.chainId,
-          permissions,
+          permissions: permissions.permissions,
+          valueLimit: permissions.valueLimit,
+          deadline: permissions.deadline,
         })
 
         if (guard && !this.guard) this.guard = guard
@@ -840,7 +853,10 @@ export class ChainSessionManager {
     if ('error' in response && response.error) {
       const { action } = response
 
-      if (action === RequestActionType.ADD_EXPLICIT_SESSION || action === RequestActionType.MODIFY_EXPLICIT_SESSION) {
+      if (
+        action === RequestActionType.CREATE_EXPLICIT_SESSION ||
+        action === RequestActionType.MODIFY_EXPLICIT_SESSION
+      ) {
         this.emit('explicitSessionResponse', { action, error: response.error })
         return true
       }
@@ -848,8 +864,8 @@ export class ChainSessionManager {
 
     if ('payload' in response && response.payload) {
       if (
-        response.action === RequestActionType.CREATE_NEW_SESSION ||
-        response.action === RequestActionType.ADD_EXPLICIT_SESSION
+        response.action === RequestActionType.CREATE_IMPLICIT_SESSION ||
+        response.action === RequestActionType.CREATE_EXPLICIT_SESSION
       ) {
         return this._handleRedirectConnectionResponse(response)
       } else if (response.action === RequestActionType.MODIFY_EXPLICIT_SESSION) {

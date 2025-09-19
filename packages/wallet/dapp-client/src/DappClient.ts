@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Relayer, Signers } from '@0xsequence/wallet-core'
+import { Relayer } from '@0xsequence/wallet-core'
 import { Address, Hex } from 'ox'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
@@ -9,7 +9,9 @@ import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
   DappClientWalletActionEventListener,
+  ExplicitSession,
   GuardConfig,
+  ImplicitSession,
   LoginMethod,
   RandomPrivateKeyFn,
   RequestActionType,
@@ -225,13 +227,45 @@ export class DappClient {
     const allSessions = new Map<string, Session>()
     Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
       chainSessionManager.getSessions().forEach((session) => {
-        const uniqueKey = `${session.address.toLowerCase()}-${session.isImplicit}`
+        const uniqueKey = `${session.sessionAddress?.toLowerCase()}-${session.isImplicit}`
         if (!allSessions.has(uniqueKey)) {
           allSessions.set(uniqueKey, session)
         }
       })
     })
     return Array.from(allSessions.values())
+  }
+
+  public getAllImplicitSessions(): ImplicitSession[] {
+    const allSessions = new Map<string, Session>()
+    Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
+      chainSessionManager.getSessions().forEach((session) => {
+        const uniqueKey = `${session.sessionAddress?.toLowerCase()}-${session.isImplicit}`
+        if (!allSessions.has(uniqueKey)) {
+          allSessions.set(uniqueKey, session)
+        }
+      })
+    })
+    const filteredSessions = Array.from(allSessions.values()).filter(
+      (session) => session.isImplicit === true,
+    ) as ImplicitSession[]
+    return filteredSessions
+  }
+
+  public getAllExplicitSessions(): ExplicitSession[] {
+    const allSessions = new Map<string, Session>()
+    Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
+      chainSessionManager.getSessions().forEach((session) => {
+        const uniqueKey = `${session.sessionAddress?.toLowerCase()}-${session.isImplicit}`
+        if (!allSessions.has(uniqueKey)) {
+          allSessions.set(uniqueKey, session)
+        }
+      })
+    })
+    const filteredSessions = Array.from(allSessions.values()).filter(
+      (session) => session.isImplicit === false,
+    ) as ExplicitSession[]
+    return filteredSessions
   }
 
   /**
@@ -362,7 +396,7 @@ export class DappClient {
   /**
    * Initiates a connection with the wallet and creates a new session.
    * @param chainId The primary chain ID for the new session.
-   * @param permissions (Optional) Permissions to request for an initial explicit session. {@link Signers.Session.ExplicitParams}
+   * @param session (Optional) Session to request for an initial explicit session. {@link Session}
    * @param options (Optional) Connection options, such as a preferred login method or email for social or email logins.
    * @throws If the connection process fails. {@link ConnectionError}
    * @throws If a session already exists. {@link InitializationError}
@@ -379,11 +413,10 @@ export class DappClient {
    */
   async connect(
     chainId: number,
-    permissions?: Signers.Session.ExplicitParams,
+    session: Session,
     options: {
       preferredLoginMethod?: LoginMethod
       email?: string
-      includeImplicitSession?: boolean
     } = {},
   ): Promise<void> {
     if (this.isInitialized) {
@@ -392,7 +425,7 @@ export class DappClient {
 
     try {
       const chainSessionManager = this.getChainSessionManager(chainId)
-      await chainSessionManager.createNewSession(this.origin, permissions, options)
+      await chainSessionManager.createNewSession(this.origin, session, options)
 
       // For popup mode, we need to manually update the state and emit an event.
       // For redirect mode, this code won't be reached; the page will navigate away.
@@ -409,8 +442,7 @@ export class DappClient {
    * Adds a new explicit session for a given chain to an existing wallet.
    * @remarks
    * An `explicit session` is a session that can interact with any contract, subject to user-approved permissions.
-   * @param chainId The chain ID on which to add the explicit session.
-   * @param permissions The permissions to request for the new session. {@link Signers.Session.ExplicitParams}
+   * @param session The explicit session to add. {@link ExplicitSession}
    *
    * @throws If the session cannot be added. {@link AddExplicitSessionError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
@@ -421,7 +453,7 @@ export class DappClient {
    *
    * @example
    * ...
-   * import { Signers, Utils } from "@0xsequence/wallet-core";
+   * import { ExplicitSession, Utils } from "@0xsequence/wallet-core";
    * import { DappClient } from "@0xsequence/sessions";
    * ...
    *
@@ -433,24 +465,24 @@ export class DappClient {
    *
    * if (dappClient.isInitialized) {
    *   // Allow Dapp (Session Signer) to transfer "amount" of USDC
-   *   const permissions: Signers.Session.ExplicitParams = {
+   *   const explicitSession: ExplicitSession = {
    *    chainId: Number(chainId),
    *    valueLimit: 0n, // Not allowed to transfer native tokens (ETH, etc)
    *    deadline: BigInt(Date.now() + 1000 * 60 * 5000), // 5000 minutes from now
    *    permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, amount)]
    *   };
-   *   await dappClient.addExplicitSession(1, permissions);
+   *   await dappClient.addExplicitSession(explicitSession);
    * }
    */
-  async addExplicitSession(chainId: number, permissions: Signers.Session.ExplicitParams): Promise<void> {
+  async addExplicitSession(session: ExplicitSession): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot add an explicit session without an existing wallet.')
 
-    const chainSessionManager = this.getChainSessionManager(chainId)
+    const chainSessionManager = this.getChainSessionManager(session.chainId)
     if (!chainSessionManager.isInitialized) {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
-    await chainSessionManager.addExplicitSession(permissions)
+    await chainSessionManager.addExplicitSession(session)
 
     if (this.transport.mode === TransportMode.POPUP) {
       await this._loadStateFromStorage()
@@ -458,10 +490,8 @@ export class DappClient {
   }
 
   /**
-   * Modifies the permissions of an existing explicit session for a given chain and session address.
-   * @param chainId The chain ID on which the explicit session exists.
-   * @param sessionAddress The address of the explicit session to modify. {@link Address.Address}
-   * @param permissions The new permissions to set for the session. {@link Signers.Session.ExplicitParams}
+   * Modifies an explicit session for a given chain
+   * @param explicitSession The explicit session to modify. {@link ExplicitSession}
    *
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    * @throws If something goes wrong while modifying the session. {@link ModifyExplicitSessionError}
@@ -475,31 +505,21 @@ export class DappClient {
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
-   *   // The address of an existing explicit session (Grants the Dapp permission to transfer 100 USDC for the user)
-   *   const sessionAddress = '0x...';
-   *   // We create a new permission object where we can increase the granted transfer amount limit
-   *   const permissions: Signers.Session.ExplicitParams = {
-   *     chainId: Number(chainId),
-   *     valueLimit: 0n,
-   *     deadline: BigInt(Date.now() + 1000 * 60 * 5000),
-   *     permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, amount)]
-   *   };
-   *   await dappClient.modifyExplicitSession(1, sessionAddress, permissions);
+   *   // Increase the deadline of the current session by 24 hours
+   *   const currentExplicitSession = {...}
+   *   const newExplicitSession = {...currentExplicitSession, deadline: currentExplicitSession.deadline + 24 * 60 * 60}
+   *   await dappClient.modifyExplicitSession(newExplicitSession);
    * }
    */
-  async modifyExplicitSession(
-    chainId: number,
-    sessionAddress: Address.Address,
-    permissions: Signers.Session.ExplicitParams,
-  ): Promise<void> {
+  async modifyExplicitSession(explicitSession: ExplicitSession): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot modify an explicit session without an existing wallet.')
 
-    const chainSessionManager = this.getChainSessionManager(chainId)
+    const chainSessionManager = this.getChainSessionManager(explicitSession.chainId)
     if (!chainSessionManager.isInitialized) {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
-    await chainSessionManager.modifyExplicitSession(sessionAddress, permissions)
+    await chainSessionManager.modifyExplicitSession(explicitSession)
 
     if (this.transport.mode === TransportMode.POPUP) {
       await this._loadStateFromStorage()
@@ -793,7 +813,7 @@ export class DappClient {
       this.chainSessionManagers.set(chainId, chainSessionManager)
 
       chainSessionManager.on('explicitSessionResponse', (data) => {
-        this.emit('explicitSessionResponse', { ...data, chainId })
+        this.emit('explicitSessionResponse', { ...data })
       })
     }
     return chainSessionManager

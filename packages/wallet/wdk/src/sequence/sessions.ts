@@ -7,6 +7,7 @@ import {
   Payload,
   Signature as SequenceSignature,
   SessionConfig,
+  Permission,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hash, Hex } from 'ox'
 import { IdentityType } from '@0xsequence/identity-instrument'
@@ -14,6 +15,20 @@ import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
 import { Actions } from './types/signature-request.js'
+
+export type Session = {
+  sessionAddress?: Address.Address
+  isImplicit: boolean
+  valueLimit: bigint
+  deadline: bigint
+  permissions?: Permission.Permission[]
+  chainId?: number
+}
+
+export type ExplicitSession = Omit<Session, 'isImplicit'> & {
+  chainId: number
+  permissions: Permission.Permission[]
+}
 
 export type AuthorizeImplicitSessionArgs = {
   target: string
@@ -99,7 +114,7 @@ export interface SessionsInterface {
   addExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    explicitSession: ExplicitSession,
   ): Promise<string>
 
   /**
@@ -121,7 +136,7 @@ export interface SessionsInterface {
   modifyExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    explicitSession: ExplicitSession,
     origin?: string,
   ): Promise<string>
 
@@ -327,12 +342,12 @@ export class Sessions implements SessionsInterface {
   async addExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    session: ExplicitSession,
     origin?: string,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress, true)
     const newTopology = SessionConfig.addExplicitSession(topology, {
-      ...permissions,
+      ...session,
       signer: sessionAddress,
     })
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
@@ -341,7 +356,7 @@ export class Sessions implements SessionsInterface {
   async modifyExplicitSession(
     walletAddress: Address.Address,
     sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    explicitSession: ExplicitSession,
     origin?: string,
   ): Promise<string> {
     // This will add the session manager if it's missing
@@ -351,7 +366,7 @@ export class Sessions implements SessionsInterface {
       throw new Error('Incomplete session topology')
     }
     const newTopology = SessionConfig.addExplicitSession(intermediateTopology, {
-      ...permissions,
+      ...explicitSession,
       signer: sessionAddress,
     })
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)

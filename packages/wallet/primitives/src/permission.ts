@@ -25,7 +25,7 @@ export type SessionPermissions = {
   chainId: number
   valueLimit: bigint
   deadline: bigint // uint64
-  permissions: [Permission, ...Permission[]]
+  permissions: Permission[]
 }
 
 export const MAX_PERMISSIONS_COUNT = 2 ** 7 - 1
@@ -127,7 +127,7 @@ export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions
     chainId,
     valueLimit,
     deadline,
-    permissions: permissions as [Permission, ...Permission[]],
+    permissions: permissions,
   }
 }
 
