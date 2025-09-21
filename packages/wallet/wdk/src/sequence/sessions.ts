@@ -331,7 +331,7 @@ export class Sessions implements SessionsInterface {
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress)
     const identitySigners = SessionConfig.getIdentitySigners(topology)
-    if (!identitySigners) {
+    if (identitySigners.length === 0) {
       throw new Error('No identity signers found')
     }
     let handler: Handler | undefined
