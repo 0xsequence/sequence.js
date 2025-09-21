@@ -116,9 +116,9 @@ function rsyFromRsvStr(sigStr: string): RSY {
 export function encodeSessionCallSignatures(
   callSignatures: SessionCallSignature[],
   topology: SessionsTopology,
+  identitySigner: Address.Address,
   explicitSigners: Address.Address[] = [],
   implicitSigners: Address.Address[] = [],
-  identitySigner?: Address.Address,
 ): Bytes.Bytes {
   const parts: Bytes.Bytes[] = []
 
@@ -128,19 +128,10 @@ export function encodeSessionCallSignatures(
     throw new Error('Incomplete topology')
   }
 
-  if (implicitSigners.length > 0 && !identitySigner) {
-    throw new Error('Implicit signers without identity signer')
-  }
-
-  // Check the topology contains exactly one identity signer
+  // Check the topology contains the identity signer
   const identitySigners = getIdentitySigners(topology)
-  if (identitySigner) {
-    if (!identitySigners.some((s) => Address.isEqual(s, identitySigner!))) {
-      throw new Error('Identity signer not found')
-    }
-  } else {
-    // Grab the first one
-    identitySigner = identitySigners[0]!
+  if (!identitySigners.some((s) => Address.isEqual(s, identitySigner))) {
+    throw new Error('Identity signer not found')
   }
 
   // Optimise the configuration tree by rolling unused signers into nodes.

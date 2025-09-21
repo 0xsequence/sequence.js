@@ -292,7 +292,7 @@ export class SessionManager implements SapientSigner {
       }
     }
 
-    // Encode the signature
+    // Prepare encoding params
     const explicitSigners: Address.Address[] = []
     const implicitSigners: Address.Address[] = []
     let identitySigner: Address.Address | undefined
@@ -315,13 +315,22 @@ export class SessionManager implements SapientSigner {
         }
       }),
     )
+    if (!identitySigner) {
+      // Explicit signers only. Use any identity signer
+      const identitySigners = SessionConfig.getIdentitySigners(await this.topology)
+      if (identitySigners.length === 0) {
+        throw new Error('No identity signers found')
+      }
+      identitySigner = identitySigners[0]!
+    }
 
+    // Perform encoding
     const encodedSignature = SessionSignature.encodeSessionCallSignatures(
       signatures,
       await this.topology,
+      identitySigner,
       explicitSigners,
       implicitSigners,
-      identitySigner,
     )
 
     return {

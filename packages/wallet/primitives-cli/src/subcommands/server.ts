@@ -141,9 +141,9 @@ const rpcMethods: Record<string, (params: any) => Promise<any>> = {
     const result = await session.doEncodeSessionCallSignatures(
       JSON.stringify(sessionTopology),
       callSignatures.map(JSON.stringify),
+      identitySigner,
       explicitSigners,
       implicitSigners,
-      identitySigner,
     )
     return result
   },
