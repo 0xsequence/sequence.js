@@ -129,7 +129,7 @@ export function encodeSessionCallSignatures(
   }
 
   if (implicitSigners.length > 0 && !identitySigner) {
-    console.warn('Encodings using implicit signers without identity signer may encode incorrectly')
+    throw new Error('Implicit signers without identity signer')
   }
 
   // Check the topology contains exactly one identity signer
