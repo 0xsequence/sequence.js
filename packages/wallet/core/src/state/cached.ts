@@ -227,11 +227,10 @@ export class Cached implements Provider {
     return source
   }
 
+  // Write methods are directly forwarded to the source. Cache is written only on read methods
+
   saveWallet(deployConfiguration: Config.Config, context: Context.Context): MaybePromise<void> {
-    return Promise.all([
-      this.args.cache.saveWallet(deployConfiguration, context),
-      this.args.source.saveWallet(deployConfiguration, context),
-    ]).then(() => undefined)
+    return this.args.source.saveWallet(deployConfiguration, context)
   }
 
   saveWitnesses(
@@ -240,10 +239,7 @@ export class Cached implements Provider {
     payload: Payload.Parented,
     signatures: Signature.RawTopology,
   ): MaybePromise<void> {
-    return Promise.all([
-      this.args.cache.saveWitnesses(wallet, chainId, payload, signatures),
-      this.args.source.saveWitnesses(wallet, chainId, payload, signatures),
-    ]).then(() => undefined)
+    return this.args.source.saveWitnesses(wallet, chainId, payload, signatures)
   }
 
   saveUpdate(
@@ -251,33 +247,22 @@ export class Cached implements Provider {
     configuration: Config.Config,
     signature: Signature.RawSignature,
   ): MaybePromise<void> {
-    return Promise.all([
-      this.args.cache.saveUpdate(wallet, configuration, signature),
-      this.args.source.saveUpdate(wallet, configuration, signature),
-    ]).then(() => undefined)
+    return this.args.source.saveUpdate(wallet, configuration, signature)
   }
 
   saveTree(tree: GenericTree.Tree): MaybePromise<void> {
-    return Promise.all([this.args.cache.saveTree(tree), this.args.source.saveTree(tree)]).then(() => undefined)
+    return this.args.source.saveTree(tree)
   }
 
   saveConfiguration(config: Config.Config): MaybePromise<void> {
-    return Promise.all([this.args.cache.saveConfiguration(config), this.args.source.saveConfiguration(config)]).then(
-      () => undefined,
-    )
+    return this.args.source.saveConfiguration(config)
   }
 
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void> {
-    return Promise.all([
-      this.args.cache.saveDeploy(imageHash, context),
-      this.args.source.saveDeploy(imageHash, context),
-    ]).then(() => undefined)
+    return this.args.source.saveDeploy(imageHash, context)
   }
 
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void> {
-    return Promise.all([
-      this.args.cache.savePayload(wallet, payload, chainId),
-      this.args.source.savePayload(wallet, payload, chainId),
-    ]).then(() => undefined)
+    return this.args.source.savePayload(wallet, payload, chainId)
   }
 }

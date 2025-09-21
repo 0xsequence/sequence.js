@@ -783,14 +783,14 @@ describe('Cached', () => {
   })
 
   describe('write operations', () => {
-    it('should forward saveWallet to source and cache', async () => {
+    it('should forward saveWallet to source only', async () => {
       await cached.saveWallet(mockConfig, mockContext)
 
       expect(mockSource.saveWallet).toHaveBeenCalledWith(mockConfig, mockContext)
-      expect(mockCache.saveWallet).toHaveBeenCalledWith(mockConfig, mockContext)
+      expect(mockCache.saveWallet).not.toHaveBeenCalled()
     })
 
-    it('should forward saveWitnesses to source and cache', async () => {
+    it('should forward saveWitnesses to source only', async () => {
       await cached.saveWitnesses(TEST_ADDRESS, Network.ChainId.MAINNET, mockPayload, mockSignatures)
 
       expect(mockSource.saveWitnesses).toHaveBeenCalledWith(
@@ -799,48 +799,43 @@ describe('Cached', () => {
         mockPayload,
         mockSignatures,
       )
-      expect(mockCache.saveWitnesses).toHaveBeenCalledWith(
-        TEST_ADDRESS,
-        Network.ChainId.MAINNET,
-        mockPayload,
-        mockSignatures,
-      )
+      expect(mockCache.saveWitnesses).not.toHaveBeenCalled()
     })
 
-    it('should forward saveUpdate to source and cache', async () => {
+    it('should forward saveUpdate to source only', async () => {
       const mockRawSignature = '0x123' as any
       await cached.saveUpdate(TEST_ADDRESS, mockConfig, mockRawSignature)
 
       expect(mockSource.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockRawSignature)
-      expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockRawSignature)
+      expect(mockCache.saveUpdate).not.toHaveBeenCalled()
     })
 
-    it('should forward saveTree to source and cache', async () => {
+    it('should forward saveTree to source only', async () => {
       await cached.saveTree(mockTree)
 
       expect(mockSource.saveTree).toHaveBeenCalledWith(mockTree)
-      expect(mockCache.saveTree).toHaveBeenCalledWith(mockTree)
+      expect(mockCache.saveTree).not.toHaveBeenCalled()
     })
 
-    it('should forward saveConfiguration to source and cache', async () => {
+    it('should forward saveConfiguration to source only', async () => {
       await cached.saveConfiguration(mockConfig)
 
       expect(mockSource.saveConfiguration).toHaveBeenCalledWith(mockConfig)
-      expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig)
+      expect(mockCache.saveConfiguration).not.toHaveBeenCalled()
     })
 
-    it('should forward saveDeploy to source and cache', async () => {
+    it('should forward saveDeploy to source only', async () => {
       await cached.saveDeploy(TEST_IMAGE_HASH, mockContext)
 
       expect(mockSource.saveDeploy).toHaveBeenCalledWith(TEST_IMAGE_HASH, mockContext)
-      expect(mockCache.saveDeploy).toHaveBeenCalledWith(TEST_IMAGE_HASH, mockContext)
+      expect(mockCache.saveDeploy).not.toHaveBeenCalled()
     })
 
-    it('should forward savePayload to source and cache', async () => {
+    it('should forward savePayload to source only', async () => {
       await cached.savePayload(TEST_ADDRESS, mockPayload, Network.ChainId.MAINNET)
 
       expect(mockSource.savePayload).toHaveBeenCalledWith(TEST_ADDRESS, mockPayload, Network.ChainId.MAINNET)
-      expect(mockCache.savePayload).toHaveBeenCalledWith(TEST_ADDRESS, mockPayload, Network.ChainId.MAINNET)
+      expect(mockCache.savePayload).not.toHaveBeenCalled()
     })
   })
 
