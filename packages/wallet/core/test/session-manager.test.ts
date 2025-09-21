@@ -504,13 +504,18 @@ for (const extension of ALL_EXTENSIONS) {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = 0
 
+        // Create unique identity and state provider for this test
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
         const explicitPermissions: Signers.Session.ExplicitParams = {
           chainId,
           valueLimit: 1000000000000000000n, // 1 ETH
           deadline: BigInt(Math.floor(Date.now() / 1000) - 3600), // 1 hour ago
-          permissions: [PermissionBuilder.for(EMITTER_ADDRESS).allowAll().build()],
+          permissions: [PermissionBuilder.for(EMITTER_ADDRESS1).allowAll().build()],
         }
         const explicitSigner = new Signers.Session.Explicit(explicitPrivateKey, explicitPermissions)
         // Create the topology and wallet
@@ -539,7 +544,7 @@ for (const extension of ALL_EXTENSIONS) {
 
         // Create a test transaction within permissions
         const call: Payload.Call = {
-          to: EMITTER_ADDRESS,
+          to: EMITTER_ADDRESS1,
           value: 0n,
           data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]), // Explicit emit
           gasLimit: 0n,
