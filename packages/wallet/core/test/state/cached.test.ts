@@ -512,8 +512,12 @@ describe('Cached', () => {
         vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue(partialCachedUpdates)
         vi.mocked(mockSource.getLatestImageHash).mockResolvedValue(TEST_IMAGE_HASH_4)
         vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(sourceUpdates)
-        vi.mocked(mockCache.getConfiguration).mockResolvedValueOnce(mockConfig2)
-        vi.mocked(mockCache.getConfiguration).mockResolvedValueOnce(mockConfig3)
+        // fromImageHash config is fetched and cached
+        vi.mocked(mockCache.getConfiguration)
+          .mockResolvedValueOnce(undefined) // First call for fromImageHash (TEST_IMAGE_HASH)
+          .mockResolvedValueOnce(mockConfig2) // Second call for TEST_IMAGE_HASH_3
+          .mockResolvedValueOnce(mockConfig3) // Third call for TEST_IMAGE_HASH_4
+        vi.mocked(mockSource.getConfiguration).mockResolvedValue(mockConfig) // fromImageHash config from source
 
         const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
 
@@ -521,6 +525,9 @@ describe('Cached', () => {
         expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH_2, {
           allUpdates: true,
         })
+        // Should save fromImageHash config to cache
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig)
+        // Should save both source updates to cache
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig2, sourceUpdates[0].signature)
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig3, sourceUpdates[1].signature)
       })
@@ -615,11 +622,14 @@ describe('Cached', () => {
 
         vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
         vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
-        // First config not in cache, second config in cache
+        // fromImageHash config not in cache, first update config not in cache, second update config in cache
         vi.mocked(mockCache.getConfiguration)
-          .mockResolvedValueOnce(undefined) // First call returns undefined
-          .mockResolvedValueOnce(mockConfig2) // Second call returns config
-        vi.mocked(mockSource.getConfiguration).mockResolvedValue(mockConfig1)
+          .mockResolvedValueOnce(undefined) // First call for fromImageHash (TEST_IMAGE_HASH)
+          .mockResolvedValueOnce(undefined) // Second call for first update (TEST_IMAGE_HASH)
+          .mockResolvedValueOnce(mockConfig2) // Third call for second update (TEST_IMAGE_HASH_2)
+        vi.mocked(mockSource.getConfiguration)
+          .mockResolvedValueOnce(mockConfig1) // fromImageHash config from source
+          .mockResolvedValueOnce(mockConfig1) // First update config from source
 
         const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
 
@@ -627,9 +637,9 @@ describe('Cached', () => {
         expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
           allUpdates: true,
         })
-        // Should fetch first config from source
+        // Should fetch fromImageHash config from source
         expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH)
-        // Should save first config to cache
+        // Should save fromImageHash config to cache
         expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig1)
         // Should save both updates to cache
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig1, mockUpdates[0].signature)
@@ -669,14 +679,16 @@ describe('Cached', () => {
 
         vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
         vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
-        // Config1 not in cache, Config2 in cache, Config3 not in cache
+        // fromImageHash not in cache, Config1 not in cache, Config2 in cache, Config3 not in cache
         vi.mocked(mockCache.getConfiguration)
-          .mockResolvedValueOnce(undefined) // First call for TEST_IMAGE_HASH
-          .mockResolvedValueOnce(mockConfig) // Second call for TEST_IMAGE_HASH_2 (in cache)
-          .mockResolvedValueOnce(undefined) // Third call for TEST_IMAGE_HASH_3
+          .mockResolvedValueOnce(undefined) // First call for fromImageHash (TEST_IMAGE_HASH)
+          .mockResolvedValueOnce(undefined) // Second call for first update (TEST_IMAGE_HASH)
+          .mockResolvedValueOnce(mockConfig) // Third call for second update (TEST_IMAGE_HASH_2) - in cache
+          .mockResolvedValueOnce(undefined) // Fourth call for third update (TEST_IMAGE_HASH_3)
         vi.mocked(mockSource.getConfiguration)
-          .mockResolvedValueOnce(mockConfig1) // First config from source
-          .mockResolvedValueOnce(mockConfig3) // Third config from source
+          .mockResolvedValueOnce(mockConfig1) // fromImageHash config from source
+          .mockResolvedValueOnce(mockConfig1) // First update config from source
+          .mockResolvedValueOnce(mockConfig3) // Third update config from source
 
         const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
 
@@ -685,13 +697,14 @@ describe('Cached', () => {
           allUpdates: true,
         })
         // Should fetch configs from source for missing ones
-        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH)
-        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH_3)
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH) // fromImageHash
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH) // first update
+        expect(mockSource.getConfiguration).toHaveBeenCalledWith(TEST_IMAGE_HASH_3) // third update
         // Should not fetch config2 since it's in cache
         expect(mockSource.getConfiguration).not.toHaveBeenCalledWith(TEST_IMAGE_HASH_2)
         // Should save missing configs to cache
-        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig1)
-        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig3)
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig1) // fromImageHash
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig3) // third update
         // Should save all updates to cache
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig1, mockUpdates[0].signature)
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockUpdates[1].signature)
@@ -764,8 +777,12 @@ describe('Cached', () => {
         const mockConfig2 = { test: 'config2' } as any
         vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
         vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
-        vi.mocked(mockCache.getConfiguration).mockResolvedValueOnce(mockConfig)
-        vi.mocked(mockCache.getConfiguration).mockResolvedValueOnce(mockConfig2)
+        // fromImageHash config not in cache, first update config in cache, second update config in cache
+        vi.mocked(mockCache.getConfiguration)
+          .mockResolvedValueOnce(undefined) // First call for fromImageHash (TEST_IMAGE_HASH)
+          .mockResolvedValueOnce(mockConfig) // Second call for first update (TEST_IMAGE_HASH) - in cache
+          .mockResolvedValueOnce(mockConfig2) // Third call for second update (TEST_IMAGE_HASH_2) - in cache
+        vi.mocked(mockSource.getConfiguration).mockResolvedValue(mockConfig) // fromImageHash config from source
 
         const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
 
@@ -776,6 +793,9 @@ describe('Cached', () => {
         expect(mockCache.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
           allUpdates: true,
         })
+        // Should save fromImageHash config to cache
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig)
+        // Should save both updates to cache
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockUpdates[0].signature)
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig2, mockUpdates[1].signature)
       })

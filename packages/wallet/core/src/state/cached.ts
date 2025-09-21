@@ -176,19 +176,16 @@ export class Cached implements Provider {
     const cachedFromImageHash = cached.length > 0 ? cached[cached.length - 1]!.imageHash : fromImageHash
     const source = await this.args.source.getConfigurationUpdates(wallet, cachedFromImageHash, options)
     if (source.length > 0) {
-      // Save the config updates to cache
-      const promises = source.map(async (update) => {
-        let config = await this.args.cache.getConfiguration(update.imageHash)
-        if (!config) {
-          config = await this.args.source.getConfiguration(update.imageHash)
+      const promises: Promise<unknown>[] = [
+        this.getConfiguration(fromImageHash), // Save the fromConfig to cache
+        ...source.map(async (update) => {
+          // Save the config updates to cache
+          const config = await this.getConfiguration(update.imageHash)
           if (config) {
-            await this.args.cache.saveConfiguration(config)
+            return this.args.cache.saveUpdate(wallet, config, update.signature)
           }
-        }
-        if (config) {
-          return this.args.cache.saveUpdate(wallet, config, update.signature)
-        }
-      })
+        }),
+      ]
       await Promise.all(promises)
     }
     const result = [...cached, ...source]
