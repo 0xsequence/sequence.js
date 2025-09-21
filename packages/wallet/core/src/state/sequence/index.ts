@@ -235,26 +235,20 @@ export class Provider implements ProviderInterface {
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
-    const { updates: serviceUpdates } = await this.service.configUpdates({
-      wallet,
-      fromImageHash,
-      allUpdates: options?.allUpdates,
-    })
-    let updates = serviceUpdates.map(({ toImageHash, signature }) => {
-      Hex.assert(toImageHash)
-      Hex.assert(signature)
-      return { imageHash: toImageHash, signature: signature }
-    })
+    const { updates } = await this.service.configUpdates({ wallet, fromImageHash, allUpdates: options?.allUpdates })
 
     return Promise.all(
-      updates.map(async ({ imageHash, signature }) => {
+      updates.map(async ({ toImageHash, signature }) => {
+        Hex.assert(toImageHash)
+        Hex.assert(signature)
+
         const decoded = Signature.decodeSignature(Hex.toBytes(signature))
 
-        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(imageHash), {
+        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(toImageHash), {
           provider: passkeySignatureValidator,
         })
 
-        return { imageHash, signature: { ...decoded, configuration } }
+        return { imageHash: toImageHash, signature: { ...decoded, configuration } }
       }),
     )
   }

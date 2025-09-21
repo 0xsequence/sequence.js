@@ -203,7 +203,7 @@ export class Provider implements ProviderInterface {
     if (!deployHash) {
       return undefined
     }
-    const configUpdates = await this.getConfigurationUpdates(wallet, deployHash.imageHash, { allUpdates: true })
+    const configUpdates = await this.getConfigurationUpdates(wallet, deployHash.imageHash)
     if (configUpdates.length === 0) {
       return deployHash.imageHash
     }
@@ -248,12 +248,7 @@ export class Provider implements ProviderInterface {
       | undefined
 
     const nextCandidatesSorted = nextCandidates
-      .filter((c) => {
-        if (!c!.config || c!.config.checkpoint <= fromConfig.checkpoint) {
-          return false
-        }
-        return true
-      })
+      .filter((c) => c!.config && c!.config.checkpoint > fromConfig.checkpoint)
       .sort((a, b) =>
         // If we are looking for the longest path, sort by ascending checkpoint
         // because we want to find the smalles jump, and we should start with the
@@ -348,7 +343,7 @@ export class Provider implements ProviderInterface {
       return []
     }
 
-    const nextStep = await this.getConfigurationUpdates(wallet, best.nextImageHash, options)
+    const nextStep = await this.getConfigurationUpdates(wallet, best.nextImageHash, { allUpdates: true })
 
     return [
       {
