@@ -162,13 +162,13 @@ export class Cached implements Provider {
   async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
+    options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
     const cached = await this.args.cache.getConfigurationUpdates(wallet, fromImageHash, options)
     if (cached.length > 0) {
-      const toImageHash = options?.toImageHash ?? (await this.getLatestImageHash(wallet))
+      const toImageHash = await this.getLatestImageHash(wallet)
       // Only use the cached updates they are up to date
-      if (!toImageHash || Hex.isEqual(cached[cached.length - 1]!.imageHash, toImageHash)) {
+      if (toImageHash && Hex.isEqual(cached[cached.length - 1]!.imageHash, toImageHash)) {
         return cached
       }
     }

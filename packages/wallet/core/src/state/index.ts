@@ -47,7 +47,7 @@ export interface Reader {
   getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
+    options?: { allUpdates?: boolean },
   ): MaybePromise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>>
 
   getTree(rootHash: Hex.Hex): MaybePromise<GenericTree.Tree | undefined>

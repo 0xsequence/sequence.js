@@ -427,22 +427,6 @@ describe('Cached', () => {
         expect(mockSource.getConfigurationUpdates).not.toHaveBeenCalled()
       })
 
-      it('should return cached updates when toImageHash matches last cached update', async () => {
-        const mockUpdates = [{ imageHash: TEST_IMAGE_HASH_2, signature: '0x123' }] as any
-        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue(mockUpdates)
-
-        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, {
-          toImageHash: TEST_IMAGE_HASH_2,
-        })
-
-        expect(result).toStrictEqual(mockUpdates)
-        expect(mockCache.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
-          toImageHash: TEST_IMAGE_HASH_2,
-        })
-        expect(mockSource.getLatestImageHash).not.toHaveBeenCalled()
-        expect(mockSource.getConfigurationUpdates).not.toHaveBeenCalled()
-      })
-
       it('should fetch from source when cached updates are stale', async () => {
         const cachedUpdates = [{ imageHash: TEST_IMAGE_HASH_2, signature: '0x123' }] as any
         const sourceUpdates = [{ imageHash: TEST_IMAGE_HASH_3, signature: '0x456' }] as any
@@ -457,24 +441,6 @@ describe('Cached', () => {
         expect(mockSource.getLatestImageHash).toHaveBeenCalledWith(TEST_ADDRESS)
         expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH_2, {
           allUpdates: true,
-        })
-        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, sourceUpdates[0].signature)
-      })
-
-      it('should fetch from source when toImageHash is beyond cached updates', async () => {
-        const cachedUpdates = [{ imageHash: TEST_IMAGE_HASH_2, signature: '0x123' }] as any
-        const sourceUpdates = [{ imageHash: TEST_IMAGE_HASH_3, signature: '0x456' }] as any
-        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue(cachedUpdates)
-        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(sourceUpdates)
-        vi.mocked(mockCache.getConfiguration).mockResolvedValue(mockConfig)
-
-        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, {
-          toImageHash: TEST_IMAGE_HASH_3,
-        })
-
-        expect(result).toEqual([...cachedUpdates, ...sourceUpdates])
-        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH_2, {
-          toImageHash: TEST_IMAGE_HASH_3,
         })
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, sourceUpdates[0].signature)
       })
@@ -531,24 +497,6 @@ describe('Cached', () => {
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig2, sourceUpdates[0].signature)
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig3, sourceUpdates[1].signature)
       })
-
-      it('should handle partial cache with toImageHash option', async () => {
-        const partialCachedUpdates = [{ imageHash: TEST_IMAGE_HASH_2, signature: '0x123' }] as any
-        const sourceUpdates = [{ imageHash: TEST_IMAGE_HASH_3, signature: '0x456' }] as any
-        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue(partialCachedUpdates)
-        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(sourceUpdates)
-        vi.mocked(mockCache.getConfiguration).mockResolvedValue(mockConfig)
-
-        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, {
-          toImageHash: TEST_IMAGE_HASH_3,
-        })
-
-        expect(result).toEqual([...partialCachedUpdates, ...sourceUpdates])
-        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH_2, {
-          toImageHash: TEST_IMAGE_HASH_3,
-        })
-        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, sourceUpdates[0].signature)
-      })
     })
 
     describe('no cache scenarios', () => {
@@ -566,24 +514,6 @@ describe('Cached', () => {
         })
         expect(mockCache.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
           allUpdates: true,
-        })
-        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockUpdates[0].signature)
-        expect(mockSource.getLatestImageHash).not.toHaveBeenCalled()
-      })
-
-      it('should fetch from source with toImageHash when not in cache', async () => {
-        const mockUpdates = [{ imageHash: TEST_IMAGE_HASH_2, signature: '0x123' }] as any
-        vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue([])
-        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(mockUpdates)
-        vi.mocked(mockCache.getConfiguration).mockResolvedValue(mockConfig)
-
-        const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, {
-          toImageHash: TEST_IMAGE_HASH_2,
-        })
-
-        expect(result).toStrictEqual(mockUpdates)
-        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH, {
-          toImageHash: TEST_IMAGE_HASH_2,
         })
         expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, mockUpdates[0].signature)
         expect(mockSource.getLatestImageHash).not.toHaveBeenCalled()
@@ -715,16 +645,25 @@ describe('Cached', () => {
     describe('edge cases', () => {
       it('should handle when getLatestImageHash returns undefined', async () => {
         const cachedUpdates = [{ imageHash: TEST_IMAGE_HASH_2, signature: '0x123' }] as any
+        const sourceUpdates = [{ imageHash: TEST_IMAGE_HASH_3, signature: '0x456' }] as any
         vi.mocked(mockCache.getConfigurationUpdates).mockResolvedValue(cachedUpdates)
         vi.mocked(mockSource.getLatestImageHash).mockResolvedValue(undefined)
+        vi.mocked(mockSource.getConfigurationUpdates).mockResolvedValue(sourceUpdates)
+        vi.mocked(mockCache.getConfiguration)
+          .mockResolvedValueOnce(undefined) // fromImageHash not in cache
+          .mockResolvedValueOnce(mockConfig) // source update config in cache
+        vi.mocked(mockSource.getConfiguration).mockResolvedValue(mockConfig) // fromImageHash config from source
 
         const result = await cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, { allUpdates: true })
 
-        // When getLatestImageHash returns undefined, it should return cached updates without fetching from source
-        expect(result).toEqual(cachedUpdates)
+        // When getLatestImageHash returns undefined, it should fetch from source and merge with cached
+        expect(result).toEqual([...cachedUpdates, ...sourceUpdates])
         expect(mockSource.getLatestImageHash).toHaveBeenCalledWith(TEST_ADDRESS)
-        expect(mockSource.getConfigurationUpdates).not.toHaveBeenCalled()
-        expect(mockCache.saveUpdate).not.toHaveBeenCalled()
+        expect(mockSource.getConfigurationUpdates).toHaveBeenCalledWith(TEST_ADDRESS, TEST_IMAGE_HASH_2, {
+          allUpdates: true,
+        })
+        expect(mockCache.saveConfiguration).toHaveBeenCalledWith(mockConfig)
+        expect(mockCache.saveUpdate).toHaveBeenCalledWith(TEST_ADDRESS, mockConfig, sourceUpdates[0].signature)
       })
 
       it('should handle when source returns empty updates', async () => {

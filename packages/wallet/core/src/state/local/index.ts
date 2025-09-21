@@ -213,21 +213,11 @@ export class Provider implements ProviderInterface {
   async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
+    options?: { allUpdates?: boolean },
   ): Promise<{ imageHash: Hex.Hex; signature: Signature.RawSignature }[]> {
     let fromConfig = await this.store.loadConfig(fromImageHash)
     if (!fromConfig) {
       return []
-    }
-
-    // If toImageHash is provided, load its config to get the target checkpoint
-    //TODO Pass this recursively to avoid loading the config multiple times
-    let toConfig: Config.Config | undefined
-    if (options?.toImageHash) {
-      toConfig = await this.store.loadConfig(options.toImageHash)
-      if (!toConfig) {
-        throw new Error(`toImageHash ${options.toImageHash} not found`)
-      }
     }
 
     const { signers, sapientSigners } = Config.getSigners(fromConfig)
@@ -260,10 +250,6 @@ export class Provider implements ProviderInterface {
     const nextCandidatesSorted = nextCandidates
       .filter((c) => {
         if (!c!.config || c!.config.checkpoint <= fromConfig.checkpoint) {
-          return false
-        }
-        // If toImageHash is provided, don't exceed its checkpoint
-        if (toConfig && c!.config.checkpoint > toConfig.checkpoint) {
           return false
         }
         return true
@@ -356,25 +342,10 @@ export class Provider implements ProviderInterface {
           },
         },
       }
-
-      // If we found the target toImageHash, return early
-      if (options?.toImageHash && Hex.isEqual(candidate.nextImageHash, options.toImageHash)) {
-        break
-      }
     }
 
     if (!best) {
       return []
-    }
-
-    // If we found the target toImageHash, return just this update
-    if (options?.toImageHash && Hex.isEqual(best.nextImageHash, options.toImageHash)) {
-      return [
-        {
-          imageHash: best.nextImageHash,
-          signature: best.signature,
-        },
-      ]
     }
 
     const nextStep = await this.getConfigurationUpdates(wallet, best.nextImageHash, options)

@@ -233,7 +233,7 @@ export class Provider implements ProviderInterface {
   async getConfigurationUpdates(
     wallet: Address.Address,
     fromImageHash: Hex.Hex,
-    options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
+    options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
     const { updates: serviceUpdates } = await this.service.configUpdates({
       wallet,
@@ -245,15 +245,6 @@ export class Provider implements ProviderInterface {
       Hex.assert(signature)
       return { imageHash: toImageHash, signature: signature }
     })
-
-    if (options?.toImageHash) {
-      // toImageHash doesn't exist on the service. Remove all updates after the toImageHash
-      const toIndex = updates.findIndex(({ imageHash }) => Hex.isEqual(imageHash, options.toImageHash!))
-      if (toIndex === -1) {
-        throw new Error(`toImageHash ${options.toImageHash} not found`)
-      }
-      updates = updates.slice(0, toIndex + 1)
-    }
 
     return Promise.all(
       updates.map(async ({ imageHash, signature }) => {
