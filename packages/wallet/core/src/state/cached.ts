@@ -164,11 +164,6 @@ export class Cached implements Provider {
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean; toImageHash?: Hex.Hex },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
-    if (options?.toImageHash && options?.allUpdates) {
-      //FIXME Is this correct?
-      throw new Error('toImageHash and allUpdates cannot be used together')
-    }
-
     const cached = await this.args.cache.getConfigurationUpdates(wallet, fromImageHash, options)
     if (cached.length > 0) {
       const toImageHash = options?.toImageHash ?? (await this.getLatestImageHash(wallet))

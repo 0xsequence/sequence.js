@@ -411,17 +411,6 @@ describe('Cached', () => {
     const TEST_IMAGE_HASH_3 = Hex.from('0x3333333333333333333333333333333333333333333333333333333333333333')
     const TEST_IMAGE_HASH_4 = Hex.from('0x4444444444444444444444444444444444444444444444444444444444444444')
 
-    describe('option validation', () => {
-      it('should throw error when toImageHash and allUpdates are used together', async () => {
-        await expect(
-          cached.getConfigurationUpdates(TEST_ADDRESS, TEST_IMAGE_HASH, {
-            toImageHash: TEST_IMAGE_HASH_2,
-            allUpdates: true,
-          }),
-        ).rejects.toThrow('toImageHash and allUpdates cannot be used together')
-      })
-    })
-
     describe('cached updates scenarios', () => {
       it('should return cached updates when available and up to date', async () => {
         const mockUpdates = [{ imageHash: TEST_IMAGE_HASH_2, signature: '0x123' }] as any
