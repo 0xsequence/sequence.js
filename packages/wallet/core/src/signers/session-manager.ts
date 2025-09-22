@@ -377,11 +377,13 @@ export class SessionManager implements SapientSigner {
     payload: Payload.Parented,
     signature: SignatureTypes.SignatureOfSapientSignerLeaf,
   ): Promise<boolean> {
+    if (!Address.isEqual(wallet, this.wallet.address)) {
+      throw new Error('Wallet address mismatch')
+    }
     if (!Payload.isCalls(payload)) {
       // Only calls are supported
       return false
     }
-
     if (!this._provider) {
       throw new Error('Provider not set')
     }
