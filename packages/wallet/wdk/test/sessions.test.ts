@@ -4,6 +4,7 @@ import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, Relayer, State 
 import { Attestation, Constants, Extensions, Network, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
+import { ExplicitSession } from '../src/sequence/types/sessions.js'
 
 describe('Sessions (via Manager)', () => {
   // Shared components
@@ -24,16 +25,12 @@ describe('Sessions (via Manager)', () => {
     sessionManager: CoreSigners.SessionManager
   }
 
-  const setupExplicitSession = async (
-    sessionAddress: Address.Address,
-    permissions: Permission.SessionPermissions,
-    isModify = false,
-  ) => {
+  const setupExplicitSession = async (explicitSession: ExplicitSession, isModify = false) => {
     let requestId: string
     if (isModify) {
-      requestId = await wdk.manager.sessions.modifyExplicitSession(dapp.wallet.address, sessionAddress, permissions)
+      requestId = await wdk.manager.sessions.modifyExplicitSession(dapp.wallet.address, explicitSession)
     } else {
-      requestId = await wdk.manager.sessions.addExplicitSession(dapp.wallet.address, sessionAddress, permissions)
+      requestId = await wdk.manager.sessions.addExplicitSession(dapp.wallet.address, explicitSession)
     }
 
     // Sign and complete the request
@@ -225,8 +222,8 @@ describe('Sessions (via Manager)', () => {
       if (!s) {
         throw new Error('Failed to create pk store')
       }
-      const permission: Permission.SessionPermissions = {
-        signer: e.address,
+      const explicitSession: ExplicitSession = {
+        sessionAddress: e.address,
         chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -237,11 +234,11 @@ describe('Sessions (via Manager)', () => {
           },
         ],
       }
-      const explicitSigner = new CoreSigners.Session.Explicit(s, permission)
+      const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
       // Add to manager
       dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-      await setupExplicitSession(explicitSigner.address, permission)
+      await setupExplicitSession(explicitSession)
 
       // Create a call payload
       const call: Payload.Call = {
@@ -290,8 +287,8 @@ describe('Sessions (via Manager)', () => {
       if (!s) {
         throw new Error('Failed to create pk store')
       }
-      const permission: Permission.SessionPermissions = {
-        signer: e.address,
+      const explicitSession: ExplicitSession = {
+        sessionAddress: e.address,
         chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -311,11 +308,11 @@ describe('Sessions (via Manager)', () => {
           },
         ],
       }
-      const explicitSigner = new CoreSigners.Session.Explicit(s, permission)
+      const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
       // Add to manager
       dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-      await setupExplicitSession(explicitSigner.address, permission)
+      await setupExplicitSession(explicitSession)
 
       // Create a call payload
       const call: Payload.Call = {
@@ -365,8 +362,8 @@ describe('Sessions (via Manager)', () => {
         throw new Error('Failed to create pk store')
       }
       // Create the initial permissions
-      let permission: Permission.SessionPermissions = {
-        signer: e.address,
+      let explicitSession: ExplicitSession = {
+        sessionAddress: e.address,
         chainId,
         valueLimit: 0n,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -386,11 +383,11 @@ describe('Sessions (via Manager)', () => {
           },
         ],
       }
-      const explicitSigner = new CoreSigners.Session.Explicit(s, permission)
+      const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
       // Add to manager
       dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-      await setupExplicitSession(explicitSigner.address, permission)
+      await setupExplicitSession(explicitSession)
 
       // Create a call payload
       const call: Payload.Call = {
@@ -429,9 +426,9 @@ describe('Sessions (via Manager)', () => {
 
       // Now we modify the permissions target contract to zero address
       // This should cause any session call to the EMITTER_ADDRESS contract to fail
-      permission.permissions[0].target = '0x0000000000000000000000000000000000000000'
+      explicitSession.permissions[0].target = '0x0000000000000000000000000000000000000000'
 
-      await setupExplicitSession(explicitSigner.address, permission, true)
+      await setupExplicitSession(explicitSession, true)
 
       // Sign and send the transaction
       // Should fail with 'No signer supported for call'
