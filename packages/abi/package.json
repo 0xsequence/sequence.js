@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/abi",
-  "version": "2.3.28",
+  "version": "2.3.29",
   "description": "abi sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/abi",
   "source": "src/index.ts",

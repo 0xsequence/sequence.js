@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 2.3.29
+
+### Patch Changes
+
+- Update relayer and api interfaces
+
 ## 2.3.28
 
 ### Patch Changes

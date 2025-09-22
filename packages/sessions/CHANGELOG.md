@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.29
+
+### Patch Changes
+
+- Update relayer and api interfaces
+- Updated dependencies
+  - @0xsequence/migration@2.3.29
+  - @0xsequence/replacer@2.3.29
+  - @0xsequence/utils@2.3.29
+  - @0xsequence/core@2.3.29
+
 ## 2.3.28
 
 ### Patch Changes

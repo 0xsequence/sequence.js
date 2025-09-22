@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 2.3.29
+
+### Patch Changes
+
+- Update relayer and api interfaces
+- Updated dependencies
+  - @0xsequence/migration@2.3.29
+  - @0xsequence/account@2.3.29
+  - @0xsequence/network@2.3.29
+  - @0xsequence/relayer@2.3.29
+  - @0xsequence/wallet@2.3.29
+  - @0xsequence/utils@2.3.29
+  - @0xsequence/auth@2.3.29
+  - @0xsequence/core@2.3.29
+  - @0xsequence/abi@2.3.29
+
 ## 2.3.28
 
 ### Patch Changes
