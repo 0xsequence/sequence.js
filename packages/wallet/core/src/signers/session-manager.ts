@@ -263,19 +263,18 @@ export class SessionManager implements SapientSigner {
     if (!Address.isEqual(wallet, this.wallet.address)) {
       throw new Error('Wallet address mismatch')
     }
+    if (this._provider) {
+      const providerChainId = await this._provider.request({
+        method: 'eth_chainId',
+      })
+      if (providerChainId !== Hex.fromNumber(chainId)) {
+        throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
+      }
+    }
     if ((await this.imageHash) !== imageHash) {
       throw new Error('Unexpected image hash')
     }
     const topology = await this._getTopologyForImageHash(imageHash)
-    //FIXME Test chain id
-    // if (this._provider) {
-    //   const providerChainId = await this._provider.request({
-    //     method: 'eth_chainId',
-    //   })
-    //   if (providerChainId !== Hex.fromNumber(chainId)) {
-    //     throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
-    //   }
-    // }
     if (!Payload.isCalls(payload) || payload.calls.length === 0) {
       throw new Error('Only calls are supported')
     }
@@ -380,22 +379,20 @@ export class SessionManager implements SapientSigner {
     if (!Address.isEqual(wallet, this.wallet.address)) {
       throw new Error('Wallet address mismatch')
     }
-    if (!Payload.isCalls(payload)) {
+    if (!Payload.isCalls(payload) || payload.calls.length === 0) {
       // Only calls are supported
       return false
     }
     if (!this._provider) {
       throw new Error('Provider not set')
     }
-    //FIXME Test chain id
-    // const providerChainId = await this._provider.request({
-    //   method: 'eth_chainId',
-    // })
-    // if (providerChainId !== Hex.fromNumber(chainId)) {
-    //   throw new Error(
-    //     `Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`,
-    //   )
-    // }
+    // Test chain id
+    const providerChainId = await this._provider.request({
+      method: 'eth_chainId',
+    })
+    if (providerChainId !== Hex.fromNumber(chainId)) {
+      throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
+    }
 
     const encodedPayload = Payload.encodeSapient(chainId, payload)
     const encodedCallData = AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE, [
