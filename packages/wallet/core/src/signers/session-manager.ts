@@ -135,8 +135,21 @@ export class SessionManager implements SapientSigner {
   }
 
   async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
+    if (!Address.isEqual(this.wallet.address, wallet)) {
+      throw new Error('Wallet address mismatch')
+    }
     // Only use signers that match the topology
     const topology = await this.topology
+    return this._findSignersForCalls(wallet, chainId, calls, topology)
+  }
+
+  private async _findSignersForCalls(
+    wallet: Address.Address,
+    chainId: number,
+    calls: Payload.Call[],
+    topology: SessionConfig.SessionsTopology,
+  ): Promise<SessionSigner[]> {
+    // Only use signers that match the topology
     const identitySigners = SessionConfig.getIdentitySigners(topology)
     if (identitySigners.length === 0) {
       throw new Error('Identity signers not found')
@@ -178,10 +191,23 @@ export class SessionManager implements SapientSigner {
     chainId: number,
     calls: Payload.Call[],
   ): Promise<Payload.Call | null> {
+    if (!Address.isEqual(wallet, this.wallet.address)) {
+      throw new Error('Wallet address mismatch')
+    }
+    const topology = await this.topology
+    return this._prepareIncrement(wallet, chainId, calls, topology)
+  }
+
+  private async _prepareIncrement(
+    wallet: Address.Address,
+    chainId: number,
+    calls: Payload.Call[],
+    topology: SessionConfig.SessionsTopology,
+  ): Promise<Payload.Call | null> {
     if (calls.length === 0) {
       throw new Error('No calls provided')
     }
-    const signers = await this.findSignersForCalls(wallet, chainId, calls)
+    const signers = await this._findSignersForCalls(wallet, chainId, calls, topology)
 
     // Create a map of signers to their associated calls
     const signerToCalls = new Map<SessionSigner, Payload.Call[]>()
@@ -259,7 +285,7 @@ export class SessionManager implements SapientSigner {
       throw new Error(`Space ${payload.space} is too large`)
     }
 
-    const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
+    const signers = await this._findSignersForCalls(wallet, chainId, payload.calls, topology)
     if (signers.length !== payload.calls.length) {
       throw new Error('No signer supported for call')
     }
@@ -275,7 +301,7 @@ export class SessionManager implements SapientSigner {
     )
 
     // Check if the last call is an increment usage call
-    const expectedIncrement = await this.prepareIncrement(wallet, chainId, payload.calls)
+    const expectedIncrement = await this._prepareIncrement(wallet, chainId, payload.calls, topology)
     if (expectedIncrement) {
       let actualIncrement: Payload.Call
       if (
