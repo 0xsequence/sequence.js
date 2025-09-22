@@ -706,9 +706,10 @@ export class ChainSessionManager {
         return
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err))
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
-        }
+      }
+      if (attempt < maxRetries) {
+        console.error('Explicit session initialization failed, retrying...')
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
       }
     }
     if (lastError)
