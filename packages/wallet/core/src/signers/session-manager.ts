@@ -50,15 +50,15 @@ export class SessionManager implements SapientSigner {
     this._provider = options.provider
   }
 
-  get imageHash(): Promise<Hex.Hex | undefined> {
+  get imageHash(): Promise<Hex.Hex> {
     return this.getImageHash()
   }
 
-  async getImageHash(): Promise<Hex.Hex | undefined> {
+  async getImageHash(): Promise<Hex.Hex> {
     const { configuration } = await this.wallet.getStatus()
     const sessionConfigLeaf = Config.findSignerLeaf(configuration, this.address)
     if (!sessionConfigLeaf || !Config.isSapientSignerLeaf(sessionConfigLeaf)) {
-      return undefined
+      throw new Error(`Session configuration not found for wallet ${this.wallet.address}`)
     }
     return sessionConfigLeaf.imageHash
   }

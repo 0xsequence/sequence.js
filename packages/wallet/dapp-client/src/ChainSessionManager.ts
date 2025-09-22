@@ -926,9 +926,7 @@ export class ChainSessionManager {
         ...envelope.payload,
         parentWallets: [this.wallet.address],
       }
-      const imageHash = await this.sessionManager.imageHash
-      if (imageHash === undefined) throw new SessionConfigError('Session manager image hash is undefined')
-
+      const imageHash = await this.sessionManager.getImageHash()
       const signature = await this.sessionManager.signSapient(
         this.wallet.address,
         this.chainId,
