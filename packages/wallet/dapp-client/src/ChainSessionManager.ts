@@ -673,26 +673,21 @@ export class ChainSessionManager {
   ): Promise<void> {
     if (!this.provider || !this.wallet)
       throw new InitializationError('Manager core components not ready for explicit session.')
+    if (!this.sessionManager) throw new InitializationError('Main session manager is not initialized.')
+
+    const signerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pk }))
 
     const maxRetries = allowRetries ? 3 : 1
     let lastError: Error | null = null
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const tempManager = new Signers.SessionManager(this.wallet, {
-          sessionManagerAddress: Extensions.Rc3.sessions,
-          provider: this.provider,
-        })
-        const topology = await tempManager.getTopology()
+        const topology = await this.sessionManager.getTopology()
 
-        const signerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pk }))
         const permissions = SessionConfig.getSessionPermissions(topology, signerAddress)
-
         if (!permissions) {
           throw new InitializationError(`Permissions not found for session key.`)
         }
-
-        if (!this.sessionManager) throw new InitializationError('Main session manager is not initialized.')
 
         const explicitSigner = new Signers.Session.Explicit(pk, permissions)
         this.sessionManager = this.sessionManager.withExplicitSigner(explicitSigner)
