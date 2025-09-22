@@ -10,14 +10,18 @@ import {
   DappClientExplicitSessionEventListener,
   DappClientWalletActionEventListener,
   ExplicitSession,
+  ExplicitSessionConfig,
   GuardConfig,
   ImplicitSession,
+  ImplicitSessionConfig,
+  isExplicitSessionConfig,
   LoginMethod,
   RandomPrivateKeyFn,
   RequestActionType,
   SendWalletTransactionPayload,
   SequenceSessionStorage,
   Session,
+  SessionConfig,
   SignMessagePayload,
   SignTypedDataPayload,
   Transaction,
@@ -209,8 +213,8 @@ export class DappClient {
   }
 
   /**
-   * Retrieves a list of all active sessions (signers) associated with the current wallet.
-   * @returns An array of all the active sessions. {@link { address: Address.Address, isImplicit: boolean }[]}
+   * Retrieves a list of all active explicit sessions (signers) associated with the current wallet.
+   * @returns An array of all the active explicit sessions. {@link ExplicitSession[]}
    *
    * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-all-sessions} for more detailed documentation.
    *
@@ -219,53 +223,57 @@ export class DappClient {
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
-   *   const sessions = dappClient.getAllSessions();
-   *   console.log('Sessions:', sessions);
+   *   const explicitSessions = dappClient.getAllExplicitSessions();
+   *   console.log('Sessions:', explicitSessions);
    * }
    */
-  public getAllSessions(): Session[] {
-    const allSessions = new Map<string, Session>()
-    Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
-      chainSessionManager.getSessions().forEach((session) => {
-        const uniqueKey = `${session.sessionAddress?.toLowerCase()}-${session.isImplicit}`
-        if (!allSessions.has(uniqueKey)) {
-          allSessions.set(uniqueKey, session)
-        }
-      })
-    })
-    return Array.from(allSessions.values())
-  }
-
-  public getAllImplicitSessions(): ImplicitSession[] {
-    const allSessions = new Map<string, Session>()
-    Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
-      chainSessionManager.getSessions().forEach((session) => {
-        const uniqueKey = `${session.sessionAddress?.toLowerCase()}-${session.isImplicit}`
-        if (!allSessions.has(uniqueKey)) {
-          allSessions.set(uniqueKey, session)
-        }
-      })
-    })
-    const filteredSessions = Array.from(allSessions.values()).filter(
-      (session) => session.isImplicit === true,
-    ) as ImplicitSession[]
-    return filteredSessions
-  }
-
   public getAllExplicitSessions(): ExplicitSession[] {
-    const allSessions = new Map<string, Session>()
+    const allExplicitSessions = new Map<string, ExplicitSession>()
     Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
-      chainSessionManager.getSessions().forEach((session) => {
-        const uniqueKey = `${session.sessionAddress?.toLowerCase()}-${session.isImplicit}`
-        if (!allSessions.has(uniqueKey)) {
-          allSessions.set(uniqueKey, session)
+      chainSessionManager.getExplicitSessions().forEach((session) => {
+        const uniqueKey = session.sessionAddress?.toLowerCase()
+        if (!allExplicitSessions.has(uniqueKey)) {
+          allExplicitSessions.set(uniqueKey, session)
         }
       })
     })
-    const filteredSessions = Array.from(allSessions.values()).filter(
-      (session) => session.isImplicit === false,
-    ) as ExplicitSession[]
-    return filteredSessions
+    return Array.from(allExplicitSessions.values())
+  }
+
+  /**
+   * Retrieves a list of all active implicit sessions (signers) associated with the current wallet.
+   * @returns An array of all the active implicit sessions. {@link ImplicitSession[]}
+   *
+   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-all-sessions} for more detailed documentation.
+   *
+   * @example
+   * const dappClient = new DappClient('http://localhost:5173');
+   * await dappClient.initialize();
+   *
+   * if (dappClient.isInitialized) {
+   *   const implicitSessions = dappClient.getAllImplicitSessions();
+   *   console.log('Sessions:', implicitSessions);
+   * }
+   */
+  public getAllImplicitSessions(): ImplicitSession[] {
+    const allImplicitSessions = new Map<string, ImplicitSession>()
+    Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
+      chainSessionManager.getImplicitSessions().forEach((session) => {
+        const uniqueKey = session.sessionAddress?.toLowerCase()
+        if (!allImplicitSessions.has(uniqueKey)) {
+          allImplicitSessions.set(uniqueKey, session)
+        }
+      })
+    })
+    return Array.from(allImplicitSessions.values())
+  }
+
+  /**
+   * Gets all the sessions (explicit and implicit) managed by the client.
+   * @returns An array of session objects. {@link Session[]}
+   */
+  public getAllSessions(): Session[] {
+    return [...this.getAllImplicitSessions(), ...this.getAllExplicitSessions()]
   }
 
   /**
@@ -396,7 +404,7 @@ export class DappClient {
   /**
    * Initiates a connection with the wallet and creates a new session.
    * @param chainId The primary chain ID for the new session.
-   * @param session (Optional) Session to request for an initial explicit session. {@link Session}
+   * @param sessionConfig Session configuration {@link SessionConfig} to request for an initial session. Can be either an explicit {@link ExplicitSessionConfig} or implicit {@link ImplicitSessionConfig}.
    * @param options (Optional) Connection options, such as a preferred login method or email for social or email logins.
    * @throws If the connection process fails. {@link ConnectionError}
    * @throws If a session already exists. {@link InitializationError}
@@ -406,14 +414,27 @@ export class DappClient {
    * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/connect} for more detailed documentation.
    *
    * @example
-   * const dappClient = new DappClient('http://localhost:5173');
-   * await dappClient.connect(137, window.location.origin, undefined, {
+   * // Connect with an explicit session configuration
+   * const explicitSessionConfig: ExplicitSessionConfig = {
+   *   valueLimit: 0n,
+   *   deadline: BigInt(Date.now() + 1000 * 60 * 60), // 1 hour
+   *   permissions: [...],
+   *   chainId: 137
+   * };
+   * await dappClient.connect(137, explicitSessionConfig, {
    *   preferredLoginMethod: 'google',
    * });
+   *
+   * // Or connect with an implicit session configuration
+   * const implicitSessionConfig: ImplicitSessionConfig = {
+   *   valueLimit: 0n,
+   *   deadline: BigInt(Date.now() + 1000 * 60 * 60), // 1 hour
+   * };
+   * await dappClient.connect(137, implicitSessionConfig);
    */
   async connect(
     chainId: number,
-    session: Session,
+    sessionConfig: SessionConfig,
     options: {
       preferredLoginMethod?: LoginMethod
       email?: string
@@ -425,7 +446,12 @@ export class DappClient {
 
     try {
       const chainSessionManager = this.getChainSessionManager(chainId)
-      await chainSessionManager.createNewSession(this.origin, session, options)
+
+      if (isExplicitSessionConfig(sessionConfig)) {
+        await chainSessionManager.createNewExplicitSession(this.origin, sessionConfig, options)
+      } else {
+        await chainSessionManager.createNewImplicitSession(this.origin, sessionConfig, options)
+      }
 
       // For popup mode, we need to manually update the state and emit an event.
       // For redirect mode, this code won't be reached; the page will navigate away.
@@ -474,15 +500,15 @@ export class DappClient {
    *   await dappClient.addExplicitSession(explicitSession);
    * }
    */
-  async addExplicitSession(explicitSession: ExplicitSession): Promise<void> {
+  async addExplicitSession(explicitSessionConfig: ExplicitSessionConfig): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot add an explicit session without an existing wallet.')
 
-    const chainSessionManager = this.getChainSessionManager(explicitSession.chainId)
+    const chainSessionManager = this.getChainSessionManager(explicitSessionConfig.chainId)
     if (!chainSessionManager.isInitialized) {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
-    await chainSessionManager.addExplicitSession(explicitSession)
+    await chainSessionManager.addExplicitSession(explicitSessionConfig)
 
     if (this.transport.mode === TransportMode.POPUP) {
       await this._loadStateFromStorage()

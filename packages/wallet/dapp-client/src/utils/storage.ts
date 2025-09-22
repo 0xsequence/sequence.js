@@ -2,13 +2,15 @@ import { Attestation } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { jsonReplacers, jsonRevivers } from './index.js'
 import {
-  CreateNewSessionPayload,
-  ModifySessionPayload,
   LoginMethod,
   SignMessagePayload,
   SignTypedDataPayload,
   GuardConfig,
   SendWalletTransactionPayload,
+  CreateExplicitSessionPayload,
+  CreateImplicitSessionPayload,
+  ModifyImplicitSessionPayload,
+  ModifyExplicitSessionPayload,
 } from '../types/index.js'
 
 export interface ExplicitSessionData {
@@ -32,8 +34,10 @@ export interface ImplicitSessionData {
 }
 
 export type PendingPayload =
-  | CreateNewSessionPayload
-  | ModifySessionPayload
+  | CreateExplicitSessionPayload
+  | CreateImplicitSessionPayload
+  | ModifyExplicitSessionPayload
+  | ModifyImplicitSessionPayload
   | SignMessagePayload
   | SignTypedDataPayload
   | SendWalletTransactionPayload

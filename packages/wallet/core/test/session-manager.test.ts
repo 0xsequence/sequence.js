@@ -6,7 +6,7 @@ import { Envelope, Signers, State, Utils, Wallet } from '../src/index.js'
 
 import { EMITTER_FUNCTIONS, EMITTER_ADDRESS, EMITTER_EVENT_TOPICS, LOCAL_RPC_URL, USDC_ADDRESS } from './constants'
 import { Extensions } from '@0xsequence/wallet-primitives'
-import { ExplicitSession } from '../../wdk/src/sequence/sessions.js'
+import { ExplicitSessionConfig } from '../../wdk/src/sequence/types/sessions.js'
 
 const { PermissionBuilder, ERC20PermissionBuilder } = Utils
 
@@ -59,7 +59,7 @@ for (const extension of ALL_EXTENSIONS) {
 
         let topology = SessionConfig.emptySessionsTopology(identityAddress)
         // Add random signer to the topology
-        const sessionPermission: ExplicitSession = {
+        const sessionPermission: ExplicitSessionConfig = {
           chainId,
           valueLimit: 1000000000000000000n,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -222,7 +222,7 @@ for (const extension of ALL_EXTENSIONS) {
 
       // Create explicit signer
       const explicitPrivateKey = Secp256k1.randomPrivateKey()
-      const explicitPermissions: ExplicitSession = {
+      const explicitPermissions: ExplicitSessionConfig = {
         chainId: useChainId ? chainId : 0,
         valueLimit: 1000000000000000000n, // 1 ETH
         deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -442,7 +442,7 @@ for (const extension of ALL_EXTENSIONS) {
 
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
-        const sessionPermission: ExplicitSession = {
+        const sessionPermission: ExplicitSessionConfig = {
           chainId,
           valueLimit: 1000000000000000000n, // 1 ETH
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -510,7 +510,7 @@ for (const extension of ALL_EXTENSIONS) {
 
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
-        const sessionPermission: ExplicitSession = {
+        const sessionPermission: ExplicitSessionConfig = {
           chainId,
           valueLimit: 0n,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -599,7 +599,7 @@ for (const extension of ALL_EXTENSIONS) {
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
         const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
         const approveAmount = 10000000n // 10 USDC
-        const sessionPermission: ExplicitSession = {
+        const sessionPermission: ExplicitSessionConfig = {
           chainId,
           valueLimit: 0n,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -696,7 +696,7 @@ for (const extension of ALL_EXTENSIONS) {
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
         const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
-        const sessionPermission: ExplicitSession = {
+        const sessionPermission: ExplicitSessionConfig = {
           chainId,
           valueLimit: 1000000000000000000n, // 1 ETH
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -801,7 +801,7 @@ for (const extension of ALL_EXTENSIONS) {
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
         const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
-        const sessionPermission: ExplicitSession = {
+        const sessionPermission: ExplicitSessionConfig = {
           chainId,
           valueLimit: 1000000000000000000n, // 1 ETH
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
@@ -920,7 +920,7 @@ for (const extension of ALL_EXTENSIONS) {
         // Create explicit signer
         const explicitPrivateKey = Secp256k1.randomPrivateKey()
         const explicitAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitPrivateKey }))
-        const sessionPermission: ExplicitSession = {
+        const sessionPermission: ExplicitSessionConfig = {
           chainId,
           valueLimit: 1000000000000000000n, // 1 ETH
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
