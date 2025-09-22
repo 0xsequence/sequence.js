@@ -734,11 +734,12 @@ export class ChainSessionManager {
 
   /**
    * Fetches fee options for a set of transactions.
+   * @param wallet The wallet address to use for the fee options.
    * @param calls The transactions to estimate fees for.
    * @returns A promise that resolves with an array of fee options.
    * @throws {FeeOptionError} If fetching fee options fails.
    */
-  async getFeeOptions(calls: Transaction[]): Promise<Relayer.FeeOption[]> {
+  async getFeeOptions(wallet: Address.Address, calls: Transaction[]): Promise<Relayer.FeeOption[]> {
     const callsToSend = calls.map((tx) => ({
       to: tx.to,
       value: tx.value,
@@ -749,8 +750,7 @@ export class ChainSessionManager {
       behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
     }))
     try {
-      const signedCall = await this._buildAndSignCalls(callsToSend)
-      const feeOptions = await this.relayer.feeOptions(signedCall.to, this.chainId, callsToSend)
+      const feeOptions = await this.relayer.feeOptions(wallet, this.chainId, callsToSend)
       return feeOptions.options
     } catch (err) {
       throw new FeeOptionError(`Failed to get fee options: ${err instanceof Error ? err.message : String(err)}`)

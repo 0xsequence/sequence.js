@@ -551,11 +551,11 @@ export class DappClient {
    * }
    */
   async getFeeOptions(chainId: number, transactions: Transaction[]): Promise<Relayer.FeeOption[]> {
-    if (!this.isInitialized) throw new InitializationError('Not initialized')
+    if (!this.isInitialized || !this.walletAddress) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
       throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
-    return await chainSessionManager.getFeeOptions(transactions)
+    return await chainSessionManager.getFeeOptions(this.walletAddress, transactions)
   }
 
   /**
