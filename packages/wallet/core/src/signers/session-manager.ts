@@ -72,6 +72,10 @@ export class SessionManager implements SapientSigner {
     if (!imageHash) {
       throw new Error(`Session configuration not found for image hash ${imageHash}`)
     }
+    return this._getTopologyForImageHash(imageHash)
+  }
+
+  private async _getTopologyForImageHash(imageHash: Hex.Hex): Promise<SessionConfig.SessionsTopology> {
     const tree = await this.stateProvider.getTree(imageHash)
     if (!tree) {
       throw new Error(`Session configuration not found for image hash ${imageHash}`)
@@ -236,6 +240,7 @@ export class SessionManager implements SapientSigner {
     if ((await this.imageHash) !== imageHash) {
       throw new Error('Unexpected image hash')
     }
+    const topology = await this._getTopologyForImageHash(imageHash)
     //FIXME Test chain id
     // if (this._provider) {
     //   const providerChainId = await this._provider.request({
@@ -327,7 +332,7 @@ export class SessionManager implements SapientSigner {
     // Perform encoding
     const encodedSignature = SessionSignature.encodeSessionCallSignatures(
       signatures,
-      await this.topology,
+      topology,
       identitySigner,
       explicitSigners,
       implicitSigners,
