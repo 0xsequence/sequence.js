@@ -1,4 +1,13 @@
-import { Envelope, Relayer, Signers, State, Wallet } from '@0xsequence/wallet-core'
+import {
+  Envelope,
+  Relayer,
+  Signers,
+  State,
+  Wallet,
+  type ExplicitSession,
+  type ExplicitSessionConfig,
+  type ImplicitSession,
+} from '@0xsequence/wallet-core'
 import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
 import * as Guard from '@0xsequence/guard'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
@@ -26,9 +35,6 @@ import {
   Transaction,
   TransportMode,
   GuardConfig,
-  ExplicitSession,
-  ExplicitSessionConfig,
-  ImplicitSession,
   CreateNewSessionPayload,
   ModifyExplicitSessionPayload,
   SessionResponsePayload,

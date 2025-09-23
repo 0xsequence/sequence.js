@@ -1,4 +1,4 @@
-import { Envelope } from '@0xsequence/wallet-core'
+import { Envelope, type ExplicitSession } from '@0xsequence/wallet-core'
 import {
   Attestation,
   Config,
@@ -13,7 +13,7 @@ import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
 import { Actions } from './types/signature-request.js'
-import { AuthorizeImplicitSessionArgs, ExplicitSession } from './types/sessions.js'
+import { AuthorizeImplicitSessionArgs } from './types/sessions.js'
 
 export interface SessionsInterface {
   /**
