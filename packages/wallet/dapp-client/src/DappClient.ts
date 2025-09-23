@@ -271,9 +271,11 @@ export class DappClient {
    * for previously established sessions.
    */
   private async _loadStateFromStorage(): Promise<void> {
-    const implicitSession = await this.sequenceStorage.getImplicitSession()
+    const [implicitSession, explicitSessions] = await Promise.all([
+      this.sequenceStorage.getImplicitSession(),
+      this.sequenceStorage.getExplicitSessions(),
+    ])
 
-    const explicitSessions = await this.sequenceStorage.getExplicitSessions()
     const chainIdsToInitialize = new Set([
       ...(implicitSession?.chainId !== undefined ? [implicitSession.chainId] : []),
       ...explicitSessions.map((s) => s.chainId),
