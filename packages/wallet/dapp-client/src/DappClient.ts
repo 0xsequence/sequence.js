@@ -13,8 +13,6 @@ import {
   ExplicitSessionConfig,
   GuardConfig,
   ImplicitSession,
-  ImplicitSessionConfig,
-  isExplicitSessionConfig,
   LoginMethod,
   RandomPrivateKeyFn,
   RequestActionType,
@@ -44,8 +42,6 @@ interface DappClientEventMap {
  * The main entry point for interacting with the Wallet.
  * This client manages user sessions across multiple chains, handles connection
  * and disconnection, and provides methods for signing and sending transactions.
- *
- * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client} for more detailed documentation.
  *
  * @example
  * // It is recommended to manage a singleton instance of this client.
@@ -170,8 +166,6 @@ export class DappClient {
    * @param listener The listener to call when the event occurs.
    * @returns A function to remove the listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/on} for more detailed documentation.
-   *
    * @example
    * useEffect(() => {
    *   const handleWalletAction = (response) => {
@@ -197,8 +191,6 @@ export class DappClient {
    * Retrieves the wallet address of the current session.
    * @returns The wallet address of the current session, or null if not initialized. {@link Address.Address}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-wallet-address} for more detailed documentation.
-   *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
@@ -215,8 +207,6 @@ export class DappClient {
   /**
    * Retrieves a list of all active explicit sessions (signers) associated with the current wallet.
    * @returns An array of all the active explicit sessions. {@link ExplicitSession[]}
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-all-sessions} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -243,8 +233,6 @@ export class DappClient {
   /**
    * Retrieves a list of all active implicit sessions (signers) associated with the current wallet.
    * @returns An array of all the active implicit sessions. {@link ImplicitSession[]}
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-all-sessions} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -321,8 +309,6 @@ export class DappClient {
    * @throws If the initialization process fails. {@link InitializationError}
    *
    * @returns A promise that resolves when initialization is complete.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/initialize} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -404,14 +390,12 @@ export class DappClient {
   /**
    * Initiates a connection with the wallet and creates a new session.
    * @param chainId The primary chain ID for the new session.
-   * @param sessionConfig Session configuration {@link SessionConfig} to request for an initial session. Can be either an explicit {@link ExplicitSessionConfig} or implicit {@link ImplicitSessionConfig}.
+   * @param sessionConfig Session configuration {@link ExplicitSessionConfig} to request for an initial session.
    * @param options (Optional) Connection options, such as a preferred login method or email for social or email logins.
    * @throws If the connection process fails. {@link ConnectionError}
    * @throws If a session already exists. {@link InitializationError}
    *
    * @returns A promise that resolves when the connection is established.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/connect} for more detailed documentation.
    *
    * @example
    * // Connect with an explicit session configuration
@@ -424,20 +408,14 @@ export class DappClient {
    * await dappClient.connect(137, explicitSessionConfig, {
    *   preferredLoginMethod: 'google',
    * });
-   *
-   * // Or connect with an implicit session configuration
-   * const implicitSessionConfig: ImplicitSessionConfig = {
-   *   valueLimit: 0n,
-   *   deadline: BigInt(Date.now() + 1000 * 60 * 60), // 1 hour
-   * };
-   * await dappClient.connect(137, implicitSessionConfig);
    */
   async connect(
     chainId: number,
-    sessionConfig: SessionConfig,
+    sessionConfig?: ExplicitSessionConfig,
     options: {
       preferredLoginMethod?: LoginMethod
       email?: string
+      includeImplicitSession?: boolean
     } = {},
   ): Promise<void> {
     if (this.isInitialized) {
@@ -446,12 +424,7 @@ export class DappClient {
 
     try {
       const chainSessionManager = this.getChainSessionManager(chainId)
-
-      if (isExplicitSessionConfig(sessionConfig)) {
-        await chainSessionManager.createNewExplicitSession(this.origin, sessionConfig, options)
-      } else {
-        await chainSessionManager.createNewImplicitSession(this.origin, sessionConfig, options)
-      }
+      await chainSessionManager.createNewSession(this.origin, sessionConfig, options)
 
       // For popup mode, we need to manually update the state and emit an event.
       // For redirect mode, this code won't be reached; the page will navigate away.
@@ -474,8 +447,6 @@ export class DappClient {
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the session is added.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/add-explicit-session} for more detailed documentation.
    *
    * @example
    * ...
@@ -524,8 +495,6 @@ export class DappClient {
    *
    * @returns A promise that resolves when the session permissions are updated.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/modify-explicit-session} for more detailed documentation.
-   *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
@@ -560,8 +529,6 @@ export class DappClient {
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves with the fee options. {@link Relayer.FeeOption[]}
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-fee-options} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -613,8 +580,6 @@ export class DappClient {
    *
    * @returns A promise that resolves with the transaction hash.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/send-transaction} for more detailed documentation.
-   *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
@@ -644,8 +609,6 @@ export class DappClient {
    * @throws If the client is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is delivered via the `walletActionResponse` event listener.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/sign-message} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -678,8 +641,6 @@ export class DappClient {
    * @throws If the client is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is returned in the `walletActionResponse` event listener.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/sign-typed-data} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -733,8 +694,6 @@ export class DappClient {
    * Disconnects the client, clearing all session data from browser storage.
    * @remarks This action does not revoke the sessions on-chain. Sessions remain active until they expire or are manually revoked by the user in their wallet.
    * @returns A promise that resolves when disconnection is complete.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/disconnect} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');

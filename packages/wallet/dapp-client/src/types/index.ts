@@ -6,10 +6,9 @@ import type { TypedData } from 'ox/TypedData'
 // --- Public Interfaces and Constants ---
 
 export const RequestActionType = {
-  CREATE_IMPLICIT_SESSION: 'createImplicitSession',
-  CREATE_EXPLICIT_SESSION: 'createExplicitSession',
+  CREATE_NEW_SESSION: 'createNewSession',
+  ADD_EXPLICIT_SESSION: 'addExplicitSession',
   MODIFY_EXPLICIT_SESSION: 'modifyExplicitSession',
-  MODIFY_IMPLICIT_SESSION: 'modifyImplicitSession',
   SIGN_MESSAGE: 'signMessage',
   SIGN_TYPED_DATA: 'signTypedData',
   SEND_WALLET_TRANSACTION: 'sendWalletTransaction',
@@ -31,6 +30,12 @@ export interface CreateExplicitSessionPayload {
   email?: string
 }
 
+export interface AddExplicitSessionPayload {
+  session: ExplicitSession
+  preferredLoginMethod?: LoginMethod
+  email?: string
+}
+
 export interface CreateImplicitSessionPayload {
   origin?: string
   session: ImplicitSession
@@ -40,7 +45,8 @@ export interface CreateImplicitSessionPayload {
 
 export interface CreateNewSessionPayload {
   origin?: string
-  session: ExplicitSession | ImplicitSession
+  session?: ExplicitSession
+  includeImplicitSession?: boolean
   preferredLoginMethod?: LoginMethod
   email?: string
 }
@@ -48,16 +54,6 @@ export interface CreateNewSessionPayload {
 export interface ModifyExplicitSessionPayload {
   walletAddress: Address.Address
   session: ExplicitSession
-}
-
-export interface ModifyImplicitSessionPayload {
-  walletAddress: Address.Address
-  session: ImplicitSession
-}
-
-export interface ModifySessionPayload {
-  walletAddress: Address.Address
-  session: ExplicitSession | ImplicitSession
 }
 
 export interface SignMessagePayload {
@@ -94,17 +90,17 @@ export interface ConnectSuccessResponsePayload {
   guard?: GuardConfig
 }
 
-export interface SignatureSuccessResponse {
+export interface SignatureResponse {
   signature: Hex.Hex
   walletAddress: string
 }
 
-export interface SendWalletTransactionSuccessResponse {
+export interface SendWalletTransactionResponse {
   transactionHash: Hex.Hex
   walletAddress: string
 }
 
-export type WalletActionResponse = SignatureSuccessResponse | SendWalletTransactionSuccessResponse
+export type WalletActionResponse = SignatureResponse | SendWalletTransactionResponse
 
 export interface SessionResponsePayload {
   walletAddress: string
@@ -132,13 +128,7 @@ export type ChainSessionManagerEvent =
   | 'implicitSessionResponse'
 
 export type ExplicitSessionEventListener = (data: {
-  action: (typeof RequestActionType)['CREATE_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
-  response?: SessionResponsePayload
-  error?: any
-}) => void
-
-export type ImplicitSessionEventListener = (data: {
-  action: (typeof RequestActionType)['CREATE_IMPLICIT_SESSION' | 'MODIFY_IMPLICIT_SESSION']
+  action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
   response?: SessionResponsePayload
   error?: any
 }) => void

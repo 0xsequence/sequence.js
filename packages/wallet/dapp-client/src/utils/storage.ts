@@ -9,8 +9,8 @@ import {
   SendWalletTransactionPayload,
   CreateExplicitSessionPayload,
   CreateImplicitSessionPayload,
-  ModifyImplicitSessionPayload,
   ModifyExplicitSessionPayload,
+  CreateNewSessionPayload,
 } from '../types/index.js'
 
 export interface ExplicitSessionData {
@@ -35,9 +35,8 @@ export interface ImplicitSessionData {
 
 export type PendingPayload =
   | CreateExplicitSessionPayload
-  | CreateImplicitSessionPayload
+  | CreateNewSessionPayload
   | ModifyExplicitSessionPayload
-  | ModifyImplicitSessionPayload
   | SignMessagePayload
   | SignTypedDataPayload
   | SendWalletTransactionPayload
