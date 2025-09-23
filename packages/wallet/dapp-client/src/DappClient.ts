@@ -2,6 +2,7 @@ import { Address, Hex } from 'ox'
 
 import {
   Relayer,
+  Signers,
   type ExplicitSession,
   type ExplicitSessionConfig,
   type ImplicitSession,
@@ -580,11 +581,30 @@ export class DappClient {
    * @returns A promise that resolves to true if the session has a valid signer, otherwise false.
    */
   async hasValidSigner(chainId: number): Promise<boolean> {
-    const chainSessionManager = this.chainSessionManagers.get(chainId)
-    if (!chainSessionManager || !chainSessionManager.isInitialized) {
-      return false
+    const chainSessionManager = this.getChainSessionManager(chainId)
+    if (!chainSessionManager.isInitialized) {
+      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
     }
     return await chainSessionManager.hasValidSigner()
+  }
+
+  /**
+   * Lists the validity of the current session's signers.
+   * @param chainId The chain ID on which to check the signer.
+   * @returns A promise that resolves to an array of signer validity objects.
+   */
+  async listSignerValidity(chainId: number): Promise<
+    {
+      signer: Address.Address
+      isValid: boolean
+      invalidReason?: Signers.Session.SessionSignerInvalidReason
+    }[]
+  > {
+    const chainSessionManager = this.getChainSessionManager(chainId)
+    if (!chainSessionManager.isInitialized) {
+      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
+    }
+    return await chainSessionManager.listSignerValidity()
   }
 
   /**

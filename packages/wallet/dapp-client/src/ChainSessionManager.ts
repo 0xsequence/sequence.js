@@ -756,16 +756,24 @@ export class ChainSessionManager {
    * @returns A promise that resolves to true if the session has a valid signer, false otherwise.
    */
   async hasValidSigner(): Promise<boolean> {
-    if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized) {
-      return false
-    }
+    return (await this.listSignerValidity()).some((s) => s.isValid)
+  }
 
-    const signerValidity = await this.sessionManager.listSignerValidity(this.chainId)
-    if (signerValidity.some((s) => s.isValid)) {
-      return true
+  /**
+   * Lists the validity of the current session's signers.
+   * @returns A promise that resolves to an array of signer validity objects.
+   */
+  async listSignerValidity(): Promise<
+    {
+      signer: Address.Address
+      isValid: boolean
+      invalidReason?: Signers.Session.SessionSignerInvalidReason
+    }[]
+  > {
+    if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized) {
+      return []
     }
-    // SessionSignerInvalidReason available here
-    return false
+    return this.sessionManager.listSignerValidity(this.chainId)
   }
 
   /**
