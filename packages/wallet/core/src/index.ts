@@ -6,3 +6,9 @@ export * as Relayer from './relayer/index.js'
 export * as Envelope from './envelope.js'
 export * as Preconditions from './preconditions/index.js'
 export * as Utils from './utils/index.js'
+export {
+  type ExplicitSessionConfig,
+  type ExplicitSession,
+  type ImplicitSession,
+  type Session,
+} from './utils/session/types.js'
