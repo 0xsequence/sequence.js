@@ -19,7 +19,6 @@ import {
   SendWalletTransactionPayload,
   SequenceSessionStorage,
   Session,
-  SessionConfig,
   SignMessagePayload,
   SignTypedDataPayload,
   Transaction,
@@ -232,6 +231,7 @@ export class DappClient {
 
   /**
    * Retrieves a list of all active implicit sessions (signers) associated with the current wallet.
+   * @note There can only be one implicit session per chain.
    * @returns An array of all the active implicit sessions. {@link ImplicitSession[]}
    *
    * @example
@@ -246,12 +246,12 @@ export class DappClient {
   public getAllImplicitSessions(): ImplicitSession[] {
     const allImplicitSessions = new Map<string, ImplicitSession>()
     Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
-      chainSessionManager.getImplicitSessions().forEach((session) => {
-        const uniqueKey = session.sessionAddress?.toLowerCase()
-        if (!allImplicitSessions.has(uniqueKey)) {
-          allImplicitSessions.set(uniqueKey, session)
-        }
-      })
+      const session = chainSessionManager.getImplicitSession()
+      if (!session) return
+      const uniqueKey = session?.sessionAddress?.toLowerCase()
+      if (uniqueKey && !allImplicitSessions.has(uniqueKey)) {
+        allImplicitSessions.set(uniqueKey, session)
+      }
     })
     return Array.from(allImplicitSessions.values())
   }

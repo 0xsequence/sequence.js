@@ -57,7 +57,7 @@ export class ChainSessionManager {
   } = {}
 
   private explicitSessions: ExplicitSession[] = []
-  private implicitSessions: ImplicitSession[] = []
+  private implicitSession: ImplicitSession | null = null
 
   private walletAddress: Address.Address | null = null
   private sessionManager: Signers.SessionManager | null = null
@@ -622,12 +622,12 @@ export class ChainSessionManager {
       )
       this.sessionManager = this.sessionManager.withImplicitSigner(implicitSigner)
 
-      this.implicitSessions.push({
+      this.implicitSession = {
         sessionAddress: implicitSigner.address,
         valueLimit: BigInt(0),
         deadline: BigInt(0),
         type: 'implicit',
-      })
+      }
 
       this.walletAddress = address
       if (saveSession)
@@ -902,11 +902,11 @@ export class ChainSessionManager {
   }
 
   /**
-   * Gets the implicit sessions managed by this session manager.
-   * @returns An array of implicit session objects.
+   * Gets the implicit session managed by this session manager.
+   * @returns An implicit session object or null if no implicit session is found.
    */
-  getImplicitSessions(): ImplicitSession[] {
-    return this.implicitSessions
+  getImplicitSession(): ImplicitSession | null {
+    return this.implicitSession
   }
 
   /**
@@ -995,7 +995,7 @@ export class ChainSessionManager {
    */
   private _resetState(): void {
     this.explicitSessions = []
-    this.implicitSessions = []
+    this.implicitSession = null
     this.walletAddress = null
     this.wallet = null
     this.sessionManager = null
