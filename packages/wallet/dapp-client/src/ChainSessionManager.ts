@@ -1,16 +1,18 @@
+import * as Guard from '@0xsequence/guard'
+import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+
 import {
   Envelope,
   Relayer,
   Signers,
   State,
   Wallet,
-  type ExplicitSession,
-  type ExplicitSessionConfig,
-  type ImplicitSession,
-} from '@0xsequence/wallet-core'
-import { Attestation, Constants, Extensions, Payload, SessionConfig } from '@0xsequence/wallet-primitives'
-import * as Guard from '@0xsequence/guard'
-import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+  Attestation,
+  Constants,
+  Extensions,
+  Payload,
+  SessionConfig,
+} from './index.js'
 
 import { DappTransport } from './DappTransport.js'
 
@@ -27,7 +29,7 @@ import { SequenceStorage } from './utils/storage.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
 
 import {
-  ConnectSuccessResponsePayload,
+  CreateNewSessionResponse,
   ExplicitSessionEventListener,
   LoginMethod,
   RandomPrivateKeyFn,
@@ -37,10 +39,11 @@ import {
   GuardConfig,
   CreateNewSessionPayload,
   ModifyExplicitSessionPayload,
-  SessionResponsePayload,
+  SessionResponse,
   AddExplicitSessionPayload,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
+import { ExplicitSession, ImplicitSession, ExplicitSessionConfig } from './index.js'
 
 interface ChainSessionManagerEventMap {
   explicitSessionResponse: ExplicitSessionEventListener
@@ -305,7 +308,7 @@ export class ChainSessionManager {
         await this.sequenceStorage.setPendingRedirectRequest(true)
       }
 
-      const connectResponse = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
+      const connectResponse = await this.transport.sendRequest<CreateNewSessionResponse>(
         RequestActionType.CREATE_NEW_SESSION,
         this.redirectUrl,
         payload,
@@ -389,7 +392,7 @@ export class ChainSessionManager {
         await this.sequenceStorage.setPendingRedirectRequest(true)
       }
 
-      const response = await this.transport.sendRequest<ConnectSuccessResponsePayload>(
+      const response = await this.transport.sendRequest<CreateNewSessionResponse>(
         RequestActionType.ADD_EXPLICIT_SESSION,
         this.redirectUrl,
         payload,
@@ -468,7 +471,7 @@ export class ChainSessionManager {
         await this.sequenceStorage.setPendingRedirectRequest(true)
       }
 
-      const response = await this.transport.sendRequest<SessionResponsePayload>(
+      const response = await this.transport.sendRequest<SessionResponse>(
         RequestActionType.MODIFY_EXPLICIT_SESSION,
         this.redirectUrl,
         payload,
@@ -499,7 +502,7 @@ export class ChainSessionManager {
    * @returns A promise resolving to true on success.
    */
   private async _handleRedirectConnectionResponse(response: {
-    payload: ConnectSuccessResponsePayload
+    payload: CreateNewSessionResponse
     action: string
   }): Promise<boolean> {
     const tempPk = await this.sequenceStorage.getAndClearTempSessionPk()
@@ -870,7 +873,7 @@ export class ChainSessionManager {
       ) {
         return this._handleRedirectConnectionResponse(response)
       } else if (response.action === RequestActionType.MODIFY_EXPLICIT_SESSION) {
-        const modifyResponse = response.payload as SessionResponsePayload
+        const modifyResponse = response.payload as SessionResponse
         if (!Address.isEqual(Address.from(modifyResponse.walletAddress), this.walletAddress!)) {
           throw new ModifyExplicitSessionError('Wallet address mismatch on redirect response.')
         }

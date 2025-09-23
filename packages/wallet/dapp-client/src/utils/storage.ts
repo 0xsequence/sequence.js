@@ -1,4 +1,3 @@
-import { Attestation } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { jsonReplacers, jsonRevivers } from './index.js'
 import {
@@ -11,6 +10,8 @@ import {
   CreateNewSessionPayload,
   AddExplicitSessionPayload,
 } from '../types/index.js'
+
+import { Attestation } from '../index.js'
 
 export interface ExplicitSessionData {
   pk: Hex.Hex

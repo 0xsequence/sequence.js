@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ExplicitSession } from '@0xsequence/wallet-core'
-import { Attestation, Payload, Permission } from '@0xsequence/wallet-primitives'
+import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import type { TypedData } from 'ox/TypedData'
 
@@ -24,15 +24,16 @@ export interface GuardConfig {
 
 // --- Payloads for Transport ---
 
-export interface AddExplicitSessionPayload {
-  session: ExplicitSession
-  preferredLoginMethod?: LoginMethod
-  email?: string
-}
 export interface CreateNewSessionPayload {
   origin?: string
   session?: ExplicitSession
   includeImplicitSession?: boolean
+  preferredLoginMethod?: LoginMethod
+  email?: string
+}
+
+export interface AddExplicitSessionPayload {
+  session: ExplicitSession
   preferredLoginMethod?: LoginMethod
   email?: string
 }
@@ -54,6 +55,12 @@ export interface SignTypedDataPayload {
   chainId: number
 }
 
+export interface SendWalletTransactionPayload {
+  address: Address.Address
+  transactionRequest: TransactionRequest
+  chainId: number
+}
+
 export type TransactionRequest = {
   to: Address.Address
   value?: bigint
@@ -61,13 +68,7 @@ export type TransactionRequest = {
   gasLimit?: bigint
 }
 
-export interface SendWalletTransactionPayload {
-  address: Address.Address
-  transactionRequest: TransactionRequest
-  chainId: number
-}
-
-export interface ConnectSuccessResponsePayload {
+export interface CreateNewSessionResponse {
   walletAddress: string
   attestation?: Attestation.Attestation
   signature?: Hex.Hex
@@ -88,7 +89,7 @@ export interface SendWalletTransactionResponse {
 
 export type WalletActionResponse = SignatureResponse | SendWalletTransactionResponse
 
-export interface SessionResponsePayload {
+export interface SessionResponse {
   walletAddress: string
   sessionAddress: string
 }
@@ -109,7 +110,7 @@ export type Transaction =
 
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
-  response?: SessionResponsePayload
+  response?: SessionResponse
   error?: any
 }) => void
 

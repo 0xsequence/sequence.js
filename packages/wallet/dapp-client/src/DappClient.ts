@@ -1,12 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Address, Hex } from 'ox'
+
 import {
   Relayer,
   type ExplicitSession,
   type ExplicitSessionConfig,
   type ImplicitSession,
   type Session,
-} from '@0xsequence/wallet-core'
-import { Address, Hex } from 'ox'
+} from './index.js'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
