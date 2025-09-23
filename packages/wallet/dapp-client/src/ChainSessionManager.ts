@@ -183,8 +183,10 @@ export class ChainSessionManager {
     this._resetState()
 
     try {
-      const implicitSession = await this.sequenceStorage.getImplicitSession()
-      const explicitSessions = await this.sequenceStorage.getExplicitSessions()
+      const [implicitSession, explicitSessions] = await Promise.all([
+        this.sequenceStorage.getImplicitSession(),
+        this.sequenceStorage.getExplicitSessions(),
+      ])
       const walletAddress = implicitSession?.walletAddress || explicitSessions[0]?.walletAddress
 
       if (walletAddress) {
