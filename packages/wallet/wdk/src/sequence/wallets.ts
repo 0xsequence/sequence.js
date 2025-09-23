@@ -817,30 +817,12 @@ export class Wallets implements WalletsInterface {
     let modules: Module[] = []
 
     if (!args.noSessionManager) {
-      //  Calculate image hash with the identity signer
-      const sessionsTopology = SessionConfig.emptySessionsTopology(loginSignerAddress)
-      // Store this tree in the state provider
-      const sessionsConfigTree = SessionConfig.sessionsTopologyToConfigurationTree(sessionsTopology)
-      this.shared.sequence.stateProvider.saveTree(sessionsConfigTree)
-      // Prepare the configuration leaf
-      const sessionsImageHash = GenericTree.hash(sessionsConfigTree)
-      const signer = {
-        ...ManagerOptionsDefaults.defaultSessionsTopology,
-        address: this.shared.sequence.extensions.sessions,
-        imageHash: sessionsImageHash,
+      const identitySigners = [device.address]
+      if (!Signers.isSapientSigner(loginSigner.signer)) {
+        // Add non sapient login signer to the identity signers
+        identitySigners.unshift(loginSignerAddress)
       }
-      if (sessionsGuardTopology) {
-        modules.push({
-          sapientLeaf: signer,
-          weight: 255n,
-          guardLeaf: sessionsGuardTopology,
-        })
-      } else {
-        modules.push({
-          sapientLeaf: signer,
-          weight: 255n,
-        })
-      }
+      await this.shared.modules.sessions.initSessionModule(modules, identitySigners, sessionsGuardTopology)
     }
 
     if (!args.noRecovery) {
@@ -1006,6 +988,10 @@ export class Wallets implements WalletsInterface {
 
         if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
           await this.shared.modules.recovery.addRecoverySignerToModules(modules, device.address)
+        }
+
+        if (this.shared.modules.sessions.hasSessionModule(modules)) {
+          await this.shared.modules.sessions.addIdentitySignerToModules(modules, device.address)
         }
 
         const walletEntryToUpdate: Wallet = {
@@ -1374,6 +1360,11 @@ export class Wallets implements WalletsInterface {
     // Remove the device from the recovery module's topology as well.
     if (this.shared.modules.recovery.hasRecoveryModule(modules)) {
       await this.shared.modules.recovery.removeRecoverySignerFromModules(modules, deviceToRemove)
+    }
+
+    // Remove the device from the session module's topology as well.
+    if (this.shared.modules.sessions.hasSessionModule(modules)) {
+      await this.shared.modules.sessions.removeIdentitySignerFromModules(modules, deviceToRemove)
     }
 
     // Request the configuration update.

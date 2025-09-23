@@ -19,14 +19,24 @@ export async function doEncodeTopology(sessionTopologyInput: string): Promise<st
 export async function doEncodeSessionCallSignatures(
   sessionTopologyInput: string,
   callSignaturesInput: string[],
+  identitySigner?: string,
   explicitSigners: string[] = [],
   implicitSigners: string[] = [],
 ): Promise<string> {
   const sessionTopology = SessionConfig.sessionsTopologyFromJson(sessionTopologyInput)
   const callSignatures = callSignaturesInput.map((s) => SessionSignature.sessionCallSignatureFromJson(s))
+  // Use first identity signer if not provided
+  if (!identitySigner) {
+    const identitySigners = SessionConfig.getIdentitySigners(sessionTopology)
+    if (identitySigners.length === 0) {
+      throw new Error('No identity signers found')
+    }
+    identitySigner = identitySigners[0]!
+  }
   const encoded = SessionSignature.encodeSessionCallSignatures(
     callSignatures,
     sessionTopology,
+    identitySigner as `0x${string}`,
     explicitSigners as `0x${string}`[],
     implicitSigners as `0x${string}`[],
   )
@@ -90,6 +100,13 @@ const sessionCommand: CommandModule = {
               description: 'The call signatures',
               demandOption: true,
             })
+            .option('identity-signer', {
+              type: 'string',
+              description: 'The identity signer',
+              demandOption: false,
+              default: undefined,
+              alias: 'id',
+            })
             .option('explicit-signers', {
               type: 'string',
               array: true,
@@ -112,6 +129,7 @@ const sessionCommand: CommandModule = {
             await doEncodeSessionCallSignatures(
               args.sessionTopology,
               args.callSignatures,
+              args.identitySigner,
               args.explicitSigners,
               args.implicitSigners,
             ),

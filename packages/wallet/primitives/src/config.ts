@@ -281,6 +281,16 @@ export function flatLeavesToTopology(leaves: Leaf[]): Topology {
   ]
 }
 
+export function topologyToFlatLeaves(topology: Topology): Leaf[] {
+  if (isNode(topology)) {
+    return [...topologyToFlatLeaves(topology[0]), ...topologyToFlatLeaves(topology[1])]
+  }
+  if (isNestedLeaf(topology)) {
+    return [...topologyToFlatLeaves(topology.tree)]
+  }
+  return [topology]
+}
+
 export function configToJson(config: Config): string {
   return JSON.stringify({
     threshold: config.threshold.toString(),

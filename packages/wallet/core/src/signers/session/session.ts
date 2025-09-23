@@ -57,6 +57,14 @@ export interface ExplicitSessionSigner extends SessionSigner {
   ) => Promise<UsageLimit[]>
 }
 
+export interface ImplicitSessionSigner extends SessionSigner {
+  identitySigner: Address.Address
+}
+
 export function isExplicitSessionSigner(signer: SessionSigner): signer is ExplicitSessionSigner {
   return 'prepareIncrements' in signer
+}
+
+export function isImplicitSessionSigner(signer: SessionSigner): signer is ImplicitSessionSigner {
+  return 'identitySigner' in signer
 }
