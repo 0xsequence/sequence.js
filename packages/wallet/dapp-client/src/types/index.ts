@@ -23,26 +23,11 @@ export interface GuardConfig {
 
 // --- Payloads for Transport ---
 
-export interface CreateExplicitSessionPayload {
-  origin?: string
-  session: ExplicitSession
-  preferredLoginMethod?: LoginMethod
-  email?: string
-}
-
 export interface AddExplicitSessionPayload {
   session: ExplicitSession
   preferredLoginMethod?: LoginMethod
   email?: string
 }
-
-export interface CreateImplicitSessionPayload {
-  origin?: string
-  session: ImplicitSession
-  preferredLoginMethod?: LoginMethod
-  email?: string
-}
-
 export interface CreateNewSessionPayload {
   origin?: string
   session?: ExplicitSession
@@ -121,11 +106,7 @@ export type Transaction =
 
 // --- Event Types ---
 
-export type ChainSessionManagerEvent =
-  | 'explicitSessionModified'
-  | 'explicitSessionResponse'
-  | 'implicitSessionModified'
-  | 'implicitSessionResponse'
+export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionResponse'
 
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
@@ -215,12 +196,6 @@ export interface SendRequestOptions {
   path?: string
 }
 
-// Configuration types - what developers pass when creating sessions
-export type ImplicitSessionConfig = {
-  valueLimit: bigint
-  deadline: bigint
-}
-
 export type ExplicitSessionConfig = {
   valueLimit: bigint
   deadline: bigint
@@ -231,8 +206,6 @@ export type ExplicitSessionConfig = {
 // Complete session types - what the SDK returns after session creation
 export type ImplicitSession = {
   sessionAddress: Address.Address
-  valueLimit: bigint
-  deadline: bigint
   type: 'implicit'
 }
 
@@ -256,46 +229,10 @@ export type SessionConfig = {
 export type Session = {
   type: 'explicit' | 'implicit'
   sessionAddress: Address.Address
-  valueLimit: bigint
-  deadline: bigint
+  valueLimit?: bigint
+  deadline?: bigint
   permissions?: Permission.Permission[]
   chainId?: number
-}
-
-/**
- * Type guard to check if a session config is an ExplicitSessionConfig
- * @param config The session config to check
- * @returns True if the config is an ExplicitSessionConfig
- */
-export const isExplicitSessionConfig = (config: SessionConfig): config is ExplicitSessionConfig => {
-  return 'permissions' in config && 'chainId' in config
-}
-
-/**
- * Type guard to check if a session config is an ImplicitSessionConfig
- * @param config The session config to check
- * @returns True if the config is an ImplicitSessionConfig
- */
-export const isImplicitSessionConfig = (config: SessionConfig): config is ImplicitSessionConfig => {
-  return !('permissions' in config) || !('chainId' in config)
-}
-
-/**
- * Type guard to check if a session is an ExplicitSession
- * @param session The session to check
- * @returns True if the session is an ExplicitSession
- */
-export const isExplicitSession = (session: Session): session is ExplicitSession => {
-  return 'permissions' in session && 'chainId' in session
-}
-
-/**
- * Type guard to check if a session is an ImplicitSession
- * @param session The session to check
- * @returns True if the session is an ImplicitSession
- */
-export const isImplicitSession = (session: Session): session is ImplicitSession => {
-  return !('permissions' in session) || !('chainId' in session)
 }
 
 export type AuthorizeImplicitSessionArgs = {

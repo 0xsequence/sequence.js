@@ -32,7 +32,7 @@ import {
   CreateNewSessionPayload,
   ModifyExplicitSessionPayload,
   SessionResponsePayload,
-  CreateExplicitSessionPayload,
+  AddExplicitSessionPayload,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 
@@ -369,7 +369,7 @@ export class ChainSessionManager {
 
       const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: newPk }))
 
-      const payload: CreateExplicitSessionPayload = {
+      const payload: AddExplicitSessionPayload = {
         session: { ...explicitSessionConfig, sessionAddress: newSignerAddress, type: 'explicit' },
       }
 
@@ -624,8 +624,6 @@ export class ChainSessionManager {
 
       this.implicitSession = {
         sessionAddress: implicitSigner.address,
-        valueLimit: BigInt(0),
-        deadline: BigInt(0),
         type: 'implicit',
       }
 

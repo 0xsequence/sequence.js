@@ -13,7 +13,6 @@ export type {
   ImplicitSession,
   ExplicitSessionConfig,
   SessionResponsePayload,
-  ImplicitSessionConfig,
   AddExplicitSessionPayload,
   CreateNewSessionPayload,
   SignTypedDataPayload,
