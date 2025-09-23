@@ -106,8 +106,6 @@ export type Transaction =
 
 // --- Event Types ---
 
-export type ChainSessionManagerEvent = 'sessionsUpdated' | 'explicitSessionResponse'
-
 export type ExplicitSessionEventListener = (data: {
   action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
   response?: SessionResponsePayload
@@ -162,24 +160,6 @@ export interface TransportMessage<T = any> {
   error?: any
 }
 
-export interface BaseRequest {
-  type: string
-}
-
-export interface MessageSignatureRequest extends BaseRequest {
-  type: 'message_signature'
-  message: string
-  address: Address.Address
-  chainId: number
-}
-
-export interface TypedDataSignatureRequest extends BaseRequest {
-  type: 'typed_data_signature'
-  typedData: unknown
-  address: Address.Address
-  chainId: number
-}
-
 export const WalletSize = {
   width: 380,
   height: 600,
@@ -218,14 +198,6 @@ export type ExplicitSession = {
   type: 'explicit'
 }
 
-// Union types for both config and complete sessions
-export type SessionConfig = {
-  valueLimit: bigint
-  deadline: bigint
-  permissions?: Permission.Permission[]
-  chainId?: number
-}
-
 export type Session = {
   type: 'explicit' | 'implicit'
   sessionAddress: Address.Address
@@ -233,9 +205,4 @@ export type Session = {
   deadline?: bigint
   permissions?: Permission.Permission[]
   chainId?: number
-}
-
-export type AuthorizeImplicitSessionArgs = {
-  target: string
-  applicationData?: Hex.Hex
 }

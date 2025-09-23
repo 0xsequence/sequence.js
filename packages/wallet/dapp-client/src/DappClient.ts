@@ -4,7 +4,7 @@ import { Address, Hex } from 'ox'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
-import { InitializationError, SigningError, TransactionError } from './utils/errors.js'
+import { ConnectionError, InitializationError, SigningError, TransactionError } from './utils/errors.js'
 import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
@@ -433,7 +433,7 @@ export class DappClient {
       }
     } catch (err) {
       await this.disconnect()
-      throw err
+      throw new ConnectionError(`Connection failed: ${err}`)
     }
   }
 

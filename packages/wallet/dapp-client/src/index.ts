@@ -5,7 +5,6 @@ export type {
   GuardConfig,
   Transaction,
   SignatureResponse,
-  ChainSessionManagerEvent,
   SequenceSessionStorage,
   RandomPrivateKeyFn,
   Session,
