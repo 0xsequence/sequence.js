@@ -1,4 +1,5 @@
-import { Signers as CoreSigners, Envelope } from '@0xsequence/wallet-core'
+import { IdentityType } from '@0xsequence/identity-instrument'
+import { Envelope, type ExplicitSession } from '@0xsequence/wallet-core'
 import {
   Attestation,
   Config,
@@ -8,18 +9,13 @@ import {
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hash, Hex } from 'ox'
-import { IdentityType } from '@0xsequence/identity-instrument'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
-import { ManagerOptionsDefaults, Shared } from './manager.js'
-import { Actions } from './types/signature-request.js'
-import { Kinds, Module } from './types/index.js'
 import { Handler } from './handlers/index.js'
-
-export type AuthorizeImplicitSessionArgs = {
-  target: string
-  applicationData?: Hex.Hex
-}
+import { ManagerOptionsDefaults, Shared } from './manager.js'
+import { Kinds, Module } from './types/index.js'
+import { AuthorizeImplicitSessionArgs } from './types/sessions.js'
+import { Actions } from './types/signature-request.js'
 
 export interface SessionsInterface {
   /**
@@ -92,16 +88,11 @@ export interface SessionsInterface {
    * completed using the `complete` method.
    *
    * @param walletAddress The address of the wallet to modify.
-   * @param sessionAddress The address of the key to be added as a session signer.
    * @param permissions The set of rules and limits that will govern this session key's capabilities.
    * @returns A promise that resolves to a `requestId` for the configuration update signature request.
    * @see {complete} to finalize the update after it has been signed.
    */
-  addExplicitSession(
-    walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
-  ): Promise<string>
+  addExplicitSession(walletAddress: Address.Address, explicitSession: ExplicitSession): Promise<string>
 
   /**
    * Initiates an on-chain configuration update to modify an existing "explicit session".
@@ -113,7 +104,6 @@ export interface SessionsInterface {
    * Like adding a session, this requires a signed configuration update.
    *
    * @param walletAddress The address of the wallet to modify.
-   * @param sessionAddress The address of the session signer to modify.
    * @param permissions The new, complete set of rules and limits for this session key.
    * @param origin Optional string to identify the source of the request.
    * @returns A promise that resolves to a `requestId` for the configuration update.
@@ -121,8 +111,7 @@ export interface SessionsInterface {
    */
   modifyExplicitSession(
     walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    explicitSession: ExplicitSession,
     origin?: string,
   ): Promise<string>
 
@@ -444,33 +433,31 @@ export class Sessions implements SessionsInterface {
 
   async addExplicitSession(
     walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    explicitSession: ExplicitSession,
     origin?: string,
   ): Promise<string> {
     const topology = await this.getTopology(walletAddress, true)
     const newTopology = SessionConfig.addExplicitSession(topology, {
-      ...permissions,
-      signer: sessionAddress,
+      ...explicitSession,
+      signer: explicitSession.sessionAddress,
     })
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }
 
   async modifyExplicitSession(
     walletAddress: Address.Address,
-    sessionAddress: Address.Address,
-    permissions: CoreSigners.Session.ExplicitParams,
+    explicitSession: ExplicitSession,
     origin?: string,
   ): Promise<string> {
     // This will add the session manager if it's missing
     const topology = await this.getTopology(walletAddress, true)
-    const intermediateTopology = SessionConfig.removeExplicitSession(topology, sessionAddress)
+    const intermediateTopology = SessionConfig.removeExplicitSession(topology, explicitSession.sessionAddress)
     if (!intermediateTopology) {
       throw new Error('Incomplete session topology')
     }
     const newTopology = SessionConfig.addExplicitSession(intermediateTopology, {
-      ...permissions,
-      signer: sessionAddress,
+      ...explicitSession,
+      signer: explicitSession.sessionAddress,
     })
     return this.prepareSessionUpdate(walletAddress, newTopology, origin)
   }

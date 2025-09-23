@@ -1,10 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Relayer, Signers } from '@0xsequence/wallet-core'
 import { Address, Hex } from 'ox'
+
+import {
+  Relayer,
+  type ExplicitSession,
+  type ExplicitSessionConfig,
+  type ImplicitSession,
+  type Session,
+} from './index.js'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
-import { InitializationError, SigningError, TransactionError } from './utils/errors.js'
+import { ConnectionError, InitializationError, SigningError, TransactionError } from './utils/errors.js'
 import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
@@ -15,7 +21,6 @@ import {
   RequestActionType,
   SendWalletTransactionPayload,
   SequenceSessionStorage,
-  Session,
   SignMessagePayload,
   SignTypedDataPayload,
   Transaction,
@@ -38,8 +43,6 @@ interface DappClientEventMap {
  * The main entry point for interacting with the Wallet.
  * This client manages user sessions across multiple chains, handles connection
  * and disconnection, and provides methods for signing and sending transactions.
- *
- * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client} for more detailed documentation.
  *
  * @example
  * // It is recommended to manage a singleton instance of this client.
@@ -164,8 +167,6 @@ export class DappClient {
    * @param listener The listener to call when the event occurs.
    * @returns A function to remove the listener.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/on} for more detailed documentation.
-   *
    * @example
    * useEffect(() => {
    *   const handleWalletAction = (response) => {
@@ -191,8 +192,6 @@ export class DappClient {
    * Retrieves the wallet address of the current session.
    * @returns The wallet address of the current session, or null if not initialized. {@link Address.Address}
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-wallet-address} for more detailed documentation.
-   *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
@@ -207,31 +206,64 @@ export class DappClient {
   }
 
   /**
-   * Retrieves a list of all active sessions (signers) associated with the current wallet.
-   * @returns An array of all the active sessions. {@link { address: Address.Address, isImplicit: boolean }[]}
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-all-sessions} for more detailed documentation.
+   * Retrieves a list of all active explicit sessions (signers) associated with the current wallet.
+   * @returns An array of all the active explicit sessions. {@link ExplicitSession[]}
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
-   *   const sessions = dappClient.getAllSessions();
-   *   console.log('Sessions:', sessions);
+   *   const explicitSessions = dappClient.getAllExplicitSessions();
+   *   console.log('Sessions:', explicitSessions);
    * }
    */
-  public getAllSessions(): Session[] {
-    const allSessions = new Map<string, Session>()
+  public getAllExplicitSessions(): ExplicitSession[] {
+    const allExplicitSessions = new Map<string, ExplicitSession>()
     Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
-      chainSessionManager.getSessions().forEach((session) => {
-        const uniqueKey = `${session.address.toLowerCase()}-${session.isImplicit}`
-        if (!allSessions.has(uniqueKey)) {
-          allSessions.set(uniqueKey, session)
+      chainSessionManager.getExplicitSessions().forEach((session) => {
+        const uniqueKey = session.sessionAddress?.toLowerCase()
+        if (!allExplicitSessions.has(uniqueKey)) {
+          allExplicitSessions.set(uniqueKey, session)
         }
       })
     })
-    return Array.from(allSessions.values())
+    return Array.from(allExplicitSessions.values())
+  }
+
+  /**
+   * Retrieves a list of all active implicit sessions (signers) associated with the current wallet.
+   * @note There can only be one implicit session per chain.
+   * @returns An array of all the active implicit sessions. {@link ImplicitSession[]}
+   *
+   * @example
+   * const dappClient = new DappClient('http://localhost:5173');
+   * await dappClient.initialize();
+   *
+   * if (dappClient.isInitialized) {
+   *   const implicitSessions = dappClient.getAllImplicitSessions();
+   *   console.log('Sessions:', implicitSessions);
+   * }
+   */
+  public getAllImplicitSessions(): ImplicitSession[] {
+    const allImplicitSessions = new Map<string, ImplicitSession>()
+    Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
+      const session = chainSessionManager.getImplicitSession()
+      if (!session) return
+      const uniqueKey = session?.sessionAddress?.toLowerCase()
+      if (uniqueKey && !allImplicitSessions.has(uniqueKey)) {
+        allImplicitSessions.set(uniqueKey, session)
+      }
+    })
+    return Array.from(allImplicitSessions.values())
+  }
+
+  /**
+   * Gets all the sessions (explicit and implicit) managed by the client.
+   * @returns An array of session objects. {@link Session[]}
+   */
+  public getAllSessions(): Session[] {
+    return [...this.getAllImplicitSessions(), ...this.getAllExplicitSessions()]
   }
 
   /**
@@ -279,8 +311,6 @@ export class DappClient {
    * @throws If the initialization process fails. {@link InitializationError}
    *
    * @returns A promise that resolves when initialization is complete.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/initialize} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -362,24 +392,28 @@ export class DappClient {
   /**
    * Initiates a connection with the wallet and creates a new session.
    * @param chainId The primary chain ID for the new session.
-   * @param permissions (Optional) Permissions to request for an initial explicit session. {@link Signers.Session.ExplicitParams}
+   * @param sessionConfig Session configuration {@link ExplicitSessionConfig} to request for an initial session.
    * @param options (Optional) Connection options, such as a preferred login method or email for social or email logins.
    * @throws If the connection process fails. {@link ConnectionError}
    * @throws If a session already exists. {@link InitializationError}
    *
    * @returns A promise that resolves when the connection is established.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/connect} for more detailed documentation.
-   *
    * @example
-   * const dappClient = new DappClient('http://localhost:5173');
-   * await dappClient.connect(137, window.location.origin, undefined, {
+   * // Connect with an explicit session configuration
+   * const explicitSessionConfig: ExplicitSessionConfig = {
+   *   valueLimit: 0n,
+   *   deadline: BigInt(Date.now() + 1000 * 60 * 60), // 1 hour
+   *   permissions: [...],
+   *   chainId: 137
+   * };
+   * await dappClient.connect(137, explicitSessionConfig, {
    *   preferredLoginMethod: 'google',
    * });
    */
   async connect(
     chainId: number,
-    permissions?: Signers.Session.ExplicitParams,
+    sessionConfig?: ExplicitSessionConfig,
     options: {
       preferredLoginMethod?: LoginMethod
       email?: string
@@ -392,7 +426,7 @@ export class DappClient {
 
     try {
       const chainSessionManager = this.getChainSessionManager(chainId)
-      await chainSessionManager.createNewSession(this.origin, permissions, options)
+      await chainSessionManager.createNewSession(this.origin, sessionConfig, options)
 
       // For popup mode, we need to manually update the state and emit an event.
       // For redirect mode, this code won't be reached; the page will navigate away.
@@ -401,7 +435,7 @@ export class DappClient {
       }
     } catch (err) {
       await this.disconnect()
-      throw err
+      throw new ConnectionError(`Connection failed: ${err}`)
     }
   }
 
@@ -409,19 +443,16 @@ export class DappClient {
    * Adds a new explicit session for a given chain to an existing wallet.
    * @remarks
    * An `explicit session` is a session that can interact with any contract, subject to user-approved permissions.
-   * @param chainId The chain ID on which to add the explicit session.
-   * @param permissions The permissions to request for the new session. {@link Signers.Session.ExplicitParams}
+   * @param session The explicit session to add. {@link ExplicitSession}
    *
    * @throws If the session cannot be added. {@link AddExplicitSessionError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the session is added.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/add-explicit-session} for more detailed documentation.
-   *
    * @example
    * ...
-   * import { Signers, Utils } from "@0xsequence/wallet-core";
+   * import { ExplicitSession, Utils } from "@0xsequence/wallet-core";
    * import { DappClient } from "@0xsequence/sessions";
    * ...
    *
@@ -433,24 +464,24 @@ export class DappClient {
    *
    * if (dappClient.isInitialized) {
    *   // Allow Dapp (Session Signer) to transfer "amount" of USDC
-   *   const permissions: Signers.Session.ExplicitParams = {
+   *   const explicitSession: ExplicitSession = {
    *    chainId: Number(chainId),
    *    valueLimit: 0n, // Not allowed to transfer native tokens (ETH, etc)
    *    deadline: BigInt(Date.now() + 1000 * 60 * 5000), // 5000 minutes from now
    *    permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, amount)]
    *   };
-   *   await dappClient.addExplicitSession(1, permissions);
+   *   await dappClient.addExplicitSession(explicitSession);
    * }
    */
-  async addExplicitSession(chainId: number, permissions: Signers.Session.ExplicitParams): Promise<void> {
+  async addExplicitSession(explicitSessionConfig: ExplicitSessionConfig): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot add an explicit session without an existing wallet.')
 
-    const chainSessionManager = this.getChainSessionManager(chainId)
+    const chainSessionManager = this.getChainSessionManager(explicitSessionConfig.chainId)
     if (!chainSessionManager.isInitialized) {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
-    await chainSessionManager.addExplicitSession(permissions)
+    await chainSessionManager.addExplicitSession(explicitSessionConfig)
 
     if (this.transport.mode === TransportMode.POPUP) {
       await this._loadStateFromStorage()
@@ -458,48 +489,34 @@ export class DappClient {
   }
 
   /**
-   * Modifies the permissions of an existing explicit session for a given chain and session address.
-   * @param chainId The chain ID on which the explicit session exists.
-   * @param sessionAddress The address of the explicit session to modify. {@link Address.Address}
-   * @param permissions The new permissions to set for the session. {@link Signers.Session.ExplicitParams}
+   * Modifies an explicit session for a given chain
+   * @param explicitSession The explicit session to modify. {@link ExplicitSession}
    *
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    * @throws If something goes wrong while modifying the session. {@link ModifyExplicitSessionError}
    *
    * @returns A promise that resolves when the session permissions are updated.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/modify-explicit-session} for more detailed documentation.
-   *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
-   *   // The address of an existing explicit session (Grants the Dapp permission to transfer 100 USDC for the user)
-   *   const sessionAddress = '0x...';
-   *   // We create a new permission object where we can increase the granted transfer amount limit
-   *   const permissions: Signers.Session.ExplicitParams = {
-   *     chainId: Number(chainId),
-   *     valueLimit: 0n,
-   *     deadline: BigInt(Date.now() + 1000 * 60 * 5000),
-   *     permissions: [Utils.ERC20PermissionBuilder.buildTransfer(USDC_ADDRESS, amount)]
-   *   };
-   *   await dappClient.modifyExplicitSession(1, sessionAddress, permissions);
+   *   // Increase the deadline of the current session by 24 hours
+   *   const currentExplicitSession = {...}
+   *   const newExplicitSession = {...currentExplicitSession, deadline: currentExplicitSession.deadline + 24 * 60 * 60}
+   *   await dappClient.modifyExplicitSession(newExplicitSession);
    * }
    */
-  async modifyExplicitSession(
-    chainId: number,
-    sessionAddress: Address.Address,
-    permissions: Signers.Session.ExplicitParams,
-  ): Promise<void> {
+  async modifyExplicitSession(explicitSession: ExplicitSession): Promise<void> {
     if (!this.isInitialized || !this.walletAddress)
       throw new InitializationError('Cannot modify an explicit session without an existing wallet.')
 
-    const chainSessionManager = this.getChainSessionManager(chainId)
+    const chainSessionManager = this.getChainSessionManager(explicitSession.chainId)
     if (!chainSessionManager.isInitialized) {
       chainSessionManager.initializeWithWallet(this.walletAddress)
     }
-    await chainSessionManager.modifyExplicitSession(sessionAddress, permissions)
+    await chainSessionManager.modifyExplicitSession(explicitSession)
 
     if (this.transport.mode === TransportMode.POPUP) {
       await this._loadStateFromStorage()
@@ -514,8 +531,6 @@ export class DappClient {
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves with the fee options. {@link Relayer.FeeOption[]}
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/get-fee-options} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -567,8 +582,6 @@ export class DappClient {
    *
    * @returns A promise that resolves with the transaction hash.
    *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/send-transaction} for more detailed documentation.
-   *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
    * await dappClient.initialize();
@@ -598,8 +611,6 @@ export class DappClient {
    * @throws If the client is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is delivered via the `walletActionResponse` event listener.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/sign-message} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -632,8 +643,6 @@ export class DappClient {
    * @throws If the client is not initialized. {@link InitializationError}
    *
    * @returns A promise that resolves when the signing process is initiated. The signature is returned in the `walletActionResponse` event listener.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/sign-typed-data} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -687,8 +696,6 @@ export class DappClient {
    * Disconnects the client, clearing all session data from browser storage.
    * @remarks This action does not revoke the sessions on-chain. Sessions remain active until they expire or are manually revoked by the user in their wallet.
    * @returns A promise that resolves when disconnection is complete.
-   *
-   * @see {@link https://docs.sequence.xyz/sdk/typescript/v3/dapp-client/disconnect} for more detailed documentation.
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -793,7 +800,7 @@ export class DappClient {
       this.chainSessionManagers.set(chainId, chainSessionManager)
 
       chainSessionManager.on('explicitSessionResponse', (data) => {
-        this.emit('explicitSessionResponse', { ...data, chainId })
+        this.emit('explicitSessionResponse', { ...data })
       })
     }
     return chainSessionManager
