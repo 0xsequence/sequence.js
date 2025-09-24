@@ -383,6 +383,9 @@ export class DappClient {
       this.emit('walletActionResponse', eventPayload)
     } else if (chainId !== undefined) {
       const chainSessionManager = this.getChainSessionManager(chainId)
+      if (!chainSessionManager.isInitialized && this.walletAddress) {
+        chainSessionManager.initializeWithWallet(this.walletAddress)
+      }
       await chainSessionManager.handleRedirectResponse(response)
     } else {
       throw new InitializationError(`Could not find a pending request context for the redirect action: ${action}`)
