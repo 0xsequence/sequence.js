@@ -124,9 +124,12 @@ export type DappClientWalletActionEventListener = (data: {
   chainId: number
 }) => void
 
-export type DappClientExplicitSessionEventListener = ExplicitSessionEventListener & {
+export type DappClientExplicitSessionEventListener = (data: {
+  action: (typeof RequestActionType)['ADD_EXPLICIT_SESSION' | 'MODIFY_EXPLICIT_SESSION']
+  response?: SessionResponse
+  error?: any
   chainId: number
-}
+}) => void
 
 // --- DappTransport Types ---
 

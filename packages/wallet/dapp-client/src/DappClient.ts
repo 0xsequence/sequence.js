@@ -800,7 +800,7 @@ export class DappClient {
       this.chainSessionManagers.set(chainId, chainSessionManager)
 
       chainSessionManager.on('explicitSessionResponse', (data) => {
-        this.emit('explicitSessionResponse', { ...data })
+        this.emit('explicitSessionResponse', { ...data, chainId })
       })
     }
     return chainSessionManager
