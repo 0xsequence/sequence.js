@@ -8,7 +8,6 @@ export type SessionSignerInvalidReason =
   | 'Permission mismatch'
   | 'Permission rule mismatch'
   | 'Identity signer not found'
-  | 'Identity signer mismatch'
   | 'Blacklisted'
 
 export type SessionSignerValidity = {

@@ -60,6 +60,7 @@ export interface SequenceStorage {
 
   saveExplicitSession(sessionData: ExplicitSessionData): Promise<void>
   getExplicitSessions(): Promise<ExplicitSessionData[]>
+  clearExplicitSession(sessionData: ExplicitSessionData): Promise<void>
   clearExplicitSessions(): Promise<void>
 
   saveImplicitSession(sessionData: ImplicitSessionData): Promise<void>
@@ -216,6 +217,23 @@ export class WebStorage implements SequenceStorage {
     } catch (error) {
       console.error('Failed to retrieve explicit sessions:', error)
       return []
+    }
+  }
+
+  async clearExplicitSession(sessionData: ExplicitSessionData): Promise<void> {
+    try {
+      const sessions = (await this.getExplicitSessions()).filter(
+        (s) =>
+          !(
+            Address.isEqual(s.walletAddress, sessionData.walletAddress) &&
+            s.pk === sessionData.pk &&
+            s.chainId === sessionData.chainId
+          ),
+      )
+      await this.setIDBItem(EXPLICIT_SESSIONS_IDB_KEY, sessions)
+    } catch (error) {
+      console.error('Failed to clear explicit session:', error)
+      throw error
     }
   }
 

@@ -499,6 +499,66 @@ export class ChainSessionManager {
   }
 
   /**
+   * Reloads an existing explicit session permissions from the wallet configuration.
+   * @param sessionAddress The address of the session to reload.
+   * @throws {InitializationError} If the session is not found.
+   */
+  async reloadExplicitSession(sessionAddress: Address.Address): Promise<void> {
+    const existingExplicitSession = this.explicitSessions.find((s) =>
+      Address.isEqual(s.sessionAddress!, sessionAddress),
+    )
+    if (!existingExplicitSession) {
+      throw new InitializationError('Session not found.')
+    }
+    const storedSessions = await this.sequenceStorage.getExplicitSessions()
+    const sessionConfig = storedSessions.find(
+      (s) =>
+        this.chainId === s.chainId &&
+        Address.isEqual(this.walletAddress!, s.walletAddress) &&
+        Address.isEqual(Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: s.pk })), sessionAddress),
+    )
+    if (!sessionConfig) {
+      throw new InitializationError('Session config not found.')
+    }
+    // Remove the existing explicit session
+    this.removeExplicitSession(sessionAddress)
+    // Reload the explicit session
+    await this._initializeExplicitSessionInternal(
+      sessionConfig.pk,
+      sessionConfig.loginMethod,
+      sessionConfig.userEmail,
+      sessionConfig.guard,
+      true,
+    )
+  }
+
+  /**
+   * Removes the implicit session from the manager and storage.
+   */
+  async removeImplicitSession(): Promise<void> {
+    this.implicitSession = null
+    await this.sequenceStorage.clearImplicitSession()
+  }
+
+  /**
+   * Removes the explicit session from the manager and storage.
+   * @param sessionAddress The address of the session to remove.
+   */
+  async removeExplicitSession(sessionAddress: Address.Address): Promise<void> {
+    this.explicitSessions = this.explicitSessions.filter((s) => !Address.isEqual(s.sessionAddress, sessionAddress))
+    const storedSessions = await this.sequenceStorage.getExplicitSessions()
+    const sessionData = storedSessions.find(
+      (s) =>
+        this.chainId === s.chainId &&
+        Address.isEqual(this.walletAddress!, s.walletAddress) &&
+        Address.isEqual(Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: s.pk })), sessionAddress),
+    )
+    if (sessionData) {
+      await this.sequenceStorage.clearExplicitSession(sessionData)
+    }
+  }
+
+  /**
    * @private Handles the connection-related part of a redirect response, initializing sessions.
    * @param response The response payload from the redirect.
    * @returns A promise resolving to true on success.
@@ -673,14 +733,30 @@ export class ChainSessionManager {
     guard?: GuardConfig,
     allowRetries: boolean = false,
   ): Promise<void> {
-    if (!this.provider || !this.wallet)
-      throw new InitializationError('Manager core components not ready for explicit session.')
-    if (!this.sessionManager) throw new InitializationError('Main session manager is not initialized.')
+    if (!this.sessionManager) {
+      throw new InitializationError('Main session manager is not initialized.')
+    }
 
     const signerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pk }))
+    const permissions = await this._loadExplicitSessionPermissions(signerAddress, allowRetries)
+
+    const explicitSigner = new Signers.Session.Explicit(pk, permissions)
+    this.sessionManager = this.sessionManager.withExplicitSigner(explicitSigner)
+    this.explicitSessions.push(permissions)
+
+    if (guard && !this.guard) this.guard = guard
+  }
+
+  private async _loadExplicitSessionPermissions(
+    signerAddress: Address.Address,
+    allowRetries: boolean = false,
+  ): Promise<ExplicitSession> {
+    if (!this.provider || !this.wallet || !this.sessionManager) {
+      throw new InitializationError('Manager core components not ready for explicit session.')
+    }
 
     const maxRetries = allowRetries ? 3 : 1
-    let lastError: Error | null = null
+    let lastError: Error | undefined
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -691,21 +767,14 @@ export class ChainSessionManager {
           throw new InitializationError(`Permissions not found for session key.`)
         }
 
-        const explicitSigner = new Signers.Session.Explicit(pk, permissions)
-        this.sessionManager = this.sessionManager.withExplicitSigner(explicitSigner)
-
-        this.explicitSessions.push({
-          sessionAddress: explicitSigner.address,
+        return {
+          sessionAddress: signerAddress,
           chainId: this.chainId,
           permissions: permissions.permissions,
           valueLimit: permissions.valueLimit,
           deadline: permissions.deadline,
           type: 'explicit',
-        })
-
-        if (guard && !this.guard) this.guard = guard
-
-        return
+        }
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err))
       }
@@ -714,8 +783,9 @@ export class ChainSessionManager {
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
       }
     }
-    if (lastError)
-      throw new InitializationError(`Explicit session init failed after ${maxRetries} attempts: ${lastError.message}`)
+    throw new InitializationError(
+      `Explicit session load failed after ${maxRetries} attempts: ${lastError?.message ?? 'Unknown error'}`,
+    )
   }
 
   /**
@@ -929,6 +999,15 @@ export class ChainSessionManager {
    */
   getExplicitSessions(): ExplicitSession[] {
     return this.explicitSessions
+  }
+
+  /**
+   * Gets an explicit session by its address.
+   * @param sessionAddress The address of the session.
+   * @returns The session object or null if not found.
+   */
+  getExplicitSession(sessionAddress: Address.Address): ExplicitSession | null {
+    return this.explicitSessions.find((s) => Address.isEqual(s.sessionAddress!, sessionAddress)) || null
   }
 
   /**

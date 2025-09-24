@@ -83,6 +83,8 @@ export class DappClient {
   private redirectActionHandler?: (url: string) => void
   private canUseIndexedDb: boolean
 
+  private sessionRefreshPeriod: number
+
   private isInitializing = false
 
   private walletAddress: Address.Address | null = null
@@ -105,6 +107,7 @@ export class DappClient {
    * @param options.randomPrivateKeyFn A function to generate random private keys for new sessions.
    * @param options.redirectActionHandler A handler to manually control navigation for redirect flows.
    * @param options.canUseIndexedDb A flag to enable or disable the use of IndexedDB for caching.
+   * @param options.sessionRefreshPeriod The default explicit session expiration period in seconds for refreshed sessions. Defaults to 30 mins.
    */
   constructor(
     walletUrl: string,
@@ -121,6 +124,7 @@ export class DappClient {
       randomPrivateKeyFn?: RandomPrivateKeyFn
       redirectActionHandler?: (url: string) => void
       canUseIndexedDb?: boolean
+      sessionRefreshPeriod?: number
     },
   ) {
     const {
@@ -132,6 +136,7 @@ export class DappClient {
       randomPrivateKeyFn,
       redirectActionHandler,
       canUseIndexedDb = true,
+      sessionRefreshPeriod = 60 * 30,
     } = options || {}
 
     this.transport = new DappTransport(
@@ -153,6 +158,7 @@ export class DappClient {
     this.randomPrivateKeyFn = randomPrivateKeyFn
     this.redirectActionHandler = redirectActionHandler
     this.canUseIndexedDb = canUseIndexedDb
+    this.sessionRefreshPeriod = sessionRefreshPeriod
   }
 
   /**
@@ -605,6 +611,80 @@ export class DappClient {
       throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
     }
     return await chainSessionManager.listSignerValidity()
+  }
+
+  /**
+   * Fixes the invalid sessions for a given chain.
+   * @note We probably shouldn't be fixing all invalid sessions at once and rather fix them one by one.
+   * @param chainId The chain ID on which to fix the invalid sessions.
+   * @param interactiveFixes Whether to fix sessions that require user interaction.
+   * @returns A promise that resolves when the invalid sessions are fixed.
+   */
+  async fixInvalidSessions(chainId: number, interactiveFixes: boolean = false): Promise<void> {
+    const chainSessionManager = this.getChainSessionManager(chainId)
+    if (!chainSessionManager.isInitialized)
+      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
+    const sessionValidity = await chainSessionManager.listSignerValidity()
+    await Promise.all(
+      sessionValidity.map(async (s) => {
+        switch (s.invalidReason) {
+          case 'Permission mismatch':
+          case 'Permission rule mismatch':
+          case 'Permission not found':
+            // Local permission doesn't match the wallet configuration. This can be fixed by reloading the session.
+            console.warn('Permission mismatch. Reloading session configuration.')
+            await chainSessionManager.reloadExplicitSession(s.signer)
+            break
+          case 'Expired':
+            // Session expired. Refresh the session deadline.
+            if (!interactiveFixes) {
+              console.warn('Session expired. Skipping interactive fix.')
+              break
+            }
+            console.warn('Session expired. Refreshing session.')
+            await chainSessionManager.modifyExplicitSession({
+              ...chainSessionManager.getExplicitSession(s.signer)!,
+              deadline: BigInt(Math.floor(Date.now() / 1000 + this.sessionRefreshPeriod)),
+            })
+            break
+          case 'Chain ID mismatch':
+            // Invalid. Remove from this session manager and add to the right session manager.
+            console.warn('Chain ID mismatch. Moving session to the right session manager.')
+            const explicitSession = chainSessionManager.getExplicitSession(s.signer)
+            await chainSessionManager.removeExplicitSession(s.signer)
+            const rightChainSessionManager = this.getChainSessionManager(explicitSession!.chainId)
+            if (!rightChainSessionManager.isInitialized) {
+              rightChainSessionManager.initializeWithWallet(this.walletAddress!)
+            }
+            //FIXME This makes a request to the wallet, which may not be neccessary. Skip?
+            if (!interactiveFixes) {
+              console.warn('Chain ID mismatch. Skipping interactive fix.')
+              break
+            }
+            await rightChainSessionManager.addExplicitSession(explicitSession!)
+            break
+          case 'Identity signer not found':
+            // Invalid. The device signer has been removed. Request a new implicit session.
+            if (!interactiveFixes) {
+              console.warn('Identity signer not found. Skipping interactive fix.')
+              break
+            }
+            console.warn('Identity signer not found. Requesting a new implicit session.')
+            await chainSessionManager.createNewSession(this.origin, undefined, { includeImplicitSession: true })
+            break
+          case 'Blacklisted':
+            // Invalid. The session was blacklisted. Request an explicit session instead.
+            // TODO We can't do this here as we don't know what perms to use for the new session.
+            // For now we'll just remove the implicit session.
+            console.warn('Session was blacklisted. Requesting a new implicit session.')
+            await chainSessionManager.removeImplicitSession()
+            break
+          default:
+            console.warn('Unknown invalid reason. Skipping.')
+            break
+        }
+      }),
+    )
   }
 
   /**
