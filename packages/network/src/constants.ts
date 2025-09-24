@@ -1248,7 +1248,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'Sandbox Testnet Explorer',
-      rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz',
+      rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz/',
     },
     nativeToken: {
       symbol: 'SAND',
