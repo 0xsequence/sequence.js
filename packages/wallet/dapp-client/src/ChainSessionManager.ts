@@ -717,6 +717,41 @@ export class ChainSessionManager {
   }
 
   /**
+   * Checks if the current session has permission to execute a set of transactions.
+   * @param transactions The transactions to check permissions for.
+   * @returns A promise that resolves to true if the session has permission, false otherwise.
+   */
+  async hasPermission(transactions: Transaction[]): Promise<boolean> {
+    if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized) {
+      return false
+    }
+
+    try {
+      const calls: Payload.Call[] = transactions.map((tx) => ({
+        to: tx.to,
+        value: tx.value ?? 0n,
+        data: tx.data ?? '0x',
+        gasLimit: tx.gasLimit ?? 0n,
+        delegateCall: tx.delegateCall ?? false,
+        onlyFallback: tx.onlyFallback ?? false,
+        behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
+      }))
+
+      // Directly check if there are signers with the necessary permissions for all calls.
+      // This will throw an error if any call is not supported.
+      await this.sessionManager.findSignersForCalls(this.wallet.address, this.chainId, calls)
+      return true
+    } catch (error) {
+      // An error from findSignersForCalls indicates a permission failure.
+      console.warn(
+        `Permission check failed for chain ${this.chainId}:`,
+        error instanceof Error ? error.message : String(error),
+      )
+      return false
+    }
+  }
+
+  /**
    * Checks if the current session has a valid signer.
    * @returns A promise that resolves to true if the session has a valid signer, false otherwise.
    */
