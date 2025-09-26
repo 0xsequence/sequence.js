@@ -503,7 +503,7 @@ for (const extension of ALL_EXTENSIONS) {
       'should fail to sign with an expired explicit session',
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-        const chainId = 0
+        const chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
         // Create unique identity and state provider for this test
         const identityPrivateKey = Secp256k1.randomPrivateKey()
@@ -561,7 +561,7 @@ for (const extension of ALL_EXTENSIONS) {
         }
 
         // Sign the transaction
-        expect(sessionManager.signSapient(wallet.address, chainId, payload, imageHash)).rejects.toThrow(
+        await expect(sessionManager.signSapient(wallet.address, chainId, payload, imageHash)).rejects.toThrow(
           'No signers match the topology',
         )
       },

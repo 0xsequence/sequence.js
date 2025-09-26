@@ -151,7 +151,7 @@ describe('Sessions (via Manager)', () => {
     }
     const signature = await dapp.sessionManager.signSapient(
       dapp.wallet.address,
-      chainId ?? 1n,
+      chainId,
       parentedEnvelope,
       sessionImageHash,
     )
@@ -255,7 +255,7 @@ describe('Sessions (via Manager)', () => {
         // Configure mock provider
         ;(provider as any).request.mockImplementation(({ method, params }) => {
           if (method === 'eth_chainId') {
-            return Promise.resolve(chainId.toString())
+            return Promise.resolve(Hex.fromNumber(chainId))
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
             // Undeployed wallet
@@ -329,7 +329,7 @@ describe('Sessions (via Manager)', () => {
         // Configure mock provider
         ;(provider as any).request.mockImplementation(({ method, params }) => {
           if (method === 'eth_chainId') {
-            return Promise.resolve(chainId.toString())
+            return Promise.resolve(Hex.fromNumber(chainId))
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
             // Undeployed wallet
@@ -404,7 +404,7 @@ describe('Sessions (via Manager)', () => {
         // Configure mock provider
         ;(provider as any).request.mockImplementation(({ method, params }) => {
           if (method === 'eth_chainId') {
-            return Promise.resolve(chainId.toString())
+            return Promise.resolve(Hex.fromNumber(chainId))
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
             // Undeployed wallet
@@ -491,7 +491,7 @@ describe('Sessions (via Manager)', () => {
         // Configure mock provider
         ;(provider as any).request.mockImplementation(({ method, params }) => {
           if (method === 'eth_chainId') {
-            return Promise.resolve(chainId.toString())
+            return Promise.resolve(Hex.fromNumber(chainId))
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
             // Undeployed wallet

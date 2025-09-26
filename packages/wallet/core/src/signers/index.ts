@@ -20,7 +20,7 @@ export interface Signer {
 
 export interface SapientSigner {
   readonly address: MaybePromise<Address.Address>
-  readonly imageHash: MaybePromise<Hex.Hex | undefined>
+  readonly imageHash: MaybePromise<Hex.Hex>
 
   signSapient: (
     wallet: Address.Address,

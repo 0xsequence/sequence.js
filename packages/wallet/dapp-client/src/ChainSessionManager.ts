@@ -673,26 +673,21 @@ export class ChainSessionManager {
   ): Promise<void> {
     if (!this.provider || !this.wallet)
       throw new InitializationError('Manager core components not ready for explicit session.')
+    if (!this.sessionManager) throw new InitializationError('Main session manager is not initialized.')
+
+    const signerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pk }))
 
     const maxRetries = allowRetries ? 3 : 1
     let lastError: Error | null = null
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const tempManager = new Signers.SessionManager(this.wallet, {
-          sessionManagerAddress: Extensions.Rc3.sessions,
-          provider: this.provider,
-        })
-        const topology = await tempManager.getTopology()
+        const topology = await this.sessionManager.getTopology()
 
-        const signerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pk }))
         const permissions = SessionConfig.getSessionPermissions(topology, signerAddress)
-
         if (!permissions) {
           throw new InitializationError(`Permissions not found for session key.`)
         }
-
-        if (!this.sessionManager) throw new InitializationError('Main session manager is not initialized.')
 
         const explicitSigner = new Signers.Session.Explicit(pk, permissions)
         this.sessionManager = this.sessionManager.withExplicitSigner(explicitSigner)
@@ -711,9 +706,10 @@ export class ChainSessionManager {
         return
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err))
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
-        }
+      }
+      if (attempt < maxRetries) {
+        console.error('Explicit session initialization failed, retrying...')
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
       }
     }
     if (lastError)
@@ -756,12 +752,30 @@ export class ChainSessionManager {
   }
 
   /**
+   * Checks if the current session has a valid signer.
+   * @returns A promise that resolves to true if the session has a valid signer, false otherwise.
+   */
+  async hasValidSigner(): Promise<boolean> {
+    if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized) {
+      return false
+    }
+
+    const signerValidity = await this.sessionManager.listSignerValidity(this.chainId)
+    if (signerValidity.some((s) => s.isValid)) {
+      return true
+    }
+    // SessionSignerInvalidReason available here
+    return false
+  }
+
+  /**
    * Fetches fee options for a set of transactions.
+   * @param wallet The wallet address to use for the fee options.
    * @param calls The transactions to estimate fees for.
    * @returns A promise that resolves with an array of fee options.
    * @throws {FeeOptionError} If fetching fee options fails.
    */
-  async getFeeOptions(calls: Transaction[]): Promise<Relayer.FeeOption[]> {
+  async getFeeOptions(wallet: Address.Address, calls: Transaction[]): Promise<Relayer.FeeOption[]> {
     const callsToSend = calls.map((tx) => ({
       to: tx.to,
       value: tx.value,
@@ -772,8 +786,7 @@ export class ChainSessionManager {
       behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
     }))
     try {
-      const signedCall = await this._buildAndSignCalls(callsToSend)
-      const feeOptions = await this.relayer.feeOptions(signedCall.to, this.chainId, callsToSend)
+      const feeOptions = await this.relayer.feeOptions(wallet, this.chainId, callsToSend)
       return feeOptions.options
     } catch (err) {
       throw new FeeOptionError(`Failed to get fee options: ${err instanceof Error ? err.message : String(err)}`)
@@ -948,9 +961,7 @@ export class ChainSessionManager {
         ...envelope.payload,
         parentWallets: [this.wallet.address],
       }
-      const imageHash = await this.sessionManager.imageHash
-      if (imageHash === undefined) throw new SessionConfigError('Session manager image hash is undefined')
-
+      const imageHash = await this.sessionManager.getImageHash()
       const signature = await this.sessionManager.signSapient(
         this.wallet.address,
         this.chainId,

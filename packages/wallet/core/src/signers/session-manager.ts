@@ -50,15 +50,15 @@ export class SessionManager implements SapientSigner {
     this._provider = options.provider
   }
 
-  get imageHash(): Promise<Hex.Hex | undefined> {
+  get imageHash(): Promise<Hex.Hex> {
     return this.getImageHash()
   }
 
-  async getImageHash(): Promise<Hex.Hex | undefined> {
+  async getImageHash(): Promise<Hex.Hex> {
     const { configuration } = await this.wallet.getStatus()
     const sessionConfigLeaf = Config.findSignerLeaf(configuration, this.address)
     if (!sessionConfigLeaf || !Config.isSapientSignerLeaf(sessionConfigLeaf)) {
-      return undefined
+      throw new Error(`Session configuration not found for wallet ${this.wallet.address}`)
     }
     return sessionConfigLeaf.imageHash
   }
@@ -72,6 +72,10 @@ export class SessionManager implements SapientSigner {
     if (!imageHash) {
       throw new Error(`Session configuration not found for image hash ${imageHash}`)
     }
+    return this._getTopologyForImageHash(imageHash)
+  }
+
+  private async _getTopologyForImageHash(imageHash: Hex.Hex): Promise<SessionConfig.SessionsTopology> {
     const tree = await this.stateProvider.getTree(imageHash)
     if (!tree) {
       throw new Error(`Session configuration not found for image hash ${imageHash}`)
@@ -131,8 +135,21 @@ export class SessionManager implements SapientSigner {
   }
 
   async findSignersForCalls(wallet: Address.Address, chainId: number, calls: Payload.Call[]): Promise<SessionSigner[]> {
+    if (!Address.isEqual(this.wallet.address, wallet)) {
+      throw new Error('Wallet address mismatch')
+    }
     // Only use signers that match the topology
     const topology = await this.topology
+    return this._findSignersForCalls(wallet, chainId, calls, topology)
+  }
+
+  private async _findSignersForCalls(
+    wallet: Address.Address,
+    chainId: number,
+    calls: Payload.Call[],
+    topology: SessionConfig.SessionsTopology,
+  ): Promise<SessionSigner[]> {
+    // Only use signers that match the topology
     const identitySigners = SessionConfig.getIdentitySigners(topology)
     if (identitySigners.length === 0) {
       throw new Error('Identity signers not found')
@@ -174,10 +191,23 @@ export class SessionManager implements SapientSigner {
     chainId: number,
     calls: Payload.Call[],
   ): Promise<Payload.Call | null> {
+    if (!Address.isEqual(wallet, this.wallet.address)) {
+      throw new Error('Wallet address mismatch')
+    }
+    const topology = await this.topology
+    return this._prepareIncrement(wallet, chainId, calls, topology)
+  }
+
+  private async _prepareIncrement(
+    wallet: Address.Address,
+    chainId: number,
+    calls: Payload.Call[],
+    topology: SessionConfig.SessionsTopology,
+  ): Promise<Payload.Call | null> {
     if (calls.length === 0) {
       throw new Error('No calls provided')
     }
-    const signers = await this.findSignersForCalls(wallet, chainId, calls)
+    const signers = await this._findSignersForCalls(wallet, chainId, calls, topology)
 
     // Create a map of signers to their associated calls
     const signerToCalls = new Map<SessionSigner, Payload.Call[]>()
@@ -233,18 +263,18 @@ export class SessionManager implements SapientSigner {
     if (!Address.isEqual(wallet, this.wallet.address)) {
       throw new Error('Wallet address mismatch')
     }
+    if (this._provider) {
+      const providerChainId = await this._provider.request({
+        method: 'eth_chainId',
+      })
+      if (providerChainId !== Hex.fromNumber(chainId)) {
+        throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
+      }
+    }
     if ((await this.imageHash) !== imageHash) {
       throw new Error('Unexpected image hash')
     }
-    //FIXME Test chain id
-    // if (this._provider) {
-    //   const providerChainId = await this._provider.request({
-    //     method: 'eth_chainId',
-    //   })
-    //   if (providerChainId !== Hex.fromNumber(chainId)) {
-    //     throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
-    //   }
-    // }
+    const topology = await this._getTopologyForImageHash(imageHash)
     if (!Payload.isCalls(payload) || payload.calls.length === 0) {
       throw new Error('Only calls are supported')
     }
@@ -254,7 +284,7 @@ export class SessionManager implements SapientSigner {
       throw new Error(`Space ${payload.space} is too large`)
     }
 
-    const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
+    const signers = await this._findSignersForCalls(wallet, chainId, payload.calls, topology)
     if (signers.length !== payload.calls.length) {
       throw new Error('No signer supported for call')
     }
@@ -270,7 +300,7 @@ export class SessionManager implements SapientSigner {
     )
 
     // Check if the last call is an increment usage call
-    const expectedIncrement = await this.prepareIncrement(wallet, chainId, payload.calls)
+    const expectedIncrement = await this._prepareIncrement(wallet, chainId, payload.calls, topology)
     if (expectedIncrement) {
       let actualIncrement: Payload.Call
       if (
@@ -327,7 +357,7 @@ export class SessionManager implements SapientSigner {
     // Perform encoding
     const encodedSignature = SessionSignature.encodeSessionCallSignatures(
       signatures,
-      await this.topology,
+      topology,
       identitySigner,
       explicitSigners,
       implicitSigners,
@@ -346,23 +376,23 @@ export class SessionManager implements SapientSigner {
     payload: Payload.Parented,
     signature: SignatureTypes.SignatureOfSapientSignerLeaf,
   ): Promise<boolean> {
-    if (!Payload.isCalls(payload)) {
+    if (!Address.isEqual(wallet, this.wallet.address)) {
+      throw new Error('Wallet address mismatch')
+    }
+    if (!Payload.isCalls(payload) || payload.calls.length === 0) {
       // Only calls are supported
       return false
     }
-
     if (!this._provider) {
       throw new Error('Provider not set')
     }
-    //FIXME Test chain id
-    // const providerChainId = await this._provider.request({
-    //   method: 'eth_chainId',
-    // })
-    // if (providerChainId !== Hex.fromNumber(chainId)) {
-    //   throw new Error(
-    //     `Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`,
-    //   )
-    // }
+    // Test chain id
+    const providerChainId = await this._provider.request({
+      method: 'eth_chainId',
+    })
+    if (providerChainId !== Hex.fromNumber(chainId)) {
+      throw new Error(`Provider chain id mismatch, expected ${Hex.fromNumber(chainId)} but got ${providerChainId}`)
+    }
 
     const encodedPayload = Payload.encodeSapient(chainId, payload)
     const encodedCallData = AbiFunction.encodeData(Constants.RECOVER_SAPIENT_SIGNATURE, [

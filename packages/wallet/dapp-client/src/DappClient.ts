@@ -271,9 +271,11 @@ export class DappClient {
    * for previously established sessions.
    */
   private async _loadStateFromStorage(): Promise<void> {
-    const implicitSession = await this.sequenceStorage.getImplicitSession()
+    const [implicitSession, explicitSessions] = await Promise.all([
+      this.sequenceStorage.getImplicitSession(),
+      this.sequenceStorage.getExplicitSessions(),
+    ])
 
-    const explicitSessions = await this.sequenceStorage.getExplicitSessions()
     const chainIdsToInitialize = new Set([
       ...(implicitSession?.chainId !== undefined ? [implicitSession.chainId] : []),
       ...explicitSessions.map((s) => s.chainId),
@@ -554,11 +556,11 @@ export class DappClient {
    * }
    */
   async getFeeOptions(chainId: number, transactions: Transaction[]): Promise<Relayer.FeeOption[]> {
-    if (!this.isInitialized) throw new InitializationError('Not initialized')
+    if (!this.isInitialized || !this.walletAddress) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
       throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
-    return await chainSessionManager.getFeeOptions(transactions)
+    return await chainSessionManager.getFeeOptions(this.walletAddress, transactions)
   }
 
   /**
@@ -573,6 +575,19 @@ export class DappClient {
       return false
     }
     return await chainSessionManager.hasPermission(transactions)
+  }
+
+  /**
+   * Checks if the current session has a valid signer.
+   * @param chainId The chain ID on which to check the signer.
+   * @returns A promise that resolves to true if the session has a valid signer, otherwise false.
+   */
+  async hasValidSigner(chainId: number): Promise<boolean> {
+    const chainSessionManager = this.chainSessionManagers.get(chainId)
+    if (!chainSessionManager || !chainSessionManager.isInitialized) {
+      return false
+    }
+    return await chainSessionManager.hasValidSigner()
   }
 
   /**
