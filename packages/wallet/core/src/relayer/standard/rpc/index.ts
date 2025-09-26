@@ -7,7 +7,7 @@ import {
 } from './relayer.gen.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { Constants, Payload, Network } from '@0xsequence/wallet-primitives'
 import { ETHTxnStatus, FeeToken as RpcFeeToken } from './relayer.gen.js'
 import { decodePrecondition } from '../../../preconditions/index.js'
 import {
@@ -25,12 +25,55 @@ export * from './relayer.gen.js'
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
+/**
+ * Convert a Sequence Network to a viem Chain
+ */
+const networkToChain = (network: Network.Network): Chain => {
+  return {
+    id: network.chainId,
+    name: network.title || network.name,
+    nativeCurrency: {
+      name: network.nativeCurrency.name,
+      symbol: network.nativeCurrency.symbol,
+      decimals: network.nativeCurrency.decimals,
+    },
+    rpcUrls: {
+      default: {
+        http: [network.rpcUrl],
+      },
+    },
+    blockExplorers: network.blockExplorer
+      ? {
+          default: {
+            name: network.blockExplorer.name || 'Explorer',
+            url: network.blockExplorer.url,
+          },
+        }
+      : undefined,
+    contracts: network.ensAddress
+      ? {
+          ensUniversalResolver: {
+            address: network.ensAddress as `0x${string}`,
+          },
+        }
+      : undefined,
+  } as Chain
+}
+
 export const getChain = (chainId: number): Chain => {
-  const chain = Object.values(chains).find((c: any) => typeof c === 'object' && 'id' in c && c.id === chainId)
-  if (!chain) {
-    throw new Error(`Chain with id ${chainId} not found`)
+  // First try to get the chain from Sequence's network configurations
+  const sequenceNetwork = Network.getNetworkFromChainId(chainId)
+  if (sequenceNetwork) {
+    return networkToChain(sequenceNetwork)
   }
-  return chain as Chain
+
+  // Fall back to viem's built-in chains
+  const viemChain = Object.values(chains).find((c: any) => typeof c === 'object' && 'id' in c && c.id === chainId)
+  if (viemChain) {
+    return viemChain as Chain
+  }
+
+  throw new Error(`Chain with id ${chainId} not found in Sequence networks or viem chains`)
 }
 
 export class RpcRelayer implements Relayer {
