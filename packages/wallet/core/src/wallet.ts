@@ -402,7 +402,7 @@ export class Wallet {
         factory,
         factoryData,
       },
-      ...(await this.prepareBlankEnvelope(Number(chainId))),
+      ...(await this.prepareBlankEnvelope(Number(chainId), provider)),
     }
   }
 
@@ -490,7 +490,7 @@ export class Wallet {
         nonce,
         calls,
       },
-      ...(await this.prepareBlankEnvelope(Number(chainId))),
+      ...(await this.prepareBlankEnvelope(Number(chainId), provider)),
     }
   }
 
@@ -597,8 +597,8 @@ export class Wallet {
     return encoded
   }
 
-  private async prepareBlankEnvelope(chainId: number) {
-    const status = await this.getStatus()
+  private async prepareBlankEnvelope(chainId: number, provider?: Provider.Provider) {
+    const status = await this.getStatus(provider)
 
     return {
       wallet: this.address,
