@@ -136,6 +136,7 @@ export enum ChainId {
 
   //MONAD_TESTNET
   MONAD_TESTNET = 10143,
+  MONAD = 143,
 
   //SOMNIA
   SOMNIA_TESTNET = 50312,
@@ -1102,6 +1103,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Monad Testnet Explorer',
       rootUrl: 'https://testnet.monadexplorer.com/'
+    },
+    nativeToken: {
+      symbol: 'MON',
+      name: 'MON',
+      decimals: 18
+    }
+  },
+  [ChainId.MONAD]: {
+    chainId: ChainId.MONAD,
+    type: NetworkType.MAINNET,
+    name: 'monad',
+    title: 'Monad',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Monad Explorer',
+      rootUrl: 'https://mainnet-beta.monvision.io/'
     },
     nativeToken: {
       symbol: 'MON',
