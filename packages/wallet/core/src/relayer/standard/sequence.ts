@@ -2,6 +2,7 @@ import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequenc
 import { Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
+import { FeeToken } from './rpc/relayer.gen.js'
 
 export class SequenceRelayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
@@ -16,6 +17,22 @@ export class SequenceRelayer implements Relayer {
 
   async isAvailable(_wallet: Address.Address, _chainId: number): Promise<boolean> {
     return true
+  }
+
+  async feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }> {
+    const { isFeeRequired, tokens, paymentAddress } = await this.service.feeTokens()
+    if (isFeeRequired) {
+      Address.assert(paymentAddress)
+      return {
+        isFeeRequired,
+        tokens,
+        paymentAddress,
+      }
+    }
+    // Not required
+    return {
+      isFeeRequired,
+    }
   }
 
   async feeOptions(

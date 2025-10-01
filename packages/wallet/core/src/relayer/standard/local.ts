@@ -2,7 +2,7 @@ import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { EIP1193Provider } from 'mipd'
 import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
-import { IntentPrecondition } from './rpc/relayer.gen.js'
+import { FeeToken, IntentPrecondition } from './rpc/relayer.gen.js'
 import { decodePrecondition } from '../../preconditions/index.js'
 import {
   erc20BalanceOf,
@@ -45,6 +45,12 @@ export class LocalRelayer implements Relayer {
 
   static createFromProvider(provider: EIP1193Provider): LocalRelayer {
     return new LocalRelayer(new EIP1193ProviderAdapter(provider))
+  }
+
+  feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }> {
+    return Promise.resolve({
+      isFeeRequired: false,
+    })
   }
 
   feeOptions(
