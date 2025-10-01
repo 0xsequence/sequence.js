@@ -3,7 +3,7 @@ import { EIP1193ProviderAdapter, LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 import { Address, Hex } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { IntentPrecondition } from './rpc/relayer.gen.js'
+import { FeeToken, IntentPrecondition } from './rpc/relayer.gen.js'
 
 export class EIP6963Relayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
@@ -21,6 +21,10 @@ export class EIP6963Relayer implements Relayer {
 
   isAvailable(wallet: Address.Address, chainId: number): Promise<boolean> {
     return this.relayer.isAvailable(wallet, chainId)
+  }
+
+  feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }> {
+    return this.relayer.feeTokens()
   }
 
   feeOptions(
