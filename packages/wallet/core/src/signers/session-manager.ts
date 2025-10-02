@@ -325,7 +325,7 @@ export class SessionManager implements SapientSigner {
     }
 
     // Perform encoding
-    const encodedSignature = SessionSignature.encodeSessionCallSignatures(
+    const encodedSignature = SessionSignature.encodeSessionSignature(
       signatures,
       await this.topology,
       identitySigner,
