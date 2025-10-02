@@ -1,7 +1,7 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
-import { Attestation, encode, encodeForJson, fromParsed, toJson } from './attestation.js'
 import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {
+  decodeSessionsTopology,
   encodeSessionsTopology,
   getIdentitySigners,
   isCompleteSessionsTopology,
@@ -9,11 +9,11 @@ import {
   SessionsTopology,
 } from './session-config.js'
 import { RSY } from './signature.js'
-import { minBytesFor, packRSY } from './utils.js'
-import { Payload } from './index.js'
+import { minBytesFor, packRSY, unpackRSY } from './utils.js'
+import { Attestation, Payload } from './index.js'
 
 export type ImplicitSessionCallSignature = {
-  attestation: Attestation
+  attestation: Attestation.Attestation
   identitySignature: RSY
   sessionSignature: RSY
 }
@@ -46,7 +46,7 @@ export function sessionCallSignatureToJson(callSignature: SessionCallSignature):
 export function encodeSessionCallSignatureForJson(callSignature: SessionCallSignature): any {
   if (isImplicitSessionCallSignature(callSignature)) {
     return {
-      attestation: encodeForJson(callSignature.attestation),
+      attestation: Attestation.encodeForJson(callSignature.attestation),
       identitySignature: rsyToRsvStr(callSignature.identitySignature),
       sessionSignature: rsyToRsvStr(callSignature.sessionSignature),
     }
@@ -68,7 +68,7 @@ export function sessionCallSignatureFromJson(json: string): SessionCallSignature
 export function sessionCallSignatureFromParsed(decoded: any): SessionCallSignature {
   if (decoded.attestation) {
     return {
-      attestation: fromParsed(decoded.attestation),
+      attestation: Attestation.fromParsed(decoded.attestation),
       identitySignature: rsyFromRsvStr(decoded.identitySignature),
       sessionSignature: rsyFromRsvStr(decoded.sessionSignature),
     }
@@ -113,7 +113,7 @@ function rsyFromRsvStr(sigStr: string): RSY {
  * @param identitySigner  The identity signer to encode. Others will be hashed into nodes.
  * @returns The encoded session call signatures.
  */
-export function encodeSessionCallSignatures(
+export function encodeSessionSignature(
   callSignatures: SessionCallSignature[],
   topology: SessionsTopology,
   identitySigner: Address.Address,
@@ -151,10 +151,12 @@ export function encodeSessionCallSignatures(
   // Map each call signature to its attestation index
   callSignatures.filter(isImplicitSessionCallSignature).forEach((callSig) => {
     if (callSig.attestation) {
-      const attestationStr = toJson(callSig.attestation)
+      const attestationStr = Attestation.toJson(callSig.attestation)
       if (!attestationMap.has(attestationStr)) {
         attestationMap.set(attestationStr, encodedAttestations.length)
-        encodedAttestations.push(Bytes.concat(encode(callSig.attestation), packRSY(callSig.identitySignature)))
+        encodedAttestations.push(
+          Bytes.concat(Attestation.encode(callSig.attestation), packRSY(callSig.identitySignature)),
+        )
       }
     }
   })
@@ -169,7 +171,7 @@ export function encodeSessionCallSignatures(
   for (const callSignature of callSignatures) {
     if (isImplicitSessionCallSignature(callSignature)) {
       // Implicit
-      const attestationStr = toJson(callSignature.attestation)
+      const attestationStr = Attestation.toJson(callSignature.attestation)
       const attestationIndex = attestationMap.get(attestationStr)
       if (attestationIndex === undefined) {
         // Unreachable
@@ -193,7 +195,83 @@ export function encodeSessionCallSignatures(
   return Bytes.concat(...parts)
 }
 
-// Helper
+export function decodeSessionSignature(encodedSignatures: Bytes.Bytes): {
+  topology: SessionsTopology
+  callSignatures: SessionCallSignature[]
+} {
+  let offset = 0
+
+  // Parse session topology length (3 bytes)
+  const topologyLength = Bytes.toNumber(encodedSignatures.slice(offset, offset + 3))
+  offset += 3
+
+  // Parse session topology
+  const topologyBytes = encodedSignatures.slice(offset, offset + topologyLength)
+  offset += topologyLength
+  const topology = decodeSessionsTopology(topologyBytes)
+
+  // Parse attestations count (1 byte)
+  const attestationsCount = Bytes.toNumber(encodedSignatures.slice(offset, offset + 1))
+  offset += 1
+
+  // Parse attestations and identity signatures
+  const attestations: Attestation.Attestation[] = []
+  const identitySignatures: RSY[] = []
+
+  for (let i = 0; i < attestationsCount; i++) {
+    // Parse attestation
+    const attestation = Attestation.decode(encodedSignatures.slice(offset))
+    offset += Attestation.encode(attestation).length
+    attestations.push(attestation)
+
+    // Parse identity signature (64 bytes)
+    const identitySignature = unpackRSY(encodedSignatures.slice(offset, offset + 64))
+    offset += 64
+    identitySignatures.push(identitySignature)
+  }
+
+  // Parse call signatures
+  const callSignatures: SessionCallSignature[] = []
+
+  while (offset < encodedSignatures.length) {
+    // Parse flag byte
+    const flagByte = encodedSignatures[offset]!
+    offset += 1
+
+    // Parse session signature (64 bytes)
+    const sessionSignature = unpackRSY(encodedSignatures.slice(offset, offset + 64))
+    offset += 64
+
+    // Check if implicit (MSB set) or explicit
+    if ((flagByte & 0x80) !== 0) {
+      // Implicit call signature
+      const attestationIndex = flagByte & 0x7f
+      if (attestationIndex >= attestations.length) {
+        throw new Error('Invalid attestation index')
+      }
+
+      callSignatures.push({
+        attestation: attestations[attestationIndex]!,
+        identitySignature: identitySignatures[attestationIndex]!,
+        sessionSignature,
+      })
+    } else {
+      // Explicit call signature
+      const permissionIndex = flagByte
+      callSignatures.push({
+        permissionIndex: BigInt(permissionIndex),
+        sessionSignature,
+      })
+    }
+  }
+
+  return {
+    topology,
+    callSignatures,
+  }
+}
+
+// Call encoding
 
 export function hashCallWithReplayProtection(
   payload: Payload.Calls,

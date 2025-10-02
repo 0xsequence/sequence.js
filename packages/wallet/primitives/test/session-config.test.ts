@@ -1,59 +1,60 @@
+import { Address, Bytes } from 'ox'
 import { describe, expect, it } from 'vitest'
-import { Address, Bytes, Hex } from 'ox'
 
+import { ChainId } from '../src/network.js'
+import { ParameterOperation, Permission, SessionPermissions } from '../src/permission.js'
 import {
-  SESSIONS_FLAG_PERMISSIONS,
-  SESSIONS_FLAG_NODE,
-  SESSIONS_FLAG_BRANCH,
-  SESSIONS_FLAG_BLACKLIST,
-  SESSIONS_FLAG_IDENTITY_SIGNER,
-  ImplicitBlacklistLeaf,
   IdentitySignerLeaf,
-  SessionPermissionsLeaf,
-  SessionNode,
+  ImplicitBlacklistLeaf,
+  SESSIONS_FLAG_BLACKLIST,
+  SESSIONS_FLAG_BRANCH,
+  SESSIONS_FLAG_IDENTITY_SIGNER,
+  SESSIONS_FLAG_NODE,
+  SESSIONS_FLAG_PERMISSIONS,
   SessionBranch,
+  SessionNode,
+  SessionPermissionsLeaf,
   SessionsTopology,
-  isSessionsTopology,
-  isCompleteSessionsTopology,
+  addExplicitSession,
+  addToImplicitBlacklist,
+  balanceSessionsTopology,
+  cleanSessionsTopology,
+  configurationTreeToSessionsTopology,
+  decodeLeafFromBytes,
+  decodeSessionsTopology,
+  emptySessionsTopology,
+  encodeLeafToGeneric,
+  encodeSessionsTopology,
+  getExplicitSigners,
   getIdentitySigners,
   getImplicitBlacklist,
   getImplicitBlacklistLeaf,
   getSessionPermissions,
-  getExplicitSigners,
-  encodeLeafToGeneric,
-  decodeLeafFromBytes,
-  sessionsTopologyToConfigurationTree,
-  configurationTreeToSessionsTopology,
-  encodeSessionsTopology,
-  sessionsTopologyToJson,
-  sessionsTopologyFromJson,
-  removeExplicitSession,
-  addExplicitSession,
+  isCompleteSessionsTopology,
+  isSessionsTopology,
   mergeSessionsTopologies,
-  balanceSessionsTopology,
-  cleanSessionsTopology,
   minimiseSessionsTopology,
-  addToImplicitBlacklist,
+  removeExplicitSession,
   removeFromImplicitBlacklist,
-  emptySessionsTopology,
+  sessionsTopologyFromJson,
+  sessionsTopologyToConfigurationTree,
+  sessionsTopologyToJson,
 } from '../src/session-config.js'
-import { SessionPermissions } from '../src/permission.js'
-import { ChainId } from '../src/network.js'
 
 describe('Session Config', () => {
   // Test data
-  const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1' as Address.Address
-  const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0' as Address.Address
-  const testAddress3 = '0xa0b86a33e6f8b5f56e64c9e1a1b8c6a9cc4b9a9e' as Address.Address
-  const testNode = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as SessionNode
+  const testAddress1: Address.Address = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
+  const testAddress2: Address.Address = '0x8ba1f109551bd432803012645aac136c776056c0'
+  const testAddress3: Address.Address = '0xa0b86a33e6f8b5f56e64c9e1a1b8c6a9cc4b9a9e'
+  const testNode: SessionNode = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
 
-  const samplePermission = {
+  const samplePermission: Permission = {
     target: testAddress3,
     rules: [
       {
         cumulative: false,
-        operation: 0, // EQUAL
-        value: Bytes.fromHex('0x'),
+        operation: ParameterOperation.EQUAL,
+        value: Bytes.fromHex('0x0000000000000000000000000000000000000000000000000000000000000000'),
         offset: 0n,
         mask: Bytes.fromHex('0xffffffff00000000000000000000000000000000000000000000000000000000'),
       },
@@ -399,12 +400,14 @@ describe('Session Config', () => {
     })
   })
 
-  describe('Sessions Topology Encoding', () => {
+  describe('Sessions Topology Encoding and Decoding', () => {
     describe('encodeSessionsTopology', () => {
       it('should encode session permissions leaf', () => {
         const result = encodeSessionsTopology(sampleSessionPermissionsLeaf)
         expect(result).toBeInstanceOf(Uint8Array)
         expect(result[0] >> 4).toBe(SESSIONS_FLAG_PERMISSIONS)
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(sampleSessionPermissionsLeaf)
       })
 
       it('should encode session node', () => {
@@ -412,12 +415,16 @@ describe('Session Config', () => {
         expect(result).toBeInstanceOf(Uint8Array)
         expect(result[0] >> 4).toBe(SESSIONS_FLAG_NODE)
         expect(result.length).toBe(33) // 1 flag byte + 32 hash bytes
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(testNode)
       })
 
       it('should encode blacklist leaf', () => {
         const result = encodeSessionsTopology(sampleBlacklistLeaf)
         expect(result).toBeInstanceOf(Uint8Array)
         expect(result[0] >> 4).toBe(SESSIONS_FLAG_BLACKLIST)
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(sampleBlacklistLeaf)
       })
 
       it('should encode identity signer leaf', () => {
@@ -425,12 +432,16 @@ describe('Session Config', () => {
         expect(result).toBeInstanceOf(Uint8Array)
         expect(result[0] >> 4).toBe(SESSIONS_FLAG_IDENTITY_SIGNER)
         expect(result.length).toBe(21) // 1 flag byte + 20 address bytes
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(sampleIdentitySignerLeaf)
       })
 
       it('should encode session branch', () => {
         const result = encodeSessionsTopology(sampleBranch)
         expect(result).toBeInstanceOf(Uint8Array)
         expect(result[0] >> 4).toBe(SESSIONS_FLAG_BRANCH)
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(sampleBranch)
       })
 
       it('should handle large blacklist with extended encoding', () => {
@@ -441,6 +452,15 @@ describe('Session Config', () => {
         const result = encodeSessionsTopology(largeBlacklist)
         expect(result).toBeInstanceOf(Uint8Array)
         expect(result[0] & 0x0f).toBe(0x0f) // Extended encoding flag
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(largeBlacklist)
+      })
+
+      it('should handle complete topology', () => {
+        const result = encodeSessionsTopology(sampleCompleteTopology)
+        expect(result).toBeInstanceOf(Uint8Array)
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(sampleCompleteTopology)
       })
 
       it('should throw for blacklist too large', () => {
@@ -724,6 +744,137 @@ describe('Session Config', () => {
 
       it('should throw for invalid topology', () => {
         expect(() => minimiseSessionsTopology({} as any, [], [])).toThrow('Invalid topology')
+      })
+
+      it('should minimize topology with multiple identity signers but keep only the specified one', () => {
+        // Create multiple identity signer leaves
+        const identitySigner1: IdentitySignerLeaf = {
+          type: 'identity-signer',
+          identitySigner: testAddress1,
+        }
+        const identitySigner2: IdentitySignerLeaf = {
+          type: 'identity-signer',
+          identitySigner: testAddress2,
+        }
+        const identitySigner3: IdentitySignerLeaf = {
+          type: 'identity-signer',
+          identitySigner: testAddress3,
+        }
+
+        // Create topology with multiple identity signers
+        const topologyWithMultipleIdentitySigners: SessionBranch = [
+          sampleBlacklistLeaf,
+          identitySigner1,
+          identitySigner2,
+          identitySigner3,
+          sampleSessionPermissionsLeaf,
+        ]
+
+        // Minimize with only testAddress2 as the identity signer
+        const result = minimiseSessionsTopology(
+          topologyWithMultipleIdentitySigners,
+          [], // no explicit signers
+          [], // no implicit signers
+          testAddress2, // only keep this identity signer
+        )
+
+        expect(isSessionsTopology(result)).toBe(true)
+
+        // Get all identity signers from the result
+        const identitySigners = getIdentitySigners(result)
+
+        // Should only contain the specified identity signer
+        expect(identitySigners).toEqual([testAddress2])
+        expect(identitySigners).not.toContain(testAddress1)
+        expect(identitySigners).not.toContain(testAddress3)
+
+        // Verify the result is still a valid topology
+        expect(isSessionsTopology(result)).toBe(true)
+      })
+
+      it('should minimize deeply nested topology with multiple identity signers but keep only the specified one', () => {
+        // Create multiple identity signer leaves
+        const identitySigner1: IdentitySignerLeaf = {
+          type: 'identity-signer',
+          identitySigner: testAddress1,
+        }
+        const identitySigner2: IdentitySignerLeaf = {
+          type: 'identity-signer',
+          identitySigner: testAddress2,
+        }
+        const identitySigner3: IdentitySignerLeaf = {
+          type: 'identity-signer',
+          identitySigner: testAddress3,
+        }
+
+        // Create additional session permissions for nesting
+        const sessionPermissions2: SessionPermissionsLeaf = {
+          type: 'session-permissions',
+          signer: testAddress2,
+          chainId: ChainId.MAINNET,
+          valueLimit: 500000000000000000n,
+          deadline: BigInt(Math.floor(Date.now() / 1000) + 1800),
+          permissions: [samplePermission],
+        }
+
+        const sessionPermissions3: SessionPermissionsLeaf = {
+          type: 'session-permissions',
+          signer: testAddress3,
+          chainId: ChainId.MAINNET,
+          valueLimit: 750000000000000000n,
+          deadline: BigInt(Math.floor(Date.now() / 1000) + 2700),
+          permissions: [samplePermission],
+        }
+
+        // Create a deeply nested topology structure
+        // Level 1: Main branch
+        // Level 2: Nested branches containing different combinations
+        const deeplyNestedTopology: SessionBranch = [
+          // First nested branch: blacklist + identity signer 1
+          [
+            sampleBlacklistLeaf,
+            identitySigner1,
+            sampleSessionPermissionsLeaf, // testAddress1 session
+          ],
+          // Second nested branch: identity signer 2 + session permissions 2
+          [
+            identitySigner2,
+            sessionPermissions2, // testAddress2 session
+          ],
+          // Third nested branch: identity signer 3 + session permissions 3
+          [
+            identitySigner3,
+            sessionPermissions3, // testAddress3 session
+          ],
+        ]
+
+        // Minimize with only testAddress2 as the identity signer
+        const result = minimiseSessionsTopology(
+          deeplyNestedTopology,
+          [], // no explicit signers
+          [], // no implicit signers
+          testAddress2, // only keep this identity signer
+        )
+
+        expect(isSessionsTopology(result)).toBe(true)
+
+        // Get all identity signers from the result
+        const identitySigners = getIdentitySigners(result)
+
+        // Should only contain the specified identity signer
+        expect(identitySigners).toEqual([testAddress2])
+        expect(identitySigners).not.toContain(testAddress1)
+        expect(identitySigners).not.toContain(testAddress3)
+
+        // Verify the result is still a valid topology
+        expect(isSessionsTopology(result)).toBe(true)
+
+        // Verify that the nested structure is properly minimized
+        // The result should be a branch with hashed nodes and the preserved identity signer
+        if (Array.isArray(result)) {
+          // Should have some components (hashed nodes and the preserved identity signer)
+          expect(result.length).toBeGreaterThan(0)
+        }
       })
     })
 
