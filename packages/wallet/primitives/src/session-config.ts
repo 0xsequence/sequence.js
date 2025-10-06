@@ -415,12 +415,13 @@ function decodeSessionTopologyPointer(bytes: Bytes.Bytes): {
     return { topology: { type: 'implicit-blacklist', blacklist }, pointer: offset + blacklistLength * 20 }
   } else if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
     // Identity signer
-    if (bytes.length < 21) {
+    const nodeLength = 21 // Flag + address
+    if (bytes.length < nodeLength) {
       throw new Error('Invalid identity signer length')
     }
     return {
-      topology: { type: 'identity-signer', identitySigner: Address.from(Hex.fromBytes(bytes.slice(1, 21))) },
-      pointer: 21,
+      topology: { type: 'identity-signer', identitySigner: Address.from(Hex.fromBytes(bytes.slice(1, nodeLength))) },
+      pointer: nodeLength,
     }
   } else {
     throw new Error(`Invalid topology flag: ${flag}`)
