@@ -33,7 +33,7 @@ export async function doEncodeSessionCallSignatures(
     }
     identitySigner = identitySigners[0]!
   }
-  const encoded = SessionSignature.encodeSessionCallSignatures(
+  const encoded = SessionSignature.encodeSessionSignature(
     callSignatures,
     sessionTopology,
     identitySigner as `0x${string}`,

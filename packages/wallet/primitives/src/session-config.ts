@@ -35,8 +35,10 @@ export type SessionLeaf = SessionPermissionsLeaf | ImplicitBlacklistLeaf | Ident
 export type SessionBranch = [SessionsTopology, SessionsTopology, ...SessionsTopology[]]
 export type SessionsTopology = SessionBranch | SessionLeaf | SessionNode
 
+const SESSIONS_NODE_SIZE_BYTES = 32
+
 function isSessionsNode(topology: any): topology is SessionNode {
-  return Hex.validate(topology) && Hex.size(topology) === 32
+  return Hex.validate(topology) && Hex.size(topology) === SESSIONS_NODE_SIZE_BYTES
 }
 
 function isImplicitBlacklist(topology: any): topology is ImplicitBlacklistLeaf {
@@ -340,6 +342,90 @@ export function encodeSessionsTopology(topology: SessionsTopology): Bytes.Bytes 
   }
 
   throw new Error('Invalid topology')
+}
+
+export function decodeSessionsTopology(bytes: Bytes.Bytes): SessionsTopology {
+  const { topology } = decodeSessionTopologyPointer(bytes)
+  return topology
+}
+
+function decodeSessionTopologyPointer(bytes: Bytes.Bytes): {
+  topology: SessionsTopology
+  pointer: number
+} {
+  if (bytes.length === 0) {
+    throw new Error('Empty topology bytes')
+  }
+
+  const flagByte = bytes[0]!
+  const flag = (flagByte & 0xf0) >> 4
+  const sizeSize = flagByte & 0x0f
+
+  if (flag === SESSIONS_FLAG_BRANCH) {
+    // Branch
+    if (sizeSize === 0 || sizeSize > 15) {
+      throw new Error('Invalid branch size')
+    }
+
+    let offset = 1
+    const encodedLength = Bytes.toNumber(bytes.slice(offset, offset + sizeSize))
+    offset += sizeSize
+
+    const encodedBranches = bytes.slice(offset, offset + encodedLength)
+    const branches: SessionsTopology[] = []
+
+    let branchOffset = 0
+    while (branchOffset < encodedBranches.length) {
+      const { topology: branchTopology, pointer: branchPointer } = decodeSessionTopologyPointer(
+        encodedBranches.slice(branchOffset),
+      )
+      branches.push(branchTopology)
+      branchOffset += branchPointer
+    }
+
+    return { topology: branches as SessionsTopology, pointer: offset + encodedLength }
+  } else if (flag === SESSIONS_FLAG_PERMISSIONS) {
+    // Permissions
+    const sessionPermissions = decodeSessionPermissions(bytes.slice(1))
+    const nodeLength = 1 + encodeSessionPermissions(sessionPermissions).length
+    return { topology: { type: 'session-permissions', ...sessionPermissions }, pointer: nodeLength }
+  } else if (flag === SESSIONS_FLAG_NODE) {
+    // Node
+    const nodeLength = SESSIONS_NODE_SIZE_BYTES + 1
+    if (bytes.length < nodeLength) {
+      throw new Error('Invalid node length')
+    }
+    return { topology: Hex.fromBytes(bytes.slice(1, nodeLength)), pointer: nodeLength }
+  } else if (flag === SESSIONS_FLAG_BLACKLIST) {
+    // Blacklist
+    let offset = 1
+    let blacklistLength = sizeSize
+    if (sizeSize === 0x0f) {
+      // Size is encoded in the next 2 bytes
+      blacklistLength = Bytes.toNumber(bytes.slice(offset, offset + 2))
+      offset += 2
+    }
+
+    const blacklist: Address.Address[] = []
+    for (let i = 0; i < blacklistLength; i++) {
+      const addressBytes = bytes.slice(offset + i * 20, offset + (i + 1) * 20)
+      blacklist.push(Address.from(Hex.fromBytes(addressBytes)))
+    }
+
+    return { topology: { type: 'implicit-blacklist', blacklist }, pointer: offset + blacklistLength * 20 }
+  } else if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
+    // Identity signer
+    const nodeLength = 21 // Flag + address
+    if (bytes.length < nodeLength) {
+      throw new Error('Invalid identity signer length')
+    }
+    return {
+      topology: { type: 'identity-signer', identitySigner: Address.from(Hex.fromBytes(bytes.slice(1, nodeLength))) },
+      pointer: nodeLength,
+    }
+  } else {
+    throw new Error(`Invalid topology flag: ${flag}`)
+  }
 }
 
 // JSON
