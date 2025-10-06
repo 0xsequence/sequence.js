@@ -63,6 +63,8 @@ export interface Relayer {
 
   isAvailable(wallet: Address.Address, chainId: number): Promise<boolean>
 
+  feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }>
+
   feeOptions(
     wallet: Address.Address,
     chainId: number,

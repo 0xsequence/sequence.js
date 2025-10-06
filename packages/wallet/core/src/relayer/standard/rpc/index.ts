@@ -109,6 +109,27 @@ export class RpcRelayer implements Relayer {
     return Promise.resolve(this.chainId === chainId)
   }
 
+  async feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: RpcFeeToken[]; paymentAddress?: Address.Address }> {
+    try {
+      const { isFeeRequired, tokens, paymentAddress } = await this.client.feeTokens()
+      if (isFeeRequired) {
+        Address.assert(paymentAddress)
+        return {
+          isFeeRequired,
+          tokens,
+          paymentAddress,
+        }
+      }
+      // Not required
+      return {
+        isFeeRequired,
+      }
+    } catch (e) {
+      console.warn('RpcRelayer.feeTokens failed:', e)
+      return { isFeeRequired: false }
+    }
+  }
+
   async feeOptions(
     wallet: Address.Address,
     chainId: number,
