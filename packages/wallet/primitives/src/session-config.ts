@@ -398,8 +398,13 @@ function decodeSessionTopologyPointer(bytes: Bytes.Bytes): {
     return { topology: Hex.fromBytes(bytes.slice(1, nodeLength)), pointer: nodeLength }
   } else if (flag === SESSIONS_FLAG_BLACKLIST) {
     // Blacklist
-    const blacklistLength = sizeSize === 0x0f ? Bytes.toNumber(bytes.slice(1, 3)) : sizeSize
-    const offset = sizeSize === 0x0f ? 3 : 1
+    let offset = 1
+    let blacklistLength = sizeSize
+    if (sizeSize === 0x0f) {
+      // Size is encoded in the next 2 bytes
+      blacklistLength = Bytes.toNumber(bytes.slice(offset, offset + 2))
+      offset += 2
+    }
 
     const blacklist: Address.Address[] = []
     for (let i = 0; i < blacklistLength; i++) {

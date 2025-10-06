@@ -427,6 +427,24 @@ describe('Session Config', () => {
         expect(decoded).toEqual(sampleBlacklistLeaf)
       })
 
+      it('should encode large blacklist leaf', () => {
+        const blacklistCount = 1000
+        const largeBlacklist: ImplicitBlacklistLeaf = {
+          type: 'implicit-blacklist',
+          blacklist: Array(blacklistCount).fill(testAddress1),
+        }
+        const result = encodeSessionsTopology(largeBlacklist)
+        expect(result).toBeInstanceOf(Uint8Array)
+        expect(result[0]).toBe((SESSIONS_FLAG_BLACKLIST << 4) | 0x0f) // Encoded large size flag
+        expect(Bytes.toNumber(result.slice(1, 3))).toBe(blacklistCount)
+        expect(result.slice(3)).toEqual(
+          Bytes.concat(...largeBlacklist.blacklist.map((b) => Bytes.padLeft(Bytes.fromHex(b), 20))),
+        )
+        expect(result.length).toBe(3 + blacklistCount * 20)
+        const decoded = decodeSessionsTopology(result)
+        expect(decoded).toEqual(largeBlacklist)
+      })
+
       it('should encode identity signer leaf', () => {
         const result = encodeSessionsTopology(sampleIdentitySignerLeaf)
         expect(result).toBeInstanceOf(Uint8Array)
