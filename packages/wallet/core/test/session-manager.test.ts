@@ -562,7 +562,7 @@ for (const extension of ALL_EXTENSIONS) {
 
         // Sign the transaction
         expect(sessionManager.signSapient(wallet.address, chainId, payload, imageHash)).rejects.toThrow(
-          'No signers match the topology',
+          `Signer supporting call is expired: ${explicitSigner.address}`,
         )
       },
       timeout,
