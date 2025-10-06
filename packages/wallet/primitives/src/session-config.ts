@@ -35,8 +35,10 @@ export type SessionLeaf = SessionPermissionsLeaf | ImplicitBlacklistLeaf | Ident
 export type SessionBranch = [SessionsTopology, SessionsTopology, ...SessionsTopology[]]
 export type SessionsTopology = SessionBranch | SessionLeaf | SessionNode
 
+const SESSIONS_NODE_SIZE_BYTES = 32
+
 function isSessionsNode(topology: any): topology is SessionNode {
-  return Hex.validate(topology) && Hex.size(topology) === 32
+  return Hex.validate(topology) && Hex.size(topology) === SESSIONS_NODE_SIZE_BYTES
 }
 
 function isImplicitBlacklist(topology: any): topology is ImplicitBlacklistLeaf {
@@ -389,10 +391,11 @@ function decodeSessionTopologyPointer(bytes: Bytes.Bytes): {
     return { topology: { type: 'session-permissions', ...sessionPermissions }, pointer: nodeLength }
   } else if (flag === SESSIONS_FLAG_NODE) {
     // Node
-    if (bytes.length < 33) {
+    const nodeLength = SESSIONS_NODE_SIZE_BYTES + 1
+    if (bytes.length < nodeLength) {
       throw new Error('Invalid node length')
     }
-    return { topology: Hex.fromBytes(bytes.slice(1, 33)), pointer: 33 }
+    return { topology: Hex.fromBytes(bytes.slice(1, nodeLength)), pointer: nodeLength }
   } else if (flag === SESSIONS_FLAG_BLACKLIST) {
     // Blacklist
     const blacklistLength = sizeSize === 0x0f ? Bytes.toNumber(bytes.slice(1, 3)) : sizeSize
