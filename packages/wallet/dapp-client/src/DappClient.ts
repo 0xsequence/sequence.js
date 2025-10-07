@@ -13,6 +13,7 @@ import { DappTransport } from './DappTransport.js'
 import { ConnectionError, InitializationError, SigningError, TransactionError } from './utils/errors.js'
 import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
+  CheckForPermissionsResponse,
   DappClientExplicitSessionEventListener,
   DappClientWalletActionEventListener,
   GuardConfig,
@@ -565,14 +566,14 @@ export class DappClient {
    * Checks if the current session has permission to execute a set of transactions on a specific chain.
    * @param chainId The chain ID on which to check the permissions.
    * @param transactions An array of transactions to check permissions for.
-   * @returns A promise that resolves to true if the session has permission, otherwise false.
+   * @returns A promise that resolves to {@link CheckForPermissionsResponse}
    */
-  async hasPermission(chainId: number, transactions: Transaction[]): Promise<boolean> {
+  async checkForPermissions(chainId: number, transactions: Transaction[]): Promise<CheckForPermissionsResponse> {
     const chainSessionManager = this.chainSessionManagers.get(chainId)
-    if (!chainSessionManager || !chainSessionManager.isInitialized) {
-      return false
+    if (!chainSessionManager) {
+      return { isImplicit: false, hasPermission: false }
     }
-    return await chainSessionManager.hasPermission(transactions)
+    return await chainSessionManager.checkForPermissions(transactions)
   }
 
   /**

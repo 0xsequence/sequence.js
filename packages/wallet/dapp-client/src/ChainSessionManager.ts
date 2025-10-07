@@ -41,6 +41,7 @@ import {
   ModifyExplicitSessionPayload,
   SessionResponse,
   AddExplicitSessionPayload,
+  CheckForPermissionsResponse,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { ExplicitSession, ImplicitSession, ExplicitSessionConfig } from './index.js'
@@ -723,11 +724,11 @@ export class ChainSessionManager {
   /**
    * Checks if the current session has permission to execute a set of transactions.
    * @param transactions The transactions to check permissions for.
-   * @returns A promise that resolves to true if the session has permission, false otherwise.
+   * @returns A promise that resolves to {@link CheckForPermissionsResponse}
    */
-  async hasPermission(transactions: Transaction[]): Promise<boolean> {
-    if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized) {
-      return false
+  async checkForPermissions(transactions: Transaction[]): Promise<CheckForPermissionsResponse> {
+    if (!this.wallet || !this.sessionManager || !this.provider) {
+      return { isImplicit: false, hasPermission: false }
     }
 
     try {
@@ -743,15 +744,17 @@ export class ChainSessionManager {
 
       // Directly check if there are signers with the necessary permissions for all calls.
       // This will throw an error if any call is not supported.
-      await this.sessionManager.findSignersForCalls(this.wallet.address, this.chainId, calls)
-      return true
+      const signers = await this.sessionManager.findSignersForCalls(this.wallet.address, this.chainId, calls)
+      // Check if there is an allowed implicit signer
+      const isImplicit = signers.some((signer) => 'identitySigner' in signer)
+      return { isImplicit, hasPermission: true }
     } catch (error) {
       // An error from findSignersForCalls indicates a permission failure.
       console.warn(
         `Permission check failed for chain ${this.chainId}:`,
         error instanceof Error ? error.message : String(error),
       )
-      return false
+      return { isImplicit: false, hasPermission: false }
     }
   }
 

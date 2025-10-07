@@ -180,3 +180,8 @@ export interface SendRequestOptions {
   timeout?: number
   path?: string
 }
+
+export type CheckForPermissionsResponse = {
+  isImplicit: boolean
+  hasPermission: boolean
+}
