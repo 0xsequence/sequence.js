@@ -15,6 +15,7 @@ import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
   DappClientWalletActionEventListener,
+  GetFeeTokensResponse,
   GuardConfig,
   LoginMethod,
   RandomPrivateKeyFn,
@@ -559,6 +560,19 @@ export class DappClient {
     if (!chainSessionManager.isInitialized)
       throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
     return await chainSessionManager.getFeeOptions(transactions)
+  }
+
+  /**
+   * Fetches fee tokens for a chain.
+   * @returns A promise that resolves with the fee tokens response. {@link GetFeeTokensResponse}
+   * @throws If the fee tokens cannot be fetched. {@link InitializationError}
+   */
+  async getFeeTokens(chainId: number): Promise<GetFeeTokensResponse> {
+    if (!this.isInitialized) throw new InitializationError('Not initialized')
+    const chainSessionManager = this.getChainSessionManager(chainId)
+    if (!chainSessionManager.isInitialized)
+      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
+    return await chainSessionManager.getFeeTokens()
   }
 
   /**

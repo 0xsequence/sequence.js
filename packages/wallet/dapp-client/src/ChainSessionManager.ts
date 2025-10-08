@@ -41,6 +41,7 @@ import {
   ModifyExplicitSessionPayload,
   SessionResponse,
   AddExplicitSessionPayload,
+  GetFeeTokensResponse,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { ExplicitSession, ImplicitSession, ExplicitSessionConfig } from './index.js'
@@ -777,6 +778,19 @@ export class ChainSessionManager {
       return feeOptions.options
     } catch (err) {
       throw new FeeOptionError(`Failed to get fee options: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  /**
+   * Fetches fee tokens for a chain.
+   * @returns {GetFeeTokensResponse}
+   * @throws {FeeOptionError} If fetching fee tokens fails.
+   */
+  async getFeeTokens(): Promise<GetFeeTokensResponse> {
+    try {
+      return await this.relayer.feeTokens()
+    } catch (err) {
+      throw new FeeOptionError(`Failed to get fee tokens: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
