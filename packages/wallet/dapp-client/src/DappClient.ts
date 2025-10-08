@@ -578,7 +578,7 @@ export class DappClient {
   /**
    * Checks if the current session has permission to execute a set of transactions on a specific chain.
    * @param chainId The chain ID on which to check the permissions.
-   * @param transactions An a rray of transactions to check permissions for.
+   * @param transactions An array of transactions to check permissions for.
    * @returns A promise that resolves to true if the session has permission, otherwise false.
    */
   async hasPermission(chainId: number, transactions: Transaction[]): Promise<boolean> {
