@@ -15,6 +15,7 @@ import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
   DappClientWalletActionEventListener,
+  GetFeeTokensResponse,
   GuardConfig,
   LoginMethod,
   RandomPrivateKeyFn,
@@ -562,9 +563,22 @@ export class DappClient {
   }
 
   /**
+   * Fetches fee tokens for a chain.
+   * @returns A promise that resolves with the fee tokens response. {@link GetFeeTokensResponse}
+   * @throws If the fee tokens cannot be fetched. {@link InitializationError}
+   */
+  async getFeeTokens(chainId: number): Promise<GetFeeTokensResponse> {
+    if (!this.isInitialized) throw new InitializationError('Not initialized')
+    const chainSessionManager = this.getChainSessionManager(chainId)
+    if (!chainSessionManager.isInitialized)
+      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
+    return await chainSessionManager.getFeeTokens()
+  }
+
+  /**
    * Checks if the current session has permission to execute a set of transactions on a specific chain.
    * @param chainId The chain ID on which to check the permissions.
-   * @param transactions An array of transactions to check permissions for.
+   * @param transactions An a rray of transactions to check permissions for.
    * @returns A promise that resolves to true if the session has permission, otherwise false.
    */
   async hasPermission(chainId: number, transactions: Transaction[]): Promise<boolean> {
