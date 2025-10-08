@@ -782,19 +782,6 @@ export class ChainSessionManager {
   }
 
   /**
-   * Fetches fee tokens for a chain.
-   * @returns {GetFeeTokensResponse}
-   * @throws {FeeOptionError} If fetching fee tokens fails.
-   */
-  async getFeeTokens(): Promise<GetFeeTokensResponse> {
-    try {
-      return await this.relayer.feeTokens()
-    } catch (err) {
-      throw new FeeOptionError(`Failed to get fee tokens: ${err instanceof Error ? err.message : String(err)}`)
-    }
-  }
-
-  /**
    * Builds, signs, and sends a batch of transactions.
    * @param transactions The transactions to be sent.
    * @param feeOption (Optional) The fee option to use for sponsoring the transaction. If provided, a token transfer call will be prepended.

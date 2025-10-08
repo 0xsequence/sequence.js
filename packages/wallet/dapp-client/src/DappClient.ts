@@ -31,6 +31,7 @@ import {
 } from './types/index.js'
 import { TypedData } from 'ox/TypedData'
 import { KEYMACHINE_URL, NODES_URL, RELAYER_URL } from './utils/constants.js'
+import { getRelayerUrl, getRpcUrl } from './utils/index.js'
 
 export type DappClientEventListener = (data?: any) => void
 
@@ -568,11 +569,12 @@ export class DappClient {
    * @throws If the fee tokens cannot be fetched. {@link InitializationError}
    */
   async getFeeTokens(chainId: number): Promise<GetFeeTokensResponse> {
-    if (!this.isInitialized) throw new InitializationError('Not initialized')
-    const chainSessionManager = this.getChainSessionManager(chainId)
-    if (!chainSessionManager.isInitialized)
-      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
-    return await chainSessionManager.getFeeTokens()
+    const relayer = new Relayer.Standard.Rpc.RpcRelayer(
+      getRelayerUrl(chainId, this.relayerUrl),
+      chainId,
+      getRpcUrl(chainId, this.nodesUrl, this.projectAccessKey),
+    )
+    return await relayer.feeTokens()
   }
 
   /**

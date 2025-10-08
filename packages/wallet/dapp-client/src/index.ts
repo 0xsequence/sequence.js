@@ -20,6 +20,7 @@ export type {
   SendWalletTransactionPayload,
   SendWalletTransactionResponse,
   WalletActionResponse,
+  GetFeeTokensResponse,
 } from './types/index.js'
 export { RequestActionType, TransportMode } from './types/index.js'
 export {
