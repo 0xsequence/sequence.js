@@ -569,11 +569,11 @@ export class DappClient {
    * @throws If the fee tokens cannot be fetched. {@link InitializationError}
    */
   async getFeeTokens(chainId: number): Promise<GetFeeTokensResponse> {
-    const relayer = new Relayer.Standard.Rpc.RpcRelayer({
-      hostname: getRelayerUrl(chainId, this.relayerUrl),
-      chainId: chainId,
-      rpcUrl: getRpcUrl(chainId, this.nodesUrl, this.projectAccessKey),
-    })
+    const relayer = new Relayer.Standard.Rpc.RpcRelayer(
+      getRelayerUrl(chainId, this.relayerUrl),
+      chainId,
+      getRpcUrl(chainId, this.nodesUrl, this.projectAccessKey),
+    )
     return await relayer.feeTokens()
   }
 

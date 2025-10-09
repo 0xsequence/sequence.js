@@ -122,12 +122,13 @@ export class ChainSessionManager {
     }
     this.guard = guard
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
-    this.relayer = new Relayer.Standard.Rpc.RpcRelayer({
-      hostname: getRelayerUrl(chainId, relayerUrl),
-      chainId: this.chainId,
-      rpcUrl: getRpcUrl(chainId, nodesUrl, projectAccessKey),
-      projectAccessKey: projectAccessKey,
-    })
+    this.relayer = new Relayer.Standard.Rpc.RpcRelayer(
+      getRelayerUrl(chainId, relayerUrl),
+      this.chainId,
+      getRpcUrl(chainId, nodesUrl, projectAccessKey),
+      undefined,
+      projectAccessKey,
+    )
 
     this.transport = transport
     this.sequenceStorage = sequenceStorage

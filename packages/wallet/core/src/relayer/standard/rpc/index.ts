@@ -76,14 +76,6 @@ export const getChain = (chainId: number): Chain => {
   throw new Error(`Chain with id ${chainId} not found in Sequence networks or viem chains`)
 }
 
-export interface RpcRelayerOptions {
-  hostname: string
-  chainId: number
-  rpcUrl: string
-  fetchImpl?: Fetch
-  projectAccessKey?: string
-}
-
 export class RpcRelayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
   public readonly type = 'rpc'
@@ -94,8 +86,7 @@ export class RpcRelayer implements Relayer {
   private provider: PublicClient
   private readonly projectAccessKey?: string
 
-  constructor(options: RpcRelayerOptions) {
-    const { hostname, chainId, rpcUrl, fetchImpl, projectAccessKey } = options
+  constructor(hostname: string, chainId: number, rpcUrl: string, fetchImpl?: Fetch, projectAccessKey?: string) {
     this.id = `rpc:${hostname}`
     this.chainId = chainId
     this.projectAccessKey = projectAccessKey
