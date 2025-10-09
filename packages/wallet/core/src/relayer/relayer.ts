@@ -1,6 +1,6 @@
 import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { FeeToken, GetMetaTxnReceiptReturn } from './standard/rpc/index.js'
+import { FeeToken, GetMetaTxnReceiptReturn } from '@0xsequence/relayer'
 
 export interface FeeOption {
   token: FeeToken
