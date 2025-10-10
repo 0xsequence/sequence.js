@@ -141,11 +141,14 @@ export class RpcRelayer implements Relayer {
     const data = Payload.encode(callsStruct)
 
     try {
-      const result = await this.client.feeOptions({
-        wallet: wallet,
-        to: wallet,
-        data: Bytes.toHex(data),
-      })
+      const result = await this.client.feeOptions(
+        {
+          wallet: wallet,
+          to: wallet,
+          data: Bytes.toHex(data),
+        },
+        { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
+      )
 
       const quote = result.quote ? ({ _tag: 'FeeQuote', _quote: result.quote } as FeeQuote) : undefined
       const options = result.options.map((option) => ({
