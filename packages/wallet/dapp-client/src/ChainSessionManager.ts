@@ -41,7 +41,6 @@ import {
   ModifyExplicitSessionPayload,
   SessionResponse,
   AddExplicitSessionPayload,
-  GetFeeTokensResponse,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { ExplicitSession, ImplicitSession, ExplicitSessionConfig } from './index.js'
@@ -232,7 +231,7 @@ export class ChainSessionManager {
 
     const implicitSession = await this.sequenceStorage.getImplicitSession()
 
-    if (implicitSession && implicitSession.chainId === this.chainId) {
+    if (implicitSession) {
       await this._initializeImplicitSessionInternal(
         implicitSession.pk,
         walletAddress,
