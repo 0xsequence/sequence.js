@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.30
+
+### Patch Changes
+
+- Add Monad mainnet
+
 ## 2.3.29
 
 ### Patch Changes

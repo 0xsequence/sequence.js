@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.30
+
+### Patch Changes
+
+- Add Monad mainnet
+- Updated dependencies
+  - @0xsequence/waas@2.3.30
+
 ## 2.3.29
 
 ### Patch Changes

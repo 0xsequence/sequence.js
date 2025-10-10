@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.30
+
+### Patch Changes
+
+- Add Monad mainnet
+- Updated dependencies
+  - @0xsequence/indexer@2.3.30
+  - @0xsequence/relayer@2.3.30
+  - @0xsequence/utils@2.3.30
+  - @0xsequence/core@2.3.30
+
 ## 2.3.29
 
 ### Patch Changes
