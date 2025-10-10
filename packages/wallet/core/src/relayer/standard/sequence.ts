@@ -1,9 +1,7 @@
-import { ETHTxnStatus, IntentPrecondition, Relayer as Service } from '@0xsequence/relayer'
+import { ETHTxnStatus, IntentPrecondition, Relayer as Service, FeeToken } from '@0xsequence/relayer'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
-import { FeeToken } from './rpc/relayer.gen.js'
-
 export class SequenceRelayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
   public readonly type = 'sequence'

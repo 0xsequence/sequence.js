@@ -126,6 +126,8 @@ export class ChainSessionManager {
       getRelayerUrl(chainId, relayerUrl),
       this.chainId,
       getRpcUrl(chainId, nodesUrl, projectAccessKey),
+      undefined,
+      projectAccessKey,
     )
 
     this.transport = transport

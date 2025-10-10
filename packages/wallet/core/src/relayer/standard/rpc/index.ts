@@ -3,12 +3,13 @@ import {
   SendMetaTxnReturn as RpcSendMetaTxnReturn,
   MetaTxn as RpcMetaTxn,
   FeeTokenType,
+  FeeToken as RpcFeeToken,
   IntentPrecondition,
-} from './relayer.gen.js'
+  ETHTxnStatus,
+} from '@0xsequence/relayer'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../../relayer.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
 import { Constants, Payload, Network } from '@0xsequence/wallet-primitives'
-import { ETHTxnStatus, FeeToken as RpcFeeToken } from './relayer.gen.js'
 import { decodePrecondition } from '../../../preconditions/index.js'
 import {
   erc20BalanceOf,
@@ -21,9 +22,8 @@ import {
 import { PublicClient, createPublicClient, http, Chain } from 'viem'
 import * as chains from 'viem/chains'
 
-export * from './relayer.gen.js'
-
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
+export type { FeeToken } from '@0xsequence/relayer'
 
 /**
  * Convert a Sequence Network to a viem Chain
@@ -84,10 +84,12 @@ export class RpcRelayer implements Relayer {
   private client: GenRelayer
   private fetch: Fetch
   private provider: PublicClient
+  private readonly projectAccessKey?: string
 
-  constructor(hostname: string, chainId: number, rpcUrl: string, fetchImpl?: Fetch) {
+  constructor(hostname: string, chainId: number, rpcUrl: string, fetchImpl?: Fetch, projectAccessKey?: string) {
     this.id = `rpc:${hostname}`
     this.chainId = chainId
+    this.projectAccessKey = projectAccessKey
     const effectiveFetch = fetchImpl || (typeof window !== 'undefined' ? window.fetch.bind(window) : undefined)
     if (!effectiveFetch) {
       throw new Error('Fetch implementation is required but not available in this environment.')
@@ -139,11 +141,14 @@ export class RpcRelayer implements Relayer {
     const data = Payload.encode(callsStruct)
 
     try {
-      const result = await this.client.feeOptions({
-        wallet: wallet,
-        to: wallet,
-        data: Bytes.toHex(data),
-      })
+      const result = await this.client.feeOptions(
+        {
+          wallet: wallet,
+          to: wallet,
+          data: Bytes.toHex(data),
+        },
+        { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
+      )
 
       const quote = result.quote ? ({ _tag: 'FeeQuote', _quote: result.quote } as FeeQuote) : undefined
       const options = result.options.map((option) => ({
@@ -178,11 +183,14 @@ export class RpcRelayer implements Relayer {
       input: data,
     }
 
-    const result: RpcSendMetaTxnReturn = await this.client.sendMetaTxn({
-      call: rpcCall,
-      quote: quote ? JSON.stringify(quote._quote) : undefined,
-      preconditions: preconditions,
-    })
+    const result: RpcSendMetaTxnReturn = await this.client.sendMetaTxn(
+      {
+        call: rpcCall,
+        quote: quote ? JSON.stringify(quote._quote) : undefined,
+        preconditions: preconditions,
+      },
+      { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
+    )
 
     if (!result.status) {
       console.error('RpcRelayer.relay failed', result)
@@ -206,11 +214,14 @@ export class RpcRelayer implements Relayer {
       input: data,
     }
 
-    const result: RpcSendMetaTxnReturn = await this.client.sendMetaTxn({
-      call: rpcCall,
-      quote: quote ? JSON.stringify(quote._quote) : undefined,
-      preconditions: preconditions,
-    })
+    const result: RpcSendMetaTxnReturn = await this.client.sendMetaTxn(
+      {
+        call: rpcCall,
+        quote: quote ? JSON.stringify(quote._quote) : undefined,
+        preconditions: preconditions,
+      },
+      { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
+    )
 
     if (!result.status) {
       console.error('RpcRelayer.relay failed', result)

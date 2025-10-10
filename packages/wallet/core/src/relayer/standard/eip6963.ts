@@ -3,7 +3,7 @@ import { EIP1193ProviderAdapter, LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
 import { Address, Hex } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { FeeToken, IntentPrecondition } from './rpc/relayer.gen.js'
+import { FeeToken, IntentPrecondition } from '@0xsequence/relayer'
 
 export class EIP6963Relayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
