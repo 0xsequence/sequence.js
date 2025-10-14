@@ -3,7 +3,7 @@ import * as Guard from '@0xsequence/guard'
 import { Handler } from './handler.js'
 import { BaseSignatureRequest, SignerUnavailable, SignerReady, SignerActionable, Kinds } from '../types/index.js'
 import { Signatures } from '../signatures.js'
-import { GuardRole, Guards } from '../guards.js'
+import { Guards } from '../guards.js'
 
 export class GuardHandler implements Handler {
   kind = Kinds.Guard

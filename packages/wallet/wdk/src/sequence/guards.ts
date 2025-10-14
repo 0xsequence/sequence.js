@@ -1,4 +1,4 @@
-import { Address, Secp256k1 } from 'ox'
+import { Address } from 'ox'
 import { Shared } from './manager.js'
 import * as Guard from '@0xsequence/guard'
 import { Signers } from '@0xsequence/wallet-core'

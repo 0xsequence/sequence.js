@@ -200,6 +200,19 @@ importers:
         version: 5.8.3
 
   packages/services/relayer:
+    dependencies:
+      '@0xsequence/wallet-primitives':
+        specifier: 0.0.0-20250915145821
+        version: 0.0.0-20250915145821(typescript@5.8.3)
+      mipd:
+        specifier: ^0.0.7
+        version: 0.0.7(typescript@5.8.3)
+      ox:
+        specifier: ^0.7.2
+        version: 0.7.2(typescript@5.8.3)
+      viem:
+        specifier: ^2.37.8
+        version: 2.37.8(typescript@5.8.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -210,6 +223,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@22.18.6)(happy-dom@17.6.3)
 
   packages/utils/abi:
     devDependencies:
@@ -271,6 +287,9 @@ importers:
       '@0xsequence/guard':
         specifier: workspace:^
         version: link:../../services/guard
+      '@0xsequence/relayer':
+        specifier: workspace:^
+        version: link:../../services/relayer
       '@0xsequence/wallet-core':
         specifier: workspace:^
         version: link:../core
@@ -370,6 +389,9 @@ importers:
       '@0xsequence/identity-instrument':
         specifier: workspace:^
         version: link:../../services/identity-instrument
+      '@0xsequence/relayer':
+        specifier: workspace:^
+        version: link:../../services/relayer
       '@0xsequence/tee-verifier':
         specifier: ^0.1.2
         version: 0.1.2
@@ -490,6 +512,9 @@ packages:
 
   '@0xsequence/tee-verifier@0.1.2':
     resolution: {integrity: sha512-7sKr8/T4newknx6LAukjlRI3siGiGhBnZohz2Z3jX0zb0EBQdKUq0L//A7CPSckHFPxTg/QvQU2v8e9x9GfkDw==}
+
+  '@0xsequence/wallet-primitives@0.0.0-20250915145821':
+    resolution: {integrity: sha512-EiV2ke7XmPoamppXw3eVV8gsKWJTaYFq3zhP+vltaXMncBM+0MHhKuPRLMsdbB7V88olma9aafZtuuZhlSIwhQ==}
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
@@ -3658,6 +3683,13 @@ snapshots:
       cbor2: 1.12.0
       pkijs: 3.2.5
 
+  '@0xsequence/wallet-primitives@0.0.0-20250915145821(typescript@5.8.3)':
+    dependencies:
+      ox: 0.7.2(typescript@5.8.3)
+    transitivePeerDependencies:
+      - typescript
+      - zod
+
   '@adraffy/ens-normalize@1.11.1': {}
 
   '@ampproject/remapping@2.3.0':
@@ -6188,7 +6220,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.0(typescript@5.8.3)
+      abitype: 1.1.1(typescript@5.8.3)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.8.3

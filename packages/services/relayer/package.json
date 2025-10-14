@@ -28,6 +28,13 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^22.15.29",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@0xsequence/wallet-primitives": "0.0.0-20250915145821",
+    "mipd": "^0.0.7",
+    "ox": "^0.7.2",
+    "viem": "^2.37.8"
   }
 }

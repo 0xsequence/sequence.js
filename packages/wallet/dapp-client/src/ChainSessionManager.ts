@@ -3,7 +3,6 @@ import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox
 
 import {
   Envelope,
-  Relayer,
   Signers,
   State,
   Wallet,
@@ -41,10 +40,10 @@ import {
   ModifyExplicitSessionPayload,
   SessionResponse,
   AddExplicitSessionPayload,
-  GetFeeTokensResponse,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { ExplicitSession, ImplicitSession, ExplicitSessionConfig } from './index.js'
+import { Relayer, RpcRelayer } from '@0xsequence/relayer'
 
 interface ChainSessionManagerEventMap {
   explicitSessionResponse: ExplicitSessionEventListener
@@ -73,7 +72,7 @@ export class ChainSessionManager {
   private sessionManager: Signers.SessionManager | null = null
   private wallet: Wallet | null = null
   private provider: Provider.Provider | null = null
-  private relayer: Relayer.Standard.Rpc.RpcRelayer
+  private relayer: RpcRelayer.RpcRelayer
   private readonly chainId: number
   public transport: DappTransport | null = null
   private sequenceStorage: SequenceStorage
@@ -122,7 +121,7 @@ export class ChainSessionManager {
     }
     this.guard = guard
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
-    this.relayer = new Relayer.Standard.Rpc.RpcRelayer(
+    this.relayer = new RpcRelayer.RpcRelayer(
       getRelayerUrl(chainId, relayerUrl),
       this.chainId,
       getRpcUrl(chainId, nodesUrl, projectAccessKey),

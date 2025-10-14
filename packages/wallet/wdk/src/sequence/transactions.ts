@@ -1,4 +1,5 @@
-import { Envelope, Relayer, Wallet } from '@0xsequence/wallet-core'
+import { Envelope, Wallet, Bundler } from '@0xsequence/wallet-core'
+import { Relayer, StandardRelayer } from '@0xsequence/relayer'
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
@@ -179,11 +180,13 @@ export class Transactions implements TransactionsInterface {
       }
 
       if (tx.status === 'relayed') {
-        let relayer: Relayer.Relayer | Relayer.Bundler | undefined = this.shared.sequence.relayers.find(
+        let relayer: Relayer.Relayer | Bundler.Bundler | undefined = this.shared.sequence.relayers.find(
           (relayer) => relayer.id === tx.relayerId,
         )
         if (!relayer) {
-          const bundler = this.shared.sequence.bundlers.find((bundler) => bundler.id === tx.relayerId)
+          const bundler: Bundler.Bundler | undefined = this.shared.sequence.bundlers.find(
+            (bundler) => bundler.id === tx.relayerId,
+          )
           if (!bundler) {
             console.warn('relayer or bundler not found', tx.id, tx.relayerId)
             continue
@@ -347,7 +350,7 @@ export class Transactions implements TransactionsInterface {
             const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
             if (feeOptions.options.length === 0) {
-              const { name, icon } = relayer instanceof Relayer.Standard.EIP6963.EIP6963Relayer ? relayer.info : {}
+              const { name, icon } = relayer instanceof StandardRelayer.EIP6963.EIP6963Relayer ? relayer.info : {}
 
               return [
                 {
@@ -361,7 +364,7 @@ export class Transactions implements TransactionsInterface {
               ]
             }
 
-            return feeOptions.options.map((feeOption) => ({
+            return feeOptions.options.map((feeOption: Relayer.FeeOption) => ({
               kind: 'standard',
               id: uuidv7(),
               feeOption,
@@ -378,7 +381,7 @@ export class Transactions implements TransactionsInterface {
         }
 
         return Promise.all(
-          this.shared.sequence.bundlers.map(async (bundler): Promise<ERC4337RelayerOption[]> => {
+          this.shared.sequence.bundlers.map(async (bundler: Bundler.Bundler): Promise<ERC4337RelayerOption[]> => {
             const ifAvailable = await bundler.isAvailable(entrypoint, tx.envelope.chainId)
             if (!ifAvailable) {
               return []
@@ -580,7 +583,7 @@ export class Transactions implements TransactionsInterface {
 
       await this.shared.modules.signatures.complete(signature.id)
     } else if (isERC4337RelayerOption(tx.relayerOption)) {
-      if (!Relayer.isBundler(relayer)) {
+      if (!Bundler.isBundler(relayer)) {
         throw new Error(`Relayer ${tx.relayerOption.relayerId} is not a bundler`)
       }
 

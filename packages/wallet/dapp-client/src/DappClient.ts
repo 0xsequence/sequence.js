@@ -1,12 +1,6 @@
 import { Address, Hex } from 'ox'
 
-import {
-  Relayer,
-  type ExplicitSession,
-  type ExplicitSessionConfig,
-  type ImplicitSession,
-  type Session,
-} from './index.js'
+import { type ExplicitSession, type ExplicitSessionConfig, type ImplicitSession, type Session } from './index.js'
 
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
@@ -32,6 +26,7 @@ import {
 import { TypedData } from 'ox/TypedData'
 import { KEYMACHINE_URL, NODES_URL, RELAYER_URL } from './utils/constants.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
+import { Relayer, RpcRelayer } from '@0xsequence/relayer'
 
 export type DappClientEventListener = (data?: any) => void
 
@@ -535,7 +530,7 @@ export class DappClient {
    * @throws If the fee options cannot be fetched. {@link FeeOptionError}
    * @throws If the client or relevant chain is not initialized. {@link InitializationError}
    *
-   * @returns A promise that resolves with the fee options. {@link Relayer.FeeOption[]}
+   * @returns A promise that resolves with the fee options. {@link FeeOption[]}
    *
    * @example
    * const dappClient = new DappClient('http://localhost:5173');
@@ -569,7 +564,7 @@ export class DappClient {
    * @throws If the fee tokens cannot be fetched. {@link InitializationError}
    */
   async getFeeTokens(chainId: number): Promise<GetFeeTokensResponse> {
-    const relayer = new Relayer.Standard.Rpc.RpcRelayer(
+    const relayer = new RpcRelayer.RpcRelayer(
       getRelayerUrl(chainId, this.relayerUrl),
       chainId,
       getRpcUrl(chainId, this.nodesUrl, this.projectAccessKey),
@@ -595,7 +590,7 @@ export class DappClient {
    * Signs and sends a transaction using an available session signer.
    * @param chainId The chain ID on which to send the transaction.
    * @param transactions An array of transactions to be executed atomically in a single batch. {@link Transaction}
-   * @param feeOption (Optional) The selected fee option to sponsor the transaction. {@link Relayer.FeeOption}
+   * @param feeOption (Optional) The selected fee option to sponsor the transaction. {@link FeeOption}
    * @throws {TransactionError} If the transaction fails to send or confirm.
    * @throws {InitializationError} If the client or relevant chain is not initialized.
    *

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ExplicitSession, Relayer } from '@0xsequence/wallet-core'
+import { RelayerGen } from '@0xsequence/relayer'
+import { ExplicitSession } from '@0xsequence/wallet-core'
 import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import type { TypedData } from 'ox/TypedData'
@@ -183,6 +184,6 @@ export interface SendRequestOptions {
 
 export type GetFeeTokensResponse = {
   isFeeRequired: boolean
-  tokens?: Relayer.Standard.Rpc.FeeToken[]
+  tokens?: RelayerGen.FeeToken[]
   paymentAddress?: Address.Address
 }

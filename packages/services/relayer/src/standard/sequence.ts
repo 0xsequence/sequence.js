@@ -1,4 +1,4 @@
-import { ETHTxnStatus, IntentPrecondition, Relayer as Service, FeeToken } from '@0xsequence/relayer'
+import { ETHTxnStatus, IntentPrecondition, Relayer as Service, FeeToken } from '../rpc-relayer/relayer.gen.js'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
