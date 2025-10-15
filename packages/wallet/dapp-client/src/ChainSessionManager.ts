@@ -40,10 +40,13 @@ import {
   ModifyExplicitSessionPayload,
   SessionResponse,
   AddExplicitSessionPayload,
+  FeeOption,
+  OperationFailedStatus,
+  OperationStatus,
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { ExplicitSession, ImplicitSession, ExplicitSessionConfig } from './index.js'
-import { Relayer, RpcRelayer } from '@0xsequence/relayer'
+import { RpcRelayer } from '@0xsequence/relayer'
 
 interface ChainSessionManagerEventMap {
   explicitSessionResponse: ExplicitSessionEventListener
@@ -763,7 +766,7 @@ export class ChainSessionManager {
    * @returns A promise that resolves with an array of fee options.
    * @throws {FeeOptionError} If fetching fee options fails.
    */
-  async getFeeOptions(calls: Transaction[]): Promise<Relayer.FeeOption[]> {
+  async getFeeOptions(calls: Transaction[]): Promise<FeeOption[]> {
     const callsToSend = calls.map((tx) => ({
       to: tx.to,
       value: tx.value,
@@ -790,7 +793,7 @@ export class ChainSessionManager {
    * @throws {InitializationError} If the session is not initialized.
    * @throws {TransactionError} If the transaction fails at any stage.
    */
-  async buildSignAndSendTransactions(transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<Hex.Hex> {
+  async buildSignAndSendTransactions(transactions: Transaction[], feeOption?: FeeOption): Promise<Hex.Hex> {
     if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized)
       throw new InitializationError('Session is not initialized.')
     try {
@@ -837,7 +840,7 @@ export class ChainSessionManager {
       if (status.status === 'confirmed') {
         return status.transactionHash
       } else {
-        const failedStatus = status as Relayer.OperationFailedStatus
+        const failedStatus = status as OperationFailedStatus
         const reason = failedStatus.reason || `unexpected status ${status.status}`
         throw new TransactionError(`Transaction failed: ${reason}`)
       }
@@ -985,7 +988,7 @@ export class ChainSessionManager {
    * @param chainId The chain ID of the transaction.
    * @returns The final status of the transaction.
    */
-  private async _waitForTransactionReceipt(opHash: `0x${string}`, chainId: number): Promise<Relayer.OperationStatus> {
+  private async _waitForTransactionReceipt(opHash: `0x${string}`, chainId: number): Promise<OperationStatus> {
     try {
       while (true) {
         const currentStatus = await this.relayer.status(opHash, chainId)

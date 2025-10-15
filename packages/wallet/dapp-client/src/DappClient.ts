@@ -9,6 +9,7 @@ import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
   DappClientExplicitSessionEventListener,
   DappClientWalletActionEventListener,
+  FeeOption,
   GetFeeTokensResponse,
   GuardConfig,
   LoginMethod,
@@ -26,7 +27,7 @@ import {
 import { TypedData } from 'ox/TypedData'
 import { KEYMACHINE_URL, NODES_URL, RELAYER_URL } from './utils/constants.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
-import { Relayer, RpcRelayer } from '@0xsequence/relayer'
+import { RpcRelayer } from '@0xsequence/relayer'
 
 export type DappClientEventListener = (data?: any) => void
 
@@ -550,7 +551,7 @@ export class DappClient {
    *   const txHash = await dappClient.sendTransaction(1, transactions, feeOption);
    * }
    */
-  async getFeeOptions(chainId: number, transactions: Transaction[]): Promise<Relayer.FeeOption[]> {
+  async getFeeOptions(chainId: number, transactions: Transaction[]): Promise<FeeOption[]> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)
@@ -609,7 +610,7 @@ export class DappClient {
    *
    *   const txHash = await dappClient.sendTransaction(1, [transaction]);
    */
-  async sendTransaction(chainId: number, transactions: Transaction[], feeOption?: Relayer.FeeOption): Promise<Hex.Hex> {
+  async sendTransaction(chainId: number, transactions: Transaction[], feeOption?: FeeOption): Promise<Hex.Hex> {
     if (!this.isInitialized) throw new InitializationError('Not initialized')
     const chainSessionManager = this.getChainSessionManager(chainId)
     if (!chainSessionManager.isInitialized)

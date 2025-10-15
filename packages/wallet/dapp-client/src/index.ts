@@ -21,6 +21,8 @@ export type {
   SendWalletTransactionResponse,
   WalletActionResponse,
   GetFeeTokensResponse,
+  FeeToken,
+  FeeOption,
 } from './types/index.js'
 export { RequestActionType, TransportMode } from './types/index.js'
 export {
