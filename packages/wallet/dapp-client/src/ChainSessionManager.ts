@@ -80,7 +80,7 @@ export class ChainSessionManager {
   private isInitializing: boolean = false
   public loginMethod: LoginMethod | null = null
   public userEmail: string | null = null
-  private guard?: GuardConfig
+  public guard?: GuardConfig
 
   /**
    * @param chainId The ID of the chain this manager is responsible for.
@@ -232,16 +232,23 @@ export class ChainSessionManager {
     const implicitSession = await this.sequenceStorage.getImplicitSession()
 
     if (implicitSession) {
-      await this._initializeImplicitSessionInternal(
-        implicitSession.pk,
-        walletAddress,
-        implicitSession.attestation,
-        implicitSession.identitySignature,
-        false,
-        implicitSession.loginMethod,
-        implicitSession.userEmail,
-        implicitSession.guard,
-      )
+      if (implicitSession.attestation && implicitSession.identitySignature) {
+        await this._initializeImplicitSessionInternal(
+          implicitSession.pk,
+          walletAddress,
+          implicitSession.attestation,
+          implicitSession.identitySignature,
+          false,
+          implicitSession.loginMethod,
+          implicitSession.userEmail,
+          implicitSession.guard,
+        )
+      } else {
+        // This is a restored "connect-only" session
+        this.loginMethod = implicitSession.loginMethod || null
+        this.userEmail = implicitSession.userEmail || null
+        this.guard = implicitSession.guard
+      }
     }
 
     const allExplicitSessions = await this.sequenceStorage.getExplicitSessions()
@@ -292,10 +299,13 @@ export class ChainSessionManager {
 
       const payload: CreateNewSessionPayload = {
         origin,
-        session: completeSession as ExplicitSession,
         includeImplicitSession: options.includeImplicitSession ?? false,
         preferredLoginMethod: options.preferredLoginMethod,
         email: options.preferredLoginMethod === 'email' ? options.email : undefined,
+      }
+
+      if (sessionConfig) {
+        payload.session = completeSession as ExplicitSession
       }
 
       if (this.transport.mode === TransportMode.REDIRECT) {
@@ -318,6 +328,8 @@ export class ChainSessionManager {
       const receivedAddress = Address.from(connectResponse.walletAddress)
       const { attestation, signature, userEmail, loginMethod, guard } = connectResponse
 
+      let walletInitialized = false
+
       if (attestation && signature) {
         await this._resetStateAndClearCredentials()
 
@@ -333,10 +345,11 @@ export class ChainSessionManager {
           userEmail,
           guard,
         )
+        walletInitialized = true
       }
 
       if (sessionConfig) {
-        this.initializeWithWallet(receivedAddress)
+        if (!walletInitialized) this.initializeWithWallet(receivedAddress)
         await this._initializeExplicitSessionInternal(newPk, loginMethod, userEmail, guard, true)
         await this.sequenceStorage.saveExplicitSession({
           pk: newPk,
@@ -345,6 +358,22 @@ export class ChainSessionManager {
           guard,
           loginMethod,
           userEmail,
+        })
+        walletInitialized = true
+      }
+
+      if (!walletInitialized) {
+        this.initializeWithWallet(receivedAddress)
+        this.loginMethod = loginMethod || null
+        this.userEmail = userEmail || null
+        this.guard = guard
+        await this.sequenceStorage.saveImplicitSession({
+          pk: newPk,
+          walletAddress: receivedAddress,
+          chainId: this.chainId,
+          loginMethod,
+          userEmail,
+          guard,
         })
       }
 
@@ -539,9 +568,22 @@ export class ChainSessionManager {
           )
         }
 
-        if (savedRequest && savedPayload && savedPayload.session?.permissions) {
+        if (savedRequest && savedPayload && savedPayload.session) {
           await this._initializeExplicitSessionInternal(tempPk, loginMethod, userEmail, guard, true)
           await this.sequenceStorage.saveExplicitSession({
+            pk: tempPk,
+            walletAddress: receivedAddress,
+            chainId: this.chainId,
+            loginMethod,
+            userEmail,
+            guard,
+          })
+        } else if (!savedPayload?.session) {
+          // Handle connect-only case for redirects
+          this.loginMethod = loginMethod || null
+          this.userEmail = userEmail || null
+          this.guard = guard
+          await this.sequenceStorage.saveImplicitSession({
             pk: tempPk,
             walletAddress: receivedAddress,
             chainId: this.chainId,

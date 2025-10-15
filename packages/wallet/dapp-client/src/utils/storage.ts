@@ -25,8 +25,8 @@ export interface ExplicitSessionData {
 export interface ImplicitSessionData {
   pk: Hex.Hex
   walletAddress: Address.Address
-  attestation: Attestation.Attestation
-  identitySignature: Hex.Hex
+  attestation?: Attestation.Attestation
+  identitySignature?: Hex.Hex
   chainId: number
   loginMethod?: LoginMethod
   userEmail?: string

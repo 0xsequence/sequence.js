@@ -225,7 +225,7 @@ export class DappClient {
     Array.from(this.chainSessionManagers.values()).forEach((chainSessionManager) => {
       chainSessionManager.getExplicitSessions().forEach((session) => {
         const uniqueKey = session.sessionAddress?.toLowerCase()
-        if (!allExplicitSessions.has(uniqueKey)) {
+        if (uniqueKey && !allExplicitSessions.has(uniqueKey)) {
           allExplicitSessions.set(uniqueKey, session)
         }
       })
@@ -437,6 +437,17 @@ export class DappClient {
       // For redirect mode, this code won't be reached; the page will navigate away.
       if (this.transport.mode === TransportMode.POPUP) {
         await this._loadStateFromStorage()
+
+        // If _loadStateFromStorage didn't initialize (e.g. connect-only),
+        // but the manager did, sync the state to the client.
+        if (!this.isInitialized && chainSessionManager.isInitialized) {
+          this.walletAddress = chainSessionManager.getWalletAddress()
+          this.isInitialized = true
+          this.loginMethod = chainSessionManager.loginMethod
+          this.userEmail = chainSessionManager.userEmail
+          this.guard = chainSessionManager.guard
+          this.emit('sessionsUpdated')
+        }
       }
     } catch (err) {
       await this.disconnect()
