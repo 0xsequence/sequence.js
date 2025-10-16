@@ -552,10 +552,7 @@ export class DappClient {
    * }
    */
   async getFeeOptions(chainId: number, transactions: Transaction[]): Promise<FeeOption[]> {
-    if (!this.isInitialized) throw new InitializationError('Not initialized')
-    const chainSessionManager = this.getChainSessionManager(chainId)
-    if (!chainSessionManager.isInitialized)
-      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
+    const chainSessionManager = await this.getOrInitializeChainManager(chainId)
     return await chainSessionManager.getFeeOptions(transactions)
   }
 
@@ -580,11 +577,19 @@ export class DappClient {
    * @returns A promise that resolves to true if the session has permission, otherwise false.
    */
   async hasPermission(chainId: number, transactions: Transaction[]): Promise<boolean> {
-    const chainSessionManager = this.chainSessionManagers.get(chainId)
-    if (!chainSessionManager || !chainSessionManager.isInitialized) {
+    if (!this.isInitialized) {
       return false
     }
-    return await chainSessionManager.hasPermission(transactions)
+    try {
+      const chainSessionManager = await this.getOrInitializeChainManager(chainId)
+      return await chainSessionManager.hasPermission(transactions)
+    } catch (error) {
+      console.warn(
+        `hasPermission check failed for chain ${chainId}:`,
+        error instanceof Error ? error.message : String(error),
+      )
+      return false
+    }
   }
 
   /**
@@ -611,10 +616,7 @@ export class DappClient {
    *   const txHash = await dappClient.sendTransaction(1, [transaction]);
    */
   async sendTransaction(chainId: number, transactions: Transaction[], feeOption?: FeeOption): Promise<Hex.Hex> {
-    if (!this.isInitialized) throw new InitializationError('Not initialized')
-    const chainSessionManager = this.getChainSessionManager(chainId)
-    if (!chainSessionManager.isInitialized)
-      throw new InitializationError(`ChainSessionManager for chain ${chainId} is not initialized.`)
+    const chainSessionManager = await this.getOrInitializeChainManager(chainId)
     return await chainSessionManager.buildSignAndSendTransactions(transactions, feeOption)
   }
 
@@ -789,6 +791,25 @@ export class DappClient {
         this.transport.closeWallet()
       }
     }
+  }
+
+  /**
+   * @private Retrieves or creates and initializes a ChainSessionManager for a given chain ID.
+   * @param chainId The chain ID to get the ChainSessionManager for.
+   * @returns The initialized ChainSessionManager for the given chain ID.
+   */
+  private async getOrInitializeChainManager(chainId: number): Promise<ChainSessionManager> {
+    if (!this.isInitialized || !this.walletAddress) {
+      throw new InitializationError('DappClient is not initialized.')
+    }
+    const manager = this.getChainSessionManager(chainId)
+    if (!manager.isInitialized) {
+      await manager.initialize()
+    }
+    if (!manager.isInitialized) {
+      throw new InitializationError(`ChainSessionManager for chain ${chainId} could not be initialized.`)
+    }
+    return manager
   }
 
   /**

@@ -137,11 +137,9 @@ export class SessionManager implements SapientSigner {
     if (identitySigners.length === 0) {
       throw new Error('Identity signers not found')
     }
-    const validImplicitSigners = this._implicitSigners.filter((signer) => signer.isValid(topology, chainId).isValid)
-    const validExplicitSigners = this._explicitSigners.filter((signer) => signer.isValid(topology, chainId).isValid)
 
     // Prioritize implicit signers
-    const availableSigners = [...validImplicitSigners, ...validExplicitSigners]
+    const availableSigners = [...this._implicitSigners, ...this._explicitSigners]
     if (availableSigners.length === 0) {
       throw new Error('No signers match the topology')
     }
@@ -150,9 +148,18 @@ export class SessionManager implements SapientSigner {
     const signers: SessionSigner[] = []
     for (const call of calls) {
       let supported = false
+      let expiredSupportedSigner: SessionSigner | undefined
       for (const signer of availableSigners) {
         try {
           supported = await signer.supportedCall(wallet, chainId, call, this.address, this._provider)
+          if (supported) {
+            // Check signer validity
+            const signerValidity = await signer.isValid(topology, chainId)
+            if (signerValidity.invalidReason === 'Expired') {
+              expiredSupportedSigner = signer
+            }
+            supported = signerValidity.isValid
+          }
         } catch (error) {
           console.error('findSignersForCalls error', error)
           continue
@@ -163,6 +170,9 @@ export class SessionManager implements SapientSigner {
         }
       }
       if (!supported) {
+        if (expiredSupportedSigner) {
+          throw new Error(`Signer supporting call is expired: ${expiredSupportedSigner.address}`)
+        }
         throw new Error('No signer supported for call')
       }
     }
@@ -256,6 +266,7 @@ export class SessionManager implements SapientSigner {
 
     const signers = await this.findSignersForCalls(wallet, chainId, payload.calls)
     if (signers.length !== payload.calls.length) {
+      // Unreachable. Throw in findSignersForCalls
       throw new Error('No signer supported for call')
     }
     const signatures = await Promise.all(

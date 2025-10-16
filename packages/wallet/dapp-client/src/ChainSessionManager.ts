@@ -236,7 +236,7 @@ export class ChainSessionManager {
 
     const implicitSession = await this.sequenceStorage.getImplicitSession()
 
-    if (implicitSession && implicitSession.chainId === this.chainId) {
+    if (implicitSession) {
       await this._initializeImplicitSessionInternal(
         implicitSession.pk,
         walletAddress,
@@ -453,9 +453,9 @@ export class ChainSessionManager {
         throw new ModifyExplicitSessionError('Session address is required.')
       }
 
-      const existingExplicitSession: ExplicitSession = this.explicitSessions.find((s) =>
+      const existingExplicitSession = this.explicitSessions.find((s) =>
         Address.isEqual(s.sessionAddress!, modifiedExplicitSession.sessionAddress!),
-      ) as ExplicitSession
+      )
       if (!existingExplicitSession) {
         throw new ModifyExplicitSessionError('Session not found.')
       }
@@ -491,6 +491,8 @@ export class ChainSessionManager {
       }
 
       existingExplicitSession.permissions = modifiedExplicitSession.permissions
+      existingExplicitSession.deadline = modifiedExplicitSession.deadline
+      existingExplicitSession.valueLimit = modifiedExplicitSession.valueLimit
 
       if (this.transport?.mode === TransportMode.POPUP) {
         this.transport?.closeWallet()
@@ -725,6 +727,20 @@ export class ChainSessionManager {
       throw new InitializationError(`Explicit session init failed after ${maxRetries} attempts: ${lastError.message}`)
   }
 
+  private async _refreshExplicitSession(expiredSignerAddress: Address.Address): Promise<void> {
+    if (!this.wallet || !this.sessionManager || !this.provider || !this.isInitialized)
+      throw new InitializationError('Session is not initialized.')
+    // Find current explicit session
+    const explicitSigner = this.explicitSessions.find((s) => Address.isEqual(s.sessionAddress, expiredSignerAddress))
+    if (!explicitSigner) throw new ModifyExplicitSessionError('Explicit session not found.')
+    // Update the deadline
+    const newExplicitSession = {
+      ...explicitSigner,
+      deadline: BigInt(Math.floor(Date.now() / 1000)) + BigInt(24 * 60 * 60),
+    }
+    await this.modifyExplicitSession(newExplicitSession)
+  }
+
   /**
    * Checks if the current session has permission to execute a set of transactions.
    * @param transactions The transactions to check permissions for.
@@ -751,6 +767,19 @@ export class ChainSessionManager {
       await this.sessionManager.findSignersForCalls(this.wallet.address, this.chainId, calls)
       return true
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Signer supporting call is expired')) {
+        // Extract the expired signer address from the message with address regex
+        const expiredSignerAddress = error.message.match(/(0x[0-9a-fA-F]{40})/)?.[1]
+        if (expiredSignerAddress) {
+          // Refresh the session
+          await this._refreshExplicitSession(Address.from(expiredSignerAddress))
+          // Retry the permission check
+          return this.hasPermission(transactions)
+        } else {
+          // Could not parse error message. Rethrow as this shouldn't happen.
+          throw error
+        }
+      }
       // An error from findSignersForCalls indicates a permission failure.
       console.warn(
         `Permission check failed for chain ${this.chainId}:`,
