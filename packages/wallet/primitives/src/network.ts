@@ -102,14 +102,6 @@ export const ChainId = {
   IMMUTABLE_ZKEVM: 13371,
   IMMUTABLE_ZKEVM_TESTNET: 13473,
 
-  // The Root Network
-  ROOT_NETWORK: 7668,
-  ROOT_NETWORK_PORCINI: 7672,
-
-  // LAOS
-  LAOS: 6283,
-  LAOS_SIGMA_TESTNET: 62850,
-
   // ETHERLINK
   ETHERLINK: 42793,
   ETHERLINK_TESTNET: 128123,
@@ -119,6 +111,7 @@ export const ChainId = {
   MOONBASE_ALPHA: 1287,
 
   // MONAD
+  MONAD: 143,
   MONAD_TESTNET: 10143,
 
   // SOMNIA
@@ -752,74 +745,6 @@ export const ALL: Network[] = [
     },
   },
   {
-    chainId: ChainId.ROOT_NETWORK,
-    type: NetworkType.MAINNET,
-    name: 'rootnet',
-    title: 'The Root Network',
-    rpcUrl: getRpcUrl('rootnet'),
-    logoUrl: getLogoUrl(ChainId.ROOT_NETWORK),
-    blockExplorer: {
-      name: 'The Root Network Explorer',
-      url: 'https://rootscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'XRP',
-      name: 'XRP',
-      decimals: 18,
-    },
-  },
-  {
-    chainId: ChainId.ROOT_NETWORK_PORCINI,
-    type: NetworkType.TESTNET,
-    name: 'rootnet-porcini',
-    title: 'The Root Network Porcini Testnet',
-    rpcUrl: getRpcUrl('rootnet-porcini'),
-    logoUrl: getLogoUrl(ChainId.ROOT_NETWORK_PORCINI),
-    blockExplorer: {
-      name: 'The Root Network Porcini Testnet Explorer',
-      url: 'https://porcini.rootscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'XRP',
-      name: 'XRP',
-      decimals: 18,
-    },
-  },
-  {
-    chainId: ChainId.LAOS,
-    type: NetworkType.MAINNET,
-    name: 'laos',
-    title: 'LAOS',
-    rpcUrl: getRpcUrl('laos'),
-    logoUrl: getLogoUrl(ChainId.LAOS),
-    blockExplorer: {
-      name: 'LAOS Explorer',
-      url: 'https://blockscout.laos.laosfoundation.io/',
-    },
-    nativeCurrency: {
-      symbol: 'LAOS',
-      name: 'LAOS',
-      decimals: 18,
-    },
-  },
-  {
-    chainId: ChainId.LAOS_SIGMA_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'laos-sigma-testnet',
-    title: 'LAOS Sigma Testnet',
-    rpcUrl: getRpcUrl('laos-sigma-testnet'),
-    logoUrl: getLogoUrl(ChainId.LAOS_SIGMA_TESTNET),
-    blockExplorer: {
-      name: 'LAOS Sigma Testnet Explorer',
-      url: 'https://sigma.explorer.laosnetwork.io/',
-    },
-    nativeCurrency: {
-      symbol: 'SIGMA',
-      name: 'SIGMA',
-      decimals: 18,
-    },
-  },
-  {
     chainId: ChainId.MOONBEAM,
     type: NetworkType.MAINNET,
     name: 'moonbeam',
@@ -884,6 +809,23 @@ export const ALL: Network[] = [
     nativeCurrency: {
       symbol: 'XTZ',
       name: 'Tez',
+      decimals: 18,
+    },
+  },
+  {
+    chainId: ChainId.MONAD,
+    type: NetworkType.MAINNET,
+    name: 'monad',
+    title: 'Monad',
+    rpcUrl: getRpcUrl('monad'),
+    logoUrl: getLogoUrl(ChainId.MONAD),
+    blockExplorer: {
+      name: 'Monad Explorer',
+      url: 'https://mainnet-beta.monvision.io/',
+    },
+    nativeCurrency: {
+      symbol: 'MON',
+      name: 'MON',
       decimals: 18,
     },
   },
