@@ -1,5 +1,14 @@
 # @0xsequence/replacer
 
+## 2.3.31
+
+### Patch Changes
+
+- Update marketplace API
+- Updated dependencies
+  - @0xsequence/core@2.3.31
+  - @0xsequence/abi@2.3.31
+
 ## 2.3.30
 
 ### Patch Changes

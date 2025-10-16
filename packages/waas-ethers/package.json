@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/waas-ethers",
-  "version": "2.3.30",
+  "version": "2.3.31",
   "description": "waas ethers wrapper",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/waas",
   "source": "src/index.ts",

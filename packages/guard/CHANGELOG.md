@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.3.31
+
+### Patch Changes
+
+- Update marketplace API
+- Updated dependencies
+  - @0xsequence/account@2.3.31
+  - @0xsequence/signhub@2.3.31
+  - @0xsequence/utils@2.3.31
+  - @0xsequence/core@2.3.31
+
 ## 2.3.30
 
 ### Patch Changes

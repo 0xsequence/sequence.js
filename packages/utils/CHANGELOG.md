@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.31
+
+### Patch Changes
+
+- Update marketplace API
+
 ## 2.3.30
 
 ### Patch Changes

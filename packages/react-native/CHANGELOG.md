@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.31
+
+### Patch Changes
+
+- Update marketplace API
+- Updated dependencies
+  - @0xsequence/waas@2.3.31
+
 ## 2.3.30
 
 ### Patch Changes
