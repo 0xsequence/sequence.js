@@ -8,7 +8,11 @@ export function isWitnessExtraSignerKind(extra: any): extra is WitnessExtraSigne
 }
 
 function toKnownKind(kind: string): Kind {
-  if (Object.values(Kinds).includes(kind as Kind)) {
+  if (kind.startsWith('custom-')) {
+    return kind as Kind
+  }
+
+  if (Object.values(Kinds).includes(kind as (typeof Kinds)[keyof typeof Kinds])) {
     return kind as Kind
   }
 
