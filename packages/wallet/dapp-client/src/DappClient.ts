@@ -13,6 +13,7 @@ import { DappTransport } from './DappTransport.js'
 import { ConnectionError, InitializationError, SigningError, TransactionError } from './utils/errors.js'
 import { SequenceStorage, WebStorage } from './utils/storage.js'
 import {
+  CreateNewSessionResponse,
   DappClientExplicitSessionEventListener,
   DappClientWalletActionEventListener,
   GetFeeTokensResponse,
@@ -63,7 +64,7 @@ interface DappClientEventMap {
 export class DappClient {
   public isInitialized = false
 
-  public loginMethod: string | null = null
+  public loginMethod: LoginMethod | null = null
   public userEmail: string | null = null
   public guard?: GuardConfig
 
@@ -87,6 +88,7 @@ export class DappClient {
   private isInitializing = false
 
   private walletAddress: Address.Address | null = null
+  private hasSessionlessConnection = false
   private eventListeners: {
     [K in keyof DappClientEventMap]?: Set<DappClientEventMap[K]>
   } = {}
@@ -275,17 +277,37 @@ export class DappClient {
   private async _loadStateFromStorage(): Promise<void> {
     const implicitSession = await this.sequenceStorage.getImplicitSession()
 
-    const explicitSessions = await this.sequenceStorage.getExplicitSessions()
+    const [explicitSessions, sessionlessConnection] = await Promise.all([
+      this.sequenceStorage.getExplicitSessions(),
+      this.sequenceStorage.getSessionlessConnection(),
+    ])
     const chainIdsToInitialize = new Set([
       ...(implicitSession?.chainId !== undefined ? [implicitSession.chainId] : []),
       ...explicitSessions.map((s) => s.chainId),
     ])
 
     if (chainIdsToInitialize.size === 0) {
-      this.isInitialized = false
-      this.emit('sessionsUpdated')
+      if (sessionlessConnection) {
+        await this.applySessionlessConnectionState(
+          sessionlessConnection.walletAddress,
+          sessionlessConnection.loginMethod,
+          sessionlessConnection.userEmail,
+          sessionlessConnection.guard,
+          false,
+        )
+      } else {
+        this.isInitialized = false
+        this.hasSessionlessConnection = false
+        this.walletAddress = null
+        this.loginMethod = null
+        this.userEmail = null
+        this.guard = undefined
+        this.emit('sessionsUpdated')
+      }
       return
     }
+
+    this.hasSessionlessConnection = false
 
     const initPromises = Array.from(chainIdsToInitialize).map((chainId) =>
       this.getChainSessionManager(chainId).initialize(),
@@ -297,6 +319,7 @@ export class DappClient {
     this.loginMethod = result[0]?.loginMethod || null
     this.userEmail = result[0]?.userEmail || null
     this.guard = implicitSession?.guard || explicitSessions.find((s) => !!s.guard)?.guard
+    await this.sequenceStorage.clearSessionlessConnection()
 
     this.isInitialized = true
     this.emit('sessionsUpdated')
@@ -388,7 +411,27 @@ export class DappClient {
       if (!chainSessionManager.isInitialized && this.walletAddress) {
         chainSessionManager.initializeWithWallet(this.walletAddress)
       }
-      await chainSessionManager.handleRedirectResponse(response)
+      const handled = await chainSessionManager.handleRedirectResponse(response)
+      if (handled && action === RequestActionType.CREATE_NEW_SESSION) {
+        const hasImplicit = !!chainSessionManager.getImplicitSession()
+        const hasExplicit = chainSessionManager.getExplicitSessions().length > 0
+        if (hasImplicit || hasExplicit) {
+          this.hasSessionlessConnection = false
+          await this._loadStateFromStorage()
+        } else if ('payload' in response && response.payload) {
+          const payload = response.payload as CreateNewSessionResponse
+          const walletAddress = chainSessionManager.getWalletAddress() ?? Address.from(payload.walletAddress)
+          await this.applySessionlessConnectionState(
+            walletAddress,
+            chainSessionManager.loginMethod,
+            chainSessionManager.userEmail,
+            chainSessionManager.getGuard(),
+          )
+        }
+      } else if (handled && action === RequestActionType.ADD_EXPLICIT_SESSION) {
+        this.hasSessionlessConnection = false
+        await this._loadStateFromStorage()
+      }
     } else {
       throw new InitializationError(`Could not find a pending request context for the redirect action: ${action}`)
     }
@@ -431,12 +474,29 @@ export class DappClient {
 
     try {
       const chainSessionManager = this.getChainSessionManager(chainId)
+      const shouldCreateSession = !!sessionConfig || (options.includeImplicitSession ?? false)
+      this.hasSessionlessConnection = false
       await chainSessionManager.createNewSession(this.origin, sessionConfig, options)
 
       // For popup mode, we need to manually update the state and emit an event.
       // For redirect mode, this code won't be reached; the page will navigate away.
       if (this.transport.mode === TransportMode.POPUP) {
-        await this._loadStateFromStorage()
+        const hasImplicitSession = !!chainSessionManager.getImplicitSession()
+        const hasExplicitSessions = chainSessionManager.getExplicitSessions().length > 0
+        if (shouldCreateSession && (hasImplicitSession || hasExplicitSessions)) {
+          await this._loadStateFromStorage()
+        } else {
+          const walletAddress = chainSessionManager.getWalletAddress()
+          if (!walletAddress) {
+            throw new InitializationError('Wallet address missing after connect.')
+          }
+          await this.applySessionlessConnectionState(
+            walletAddress,
+            chainSessionManager.loginMethod,
+            chainSessionManager.userEmail,
+            chainSessionManager.getGuard(),
+          )
+        }
       }
     } catch (err) {
       await this.disconnect()
@@ -744,6 +804,8 @@ export class DappClient {
     this.walletAddress = null
     this.loginMethod = null
     this.userEmail = null
+    this.guard = undefined
+    this.hasSessionlessConnection = false
     this.emit('sessionsUpdated')
   }
 
@@ -756,6 +818,30 @@ export class DappClient {
     const listeners = this.eventListeners[event]
     if (listeners) {
       listeners.forEach((listener) => (listener as (...a: typeof args) => void)(...args))
+    }
+  }
+
+  private async applySessionlessConnectionState(
+    walletAddress: Address.Address,
+    loginMethod?: LoginMethod | null,
+    userEmail?: string | null,
+    guard?: GuardConfig,
+    persist: boolean = true,
+  ): Promise<void> {
+    this.walletAddress = walletAddress
+    this.loginMethod = loginMethod ?? null
+    this.userEmail = userEmail ?? null
+    this.guard = guard
+    this.hasSessionlessConnection = true
+    this.isInitialized = true
+    this.emit('sessionsUpdated')
+    if (persist) {
+      await this.sequenceStorage.saveSessionlessConnection({
+        walletAddress,
+        loginMethod: this.loginMethod ?? undefined,
+        userEmail: this.userEmail ?? undefined,
+        guard: this.guard,
+      })
     }
   }
 
@@ -812,6 +898,9 @@ export class DappClient {
     }
     if (!manager.isInitialized) {
       throw new InitializationError(`ChainSessionManager for chain ${chainId} could not be initialized.`)
+    }
+    if (!manager.getImplicitSession() && manager.getExplicitSessions().length === 0) {
+      throw new InitializationError('No sessions are available for the requested action.')
     }
     return manager
   }

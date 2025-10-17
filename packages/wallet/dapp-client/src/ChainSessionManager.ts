@@ -174,7 +174,7 @@ export class ChainSessionManager {
    * @throws {InitializationError} If initialization fails.
    */
   async initialize(): Promise<{
-    loginMethod: string | null
+    loginMethod: LoginMethod | null
     userEmail: string | null
   } | void> {
     if (this.isInitializing) return
@@ -280,26 +280,34 @@ export class ChainSessionManager {
       throw new InitializationError('A session already exists. Disconnect first.')
     }
 
-    const newPk = await this.randomPrivateKeyFn()
-    const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: newPk }))
-    const completeSession = {
-      sessionAddress: newSignerAddress,
-      ...sessionConfig,
-    }
+    const shouldCreateSession = !!sessionConfig || (options.includeImplicitSession ?? false)
+
+    const newPk = shouldCreateSession ? await this.randomPrivateKeyFn() : null
+    const newSignerAddress =
+      shouldCreateSession && newPk ? Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: newPk })) : null
+    const completeSession =
+      shouldCreateSession && newSignerAddress
+        ? {
+            sessionAddress: newSignerAddress,
+            ...sessionConfig,
+          }
+        : undefined
 
     try {
       if (!this.transport) throw new InitializationError('Transport failed to initialize.')
 
       const payload: CreateNewSessionPayload = {
         origin,
-        session: completeSession as ExplicitSession,
+        session: completeSession as ExplicitSession | undefined,
         includeImplicitSession: options.includeImplicitSession ?? false,
         preferredLoginMethod: options.preferredLoginMethod,
         email: options.preferredLoginMethod === 'email' ? options.email : undefined,
       }
 
       if (this.transport.mode === TransportMode.REDIRECT) {
-        await this.sequenceStorage.saveTempSessionPk(newPk)
+        if (shouldCreateSession && newPk) {
+          await this.sequenceStorage.saveTempSessionPk(newPk)
+        }
         await this.sequenceStorage.savePendingRequest({
           chainId: this.chainId,
           action: RequestActionType.CREATE_NEW_SESSION,
@@ -318,34 +326,44 @@ export class ChainSessionManager {
       const receivedAddress = Address.from(connectResponse.walletAddress)
       const { attestation, signature, userEmail, loginMethod, guard } = connectResponse
 
-      if (attestation && signature) {
+      if (shouldCreateSession) {
         await this._resetStateAndClearCredentials()
 
+        this.loginMethod = null
+        this.userEmail = null
+
         this.initializeWithWallet(receivedAddress)
 
-        await this._initializeImplicitSessionInternal(
-          newPk,
-          receivedAddress,
-          attestation,
-          signature,
-          true,
-          loginMethod,
-          userEmail,
-          guard,
-        )
-      }
+        if (attestation && signature && newPk) {
+          await this._initializeImplicitSessionInternal(
+            newPk,
+            receivedAddress,
+            attestation,
+            signature,
+            true,
+            loginMethod,
+            userEmail,
+            guard,
+          )
+        }
 
-      if (sessionConfig) {
+        if (sessionConfig && newPk) {
+          await this._initializeExplicitSessionInternal(newPk, loginMethod, userEmail, guard, true)
+          await this.sequenceStorage.saveExplicitSession({
+            pk: newPk,
+            walletAddress: receivedAddress,
+            chainId: this.chainId,
+            guard,
+            loginMethod,
+            userEmail,
+          })
+        }
+      } else {
+        await this._resetStateAndClearCredentials()
         this.initializeWithWallet(receivedAddress)
-        await this._initializeExplicitSessionInternal(newPk, loginMethod, userEmail, guard, true)
-        await this.sequenceStorage.saveExplicitSession({
-          pk: newPk,
-          walletAddress: receivedAddress,
-          chainId: this.chainId,
-          guard,
-          loginMethod,
-          userEmail,
-        })
+        this.loginMethod = loginMethod ?? null
+        this.userEmail = userEmail ?? null
+        this.guard = guard
       }
 
       if (this.transport.mode === TransportMode.POPUP) {
@@ -422,6 +440,7 @@ export class ChainSessionManager {
         userEmail: response.userEmail,
         guard: response.guard,
       })
+      await this.sequenceStorage.clearSessionlessConnection()
     } catch (err) {
       if (this.transport?.mode === TransportMode.POPUP) this.transport.closeWallet()
       throw new AddExplicitSessionError(`Adding explicit session failed: ${err}`)
@@ -507,26 +526,35 @@ export class ChainSessionManager {
     payload: CreateNewSessionResponse
     action: string
   }): Promise<boolean> {
-    const tempPk = await this.sequenceStorage.getAndClearTempSessionPk()
-    if (!tempPk) {
-      throw new InitializationError('Failed to retrieve temporary session key after redirect.')
-    }
-
     try {
       const connectResponse = response.payload
       const receivedAddress = Address.from(connectResponse.walletAddress)
       const { userEmail, loginMethod, guard } = connectResponse
+      const savedRequest = await this.sequenceStorage.peekPendingRequest()
+      const savedPayload = savedRequest?.payload as CreateNewSessionPayload | undefined
+      const explicitSessionRequested = !!savedPayload?.session
+      const implicitSessionRequested = savedPayload?.includeImplicitSession ?? false
+      const needsTempPk = explicitSessionRequested || implicitSessionRequested
+      const tempPk = needsTempPk ? await this.sequenceStorage.getAndClearTempSessionPk() : null
+
+      if (needsTempPk && !tempPk) {
+        throw new InitializationError('Failed to retrieve temporary session key after redirect.')
+      }
 
       if (response.action === RequestActionType.CREATE_NEW_SESSION) {
         const { attestation, signature } = connectResponse
 
-        const savedRequest = await this.sequenceStorage.peekPendingRequest()
-        const savedPayload = savedRequest?.payload as CreateNewSessionPayload | undefined
         await this._resetStateAndClearCredentials()
+
+        this.loginMethod = null
+        this.userEmail = null
 
         this.initializeWithWallet(receivedAddress)
 
-        if (attestation && signature) {
+        if (implicitSessionRequested) {
+          if (!attestation || !signature || !tempPk) {
+            throw new InitializationError('Missing implicit session data in redirect response.')
+          }
           await this._initializeImplicitSessionInternal(
             tempPk,
             receivedAddress,
@@ -539,7 +567,7 @@ export class ChainSessionManager {
           )
         }
 
-        if (savedRequest && savedPayload && savedPayload.session?.permissions) {
+        if (explicitSessionRequested && savedPayload?.session && tempPk) {
           await this._initializeExplicitSessionInternal(tempPk, loginMethod, userEmail, guard, true)
           await this.sequenceStorage.saveExplicitSession({
             pk: tempPk,
@@ -549,29 +577,42 @@ export class ChainSessionManager {
             userEmail,
             guard,
           })
+          await this.sequenceStorage.clearSessionlessConnection()
+        }
+
+        if (!explicitSessionRequested && !implicitSessionRequested) {
+          this.loginMethod = loginMethod ?? null
+          this.userEmail = userEmail ?? null
+          this.guard = guard
         }
       } else if (response.action === RequestActionType.ADD_EXPLICIT_SESSION) {
         if (!this.walletAddress || !Address.isEqual(receivedAddress, this.walletAddress)) {
           throw new InitializationError('Received an explicit session for a wallet that is not active.')
         }
 
+        const explicitSessionPk = tempPk ?? (await this.sequenceStorage.getAndClearTempSessionPk())
+        if (!explicitSessionPk) {
+          throw new InitializationError('Failed to retrieve temporary session key for explicit session.')
+        }
+
         await this._initializeExplicitSessionInternal(
-          tempPk,
+          explicitSessionPk,
           this.loginMethod ?? undefined,
           this.userEmail ?? undefined,
           this.guard ?? undefined,
           true,
         )
         await this.sequenceStorage.saveExplicitSession({
-          pk: tempPk,
+          pk: explicitSessionPk,
           walletAddress: receivedAddress,
           chainId: this.chainId,
           loginMethod: this.loginMethod ?? undefined,
           userEmail: this.userEmail ?? undefined,
           guard: this.guard ?? undefined,
         })
+        await this.sequenceStorage.clearSessionlessConnection()
 
-        const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: tempPk }))
+        const newSignerAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: explicitSessionPk }))
 
         this.emit('explicitSessionResponse', {
           action: RequestActionType.ADD_EXPLICIT_SESSION,
@@ -580,6 +621,8 @@ export class ChainSessionManager {
             sessionAddress: newSignerAddress,
           },
         })
+      } else {
+        throw new WalletRedirectError(`Received unhandled redirect action: ${response.action}`)
       }
       this.isInitialized = true
       return true
@@ -929,6 +972,10 @@ export class ChainSessionManager {
     return this.walletAddress
   }
 
+  getGuard(): GuardConfig | undefined {
+    return this.guard
+  }
+
   /**
    * Gets the sessions (signers) managed by this session manager.
    * @returns An array of session objects.
@@ -1036,6 +1083,7 @@ export class ChainSessionManager {
     this.wallet = null
     this.sessionManager = null
     this.isInitialized = false
+    this.guard = undefined
   }
 
   /**
@@ -1045,5 +1093,6 @@ export class ChainSessionManager {
     this._resetState()
     await this.sequenceStorage.clearImplicitSession()
     await this.sequenceStorage.clearExplicitSessions()
+    await this.sequenceStorage.clearSessionlessConnection()
   }
 }
