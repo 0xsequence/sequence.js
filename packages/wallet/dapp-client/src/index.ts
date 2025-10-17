@@ -21,6 +21,8 @@ export type {
   SendWalletTransactionResponse,
   WalletActionResponse,
   GetFeeTokensResponse,
+  FeeToken,
+  FeeOption,
 } from './types/index.js'
 export { RequestActionType, TransportMode } from './types/index.js'
 export {
@@ -44,4 +46,4 @@ export { WebStorage } from './utils/storage.js'
 
 export { Attestation, Permission, Extensions, SessionConfig, Constants, Payload } from '@0xsequence/wallet-primitives'
 export type { ExplicitSessionConfig, ExplicitSession, ImplicitSession, Session } from '@0xsequence/wallet-core'
-export { Signers, Wallet, Utils, Relayer, Envelope, State } from '@0xsequence/wallet-core'
+export { Signers, Wallet, Utils, Envelope, State } from '@0xsequence/wallet-core'

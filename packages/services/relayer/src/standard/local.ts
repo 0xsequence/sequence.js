@@ -2,8 +2,8 @@ import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { EIP1193Provider } from 'mipd'
 import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
-import { FeeToken, IntentPrecondition } from './rpc/relayer.gen.js'
-import { decodePrecondition } from '../../preconditions/index.js'
+import { FeeToken, IntentPrecondition } from '../rpc-relayer/relayer.gen.js'
+import { decodePrecondition } from '../preconditions/index.js'
 import {
   erc20BalanceOf,
   erc20Allowance,

@@ -154,7 +154,7 @@ export class SessionManager implements SapientSigner {
           supported = await signer.supportedCall(wallet, chainId, call, this.address, this._provider)
           if (supported) {
             // Check signer validity
-            const signerValidity = await signer.isValid(topology, chainId)
+            const signerValidity = signer.isValid(topology, chainId)
             if (signerValidity.invalidReason === 'Expired') {
               expiredSupportedSigner = signer
             }
@@ -173,7 +173,9 @@ export class SessionManager implements SapientSigner {
         if (expiredSupportedSigner) {
           throw new Error(`Signer supporting call is expired: ${expiredSupportedSigner.address}`)
         }
-        throw new Error('No signer supported for call')
+        throw new Error(
+          `No signer supported for call. ` + `Call: to=${call.to}, data=${call.data}, value=${call.value}, `,
+        )
       }
     }
     return signers

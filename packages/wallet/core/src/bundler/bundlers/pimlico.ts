@@ -2,7 +2,7 @@ import { Payload } from '@0xsequence/wallet-primitives'
 import { Bundler } from '../bundler.js'
 import { Provider, Hex, Address, RpcTransport } from 'ox'
 import { UserOperation } from 'ox/erc4337'
-import { OperationStatus } from '../relayer.js'
+import { Relayer } from '@0xsequence/relayer'
 
 type FeePerGasPair = {
   maxFeePerGas: Hex.Hex | bigint
@@ -103,7 +103,7 @@ export class PimlicoBundler implements Bundler {
     }
   }
 
-  async status(opHash: Hex.Hex, _chainId: number): Promise<OperationStatus> {
+  async status(opHash: Hex.Hex, _chainId: number): Promise<Relayer.OperationStatus> {
     try {
       type PimlicoStatusResp = {
         status: 'not_found' | 'not_submitted' | 'submitted' | 'rejected' | 'included' | 'failed' | 'reverted'

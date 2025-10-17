@@ -1,10 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ExplicitSession, Relayer } from '@0xsequence/wallet-core'
+import { Relayer, RelayerGen } from '@0xsequence/relayer'
+import { ExplicitSession } from '@0xsequence/wallet-core'
 import { Attestation, Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import type { TypedData } from 'ox/TypedData'
 
 // --- Public Interfaces and Constants ---
+
+export type FeeToken = RelayerGen.FeeToken
+export type FeeOption = RelayerGen.FeeOption
+export type OperationFailedStatus = Relayer.OperationFailedStatus
+export type OperationStatus = Relayer.OperationStatus
 
 export const RequestActionType = {
   CREATE_NEW_SESSION: 'createNewSession',
@@ -183,6 +189,6 @@ export interface SendRequestOptions {
 
 export type GetFeeTokensResponse = {
   isFeeRequired: boolean
-  tokens?: Relayer.Standard.Rpc.FeeToken[]
+  tokens?: FeeToken[]
   paymentAddress?: Address.Address
 }

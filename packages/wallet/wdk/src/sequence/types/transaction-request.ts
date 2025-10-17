@@ -1,6 +1,7 @@
-import { Envelope, Relayer } from '@0xsequence/wallet-core'
+import { Envelope } from '@0xsequence/wallet-core'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
+import { Relayer } from '@0xsequence/relayer'
 
 export type TransactionRequest = {
   to: Address.Address

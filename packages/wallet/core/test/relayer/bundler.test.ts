@@ -2,8 +2,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { Address, Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
-import { Bundler, isBundler } from '../../src/relayer/bundler.js'
-import { OperationStatus } from '../../src/relayer/relayer.js'
+import { Bundler, isBundler } from '../../src/bundler/index.js'
+import { Relayer } from '@0xsequence/relayer'
 
 // Test addresses and data
 const TEST_WALLET_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
@@ -220,7 +220,7 @@ describe('Bundler', () => {
     })
 
     it('should handle various operation statuses', async () => {
-      const statuses: OperationStatus[] = [
+      const statuses: Relayer.OperationStatus[] = [
         { status: 'unknown' },
         { status: 'pending' },
         { status: 'confirmed', transactionHash: TEST_OP_HASH },

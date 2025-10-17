@@ -1422,7 +1422,6 @@
 - relayer: fix Relayer.wait() interface
 
   The interface for calling Relayer.wait() has changed. Instead of a single optional ill-defined timeout/delay parameter, there are three optional parameters, in order:
-
   - timeout: the maximum time to wait for the transaction receipt
   - delay: the polling interval, i.e. the time to wait between requests
   - maxFails: the maximum number of hard failures to tolerate before giving up
@@ -1761,7 +1760,6 @@
 ### Minor Changes
 
 - major architectural changes in Sequence design
-
   - only one API instance, API is no longer a per-chain service
   - separate per-chain indexer service, API no longer handles indexing
   - single contract metadata service, API no longer serves metadata

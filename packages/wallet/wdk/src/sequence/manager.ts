@@ -1,5 +1,5 @@
-import { Signers as CoreSigners, Relayer, State } from '@0xsequence/wallet-core'
-
+import { Bundler, Signers as CoreSigners, State } from '@0xsequence/wallet-core'
+import { Relayer, StandardRelayer } from '@0xsequence/relayer'
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
@@ -52,7 +52,7 @@ export type ManagerOptions = {
   stateProvider?: State.Provider
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
-  bundlers?: Relayer.Bundler[]
+  bundlers?: Bundler.Bundler[]
   guardUrl?: string
   guardAddresses?: Record<GuardRole, Address.Address>
 
@@ -104,7 +104,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Sequence.Provider(),
   networks: Network.ALL,
-  relayers: () => [Relayer.Standard.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [StandardRelayer.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
   bundlers: [],
 
   guardUrl: 'https://dev-guard.sequence.app',
@@ -193,7 +193,7 @@ export type Sequence = {
 
   readonly networks: Network.Network[]
   readonly relayers: Relayer.Relayer[]
-  readonly bundlers: Relayer.Bundler[]
+  readonly bundlers: Bundler.Bundler[]
 
   readonly defaultGuardTopology: Config.SignerLeaf
   readonly defaultRecoverySettings: RecoverySettings
@@ -358,7 +358,7 @@ export class Manager {
     // Add EIP-6963 relayers if enabled
     if (ops.multiInjectedProviderDiscovery) {
       try {
-        relayers.push(...Relayer.Standard.EIP6963.getRelayers())
+        relayers.push(...StandardRelayer.EIP6963.getRelayers())
       } catch (error) {
         console.warn('Failed to initialize EIP-6963 relayers:', error)
       }
