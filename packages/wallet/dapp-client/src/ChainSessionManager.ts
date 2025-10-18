@@ -75,7 +75,7 @@ export class ChainSessionManager {
   private sessionManager: Signers.SessionManager | null = null
   private wallet: Wallet | null = null
   private provider: Provider.Provider | null = null
-  private relayer: RpcRelayer.RpcRelayer
+  private relayer: RpcRelayer
   private readonly chainId: number
   public transport: DappTransport | null = null
   private sequenceStorage: SequenceStorage
@@ -124,7 +124,7 @@ export class ChainSessionManager {
     }
     this.guard = guard
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
-    this.relayer = new RpcRelayer.RpcRelayer(
+    this.relayer = new RpcRelayer(
       getRelayerUrl(chainId, relayerUrl),
       this.chainId,
       getRpcUrl(chainId, nodesUrl, projectAccessKey),
