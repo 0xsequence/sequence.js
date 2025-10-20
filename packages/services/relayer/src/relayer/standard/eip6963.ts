@@ -1,6 +1,6 @@
 import { createStore, EIP6963ProviderInfo, EIP6963ProviderDetail } from 'mipd'
 import { EIP1193ProviderAdapter, LocalRelayer } from './local.js'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
 import { Address, Hex } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { FeeToken, IntentPrecondition } from '../rpc-relayer/relayer.gen.js'

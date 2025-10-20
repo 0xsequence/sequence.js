@@ -9,8 +9,8 @@ import {
 } from './relayer.gen.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
 import { Constants, Payload, Network } from '@0xsequence/wallet-primitives'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
-import { decodePrecondition } from '../preconditions/codec.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
+import { decodePrecondition } from '../../preconditions/index.js'
 import {
   erc20BalanceOf,
   erc20Allowance,

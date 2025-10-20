@@ -46,7 +46,7 @@ import {
 } from './types/index.js'
 import { CACHE_DB_NAME, VALUE_FORWARDER_ADDRESS } from './utils/constants.js'
 import { ExplicitSession, ImplicitSession, ExplicitSessionConfig } from './index.js'
-import { RpcRelayer } from '@0xsequence/relayer'
+import { Relayer } from '@0xsequence/relayer'
 
 interface ChainSessionManagerEventMap {
   explicitSessionResponse: ExplicitSessionEventListener
@@ -75,7 +75,7 @@ export class ChainSessionManager {
   private sessionManager: Signers.SessionManager | null = null
   private wallet: Wallet | null = null
   private provider: Provider.Provider | null = null
-  private relayer: RpcRelayer.RpcRelayer
+  private relayer: Relayer.RpcRelayer
   private readonly chainId: number
   public transport: DappTransport | null = null
   private sequenceStorage: SequenceStorage
@@ -124,7 +124,7 @@ export class ChainSessionManager {
     }
     this.guard = guard
     this.provider = Provider.from(RpcTransport.fromHttp(rpcUrl))
-    this.relayer = new RpcRelayer.RpcRelayer(
+    this.relayer = new Relayer.RpcRelayer(
       getRelayerUrl(chainId, relayerUrl),
       this.chainId,
       getRpcUrl(chainId, nodesUrl, projectAccessKey),
