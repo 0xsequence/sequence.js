@@ -153,7 +153,10 @@ export enum ChainId {
   KATANA = 747474,
 
   // SANDBOX
-  SANDBOX_TESTNET = 6252
+  SANDBOX_TESTNET = 6252,
+
+  //ARC
+  ARC_TESTNET = 5042002
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1251,6 +1254,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'SAND',
       name: 'SAND',
       decimals: 18
+    }
+  },
+
+  [ChainId.ARC_TESTNET]: {
+    chainId: ChainId.ARC_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'arc-testnet',
+    title: 'Arc testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARC_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Arc testnet',
+      rootUrl: 'https://arc-testnet-explorer.stg.blockchain.circle.com/'
+    },
+    nativeToken: {
+      symbol: 'USDC',
+      name: 'USDC',
+      decimals: 6
     }
   }
 }
