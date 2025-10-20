@@ -2,7 +2,6 @@ import { Address, Bytes, Hash, Hex } from 'ox'
 import {
   isRawConfig,
   isRawNestedLeaf,
-  isRawNode,
   isRawSignerLeaf,
   isSignedSapientSignerLeaf,
   isSignedSignerLeaf,

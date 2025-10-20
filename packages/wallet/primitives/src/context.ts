@@ -72,6 +72,15 @@ export const KnownContexts: KnownContext[] = [
   { name: 'Rc3_4337', development: true, ...Rc3_4337 },
 ]
 
+export function isContext(context: any): context is Context {
+  return (
+    (context as Context).factory !== undefined &&
+    (context as Context).stage1 !== undefined &&
+    (context as Context).stage2 !== undefined &&
+    (context as Context).creationCode !== undefined
+  )
+}
+
 export function isKnownContext(context: Context): context is KnownContext {
   return (context as KnownContext).name !== undefined && (context as KnownContext).development !== undefined
 }
