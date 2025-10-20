@@ -87,3 +87,22 @@ export function isRelayer(relayer: any): relayer is Relayer {
     'checkPrecondition' in relayer
   )
 }
+
+// Import RpcRelayer for re-export in namespace
+import { RpcRelayer as RpcRelayerClass } from './rpc-relayer/index.js'
+
+// Namespace export with cleaner API
+export namespace Relayer {
+  // Re-export RpcRelayer class
+  export const RpcRelayer = RpcRelayerClass
+  export type RpcRelayer = InstanceType<typeof RpcRelayerClass>
+
+  // Re-export types with cleaner names
+  export type Status = OperationStatus
+  export type FailedStatus = OperationFailedStatus
+  export type PendingStatus = OperationPendingStatus
+  export type ConfirmedStatus = OperationConfirmedStatus
+  export type UnknownStatus = OperationUnknownStatus
+  export type QueuedStatus = OperationQueuedStatus
+  export type PendingPreconditionStatus = OperationPendingPreconditionStatus
+}
