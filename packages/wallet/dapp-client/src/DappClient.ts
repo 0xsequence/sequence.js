@@ -28,7 +28,7 @@ import {
 import { TypedData } from 'ox/TypedData'
 import { KEYMACHINE_URL, NODES_URL, RELAYER_URL } from './utils/constants.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
-import { RpcRelayer } from '@0xsequence/relayer'
+import { Relayer } from '@0xsequence/relayer'
 
 export type DappClientEventListener = (data?: any) => void
 
@@ -622,7 +622,7 @@ export class DappClient {
    * @throws If the fee tokens cannot be fetched. {@link InitializationError}
    */
   async getFeeTokens(chainId: number): Promise<GetFeeTokensResponse> {
-    const relayer = new RpcRelayer.RpcRelayer(
+    const relayer = new Relayer.RpcRelayer(
       getRelayerUrl(chainId, this.relayerUrl),
       chainId,
       getRpcUrl(chainId, this.nodesUrl, this.projectAccessKey),

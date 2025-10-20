@@ -1,5 +1,3 @@
-export * as RpcRelayer from './rpc-relayer/index.js'
-export * as Relayer from './relayer.js'
-export * as StandardRelayer from './standard/index.js'
-export * as RelayerGen from './rpc-relayer/relayer.gen.js'
+export * as Relayer from './relayer/index.js'
+export * as RpcRelayerGen from './relayer/rpc-relayer/relayer.gen.js'
 export * as Preconditions from './preconditions/index.js'

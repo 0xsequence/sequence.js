@@ -1,5 +1,5 @@
 import { Envelope, Wallet, Bundler } from '@0xsequence/wallet-core'
-import { Relayer, StandardRelayer } from '@0xsequence/relayer'
+import { Relayer } from '@0xsequence/relayer'
 import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
 import { v7 as uuidv7 } from 'uuid'
@@ -350,7 +350,7 @@ export class Transactions implements TransactionsInterface {
             const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
 
             if (feeOptions.options.length === 0) {
-              const { name, icon } = relayer instanceof StandardRelayer.EIP6963.EIP6963Relayer ? relayer.info : {}
+              const { name, icon } = relayer instanceof Relayer.EIP6963.EIP6963Relayer ? relayer.info : {}
 
               return [
                 {

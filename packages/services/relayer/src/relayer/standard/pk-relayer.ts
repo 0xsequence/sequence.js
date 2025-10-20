@@ -1,7 +1,7 @@
 import { Payload, Precondition } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, Secp256k1, TransactionEnvelopeEip1559, TransactionReceipt } from 'ox'
 import { LocalRelayer } from './local.js'
-import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../relayer.js'
+import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
 import { FeeToken } from '../rpc-relayer/relayer.gen.js'
 
 export class PkRelayer implements Relayer {

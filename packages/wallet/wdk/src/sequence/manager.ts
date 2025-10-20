@@ -1,5 +1,5 @@
 import { Bundler, Signers as CoreSigners, State } from '@0xsequence/wallet-core'
-import { Relayer, StandardRelayer } from '@0xsequence/relayer'
+import { Relayer } from '@0xsequence/relayer'
 import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
@@ -104,7 +104,7 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Sequence.Provider(),
   networks: Network.ALL,
-  relayers: () => [StandardRelayer.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => [Relayer.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
   bundlers: [],
 
   guardUrl: 'https://dev-guard.sequence.app',
@@ -358,7 +358,7 @@ export class Manager {
     // Add EIP-6963 relayers if enabled
     if (ops.multiInjectedProviderDiscovery) {
       try {
-        relayers.push(...StandardRelayer.EIP6963.getRelayers())
+        relayers.push(...Relayer.EIP6963.getRelayers())
       } catch (error) {
         console.warn('Failed to initialize EIP-6963 relayers:', error)
       }
