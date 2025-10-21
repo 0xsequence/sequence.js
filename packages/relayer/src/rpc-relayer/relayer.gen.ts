@@ -431,6 +431,7 @@ export interface PingArgs {}
 export interface PingReturn {
   status: boolean
 }
+
 export interface VersionArgs {}
 
 export interface VersionArgs {}
@@ -438,6 +439,7 @@ export interface VersionArgs {}
 export interface VersionReturn {
   version: Version
 }
+
 export interface RuntimeStatusArgs {}
 
 export interface RuntimeStatusArgs {}
@@ -445,6 +447,7 @@ export interface RuntimeStatusArgs {}
 export interface RuntimeStatusReturn {
   status: RuntimeStatus
 }
+
 export interface GetSequenceContextArgs {}
 
 export interface GetSequenceContextArgs {}
@@ -452,6 +455,7 @@ export interface GetSequenceContextArgs {}
 export interface GetSequenceContextReturn {
   data: SequenceContext
 }
+
 export interface GetChainIDArgs {}
 
 export interface GetChainIDArgs {}
@@ -516,6 +520,7 @@ export interface UpdateMetaTxnGasLimitsArgs {
 export interface UpdateMetaTxnGasLimitsReturn {
   payload: string
 }
+
 export interface FeeTokensArgs {}
 
 export interface FeeTokensArgs {}
@@ -802,7 +807,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -815,7 +820,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -828,7 +833,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -841,7 +846,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -854,7 +859,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -867,7 +872,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -880,7 +885,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -893,7 +898,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -906,7 +911,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -919,7 +924,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -936,7 +941,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -949,7 +954,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -962,7 +967,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -979,7 +984,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -996,7 +1001,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1013,7 +1018,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1026,7 +1031,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1043,7 +1048,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1056,7 +1061,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1069,7 +1074,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1082,7 +1087,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1099,7 +1104,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1116,7 +1121,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1133,7 +1138,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1150,7 +1155,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1163,7 +1168,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1176,7 +1181,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1189,7 +1194,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1202,7 +1207,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1215,7 +1220,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1232,7 +1237,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1245,7 +1250,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1262,7 +1267,7 @@ export class Relayer implements RelayerClient {
         })
       },
       error => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
       }
     )
   }
@@ -1283,13 +1288,9 @@ const buildResponse = (res: Response): Promise<any> => {
     try {
       data = JSON.parse(text)
     } catch (error) {
-      let message = ''
-      if (error instanceof Error) {
-        message = error.message
-      }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`
+        cause: `JSON.parse(): ${error instanceof Error ? error.message : String(error)}: response text: ${text}`
       })
     }
     if (!res.ok) {
@@ -1881,7 +1882,7 @@ export enum errors {
   WebrpcBadResponse = 'WebrpcBadResponse',
   WebrpcServerPanic = 'WebrpcServerPanic',
   WebrpcInternalError = 'WebrpcInternalError',
-  WebrpcClientDisconnected = 'WebrpcClientDisconnected',
+  WebrpcClientAborted = 'WebrpcClientAborted',
   WebrpcStreamLost = 'WebrpcStreamLost',
   WebrpcStreamFinished = 'WebrpcStreamFinished',
   Unauthorized = 'Unauthorized',
@@ -1922,7 +1923,7 @@ export enum WebrpcErrorCodes {
   WebrpcBadResponse = -5,
   WebrpcServerPanic = -6,
   WebrpcInternalError = -7,
-  WebrpcClientDisconnected = -8,
+  WebrpcClientAborted = -8,
   WebrpcStreamLost = -9,
   WebrpcStreamFinished = -10,
   Unauthorized = 1000,
@@ -1963,7 +1964,7 @@ export const webrpcErrorByCode: { [code: number]: any } = {
   [-5]: WebrpcBadResponseError,
   [-6]: WebrpcServerPanicError,
   [-7]: WebrpcInternalErrorError,
-  [-8]: WebrpcClientDisconnectedError,
+  [-8]: WebrpcClientAbortedError,
   [-9]: WebrpcStreamLostError,
   [-10]: WebrpcStreamFinishedError,
   [1000]: UnauthorizedError,
