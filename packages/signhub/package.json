@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/signhub",
-  "version": "2.3.31",
+  "version": "2.3.32",
   "description": "orchestrates a series of signers, provides visibility into the signing process, and to the signers themselves",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/signhub",
   "source": "src/index.ts",

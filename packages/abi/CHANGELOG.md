@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.32
+
+### Patch Changes
+
+- Remove LAOS and TRN
+
 ## 2.3.31
 
 ### Patch Changes

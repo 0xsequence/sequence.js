@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.32
+
+### Patch Changes
+
+- Remove LAOS and TRN
+- Updated dependencies
+  - @0xsequence/migration@2.3.32
+  - @0xsequence/replacer@2.3.32
+  - @0xsequence/utils@2.3.32
+  - @0xsequence/core@2.3.32
+
 ## 2.3.31
 
 ### Patch Changes

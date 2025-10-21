@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.3.32
+
+### Patch Changes
+
+- Remove LAOS and TRN
+- Updated dependencies
+  - @0xsequence/core@2.3.32
+
 ## 2.3.31
 
 ### Patch Changes
