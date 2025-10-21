@@ -115,18 +115,18 @@ export enum ChainId {
   IMMUTABLE_ZKEVM_TESTNET = 13473,
 
   // The Root Network
-  ROOT_NETWORK = 7668,
-  ROOT_NETWORK_PORCINI = 7672,
+  ROOT_NETWORK = 7668, // network is deprecated
+  ROOT_NETWORK_PORCINI = 7672, // network is deprecated
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
   HARDHAT_2 = 31338,
 
   // LAOS
-  LAOS = 6283,
-  LAOS_SIGMA_TESTNET = 62850,
+  LAOS = 6283, // network is deprecated
+  LAOS_SIGMA_TESTNET = 62850, // network is deprecated
 
-  //ETHERLINK
+  // ETHERLINK
   ETHERLINK = 42793,
   ETHERLINK_TESTNET = 128123,
 
@@ -134,18 +134,19 @@ export enum ChainId {
   MOONBEAM = 1284,
   MOONBASE_ALPHA = 1287,
 
-  //MONAD_TESTNET
+  // MONAD_TESTNET
   MONAD_TESTNET = 10143,
   MONAD = 143,
 
-  //SOMNIA
+  // SOMNIA
   SOMNIA_TESTNET = 50312,
   SOMNIA = 5031,
 
   // INCENTIV TESTNET
+  INCENTIV_TESTNET = 11690, // deprecated
   INCENTIV_TESTNET_V2 = 28802,
 
-  //SEI
+  // SEI
   SEI = 1329,
   SEI_TESTNET = 1328,
 
@@ -155,7 +156,7 @@ export enum ChainId {
   // SANDBOX
   SANDBOX_TESTNET = 6252,
 
-  //ARC
+  // ARC
   ARC_TESTNET = 5042002
 }
 
@@ -955,7 +956,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'XRP',
       name: 'XRP',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.ROOT_NETWORK_PORCINI]: {
     chainId: ChainId.ROOT_NETWORK_PORCINI,
@@ -972,7 +974,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'XRP',
       name: 'XRP',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.HARDHAT]: {
     chainId: ChainId.HARDHAT,
@@ -1009,7 +1012,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'LAOS',
       name: 'LAOS',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.LAOS_SIGMA_TESTNET]: {
     chainId: ChainId.LAOS_SIGMA_TESTNET,
@@ -1026,7 +1030,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'SIGMA',
       name: 'SIGMA',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.MOONBEAM]: {
     chainId: ChainId.MOONBEAM,
@@ -1119,7 +1124,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'monad',
     title: 'Monad',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD}.webp`,
-    testnet: true,
+    testnet: false,
     blockExplorer: {
       name: 'Monad Explorer',
       rootUrl: 'https://mainnet-beta.monvision.io/'
@@ -1140,13 +1145,32 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'Somnia Testnet Explorer',
-      rootUrl: 'https://somnia-testnet.socialscan.io/'
+      rootUrl: 'https://shannon-explorer.somnia.network/'
     },
     nativeToken: {
       symbol: 'STT',
       name: 'STT',
       decimals: 18
     }
+  },
+
+  [ChainId.INCENTIV_TESTNET]: {
+    chainId: ChainId.INCENTIV_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'incentiv-testnet',
+    title: 'Incentiv Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Incentiv Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.incentiv.net/'
+    },
+    nativeToken: {
+      symbol: 'CENT',
+      name: 'CENT',
+      decimals: 18
+    },
+    deprecated: true
   },
 
   [ChainId.INCENTIV_TESTNET_V2]: {
@@ -1243,12 +1267,12 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.SANDBOX_TESTNET,
     type: NetworkType.TESTNET,
     name: 'sandbox-testnet',
-    title: 'Sandbox testnet',
+    title: 'Sandbox Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SANDBOX_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'Sandbox testnet',
-      rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz'
+      name: 'Sandbox Testnet Explorer',
+      rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz/'
     },
     nativeToken: {
       symbol: 'SAND',
@@ -1261,12 +1285,12 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     chainId: ChainId.ARC_TESTNET,
     type: NetworkType.TESTNET,
     name: 'arc-testnet',
-    title: 'Arc testnet',
+    title: 'Arc Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARC_TESTNET}.webp`,
     testnet: true,
     blockExplorer: {
-      name: 'Arc testnet',
-      rootUrl: 'https://arc-testnet-explorer.stg.blockchain.circle.com/'
+      name: 'Arc Testnet Explorer',
+      rootUrl: 'https://1jr2dw1zdqvyes8u.blockscout.com/'
     },
     nativeToken: {
       symbol: 'USDC',
