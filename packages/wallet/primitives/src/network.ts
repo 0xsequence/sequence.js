@@ -126,6 +126,9 @@ export const ChainId = {
 
   // SANDBOX
   SANDBOX_TESTNET: 6252,
+
+  // ARC
+  ARC_TESTNET: 5042002,
 } as const
 
 export type ChainId = (typeof ChainId)[keyof typeof ChainId]
@@ -934,6 +937,24 @@ export const ALL: Network[] = [
       symbol: 'SAND',
       name: 'SAND',
       decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.ARC_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'arc-testnet',
+    title: 'Arc Testnet',
+    rpcUrl: getRpcUrl('arc-testnet'),
+    logoUrl: getLogoUrl(ChainId.ARC_TESTNET),
+    blockExplorer: {
+      name: 'Arc Testnet Explorer',
+      url: 'https://1jr2dw1zdqvyes8u.blockscout.com/',
+    },
+    nativeCurrency: {
+      symbol: 'USDC',
+      name: 'USDC',
+      decimals: 6,
     },
   },
 ]
