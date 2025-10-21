@@ -131,10 +131,10 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.TOY_TESTNET),
   createNetworkConfig(ChainId.IMMUTABLE_ZKEVM),
   createNetworkConfig(ChainId.IMMUTABLE_ZKEVM_TESTNET),
-  createNetworkConfig(ChainId.ROOT_NETWORK),
-  createNetworkConfig(ChainId.ROOT_NETWORK_PORCINI),
-  createNetworkConfig(ChainId.LAOS),
-  createNetworkConfig(ChainId.LAOS_SIGMA_TESTNET),
+  createNetworkConfig(ChainId.ROOT_NETWORK, { disabled: true }),
+  createNetworkConfig(ChainId.ROOT_NETWORK_PORCINI, { disabled: true }),
+  createNetworkConfig(ChainId.LAOS, { disabled: true }),
+  createNetworkConfig(ChainId.LAOS_SIGMA_TESTNET, { disabled: true }),
   createNetworkConfig(ChainId.MOONBEAM),
   createNetworkConfig(ChainId.MOONBASE_ALPHA),
   createNetworkConfig(ChainId.ETHERLINK),
@@ -149,5 +149,6 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.INCENTIV_TESTNET_V2),
   createNetworkConfig(ChainId.KATANA),
   createNetworkConfig(ChainId.SANDBOX_TESTNET),
+  createNetworkConfig(ChainId.ARC_TESTNET),
   ...hardhatNetworks
 ])
