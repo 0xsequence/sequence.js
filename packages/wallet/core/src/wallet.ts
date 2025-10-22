@@ -36,6 +36,7 @@ export type WalletStatus = {
   pendingUpdates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>
   /** Pending migrations, fully encoded with signature */
   pendingMigrations: Array<State.Migration>
+  version: number
   chainId?: number
   counterFactual: {
     context: Context.KnownContext | Context.Context
@@ -125,9 +126,12 @@ export class Wallet {
       Config.evaluateConfigurationSafety(configuration)
     }
 
+    const status = await this.getStatus()
+    this.requireV3Wallet(status)
+
     const imageHash = Config.hashConfiguration(configuration)
     const blankEnvelope = (
-      await Promise.all([this.prepareBlankEnvelope(0), this.stateProvider.saveConfiguration(configuration)])
+      await Promise.all([this.prepareBlankEnvelope(0, status), this.stateProvider.saveConfiguration(configuration)])
     )[0]
 
     return {
@@ -272,8 +276,9 @@ export class Wallet {
 
     // Get migrations
     const detectedContextVersion = Context.getVersionFromContext(context)
+    let version = detectedContextVersion
     if (detectedContextVersion !== 3) {
-      // TODO Cater for v3 -> v3 migrations
+      // TODO Cater for pending v3 -> v3 migrations
       const migration = await this.stateProvider.getMigration(
         this.address,
         fromImageHash,
@@ -290,6 +295,7 @@ export class Wallet {
         migrations.push(migration)
         // We will perform the migration and update configurations from there.
         fromImageHash = Bytes.toHex(Config.hashConfiguration(migration.toConfig))
+        version = migration.toVersion
       }
     }
 
@@ -313,6 +319,7 @@ export class Wallet {
         imageHash,
         pendingUpdates: [...updates].reverse(),
         pendingMigrations: [...migrations],
+        version,
         chainId,
         onChainImageHash: onChainImageHash!,
         context,
@@ -326,6 +333,7 @@ export class Wallet {
         imageHash,
         pendingUpdates: [...updates].reverse(),
         pendingMigrations: [...migrations],
+        version,
         chainId,
         counterFactual: {
           context: counterFactualContext,
@@ -396,6 +404,7 @@ export class Wallet {
     }
 
     const [chainId, status] = await Promise.all([provider.request({ method: 'eth_chainId' }), this.getStatus(provider)])
+    this.requireV3Wallet(status, true)
 
     // If entrypoint is address(0) then 4337 is not enabled in this wallet
     if (!status.context.capabilities?.erc4337?.entrypoint) {
@@ -449,7 +458,7 @@ export class Wallet {
         factory,
         factoryData,
       },
-      ...(await this.prepareBlankEnvelope(Number(chainId), provider)),
+      ...(await this.prepareBlankEnvelope(Number(chainId), status)),
     }
   }
 
@@ -514,10 +523,12 @@ export class Wallet {
       this.getNonce(provider, space),
     ])
 
-    // If the latest configuration does not match the onchain configuration
-    // then we bundle the update into the transaction envelope
+    // If the latest configuration does not match the onchain configuration, we bundle the update into the transaction envelope
+    // Same for pending migrations
+    const status = await this.getStatus(provider)
+    this.requireV3Wallet(status)
+
     if (!options?.noConfigUpdate) {
-      const status = await this.getStatus(provider)
       if (status.imageHash !== status.onChainImageHash) {
         calls.push({
           to: this.address,
@@ -538,7 +549,7 @@ export class Wallet {
         nonce,
         calls,
       },
-      ...(await this.prepareBlankEnvelope(Number(chainId), provider)),
+      ...(await this.prepareBlankEnvelope(Number(chainId), status)),
     }
   }
 
@@ -624,8 +635,11 @@ export class Wallet {
       const messageSize = Hex.size(hexMessage)
       encodedMessage = Hex.concat(Hex.fromString(`${`\x19Ethereum Signed Message:\n${messageSize}`}`), hexMessage)
     }
+    const status = await this.getStatus()
+    this.requireV3Wallet(status, true)
+
     return {
-      ...(await this.prepareBlankEnvelope(chainId)),
+      ...(await this.prepareBlankEnvelope(chainId, status)),
       payload: Payload.fromMessage(encodedMessage),
     }
   }
@@ -635,9 +649,8 @@ export class Wallet {
     provider?: Provider.Provider,
   ): Promise<Bytes.Bytes> {
     const status = await this.getStatus(provider)
-    if (status.pendingMigrations.length > 0) {
-      throw new Error('execute pending migrations before signing a message')
-    }
+    this.requireV3Wallet(status, true)
+
     const signature = Envelope.encodeSignature(envelope)
     if (!status.isDeployed) {
       const deployTransaction = await this.buildDeployTransaction()
@@ -650,13 +663,21 @@ export class Wallet {
     return encoded
   }
 
-  private async prepareBlankEnvelope(chainId: number, provider?: Provider.Provider) {
-    const status = await this.getStatus(provider)
-
+  private prepareBlankEnvelope(chainId: number, status: WalletStatus) {
     return {
       wallet: this.address,
       chainId: chainId,
       configuration: status.configuration,
     }
+  }
+
+  private requireV3Wallet(status: WalletStatus, noPendingMigrations: boolean = false): boolean {
+    if (status.version !== 3) {
+      throw new Error('migrate to v3 before performing this action')
+    }
+    if (noPendingMigrations && status.pendingMigrations.length > 0) {
+      throw new Error('execute pending migrations before performing this action')
+    }
+    return true
   }
 }
