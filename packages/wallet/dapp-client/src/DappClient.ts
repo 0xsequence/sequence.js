@@ -403,6 +403,34 @@ export class DappClient {
       }
       this.emit('walletActionResponse', eventPayload)
     } else if (chainId !== undefined) {
+      if ('error' in response && response.error && action === RequestActionType.CREATE_NEW_SESSION) {
+        await this.sequenceStorage.setPendingRedirectRequest(false)
+        await this.sequenceStorage.getAndClearTempSessionPk()
+        await this.sequenceStorage.getAndClearPendingRequest()
+
+        if (this.hasSessionlessConnection) {
+          const sessionlessConnection = await this.sequenceStorage.getSessionlessConnection()
+          if (sessionlessConnection) {
+            await this.applySessionlessConnectionState(
+              sessionlessConnection.walletAddress,
+              sessionlessConnection.loginMethod,
+              sessionlessConnection.userEmail,
+              sessionlessConnection.guard,
+              false,
+            )
+          } else if (this.walletAddress) {
+            await this.applySessionlessConnectionState(
+              this.walletAddress,
+              this.loginMethod,
+              this.userEmail,
+              this.guard,
+              false,
+            )
+          }
+        }
+        return
+      }
+
       const chainSessionManager = this.getChainSessionManager(chainId)
       if (!chainSessionManager.isInitialized && this.walletAddress) {
         chainSessionManager.initializeWithWallet(this.walletAddress)
@@ -496,6 +524,87 @@ export class DappClient {
       }
     } catch (err) {
       await this.disconnect()
+      throw new ConnectionError(`Connection failed: ${err}`)
+    }
+  }
+
+  /**
+   * Upgrades an existing sessionless connection by creating implicit and/or explicit sessions.
+   * @param chainId The chain ID to target for the new sessions.
+   * @param sessionConfig The explicit session configuration to request. {@link ExplicitSessionConfig}
+   * @param options Connection options such as preferred login method or email for social/email logins.
+   * @throws If no sessionless connection is available or the session upgrade fails. {@link InitializationError}
+   * @throws If neither an implicit nor explicit session is requested. {@link InitializationError}
+   *
+   * @returns A promise that resolves once the session upgrade completes.
+   */
+  async upgradeSessionlessConnection(
+    chainId: number,
+    sessionConfig?: ExplicitSessionConfig,
+    options: {
+      preferredLoginMethod?: LoginMethod
+      email?: string
+      includeImplicitSession?: boolean
+    } = {},
+  ): Promise<void> {
+    if (!this.isInitialized || !this.hasSessionlessConnection || !this.walletAddress) {
+      throw new InitializationError('A sessionless connection is required before requesting new sessions.')
+    }
+
+    const shouldCreateSession = !!sessionConfig || (options.includeImplicitSession ?? false)
+    if (!shouldCreateSession) {
+      throw new InitializationError(
+        'Cannot upgrade a sessionless connection without requesting an implicit or explicit session.',
+      )
+    }
+
+    const sessionlessSnapshot = {
+      walletAddress: this.walletAddress,
+      loginMethod: this.loginMethod,
+      userEmail: this.userEmail,
+      guard: this.guard,
+    }
+
+    try {
+      let chainSessionManager = this.chainSessionManagers.get(chainId)
+      if (
+        chainSessionManager &&
+        chainSessionManager.isInitialized &&
+        !chainSessionManager.getImplicitSession() &&
+        chainSessionManager.getExplicitSessions().length === 0
+      ) {
+        this.chainSessionManagers.delete(chainId)
+        chainSessionManager = undefined
+      }
+      chainSessionManager = chainSessionManager ?? this.getChainSessionManager(chainId)
+      await chainSessionManager.createNewSession(this.origin, sessionConfig, options)
+
+      if (this.transport.mode === TransportMode.POPUP) {
+        const hasImplicitSession = !!chainSessionManager.getImplicitSession()
+        const hasExplicitSessions = chainSessionManager.getExplicitSessions().length > 0
+
+        if (shouldCreateSession && (hasImplicitSession || hasExplicitSessions)) {
+          await this._loadStateFromStorage()
+        } else {
+          const walletAddress = chainSessionManager.getWalletAddress()
+          if (!walletAddress) {
+            throw new InitializationError('Wallet address missing after connect.')
+          }
+          await this.applySessionlessConnectionState(
+            walletAddress,
+            chainSessionManager.loginMethod,
+            chainSessionManager.userEmail,
+            chainSessionManager.getGuard(),
+          )
+        }
+      }
+    } catch (err) {
+      await this.applySessionlessConnectionState(
+        sessionlessSnapshot.walletAddress,
+        sessionlessSnapshot.loginMethod,
+        sessionlessSnapshot.userEmail,
+        sessionlessSnapshot.guard,
+      )
       throw new ConnectionError(`Connection failed: ${err}`)
     }
   }
