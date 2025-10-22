@@ -66,7 +66,6 @@ export class MigrationEncoder_v1v3
 
     const space = options?.space ?? BigInt(MIGRATION_V1_V3_NONCE_SPACE)
     const nonce = 0n // Nonce must be unused
-    // const v2Nonce = v2commons.transaction.encodeNonce(space, nonce)
 
     // Update implementation to v3
     const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')

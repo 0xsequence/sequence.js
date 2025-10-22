@@ -28,7 +28,7 @@ const convertContextToV3Context = (context: v2commons.context.WalletContext): V3
   }
 }
 
-describe('MigrationEncoder_v1v3', () => {
+describe('MigrationEncoder_v1v3', async () => {
   let anvilSigner: MultiSigner
   let testSigner: MultiSigner
 
@@ -57,7 +57,7 @@ describe('MigrationEncoder_v1v3', () => {
     testSigner = createMultiSigner(testSignerPk, providers.v2)
   })
 
-  describe('convertConfig', () => {
+  describe('convertConfig', async () => {
     it('should convert v1 config to v3 config with single signer', async () => {
       const v1Config: v1.config.WalletConfig = {
         version: 1,
@@ -251,7 +251,7 @@ describe('MigrationEncoder_v1v3', () => {
     })
   })
 
-  describe('prepareMigration', () => {
+  describe('prepareMigration', async () => {
     it('should prepare migration transactions correctly', async () => {
       const walletAddress = testAddress
       const contexts: VersionedContext = {
@@ -396,7 +396,7 @@ describe('MigrationEncoder_v1v3', () => {
     })
   })
 
-  describe('decodeTransactions', () => {
+  describe('decodeTransactions', async () => {
     it('should decode transactions correctly', async () => {
       const walletAddress = testAddress
       const imageHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
@@ -524,7 +524,7 @@ describe('MigrationEncoder_v1v3', () => {
     })
   })
 
-  describe('constants', () => {
+  describe('constants', async () => {
     it('should have correct nonce space', () => {
       expect(MIGRATION_V1_V3_NONCE_SPACE).toBe('0x9e4d5bdafd978baf1290aff23057245a2a62bef5')
     })
@@ -535,7 +535,7 @@ describe('MigrationEncoder_v1v3', () => {
     })
   })
 
-  describe('integration test', () => {
+  describe('integration test', async () => {
     it('should use migration ', async () => {
       // Create v1 config
       const v1Config: v1.config.WalletConfig = {
@@ -620,6 +620,9 @@ describe('MigrationEncoder_v1v3', () => {
       expect(receipt?.status).toBe(1)
       // This should now be a v3 wallet on chain
 
+      // Wait for any pending transactions to fully settle
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
       // Save the wallet information to the state provider
       const stateProvider = new State.Local.Provider()
       await stateProvider.saveDeploy(v1ImageHash, convertContextToV3Context(v1.DeployedWalletContext))
@@ -653,6 +656,8 @@ describe('MigrationEncoder_v1v3', () => {
         method: 'eth_sendTransaction',
         params: [signedTx],
       })
+      // Wait a bit for the transaction to be mined
+      await new Promise((resolve) => setTimeout(resolve, 3000))
       const testReceipt = await providers.v3.request({
         method: 'eth_getTransactionReceipt',
         params: [testTx],

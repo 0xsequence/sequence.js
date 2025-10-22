@@ -11,7 +11,7 @@ import { assert, beforeEach, describe, expect, it } from 'vitest'
 import { Migrator_v1v3, MigratorV1V3Options } from '../src/migrations/v1/migrator_v1_v3.js'
 import { createMultiSigner, type MultiSigner, type V1WalletType } from './testUtils.js'
 
-describe('Migrator_v1v3', () => {
+describe('Migrator_v1v3', async () => {
   let anvilSigner: MultiSigner
   let testSigner: MultiSigner
 
@@ -42,7 +42,7 @@ describe('Migrator_v1v3', () => {
     testSigner = createMultiSigner(Secp256k1.randomPrivateKey(), providers.v2)
   })
 
-  describe('convertWallet', () => {
+  describe('convertWallet', async () => {
     it('should convert a v1 wallet to a v3 wallet', async () => {
       const v1Config = {
         version: 1,
@@ -84,6 +84,9 @@ describe('Migrator_v1v3', () => {
       }
       const v3Wallet = await migrator.convertWallet(v1Wallet, options)
 
+      // Wait for any pending transactions from v1 wallet operations to settle
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
       // Test the wallet works as a v3 wallet now with a test transaction
       const call: Payload.Call = {
         to: Address.from('0x0000000000000000000000000000000000000000'),
@@ -111,6 +114,8 @@ describe('Migrator_v1v3', () => {
         method: 'eth_sendTransaction',
         params: [signedTx],
       })
+      // Wait a bit for the transaction to be mined
+      await new Promise((resolve) => setTimeout(resolve, 3000))
       const receipt = await providers.v3.request({
         method: 'eth_getTransactionReceipt',
         params: [testTx],
