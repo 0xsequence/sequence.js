@@ -229,6 +229,7 @@ export class Wallet {
                 }
                 return implementationAddress
               })
+              .catch(() => undefined)
           }),
       ])
 
