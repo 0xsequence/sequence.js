@@ -2,7 +2,7 @@ import { LocalRelayer } from '@0xsequence/relayerv2'
 import { Orchestrator } from '@0xsequence/signhubv2'
 import { v1, commons as v2commons } from '@0xsequence/v2core'
 import { Wallet as V1Wallet } from '@0xsequence/v2wallet' // V1 and V2 wallets share the same implementation
-import { Envelope, Wallet as V3Wallet } from '@0xsequence/wallet-core'
+import { Envelope, State, Wallet as V3Wallet } from '@0xsequence/wallet-core'
 import {
   Payload,
   Config as V3Config,
@@ -11,11 +11,22 @@ import {
 } from '@0xsequence/wallet-primitives'
 import { ethers } from 'ethers'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { fromRpcStatus } from 'ox/TransactionReceipt'
 import { assert, beforeEach, describe, expect, it } from 'vitest'
 import { MIGRATION_V1_V3_NONCE_SPACE, Migration_v1v3 } from '../src/migrations/v1/migration_v1_v3.js'
-import { UnsignedMigration, VersionedContext } from '../src/migrator.js'
-import { createMultiSigner, MultiSigner, V1WalletType } from './testUtils.js'
-import { fromRpcStatus } from 'ox/TransactionReceipt'
+import { VersionedContext } from '../src/types.js'
+import { createMultiSigner, MultiSigner } from './testUtils.js'
+
+const convertContextToV3Context = (context: v2commons.context.WalletContext): V3Context.Context => {
+  Hex.assert(context.walletCreationCode)
+  return {
+    // Close enough
+    factory: Address.from(context.factory),
+    stage1: Address.from(context.mainModule),
+    stage2: Address.from(context.mainModuleUpgradable),
+    creationCode: context.walletCreationCode,
+  }
+}
 
 describe('Migration_v1v3', () => {
   let anvilSigner: MultiSigner
@@ -29,8 +40,6 @@ describe('Migration_v1v3', () => {
 
   let migration: Migration_v1v3
 
-  let v1Config: v1.config.WalletConfig
-  let v1Wallet: V1WalletType
   let testAddress: Address.Address
 
   beforeEach(async () => {
@@ -44,34 +53,8 @@ describe('Migration_v1v3', () => {
     const anvilPk = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     anvilSigner = createMultiSigner(anvilPk, providers.v2)
     testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
-    testSigner = createMultiSigner(Secp256k1.randomPrivateKey(), providers.v2)
-    console.log('testSigner', testSigner.address)
-    v1Config = {
-      version: 1,
-      threshold: 1,
-      signers: [
-        {
-          weight: 1,
-          address: testSigner.address,
-        },
-      ],
-    }
-    const orchestrator = new Orchestrator([testSigner.v2])
-    v1Wallet = await V1Wallet.newWallet<
-      v1.config.WalletConfig,
-      v1.signature.Signature,
-      v1.signature.UnrecoveredSignature
-    >({
-      context: v1.DeployedWalletContext,
-      chainId: 42161,
-      coders: {
-        config: v1.config.ConfigCoder,
-        signature: v1.signature.SignatureCoder,
-      },
-      orchestrator,
-      config: v1Config,
-      relayer: new LocalRelayer(anvilSigner.v2),
-    })
+    const testSignerPk = Secp256k1.randomPrivateKey()
+    testSigner = createMultiSigner(testSignerPk, providers.v2)
   })
 
   describe('convertConfig', () => {
@@ -309,15 +292,19 @@ describe('Migration_v1v3', () => {
         ],
       }
 
-      const migrationResult = await migration.prepareMigration(walletAddress, contexts, v3Config)
+      const randomSpace = BigInt(Math.floor(Math.random() * 10000000000))
+      const migrationResult = await migration.prepareMigration(walletAddress, contexts, v3Config, {
+        space: BigInt(randomSpace),
+      })
 
       expect(migrationResult.fromVersion).toBe(1)
       expect(migrationResult.toVersion).toBe(3)
-      expect(migrationResult.transactions).toHaveLength(2)
-      expect(migrationResult.nonce).toBeDefined()
+      expect(migrationResult.payload.calls).toHaveLength(2)
+      expect(migrationResult.payload.nonce).toBe(0n)
+      expect(migrationResult.payload.space).toBe(randomSpace)
 
       // Check first transaction (update implementation)
-      const updateImplTx = migrationResult.transactions[0]
+      const updateImplTx = migrationResult.payload.calls[0]
       expect(updateImplTx.to).toBe(walletAddress)
 
       const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')
@@ -325,7 +312,7 @@ describe('Migration_v1v3', () => {
       expect(decodedImplArgs[0].toLowerCase()).toBe(V3Context.Rc3.stage2.toLowerCase())
 
       // Check second transaction (update image hash)
-      const updateImageHashTx = migrationResult.transactions[1]
+      const updateImageHashTx = migrationResult.payload.calls[1]
       expect(updateImageHashTx.to).toBe(walletAddress)
 
       const updateImageHashAbi = AbiFunction.from('function updateImageHash(bytes32 imageHash)')
@@ -381,9 +368,9 @@ describe('Migration_v1v3', () => {
         ],
       }
 
-      const migrationResult = await migration.prepareMigration(walletAddress, contexts, v3Config)
+      const migrationResult = await migration.prepareMigration(walletAddress, contexts, v3Config, {})
 
-      const updateImplTx = migrationResult.transactions[0]
+      const updateImplTx = migrationResult.payload.calls[0]
       const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')
       const decodedImplArgs = AbiFunction.decodeData(updateImplementationAbi, updateImplTx.data)
       expect(decodedImplArgs[0]).toBe(customContext.stage2)
@@ -405,71 +392,7 @@ describe('Migration_v1v3', () => {
         },
       }
 
-      await expect(migration.prepareMigration(walletAddress, contexts, v3Config)).rejects.toThrow('Invalid context')
-    })
-  })
-
-  describe('signMigration', () => {
-    it('should sign migration correctly', async () => {
-      const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')
-      const updateImageHashAbi = AbiFunction.from('function updateImageHash(bytes32 imageHash)')
-
-      const unsignedMigration: UnsignedMigration = {
-        transactions: [
-          {
-            to: Address.from(v1Wallet.address),
-            data: AbiFunction.encodeData(updateImplementationAbi, [V3Context.Rc3.stage2]),
-          },
-          {
-            to: Address.from(v1Wallet.address),
-            data: AbiFunction.encodeData(updateImageHashAbi, [
-              '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-            ]),
-          },
-        ],
-        nonce: 123n,
-        fromVersion: 1,
-        toVersion: 3,
-      }
-
-      const signedMigration = await migration.signMigration(unsignedMigration, v1Wallet)
-
-      expect(signedMigration.signature).toBeDefined()
-      expect(signedMigration.fromVersion).toBe(1)
-      expect(signedMigration.toVersion).toBe(3)
-      expect(signedMigration.transactions).toEqual(unsignedMigration.transactions)
-      expect(signedMigration.nonce).toBe(123n)
-
-      // Note: We can't easily mock the internal signTransactionBundle call since it's part of the wallet
-      // The test verifies that the migration was signed successfully
-    })
-
-    it('should throw error when wallet address does not match migration address', async () => {
-      const differentAddress = '0x9999999999999999999999999999999999999999'
-      const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')
-      const updateImageHashAbi = AbiFunction.from('function updateImageHash(bytes32 imageHash)')
-
-      const unsignedMigration: UnsignedMigration = {
-        transactions: [
-          {
-            to: differentAddress,
-            data: AbiFunction.encodeData(updateImplementationAbi, [V3Context.Rc3.stage2]),
-          },
-          {
-            to: differentAddress,
-            data: AbiFunction.encodeData(updateImageHashAbi, [
-              '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-            ]),
-          },
-        ],
-        nonce: 123n,
-        fromVersion: 1,
-        toVersion: 3,
-      }
-
-      await expect(migration.signMigration(unsignedMigration, v1Wallet)).rejects.toThrow(
-        'Wallet address does not match migration address',
-      )
+      await expect(migration.prepareMigration(walletAddress, contexts, v3Config, {})).rejects.toThrow('Invalid context')
     })
   })
 
@@ -481,68 +404,123 @@ describe('Migration_v1v3', () => {
       const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')
       const updateImageHashAbi = AbiFunction.from('function updateImageHash(bytes32 imageHash)')
 
-      const transactions = [
-        {
-          to: walletAddress,
-          data: AbiFunction.encodeData(updateImplementationAbi, [V3Context.Rc3.stage2]),
-        },
-        {
-          to: walletAddress,
-          data: AbiFunction.encodeData(updateImageHashAbi, [imageHash]),
-        },
-      ]
+      const payload: Payload.Calls = {
+        type: 'call',
+        space: 0n,
+        nonce: 0n,
+        calls: [
+          {
+            to: walletAddress,
+            value: 0n,
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+            data: AbiFunction.encodeData(updateImplementationAbi, [V3Context.Rc3.stage2]),
+          },
+          {
+            to: walletAddress,
+            value: 0n,
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+            data: AbiFunction.encodeData(updateImageHashAbi, [imageHash]),
+          },
+        ],
+      }
 
-      const decoded = await migration.decodeTransactions(transactions)
+      const decoded = await migration.decodePayload(payload)
 
       expect(decoded.address).toBe(walletAddress)
       expect(decoded.toImageHash).toBe(imageHash)
     })
 
-    it('should throw error for invalid number of transactions', async () => {
-      const transactions: UnsignedMigration['transactions'] = [
-        {
-          to: testAddress,
-          data: '0x1234567890abcdef',
-        },
-      ]
+    it('should throw error for invalid number of calls', async () => {
+      const payload: Payload.Calls = {
+        type: 'call',
+        space: 0n,
+        nonce: 0n,
+        calls: [
+          {
+            to: testAddress,
+            value: 0n,
+            data: '0x1234567890abcdef',
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          },
+        ],
+      }
 
-      await expect(migration.decodeTransactions(transactions)).rejects.toThrow('Invalid transactions')
+      await expect(migration.decodePayload(payload)).rejects.toThrow('Invalid calls')
     })
 
-    it('should throw error when transaction addresses do not match', async () => {
+    it('should throw error when payload addresses do not match', async () => {
       const differentAddress = '0x9999999999999999999999999999999999999999'
       const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')
       const updateImageHashAbi = AbiFunction.from('function updateImageHash(bytes32 imageHash)')
 
-      const transactions: UnsignedMigration['transactions'] = [
-        {
-          to: testAddress,
-          data: AbiFunction.encodeData(updateImplementationAbi, [V3Context.Rc3.stage2]),
-        },
-        {
-          to: differentAddress,
-          data: AbiFunction.encodeData(updateImageHashAbi, [
-            '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-          ]),
-        },
-      ]
+      const payload: Payload.Calls = {
+        type: 'call',
+        space: 0n,
+        nonce: 0n,
+        calls: [
+          {
+            to: testAddress,
+            value: 0n,
+            data: AbiFunction.encodeData(updateImplementationAbi, [V3Context.Rc3.stage2]),
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          },
+          {
+            to: differentAddress,
+            value: 0n,
+            data: AbiFunction.encodeData(updateImageHashAbi, [
+              '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+            ]),
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          },
+        ],
+      }
 
-      await expect(migration.decodeTransactions(transactions)).rejects.toThrow('Invalid to address')
+      await expect(migration.decodePayload(payload)).rejects.toThrow('Invalid to address')
     })
 
-    it('should throw error for invalid transaction data', async () => {
-      const transactions: UnsignedMigration['transactions'] = [
-        {
-          to: testAddress,
-          data: '0xinvalid',
-        },
-        {
-          to: testAddress,
-          data: '0xalsoinvalid',
-        },
-      ]
+    it('should throw error for invalid payload data', async () => {
+      const payload: Payload.Calls = {
+        type: 'call',
+        space: 0n,
+        nonce: 0n,
+        calls: [
+          {
+            to: testAddress,
+            value: 0n,
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+            data: '0xinvalid',
+          },
+          {
+            to: testAddress,
+            value: 0n,
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+            data: '0xalsoinvalid',
+          },
+        ],
+      }
 
-      await expect(migration.decodeTransactions(transactions)).rejects.toThrow()
+      await expect(migration.decodePayload(payload)).rejects.toThrow(/^Invalid byte sequence/)
     })
   })
 
@@ -558,7 +536,7 @@ describe('Migration_v1v3', () => {
   })
 
   describe('integration test', () => {
-    it('should perform complete migration flow', async () => {
+    it('should use migration ', async () => {
       // Create v1 config
       const v1Config: v1.config.WalletConfig = {
         version: 1,
@@ -570,6 +548,26 @@ describe('Migration_v1v3', () => {
           },
         ],
       }
+      const v1ImageHash = v1.config.ConfigCoder.imageHashOf(v1Config)
+      Hex.assert(v1ImageHash)
+      const orchestrator = new Orchestrator([testSigner.v2])
+      const v1Wallet = await V1Wallet.newWallet<
+        v1.config.WalletConfig,
+        v1.signature.Signature,
+        v1.signature.UnrecoveredSignature
+      >({
+        context: v1.DeployedWalletContext,
+        chainId: Number(chainId),
+        coders: {
+          config: v1.config.ConfigCoder,
+          signature: v1.signature.SignatureCoder,
+        },
+        orchestrator,
+        config: v1Config,
+        provider: providers.v2,
+        relayer: new LocalRelayer(anvilSigner.v2),
+      })
+      const walletAddress = Address.from(v1Wallet.address)
 
       // Convert to v3 config
       const options = {
@@ -583,41 +581,47 @@ describe('Migration_v1v3', () => {
       const contexts: VersionedContext = {
         3: V3Context.Rc3,
       }
-      const unsignedMigration = await migration.prepareMigration(Address.from(v1Wallet.address), contexts, v3Config)
-
-      // Sign migration
-      const signedMigration = await migration.signMigration(unsignedMigration, v1Wallet)
-
-      // Verify signed migration
-      expect(signedMigration.signature).toBeDefined()
-      expect(signedMigration.fromVersion).toBe(1)
-      expect(signedMigration.toVersion).toBe(3)
-      expect(signedMigration.transactions).toHaveLength(2)
+      const unsignedMigration = await migration.prepareMigration(walletAddress, contexts, v3Config, {})
 
       // Decode transactions
-      const decoded = await migration.decodeTransactions(signedMigration.transactions)
-      expect(decoded.address).toBe(v1Wallet.address)
+      const decoded = await migration.decodePayload(unsignedMigration.payload)
+      expect(decoded.address).toBe(walletAddress)
       expect(decoded.toImageHash).toBe(Hex.fromBytes(V3Config.hashConfiguration(v3Config)))
 
-      // Send it
-      const signedTxBundle: v2commons.transaction.IntendedTransactionBundle = {
-        entrypoint: v1Wallet.address,
-        transactions: signedMigration.transactions,
-        nonce: signedMigration.nonce,
-        chainId,
-        intent: {
-          id: '1',
-          wallet: v1Wallet.address,
-        },
+      // Sign it using v1 wallet
+      const v2Nonce = v2commons.transaction.encodeNonce(
+        unsignedMigration.payload.space,
+        unsignedMigration.payload.nonce,
+      )
+      const txBundle: v2commons.transaction.TransactionBundle = {
+        entrypoint: walletAddress,
+        transactions: unsignedMigration.payload.calls.map(
+          (call): v2commons.transaction.Transaction => ({
+            to: call.to,
+            data: call.data,
+            gasLimit: call.gasLimit.toString(),
+            delegateCall: call.delegateCall,
+            revertOnError: call.behaviorOnError === 'revert',
+          }),
+        ),
+        nonce: v2Nonce,
       }
-      const tx = await v1Wallet.sendSignedTransaction(signedTxBundle)
-      console.log('tx', tx)
+      const signedTxBundle = await v1Wallet.signTransactionBundle(txBundle)
+      const decorated = await v1Wallet.decorateTransactions(signedTxBundle)
+
+      // Send it
+      const tx = await v1Wallet.sendSignedTransaction(decorated)
       const receipt = await tx.wait()
-      console.log('receipt', receipt)
       expect(receipt?.status).toBe(1)
+      // This should now be a v3 wallet on chain
+
+      // Save the wallet information to the state provider
+      const stateProvider = new State.Local.Provider()
+      await stateProvider.saveDeploy(v1ImageHash, convertContextToV3Context(v1.DeployedWalletContext))
+      await stateProvider.saveConfiguration(v3Config)
 
       // Test the wallet works as a v3 wallet now with a test transaction
-      const v3Wallet = await V3Wallet.fromConfiguration(v3Config)
+      const v3Wallet = new V3Wallet(walletAddress, { stateProvider })
       const call: Payload.Call = {
         to: Address.from('0x0000000000000000000000000000000000000000'),
         data: Hex.fromString('0x'),
@@ -640,17 +644,14 @@ describe('Migration_v1v3', () => {
         },
       ])
       const signedTx = await v3Wallet.buildTransaction(providers.v3, signedEnvelope)
-      console.log(`V3 transaction: ${signedTx.to} ${signedTx.data}`)
       const testTx = await providers.v3.request({
         method: 'eth_sendTransaction',
         params: [signedTx],
       })
-      console.log(`V3 transaction sent ${testTx}`)
       const testReceipt = await providers.v3.request({
         method: 'eth_getTransactionReceipt',
         params: [testTx],
       })
-      console.log(`V3 transaction successful! ${JSON.stringify(testReceipt)}`)
       assert(testReceipt?.status, 'Receipt status is undefined')
       expect(fromRpcStatus[testReceipt.status]).toBe('success')
     })

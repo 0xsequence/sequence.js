@@ -7,10 +7,11 @@ import {
   Address as SequenceAddress,
   Signature as SequenceSignature,
 } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hex, Provider, TypedData } from 'ox'
+import { AbiFunction, AbiParameters, Address, Bytes, Hex, Provider, TypedData } from 'ox'
 import * as Envelope from './envelope.js'
 import * as State from './state/index.js'
 import { UserOperation } from 'ox/erc4337'
+import { encodeMigration } from './utils/migration/migration-encoder.js'
 
 export type WalletOptions = {
   knownContexts: Context.KnownContext[]
@@ -33,6 +34,8 @@ export type WalletStatus = {
   imageHash: Hex.Hex
   /** Pending updates in reverse chronological order (newest first) */
   pendingUpdates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }>
+  /** Pending migrations, fully encoded with signature */
+  pendingMigrations: Array<State.Migration>
   chainId?: number
   counterFactual: {
     context: Context.KnownContext | Context.Context
@@ -49,7 +52,7 @@ export type WalletStatusWithOnchain = WalletStatus & {
 export class Wallet {
   public readonly guest: Address.Address
   public readonly stateProvider: State.Provider
-  public readonly knownContexts: Context.KnownContext[]
+  public readonly knownContexts: Context.Context[]
 
   constructor(
     readonly address: Address.Address,
@@ -172,6 +175,7 @@ export class Wallet {
     let chainId: number | undefined
     let imageHash: Hex.Hex
     let updates: Array<{ imageHash: Hex.Hex; signature: SequenceSignature.RawSignature }> = []
+    let migrations: Array<State.Migration> = []
     let onChainImageHash: Hex.Hex | undefined
     let stage: 'stage1' | 'stage2' | undefined
 
@@ -182,19 +186,20 @@ export class Wallet {
 
     // Try to use a context from the known contexts, so we populate
     // the capabilities of the context
-    const counterFactualContext =
-      this.knownContexts.find(
-        (kc) =>
-          Address.isEqual(deployInformation.context.factory, kc.factory) &&
-          Address.isEqual(deployInformation.context.stage1, kc.stage1),
-      ) ?? deployInformation.context
+    const counterFactualContext = deployInformation
+      ? (this.knownContexts.find(
+          (kc) =>
+            Address.isEqual(deployInformation.context.factory, kc.factory) &&
+            Address.isEqual(deployInformation.context.stage1, kc.stage1),
+        ) ?? deployInformation.context)
+      : undefined
 
     let context: Context.KnownContext | Context.Context | undefined
 
     if (provider) {
       // Get chain ID, deployment status, and implementation
       const requests = await Promise.all([
-        provider.request({ method: 'eth_chainId' }),
+        provider.request({ method: 'eth_chainId' }).then((res) => Number(res)),
         this.isDeployed(provider),
         provider
           .request({
@@ -202,25 +207,40 @@ export class Wallet {
             params: [{ to: this.address, data: AbiFunction.encodeData(Constants.GET_IMPLEMENTATION) }, 'latest'],
           })
           .then((res) => {
-            const address = `0x${res.slice(-40)}`
-            Address.assert(address, { strict: false })
-            return address
+            return AbiFunction.decodeResult(Constants.GET_IMPLEMENTATION, res)
           })
-          .catch(() => undefined),
+          .catch(() => {
+            // Fallback to reading storage slot
+            const position = AbiParameters.encode(AbiParameters.from(['address']), [this.address])
+            return provider
+              .request({
+                method: 'eth_getStorageAt',
+                params: [this.address, position, 'latest'],
+              })
+              .then((res) => {
+                const [implementation] = AbiParameters.decode(AbiParameters.from(['address']), Bytes.fromHex(res))
+                const implementationAddress = Address.from(implementation)
+                if (Address.isEqual(implementationAddress, '0x0000000000000000000000000000000000000000')) {
+                  return undefined
+                }
+                return implementationAddress
+              })
+          }),
       ])
 
-      chainId = Number(requests[0])
+      chainId = requests[0]
       isDeployed = requests[1]
       implementation = requests[2]
 
       // Try to find the context from the known contexts (or use the counterfactual context)
       context = implementation
         ? [...this.knownContexts, counterFactualContext].find(
-            (kc) => Address.isEqual(implementation!, kc.stage1) || Address.isEqual(implementation!, kc.stage2),
+            (kc) => kc && (Address.isEqual(implementation!, kc.stage1) || Address.isEqual(implementation!, kc.stage2)),
           )
         : counterFactualContext
 
       if (!context) {
+        // Add to status
         throw new Error(`cannot find context for ${this.address}`)
       }
 
@@ -242,20 +262,45 @@ export class Wallet {
         }
         onChainImageHash = deployInformation.imageHash
       }
-
-      // Get configuration updates
-      updates = await this.stateProvider.getConfigurationUpdates(this.address, onChainImageHash)
-      imageHash = updates[updates.length - 1]?.imageHash ?? onChainImageHash
+    } else if (deployInformation) {
+      context = deployInformation.context
     } else {
-      // Without a provider, we can only get information from the state provider
-      updates = await this.stateProvider.getConfigurationUpdates(this.address, deployInformation.imageHash)
-      imageHash = updates[updates.length - 1]?.imageHash ?? deployInformation.imageHash
+      throw new Error(`cannot find status information for ${this.address}. Missing deploy information and no provider.`)
     }
+
+    let fromImageHash = onChainImageHash ?? deployInformation.imageHash
+
+    // Get migrations
+    const detectedContextVersion = Context.getVersionFromContext(context)
+    if (detectedContextVersion !== 3) {
+      // TODO Cater for v3 -> v3 migrations
+      const migration = await this.stateProvider.getMigration(
+        this.address,
+        fromImageHash,
+        detectedContextVersion,
+        chainId ?? 0,
+      )
+      if (migration) {
+        //TODO Support successive migrations
+        if (migration.toVersion !== 3) {
+          throw new Error(
+            `wallet migration is not for v3. Got ${migration.toVersion} for ${this.address} from version ${detectedContextVersion} to version ${migration.toVersion}.`,
+          )
+        }
+        migrations.push(migration)
+        // We will perform the migration and update configurations from there.
+        fromImageHash = Bytes.toHex(Config.hashConfiguration(migration.toConfig))
+      }
+    }
+
+    // Get configuration updates
+    updates = await this.stateProvider.getConfigurationUpdates(this.address, fromImageHash)
+    imageHash = updates[updates.length - 1]?.imageHash ?? fromImageHash
 
     // Get the current configuration
     const configuration = await this.stateProvider.getConfiguration(imageHash)
     if (!configuration) {
-      throw new Error(`cannot find configuration details for ${this.address}`)
+      throw new Error(`cannot find configuration details for ${this.address} with image hash ${imageHash}`)
     }
 
     if (provider) {
@@ -267,6 +312,7 @@ export class Wallet {
         configuration,
         imageHash,
         pendingUpdates: [...updates].reverse(),
+        pendingMigrations: [...migrations],
         chainId,
         onChainImageHash: onChainImageHash!,
         context,
@@ -279,10 +325,11 @@ export class Wallet {
         configuration,
         imageHash,
         pendingUpdates: [...updates].reverse(),
+        pendingMigrations: [...migrations],
         chainId,
         counterFactual: {
           context: counterFactualContext,
-          imageHash: deployInformation.imageHash,
+          imageHash: deployInformation?.imageHash ?? '',
         },
       } as T extends Provider.Provider ? WalletStatusWithOnchain : WalletStatus
     }
@@ -442,6 +489,7 @@ export class Wallet {
     options?: {
       space?: bigint
       noConfigUpdate?: boolean
+      noMigration?: boolean
       unsafe?: boolean
     },
   ): Promise<Envelope.Envelope<Payload.Calls>> {
@@ -494,7 +542,13 @@ export class Wallet {
     }
   }
 
-  async buildTransaction(provider: Provider.Provider, envelope: Envelope.Signed<Payload.Calls>) {
+  async buildTransaction(
+    provider: Provider.Provider,
+    envelope: Envelope.Signed<Payload.Calls>,
+  ): Promise<{
+    to: Address.Address
+    data: Hex.Hex
+  }> {
     const status = await this.getStatus(provider)
 
     const updatedEnvelope = { ...envelope, configuration: status.configuration }
@@ -502,63 +556,59 @@ export class Wallet {
     if (weight < threshold) {
       throw new Error('insufficient weight in envelope')
     }
-
     const signature = Envelope.encodeSignature(updatedEnvelope)
 
-    if (status.isDeployed) {
-      return {
-        to: this.address,
-        data: AbiFunction.encodeData(Constants.EXECUTE, [
-          Bytes.toHex(Payload.encode(envelope.payload)),
-          Bytes.toHex(
-            SequenceSignature.encodeSignature({
-              ...signature,
-              suffix: status.pendingUpdates.map(({ signature }) => signature),
-            }),
-          ),
-        ]),
-      }
-    } else {
-      const deploy = await this.buildDeployTransaction()
+    const encodedCalls: {
+      to: Address.Address
+      data: Hex.Hex
+    }[] = []
 
-      return {
-        to: this.guest,
-        data: Bytes.toHex(
-          Payload.encode({
-            type: 'call',
-            space: 0n,
-            nonce: 0n,
-            calls: [
-              {
-                to: deploy.to,
-                value: 0n,
-                data: deploy.data,
-                gasLimit: 0n,
-                delegateCall: false,
-                onlyFallback: false,
-                behaviorOnError: 'revert',
-              },
-              {
-                to: this.address,
-                value: 0n,
-                data: AbiFunction.encodeData(Constants.EXECUTE, [
-                  Bytes.toHex(Payload.encode(envelope.payload)),
-                  Bytes.toHex(
-                    SequenceSignature.encodeSignature({
-                      ...signature,
-                      suffix: status.pendingUpdates.map(({ signature }) => signature),
-                    }),
-                  ),
-                ]),
-                gasLimit: 0n,
-                delegateCall: false,
-                onlyFallback: false,
-                behaviorOnError: 'revert',
-              },
-            ],
+    // Deployment
+    if (!status.isDeployed) {
+      const deploy = await this.buildDeployTransaction()
+      encodedCalls.push(deploy)
+    }
+
+    // Pending migrations
+    if (status.pendingMigrations.length > 0) {
+      encodedCalls.push(...status.pendingMigrations.map(encodeMigration))
+    }
+
+    // Requested payload
+    encodedCalls.push({
+      to: this.address,
+      data: AbiFunction.encodeData(Constants.EXECUTE, [
+        Bytes.toHex(Payload.encode(envelope.payload)),
+        Bytes.toHex(
+          SequenceSignature.encodeSignature({
+            ...signature,
+            suffix: status.pendingUpdates.map(({ signature }) => signature),
           }),
         ),
-      }
+      ]),
+    })
+
+    if (encodedCalls.length === 1) {
+      return encodedCalls[0]!
+    }
+
+    return {
+      to: this.guest,
+      data: Bytes.toHex(
+        Payload.encode({
+          type: 'call',
+          space: 0n,
+          nonce: 0n,
+          calls: encodedCalls.map((call) => ({
+            ...call,
+            value: 0n,
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          })),
+        }),
+      ),
     }
   }
 
@@ -585,6 +635,9 @@ export class Wallet {
     provider?: Provider.Provider,
   ): Promise<Bytes.Bytes> {
     const status = await this.getStatus(provider)
+    if (status.pendingMigrations.length > 0) {
+      throw new Error('execute pending migrations before signing a message')
+    }
     const signature = Envelope.encodeSignature(envelope)
     if (!status.isDeployed) {
       const deployTransaction = await this.buildDeployTransaction()

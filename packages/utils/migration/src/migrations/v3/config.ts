@@ -26,12 +26,14 @@ export const createDefaultV3Topology = (
         address: loginSigner.address,
         weight: 1n,
       }
+
   // Wallet guard topology
   const walletGuardTopology: V3Config.SignerLeaf = {
     type: 'signer',
     address: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a', // Guard wallet signer
     weight: 1n,
   }
+
   // Placeholder recovery topology
   const recoveryTopology: V3Config.SapientSignerLeaf = {
     type: 'sapient-signer',
@@ -39,6 +41,7 @@ export const createDefaultV3Topology = (
     weight: 255n,
     imageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
   }
+
   // Session topology
   let sessionsImageHash: Hex.Hex = '0x0000000000000000000000000000000000000000000000000000000000000000'
   if (!loginSigner.imageHash) {
@@ -53,6 +56,7 @@ export const createDefaultV3Topology = (
     weight: 1n,
     imageHash: sessionsImageHash,
   }
+
   // Sessions are protected by a guard signer
   const sessionGuardTopology: V3Config.SignerLeaf = {
     type: 'signer',
@@ -65,6 +69,7 @@ export const createDefaultV3Topology = (
     threshold: 2n,
     tree: [sessionTopology, sessionGuardTopology],
   }
+
   // Return the wallet topology
   return [
     [loginTopology, walletGuardTopology],

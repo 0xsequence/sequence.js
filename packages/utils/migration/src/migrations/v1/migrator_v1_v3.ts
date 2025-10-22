@@ -1,77 +1,89 @@
-import { commons as v2commons } from '@0xsequence/v2core'
-import { migrator as v2migrator } from '@0xsequence/v2migration'
+import { v1, commons as v2commons } from '@0xsequence/v2core'
 import { WalletV1 } from '@0xsequence/v2wallet'
 import { State, Wallet as WalletV3 } from '@0xsequence/wallet-core'
-import { Constants, Context as V3Context } from '@0xsequence/wallet-primitives'
-import { Address } from 'ox'
+import { Payload, Context as V3Context } from '@0xsequence/wallet-primitives'
+import { Address, Hex } from 'ox'
 import { Migrator } from '../index.js'
-import { ConvertOptions, Migration_v1v3 } from './migration_v1_v3.js'
+import { ConvertOptions, MigrationEncoder_v1v3, PrepareOptions } from './migration_v1_v3.js'
 
-export type MigratorV1V3Options = ConvertOptions & {
-  v3Context?: V3Context.Context
-}
+export type MigratorV1V3Options = ConvertOptions &
+  PrepareOptions & {
+    v3Context?: V3Context.Context
+  }
 
 export class Migrator_v1v3 implements Migrator<WalletV1, WalletV3, MigratorV1V3Options> {
   fromVersion = 1
   toVersion = 3
 
   constructor(
-    private readonly v1Tracker?: v2migrator.PresignedMigrationTracker,
-    private readonly v3StateProvider?: State.Provider,
-    public readonly migration: Migration_v1v3 = new Migration_v1v3(),
+    private readonly v3StateProvider: State.Provider,
+    private readonly encoder: MigrationEncoder_v1v3 = new MigrationEncoder_v1v3(),
   ) {}
 
+  private convertV1Context(v1Wallet: v2commons.context.WalletContext): V3Context.Context & { guest?: Address.Address } {
+    Hex.assert(v1Wallet.walletCreationCode)
+    return {
+      factory: Address.from(v1Wallet.factory),
+      stage1: Address.from(v1Wallet.mainModule),
+      stage2: Address.from(v1Wallet.mainModuleUpgradable),
+      creationCode: v1Wallet.walletCreationCode,
+      guest: Address.from(v1Wallet.guestModule),
+    }
+  }
+
   async convertWallet(v1Wallet: WalletV1, options: MigratorV1V3Options): Promise<WalletV3> {
-    // Prepare migration
+    // Prepare configuration
+    const walletAddress = Address.from(v1Wallet.address)
     const v3Context = options.v3Context || V3Context.Rc3
     const v1Config = v1Wallet.config
-    const v3Config = await this.migration.convertConfig(v1Config, options)
-    await this.v3StateProvider?.saveConfiguration(v3Config)
-    const unsignedMigration = await this.migration.prepareMigration(
-      Address.from(v1Wallet.address),
-      { [3]: v3Context },
-      v3Config,
-    )
+    const v3Config = await this.encoder.convertConfig(v1Config, options)
+
+    // Save v1 wallet information to v3 state provider
+    const v1ImageHash = v1.config.ConfigCoder.imageHashOf(v1Config)
+    Hex.assert(v1ImageHash)
+    if (this.v3StateProvider instanceof State.Sequence.Provider) {
+      // Force save the v1 configuration to key machine
+      const v1ServiceConfig = {
+        threshold: Number(v1Config.threshold),
+        signers: v1Config.signers.map(({ weight, address }) => ({ weight: Number(weight), address })),
+      }
+      await this.v3StateProvider.forceSaveConfiguration(v1ServiceConfig, 1)
+    }
+    await this.v3StateProvider.saveDeploy(v1ImageHash, this.convertV1Context(v1Wallet.context))
+    await this.v3StateProvider.saveConfiguration(v3Config)
+
+    // Prepare migration
+    const unsignedMigration = await this.encoder.prepareMigration(walletAddress, { [3]: v3Context }, v3Config, options)
 
     // Sign migration
+    const chainId = v1Wallet.chainId
+    const v2Nonce = v2commons.transaction.encodeNonce(unsignedMigration.payload.space, unsignedMigration.payload.nonce)
     const txBundle: v2commons.transaction.TransactionBundle = {
-      entrypoint: v1Wallet.address,
-      transactions: unsignedMigration.transactions.map((tx) => ({
+      entrypoint: walletAddress,
+      transactions: unsignedMigration.payload.calls.map((tx: Payload.Call) => ({
         to: tx.to,
         data: tx.data,
         gasLimit: 0n,
         revertOnError: true,
       })),
-      nonce: unsignedMigration.nonce,
+      nonce: v2Nonce,
     }
-    const signedTxBundle = await v1Wallet.signTransactionBundle(txBundle)
+    const { signature } = await v1Wallet.signTransactionBundle(txBundle)
+    Hex.assert(signature)
 
     // Save to tracker
-    const v2SignedMigration: v2migrator.SignedMigration = {
-      fromVersion: this.fromVersion,
-      toVersion: this.toVersion,
-      toConfig: {
-        version: 3,
-        ...v3Config,
-      },
-      tx: signedTxBundle,
+    const signedMigration: State.Migration = {
+      ...unsignedMigration,
+      fromImageHash: v1ImageHash,
+      chainId: Number(chainId),
+      signature,
     }
-    const versionedContext: v2commons.context.VersionedContext = {
-      [3]: {
-        version: 3,
-        mainModule: v3Context.stage1,
-        mainModuleUpgradable: v3Context.stage2,
-        factory: v3Context.factory,
-        guestModule: Constants.DefaultGuestAddress,
-        walletCreationCode: v3Context.creationCode,
-      },
-    }
-    await this.v1Tracker?.saveMigration(v1Wallet.address, v2SignedMigration, versionedContext)
-    //FIXME State provider should be aware of migrations too
+    await this.v3StateProvider.saveMigration(walletAddress, signedMigration)
 
     // Return v3 wallet
-    return WalletV3.fromConfiguration(v3Config, {
-      context: v3Context,
+    return new WalletV3(walletAddress, {
+      knownContexts: [{ name: 'v3', development: false, ...v3Context }],
+      stateProvider: this.v3StateProvider,
     })
   }
 }

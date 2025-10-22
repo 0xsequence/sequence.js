@@ -1,6 +1,6 @@
 import { Address, Hex } from 'ox'
 import { Config, Context, GenericTree, Payload, Signature, Utils } from '@0xsequence/wallet-primitives'
-import { Provider } from '../index.js'
+import { Migration, Provider } from '../index.js'
 
 export class DevHttpProvider implements Provider {
   private readonly baseUrl: string
@@ -249,5 +249,18 @@ export class DevHttpProvider implements Provider {
 
   async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): Promise<void> {
     return this.request<void>('POST', '/payload', { wallet, payload, chainId })
+  }
+
+  async getMigration(
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ): Promise<Migration | undefined> {
+    return this.request('GET', `/migration/${wallet}/from/${fromImageHash}/version/${fromVersion}/chain/${chainId}`)
+  }
+
+  async saveMigration(wallet: Address.Address, migration: Migration): Promise<void> {
+    return this.request<void>('POST', '/migration', { wallet, migration })
   }
 }
