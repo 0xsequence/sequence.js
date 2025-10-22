@@ -621,7 +621,7 @@ describe('MigrationEncoder_v1v3', async () => {
       // This should now be a v3 wallet on chain
 
       // Wait for any pending transactions to fully settle
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Save the wallet information to the state provider
       const stateProvider = new State.Local.Provider()

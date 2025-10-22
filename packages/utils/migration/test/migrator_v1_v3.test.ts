@@ -85,7 +85,7 @@ describe('Migrator_v1v3', async () => {
       const v3Wallet = await migrator.convertWallet(v1Wallet, options)
 
       // Wait for any pending transactions from v1 wallet operations to settle
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Test the wallet works as a v3 wallet now with a test transaction
       const call: Payload.Call = {
