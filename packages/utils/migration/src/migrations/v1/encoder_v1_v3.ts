@@ -9,18 +9,12 @@ import {
 import { AbiFunction, Address, Hex } from 'ox'
 import { UnsignedMigration, VersionedContext } from '../../types.js'
 import { MigrationEncoder } from '../index.js'
-import { createDefaultV3Topology } from '../v3/config.js'
+import { ConvertOptions as V3ConvertOptions, createDefaultV3Topology } from '../v3/config.js'
+
+export type ConvertOptions = V3ConvertOptions
 
 // uint160(keccak256("org.sequence.sdk.migration.v1v3.space.nonce"))
 export const MIGRATION_V1_V3_NONCE_SPACE = '0x9e4d5bdafd978baf1290aff23057245a2a62bef5'
-
-export type ConvertOptions = {
-  loginSigner: {
-    address: Address.Address
-    imageHash?: Hex.Hex
-  }
-  extensions?: V3Extensions.Extensions
-}
 
 export type PrepareOptions = {
   space?: bigint
@@ -53,7 +47,7 @@ export class MigrationEncoder_v1v3
           type: 'nested',
           weight: 1n,
           threshold: 2n,
-          tree: createDefaultV3Topology(options.loginSigner, options.extensions),
+          tree: createDefaultV3Topology(options),
         },
       ],
     }
