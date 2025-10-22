@@ -2,7 +2,7 @@ import { State } from '@0xsequence/wallet-core'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { UnsignedMigration, VersionedContext } from '../types.js'
-import { MigrationEncoder_v1v3 } from './v1/migration_v1_v3.js'
+import { MigrationEncoder_v1v3 } from './v1/encoder_v1_v3.js'
 
 export interface MigrationEncoder<FromConfigType, ToConfigType, ConvertOptionsType, PrepareOptionsType> {
   fromVersion: number

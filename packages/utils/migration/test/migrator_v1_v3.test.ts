@@ -33,7 +33,8 @@ describe('Migrator_v1v3', () => {
     }
     chainId = Number(await providers.v3.request({ method: 'eth_chainId' }))
 
-    stateProvider = new State.Sequence.Provider('http://127.0.0.1:36261')
+    stateProvider = new State.Local.Provider()
+    // stateProvider = new State.Sequence.Provider('http://127.0.0.1:36261')
     migrator = new Migrator_v1v3(stateProvider)
 
     const anvilPk = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
@@ -50,6 +51,11 @@ describe('Migrator_v1v3', () => {
           {
             weight: 1,
             address: testSigner.address,
+          },
+          // Include a random signer to avoid image hash collisions
+          {
+            weight: 1,
+            address: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() })),
           },
         ],
       }

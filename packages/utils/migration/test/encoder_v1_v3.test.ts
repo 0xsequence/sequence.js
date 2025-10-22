@@ -13,7 +13,7 @@ import { ethers } from 'ethers'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { fromRpcStatus } from 'ox/TransactionReceipt'
 import { assert, beforeEach, describe, expect, it } from 'vitest'
-import { MIGRATION_V1_V3_NONCE_SPACE, Migration_v1v3 } from '../src/migrations/v1/migration_v1_v3.js'
+import { MIGRATION_V1_V3_NONCE_SPACE, MigrationEncoder_v1v3 } from '../src/migrations/v1/encoder_v1_v3.js'
 import { VersionedContext } from '../src/types.js'
 import { createMultiSigner, MultiSigner } from './testUtils.js'
 
@@ -28,7 +28,7 @@ const convertContextToV3Context = (context: v2commons.context.WalletContext): V3
   }
 }
 
-describe('Migration_v1v3', () => {
+describe('MigrationEncoder_v1v3', () => {
   let anvilSigner: MultiSigner
   let testSigner: MultiSigner
 
@@ -38,12 +38,12 @@ describe('Migration_v1v3', () => {
   }
   let chainId: number
 
-  let migration: Migration_v1v3
+  let migration: MigrationEncoder_v1v3
 
   let testAddress: Address.Address
 
   beforeEach(async () => {
-    migration = new Migration_v1v3()
+    migration = new MigrationEncoder_v1v3()
     const url = 'http://127.0.0.1:8545'
     providers = {
       v2: ethers.getDefaultProvider(url),
@@ -545,6 +545,11 @@ describe('Migration_v1v3', () => {
           {
             weight: 1,
             address: testSigner.address,
+          },
+          // Include a random signer to avoid image hash collisions
+          {
+            weight: 1,
+            address: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() })),
           },
         ],
       }

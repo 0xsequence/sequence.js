@@ -4,7 +4,7 @@ import { State, Wallet as WalletV3 } from '@0xsequence/wallet-core'
 import { Payload, Context as V3Context } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { Migrator } from '../index.js'
-import { ConvertOptions, MigrationEncoder_v1v3, PrepareOptions } from './migration_v1_v3.js'
+import { ConvertOptions, MigrationEncoder_v1v3, PrepareOptions } from './encoder_v1_v3.js'
 
 export type MigratorV1V3Options = ConvertOptions &
   PrepareOptions & {
