@@ -245,7 +245,6 @@ export class Wallet {
         : counterFactualContext
 
       if (!context) {
-        // Add to status
         throw new Error(`cannot find context for ${this.address}`)
       }
 
