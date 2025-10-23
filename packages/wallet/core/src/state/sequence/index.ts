@@ -9,13 +9,7 @@ import {
   TransactionRequest,
 } from 'ox'
 import { Migration, normalizeAddressKeys, Provider as ProviderInterface } from '../index.js'
-import {
-  SaveConfigArgs,
-  Context as ServiceContext,
-  Sessions,
-  SignatureType,
-  TransactionBundle,
-} from './sessions.gen.js'
+import { Context as ServiceContext, Sessions, SignatureType, TransactionBundle } from './sessions.gen.js'
 
 type ContextWithGuest = Context.Context & { guest?: Address.Address }
 

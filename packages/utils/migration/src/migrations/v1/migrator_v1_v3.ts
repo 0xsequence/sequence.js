@@ -47,13 +47,18 @@ export class Migrator_v1v3 implements Migrator<WalletV1, WalletV3, MigratorV1V3O
         threshold: Number(v1Config.threshold),
         signers: v1Config.signers.map(({ weight, address }) => ({ weight: Number(weight), address })),
       }
-      await this.v3StateProvider.forceSaveConfiguration(v1ServiceConfig, 1)
+      await this.v3StateProvider.forceSaveConfiguration(v1ServiceConfig, this.fromVersion)
     }
     await this.v3StateProvider.saveDeploy(v1ImageHash, this.convertV1Context(v1Wallet.context))
     await this.v3StateProvider.saveConfiguration(v3Config)
 
     // Prepare migration
-    const unsignedMigration = await this.encoder.prepareMigration(walletAddress, { [3]: v3Context }, v3Config, options)
+    const unsignedMigration = await this.encoder.prepareMigration(
+      walletAddress,
+      { [this.toVersion]: v3Context },
+      v3Config,
+      options,
+    )
 
     // Sign migration
     const chainId = v1Wallet.chainId

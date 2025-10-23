@@ -1,7 +1,7 @@
 import { LocalRelayer } from '@0xsequence/relayerv2'
 import { Orchestrator } from '@0xsequence/signhubv2'
-import { v1, commons as v2commons } from '@0xsequence/v2core'
-import { Wallet as V1Wallet } from '@0xsequence/v2wallet' // V1 and V2 wallets share the same implementation
+import { v2, commons as v2commons } from '@0xsequence/v2core'
+import { Wallet as V2Wallet } from '@0xsequence/v2wallet'
 import { Envelope, State, Wallet as V3Wallet } from '@0xsequence/wallet-core'
 import {
   Payload,
@@ -13,23 +13,11 @@ import { ethers } from 'ethers'
 import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { fromRpcStatus } from 'ox/TransactionReceipt'
 import { assert, beforeEach, describe, expect, it } from 'vitest'
-import { MIGRATION_V1_V3_NONCE_SPACE, MigrationEncoder_v1v3 } from '../src/migrations/v1/encoder_v1_v3.js'
-import { VersionedContext } from '../src/types.js'
-import { createMultiSigner, MultiSigner } from './testUtils.js'
+import { MIGRATION_V2_V3_NONCE_SPACE, MigrationEncoder_v2v3 } from '../../src/migrations/v2/encoder_v2_v3.js'
+import { VersionedContext } from '../../src/types.js'
+import { convertV2ContextToV3Context, createAnvilSigner, createMultiSigner, MultiSigner } from '../testUtils.js'
 
-const convertContextToV3Context = (context: v2commons.context.WalletContext): V3Context.Context => {
-  Hex.assert(context.walletCreationCode)
-  return {
-    // Close enough
-    factory: Address.from(context.factory),
-    stage1: Address.from(context.mainModule),
-    stage2: Address.from(context.mainModuleUpgradable),
-    creationCode: context.walletCreationCode,
-  }
-}
-
-describe('MigrationEncoder_v1v3', async () => {
-  let anvilSigner: MultiSigner
+describe('MigrationEncoder_v2v3', async () => {
   let testSigner: MultiSigner
 
   let providers: {
@@ -38,36 +26,33 @@ describe('MigrationEncoder_v1v3', async () => {
   }
   let chainId: number
 
-  let migration: MigrationEncoder_v1v3
+  let migration: MigrationEncoder_v2v3
 
   let testAddress: Address.Address
 
   beforeEach(async () => {
-    migration = new MigrationEncoder_v1v3()
+    migration = new MigrationEncoder_v2v3()
     const url = 'http://127.0.0.1:8545'
     providers = {
       v2: ethers.getDefaultProvider(url),
       v3: Provider.from(RpcTransport.fromHttp(url)),
     }
     chainId = Number(await providers.v3.request({ method: 'eth_chainId' }))
-    const anvilPk = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-    anvilSigner = createMultiSigner(anvilPk, providers.v2)
     testAddress = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
     const testSignerPk = Secp256k1.randomPrivateKey()
     testSigner = createMultiSigner(testSignerPk, providers.v2)
   })
 
   describe('convertConfig', async () => {
-    it('should convert v1 config to v3 config with single signer', async () => {
-      const v1Config: v1.config.WalletConfig = {
-        version: 1,
+    it('should convert v2 config to v3 config with single signer', async () => {
+      const v2Config: v2.config.WalletConfig = {
+        version: 2,
         threshold: 1,
-        signers: [
-          {
-            weight: 1,
-            address: testSigner.address,
-          },
-        ],
+        checkpoint: 0,
+        tree: {
+          address: testSigner.address,
+          weight: 1,
+        },
       }
 
       const options = {
@@ -76,22 +61,22 @@ describe('MigrationEncoder_v1v3', async () => {
         },
       }
 
-      const v3Config = await migration.convertConfig(v1Config, options)
+      const v3Config = await migration.convertConfig(v2Config, options)
 
       expect(v3Config.threshold).toBe(1n)
       expect(v3Config.checkpoint).toBe(0n)
       expect(v3Config.topology).toHaveLength(2)
 
-      // Check first topology (v1 signers) - single signer becomes a single leaf
-      const v1Topology = v3Config.topology[0] as V3Config.NestedLeaf
-      expect(v1Topology.type).toBe('nested')
-      expect(v1Topology.weight).toBe(1n)
-      expect(v1Topology.threshold).toBe(1n)
-      expect(V3Config.isSignerLeaf(v1Topology.tree)).toBe(true)
-      if (V3Config.isSignerLeaf(v1Topology.tree)) {
-        expect(v1Topology.tree.type).toBe('signer')
-        expect(v1Topology.tree.address).toBe(testSigner.address)
-        expect(v1Topology.tree.weight).toBe(1n)
+      // Check first topology (v2 signers) - becomes a nested leaf
+      const v2Topology = v3Config.topology[0] as V3Config.NestedLeaf
+      expect(v2Topology.type).toBe('nested')
+      expect(v2Topology.weight).toBe(1n)
+      expect(v2Topology.threshold).toBe(1n)
+      expect(V3Config.isSignerLeaf(v2Topology.tree)).toBe(true)
+      if (V3Config.isSignerLeaf(v2Topology.tree)) {
+        expect(v2Topology.tree.type).toBe('signer')
+        expect(v2Topology.tree.address).toBe(testSigner.address)
+        expect(v2Topology.tree.weight).toBe(1n)
       }
 
       // Check second topology (v3 extensions)
@@ -101,21 +86,22 @@ describe('MigrationEncoder_v1v3', async () => {
       expect(v3Topology.threshold).toBe(2n)
     })
 
-    it('should convert v1 config to v3 config with multiple signers', async () => {
+    it('should convert v2 config to v3 config with multiple signers', async () => {
       const testSigner2 = createMultiSigner(Secp256k1.randomPrivateKey(), providers.v2)
-      const v1Config: v1.config.WalletConfig = {
-        version: 1,
+      const v2Config: v2.config.WalletConfig = {
+        version: 2,
         threshold: 2,
-        signers: [
-          {
-            weight: 1,
+        checkpoint: 0,
+        tree: {
+          left: {
             address: testSigner.address,
-          },
-          {
             weight: 1,
-            address: testSigner2.address,
           },
-        ],
+          right: {
+            address: testSigner2.address,
+            weight: 1,
+          },
+        },
       }
 
       const options = {
@@ -124,36 +110,35 @@ describe('MigrationEncoder_v1v3', async () => {
         },
       }
 
-      const v3Config = await migration.convertConfig(v1Config, options)
+      const v3Config = await migration.convertConfig(v2Config, options)
 
       expect(v3Config.threshold).toBe(1n)
       expect(v3Config.checkpoint).toBe(0n)
 
-      // Check first topology (v1 signers) - multiple signers become a node array
-      const v1Topology = v3Config.topology[0] as V3Config.NestedLeaf
-      expect(v1Topology.type).toBe('nested')
-      expect(v1Topology.weight).toBe(1n)
-      expect(v1Topology.threshold).toBe(2n)
-      expect(Array.isArray(v1Topology.tree)).toBe(true)
-      expect(v1Topology.tree).toHaveLength(2)
-      expect(v1Topology.tree[0].type).toBe('signer')
-      expect(v1Topology.tree[0].address).toBe(testSigner.address)
-      expect(v1Topology.tree[0].weight).toBe(1n)
-      expect(v1Topology.tree[1].type).toBe('signer')
-      expect(v1Topology.tree[1].address).toBe(testSigner2.address)
-      expect(v1Topology.tree[1].weight).toBe(1n)
+      // Check first topology (v2 signers) - multiple signers become a node array
+      const v2Topology = v3Config.topology[0] as V3Config.NestedLeaf
+      expect(v2Topology.type).toBe('nested')
+      expect(v2Topology.weight).toBe(1n)
+      expect(v2Topology.threshold).toBe(2n)
+      expect(Array.isArray(v2Topology.tree)).toBe(true)
+      expect(v2Topology.tree).toHaveLength(2)
+      expect(v2Topology.tree[0].type).toBe('signer')
+      expect(v2Topology.tree[0].address).toBe(testSigner.address)
+      expect(v2Topology.tree[0].weight).toBe(1n)
+      expect(v2Topology.tree[1].type).toBe('signer')
+      expect(v2Topology.tree[1].address).toBe(testSigner2.address)
+      expect(v2Topology.tree[1].weight).toBe(1n)
     })
 
-    it('should convert v1 config with custom extensions', async () => {
-      const v1Config: v1.config.WalletConfig = {
-        version: 1,
+    it('should convert v2 config with custom extensions', async () => {
+      const v2Config: v2.config.WalletConfig = {
+        version: 2,
         threshold: 1,
-        signers: [
-          {
-            weight: 1,
-            address: testSigner.address,
-          },
-        ],
+        checkpoint: 0,
+        tree: {
+          address: testSigner.address,
+          weight: 1,
+        },
       }
 
       const customExtensions: V3Extensions.Extensions = {
@@ -169,7 +154,7 @@ describe('MigrationEncoder_v1v3', async () => {
         extensions: customExtensions,
       }
 
-      const v3Config = await migration.convertConfig(v1Config, options)
+      const v3Config = await migration.convertConfig(v2Config, options)
 
       // Check that custom extensions are used in the v3 topology
       const v3Topology = v3Config.topology[1] as V3Config.NestedLeaf
@@ -212,15 +197,14 @@ describe('MigrationEncoder_v1v3', async () => {
     })
 
     it('should handle login signer with image hash', async () => {
-      const v1Config: v1.config.WalletConfig = {
-        version: 1,
+      const v2Config: v2.config.WalletConfig = {
+        version: 2,
         threshold: 1,
-        signers: [
-          {
-            weight: 1,
-            address: testSigner.address,
-          },
-        ],
+        checkpoint: 0,
+        tree: {
+          address: testSigner.address,
+          weight: 1,
+        },
       }
 
       const imageHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
@@ -231,7 +215,7 @@ describe('MigrationEncoder_v1v3', async () => {
         },
       }
 
-      const v3Config = await migration.convertConfig(v1Config, options)
+      const v3Config = await migration.convertConfig(v2Config, options)
 
       // Check that login signer is a sapient signer with image hash
       const v3Topology = v3Config.topology[1] as V3Config.NestedLeaf
@@ -297,7 +281,7 @@ describe('MigrationEncoder_v1v3', async () => {
         space: BigInt(randomSpace),
       })
 
-      expect(migrationResult.fromVersion).toBe(1)
+      expect(migrationResult.fromVersion).toBe(2)
       expect(migrationResult.toVersion).toBe(3)
       expect(migrationResult.payload.calls).toHaveLength(2)
       expect(migrationResult.payload.nonce).toBe(0n)
@@ -526,53 +510,55 @@ describe('MigrationEncoder_v1v3', async () => {
 
   describe('constants', async () => {
     it('should have correct nonce space', () => {
-      expect(MIGRATION_V1_V3_NONCE_SPACE).toBe('0x9e4d5bdafd978baf1290aff23057245a2a62bef5')
+      expect(MIGRATION_V2_V3_NONCE_SPACE).toBe('0xf9fe6701dd3716c9cdb4faf375921627b507d142')
     })
 
     it('should have correct version numbers', () => {
-      expect(migration.fromVersion).toBe(1)
+      expect(migration.fromVersion).toBe(2)
       expect(migration.toVersion).toBe(3)
     })
   })
 
   describe('integration test', async () => {
     it('should use migration ', async () => {
-      // Create v1 config
-      const v1Config: v1.config.WalletConfig = {
-        version: 1,
+      // Create v2 config
+      const v2Config: v2.config.WalletConfig = {
+        version: 2,
         threshold: 1,
-        signers: [
-          {
+        checkpoint: 0,
+        tree: {
+          left: {
             weight: 1,
             address: testSigner.address,
           },
           // Include a random signer to avoid image hash collisions
-          {
+          right: {
             weight: 1,
             address: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() })),
           },
-        ],
+        },
       }
-      const v1ImageHash = v1.config.ConfigCoder.imageHashOf(v1Config)
-      Hex.assert(v1ImageHash)
+      const v2ImageHash = v2.config.ConfigCoder.imageHashOf(v2Config)
+      Hex.assert(v2ImageHash)
       const orchestrator = new Orchestrator([testSigner.v2])
-      const v1Wallet = await V1Wallet.newWallet<
-        v1.config.WalletConfig,
-        v1.signature.Signature,
-        v1.signature.UnrecoveredSignature
+      const anvilSigner = await createAnvilSigner(providers.v2, providers.v3)
+      const v2Wallet = await V2Wallet.newWallet<
+        v2.config.WalletConfig,
+        v2.signature.Signature,
+        v2.signature.UnrecoveredSignature
       >({
-        context: v1.DeployedWalletContext,
+        context: v2.DeployedWalletContext,
         chainId: Number(chainId),
         coders: {
-          config: v1.config.ConfigCoder,
-          signature: v1.signature.SignatureCoder,
+          config: v2.config.ConfigCoder,
+          signature: v2.signature.SignatureCoder,
         },
         orchestrator,
-        config: v1Config,
+        config: v2Config,
         provider: providers.v2,
         relayer: new LocalRelayer(anvilSigner.v2),
       })
-      const walletAddress = Address.from(v1Wallet.address)
+      const walletAddress = Address.from(v2Wallet.address)
 
       // Convert to v3 config
       const options = {
@@ -580,7 +566,7 @@ describe('MigrationEncoder_v1v3', async () => {
           address: testSigner.address,
         },
       }
-      const v3Config = await migration.convertConfig(v1Config, options)
+      const v3Config = await migration.convertConfig(v2Config, options)
 
       // Prepare migration
       const contexts: VersionedContext = {
@@ -593,7 +579,7 @@ describe('MigrationEncoder_v1v3', async () => {
       expect(decoded.address).toBe(walletAddress)
       expect(decoded.toImageHash).toBe(Hex.fromBytes(V3Config.hashConfiguration(v3Config)))
 
-      // Sign it using v1 wallet
+      // Sign it using v2 wallet
       const v2Nonce = v2commons.transaction.encodeNonce(
         unsignedMigration.payload.space,
         unsignedMigration.payload.nonce,
@@ -611,21 +597,18 @@ describe('MigrationEncoder_v1v3', async () => {
         ),
         nonce: v2Nonce,
       }
-      const signedTxBundle = await v1Wallet.signTransactionBundle(txBundle)
-      const decorated = await v1Wallet.decorateTransactions(signedTxBundle)
+      const signedTxBundle = await v2Wallet.signTransactionBundle(txBundle)
+      const decorated = await v2Wallet.decorateTransactions(signedTxBundle)
 
       // Send it
-      const tx = await v1Wallet.sendSignedTransaction(decorated)
+      const tx = await v2Wallet.sendSignedTransaction(decorated)
       const receipt = await tx.wait()
       expect(receipt?.status).toBe(1)
       // This should now be a v3 wallet on chain
 
-      // Wait for any pending transactions to fully settle
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
       // Save the wallet information to the state provider
       const stateProvider = new State.Local.Provider()
-      await stateProvider.saveDeploy(v1ImageHash, convertContextToV3Context(v1.DeployedWalletContext))
+      await stateProvider.saveDeploy(v2ImageHash, convertV2ContextToV3Context(v2.DeployedWalletContext))
       await stateProvider.saveConfiguration(v3Config)
 
       // Test the wallet works as a v3 wallet now with a test transaction
@@ -656,8 +639,7 @@ describe('MigrationEncoder_v1v3', async () => {
         method: 'eth_sendTransaction',
         params: [signedTx],
       })
-      // Wait a bit for the transaction to be mined
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       const testReceipt = await providers.v3.request({
         method: 'eth_getTransactionReceipt',
         params: [testTx],

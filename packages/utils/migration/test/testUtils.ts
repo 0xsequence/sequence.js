@@ -1,9 +1,8 @@
-import { Wallet as V1Wallet } from '@0xsequence/v2wallet'
-import { v1 } from '@0xsequence/v2core'
-import { Hex, Address } from 'ox'
-import { ethers } from 'ethers'
+import { commons as v2commons } from '@0xsequence/v2core'
 import { Signers as V3Signers } from '@0xsequence/wallet-core'
-import { Secp256k1 } from 'ox'
+import { Context as V3Context } from '@0xsequence/wallet-primitives'
+import { ethers } from 'ethers'
+import { Address, Hex, Provider, Secp256k1 } from 'ox'
 
 export type MultiSigner = {
   pk: Hex.Hex
@@ -11,8 +10,6 @@ export type MultiSigner = {
   v2: ethers.Signer
   v3: V3Signers.Pk.Pk
 }
-
-export type V1WalletType = V1Wallet<v1.config.WalletConfig, v1.signature.Signature, v1.signature.UnrecoveredSignature>
 
 export const createMultiSigner = (pk: Hex.Hex, provider: ethers.Provider): MultiSigner => {
   const v2Signer = new ethers.Wallet(pk, provider)
@@ -26,5 +23,32 @@ export const createMultiSigner = (pk: Hex.Hex, provider: ethers.Provider): Multi
     address: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: pk })),
     v2,
     v3: new V3Signers.Pk.Pk(pk),
+  }
+}
+
+export const createAnvilSigner = async (
+  v2Provider: ethers.Provider,
+  v3Provider: Provider.Provider,
+): Promise<MultiSigner> => {
+  const anvilSigner = createMultiSigner(Secp256k1.randomPrivateKey(), v2Provider)
+  await v3Provider.request({
+    method: 'anvil_impersonateAccount',
+    params: [anvilSigner.address],
+  })
+  await v3Provider.request({
+    method: 'anvil_setBalance',
+    params: [anvilSigner.address, '0x1000000000000000000000000000000000000000'],
+  })
+  return anvilSigner
+}
+
+export const convertV2ContextToV3Context = (context: v2commons.context.WalletContext): V3Context.Context => {
+  Hex.assert(context.walletCreationCode)
+  return {
+    // Close enough
+    factory: Address.from(context.factory),
+    stage1: Address.from(context.mainModule),
+    stage2: Address.from(context.mainModuleUpgradable),
+    creationCode: context.walletCreationCode,
   }
 }

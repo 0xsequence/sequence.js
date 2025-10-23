@@ -8,11 +8,10 @@ import { ethers } from 'ethers'
 import { Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { fromRpcStatus } from 'ox/TransactionReceipt'
 import { assert, beforeEach, describe, expect, it } from 'vitest'
-import { Migrator_v1v3, MigratorV1V3Options } from '../src/migrations/v1/migrator_v1_v3.js'
-import { createMultiSigner, type MultiSigner, type V1WalletType } from './testUtils.js'
+import { Migrator_v1v3, MigratorV1V3Options } from '../../src/migrations/v1/migrator_v1_v3.js'
+import { createAnvilSigner, createMultiSigner, type MultiSigner } from '../testUtils.js'
 
 describe('Migrator_v1v3', async () => {
-  let anvilSigner: MultiSigner
   let testSigner: MultiSigner
 
   let providers: {
@@ -37,8 +36,6 @@ describe('Migrator_v1v3', async () => {
     // stateProvider = new State.Sequence.Provider('http://127.0.0.1:36261')
     migrator = new Migrator_v1v3(stateProvider)
 
-    const anvilPk = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-    anvilSigner = createMultiSigner(anvilPk, providers.v2)
     testSigner = createMultiSigner(Secp256k1.randomPrivateKey(), providers.v2)
   })
 
@@ -60,6 +57,7 @@ describe('Migrator_v1v3', async () => {
         ],
       }
       const orchestrator = new Orchestrator([testSigner.v2])
+      const anvilSigner = await createAnvilSigner(providers.v2, providers.v3)
       const v1Wallet = await V1Wallet.newWallet<
         v1.config.WalletConfig,
         v1.signature.Signature,
@@ -83,9 +81,6 @@ describe('Migrator_v1v3', async () => {
         },
       }
       const v3Wallet = await migrator.convertWallet(v1Wallet, options)
-
-      // Wait for any pending transactions from v1 wallet operations to settle
-      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Test the wallet works as a v3 wallet now with a test transaction
       const call: Payload.Call = {
@@ -114,8 +109,7 @@ describe('Migrator_v1v3', async () => {
         method: 'eth_sendTransaction',
         params: [signedTx],
       })
-      // Wait a bit for the transaction to be mined
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       const receipt = await providers.v3.request({
         method: 'eth_getTransactionReceipt',
         params: [testTx],
