@@ -620,7 +620,7 @@ export class Wallets implements WalletsInterface {
     return undo
   }
 
-  private async prepareSignUp(args: SignupArgs): Promise<{
+  async prepareLoginSigner(args: SignupArgs): Promise<{
     signer: (Signers.Signer | Signers.SapientSigner) & Signers.Witnessable
     extra: WitnessExtraSignerKind
     loginEmail?: string
@@ -737,7 +737,7 @@ export class Wallets implements WalletsInterface {
   }
 
   async signUp(args: SignupArgs): Promise<Address.Address | undefined> {
-    const loginSigner = await this.prepareSignUp(args)
+    const loginSigner = await this.prepareLoginSigner(args)
 
     args.onStatusChange?.({ type: 'login-signer-created', address: await loginSigner.signer.address })
 
