@@ -14,7 +14,6 @@ import { AbiFunction, Address, Hex, Provider, RpcTransport, Secp256k1 } from 'ox
 import { fromRpcStatus } from 'ox/TransactionReceipt'
 import { assert, beforeEach, describe, expect, it } from 'vitest'
 import { MIGRATION_V2_V3_NONCE_SPACE, MigrationEncoder_v2v3 } from '../../src/migrations/v2/encoder_v2_v3.js'
-import { VersionedContext } from '../../src/types.js'
 import { convertV2ContextToV3Context, createAnvilSigner, createMultiSigner, MultiSigner } from '../testUtils.js'
 
 describe('MigrationEncoder_v2v3', async () => {
@@ -238,9 +237,6 @@ describe('MigrationEncoder_v2v3', async () => {
   describe('prepareMigration', async () => {
     it('should prepare migration transactions correctly', async () => {
       const walletAddress = testAddress
-      const contexts: VersionedContext = {
-        3: V3Context.Rc3,
-      }
 
       const v3Config: V3Config.Config = {
         threshold: 1n,
@@ -277,7 +273,7 @@ describe('MigrationEncoder_v2v3', async () => {
       }
 
       const randomSpace = BigInt(Math.floor(Math.random() * 10000000000))
-      const migrationResult = await migration.prepareMigration(walletAddress, contexts, v3Config, {
+      const migrationResult = await migration.prepareMigration(walletAddress, V3Context.Rc3, v3Config, {
         space: BigInt(randomSpace),
       })
 
@@ -314,10 +310,6 @@ describe('MigrationEncoder_v2v3', async () => {
         factory: '0x4444444444444444444444444444444444444444',
       }
 
-      const contexts: VersionedContext = {
-        3: customContext,
-      }
-
       const v3Config: V3Config.Config = {
         threshold: 1n,
         checkpoint: 0n,
@@ -352,31 +344,12 @@ describe('MigrationEncoder_v2v3', async () => {
         ],
       }
 
-      const migrationResult = await migration.prepareMigration(walletAddress, contexts, v3Config, {})
+      const migrationResult = await migration.prepareMigration(walletAddress, customContext, v3Config, {})
 
       const updateImplTx = migrationResult.payload.calls[0]
       const updateImplementationAbi = AbiFunction.from('function updateImplementation(address implementation)')
       const decodedImplArgs = AbiFunction.decodeData(updateImplementationAbi, updateImplTx.data)
       expect(decodedImplArgs[0]).toBe(customContext.stage2)
-    })
-
-    it('should throw error for invalid context', async () => {
-      const walletAddress = testAddress
-      const contexts: VersionedContext = {
-        3: 'invalid-context' as any,
-      }
-
-      const v3Config: V3Config.Config = {
-        threshold: 1n,
-        checkpoint: 0n,
-        topology: {
-          type: 'signer',
-          address: testSigner.address,
-          weight: 1n,
-        },
-      }
-
-      await expect(migration.prepareMigration(walletAddress, contexts, v3Config, {})).rejects.toThrow('Invalid context')
     })
   })
 
@@ -569,10 +542,7 @@ describe('MigrationEncoder_v2v3', async () => {
       const v3Config = await migration.convertConfig(v2Config, options)
 
       // Prepare migration
-      const contexts: VersionedContext = {
-        3: V3Context.Rc3,
-      }
-      const unsignedMigration = await migration.prepareMigration(walletAddress, contexts, v3Config, {})
+      const unsignedMigration = await migration.prepareMigration(walletAddress, V3Context.Rc3, v3Config, {})
 
       // Decode transactions
       const decoded = await migration.decodePayload(unsignedMigration.payload)

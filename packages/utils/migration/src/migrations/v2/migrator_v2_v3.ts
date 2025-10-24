@@ -74,12 +74,7 @@ export class Migrator_v2v3 implements Migrator<WalletV2, WalletV3, MigratorV2V3O
     await this.v3StateProvider.saveConfiguration(v3Config)
 
     // Prepare migration
-    const unsignedMigration = await this.encoder.prepareMigration(
-      walletAddress,
-      { [this.toVersion]: v3Context },
-      v3Config,
-      options,
-    )
+    const unsignedMigration = await this.encoder.prepareMigration(walletAddress, v3Context, v3Config, options)
 
     // Sign migration
     const chainId = v2Wallet.chainId

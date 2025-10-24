@@ -1,10 +1,10 @@
 import { State } from '@0xsequence/wallet-core'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
-import { UnsignedMigration, VersionedContext } from '../types.js'
+import { UnsignedMigration } from '../types.js'
 import { MigrationEncoder_v1v3 } from './v1/encoder_v1_v3.js'
 
-export interface MigrationEncoder<FromConfigType, ToConfigType, ConvertOptionsType, PrepareOptionsType> {
+export interface MigrationEncoder<FromConfigType, ToConfigType, ToContextType, ConvertOptionsType, PrepareOptionsType> {
   fromVersion: number
   toVersion: number
 
@@ -26,7 +26,7 @@ export interface MigrationEncoder<FromConfigType, ToConfigType, ConvertOptionsTy
    */
   prepareMigration: (
     walletAddress: Address.Address,
-    contexts: VersionedContext,
+    toContext: ToContextType,
     toConfig: ToConfigType,
     options: PrepareOptionsType,
   ) => Promise<UnsignedMigration>
@@ -59,12 +59,18 @@ export interface Migrator<FromWallet, ToWallet, ConvertOptionsType> {
   convertWallet: (fromWallet: FromWallet, options: ConvertOptionsType) => Promise<ToWallet>
 }
 
-export const encoders: MigrationEncoder<any, any, any, any>[] = [new MigrationEncoder_v1v3()]
+export const encoders: MigrationEncoder<any, any, any, any, any>[] = [new MigrationEncoder_v1v3()]
 
-export function getMigrationEncoder<FromConfigType, ToConfigType, ConvertOptionsType, PrepareOptionsType>(
+export function getMigrationEncoder<
+  FromConfigType,
+  ToConfigType,
+  ToContextType,
+  ConvertOptionsType,
+  PrepareOptionsType,
+>(
   fromVersion: number,
   toVersion: number,
-): MigrationEncoder<FromConfigType, ToConfigType, ConvertOptionsType, PrepareOptionsType> {
+): MigrationEncoder<FromConfigType, ToConfigType, ToContextType, ConvertOptionsType, PrepareOptionsType> {
   const encoder = encoders.find((encoder) => encoder.fromVersion === fromVersion && encoder.toVersion === toVersion)
   if (!encoder) {
     throw new Error(`Unsupported from version: ${fromVersion} to version: ${toVersion}`)
