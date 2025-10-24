@@ -1,5 +1,5 @@
 import { Address, Hex } from 'ox'
-import { MaybePromise, Provider } from './index.js'
+import { MaybePromise, Migration, Provider } from './index.js'
 import { Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wallet-primitives'
 import { normalizeAddressKeys } from './utils.js'
 
@@ -231,5 +231,27 @@ export class Cached implements Provider {
 
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void> {
     return this.args.source.savePayload(wallet, payload, chainId)
+  }
+
+  async getMigration(
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ): Promise<Migration | undefined> {
+    const cached = await this.args.cache.getMigration(wallet, fromImageHash, fromVersion, chainId)
+    if (cached) {
+      return cached
+    }
+    const source = await this.args.source.getMigration(wallet, fromImageHash, fromVersion, chainId)
+    if (source) {
+      await this.args.cache.saveMigration(wallet, source)
+    }
+    return source
+  }
+
+  saveMigration(wallet: Address.Address, migration: Migration): MaybePromise<void> {
+    // Only save to cache when we read from source
+    return this.args.source.saveMigration(wallet, migration)
   }
 }

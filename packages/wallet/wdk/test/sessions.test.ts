@@ -261,6 +261,10 @@ describe('Sessions (via Manager)', () => {
             // Undeployed wallet
             return Promise.resolve('0x')
           }
+          if (method === 'eth_getStorageAt') {
+            // Return 0 for storage slots (implementation)
+            return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
+          }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
             // Nonce is 0
             return Promise.resolve('0x00')
@@ -334,6 +338,10 @@ describe('Sessions (via Manager)', () => {
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
             // Undeployed wallet
             return Promise.resolve('0x')
+          }
+          if (method === 'eth_getStorageAt') {
+            // Return 0 for storage slots (implementation)
+            return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
             // Nonce is 0
@@ -409,6 +417,10 @@ describe('Sessions (via Manager)', () => {
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
             // Undeployed wallet
             return Promise.resolve('0x')
+          }
+          if (method === 'eth_getStorageAt') {
+            // Return 0 for storage slots (implementation)
+            return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
             // Nonce is 0
@@ -496,6 +508,10 @@ describe('Sessions (via Manager)', () => {
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
             // Undeployed wallet
             return Promise.resolve('0x')
+          }
+          if (method === 'eth_getStorageAt') {
+            // Return 0 for storage slots (implementation)
+            return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
           }
           if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
             // Nonce is 0
