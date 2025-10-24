@@ -1,5 +1,5 @@
 import { Config, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { Address, Hex } from 'ox'
+import { Address, Hex, Bytes } from 'ox'
 import * as State from '../state/index.js'
 
 export * as Pk from './pk/index.js'
@@ -10,6 +10,8 @@ export * from './guard.js'
 
 export interface Signer {
   readonly address: MaybePromise<Address.Address>
+
+  signDigest: (digest: Bytes.Bytes) => Config.SignerSignature<Signature.SignatureOfSignerLeaf>
 
   sign: (
     wallet: Address.Address,
