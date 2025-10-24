@@ -5,7 +5,7 @@ import { type ExplicitSession, type ExplicitSessionConfig, type ImplicitSession,
 import { ChainSessionManager } from './ChainSessionManager.js'
 import { DappTransport } from './DappTransport.js'
 import { ConnectionError, InitializationError, SigningError, TransactionError } from './utils/errors.js'
-import { SequenceStorage, WebStorage } from './utils/storage.js'
+import { SequenceStorage, WebStorage, type SessionlessConnectionData } from './utils/storage.js'
 import {
   CreateNewSessionResponse,
   DappClientExplicitSessionEventListener,
@@ -85,6 +85,7 @@ export class DappClient {
 
   private walletAddress: Address.Address | null = null
   private hasSessionlessConnection = false
+  private cachedSessionlessConnection: SessionlessConnectionData | null = null
   private eventListeners: {
     [K in keyof DappClientEventMap]?: Set<DappClientEventMap[K]>
   } = {}
@@ -273,10 +274,14 @@ export class DappClient {
   private async _loadStateFromStorage(): Promise<void> {
     const implicitSession = await this.sequenceStorage.getImplicitSession()
 
-    const [explicitSessions, sessionlessConnection] = await Promise.all([
+    const [explicitSessions, sessionlessConnection, sessionlessSnapshot] = await Promise.all([
       this.sequenceStorage.getExplicitSessions(),
       this.sequenceStorage.getSessionlessConnection(),
+      this.sequenceStorage.getSessionlessConnectionSnapshot
+        ? this.sequenceStorage.getSessionlessConnectionSnapshot()
+        : Promise.resolve(null),
     ])
+    this.cachedSessionlessConnection = sessionlessSnapshot ?? null
     const chainIdsToInitialize = new Set([
       ...(implicitSession?.chainId !== undefined ? [implicitSession.chainId] : []),
       ...explicitSessions.map((s) => s.chainId),
@@ -316,6 +321,10 @@ export class DappClient {
     this.userEmail = result[0]?.userEmail || null
     this.guard = implicitSession?.guard || explicitSessions.find((s) => !!s.guard)?.guard
     await this.sequenceStorage.clearSessionlessConnection()
+    if (this.sequenceStorage.clearSessionlessConnectionSnapshot) {
+      await this.sequenceStorage.clearSessionlessConnectionSnapshot()
+    }
+    this.cachedSessionlessConnection = null
 
     this.isInitialized = true
     this.emit('sessionsUpdated')
@@ -367,6 +376,63 @@ export class DappClient {
     } finally {
       this.isInitializing = false
     }
+  }
+
+  /**
+   * Indicates if there is cached sessionless connection data that can be restored.
+   */
+  public async hasRestorableSessionlessConnection(): Promise<boolean> {
+    if (this.cachedSessionlessConnection) return true
+    this.cachedSessionlessConnection = this.sequenceStorage.getSessionlessConnectionSnapshot
+      ? await this.sequenceStorage.getSessionlessConnectionSnapshot()
+      : null
+    return this.cachedSessionlessConnection !== null
+  }
+
+  /**
+   * Returns the cached sessionless connection metadata without altering client state.
+   * @returns The cached sessionless connection or null if none is available.
+   */
+  public async getSessionlessConnectionInfo(): Promise<SessionlessConnectionData | null> {
+    if (!this.cachedSessionlessConnection) {
+      this.cachedSessionlessConnection = this.sequenceStorage.getSessionlessConnectionSnapshot
+        ? await this.sequenceStorage.getSessionlessConnectionSnapshot()
+        : null
+    }
+    if (!this.cachedSessionlessConnection) return null
+    return {
+      walletAddress: this.cachedSessionlessConnection.walletAddress,
+      loginMethod: this.cachedSessionlessConnection.loginMethod,
+      userEmail: this.cachedSessionlessConnection.userEmail,
+      guard: this.cachedSessionlessConnection.guard,
+    }
+  }
+
+  /**
+   * Restores a sessionless connection that was previously persisted via {@link disconnect} or a connect flow.
+   * @returns A promise that resolves to true if a sessionless connection was applied.
+   */
+  public async restoreSessionlessConnection(): Promise<boolean> {
+    const sessionlessConnection =
+      this.cachedSessionlessConnection ??
+      (this.sequenceStorage.getSessionlessConnectionSnapshot
+        ? await this.sequenceStorage.getSessionlessConnectionSnapshot()
+        : null)
+    if (!sessionlessConnection) {
+      return false
+    }
+
+    await this.applySessionlessConnectionState(
+      sessionlessConnection.walletAddress,
+      sessionlessConnection.loginMethod,
+      sessionlessConnection.userEmail,
+      sessionlessConnection.guard,
+    )
+    if (this.sequenceStorage.clearSessionlessConnectionSnapshot) {
+      await this.sequenceStorage.clearSessionlessConnectionSnapshot()
+    }
+    this.cachedSessionlessConnection = null
+    return true
   }
 
   /**
@@ -881,6 +947,8 @@ export class DappClient {
   /**
    * Disconnects the client, clearing all session data from browser storage.
    * @remarks This action does not revoke the sessions on-chain. Sessions remain active until they expire or are manually revoked by the user in their wallet.
+   * @param options Options to control the disconnection behavior.
+   * @param options.keepSessionlessConnection When true, retains the latest wallet metadata so it can be restored later as a sessionless connection. Defaults to true.
    * @returns A promise that resolves when disconnection is complete.
    *
    * @example
@@ -888,10 +956,12 @@ export class DappClient {
    * await dappClient.initialize();
    *
    * if (dappClient.isInitialized) {
-   *   await dappClient.disconnect();
+   *   await dappClient.disconnect({ keepSessionlessConnection: true });
    * }
    */
-  async disconnect(): Promise<void> {
+  async disconnect(options?: { keepSessionlessConnection?: boolean }): Promise<void> {
+    const keepSessionlessConnection = options?.keepSessionlessConnection ?? true
+
     const transportMode = this.transport.mode
 
     this.transport.destroy()
@@ -904,7 +974,30 @@ export class DappClient {
     )
 
     this.chainSessionManagers.clear()
+    const sessionlessSnapshot =
+      keepSessionlessConnection && this.walletAddress
+        ? {
+            walletAddress: this.walletAddress,
+            loginMethod: this.loginMethod ?? undefined,
+            userEmail: this.userEmail ?? undefined,
+            guard: this.guard,
+          }
+        : undefined
+
     await this.sequenceStorage.clearAllData()
+
+    if (sessionlessSnapshot) {
+      if (this.sequenceStorage.saveSessionlessConnectionSnapshot) {
+        await this.sequenceStorage.saveSessionlessConnectionSnapshot(sessionlessSnapshot)
+      }
+      this.cachedSessionlessConnection = sessionlessSnapshot
+    } else {
+      if (this.sequenceStorage.clearSessionlessConnectionSnapshot) {
+        await this.sequenceStorage.clearSessionlessConnectionSnapshot()
+      }
+      this.cachedSessionlessConnection = null
+    }
+
     this.isInitialized = false
     this.walletAddress = null
     this.loginMethod = null
@@ -939,6 +1032,7 @@ export class DappClient {
     this.guard = guard
     this.hasSessionlessConnection = true
     this.isInitialized = true
+    this.cachedSessionlessConnection = null
     this.emit('sessionsUpdated')
     if (persist) {
       await this.sequenceStorage.saveSessionlessConnection({

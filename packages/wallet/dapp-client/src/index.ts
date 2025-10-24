@@ -39,6 +39,7 @@ export type {
   SequenceStorage,
   ExplicitSessionData,
   ImplicitSessionData,
+  SessionlessConnectionData,
   PendingRequestContext,
   PendingPayload,
 } from './utils/storage.js'
