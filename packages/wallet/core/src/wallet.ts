@@ -498,7 +498,7 @@ export class Wallet {
     options?: {
       space?: bigint
       noConfigUpdate?: boolean
-      noMigration?: boolean
+      noPendingMigrations?: boolean
       unsafe?: boolean
     },
   ): Promise<Envelope.Envelope<Payload.Calls>> {
@@ -526,7 +526,7 @@ export class Wallet {
     // If the latest configuration does not match the onchain configuration, we bundle the update into the transaction envelope
     // Same for pending migrations
     const status = await this.getStatus(provider)
-    this.requireV3Wallet(status)
+    this.requireV3Wallet(status, options?.noPendingMigrations)
 
     if (!options?.noConfigUpdate) {
       if (status.imageHash !== status.onChainImageHash) {
