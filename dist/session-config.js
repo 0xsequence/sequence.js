@@ -1,0 +1,679 @@
+import { Address, Bytes, Hash, Hex } from 'ox';
+import * as GenericTree from './generic-tree.js';
+import { decodeSessionPermissions, encodeSessionPermissions, encodeSessionPermissionsForJson, sessionPermissionsFromParsed, } from './permission.js';
+import { minBytesFor } from './utils.js';
+//FIXME Reorder by expected usage
+export const SESSIONS_FLAG_PERMISSIONS = 0;
+export const SESSIONS_FLAG_NODE = 1;
+export const SESSIONS_FLAG_BRANCH = 2;
+export const SESSIONS_FLAG_BLACKLIST = 3;
+export const SESSIONS_FLAG_IDENTITY_SIGNER = 4;
+const SESSIONS_NODE_SIZE_BYTES = 32;
+function isSessionsNode(topology) {
+    return Hex.validate(topology) && Hex.size(topology) === SESSIONS_NODE_SIZE_BYTES;
+}
+function isImplicitBlacklist(topology) {
+    return typeof topology === 'object' && topology !== null && 'blacklist' in topology;
+}
+function isIdentitySignerLeaf(topology) {
+    return typeof topology === 'object' && topology !== null && 'identitySigner' in topology;
+}
+function isSessionPermissions(topology) {
+    return typeof topology === 'object' && topology !== null && 'signer' in topology;
+}
+function isSessionsLeaf(topology) {
+    return isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology) || isSessionPermissions(topology);
+}
+function isSessionsBranch(topology) {
+    return Array.isArray(topology) && topology.length >= 2 && topology.every((child) => isSessionsTopology(child));
+}
+export function isSessionsTopology(topology) {
+    return isSessionsBranch(topology) || isSessionsLeaf(topology) || isSessionsNode(topology);
+}
+/**
+ * Checks if the topology is complete.
+ * A complete topology has at least one identity signer and one blacklist.
+ * When performing encoding, exactly one identity signer is required. Others must be hashed into nodes.
+ * @param topology The topology to check
+ * @returns True if the topology is complete
+ */
+export function isCompleteSessionsTopology(topology) {
+    // Ensure the object is a sessions topology
+    if (!isSessionsTopology(topology)) {
+        return false;
+    }
+    // Check the topology contains at least one identity signer and exactly one blacklist
+    const { identitySignerCount, blacklistCount } = checkIsCompleteSessionsBranch(topology);
+    return identitySignerCount >= 1 && blacklistCount === 1;
+}
+function checkIsCompleteSessionsBranch(topology) {
+    let thisHasIdentitySigner = 0;
+    let thisHasBlacklist = 0;
+    if (isSessionsBranch(topology)) {
+        for (const child of topology) {
+            const { identitySignerCount, blacklistCount } = checkIsCompleteSessionsBranch(child);
+            thisHasIdentitySigner += identitySignerCount;
+            thisHasBlacklist += blacklistCount;
+        }
+    }
+    if (isIdentitySignerLeaf(topology)) {
+        thisHasIdentitySigner++;
+    }
+    if (isImplicitBlacklist(topology)) {
+        thisHasBlacklist++;
+    }
+    return { identitySignerCount: thisHasIdentitySigner, blacklistCount: thisHasBlacklist };
+}
+/**
+ * Gets the identity signers from the topology.
+ * @param topology The topology to get the identity signer from
+ * @returns The identity signers
+ */
+export function getIdentitySigners(topology) {
+    if (isIdentitySignerLeaf(topology)) {
+        // Got one
+        return [topology.identitySigner];
+    }
+    if (isSessionsBranch(topology)) {
+        // Check branches
+        return topology.map(getIdentitySigners).flat();
+    }
+    return [];
+}
+/**
+ * Gets the implicit blacklist from the topology.
+ * @param topology The topology to get the implicit blacklist from
+ * @returns The implicit blacklist or null if it's not present
+ */
+export function getImplicitBlacklist(topology) {
+    const blacklistNode = getImplicitBlacklistLeaf(topology);
+    if (!blacklistNode) {
+        return null;
+    }
+    return blacklistNode.blacklist;
+}
+/**
+ * Gets the implicit blacklist leaf from the topology.
+ * @param topology The topology to get the implicit blacklist leaf from
+ * @returns The implicit blacklist leaf or null if it's not present
+ */
+export function getImplicitBlacklistLeaf(topology) {
+    if (isImplicitBlacklist(topology)) {
+        // Got it
+        return topology;
+    }
+    if (isSessionsBranch(topology)) {
+        // Check branches
+        const results = topology.map(getImplicitBlacklistLeaf).filter((t) => t !== null);
+        if (results.length > 1) {
+            throw new Error('Multiple blacklists');
+        }
+        if (results.length === 1) {
+            return results[0];
+        }
+    }
+    return null;
+}
+export function getSessionPermissions(topology, address) {
+    if (isSessionPermissions(topology)) {
+        if (Address.isEqual(topology.signer, address)) {
+            return topology;
+        }
+    }
+    if (isSessionsBranch(topology)) {
+        for (const child of topology) {
+            const result = getSessionPermissions(child, address);
+            if (result) {
+                return result;
+            }
+        }
+    }
+    return null;
+}
+export function getExplicitSigners(topology) {
+    return getExplicitSignersFromBranch(topology, []);
+}
+function getExplicitSignersFromBranch(topology, current) {
+    if (isSessionPermissions(topology)) {
+        return [...current, topology.signer];
+    }
+    if (isSessionsBranch(topology)) {
+        const result = [...current];
+        for (const child of topology) {
+            result.push(...getExplicitSignersFromBranch(child, current));
+        }
+        return result;
+    }
+    return current;
+}
+// Encode / decode to configuration tree
+/**
+ * Encodes a leaf to bytes.
+ * This can be Hash.keccak256'd to convert to a node..
+ * @param leaf The leaf to encode
+ * @returns The encoded leaf
+ */
+export function encodeLeafToGeneric(leaf) {
+    if (isSessionPermissions(leaf)) {
+        return {
+            type: 'leaf',
+            value: Bytes.concat(Bytes.fromNumber(SESSIONS_FLAG_PERMISSIONS), encodeSessionPermissions(leaf)),
+        };
+    }
+    if (isImplicitBlacklist(leaf)) {
+        return {
+            type: 'leaf',
+            value: Bytes.concat(Bytes.fromNumber(SESSIONS_FLAG_BLACKLIST), Bytes.concat(...leaf.blacklist.map((b) => Bytes.padLeft(Bytes.fromHex(b), 20)))),
+        };
+    }
+    if (isIdentitySignerLeaf(leaf)) {
+        return {
+            type: 'leaf',
+            value: Bytes.concat(Bytes.fromNumber(SESSIONS_FLAG_IDENTITY_SIGNER), Bytes.padLeft(Bytes.fromHex(leaf.identitySigner), 20)),
+        };
+    }
+    // Unreachable
+    throw new Error('Invalid leaf');
+}
+export function decodeLeafFromBytes(bytes) {
+    const flag = bytes[0];
+    if (flag === SESSIONS_FLAG_BLACKLIST) {
+        const blacklist = [];
+        for (let i = 1; i < bytes.length; i += 20) {
+            blacklist.push(Bytes.toHex(bytes.slice(i, i + 20)));
+        }
+        return { type: 'implicit-blacklist', blacklist };
+    }
+    if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
+        return { type: 'identity-signer', identitySigner: Bytes.toHex(bytes.slice(1, 21)) };
+    }
+    if (flag === SESSIONS_FLAG_PERMISSIONS) {
+        return { type: 'session-permissions', ...decodeSessionPermissions(bytes.slice(1)) };
+    }
+    throw new Error('Invalid leaf');
+}
+export function sessionsTopologyToConfigurationTree(topology) {
+    if (isSessionsBranch(topology)) {
+        return topology.map(sessionsTopologyToConfigurationTree);
+    }
+    if (isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology) || isSessionPermissions(topology)) {
+        return encodeLeafToGeneric(topology);
+    }
+    if (isSessionsNode(topology)) {
+        // A node is already encoded and hashed
+        return topology;
+    }
+    throw new Error('Invalid topology');
+}
+export function configurationTreeToSessionsTopology(tree) {
+    if (GenericTree.isBranch(tree)) {
+        return tree.map(configurationTreeToSessionsTopology);
+    }
+    if (GenericTree.isNode(tree)) {
+        throw new Error('Unknown in configuration tree');
+    }
+    return decodeLeafFromBytes(tree.value);
+}
+// Encoding for contract validation
+/**
+ * Encodes a topology into bytes for contract validation.
+ * @param topology The topology to encode
+ * @returns The encoded topology
+ */
+export function encodeSessionsTopology(topology) {
+    if (isSessionsBranch(topology)) {
+        const encodedBranches = [];
+        for (const node of topology) {
+            encodedBranches.push(encodeSessionsTopology(node));
+        }
+        const encoded = Bytes.concat(...encodedBranches);
+        const encodedSize = minBytesFor(BigInt(encoded.length));
+        if (encodedSize > 15) {
+            throw new Error('Branch too large');
+        }
+        const flagByte = (SESSIONS_FLAG_BRANCH << 4) | encodedSize;
+        return Bytes.concat(Bytes.fromNumber(flagByte), Bytes.padLeft(Bytes.fromNumber(encoded.length), encodedSize), encoded);
+    }
+    if (isSessionPermissions(topology)) {
+        const flagByte = SESSIONS_FLAG_PERMISSIONS << 4;
+        const encodedLeaf = encodeSessionPermissions(topology);
+        return Bytes.concat(Bytes.fromNumber(flagByte), encodedLeaf);
+    }
+    if (isSessionsNode(topology)) {
+        const flagByte = SESSIONS_FLAG_NODE << 4;
+        return Bytes.concat(Bytes.fromNumber(flagByte), Hex.toBytes(topology));
+    }
+    if (isImplicitBlacklist(topology)) {
+        const encoded = Bytes.concat(...topology.blacklist.map((b) => Bytes.fromHex(b)));
+        if (topology.blacklist.length >= 0x0f) {
+            // If the blacklist is too large, we can't encode the length into the flag byte.
+            // Instead we encode 0x0f and the length in the next 2 bytes.
+            if (topology.blacklist.length > 0xffff) {
+                throw new Error('Blacklist too large');
+            }
+            return Bytes.concat(Bytes.fromNumber((SESSIONS_FLAG_BLACKLIST << 4) | 0x0f), Bytes.fromNumber(topology.blacklist.length, { size: 2 }), encoded);
+        }
+        // Encode the size into the flag byte
+        const flagByte = (SESSIONS_FLAG_BLACKLIST << 4) | topology.blacklist.length;
+        return Bytes.concat(Bytes.fromNumber(flagByte), encoded);
+    }
+    if (isIdentitySignerLeaf(topology)) {
+        const flagByte = SESSIONS_FLAG_IDENTITY_SIGNER << 4;
+        return Bytes.concat(Bytes.fromNumber(flagByte), Bytes.padLeft(Bytes.fromHex(topology.identitySigner), 20));
+    }
+    throw new Error('Invalid topology');
+}
+export function decodeSessionsTopology(bytes) {
+    const { topology } = decodeSessionTopologyPointer(bytes);
+    return topology;
+}
+function decodeSessionTopologyPointer(bytes) {
+    if (bytes.length === 0) {
+        throw new Error('Empty topology bytes');
+    }
+    const flagByte = bytes[0];
+    const flag = (flagByte & 0xf0) >> 4;
+    const sizeSize = flagByte & 0x0f;
+    if (flag === SESSIONS_FLAG_BRANCH) {
+        // Branch
+        if (sizeSize === 0 || sizeSize > 15) {
+            throw new Error('Invalid branch size');
+        }
+        let offset = 1;
+        const encodedLength = Bytes.toNumber(bytes.slice(offset, offset + sizeSize));
+        offset += sizeSize;
+        const encodedBranches = bytes.slice(offset, offset + encodedLength);
+        const branches = [];
+        let branchOffset = 0;
+        while (branchOffset < encodedBranches.length) {
+            const { topology: branchTopology, pointer: branchPointer } = decodeSessionTopologyPointer(encodedBranches.slice(branchOffset));
+            branches.push(branchTopology);
+            branchOffset += branchPointer;
+        }
+        return { topology: branches, pointer: offset + encodedLength };
+    }
+    else if (flag === SESSIONS_FLAG_PERMISSIONS) {
+        // Permissions
+        const sessionPermissions = decodeSessionPermissions(bytes.slice(1));
+        const nodeLength = 1 + encodeSessionPermissions(sessionPermissions).length;
+        return { topology: { type: 'session-permissions', ...sessionPermissions }, pointer: nodeLength };
+    }
+    else if (flag === SESSIONS_FLAG_NODE) {
+        // Node
+        const nodeLength = SESSIONS_NODE_SIZE_BYTES + 1;
+        if (bytes.length < nodeLength) {
+            throw new Error('Invalid node length');
+        }
+        return { topology: Hex.fromBytes(bytes.slice(1, nodeLength)), pointer: nodeLength };
+    }
+    else if (flag === SESSIONS_FLAG_BLACKLIST) {
+        // Blacklist
+        let offset = 1;
+        let blacklistLength = sizeSize;
+        if (sizeSize === 0x0f) {
+            // Size is encoded in the next 2 bytes
+            blacklistLength = Bytes.toNumber(bytes.slice(offset, offset + 2));
+            offset += 2;
+        }
+        const blacklist = [];
+        for (let i = 0; i < blacklistLength; i++) {
+            const addressBytes = bytes.slice(offset + i * 20, offset + (i + 1) * 20);
+            blacklist.push(Address.from(Hex.fromBytes(addressBytes)));
+        }
+        return { topology: { type: 'implicit-blacklist', blacklist }, pointer: offset + blacklistLength * 20 };
+    }
+    else if (flag === SESSIONS_FLAG_IDENTITY_SIGNER) {
+        // Identity signer
+        const nodeLength = 21; // Flag + address
+        if (bytes.length < nodeLength) {
+            throw new Error('Invalid identity signer length');
+        }
+        return {
+            topology: { type: 'identity-signer', identitySigner: Address.from(Hex.fromBytes(bytes.slice(1, nodeLength))) },
+            pointer: nodeLength,
+        };
+    }
+    else {
+        throw new Error(`Invalid topology flag: ${flag}`);
+    }
+}
+// JSON
+export function sessionsTopologyToJson(topology) {
+    return JSON.stringify(encodeSessionsTopologyForJson(topology));
+}
+function encodeSessionsTopologyForJson(topology) {
+    if (isSessionsNode(topology)) {
+        return topology;
+    }
+    if (isSessionPermissions(topology)) {
+        return encodeSessionPermissionsForJson(topology);
+    }
+    if (isImplicitBlacklist(topology) || isIdentitySignerLeaf(topology)) {
+        return topology; // No encoding necessary
+    }
+    if (isSessionsBranch(topology)) {
+        return topology.map((node) => encodeSessionsTopologyForJson(node));
+    }
+    throw new Error('Invalid topology');
+}
+export function sessionsTopologyFromJson(json) {
+    const parsed = JSON.parse(json);
+    return sessionsTopologyFromParsed(parsed);
+}
+function sessionsTopologyFromParsed(parsed) {
+    // Parse branch
+    if (Array.isArray(parsed)) {
+        const branches = parsed.map((node) => sessionsTopologyFromParsed(node));
+        return branches;
+    }
+    // Parse node
+    if (typeof parsed === 'string' && Hex.validate(parsed) && Hex.size(parsed) === 32) {
+        return parsed;
+    }
+    // Parse permissions
+    if (typeof parsed === 'object' &&
+        parsed !== null &&
+        'signer' in parsed &&
+        'valueLimit' in parsed &&
+        'deadline' in parsed &&
+        'permissions' in parsed) {
+        return { type: 'session-permissions', ...sessionPermissionsFromParsed(parsed) };
+    }
+    // Parse identity signer
+    if (typeof parsed === 'object' && parsed !== null && 'identitySigner' in parsed) {
+        const identitySigner = parsed.identitySigner;
+        return { type: 'identity-signer', identitySigner };
+    }
+    // Parse blacklist
+    if (typeof parsed === 'object' && parsed !== null && 'blacklist' in parsed) {
+        const blacklist = parsed.blacklist.map((address) => Address.from(address));
+        return { type: 'implicit-blacklist', blacklist };
+    }
+    throw new Error('Invalid topology');
+}
+// Operations
+function removeLeaf(topology, leaf) {
+    if (isSessionsLeaf(topology) && isSessionsLeaf(leaf)) {
+        if (topology.type === leaf.type) {
+            if (isSessionPermissions(topology) && isSessionPermissions(leaf)) {
+                if (Address.isEqual(topology.signer, leaf.signer)) {
+                    return null;
+                }
+            }
+            else if (isImplicitBlacklist(topology) && isImplicitBlacklist(leaf)) {
+                // Remove blacklist items in leaf from topology
+                const newBlacklist = topology.blacklist.filter((b) => !leaf.blacklist.includes(b));
+                if (newBlacklist.length === 0) {
+                    return null;
+                }
+                return { type: 'implicit-blacklist', blacklist: newBlacklist };
+            }
+            else if (isIdentitySignerLeaf(topology) && isIdentitySignerLeaf(leaf)) {
+                // Remove identity signer from topology
+                if (Address.isEqual(topology.identitySigner, leaf.identitySigner)) {
+                    return null;
+                }
+            }
+        }
+    }
+    else if (isSessionsNode(topology) && isSessionsNode(leaf)) {
+        if (Hex.isEqual(topology, leaf)) {
+            // Match, remove the node
+            return null;
+        }
+    }
+    // If it's a branch, recurse on each child:
+    if (isSessionsBranch(topology)) {
+        const newChildren = [];
+        for (const child of topology) {
+            const updatedChild = removeLeaf(child, leaf);
+            if (updatedChild != null) {
+                newChildren.push(updatedChild);
+            }
+        }
+        // If no children remain, return null to remove entire branch
+        if (newChildren.length === 0) {
+            return null;
+        }
+        // If exactly one child remains, collapse upward
+        if (newChildren.length === 1) {
+            return newChildren[0];
+        }
+        // Otherwise, return the updated branch
+        return newChildren;
+    }
+    // Other leaf, return unchanged
+    return topology;
+}
+/**
+ * Removes all explicit sessions (permissions leaf nodes) that match the given signer from the topology.
+ * Returns the updated topology or null if it becomes empty (for nesting).
+ * If the signer is not found, the topology is returned unchanged.
+ */
+export function removeExplicitSession(topology, signerAddress) {
+    const explicitLeaf = getSessionPermissions(topology, signerAddress);
+    if (!explicitLeaf) {
+        // Not found, return unchanged
+        return topology;
+    }
+    const removed = removeLeaf(topology, explicitLeaf);
+    if (!removed) {
+        // Empty, return null
+        return null;
+    }
+    // Balance it
+    return balanceSessionsTopology(removed);
+}
+export function addExplicitSession(topology, sessionPermissions) {
+    // Find the session in the topology
+    if (getSessionPermissions(topology, sessionPermissions.signer)) {
+        throw new Error('Session already exists');
+    }
+    // Merge and balance
+    const merged = mergeSessionsTopologies(topology, { type: 'session-permissions', ...sessionPermissions });
+    return balanceSessionsTopology(merged);
+}
+export function removeIdentitySigner(topology, identitySigner) {
+    const identityLeaf = {
+        type: 'identity-signer',
+        identitySigner,
+    };
+    // Remove the old identity signer and balance
+    const removed = removeLeaf(topology, identityLeaf);
+    if (!removed) {
+        // Empty, return null
+        return null;
+    }
+    return balanceSessionsTopology(removed);
+}
+export function addIdentitySigner(topology, identitySigner) {
+    // Find the session in the topology
+    if (getIdentitySigners(topology).some((s) => Address.isEqual(s, identitySigner))) {
+        throw new Error('Identity signer already exists');
+    }
+    // Merge and balance
+    const merged = mergeSessionsTopologies(topology, { type: 'identity-signer', identitySigner });
+    return balanceSessionsTopology(merged);
+}
+/**
+ * Merges two topologies into a new branch of [a, b].
+ */
+export function mergeSessionsTopologies(a, b) {
+    return [a, b];
+}
+/**
+ * Helper to flatten a topology into an array of leaves and nodes only.
+ * We ignore branches by recursing into them.
+ */
+function flattenSessionsTopology(topology) {
+    if (isSessionsLeaf(topology) || isSessionsNode(topology)) {
+        return [topology];
+    }
+    // If it's a branch, flatten all children
+    const result = [];
+    for (const child of topology) {
+        result.push(...flattenSessionsTopology(child));
+    }
+    return result;
+}
+/**
+ * Helper to build a balanced binary tree from an array of leaves/nodes.
+ * This function returns:
+ *   - A single leaf/node if there's only 1 item
+ *   - A branch of two subtrees otherwise
+ */
+function buildBalancedSessionsTopology(items) {
+    if (items.length === 1) {
+        return items[0];
+    }
+    if (items.length === 0) {
+        throw new Error('Cannot build a topology from an empty list');
+    }
+    const mid = Math.floor(items.length / 2);
+    const left = items.slice(0, mid);
+    const right = items.slice(mid);
+    // Recursively build subtrees
+    const leftTopo = buildBalancedSessionsTopology(left);
+    const rightTopo = buildBalancedSessionsTopology(right);
+    return [leftTopo, rightTopo];
+}
+/**
+ * Balances the topology by flattening and rebuilding as a balanced binary tree.
+ */
+export function balanceSessionsTopology(topology) {
+    return buildBalancedSessionsTopology(flattenSessionsTopology(topology));
+}
+/**
+ * Cleans a topology by removing leaves (SessionPermissions) whose deadline has expired.
+ *    - currentTime is compared against `session.deadline`.
+ *    - If a branch ends up with zero valid leaves, return `null`.
+ *    - If it has one child, collapse that child upward.
+ */
+export function cleanSessionsTopology(topology, currentTime = BigInt(Math.floor(Date.now() / 1000))) {
+    // If it's a node, just return it as is.
+    if (isSessionsNode(topology)) {
+        return topology;
+    }
+    // If it's a leaf, check the deadline
+    if (isSessionPermissions(topology)) {
+        if (topology.deadline < currentTime) {
+            // Expired => remove
+            return null;
+        }
+        // Valid => keep
+        return topology;
+    }
+    if (isIdentitySignerLeaf(topology) || isImplicitBlacklist(topology)) {
+        return topology;
+    }
+    // If it's a branch, clean all children
+    const newChildren = [];
+    for (const child of topology) {
+        const cleanedChild = cleanSessionsTopology(child, currentTime);
+        if (cleanedChild !== null) {
+            newChildren.push(cleanedChild);
+        }
+    }
+    // If no children remain, return null
+    if (newChildren.length === 0) {
+        return null;
+    }
+    // If exactly one child remains, collapse upward:
+    if (newChildren.length === 1) {
+        return newChildren[0];
+    }
+    // Otherwise, return a new branch with the cleaned children
+    return newChildren;
+}
+/**
+ * Minimise the topology by rolling unused signers into nodes.
+ * @param topology The topology to minimise
+ * @param signers The list of signers to consider
+ * @returns The minimised topology
+ */
+export function minimiseSessionsTopology(topology, explicitSigners = [], implicitSigners = [], identitySigner) {
+    if (isSessionsBranch(topology)) {
+        const branches = topology.map((b) => minimiseSessionsTopology(b, explicitSigners, implicitSigners, identitySigner));
+        // If all branches are nodes, the branch can be a node too
+        if (branches.every((b) => isSessionsNode(b))) {
+            return Hash.keccak256(Bytes.concat(...branches.map((b) => Hex.toBytes(b))), { as: 'Hex' });
+        }
+        return branches;
+    }
+    if (isSessionPermissions(topology)) {
+        if (explicitSigners.includes(topology.signer)) {
+            // Don't role it up as signer permissions must be visible
+            return topology;
+        }
+        return GenericTree.hash(encodeLeafToGeneric(topology));
+    }
+    if (isImplicitBlacklist(topology)) {
+        if (implicitSigners.length === 0) {
+            // No implicit signers, so we can roll up the blacklist
+            return GenericTree.hash(encodeLeafToGeneric(topology));
+        }
+        // If there are implicit signers, we can't roll up the blacklist
+        return topology;
+    }
+    if (isIdentitySignerLeaf(topology)) {
+        if (identitySigner && !Address.isEqual(topology.identitySigner, identitySigner)) {
+            // Not the identity signer we're looking for, so roll it up
+            return GenericTree.hash(encodeLeafToGeneric(topology));
+        }
+        // Return this identity signer leaf
+        return topology;
+    }
+    if (isSessionsNode(topology)) {
+        // Node is already encoded and hashed
+        return topology;
+    }
+    // Unreachable
+    throw new Error('Invalid topology');
+}
+/**
+ * Adds an address to the implicit session's blacklist.
+ * If the address is not already in the blacklist, it is added and the list is sorted.
+ */
+export function addToImplicitBlacklist(topology, address) {
+    const blacklistNode = getImplicitBlacklistLeaf(topology);
+    if (!blacklistNode) {
+        throw new Error('No blacklist found');
+    }
+    const { blacklist } = blacklistNode;
+    if (blacklist.some((addr) => Address.isEqual(addr, address))) {
+        return topology;
+    }
+    blacklist.push(address);
+    blacklist.sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1)); // keep sorted so on-chain binary search works as expected
+    return topology;
+}
+/**
+ * Removes an address from the implicit session's blacklist.
+ */
+export function removeFromImplicitBlacklist(topology, address) {
+    const blacklistNode = getImplicitBlacklistLeaf(topology);
+    if (!blacklistNode) {
+        throw new Error('No blacklist found');
+    }
+    const { blacklist } = blacklistNode;
+    const newBlacklist = blacklist.filter((a) => a !== address);
+    blacklistNode.blacklist = newBlacklist;
+    return topology;
+}
+/**
+ *  Generate an empty sessions topology with the given identity signer. No session permission and an empty blacklist
+ */
+export function emptySessionsTopology(identitySigner) {
+    if (!Array.isArray(identitySigner)) {
+        return emptySessionsTopology([identitySigner]);
+    }
+    const flattenedTopology = [
+        {
+            type: 'implicit-blacklist',
+            blacklist: [],
+        },
+        ...identitySigner.map((signer) => ({ type: 'identity-signer', identitySigner: signer })),
+    ];
+    return buildBalancedSessionsTopology(flattenedTopology);
+}
+//# sourceMappingURL=session-config.js.map
