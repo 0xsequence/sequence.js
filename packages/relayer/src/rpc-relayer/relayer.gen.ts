@@ -1303,6 +1303,22 @@ const buildResponse = (res: Response): Promise<any> => {
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
+export const JsonEncode = <T = any>(obj: T, _typ: string = ''): string => {
+  return JSON.stringify(obj)
+}
+
+export const JsonDecode = <T = any>(data: string | any, _typ: string = ''): T => {
+  let parsed: any = data
+  if (typeof data === 'string') {
+    try {
+      parsed = JSON.parse(data)
+    } catch (err) {
+      throw WebrpcBadResponseError.new({ cause: `JsonDecode: JSON.parse failed: ${(err as Error).message}` })
+    }
+  }
+  return parsed as T
+}
+
 //
 // BigInt helpers
 //
