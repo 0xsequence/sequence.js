@@ -1159,18 +1159,18 @@ export class Wallets implements WalletsInterface {
       throw new Error('wallet-not-found')
     }
 
-    // Prevent starting logout if already logging out or not ready
-    if (walletEntry.status !== 'ready') {
-      console.warn(`Logout called on wallet ${wallet} with status ${walletEntry.status}. Aborting.`)
-      throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
-    }
-
     if (options?.skipRemoveDevice) {
       await Promise.all([
         this.shared.databases.manager.del(wallet),
         this.shared.modules.devices.remove(walletEntry.device),
       ])
       return undefined as any
+    }
+
+    // Prevent starting logout if already logging out or not ready
+    if (walletEntry.status !== 'ready') {
+      console.warn(`Logout called on wallet ${wallet} with status ${walletEntry.status}. Aborting.`)
+      throw new Error(`Wallet is not in 'ready' state for logout (current: ${walletEntry.status})`)
     }
 
     const device = await this.shared.modules.devices.get(walletEntry.device)
