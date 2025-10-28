@@ -11,8 +11,9 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
   protected redirectUri: string = ''
 
   constructor(
-    public readonly signupKind: 'apple' | 'google-pkce',
+    public readonly signupKind: 'apple' | 'google-pkce' | `custom-${string}`,
     public readonly issuer: string,
+    protected readonly oauthUrl: string,
     public readonly audience: string,
     nitro: Identity.IdentityInstrument,
     signatures: Signatures,
@@ -48,12 +49,11 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       client_id: this.audience,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'openid',
+      scope: 'openid profile email',
       state,
     })
 
-    const oauthUrl = this.oauthUrl()
-    return `${oauthUrl}?${searchParams.toString()}`
+    return `${this.oauthUrl}?${searchParams.toString()}`
   }
 
   public async completeAuth(
@@ -98,17 +98,6 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
         window.location.href = url
         return true
       },
-    }
-  }
-
-  protected oauthUrl() {
-    switch (this.issuer) {
-      case 'https://accounts.google.com':
-        return 'https://accounts.google.com/o/oauth2/v2/auth'
-      case 'https://appleid.apple.com':
-        return 'https://appleid.apple.com/auth/authorize'
-      default:
-        throw new Error('unsupported-issuer')
     }
   }
 }
