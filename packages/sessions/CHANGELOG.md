@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.33
+
+### Patch Changes
+
+- Arc Testnet fixes
+- Updated dependencies
+  - @0xsequence/migration@2.3.33
+  - @0xsequence/replacer@2.3.33
+  - @0xsequence/utils@2.3.33
+  - @0xsequence/core@2.3.33
+
 ## 2.3.32
 
 ### Patch Changes

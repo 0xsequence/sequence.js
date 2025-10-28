@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.33
+
+### Patch Changes
+
+- Arc Testnet fixes
+
 ## 2.3.32
 
 ### Patch Changes

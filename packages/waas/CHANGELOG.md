@@ -1,5 +1,15 @@
 # @0xsequence/waas
 
+## 2.3.33
+
+### Patch Changes
+
+- Arc Testnet fixes
+- Updated dependencies
+  - @0xsequence/network@2.3.33
+  - @0xsequence/utils@2.3.33
+  - @0xsequence/core@2.3.33
+
 ## 2.3.32
 
 ### Patch Changes
