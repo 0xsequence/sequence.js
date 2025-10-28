@@ -1291,12 +1291,12 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'Arc Testnet Explorer',
-      rootUrl: 'https://1jr2dw1zdqvyes8u.blockscout.com/',
+      rootUrl: 'https://testnet.arcscan.app/',
     },
     nativeToken: {
       symbol: 'USDC',
       name: 'USDC',
-      decimals: 6,
+      decimals: 18,
     },
   },
 };
