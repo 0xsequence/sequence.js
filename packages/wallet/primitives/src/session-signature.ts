@@ -1,4 +1,5 @@
 import { Address, Bytes, Hash, Hex } from 'ox'
+import { Attestation, Extensions, Payload } from './index.js'
 import { MAX_PERMISSIONS_COUNT } from './permission.js'
 import {
   decodeSessionsTopology,
@@ -10,7 +11,6 @@ import {
 } from './session-config.js'
 import { RSY } from './signature.js'
 import { minBytesFor, packRSY, unpackRSY } from './utils.js'
-import { Attestation, Payload } from './index.js'
 
 export type ImplicitSessionCallSignature = {
   attestation: Attestation.Attestation
@@ -273,20 +273,37 @@ export function decodeSessionSignature(encodedSignatures: Bytes.Bytes): {
 
 // Call encoding
 
+/**
+ * Hashes a call with replay protection parameters.
+ * @param payload The payload to hash.
+ * @param callIdx The index of the call to hash.
+ * @param chainId The chain ID. Use 0 when noChainId enabled.
+ * @param sessionManagerAddress The session manager address to compile the hash for. Only required to support deprecated hash encodings for Dev1, Dev2 and Rc3.
+ * @returns The hash of the call with replay protection parameters for sessions.
+ */
 export function hashCallWithReplayProtection(
+  wallet: Address.Address,
   payload: Payload.Calls,
   callIdx: number,
   chainId: number,
-  skipCallIdx: boolean = false, // Deprecated. Dev1 and Dev2 support
+  sessionManagerAddress?: Address.Address,
 ): Hex.Hex {
   const call = payload.calls[callIdx]!
+  // Support deprecated hashes for Dev1, Dev2 and Rc3
+  const ignoreCallIdx =
+    sessionManagerAddress &&
+    (Address.isEqual(sessionManagerAddress, Extensions.Dev1.sessions) ||
+      Address.isEqual(sessionManagerAddress, Extensions.Dev2.sessions))
+  const ignoreWallet =
+    ignoreCallIdx || (sessionManagerAddress && Address.isEqual(sessionManagerAddress, Extensions.Rc3.sessions))
   return Hex.fromBytes(
     Hash.keccak256(
       Bytes.concat(
+        ignoreWallet ? Bytes.from([]) : Bytes.fromHex(wallet),
         Bytes.fromNumber(chainId, { size: 32 }),
         Bytes.fromNumber(payload.space, { size: 32 }),
         Bytes.fromNumber(payload.nonce, { size: 32 }),
-        skipCallIdx ? Bytes.from([]) : Bytes.fromNumber(callIdx, { size: 32 }),
+        ignoreCallIdx ? Bytes.from([]) : Bytes.fromNumber(callIdx, { size: 32 }),
         Bytes.fromHex(Payload.hashCall(call)),
       ),
     ),

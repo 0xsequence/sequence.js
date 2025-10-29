@@ -263,10 +263,13 @@ export class Explicit implements ExplicitSessionSigner {
     }
 
     // Sign it
-    const useDeprecatedHash =
-      Address.isEqual(sessionManagerAddress, Extensions.Dev1.sessions) ||
-      Address.isEqual(sessionManagerAddress, Extensions.Dev2.sessions)
-    const callHash = SessionSignature.hashCallWithReplayProtection(payload, callIdx, chainId, useDeprecatedHash)
+    const callHash = SessionSignature.hashCallWithReplayProtection(
+      wallet,
+      payload,
+      callIdx,
+      chainId,
+      sessionManagerAddress,
+    )
     const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       permissionIndex: BigInt(permissionIndex),
