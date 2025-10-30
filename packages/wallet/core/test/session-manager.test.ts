@@ -13,7 +13,7 @@ import {
   USDC_ADDRESS,
 } from './constants'
 import { Extensions } from '@0xsequence/wallet-primitives'
-import { ExplicitSessionConfig } from '../../wdk/src/sequence/types/sessions.js'
+import { ExplicitSessionConfig } from '../src/utils/session/types.js'
 
 const { PermissionBuilder, ERC20PermissionBuilder } = Utils
 
@@ -565,7 +565,7 @@ for (const extension of ALL_EXTENSIONS) {
         }
 
         // Sign the transaction
-        expect(sessionManager.signSapient(wallet.address, chainId, payload, imageHash)).rejects.toThrow(
+        await expect(sessionManager.signSapient(wallet.address, chainId, payload, imageHash)).rejects.toThrow(
           `Signer supporting call is expired: ${explicitSigner.address}`,
         )
       },

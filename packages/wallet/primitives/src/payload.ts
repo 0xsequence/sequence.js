@@ -184,6 +184,10 @@ export function isCalls4337_07(payload: Payload): payload is Calls4337_07 {
   return payload.type === 'call_4337_07'
 }
 
+export function isParented(payload: Payload): payload is Parented {
+  return 'parentWallets' in payload
+}
+
 export function toRecovery<T extends MayRecoveryPayload>(payload: T): Recovery<T> {
   if (isRecovery(payload)) {
     return payload

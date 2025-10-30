@@ -11,7 +11,7 @@ import {
   encodeSessionCallSignatureForJson,
   encodeSessionSignature,
   ExplicitSessionCallSignature,
-  hashCallWithReplayProtection,
+  hashPayloadWithCallIdx,
   ImplicitSessionCallSignature,
   isExplicitSessionCallSignature,
   isImplicitSessionCallSignature,
@@ -445,24 +445,24 @@ describe('Session Signature', () => {
   })
 
   describe('Helper Functions', () => {
-    describe('hashCallWithReplayProtection', () => {
+    describe('hashPayloadWithCallIdx', () => {
       it('should hash call with replay protection parameters', () => {
-        const result = hashCallWithReplayProtection(testAddress1, samplePayload, 0, testChainId)
+        const result = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, testChainId)
 
         expect(result).toMatch(/^0x[0-9a-f]{64}$/) // 32-byte hex string
         expect(Hex.size(result)).toBe(32)
       })
 
       it('should produce different hashes for different chain IDs', () => {
-        const hash1 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, ChainId.MAINNET)
-        const hash2 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, ChainId.POLYGON)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, ChainId.MAINNET)
+        const hash2 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, ChainId.POLYGON)
 
         expect(hash1).not.toBe(hash2)
       })
 
       it('should produce different hashes for different spaces', () => {
-        const hash1 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, testChainId)
-        const hash2 = hashCallWithReplayProtection(
+        const hash1 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, testChainId)
+        const hash2 = hashPayloadWithCallIdx(
           testAddress1,
           { ...samplePayload, space: samplePayload.space + 1n },
           0,
@@ -473,8 +473,8 @@ describe('Session Signature', () => {
       })
 
       it('should produce different hashes for different nonces', () => {
-        const hash1 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, testChainId)
-        const hash2 = hashCallWithReplayProtection(
+        const hash1 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, testChainId)
+        const hash2 = hashPayloadWithCallIdx(
           testAddress1,
           { ...samplePayload, nonce: samplePayload.nonce + 1n },
           0,
@@ -491,8 +491,8 @@ describe('Session Signature', () => {
         }
         const payload2 = { ...samplePayload, calls: [call2] }
 
-        const hash1 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, testChainId)
-        const hash2 = hashCallWithReplayProtection(testAddress1, payload2, 0, testChainId)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, testChainId)
+        const hash2 = hashPayloadWithCallIdx(testAddress1, payload2, 0, testChainId)
 
         expect(hash1).not.toBe(hash2)
       })
@@ -500,8 +500,8 @@ describe('Session Signature', () => {
       it('should produce different hashes for different wallets', () => {
         const payload = { ...samplePayload, calls: [sampleCall, sampleCall] }
 
-        const hash1 = hashCallWithReplayProtection(testAddress1, payload, 0, testChainId)
-        const hash2 = hashCallWithReplayProtection(testAddress2, payload, 0, testChainId)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, payload, 0, testChainId)
+        const hash2 = hashPayloadWithCallIdx(testAddress2, payload, 0, testChainId)
 
         expect(hash1).not.toBe(hash2)
       })
@@ -511,8 +511,8 @@ describe('Session Signature', () => {
         // This is exploitable and should not be used in practice
         const payload = { ...samplePayload, calls: [sampleCall, sampleCall] }
 
-        const hash1 = hashCallWithReplayProtection(testAddress1, payload, 0, testChainId, Extensions.Dev1.sessions)
-        const hash2 = hashCallWithReplayProtection(testAddress2, payload, 0, testChainId, Extensions.Dev2.sessions)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, payload, 0, testChainId, Extensions.Dev1.sessions)
+        const hash2 = hashPayloadWithCallIdx(testAddress2, payload, 0, testChainId, Extensions.Dev2.sessions)
 
         expect(hash1).toBe(hash2)
       })
@@ -522,9 +522,9 @@ describe('Session Signature', () => {
         // This is exploitable and should not be used in practice
         const payload = { ...samplePayload, calls: [sampleCall, sampleCall] }
 
-        const hash1 = hashCallWithReplayProtection(testAddress1, payload, 0, testChainId, Extensions.Dev1.sessions)
-        const hash2 = hashCallWithReplayProtection(testAddress2, payload, 0, testChainId, Extensions.Rc3.sessions)
-        const hash3 = hashCallWithReplayProtection(testAddress2, payload, 0, testChainId)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, payload, 0, testChainId, Extensions.Dev1.sessions)
+        const hash2 = hashPayloadWithCallIdx(testAddress2, payload, 0, testChainId, Extensions.Rc3.sessions)
+        const hash3 = hashPayloadWithCallIdx(testAddress2, payload, 0, testChainId)
 
         expect(hash1).not.toBe(hash2)
         expect(hash1).not.toBe(hash3)
@@ -534,8 +534,8 @@ describe('Session Signature', () => {
       it('should produce different hashes for same call at different index', () => {
         const payload = { ...samplePayload, calls: [sampleCall, sampleCall] }
 
-        const hash1 = hashCallWithReplayProtection(testAddress1, payload, 0, testChainId)
-        const hash2 = hashCallWithReplayProtection(testAddress1, payload, 1, testChainId)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, payload, 0, testChainId)
+        const hash2 = hashPayloadWithCallIdx(testAddress1, payload, 1, testChainId)
 
         expect(hash1).not.toBe(hash2)
       })
@@ -545,15 +545,15 @@ describe('Session Signature', () => {
         // This is exploitable and should not be used in practice
         const payload = { ...samplePayload, calls: [sampleCall, sampleCall] }
 
-        const hash1 = hashCallWithReplayProtection(testAddress1, payload, 0, testChainId, Extensions.Dev1.sessions)
-        const hash2 = hashCallWithReplayProtection(testAddress1, payload, 1, testChainId, Extensions.Dev1.sessions)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, payload, 0, testChainId, Extensions.Dev1.sessions)
+        const hash2 = hashPayloadWithCallIdx(testAddress1, payload, 1, testChainId, Extensions.Dev1.sessions)
 
         expect(hash1).toBe(hash2)
       })
 
       it('should be deterministic', () => {
-        const hash1 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, testChainId)
-        const hash2 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, testChainId)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, testChainId)
+        const hash2 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, testChainId)
 
         expect(hash1).toBe(hash2)
       })
@@ -563,7 +563,7 @@ describe('Session Signature', () => {
         const largeSpace = 2n ** 16n
         const largeNonce = 2n ** 24n
 
-        const result = hashCallWithReplayProtection(
+        const result = hashPayloadWithCallIdx(
           testAddress1,
           { ...samplePayload, space: largeSpace, nonce: largeNonce },
           0,
@@ -573,7 +573,7 @@ describe('Session Signature', () => {
       })
 
       it('should handle zero values', () => {
-        const result = hashCallWithReplayProtection(testAddress1, { ...samplePayload, space: 0n, nonce: 0n }, 0, 0)
+        const result = hashPayloadWithCallIdx(testAddress1, { ...samplePayload, space: 0n, nonce: 0n }, 0, 0)
         expect(result).toMatch(/^0x[0-9a-f]{64}$/)
       })
 
@@ -584,7 +584,7 @@ describe('Session Signature', () => {
         }
         const payload = { ...samplePayload, calls: [callWithEmptyData] }
 
-        const result = hashCallWithReplayProtection(testAddress1, payload, 0, testChainId)
+        const result = hashPayloadWithCallIdx(testAddress1, payload, 0, testChainId)
         expect(result).toMatch(/^0x[0-9a-f]{64}$/)
       })
 
@@ -595,8 +595,8 @@ describe('Session Signature', () => {
         }
         const payload = { ...samplePayload, calls: [delegateCall] }
 
-        const hash1 = hashCallWithReplayProtection(testAddress1, samplePayload, 0, testChainId)
-        const hash2 = hashCallWithReplayProtection(testAddress1, payload, 0, testChainId)
+        const hash1 = hashPayloadWithCallIdx(testAddress1, samplePayload, 0, testChainId)
+        const hash2 = hashPayloadWithCallIdx(testAddress1, payload, 0, testChainId)
 
         expect(hash1).not.toBe(hash2)
       })
@@ -780,7 +780,7 @@ describe('Session Signature', () => {
 
       // Generate hashes for each call
       const hashes = calls.map((call) =>
-        hashCallWithReplayProtection(testAddress1, payload, calls.indexOf(call), testChainId),
+        hashPayloadWithCallIdx(testAddress1, payload, calls.indexOf(call), testChainId),
       )
 
       // All hashes should be valid and different

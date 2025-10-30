@@ -263,13 +263,7 @@ export class Explicit implements ExplicitSessionSigner {
     }
 
     // Sign it
-    const callHash = SessionSignature.hashCallWithReplayProtection(
-      wallet,
-      payload,
-      callIdx,
-      chainId,
-      sessionManagerAddress,
-    )
+    const callHash = SessionSignature.hashPayloadWithCallIdx(wallet, payload, callIdx, chainId, sessionManagerAddress)
     const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       permissionIndex: BigInt(permissionIndex),
