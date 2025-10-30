@@ -85,7 +85,7 @@ export type ManagerOptions = {
 export const ManagerOptionsDefaults = {
   verbose: false,
 
-  extensions: Extensions.Rc3,
+  extensions: Extensions.Rc4,
   context: Context.Rc3,
   context4337: Context.Rc3_4337,
   guest: Constants.DefaultGuestAddress,
