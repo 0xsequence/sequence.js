@@ -223,7 +223,7 @@ describe('GuardHandler', () => {
       const mockAddSignature = vi.fn()
       signatures.addSignature = mockAddSignature
 
-      const mockCallback = vi.fn().mockImplementation(async (codeType, respond) => {
+      const mockCallback = vi.fn().mockImplementation(async (request, codeType, respond) => {
         expect(codeType).toBe('TOTP')
         await respond('123456')
       })
