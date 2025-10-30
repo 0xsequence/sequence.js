@@ -24,5 +24,12 @@ export const Rc3: Extensions = {
   sessions: '0x0000000000CC58810c33F3a0D78aA1Ed80FaDcD8',
 }
 
+//FIXME This is a placeholder for the actual Rc4 extension
+export const Rc4: Extensions = {
+  passkeys: Rc3.passkeys,
+  recovery: Rc3.recovery,
+  sessions: '0x6f1092241e82bD0786C5DA6b6919AD38966fff8E',
+}
+
 export * as Passkeys from './passkeys.js'
 export * as Recovery from './recovery.js'

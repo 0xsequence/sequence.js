@@ -115,10 +115,7 @@ export class Implicit implements ImplicitSessionSigner {
     if (!isSupported) {
       throw new Error('Unsupported call')
     }
-    const useDeprecatedHash =
-      Address.isEqual(sessionManagerAddress, Extensions.Dev1.sessions) ||
-      Address.isEqual(sessionManagerAddress, Extensions.Dev2.sessions)
-    const callHash = SessionSignature.hashCallWithReplayProtection(payload, callIdx, chainId, useDeprecatedHash)
+    const callHash = SessionSignature.hashPayloadWithCallIdx(wallet, payload, callIdx, chainId, sessionManagerAddress)
     const sessionSignature = await this._privateKey.signDigest(Bytes.fromHex(callHash))
     return {
       attestation: this._attestation,

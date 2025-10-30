@@ -221,7 +221,7 @@ export class ChainSessionManager {
       stateProvider: this.stateProvider,
     })
     this.sessionManager = new Signers.SessionManager(this.wallet, {
-      sessionManagerAddress: Extensions.Rc3.sessions,
+      sessionManagerAddress: Extensions.Rc4.sessions,
       provider: this.provider!,
     })
     this.isInitialized = true
@@ -730,7 +730,7 @@ export class ChainSessionManager {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const tempManager = new Signers.SessionManager(this.wallet, {
-          sessionManagerAddress: Extensions.Rc3.sessions,
+          sessionManagerAddress: Extensions.Rc4.sessions,
           provider: this.provider,
         })
         const topology = await tempManager.getTopology()
