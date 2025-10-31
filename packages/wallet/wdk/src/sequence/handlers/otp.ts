@@ -99,7 +99,7 @@ export class OtpHandler extends IdentityHandler implements Handler {
       try {
         const { loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
 
-        const respond: RespondFn = async (otp: string) => {
+        const respond: RespondFn = async (otp) => {
           try {
             const { signer, email: returnedEmail } = await this.nitroCompleteAuth(
               challenge.withAnswer(codeChallenge, otp),

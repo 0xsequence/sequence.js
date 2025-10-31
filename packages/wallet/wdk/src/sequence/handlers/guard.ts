@@ -94,7 +94,7 @@ export class GuardHandler implements Handler {
             resolve(true)
           } catch (e) {
             if (e instanceof Guard.AuthRequiredError) {
-              const respond: RespondFn = async (id: 'TOTP' | 'PIN' | 'recovery', code: string) => {
+              const respond: RespondFn = async (id, code) => {
                 try {
                   const signature = await guard.signEnvelope(request.envelope, { id, code })
                   await this.signatures.addSignature(request.id, signature)
