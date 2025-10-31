@@ -3,6 +3,16 @@ import { Context, Config, Payload, Signature, GenericTree } from '@0xsequence/wa
 
 export type Provider = Reader & Writer
 
+export type Migration = {
+  fromVersion: number
+  toVersion: number
+  fromImageHash: Hex.Hex
+  toConfig: Config.Config
+  payload: Payload.Calls
+  signature: Hex.Hex // Encoded
+  chainId: number
+}
+
 export interface Reader {
   getConfiguration(imageHash: Hex.Hex): MaybePromise<Config.Config | undefined>
 
@@ -52,6 +62,13 @@ export interface Reader {
   getPayload(
     opHash: Hex.Hex,
   ): MaybePromise<{ chainId: number; payload: Payload.Parented; wallet: Address.Address } | undefined>
+
+  getMigration(
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ): MaybePromise<Migration | undefined>
 }
 
 export interface Writer {
@@ -75,6 +92,8 @@ export interface Writer {
   saveConfiguration(config: Config.Config): MaybePromise<void>
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void>
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void>
+
+  saveMigration(wallet: Address.Address, migration: Migration): MaybePromise<void>
 }
 
 export type MaybePromise<T> = T | Promise<T>

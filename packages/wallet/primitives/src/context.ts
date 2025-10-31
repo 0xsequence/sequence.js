@@ -72,6 +72,32 @@ export const KnownContexts: KnownContext[] = [
   { name: 'Rc3_4337', development: true, ...Rc3_4337 },
 ]
 
+export function isContext(context: any): context is Context {
+  return (
+    (context as Context).factory !== undefined &&
+    (context as Context).stage1 !== undefined &&
+    (context as Context).stage2 !== undefined &&
+    (context as Context).creationCode !== undefined
+  )
+}
+
 export function isKnownContext(context: Context): context is KnownContext {
   return (context as KnownContext).name !== undefined && (context as KnownContext).development !== undefined
+}
+
+export function getVersionFromContext(context: Context): number {
+  if (
+    Address.isEqual(context.stage1, '0xd01F11855bCcb95f88D7A48492F66410d4637313') &&
+    Address.isEqual(context.stage2, '0x7EFE6cE415956c5f80C6530cC6cc81b4808F6118')
+  ) {
+    return 1
+  }
+  if (
+    Address.isEqual(context.stage1, '0xfBf8f1A5E00034762D928f46d438B947f5d4065d') &&
+    Address.isEqual(context.stage2, '0x4222dcA3974E39A8b41c411FeDDE9b09Ae14b911')
+  ) {
+    return 2
+  }
+  // We assume this is a v3 context
+  return 3
 }

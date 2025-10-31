@@ -1,6 +1,7 @@
 import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
 import { Store } from './index.js'
+import { Migration } from '../index.js'
 
 export class MemoryStore implements Store {
   private configs = new Map<`0x${string}`, Config.Config>()
@@ -13,6 +14,8 @@ export class MemoryStore implements Store {
   private sapientSignatures = new Map<`0x${string}`, Signature.SignatureOfSapientSignerLeaf>()
 
   private trees = new Map<`0x${string}`, GenericTree.Tree>()
+
+  private migrations = new Map<string, Migration>()
 
   private deepCopy<T>(value: T): T {
     // modern runtime → fast native path
@@ -152,5 +155,30 @@ export class MemoryStore implements Store {
 
   async saveTree(rootHash: Hex.Hex, tree: GenericTree.Tree): Promise<void> {
     this.trees.set(rootHash.toLowerCase() as `0x${string}`, this.deepCopy(tree))
+  }
+
+  private getMigrationKey(
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ): string {
+    return `${wallet.toLowerCase()}-${fromImageHash.toLowerCase()}-${fromVersion}-${chainId}`
+  }
+
+  async loadMigration(
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ): Promise<Migration | undefined> {
+    const key = this.getMigrationKey(wallet, fromImageHash, fromVersion, chainId)
+    const migration = this.migrations.get(key)
+    return migration ? this.deepCopy(migration) : undefined
+  }
+
+  async saveMigration(wallet: Address.Address, migration: Migration): Promise<void> {
+    const key = this.getMigrationKey(wallet, migration.fromImageHash, migration.fromVersion, migration.chainId)
+    this.migrations.set(key, this.deepCopy(migration))
   }
 }
