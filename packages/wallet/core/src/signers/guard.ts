@@ -4,7 +4,7 @@ import * as GuardService from '@0xsequence/guard'
 import * as Envelope from '../envelope.js'
 
 type GuardToken = {
-  id: 'TOTP' | 'PIN'
+  id: 'TOTP' | 'PIN' | 'recovery'
   code: string
 }
 

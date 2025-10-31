@@ -95,7 +95,7 @@ export class MnemonicHandler implements Handler {
       message: 'enter-mnemonic',
       handle: () =>
         new Promise(async (resolve, reject) => {
-          const respond: RespondFn = async (mnemonic: string) => {
+          const respond: RespondFn = async (mnemonic) => {
             const signer = MnemonicHandler.toSigner(mnemonic)
             if (!signer) {
               return reject('invalid-mnemonic')
