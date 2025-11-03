@@ -1303,11 +1303,105 @@ const buildResponse = (res: Response): Promise<any> => {
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
-export const JsonEncode = <T = any>(obj: T, _typ: string = ''): string => {
-  return JSON.stringify(obj)
+//
+// BigInt helpers
+//
+
+const BIG_INT_FIELDS: { [typ: string]: (string | [string, string])[] } = {
+  SendMetaTxnArgs: [['preconditions', 'TransactionPrecondition[]']],
+  TransactionPrecondition: ['minAmount'],
+  Transactions: [['preconditions', 'TransactionPrecondition[]']]
 }
 
-export const JsonDecode = <T = any>(data: string | any, _typ: string = ''): T => {
+// Encode in-place: mutate provided object graph to serialize bigints to strings.
+function encodeType(typ: string, obj: any): any {
+  if (obj == null || typeof obj !== 'object') return obj
+  const descs = BIG_INT_FIELDS[typ] || []
+  if (!descs.length) return obj
+  for (const d of descs) {
+    if (Array.isArray(d)) {
+      const [fieldName, nestedType] = d
+      if (fieldName.endsWith('[]')) {
+        const base = fieldName.slice(0, -2)
+        const arr = obj[base]
+        if (Array.isArray(arr)) {
+          for (let i = 0; i < arr.length; i++) arr[i] = encodeType(nestedType, arr[i])
+        }
+      } else if (obj[fieldName]) {
+        obj[fieldName] = encodeType(nestedType, obj[fieldName])
+      }
+      continue
+    }
+    if (d.endsWith('[]')) {
+      const base = d.slice(0, -2)
+      const arr = obj[base]
+      if (Array.isArray(arr)) {
+        for (let i = 0; i < arr.length; i++) {
+          if (typeof arr[i] === 'bigint') arr[i] = arr[i].toString()
+        }
+      }
+      continue
+    }
+    if (typeof obj[d] === 'bigint') obj[d] = obj[d].toString()
+  }
+  return obj
+}
+
+// Decode in-place: mutate object graph; throw if expected numeric string is invalid.
+function decodeType(typ: string, obj: any): any {
+  if (obj == null || typeof obj !== 'object') return obj
+  const descs = BIG_INT_FIELDS[typ] || []
+  if (!descs.length) return obj
+  for (const d of descs) {
+    if (Array.isArray(d)) {
+      const [fieldName, nestedType] = d
+      if (fieldName.endsWith('[]')) {
+        const base = fieldName.slice(0, -2)
+        const arr = obj[base]
+        if (Array.isArray(arr)) {
+          for (let i = 0; i < arr.length; i++) arr[i] = decodeType(nestedType, arr[i])
+        }
+      } else if (obj[fieldName]) {
+        obj[fieldName] = decodeType(nestedType, obj[fieldName])
+      }
+      continue
+    }
+    if (d.endsWith('[]')) {
+      const base = d.slice(0, -2)
+      const arr = obj[base]
+      if (Array.isArray(arr)) {
+        for (let i = 0; i < arr.length; i++) {
+          const v = arr[i]
+          if (typeof v === 'string') {
+            try {
+              arr[i] = BigInt(v)
+            } catch (e) {
+              throw WebrpcBadResponseError.new({ cause: `Invalid bigint value for ${base}[${i}]: ${v}` })
+            }
+          }
+        }
+      }
+      continue
+    }
+    const v = obj[d]
+    if (typeof v === 'string') {
+      try {
+        obj[d] = BigInt(v)
+      } catch (e) {
+        throw WebrpcBadResponseError.new({ cause: `Invalid bigint value for ${d}: ${v}` })
+      }
+    }
+  }
+  return obj
+}
+
+// Encode object of given root type to JSON with BigInts converted to decimal strings.
+export const JsonEncode = <T = any>(obj: T, typ: string = ''): string => {
+  return JSON.stringify(encodeType(typ, obj))
+}
+
+// Decode data (JSON string or already-parsed object) and convert declared BigInt string fields back to BigInt.
+export const JsonDecode = <T = any>(data: string | any, typ: string = ''): T => {
   let parsed: any = data
   if (typeof data === 'string') {
     try {
@@ -1316,7 +1410,7 @@ export const JsonDecode = <T = any>(data: string | any, _typ: string = ''): T =>
       throw WebrpcBadResponseError.new({ cause: `JsonDecode: JSON.parse failed: ${(err as Error).message}` })
     }
   }
-  return parsed as T
+  return decodeType(typ, parsed) as T
 }
 
 //
