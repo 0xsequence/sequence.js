@@ -1,11 +1,12 @@
 import { Address, Hex } from 'ox'
 import * as Guard from '@0xsequence/guard'
+import { Signers } from '@0xsequence/wallet-core'
 import { Handler } from './handler.js'
 import { BaseSignatureRequest, SignerUnavailable, SignerReady, SignerActionable, Kinds } from '../types/index.js'
 import { Signatures } from '../signatures.js'
 import { Guards } from '../guards.js'
 
-type RespondFn = (id: 'TOTP' | 'PIN' | 'recovery', code: string) => Promise<void>
+type RespondFn = (token: Signers.GuardToken) => Promise<void>
 
 export type PromptCodeHandler = (
   request: BaseSignatureRequest,
@@ -94,9 +95,9 @@ export class GuardHandler implements Handler {
             resolve(true)
           } catch (e) {
             if (e instanceof Guard.AuthRequiredError) {
-              const respond: RespondFn = async (id, code) => {
+              const respond: RespondFn = async (token) => {
                 try {
-                  const signature = await guard.signEnvelope(request.envelope, { id, code })
+                  const signature = await guard.signEnvelope(request.envelope, token)
                   await this.signatures.addSignature(request.id, signature)
                   resolve(true)
                 } catch (e) {
