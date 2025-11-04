@@ -8,7 +8,7 @@ import {
   GenericTree,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox'
-import { Provider as ProviderInterface } from '../index.js'
+import { Migration, Provider as ProviderInterface } from '../index.js'
 import { MemoryStore } from './memory.js'
 import { normalizeAddressKeys } from '../utils.js'
 
@@ -61,6 +61,15 @@ export interface Store {
   // generic trees
   loadTree: (rootHash: Hex.Hex) => Promise<GenericTree.Tree | undefined>
   saveTree: (rootHash: Hex.Hex, tree: GenericTree.Tree) => Promise<void>
+
+  // migrations
+  loadMigration: (
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ) => Promise<Migration | undefined>
+  saveMigration: (wallet: Address.Address, migration: Migration) => Promise<void>
 }
 
 export class Provider implements ProviderInterface {
@@ -434,6 +443,19 @@ export class Provider implements ProviderInterface {
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): Promise<void> {
     const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
     return this.store.savePayloadOfSubdigest(subdigest, { content: payload, chainId, wallet })
+  }
+
+  async getMigration(
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ): Promise<Migration | undefined> {
+    return this.store.loadMigration(wallet, fromImageHash, fromVersion, chainId)
+  }
+
+  async saveMigration(wallet: Address.Address, migration: Migration): Promise<void> {
+    return this.store.saveMigration(wallet, migration)
   }
 }
 

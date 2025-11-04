@@ -8,8 +8,10 @@ import {
   Signature as oxSignature,
   TransactionRequest,
 } from 'ox'
-import { normalizeAddressKeys, Provider as ProviderInterface } from '../index.js'
-import { Sessions, SignatureType } from './sessions.gen.js'
+import { Migration, normalizeAddressKeys, Provider as ProviderInterface } from '../index.js'
+import { Context as ServiceContext, Sessions, SignatureType, TransactionBundle } from './sessions.gen.js'
+
+type ContextWithGuest = Context.Context & { guest?: Address.Address }
 
 export class Provider implements ProviderInterface {
   private readonly service: Sessions
@@ -29,22 +31,14 @@ export class Provider implements ProviderInterface {
   }
 
   async getDeploy(wallet: Address.Address): Promise<{ imageHash: Hex.Hex; context: Context.Context } | undefined> {
-    const { deployHash, context } = await this.service.deployHash({ wallet })
+    const { deployHash, context: serviceContext } = await this.service.deployHash({ wallet })
 
     Hex.assert(deployHash)
-    Address.assert(context.factory)
-    Address.assert(context.mainModule)
-    Address.assert(context.mainModuleUpgradable)
-    Hex.assert(context.walletCreationCode)
+    const context = fromServiceContext(serviceContext)
 
     return {
       imageHash: deployHash,
-      context: {
-        factory: context.factory,
-        stage1: context.mainModule,
-        stage2: context.mainModuleUpgradable,
-        creationCode: context.walletCreationCode,
-      },
+      context,
     }
   }
 
@@ -271,18 +265,51 @@ export class Provider implements ProviderInterface {
     return { payload: fromServicePayload(payload), wallet, chainId: Number(chainID) }
   }
 
-  async saveWallet(deployConfiguration: Config.Config, context: Context.Context): Promise<void> {
+  async getMigration(
+    wallet: Address.Address,
+    fromImageHash: Hex.Hex,
+    fromVersion: number,
+    chainId: number,
+  ): Promise<Migration | undefined> {
+    const chainIdString = chainId.toString()
+    const { migrations } = await this.service.migrations({ wallet, fromImageHash, fromVersion, chainID: chainIdString })
+
+    const chainMigrations = migrations[chainIdString]
+    if (!chainMigrations) {
+      return undefined
+    }
+    const toVersions = Object.keys(chainMigrations)
+      .map(Number)
+      .sort((a: number, b: number) => b - a)
+
+    for (const toVersion of toVersions) {
+      for (const [toHash, transactions] of Object.entries(chainMigrations[toVersion]!)) {
+        if (!toHash || !transactions || !Hex.validate(toHash) || !Hex.validate(transactions.signature)) {
+          continue
+        }
+        const toConfig = await this.getConfiguration(toHash)
+        if (!toConfig || !Hex.validate(toHash)) {
+          continue
+        }
+        return {
+          fromImageHash,
+          fromVersion,
+          toVersion,
+          toConfig,
+          payload: fromServiceTransactionBundle(transactions),
+          signature: transactions.signature,
+          chainId,
+        }
+      }
+    }
+  }
+
+  async saveWallet(deployConfiguration: Config.Config, context: ContextWithGuest): Promise<void> {
+    const contextVersion = Context.getVersionFromContext(context)
     await this.service.saveWallet({
-      version: 3,
+      version: contextVersion,
       deployConfig: getServiceConfig(deployConfiguration),
-      context: {
-        version: 3,
-        factory: context.factory,
-        mainModule: context.stage1,
-        mainModuleUpgradable: context.stage2,
-        guestModule: Constants.DefaultGuestAddress,
-        walletCreationCode: context.creationCode,
-      },
+      context: getServiceContext(context, contextVersion),
     })
   }
 
@@ -350,8 +377,19 @@ export class Provider implements ProviderInterface {
     await this.service.saveConfig({ version: 3, config: getServiceConfig(config) })
   }
 
-  async saveDeploy(_imageHash: Hex.Hex, _context: Context.Context): Promise<void> {
-    // TODO: save deploy hash even if we don't have its configuration
+  // FIXME This is here to cater for saving non v3 configurations to key machine.
+  async forceSaveConfiguration(config: any, version: number): Promise<void> {
+    await this.service.saveConfig({ version, config })
+  }
+
+  async saveDeploy(imageHash: Hex.Hex, context: ContextWithGuest): Promise<void> {
+    // Config must already be saved to use this method
+    const { version, config } = await this.service.config({ imageHash })
+    await this.service.saveWallet({
+      version,
+      deployConfig: config,
+      context: getServiceContext(context, version),
+    })
   }
 
   async savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): Promise<void> {
@@ -360,6 +398,29 @@ export class Provider implements ProviderInterface {
       payload: getServicePayload(payload),
       wallet,
       chainID: chainId.toString(),
+    })
+  }
+
+  async saveMigration(wallet: Address.Address, migration: Migration): Promise<void> {
+    const serviceConfig = getServiceConfig(migration.toConfig)
+    const nonce = encodeTransactionBundleNonce(migration.payload.space, migration.payload.nonce)
+    await this.service.saveMigration({
+      wallet,
+      fromVersion: migration.fromVersion,
+      toVersion: migration.toVersion,
+      toConfig: serviceConfig,
+      executor: wallet,
+      transactions: migration.payload.calls.map((tx) => ({
+        to: tx.to,
+        value: tx.value.toString(),
+        data: tx.data,
+        gasLimit: tx.gasLimit.toString(),
+        delegateCall: tx.delegateCall,
+        revertOnError: tx.behaviorOnError === 'revert',
+      })),
+      nonce,
+      signature: migration.signature,
+      chainID: migration.chainId.toString(),
     })
   }
 }
@@ -670,4 +731,66 @@ function getSignerSignatures(
   } else {
     throw new Error(`unknown topology '${JSON.stringify(topology)}'`)
   }
+}
+
+function fromServiceContext(context: ServiceContext): Context.Context {
+  Address.assert(context.factory)
+  Address.assert(context.mainModule)
+  Address.assert(context.mainModuleUpgradable)
+  Hex.assert(context.walletCreationCode)
+  return {
+    factory: Address.from(context.factory),
+    stage1: context.mainModule,
+    stage2: context.mainModuleUpgradable,
+    creationCode: context.walletCreationCode,
+  }
+}
+
+function getServiceContext(context: ContextWithGuest, contextVersion?: number): ServiceContext {
+  return {
+    version: contextVersion ?? Context.getVersionFromContext(context),
+    guestModule: context.guest ?? Constants.DefaultGuestAddress,
+    factory: context.factory,
+    mainModule: context.stage1,
+    mainModuleUpgradable: context.stage2,
+    walletCreationCode: context.creationCode,
+  }
+}
+
+function fromServiceTransactionBundle(bundle: TransactionBundle): Payload.Calls {
+  // Decode nonce and space
+  const [space, nonce] = decodeTransactionBundleNonce(bundle.nonce)
+  return {
+    type: 'call',
+    space,
+    nonce,
+    calls: bundle.transactions.map((tx) => {
+      const data = tx.data || '0x'
+      Hex.assert(data)
+      return {
+        to: Address.from(tx.to),
+        value: BigInt(tx.value || '0'),
+        data,
+        gasLimit: BigInt(tx.gasLimit || '0'),
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
+    }),
+  }
+}
+
+export function decodeTransactionBundleNonce(nonce: string): [bigint, bigint] {
+  const bnonce = BigInt(nonce)
+  const shr = 2n ** 96n
+  return [bnonce / shr, bnonce % shr]
+}
+
+export function encodeTransactionBundleNonce(space: bigint, nonce: bigint): string {
+  const shl = 2n ** 96n
+  if (nonce / shl !== 0n) {
+    throw new Error('Space already encoded')
+  }
+  const encoded = nonce + space * shl
+  return encoded.toString()
 }
