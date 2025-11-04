@@ -5,7 +5,7 @@ import { BaseSignatureRequest, SignerUnavailable, SignerReady, SignerActionable,
 import { Signatures } from '../signatures.js'
 import { Guards } from '../guards.js'
 
-type RespondFn = (id: 'TOTP' | 'PIN' | 'recovery', code: string) => Promise<void>
+type RespondFn = (id: 'TOTP' | 'PIN' | 'recovery', code: string, resetAuth?: boolean) => Promise<void>
 
 export type PromptCodeHandler = (
   request: BaseSignatureRequest,
@@ -94,9 +94,9 @@ export class GuardHandler implements Handler {
             resolve(true)
           } catch (e) {
             if (e instanceof Guard.AuthRequiredError) {
-              const respond: RespondFn = async (id, code) => {
+              const respond: RespondFn = async (id, code, resetAuth) => {
                 try {
-                  const signature = await guard.signEnvelope(request.envelope, { id, code })
+                  const signature = await guard.signEnvelope(request.envelope, { id, code, resetAuth })
                   await this.signatures.addSignature(request.id, signature)
                   resolve(true)
                 } catch (e) {
