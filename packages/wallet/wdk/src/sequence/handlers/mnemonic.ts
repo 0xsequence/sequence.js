@@ -7,15 +7,17 @@ import { SignerReady, SignerUnavailable, BaseSignatureRequest, SignerActionable 
 
 type RespondFn = (mnemonic: string) => Promise<void>
 
+export type PromptMnemonicHandler = (respond: RespondFn) => Promise<void>
+
 export class MnemonicHandler implements Handler {
   kind = Kinds.LoginMnemonic
 
-  private onPromptMnemonic: undefined | ((respond: RespondFn) => Promise<void>)
+  private onPromptMnemonic: undefined | PromptMnemonicHandler
   private readySigners = new Map<Address.Address, Signers.Pk.Pk>()
 
   constructor(private readonly signatures: Signatures) {}
 
-  public registerUI(onPromptMnemonic: (respond: RespondFn) => Promise<void>) {
+  public registerUI(onPromptMnemonic: PromptMnemonicHandler) {
     this.onPromptMnemonic = onPromptMnemonic
     return () => {
       this.onPromptMnemonic = undefined
@@ -93,7 +95,7 @@ export class MnemonicHandler implements Handler {
       message: 'enter-mnemonic',
       handle: () =>
         new Promise(async (resolve, reject) => {
-          const respond = async (mnemonic: string) => {
+          const respond: RespondFn = async (mnemonic) => {
             const signer = MnemonicHandler.toSigner(mnemonic)
             if (!signer) {
               return reject('invalid-mnemonic')

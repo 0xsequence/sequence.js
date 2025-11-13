@@ -27,8 +27,10 @@ import { Signers } from './signers.js'
 import { Transactions, TransactionsInterface } from './transactions.js'
 import { Kinds } from './types/signer.js'
 import { Wallets, WalletsInterface } from './wallets.js'
-import { GuardHandler } from './handlers/guard.js'
+import { GuardHandler, PromptCodeHandler } from './handlers/guard.js'
 import { PasskeyCredential } from '../dbs/index.js'
+import { PromptMnemonicHandler } from './handlers/mnemonic.js'
+import { PromptOtpHandler } from './handlers/otp.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -500,18 +502,16 @@ export class Manager {
     }
   }
 
-  public registerMnemonicUI(onPromptMnemonic: (respond: (mnemonic: string) => Promise<void>) => Promise<void>) {
+  public registerMnemonicUI(onPromptMnemonic: PromptMnemonicHandler) {
     return this.mnemonicHandler.registerUI(onPromptMnemonic)
   }
 
-  public registerOtpUI(onPromptOtp: (recipient: string, respond: (otp: string) => Promise<void>) => Promise<void>) {
+  public registerOtpUI(onPromptOtp: PromptOtpHandler) {
     return this.otpHandler?.registerUI(onPromptOtp) || (() => {})
   }
 
-  public registerGuardUI(
-    onPromptOtp: (codeType: 'TOTP' | 'PIN', respond: (otp: string) => Promise<void>) => Promise<void>,
-  ) {
-    return this.guardHandler?.registerUI(onPromptOtp) || (() => {})
+  public registerGuardUI(onPromptCode: PromptCodeHandler) {
+    return this.guardHandler?.registerUI(onPromptCode) || (() => {})
   }
 
   public async setRedirectPrefix(prefix: string) {
