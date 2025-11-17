@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.34
+
+### Patch Changes
+
+- API updates, remove Sei
+- Updated dependencies
+  - @0xsequence/waas@2.3.34
+
 ## 2.3.33
 
 ### Patch Changes

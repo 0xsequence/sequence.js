@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.34
+
+### Patch Changes
+
+- API updates, remove Sei
+- Updated dependencies
+  - @0xsequence/indexer@2.3.34
+  - @0xsequence/relayer@2.3.34
+  - @0xsequence/utils@2.3.34
+  - @0xsequence/core@2.3.34
+
 ## 2.3.33
 
 ### Patch Changes

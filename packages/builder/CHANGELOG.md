@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 2.3.34
+
+### Patch Changes
+
+- API updates, remove Sei
+
 ## 2.3.33
 
 ### Patch Changes
