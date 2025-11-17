@@ -364,9 +364,12 @@ export class Provider implements ProviderInterface {
   }
 }
 
-const passkeySigners = [Extensions.Dev1.passkeys, Extensions.Dev2.passkeys, Extensions.Rc3.passkeys].map(
-  Address.checksum,
-)
+const passkeySigners = [
+  Extensions.Dev1.passkeys,
+  Extensions.Dev2.passkeys,
+  Extensions.Rc3.passkeys,
+  Extensions.Rc4.passkeys,
+].map(Address.checksum)
 
 const recoverSapientSignatureCompactSignature =
   'function recoverSapientSignatureCompact(bytes32 _digest, bytes _signature) view returns (bytes32)'

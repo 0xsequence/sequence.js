@@ -45,7 +45,7 @@ const addressCommand: CommandModule = {
             .option('creationCode', {
               type: 'string',
               description: 'Creation code (optional)',
-              default: Context.Rc3.creationCode,
+              default: Context.Rc4.creationCode,
             })
         },
         async (argv) => {
