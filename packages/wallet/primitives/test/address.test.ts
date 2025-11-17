@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Address, Bytes, Hash, Hex } from 'ox'
 
 import { from } from '../src/address.js'
-import { Context, Dev1, Dev2, Rc3 } from '../src/context.js'
+import { Context, Dev1, Dev2, Rc3, Rc4 } from '../src/context.js'
 import { Config, hashConfiguration } from '../src/config.js'
 
 describe('Address', () => {
@@ -111,6 +111,19 @@ describe('Address', () => {
     it('should work with Rc3 context', () => {
       const { stage2, ...rc3Context } = Rc3
       const address = from(sampleConfig, rc3Context)
+
+      expect(() => Address.assert(address)).not.toThrow()
+      expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
+
+      // Should be different from Dev2
+      const { stage2: _, ...dev2Context } = Dev2
+      const dev2Address = from(sampleConfig, dev2Context)
+      expect(address).not.toBe(dev2Address)
+    })
+
+    it('should work with Rc4 context', () => {
+      const { stage2, ...rc4Context } = Rc4
+      const address = from(sampleConfig, rc4Context)
 
       expect(() => Address.assert(address)).not.toThrow()
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
