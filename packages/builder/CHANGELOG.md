@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 2.3.35
+
+### Patch Changes
+
+- Network and API updates
+
 ## 2.3.34
 
 ### Patch Changes

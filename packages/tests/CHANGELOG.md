@@ -1,5 +1,14 @@
 # @0xsequence/tests
 
+## 2.3.35
+
+### Patch Changes
+
+- Network and API updates
+- Updated dependencies
+  - @0xsequence/utils@2.3.35
+  - @0xsequence/core@2.3.35
+
 ## 2.3.34
 
 ### Patch Changes
