@@ -140,10 +140,6 @@ export enum ChainId {
   INCENTIV_TESTNET_V2 = 28802,
   INCENTIV = 24101,
 
-  // SEI
-  SEI = 1329,
-  SEI_TESTNET = 1328,
-
   // Katana
   KATANA = 747474,
 
@@ -1145,42 +1141,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'CENT',
       name: 'CENT',
-      decimals: 18
-    }
-  },
-
-  [ChainId.SEI]: {
-    chainId: ChainId.SEI,
-    type: NetworkType.MAINNET,
-    name: 'sei',
-    title: 'Sei',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEI}.webp`,
-    testnet: false,
-    blockExplorer: {
-      name: 'SEI Explorer',
-      rootUrl: 'https://seitrace.com/?chain=pacific-1'
-    },
-    nativeToken: {
-      symbol: 'SEI',
-      name: 'SEI',
-      decimals: 18
-    }
-  },
-
-  [ChainId.SEI_TESTNET]: {
-    chainId: ChainId.SEI_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'sei-testnet',
-    title: 'Sei Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEI_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Sei Testnet Explorer',
-      rootUrl: 'https://seitrace.com/?chain=atlantic-2'
-    },
-    nativeToken: {
-      symbol: 'SEI',
-      name: 'SEI',
       decimals: 18
     }
   },
