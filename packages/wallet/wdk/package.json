@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run && node test/test-ssr-safety.mjs",
+    "test": "vitest run && npm run test:ssr",
     "test:coverage": "vitest run --coverage",
     "test:ssr": "node test/test-ssr-safety.mjs",
     "typecheck": "tsc --noEmit",
