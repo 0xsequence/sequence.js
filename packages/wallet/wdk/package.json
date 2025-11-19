@@ -10,8 +10,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run",
+    "test": "vitest run && node test/test-ssr-safety.mjs",
     "test:coverage": "vitest run --coverage",
+    "test:ssr": "node test/test-ssr-safety.mjs",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
