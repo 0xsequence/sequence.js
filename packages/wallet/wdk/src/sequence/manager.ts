@@ -106,7 +106,12 @@ export const ManagerOptionsDefaults = {
 
   stateProvider: new State.Sequence.Provider(),
   networks: Network.ALL,
-  relayers: () => [Relayer.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined),
+  relayers: () => {
+    if (typeof window !== 'undefined') {
+      return [Relayer.LocalRelayer.createFromWindow(window)].filter((r) => r !== undefined)
+    }
+    return []
+  },
   bundlers: [],
 
   guardUrl: 'https://dev-guard.sequence.app',
@@ -138,7 +143,7 @@ export const ManagerOptionsDefaults = {
   identity: {
     // TODO: change to prod url once deployed
     url: 'https://dev-identity.sequence-dev.app',
-    fetch: window.fetch,
+    fetch: typeof window !== 'undefined' ? window.fetch : undefined,
     verifyAttestation: true,
     email: {
       enabled: false,
