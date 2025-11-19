@@ -121,6 +121,7 @@ export enum ChainId {
   // ETHERLINK
   ETHERLINK = 42793,
   ETHERLINK_TESTNET = 128123,
+  ETHERLINK_SHADOWNET_TESTNET = 127823,
 
   // MOONBEAM
   MOONBEAM = 1284,
@@ -137,6 +138,11 @@ export enum ChainId {
   // INCENTIV TESTNET
   INCENTIV_TESTNET = 11690, // deprecated
   INCENTIV_TESTNET_V2 = 28802,
+  INCENTIV = 24101,
+
+  // SEI
+  SEI = 1329,
+  SEI_TESTNET = 1328,
 
   // Katana
   KATANA = 747474,
@@ -1018,6 +1024,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
+  [ChainId.ETHERLINK_SHADOWNET_TESTNET]: {
+    chainId: ChainId.ETHERLINK_SHADOWNET_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'etherlink-shadownet-testnet',
+    title: 'Etherlink Shadownet Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ETHERLINK_SHADOWNET_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Etherlink Shadownet Testnet Explorer',
+      rootUrl: 'https://shadownet.explorer.etherlink.com/'
+    },
+    nativeToken: {
+      symbol: 'XTZ',
+      name: 'Tez',
+      decimals: 18
+    }
+  },
   [ChainId.MONAD_TESTNET]: {
     chainId: ChainId.MONAD_TESTNET,
     type: NetworkType.TESTNET,
@@ -1104,6 +1127,60 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'TCENT',
       name: 'TCENT',
+      decimals: 18
+    }
+  },
+
+  [ChainId.INCENTIV]: {
+    chainId: ChainId.INCENTIV,
+    type: NetworkType.MAINNET,
+    name: 'incentiv',
+    title: 'Incentiv',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Incentiv',
+      rootUrl: 'https://explorer.incentiv.io/'
+    },
+    nativeToken: {
+      symbol: 'CENT',
+      name: 'CENT',
+      decimals: 18
+    }
+  },
+
+  [ChainId.SEI]: {
+    chainId: ChainId.SEI,
+    type: NetworkType.MAINNET,
+    name: 'sei',
+    title: 'Sei',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEI}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'SEI Explorer',
+      rootUrl: 'https://seitrace.com/?chain=pacific-1'
+    },
+    nativeToken: {
+      symbol: 'SEI',
+      name: 'SEI',
+      decimals: 18
+    }
+  },
+
+  [ChainId.SEI_TESTNET]: {
+    chainId: ChainId.SEI_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'sei-testnet',
+    title: 'Sei Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SEI_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Sei Testnet Explorer',
+      rootUrl: 'https://seitrace.com/?chain=atlantic-2'
+    },
+    nativeToken: {
+      symbol: 'SEI',
+      name: 'SEI',
       decimals: 18
     }
   },
