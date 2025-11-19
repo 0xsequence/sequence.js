@@ -56,6 +56,7 @@ describe('AuthCodePkceHandler', () => {
     handler = new AuthCodePkceHandler(
       'google-pkce',
       'https://accounts.google.com',
+      'https://accounts.google.com/o/oauth2/v2/auth',
       'test-google-client-id',
       mockNitroInstrument,
       mockSignatures,
@@ -81,8 +82,6 @@ describe('AuthCodePkceHandler', () => {
         email: 'user@example.com',
       }
     })
-
-    vi.spyOn(handler as any, 'oauthUrl').mockReturnValue('https://accounts.google.com/oauth/authorize')
   })
 
   afterEach(() => {
@@ -116,7 +115,7 @@ describe('AuthCodePkceHandler', () => {
       })
 
       // Verify OAuth URL is constructed correctly
-      expect(result).toMatch(/^https:\/\/accounts\.google\.com\/oauth\/authorize\?/)
+      expect(result).toMatch(/^https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?/)
       expect(result).toContain('code_challenge=mock-challenge-hash')
       expect(result).toContain('code_challenge_method=S256')
       expect(result).toContain('client_id=test-google-client-id')
@@ -335,10 +334,6 @@ describe('AuthCodePkceHandler', () => {
       const newRedirectUri = 'https://newdomain.com/callback'
       handler.setRedirectUri(newRedirectUri)
 
-      // Verify redirect URI is used in OAuth URL construction
-      const mockUrl = 'https://accounts.google.com/oauth/authorize'
-      vi.spyOn(handler as any, 'oauthUrl').mockReturnValue(mockUrl)
-
       return handler.commitAuth('https://example.com/success', true).then((result) => {
         expect(result).toContain(`redirect_uri=${encodeURIComponent(newRedirectUri)}`)
       })
@@ -346,8 +341,9 @@ describe('AuthCodePkceHandler', () => {
 
     it('Should work with different issuer and audience configurations', () => {
       const customHandler = new AuthCodePkceHandler(
-        'google-pkce',
+        'custom-provider',
         'https://custom-issuer.com',
+        'https://custom-issuer.com/o/oauth2/v2/auth',
         'custom-client-id',
         mockNitroInstrument,
         mockSignatures,
@@ -357,7 +353,7 @@ describe('AuthCodePkceHandler', () => {
 
       expect(customHandler['issuer']).toBe('https://custom-issuer.com')
       expect(customHandler['audience']).toBe('custom-client-id')
-      expect(customHandler.signupKind).toBe('google-pkce')
+      expect(customHandler.signupKind).toBe('custom-provider')
     })
   })
 })

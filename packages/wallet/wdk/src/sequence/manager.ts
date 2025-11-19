@@ -81,6 +81,13 @@ export type ManagerOptions = {
       enabled: boolean
       clientId: string
     }
+    customProviders?: {
+      kind: `custom-${string}`
+      authMethod: 'id-token' | 'authcode' | 'authcode-pkce'
+      issuer: string
+      oauthUrl: string
+      clientId: string
+    }[]
   }
 }
 
@@ -468,6 +475,7 @@ export class Manager {
         new AuthCodePkceHandler(
           'google-pkce',
           'https://accounts.google.com',
+          'https://accounts.google.com/o/oauth2/v2/auth',
           ops.identity.google.clientId,
           identityInstrument,
           modules.signatures,
@@ -482,6 +490,7 @@ export class Manager {
         new AuthCodeHandler(
           'apple',
           'https://appleid.apple.com',
+          'https://appleid.apple.com/auth/authorize',
           ops.identity.apple.clientId,
           identityInstrument,
           modules.signatures,
@@ -489,6 +498,46 @@ export class Manager {
           shared.databases.authKeys,
         ),
       )
+    }
+    if (ops.identity.customProviders?.length) {
+      for (const provider of ops.identity.customProviders) {
+        switch (provider.authMethod) {
+          case 'id-token':
+            throw new Error('id-token is not supported yet')
+          case 'authcode':
+            shared.handlers.set(
+              provider.kind,
+              new AuthCodeHandler(
+                provider.kind,
+                provider.issuer,
+                provider.oauthUrl,
+                provider.clientId,
+                identityInstrument,
+                modules.signatures,
+                shared.databases.authCommitments,
+                shared.databases.authKeys,
+              ),
+            )
+            break
+          case 'authcode-pkce':
+            shared.handlers.set(
+              provider.kind,
+              new AuthCodePkceHandler(
+                provider.kind,
+                provider.issuer,
+                provider.oauthUrl,
+                provider.clientId,
+                identityInstrument,
+                modules.signatures,
+                shared.databases.authCommitments,
+                shared.databases.authKeys,
+              ),
+            )
+            break
+          default:
+            throw new Error('unsupported auth method')
+        }
+      }
     }
 
     shared.modules = modules
