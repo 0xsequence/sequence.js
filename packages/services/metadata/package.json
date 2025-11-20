@@ -5,7 +5,7 @@
     "access": "public"
   },
   "description": "metadata sub-package for Sequence",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/metadata",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/services/metadata",
   "author": "Sequence Platforms Inc.",
   "license": "Apache-2.0",
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },

@@ -2,7 +2,7 @@
   "name": "@0xsequence/abi",
   "version": "3.0.0",
   "description": "abi sub-package for Sequence",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/abi",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/utils/abi",
   "author": "Sequence Platforms Inc.",
   "license": "Apache-2.0",
   "publishConfig": {
@@ -16,7 +16,7 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
