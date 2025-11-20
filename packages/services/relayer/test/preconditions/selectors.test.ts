@@ -7,7 +7,7 @@ import {
   extractNativeBalancePreconditions,
   extractERC20BalancePreconditions,
 } from '../../src/preconditions/selectors.js'
-import { IntentPrecondition } from '../../src/preconditions/codec.js'
+import { TransactionPrecondition } from '../../src/preconditions/codec.js'
 import {
   NativeBalancePrecondition,
   Erc20BalancePrecondition,
@@ -22,7 +22,7 @@ const TOKEN_ADDRESS = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
 describe('Preconditions Selectors', () => {
   describe('extractChainID', () => {
     it('should extract chainID from valid precondition data', () => {
-      const precondition: IntentPrecondition = {
+      const precondition: TransactionPrecondition = {
         type: 'native-balance',
         data: JSON.stringify({
           address: TEST_ADDRESS,
@@ -36,7 +36,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should extract large chainID values', () => {
-      const precondition: IntentPrecondition = {
+      const precondition: TransactionPrecondition = {
         type: 'native-balance',
         data: JSON.stringify({
           address: TEST_ADDRESS,
@@ -49,7 +49,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should return undefined when chainID is not present', () => {
-      const precondition: IntentPrecondition = {
+      const precondition: TransactionPrecondition = {
         type: 'native-balance',
         data: JSON.stringify({
           address: TEST_ADDRESS,
@@ -62,7 +62,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should return undefined when chainID is falsy', () => {
-      const precondition: IntentPrecondition = {
+      const precondition: TransactionPrecondition = {
         type: 'native-balance',
         data: JSON.stringify({
           address: TEST_ADDRESS,
@@ -76,7 +76,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should return undefined when chainID is null', () => {
-      const precondition: IntentPrecondition = {
+      const precondition: TransactionPrecondition = {
         type: 'native-balance',
         data: JSON.stringify({
           address: TEST_ADDRESS,
@@ -95,7 +95,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should return undefined for invalid JSON', () => {
-      const precondition: IntentPrecondition = {
+      const precondition: TransactionPrecondition = {
         type: 'native-balance',
         data: 'invalid json',
       }
@@ -105,7 +105,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should handle chainID with value 0', () => {
-      const precondition: IntentPrecondition = {
+      const precondition: TransactionPrecondition = {
         type: 'native-balance',
         data: JSON.stringify({
           address: TEST_ADDRESS,
@@ -120,7 +120,7 @@ describe('Preconditions Selectors', () => {
 
   describe('extractSupportedPreconditions', () => {
     it('should extract valid preconditions', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'native-balance',
           data: JSON.stringify({
@@ -145,7 +145,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should filter out invalid preconditions', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'native-balance',
           data: JSON.stringify({
@@ -179,7 +179,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should handle mixed valid and invalid preconditions', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'native-balance',
           data: JSON.stringify({
@@ -210,7 +210,7 @@ describe('Preconditions Selectors', () => {
 
   describe('extractNativeBalancePreconditions', () => {
     it('should extract only native balance preconditions', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'native-balance',
           data: JSON.stringify({
@@ -246,7 +246,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should return empty array when no native balance preconditions exist', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'erc20-balance',
           data: JSON.stringify({
@@ -280,7 +280,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should filter out invalid native balance preconditions', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'native-balance',
           data: JSON.stringify({
@@ -310,7 +310,7 @@ describe('Preconditions Selectors', () => {
 
   describe('extractERC20BalancePreconditions', () => {
     it('should extract only ERC20 balance preconditions', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'native-balance',
           data: JSON.stringify({
@@ -349,7 +349,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should return empty array when no ERC20 balance preconditions exist', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'native-balance',
           data: JSON.stringify({
@@ -382,7 +382,7 @@ describe('Preconditions Selectors', () => {
     })
 
     it('should filter out invalid ERC20 balance preconditions', () => {
-      const intents: IntentPrecondition[] = [
+      const intents: TransactionPrecondition[] = [
         {
           type: 'erc20-balance',
           data: JSON.stringify({
