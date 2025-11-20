@@ -3,7 +3,7 @@ import { EIP1193ProviderAdapter, LocalRelayer } from './local.js'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
 import { Address, Hex } from 'ox'
 import { Payload } from '@0xsequence/wallet-primitives'
-import { FeeToken, IntentPrecondition } from '../rpc-relayer/relayer.gen.js'
+import { FeeToken, TransactionPrecondition } from '../rpc-relayer/relayer.gen.js'
 
 export class EIP6963Relayer implements Relayer {
   public readonly kind: 'relayer' = 'relayer'
@@ -43,7 +43,7 @@ export class EIP6963Relayer implements Relayer {
     return this.relayer.status(opHash, chainId)
   }
 
-  async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+  async checkPrecondition(precondition: TransactionPrecondition): Promise<boolean> {
     return this.relayer.checkPrecondition(precondition)
   }
 }

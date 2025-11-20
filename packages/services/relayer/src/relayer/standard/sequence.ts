@@ -1,4 +1,4 @@
-import { ETHTxnStatus, IntentPrecondition, Relayer as Service, FeeToken } from '../rpc-relayer/relayer.gen.js'
+import { ETHTxnStatus, TransactionPrecondition, Relayer as Service, FeeToken } from '../rpc-relayer/relayer.gen.js'
 import { Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Bytes, Hex } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
@@ -52,7 +52,7 @@ export class SequenceRelayer implements Relayer {
     }
   }
 
-  async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+  async checkPrecondition(precondition: TransactionPrecondition): Promise<boolean> {
     // TODO: implement
     return false
   }

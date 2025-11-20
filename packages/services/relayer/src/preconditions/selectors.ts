@@ -1,20 +1,15 @@
 import { Precondition, NativeBalancePrecondition, Erc20BalancePrecondition } from './types.js'
-import { IntentPrecondition, decodePreconditions } from './codec.js'
+import { TransactionPrecondition, decodePreconditions } from './codec.js'
 
-export function extractChainID(precondition: IntentPrecondition): number | undefined {
+export function extractChainID(precondition: TransactionPrecondition): number | undefined {
   if (!precondition) {
     return undefined
   }
 
-  try {
-    const data = JSON.parse(precondition.data)
-    return data.chainID ? Number(data.chainID) : undefined
-  } catch (e) {
-    return undefined
-  }
+  return precondition.chainId
 }
 
-export function extractSupportedPreconditions(preconditions: IntentPrecondition[]): Precondition[] {
+export function extractSupportedPreconditions(preconditions: TransactionPrecondition[]): Precondition[] {
   if (!preconditions || preconditions.length === 0) {
     return []
   }
@@ -22,7 +17,9 @@ export function extractSupportedPreconditions(preconditions: IntentPrecondition[
   return decodePreconditions(preconditions)
 }
 
-export function extractNativeBalancePreconditions(preconditions: IntentPrecondition[]): NativeBalancePrecondition[] {
+export function extractNativeBalancePreconditions(
+  preconditions: TransactionPrecondition[],
+): NativeBalancePrecondition[] {
   if (!preconditions || preconditions.length === 0) {
     return []
   }
@@ -31,7 +28,7 @@ export function extractNativeBalancePreconditions(preconditions: IntentPrecondit
   return decoded.filter((p): p is NativeBalancePrecondition => p.type() === 'native-balance')
 }
 
-export function extractERC20BalancePreconditions(preconditions: IntentPrecondition[]): Erc20BalancePrecondition[] {
+export function extractERC20BalancePreconditions(preconditions: TransactionPrecondition[]): Erc20BalancePrecondition[] {
   if (!preconditions || preconditions.length === 0) {
     return []
   }

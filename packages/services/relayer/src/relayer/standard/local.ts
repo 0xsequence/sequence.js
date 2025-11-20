@@ -2,7 +2,7 @@ import { Constants, Payload } from '@0xsequence/wallet-primitives'
 import { EIP1193Provider } from 'mipd'
 import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
-import { FeeToken, IntentPrecondition } from '../rpc-relayer/relayer.gen.js'
+import { FeeToken, TransactionPrecondition } from '../rpc-relayer/relayer.gen.js'
 import { decodePrecondition } from '../../preconditions/index.js'
 import {
   erc20BalanceOf,
@@ -80,7 +80,7 @@ export class LocalRelayer implements Relayer {
     data: Hex.Hex,
     chainId: number,
     quote?: FeeQuote,
-    preconditions?: IntentPrecondition[],
+    preconditions?: TransactionPrecondition[],
     checkInterval: number = 5000,
   ): Promise<{ opHash: Hex.Hex }> {
     // Helper function to check all preconditions
@@ -168,7 +168,7 @@ export class LocalRelayer implements Relayer {
       : { status: 'failed', reason: 'failed' }
   }
 
-  async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+  async checkPrecondition(precondition: TransactionPrecondition): Promise<boolean> {
     const decoded = decodePrecondition(precondition)
 
     if (!decoded) {

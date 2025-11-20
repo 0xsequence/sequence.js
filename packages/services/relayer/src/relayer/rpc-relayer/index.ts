@@ -4,7 +4,7 @@ import {
   MetaTxn as RpcMetaTxn,
   FeeTokenType,
   FeeToken as RpcFeeToken,
-  IntentPrecondition,
+  TransactionPrecondition,
   ETHTxnStatus,
 } from './relayer.gen.js'
 import { Address, Hex, Bytes, AbiFunction } from 'ox'
@@ -173,7 +173,7 @@ export class RpcRelayer implements Relayer {
     data: Hex.Hex,
     chainId: number,
     quote?: FeeQuote,
-    preconditions?: IntentPrecondition[],
+    preconditions?: TransactionPrecondition[],
   ): Promise<{ opHash: Hex.Hex }> {
     console.log('sendMetaTxn', walletAddress, to, data, chainId, quote, preconditions)
     const rpcCall: RpcMetaTxn = {
@@ -204,7 +204,7 @@ export class RpcRelayer implements Relayer {
     data: Hex.Hex,
     chainId: number,
     quote?: FeeQuote,
-    preconditions?: IntentPrecondition[],
+    preconditions?: TransactionPrecondition[],
   ): Promise<{ opHash: Hex.Hex }> {
     console.log('relay', to, data, chainId, quote, preconditions)
     const rpcCall: RpcMetaTxn = {
@@ -273,7 +273,7 @@ export class RpcRelayer implements Relayer {
     }
   }
 
-  async checkPrecondition(precondition: IntentPrecondition): Promise<boolean> {
+  async checkPrecondition(precondition: TransactionPrecondition): Promise<boolean> {
     const decoded = decodePrecondition(precondition)
 
     if (!decoded) {
