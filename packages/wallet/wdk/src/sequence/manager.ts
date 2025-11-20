@@ -119,7 +119,7 @@ export const ManagerOptionsDefaults = {
   guardAddresses: {
     wallet: '0x26f3D30F41FA897309Ae804A2AFf15CEb1dA5742',
     sessions: '0xF6Bc87F5F2edAdb66737E32D37b46423901dfEF1',
-  } as Record<GuardRole, Address.Address>, // TODO: change to the actual guard address
+  } as Record<GuardRole, Address.Address>,
 
   defaultGuardTopology: {
     type: 'nested',
@@ -153,7 +153,6 @@ export const ManagerOptionsDefaults = {
   multiInjectedProviderDiscovery: true,
 
   identity: {
-    // TODO: change to prod url once deployed
     url: 'https://identity.sequence.app',
     fetch: typeof window !== 'undefined' ? window.fetch : undefined,
     verifyAttestation: true,
