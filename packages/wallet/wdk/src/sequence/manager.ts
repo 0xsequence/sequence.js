@@ -115,10 +115,10 @@ export const ManagerOptionsDefaults = {
   },
   bundlers: [],
 
-  guardUrl: 'https://dev-guard.sequence.app',
+  guardUrl: 'https://guard.sequence.app',
   guardAddresses: {
-    wallet: '0xa2e70CeaB3Eb145F32d110383B75B330fA4e288a',
-    sessions: '0x18002Fc09deF9A47437cc64e270843dE094f5984',
+    wallet: '0x26f3D30F41FA897309Ae804A2AFf15CEb1dA5742',
+    sessions: '0xF6Bc87F5F2edAdb66737E32D37b46423901dfEF1',
   } as Record<GuardRole, Address.Address>, // TODO: change to the actual guard address
 
   defaultGuardTopology: {
@@ -154,7 +154,7 @@ export const ManagerOptionsDefaults = {
 
   identity: {
     // TODO: change to prod url once deployed
-    url: 'https://dev-identity.sequence-dev.app',
+    url: 'https://identity.sequence.app',
     fetch: typeof window !== 'undefined' ? window.fetch : undefined,
     verifyAttestation: true,
     email: {
