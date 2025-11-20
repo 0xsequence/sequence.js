@@ -33,11 +33,13 @@ import {
   maximumDepth,
   evaluateConfigurationSafety,
   normalizeSignerSignature,
+  replaceAddress,
 } from '../src/config.js'
 
 describe('Config', () => {
   const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
   const testAddress2 = '0x8ba1f109551bd432803012645aac136c776056c0'
+  const replacementAddress = '0x1111111111111111111111111111111111111111'
   const testImageHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
   const testDigest = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef'
 
@@ -313,6 +315,67 @@ describe('Config', () => {
     it('should work with config input', () => {
       const result = findSignerLeaf(sampleConfig, testAddress1)
       expect(result).toEqual(sampleSignerLeaf)
+    })
+  })
+
+  describe('replaceAddress', () => {
+    it('should replace signer leaf addresses', () => {
+      const signerLeaf: SignerLeaf = { ...sampleSignerLeaf }
+
+      const result = replaceAddress(signerLeaf, testAddress1, replacementAddress)
+
+      expect(result).toEqual({ ...sampleSignerLeaf, address: replacementAddress })
+      expect(result).not.toBe(signerLeaf)
+      expect(signerLeaf.address).toBe(testAddress1)
+    })
+
+    it('should replace sapient signer leaf addresses', () => {
+      const sapientLeaf: SapientSignerLeaf = { ...sampleSapientSignerLeaf }
+
+      const result = replaceAddress(sapientLeaf, testAddress2, replacementAddress)
+
+      expect(result).toEqual({ ...sampleSapientSignerLeaf, address: replacementAddress })
+      expect(result).not.toBe(sapientLeaf)
+      expect(sapientLeaf.address).toBe(testAddress2)
+    })
+
+    it('should recurse through nodes and nested leaves', () => {
+      const nestedSapient: SapientSignerLeaf = { ...sampleSapientSignerLeaf, address: testAddress1 }
+      const nestedLeaf: NestedLeaf = {
+        type: 'nested',
+        tree: [nestedSapient, sampleSubdigestLeaf],
+        weight: 5n,
+        threshold: 1n,
+      }
+      const topology: Topology = [{ ...sampleSignerLeaf }, nestedLeaf]
+
+      const result = replaceAddress(topology, testAddress1, replacementAddress)
+
+      expect(result).toEqual([
+        { ...sampleSignerLeaf, address: replacementAddress },
+        {
+          ...nestedLeaf,
+          tree: [{ ...nestedSapient, address: replacementAddress }, sampleSubdigestLeaf],
+        },
+      ])
+      expect(nestedSapient.address).toBe(testAddress1)
+      expect((nestedLeaf.tree as Node)[1]).toBe(sampleSubdigestLeaf)
+    })
+
+    it('should return the original topology when no address matches', () => {
+      const sapientLeaf: SapientSignerLeaf = { ...sampleSapientSignerLeaf }
+
+      const result = replaceAddress(sapientLeaf, replacementAddress, testAddress1)
+
+      expect(result).toBe(sapientLeaf)
+    })
+
+    it('should leave non-signer leaves unchanged', () => {
+      expect(replaceAddress(sampleSubdigestLeaf, testAddress1, replacementAddress)).toBe(sampleSubdigestLeaf)
+      expect(replaceAddress(sampleAnyAddressSubdigestLeaf, testAddress1, replacementAddress)).toBe(
+        sampleAnyAddressSubdigestLeaf,
+      )
+      expect(replaceAddress(sampleNodeLeaf, testAddress1, replacementAddress)).toBe(sampleNodeLeaf)
     })
   })
 

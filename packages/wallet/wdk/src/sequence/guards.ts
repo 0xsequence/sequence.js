@@ -2,7 +2,7 @@ import { Address } from 'ox'
 import { Shared } from './manager.js'
 import * as Guard from '@0xsequence/guard'
 import { Signers } from '@0xsequence/wallet-core'
-import { Config } from '@0xsequence/wallet-primitives'
+import { Config, Constants } from '@0xsequence/wallet-primitives'
 
 export type GuardRole = 'wallet' | 'sessions'
 
@@ -28,17 +28,23 @@ export class Guards {
     return undefined
   }
 
-  topology(role: GuardRole): Config.NestedLeaf | undefined {
+  topology(role: GuardRole): Config.Topology | undefined {
     const guardAddress = this.shared.sequence.guardAddresses[role]
     if (!guardAddress) {
       return undefined
     }
 
-    return {
-      type: 'nested',
-      weight: 1n,
-      threshold: 1n,
-      tree: { ...this.shared.sequence.defaultGuardTopology, address: guardAddress },
+    const topology = Config.replaceAddress(
+      this.shared.sequence.defaultGuardTopology,
+      Constants.PlaceholderAddress,
+      guardAddress,
+    )
+
+    // If the imageHash did not change it means the replacement failed
+    if (Config.hashConfiguration(topology) === Config.hashConfiguration(this.shared.sequence.defaultGuardTopology)) {
+      throw new Error(`Guard address replacement failed for role ${role}`)
     }
+
+    return topology
   }
 }

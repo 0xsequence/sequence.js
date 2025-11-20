@@ -627,3 +627,39 @@ function mergeLeaf(a: Leaf, b: Leaf): Leaf {
 
   throw new Error('Topology mismatch: incompatible leaf types')
 }
+
+export function replaceAddress(
+  topology: Topology,
+  targetAddress: Address.Address,
+  replacementAddress: Address.Address,
+): Topology {
+  // 1. Handle Branches/Nodes (Recursion)
+  if (isNode(topology)) {
+    return [
+      replaceAddress(topology[0], targetAddress, replacementAddress),
+      replaceAddress(topology[1], targetAddress, replacementAddress),
+    ]
+  }
+
+  // 2. Handle Nested Leaves (Recursion)
+  if (isNestedLeaf(topology)) {
+    return {
+      ...topology,
+      tree: replaceAddress(topology.tree, targetAddress, replacementAddress),
+    }
+  }
+
+  // 3. Handle Leaves (Replacement)
+  if (isSignerLeaf(topology) || isSapientSignerLeaf(topology)) {
+    // If this leaf holds the placeholder address, swap it
+    if (Address.isEqual(topology.address, targetAddress)) {
+      return {
+        ...topology,
+        address: replacementAddress,
+      }
+    }
+  }
+
+  // 4. Return other leaf types unchanged (Subdigest, NodeLeaf, etc.)
+  return topology
+}

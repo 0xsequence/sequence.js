@@ -1,6 +1,7 @@
 import { Abi } from 'ox'
 
 export const ZeroAddress = '0x0000000000000000000000000000000000000000' as const
+export const PlaceholderAddress = '0xffff0000ffff0000ffff0000ffff0000ffff0000' as const
 
 export const DefaultGuestAddress = '0x0000000000601fcA38f0cCA649453F6739436d6C' as const
 

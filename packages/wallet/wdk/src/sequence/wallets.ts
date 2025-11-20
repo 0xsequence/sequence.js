@@ -434,7 +434,7 @@ function toConfig(
   loginTopology: Config.Topology,
   devicesTopology: Config.Topology,
   modules: Module[],
-  guardTopology?: Config.NestedLeaf,
+  guardTopology?: Config.Topology,
 ): Config.Config {
   if (!guardTopology) {
     return {
@@ -467,7 +467,7 @@ function toModulesTopology(modules: Module[]): Config.Topology {
       return {
         type: 'nested',
         weight: module.weight,
-        threshold: module.sapientLeaf.weight + module.guardLeaf.weight,
+        threshold: module.sapientLeaf.weight + Config.getWeight(module.guardLeaf, () => true).maxWeight,
         tree: [module.sapientLeaf, module.guardLeaf],
       } as Config.NestedLeaf
     } else {
@@ -491,8 +491,7 @@ function fromModulesTopology(topology: Config.Topology): Module[] {
   } else if (
     Config.isNestedLeaf(topology) &&
     Config.isNode(topology.tree) &&
-    Config.isSapientSignerLeaf(topology.tree[0]) &&
-    Config.isNestedLeaf(topology.tree[1])
+    Config.isSapientSignerLeaf(topology.tree[0])
   ) {
     modules.push({
       sapientLeaf: topology.tree[0],
@@ -513,7 +512,7 @@ function fromConfig(config: Config.Config): {
   loginTopology: Config.Topology
   devicesTopology: Config.Topology
   modules: Module[]
-  guardTopology?: Config.NestedLeaf
+  guardTopology?: Config.Topology
 } {
   if (config.threshold === 1n) {
     if (Config.isNode(config.topology) && Config.isNode(config.topology[0])) {
@@ -530,7 +529,7 @@ function fromConfig(config: Config.Config): {
       Config.isNode(config.topology) &&
       Config.isNode(config.topology[0]) &&
       Config.isNode(config.topology[0][0]) &&
-      Config.isNestedLeaf(config.topology[0][1])
+      Config.isTopology(config.topology[0][1])
     ) {
       return {
         loginTopology: config.topology[0][0][0],
