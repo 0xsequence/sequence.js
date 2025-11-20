@@ -1,0 +1,5 @@
+export const CACHE_DB_NAME = 'sequence-cache'
+export const NODES_URL = 'https://nodes.sequence.app/{network}'
+export const RELAYER_URL = 'https://{network}-relayer.sequence.app'
+export const KEYMACHINE_URL = 'https://keymachine.sequence.app'
+export const VALUE_FORWARDER_ADDRESS = '0xABAAd93EeE2a569cF0632f39B10A9f5D734777ca'
