@@ -1,4 +1,4 @@
-import { Address } from 'ox'
+import { Address, Bytes } from 'ox'
 import { Shared } from './manager.js'
 import * as Guard from '@0xsequence/guard'
 import { Signers } from '@0xsequence/wallet-core'
@@ -41,7 +41,12 @@ export class Guards {
     )
 
     // If the imageHash did not change it means the replacement failed
-    if (Config.hashConfiguration(topology) === Config.hashConfiguration(this.shared.sequence.defaultGuardTopology)) {
+    if (
+      Bytes.isEqual(
+        Config.hashConfiguration(topology),
+        Config.hashConfiguration(this.shared.sequence.defaultGuardTopology),
+      )
+    ) {
       throw new Error(`Guard address replacement failed for role ${role}`)
     }
 

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Manager } from '../src/sequence'
 import { GuardHandler } from '../src/sequence/handlers/guard'
 import { Address, Bytes, Hex, TypedData } from 'ox'
-import { Network, Payload } from '@0xsequence/wallet-primitives'
+import { Config, Constants, Network, Payload } from '@0xsequence/wallet-primitives'
 import { Kinds } from '../src/sequence/types/signer'
 import { newManager } from './constants'
 import { GuardRole, Guards } from '../src/sequence/guards'
@@ -313,6 +313,43 @@ describe('GuardHandler', () => {
       const sharedConfig = (manager as any).shared.sequence
       expect(sharedConfig.guardUrl).toBeDefined()
       expect(sharedConfig.guardAddresses).toBeDefined()
+    })
+  })
+
+  describe('Guard Topology', () => {
+    it('should replace the placeholder guard address', () => {
+      const guardAddress = (manager as any).shared.sequence.guardAddresses.wallet
+      const defaultTopology = (manager as any).shared.sequence.defaultGuardTopology
+
+      const topology = guards.topology('wallet')
+
+      expect(topology).toBeDefined()
+      expect(Config.findSignerLeaf(topology!, guardAddress)).toBeDefined()
+      expect(Config.findSignerLeaf(topology!, Constants.PlaceholderAddress as Address.Address)).toBeUndefined()
+      expect(Config.findSignerLeaf(defaultTopology, guardAddress)).toBeUndefined()
+      expect(Config.hashConfiguration(topology!)).not.toEqual(Config.hashConfiguration(defaultTopology))
+    })
+
+    it('should throw when the placeholder is missing in the default topology', async () => {
+      const customManager = newManager(
+        {
+          defaultGuardTopology: {
+            type: 'signer',
+            address: '0x0000000000000000000000000000000000000001',
+            weight: 1n,
+          },
+        },
+        undefined,
+        `guard_topology_${Date.now()}`,
+      )
+
+      const customGuards = (customManager as any).shared.modules.guards as Guards
+
+      try {
+        expect(() => customGuards.topology('wallet')).toThrow('Guard address replacement failed for role wallet')
+      } finally {
+        await customManager.stop()
+      }
     })
   })
 })
