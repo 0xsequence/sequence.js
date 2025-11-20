@@ -13,6 +13,10 @@ import {
 
 import { Attestation } from '../index.js'
 
+const isBrowser = typeof window !== 'undefined'
+const hasSessionStorage = isBrowser && typeof sessionStorage !== 'undefined'
+const hasIndexedDb = typeof indexedDB !== 'undefined'
+
 export interface ExplicitSessionData {
   pk: Hex.Hex
   walletAddress: Address.Address
@@ -97,7 +101,12 @@ const TEMP_SESSION_PK_KEY = 'SequencePendingTempSessionPk'
 const PENDING_REQUEST_CONTEXT_KEY = 'SequencePendingRequestContext'
 
 export class WebStorage implements SequenceStorage {
+  private inMemoryDb = new Map<IDBValidKey, unknown>()
+
   private openDB(): Promise<IDBDatabase> {
+    if (!hasIndexedDb) {
+      return Promise.reject(new Error('IndexedDB is not available in this environment.'))
+    }
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION)
       request.onerror = (event) => reject(`IndexedDB error: ${(event.target as IDBRequest).error}`)
@@ -112,6 +121,9 @@ export class WebStorage implements SequenceStorage {
   }
 
   private async getIDBItem<T>(key: IDBValidKey): Promise<T | undefined> {
+    if (!hasIndexedDb) {
+      return this.inMemoryDb.get(key) as T | undefined
+    }
     const db = await this.openDB()
     return new Promise((resolve, reject) => {
       const request = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(key)
@@ -121,6 +133,10 @@ export class WebStorage implements SequenceStorage {
   }
 
   private async setIDBItem(key: IDBValidKey, value: unknown): Promise<void> {
+    if (!hasIndexedDb) {
+      this.inMemoryDb.set(key, value)
+      return
+    }
     const db = await this.openDB()
     return new Promise((resolve, reject) => {
       const request = db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put(value, key)
@@ -130,6 +146,10 @@ export class WebStorage implements SequenceStorage {
   }
 
   private async deleteIDBItem(key: IDBValidKey): Promise<void> {
+    if (!hasIndexedDb) {
+      this.inMemoryDb.delete(key)
+      return
+    }
     const db = await this.openDB()
     return new Promise((resolve, reject) => {
       const request = db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).delete(key)
@@ -140,11 +160,9 @@ export class WebStorage implements SequenceStorage {
 
   async setPendingRedirectRequest(isPending: boolean): Promise<void> {
     try {
-      if (isPending) {
-        sessionStorage.setItem(PENDING_REDIRECT_REQUEST_KEY, 'true')
-      } else {
-        sessionStorage.removeItem(PENDING_REDIRECT_REQUEST_KEY)
-      }
+      if (!hasSessionStorage) return
+      if (isPending) sessionStorage.setItem(PENDING_REDIRECT_REQUEST_KEY, 'true')
+      else sessionStorage.removeItem(PENDING_REDIRECT_REQUEST_KEY)
     } catch (error) {
       console.error('Failed to set pending redirect flag:', error)
     }
@@ -152,6 +170,7 @@ export class WebStorage implements SequenceStorage {
 
   async isRedirectRequestPending(): Promise<boolean> {
     try {
+      if (!hasSessionStorage) return false
       return sessionStorage.getItem(PENDING_REDIRECT_REQUEST_KEY) === 'true'
     } catch (error) {
       console.error('Failed to check pending redirect flag:', error)
@@ -161,6 +180,7 @@ export class WebStorage implements SequenceStorage {
 
   async saveTempSessionPk(pk: Hex.Hex): Promise<void> {
     try {
+      if (!hasSessionStorage) return
       sessionStorage.setItem(TEMP_SESSION_PK_KEY, pk)
     } catch (error) {
       console.error('Failed to save temp session PK:', error)
@@ -169,6 +189,7 @@ export class WebStorage implements SequenceStorage {
 
   async getAndClearTempSessionPk(): Promise<Hex.Hex | null> {
     try {
+      if (!hasSessionStorage) return null
       const pk = sessionStorage.getItem(TEMP_SESSION_PK_KEY)
       sessionStorage.removeItem(TEMP_SESSION_PK_KEY)
       return pk as Hex.Hex | null
@@ -180,6 +201,7 @@ export class WebStorage implements SequenceStorage {
 
   async savePendingRequest(context: PendingRequestContext): Promise<void> {
     try {
+      if (!hasSessionStorage) return
       sessionStorage.setItem(PENDING_REQUEST_CONTEXT_KEY, JSON.stringify(context, jsonReplacers))
     } catch (error) {
       console.error('Failed to save pending request context:', error)
@@ -188,6 +210,7 @@ export class WebStorage implements SequenceStorage {
 
   async getAndClearPendingRequest(): Promise<PendingRequestContext | null> {
     try {
+      if (!hasSessionStorage) return null
       const context = sessionStorage.getItem(PENDING_REQUEST_CONTEXT_KEY)
       if (!context) return null
       sessionStorage.removeItem(PENDING_REQUEST_CONTEXT_KEY)
@@ -200,6 +223,7 @@ export class WebStorage implements SequenceStorage {
 
   async peekPendingRequest(): Promise<PendingRequestContext | null> {
     try {
+      if (!hasSessionStorage) return null
       const context = sessionStorage.getItem(PENDING_REQUEST_CONTEXT_KEY)
       if (!context) return null
       return JSON.parse(context, jsonRevivers)
@@ -329,9 +353,11 @@ export class WebStorage implements SequenceStorage {
   async clearAllData(): Promise<void> {
     try {
       // Clear all session storage items
-      sessionStorage.removeItem(PENDING_REDIRECT_REQUEST_KEY)
-      sessionStorage.removeItem(TEMP_SESSION_PK_KEY)
-      sessionStorage.removeItem(PENDING_REQUEST_CONTEXT_KEY)
+      if (hasSessionStorage) {
+        sessionStorage.removeItem(PENDING_REDIRECT_REQUEST_KEY)
+        sessionStorage.removeItem(TEMP_SESSION_PK_KEY)
+        sessionStorage.removeItem(PENDING_REQUEST_CONTEXT_KEY)
+      }
 
       // Clear all IndexedDB items
       await this.clearExplicitSessions()

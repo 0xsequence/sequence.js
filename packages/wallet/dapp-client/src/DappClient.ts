@@ -69,7 +69,8 @@ export class DappClient {
   private chainSessionManagers: Map<number, ChainSessionManager> = new Map()
 
   private walletUrl: string
-  private transport: DappTransport
+  private transport: DappTransport | null = null
+  private transportModeSetting: TransportMode
   private projectAccessKey: string
   private nodesUrl: string
   private relayerUrl: string
@@ -89,6 +90,10 @@ export class DappClient {
   private eventListeners: {
     [K in keyof DappClientEventMap]?: Set<DappClientEventMap[K]>
   } = {}
+
+  private get isBrowser(): boolean {
+    return typeof window !== 'undefined' && typeof document !== 'undefined'
+  }
 
   /**
    * @param walletUrl The URL of the Wallet Webapp.
@@ -134,14 +139,8 @@ export class DappClient {
       canUseIndexedDb = true,
     } = options || {}
 
-    this.transport = new DappTransport(
-      walletUrl,
-      transportMode,
-      undefined,
-      sequenceSessionStorage,
-      redirectActionHandler,
-    )
     this.walletUrl = walletUrl
+    this.transportModeSetting = transportMode
     this.projectAccessKey = projectAccessKey
     this.nodesUrl = options?.nodesUrl || NODES_URL
     this.relayerUrl = options?.relayerUrl || RELAYER_URL
@@ -159,7 +158,7 @@ export class DappClient {
    * @returns The transport mode of the client. {@link TransportMode}
    */
   public get transportMode(): TransportMode {
-    return this.transport.mode
+    return this.transport?.mode ?? this.transportModeSetting
   }
 
   /**
@@ -445,7 +444,11 @@ export class DappClient {
   public async handleRedirectResponse(url?: string): Promise<void> {
     const pendingRequest = await this.sequenceStorage.peekPendingRequest()
 
-    const response = await this.transport.getRedirectResponse(true, url)
+    if (!this.transport && this.transportMode === TransportMode.POPUP && !this.isBrowser) {
+      return
+    }
+
+    const response = await this.ensureTransport().getRedirectResponse(true, url)
     if (!response) {
       return
     }
@@ -570,7 +573,7 @@ export class DappClient {
 
       // For popup mode, we need to manually update the state and emit an event.
       // For redirect mode, this code won't be reached; the page will navigate away.
-      if (this.transport.mode === TransportMode.POPUP) {
+      if (this.transportMode === TransportMode.POPUP) {
         const hasImplicitSession = !!chainSessionManager.getImplicitSession()
         const hasExplicitSessions = chainSessionManager.getExplicitSessions().length > 0
         if (shouldCreateSession && (hasImplicitSession || hasExplicitSessions)) {
@@ -645,7 +648,7 @@ export class DappClient {
       chainSessionManager = chainSessionManager ?? this.getChainSessionManager(chainId)
       await chainSessionManager.createNewSession(this.origin, sessionConfig, options)
 
-      if (this.transport.mode === TransportMode.POPUP) {
+      if (this.transportMode === TransportMode.POPUP) {
         const hasImplicitSession = !!chainSessionManager.getImplicitSession()
         const hasExplicitSessions = chainSessionManager.getExplicitSessions().length > 0
 
@@ -719,7 +722,7 @@ export class DappClient {
     }
     await chainSessionManager.addExplicitSession(explicitSessionConfig)
 
-    if (this.transport.mode === TransportMode.POPUP) {
+    if (this.transportMode === TransportMode.POPUP) {
       await this._loadStateFromStorage()
     }
   }
@@ -754,7 +757,7 @@ export class DappClient {
     }
     await chainSessionManager.modifyExplicitSession(explicitSession)
 
-    if (this.transport.mode === TransportMode.POPUP) {
+    if (this.transportMode === TransportMode.POPUP) {
       await this._loadStateFromStorage()
     }
   }
@@ -962,16 +965,12 @@ export class DappClient {
   async disconnect(options?: { keepSessionlessConnection?: boolean }): Promise<void> {
     const keepSessionlessConnection = options?.keepSessionlessConnection ?? true
 
-    const transportMode = this.transport.mode
+    const transportMode = this.transportMode
 
-    this.transport.destroy()
-    this.transport = new DappTransport(
-      this.walletUrl,
-      transportMode,
-      undefined,
-      this.sequenceSessionStorage,
-      this.redirectActionHandler,
-    )
+    if (this.transport) {
+      this.transport.destroy()
+    }
+    this.transport = null
 
     this.chainSessionManagers.clear()
     const sessionlessSnapshot =
@@ -1019,6 +1018,22 @@ export class DappClient {
     }
   }
 
+  private ensureTransport(): DappTransport {
+    if (!this.transport) {
+      if (this.transportModeSetting === TransportMode.POPUP && !this.isBrowser) {
+        throw new InitializationError('Popup transport requires a browser environment.')
+      }
+      this.transport = new DappTransport(
+        this.walletUrl,
+        this.transportModeSetting,
+        undefined,
+        this.sequenceSessionStorage,
+        this.redirectActionHandler,
+      )
+    }
+    return this.transport
+  }
+
   private async applySessionlessConnectionState(
     walletAddress: Address.Address,
     loginMethod?: LoginMethod | null,
@@ -1056,17 +1071,18 @@ export class DappClient {
     try {
       const redirectUrl = this.origin + (this.redirectPath ? this.redirectPath : '')
       const path = action === RequestActionType.SEND_WALLET_TRANSACTION ? '/request/transaction' : '/request/sign'
+      const transport = this.ensureTransport()
 
-      if (this.transport.mode === TransportMode.REDIRECT) {
+      if (transport.mode === TransportMode.REDIRECT) {
         await this.sequenceStorage.savePendingRequest({
           action,
           payload,
           chainId: chainId,
         })
         await this.sequenceStorage.setPendingRedirectRequest(true)
-        await this.transport.sendRequest(action, redirectUrl, payload, { path })
+        await transport.sendRequest(action, redirectUrl, payload, { path })
       } else {
-        const response = await this.transport.sendRequest<WalletActionResponse>(action, redirectUrl, payload, {
+        const response = await transport.sendRequest<WalletActionResponse>(action, redirectUrl, payload, {
           path,
         })
         this.emit('walletActionResponse', { action, response, chainId })
@@ -1076,7 +1092,7 @@ export class DappClient {
       this.emit('walletActionResponse', { action, error, chainId })
       throw error
     } finally {
-      if (this.transport.mode === TransportMode.POPUP) {
+      if (this.transportMode === TransportMode.POPUP && this.transport) {
         this.transport.closeWallet()
       }
     }
@@ -1112,9 +1128,10 @@ export class DappClient {
   private getChainSessionManager(chainId: number): ChainSessionManager {
     let chainSessionManager = this.chainSessionManagers.get(chainId)
     if (!chainSessionManager) {
+      const transport = this.ensureTransport()
       chainSessionManager = new ChainSessionManager(
         chainId,
-        this.transport,
+        transport,
         this.projectAccessKey,
         this.keymachineUrl,
         this.nodesUrl,
