@@ -1,0 +1,256 @@
+import { Payload, Signature, Config, Address as SequenceAddress, Extensions, GenericTree, } from '@0xsequence/wallet-primitives';
+import { Address, Bytes, Hex, PersonalMessage, Secp256k1 } from 'ox';
+import { MemoryStore } from './memory.js';
+import { normalizeAddressKeys } from '../utils.js';
+export class Provider {
+    store;
+    extensions;
+    constructor(store = new MemoryStore(), extensions = Extensions.Rc4) {
+        this.store = store;
+        this.extensions = extensions;
+    }
+    getConfiguration(imageHash) {
+        return this.store.loadConfig(imageHash);
+    }
+    async saveWallet(deployConfiguration, context) {
+        // Save both the configuration and the deploy hash
+        await this.saveConfig(deployConfiguration);
+        const imageHash = Config.hashConfiguration(deployConfiguration);
+        await this.saveCounterfactualWallet(SequenceAddress.from(imageHash, context), Hex.fromBytes(imageHash), context);
+    }
+    async saveConfig(config) {
+        const imageHash = Bytes.toHex(Config.hashConfiguration(config));
+        const previous = await this.store.loadConfig(imageHash);
+        if (previous) {
+            const combined = Config.mergeTopology(previous.topology, config.topology);
+            return this.store.saveConfig(imageHash, { ...previous, topology: combined });
+        }
+        else {
+            return this.store.saveConfig(imageHash, config);
+        }
+    }
+    saveCounterfactualWallet(wallet, imageHash, context) {
+        this.store.saveCounterfactualWallet(wallet, imageHash, context);
+    }
+    getDeploy(wallet) {
+        return this.store.loadCounterfactualWallet(wallet);
+    }
+    async getWalletsGeneric(subdigests, loadSignatureFn) {
+        const payloads = await Promise.all(subdigests.map((sd) => this.store.loadPayloadOfSubdigest(sd)));
+        const response = {};
+        for (const payload of payloads) {
+            if (!payload) {
+                continue;
+            }
+            const walletAddress = Address.checksum(payload.wallet);
+            // If we already have a witness for this wallet, skip it
+            if (response[walletAddress]) {
+                continue;
+            }
+            const subdigest = Hex.fromBytes(Payload.hash(walletAddress, payload.chainId, payload.content));
+            const signature = await loadSignatureFn(subdigest);
+            if (!signature) {
+                continue;
+            }
+            response[walletAddress] = {
+                chainId: payload.chainId,
+                payload: payload.content,
+                signature,
+            };
+        }
+        return response;
+    }
+    async getWallets(signer) {
+        return normalizeAddressKeys(await this.getWalletsGeneric(await this.store.loadSubdigestsOfSigner(signer), (subdigest) => this.store.loadSignatureOfSubdigest(signer, subdigest)));
+    }
+    async getWalletsForSapient(signer, imageHash) {
+        return normalizeAddressKeys(await this.getWalletsGeneric(await this.store.loadSubdigestsOfSapientSigner(signer, imageHash), (subdigest) => this.store.loadSapientSignatureOfSubdigest(signer, subdigest, imageHash)));
+    }
+    getWitnessFor(wallet, signer) {
+        const checksumAddress = Address.checksum(wallet);
+        return this.getWallets(signer).then((wallets) => wallets[checksumAddress]);
+    }
+    getWitnessForSapient(wallet, signer, imageHash) {
+        const checksumAddress = Address.checksum(wallet);
+        return this.getWalletsForSapient(signer, imageHash).then((wallets) => wallets[checksumAddress]);
+    }
+    async saveWitnesses(wallet, chainId, payload, signatures) {
+        const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload));
+        await Promise.all([
+            this.saveSignature(subdigest, signatures),
+            this.store.savePayloadOfSubdigest(subdigest, { content: payload, chainId, wallet }),
+        ]);
+        return;
+    }
+    async getConfigurationUpdates(wallet, fromImageHash, options) {
+        let fromConfig = await this.store.loadConfig(fromImageHash);
+        if (!fromConfig) {
+            return [];
+        }
+        const { signers, sapientSigners } = Config.getSigners(fromConfig);
+        const subdigestsOfSigner = await Promise.all([
+            ...signers.map((s) => this.store.loadSubdigestsOfSigner(s)),
+            ...sapientSigners.map((s) => this.store.loadSubdigestsOfSapientSigner(s.address, s.imageHash)),
+        ]);
+        const subdigests = [...new Set(subdigestsOfSigner.flat())];
+        const payloads = await Promise.all(subdigests.map((subdigest) => this.store.loadPayloadOfSubdigest(subdigest)));
+        const nextCandidates = await Promise.all(payloads
+            .filter((p) => p?.content && Payload.isConfigUpdate(p.content))
+            .map(async (p) => ({
+            payload: p,
+            nextImageHash: p.content.imageHash,
+            config: await this.store.loadConfig(p.content.imageHash),
+        })));
+        let best;
+        const nextCandidatesSorted = nextCandidates
+            .filter((c) => c.config && c.config.checkpoint > fromConfig.checkpoint)
+            .sort((a, b) => 
+        // If we are looking for the longest path, sort by ascending checkpoint
+        // because we want to find the smalles jump, and we should start with the
+        // closest one. If we are not looking for the longest path, sort by
+        // descending checkpoint, because we want to find the largest jump.
+        //
+        // We don't have a guarantee that all "next configs" will be valid
+        // so worst case scenario we will need to try all of them.
+        // But we can try to optimize for the most common case.
+        a.config.checkpoint > b.config.checkpoint ? (options?.allUpdates ? 1 : -1) : options?.allUpdates ? -1 : 1);
+        for (const candidate of nextCandidatesSorted) {
+            if (best) {
+                if (options?.allUpdates) {
+                    // Only consider candidates earlier than our current best
+                    if (candidate.config.checkpoint <= best.checkpoint) {
+                        continue;
+                    }
+                }
+                else {
+                    // Only consider candidates later than our current best
+                    if (candidate.config.checkpoint <= best.checkpoint) {
+                        continue;
+                    }
+                }
+            }
+            // Get all signatures (for all signers) for this subdigest
+            const expectedSubdigest = Hex.fromBytes(Payload.hash(wallet, candidate.payload.chainId, candidate.payload.content));
+            const signaturesOfSigners = await Promise.all([
+                ...signers.map(async (signer) => {
+                    return { signer, signature: await this.store.loadSignatureOfSubdigest(signer, expectedSubdigest) };
+                }),
+                ...sapientSigners.map(async (signer) => {
+                    return {
+                        signer: signer.address,
+                        imageHash: signer.imageHash,
+                        signature: await this.store.loadSapientSignatureOfSubdigest(signer.address, expectedSubdigest, signer.imageHash),
+                    };
+                }),
+            ]);
+            let totalWeight = 0n;
+            const encoded = Signature.fillLeaves(fromConfig.topology, (leaf) => {
+                if (Config.isSapientSignerLeaf(leaf)) {
+                    const sapientSignature = signaturesOfSigners.find(({ signer, imageHash }) => {
+                        return imageHash && Address.isEqual(signer, leaf.address) && imageHash === leaf.imageHash;
+                    })?.signature;
+                    if (sapientSignature) {
+                        totalWeight += leaf.weight;
+                        return sapientSignature;
+                    }
+                }
+                const signature = signaturesOfSigners.find(({ signer }) => Address.isEqual(signer, leaf.address))?.signature;
+                if (!signature) {
+                    return undefined;
+                }
+                totalWeight += leaf.weight;
+                return signature;
+            });
+            if (totalWeight < fromConfig.threshold) {
+                continue;
+            }
+            best = {
+                nextImageHash: candidate.nextImageHash,
+                checkpoint: candidate.config.checkpoint,
+                signature: {
+                    noChainId: true,
+                    configuration: {
+                        threshold: fromConfig.threshold,
+                        checkpoint: fromConfig.checkpoint,
+                        topology: encoded,
+                    },
+                },
+            };
+        }
+        if (!best) {
+            return [];
+        }
+        const nextStep = await this.getConfigurationUpdates(wallet, best.nextImageHash, { allUpdates: true });
+        return [
+            {
+                imageHash: best.nextImageHash,
+                signature: best.signature,
+            },
+            ...nextStep,
+        ];
+    }
+    async saveUpdate(wallet, configuration, signature) {
+        const nextImageHash = Bytes.toHex(Config.hashConfiguration(configuration));
+        const payload = {
+            type: 'config-update',
+            imageHash: nextImageHash,
+        };
+        const subdigest = Payload.hash(wallet, 0, payload);
+        await this.store.savePayloadOfSubdigest(Hex.fromBytes(subdigest), { content: payload, chainId: 0, wallet });
+        await this.saveConfig(configuration);
+        await this.saveSignature(Hex.fromBytes(subdigest), signature.configuration.topology);
+    }
+    async saveSignature(subdigest, topology) {
+        if (Signature.isRawNode(topology)) {
+            await Promise.all([this.saveSignature(subdigest, topology[0]), this.saveSignature(subdigest, topology[1])]);
+            return;
+        }
+        if (Signature.isRawNestedLeaf(topology)) {
+            return this.saveSignature(subdigest, topology.tree);
+        }
+        if (Signature.isRawSignerLeaf(topology)) {
+            const type = topology.signature.type;
+            if (type === 'eth_sign' || type === 'hash') {
+                const address = Secp256k1.recoverAddress({
+                    payload: type === 'eth_sign' ? PersonalMessage.getSignPayload(subdigest) : subdigest,
+                    signature: topology.signature,
+                });
+                return this.store.saveSignatureOfSubdigest(address, subdigest, topology.signature);
+            }
+            if (Signature.isSignatureOfSapientSignerLeaf(topology.signature)) {
+                switch (topology.signature.address.toLowerCase()) {
+                    case this.extensions.passkeys.toLowerCase():
+                        const decoded = Extensions.Passkeys.decode(Bytes.fromHex(topology.signature.data));
+                        if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
+                            throw new Error('Invalid passkey signature');
+                        }
+                        return this.store.saveSapientSignatureOfSubdigest(topology.signature.address, subdigest, Extensions.Passkeys.rootFor(decoded.publicKey), topology.signature);
+                    default:
+                        throw new Error(`Unsupported sapient signer: ${topology.signature.address}`);
+                }
+            }
+        }
+    }
+    getTree(rootHash) {
+        return this.store.loadTree(rootHash);
+    }
+    saveTree(tree) {
+        return this.store.saveTree(GenericTree.hash(tree), tree);
+    }
+    saveConfiguration(config) {
+        return this.store.saveConfig(Bytes.toHex(Config.hashConfiguration(config)), config);
+    }
+    saveDeploy(imageHash, context) {
+        return this.store.saveCounterfactualWallet(SequenceAddress.from(Bytes.fromHex(imageHash), context), imageHash, context);
+    }
+    async getPayload(opHash) {
+        const data = await this.store.loadPayloadOfSubdigest(opHash);
+        return data ? { chainId: data.chainId, payload: data.content, wallet: data.wallet } : undefined;
+    }
+    savePayload(wallet, payload, chainId) {
+        const subdigest = Hex.fromBytes(Payload.hash(wallet, chainId, payload));
+        return this.store.savePayloadOfSubdigest(subdigest, { content: payload, chainId, wallet });
+    }
+}
+export * from './memory.js';
+export * from './indexed-db.js';
