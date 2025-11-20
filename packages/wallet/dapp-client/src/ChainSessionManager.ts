@@ -114,7 +114,8 @@ export class ChainSessionManager {
     const rpcUrl = getRpcUrl(chainId, nodesUrl, projectAccessKey)
     this.chainId = chainId
 
-    if (canUseIndexedDb) {
+    const canUseIndexedDbInEnv = canUseIndexedDb && typeof indexedDB !== 'undefined'
+    if (canUseIndexedDbInEnv) {
       this.stateProvider = new State.Cached({
         source: new State.Sequence.Provider(keyMachineUrl),
         cache: new State.Local.Provider(new State.Local.IndexedDbStore(CACHE_DB_NAME)),
