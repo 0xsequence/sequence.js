@@ -365,6 +365,28 @@ describe('Wallets', () => {
     expect(Config.findSignerLeaf(sessionsModule!.guardLeaf!, sessionsGuardAddress)).toBeDefined()
   })
 
+  it('Should fail signup when default guard topology lacks placeholder address', async () => {
+    manager = newManager(
+      {
+        defaultGuardTopology: {
+          type: 'signer',
+          address: '0x0000000000000000000000000000000000000001',
+          weight: 1n,
+        },
+      },
+      undefined,
+      `guard_missing_placeholder_${Date.now()}`,
+    )
+
+    await expect(
+      manager.wallets.signUp({
+        mnemonic: Mnemonic.random(Mnemonic.english),
+        kind: 'mnemonic',
+        noGuard: false,
+      }),
+    ).rejects.toThrow('Guard address replacement failed for role wallet')
+  })
+
   // === ERROR HANDLING ===
 
   it('Should throw error when trying to get configuration for non-existent wallet', async () => {

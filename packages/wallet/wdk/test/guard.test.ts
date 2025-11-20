@@ -351,5 +351,24 @@ describe('GuardHandler', () => {
         await customManager.stop()
       }
     })
+
+    it('should return undefined when no guard address is set for a role', async () => {
+      const defaultWalletGuard = (manager as any).shared.sequence.guardAddresses.wallet
+      const customManager = newManager(
+        {
+          guardAddresses: {
+            wallet: defaultWalletGuard,
+          } as any,
+        },
+        undefined,
+        `guard_missing_${Date.now()}`,
+      )
+
+      const customGuards = (customManager as any).shared.modules.guards as Guards
+
+      expect(customGuards.topology('sessions')).toBeUndefined()
+
+      await customManager.stop()
+    })
   })
 })
