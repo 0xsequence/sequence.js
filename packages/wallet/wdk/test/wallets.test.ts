@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Manager, SignerActionable, SignerReady } from '../src/sequence'
 import { Mnemonic, Address } from 'ox'
 import { newManager } from './constants'
-import { Network } from '@0xsequence/wallet-primitives'
+import { Config, Constants, Network } from '@0xsequence/wallet-primitives'
 
 describe('Wallets', () => {
   let manager: Manager | undefined
@@ -296,6 +296,95 @@ describe('Wallets', () => {
     expect(config.raw.loginTopology).toBeDefined()
     expect(config.raw.devicesTopology).toBeDefined()
     expect(config.raw.modules).toBeDefined()
+  })
+
+  it('Should include guard configuration when enabled', async () => {
+    manager = newManager(undefined, undefined, `guard_enabled_${Date.now()}`)
+    const guardAddress = (manager as any).shared.sequence.guardAddresses.wallet
+    const sessionsGuardAddress = (manager as any).shared.sequence.guardAddresses.sessions
+    const sessionsModuleAddress = (manager as any).shared.sequence.extensions.sessions
+
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: false,
+    })
+
+    const config = await manager.wallets.getConfiguration(wallet!)
+
+    expect(config.walletGuard?.address).toBe(guardAddress)
+    expect(config.raw.guardTopology).toBeDefined()
+    expect(Config.findSignerLeaf(config.raw.guardTopology!, guardAddress)).toBeDefined()
+    expect(
+      Config.findSignerLeaf(config.raw.guardTopology!, Constants.PlaceholderAddress as Address.Address),
+    ).toBeUndefined()
+
+    const sessionsModule = config.raw.modules.find((m) => Address.isEqual(m.sapientLeaf.address, sessionsModuleAddress))
+    expect(sessionsModule?.guardLeaf).toBeDefined()
+    expect(Config.findSignerLeaf(sessionsModule!.guardLeaf!, sessionsGuardAddress)).toBeDefined()
+    expect(
+      Config.findSignerLeaf(sessionsModule!.guardLeaf!, Constants.PlaceholderAddress as Address.Address),
+    ).toBeUndefined()
+
+    expect(config.moduleGuards.get(sessionsModuleAddress as Address.Address)?.address).toBe(sessionsGuardAddress)
+  })
+
+  it('Should support non-nested guard topologies', async () => {
+    manager = newManager(
+      {
+        defaultGuardTopology: {
+          type: 'signer',
+          address: Constants.PlaceholderAddress,
+          weight: 1n,
+        },
+      },
+      undefined,
+      `flat_guard_${Date.now()}`,
+    )
+
+    const guardAddress = (manager as any).shared.sequence.guardAddresses.wallet
+    const sessionsGuardAddress = (manager as any).shared.sequence.guardAddresses.sessions
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: false,
+    })
+
+    const config = await manager.wallets.getConfiguration(wallet!)
+
+    expect(config.walletGuard?.address).toBe(guardAddress)
+    expect(config.raw.guardTopology).toBeDefined()
+    expect(Config.findSignerLeaf(config.raw.guardTopology!, guardAddress)).toBeDefined()
+    expect(
+      Config.findSignerLeaf(config.raw.guardTopology!, Constants.PlaceholderAddress as Address.Address),
+    ).toBeUndefined()
+
+    const sessionsModuleAddress = (manager as any).shared.sequence.extensions.sessions
+    const sessionsModule = config.raw.modules.find((m) => Address.isEqual(m.sapientLeaf.address, sessionsModuleAddress))
+    expect(sessionsModule?.guardLeaf).toBeDefined()
+    expect(Config.findSignerLeaf(sessionsModule!.guardLeaf!, sessionsGuardAddress)).toBeDefined()
+  })
+
+  it('Should fail signup when default guard topology lacks placeholder address', async () => {
+    manager = newManager(
+      {
+        defaultGuardTopology: {
+          type: 'signer',
+          address: '0x0000000000000000000000000000000000000001',
+          weight: 1n,
+        },
+      },
+      undefined,
+      `guard_missing_placeholder_${Date.now()}`,
+    )
+
+    await expect(
+      manager.wallets.signUp({
+        mnemonic: Mnemonic.random(Mnemonic.english),
+        kind: 'mnemonic',
+        noGuard: false,
+      }),
+    ).rejects.toThrow('Guard address replacement failed for role wallet')
   })
 
   // === ERROR HANDLING ===

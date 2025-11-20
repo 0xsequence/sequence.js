@@ -58,7 +58,8 @@ export type ManagerOptions = {
   guardUrl?: string
   guardAddresses?: Record<GuardRole, Address.Address>
 
-  defaultGuardTopology?: Config.SignerLeaf
+  // The default guard topology MUST have a placeholder address for the guard address
+  defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
 
   // EIP-6963 support
@@ -121,14 +122,25 @@ export const ManagerOptionsDefaults = {
   } as Record<GuardRole, Address.Address>, // TODO: change to the actual guard address
 
   defaultGuardTopology: {
-    // TODO: Move this somewhere else
-    type: 'signer',
-    address: '0x0000000000000000000000000000000000000000', // will be replaced by the actual guard address
+    type: 'nested',
     weight: 1n,
-  } as Config.SignerLeaf,
+    threshold: 1n,
+    tree: [
+      {
+        type: 'signer',
+        address: Constants.PlaceholderAddress,
+        weight: 1n,
+      },
+      {
+        type: 'signer',
+        // Sequence dev multisig, as recovery guard signer
+        address: '0x007a47e6BF40C1e0ed5c01aE42fDC75879140bc4',
+        weight: 1n,
+      },
+    ],
+  } as Config.NestedLeaf,
 
   defaultSessionsTopology: {
-    // TODO: Move this somewhere else
     type: 'sapient-signer',
     weight: 1n,
   } as Omit<Config.SapientSignerLeaf, 'imageHash' | 'address'>,
@@ -202,7 +214,7 @@ export type Sequence = {
   readonly relayers: Relayer.Relayer[]
   readonly bundlers: Bundler.Bundler[]
 
-  readonly defaultGuardTopology: Config.SignerLeaf
+  readonly defaultGuardTopology: Config.Topology
   readonly defaultRecoverySettings: RecoverySettings
 
   readonly guardUrl: string

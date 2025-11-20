@@ -253,7 +253,7 @@ export class Sessions implements SessionsInterface {
     return modules.some((m) => Address.isEqual(m.sapientLeaf.address, this.shared.sequence.extensions.sessions))
   }
 
-  async initSessionModule(modules: Module[], identitySigners: Address.Address[], guardTopology?: Config.NestedLeaf) {
+  async initSessionModule(modules: Module[], identitySigners: Address.Address[], guardTopology?: Config.Topology) {
     if (this.hasSessionModule(modules)) {
       throw new Error('session-module-already-initialized')
     }
