@@ -25,7 +25,8 @@
         "repo/**/*.ts",
         "repo/**/*.tsx",
         "test/**/*.ts",
-        "test/**/*.tsx"
+        "test/**/*.tsx",
+        "test/**/*.mjs"
       ],
       "outputs": []
     },
