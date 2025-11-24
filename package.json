@@ -1,0 +1,35 @@
+{
+  "name": "@0xsequence/guard",
+  "version": "3.0.0-beta.1",
+  "description": "guard sub-package for Sequence",
+  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/services/guard",
+  "author": "Sequence Platforms Inc.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:^",
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  },
+  "dependencies": {
+    "ox": "^0.7.2"
+  }
+}
