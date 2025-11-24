@@ -10,12 +10,15 @@ import {
   Erc1155ApprovalPrecondition,
 } from './types.js'
 
-export interface IntentPrecondition {
+export interface TransactionPrecondition {
   type: string
-  data: string
+  chainId: number
+  ownerAddress: string
+  tokenAddress: string
+  minAmount: bigint
 }
 
-export function decodePreconditions(preconditions: IntentPrecondition[]): Precondition[] {
+export function decodePreconditions(preconditions: TransactionPrecondition[]): Precondition[] {
   const decodedPreconditions: Precondition[] = []
 
   for (const p of preconditions) {
@@ -28,7 +31,7 @@ export function decodePreconditions(preconditions: IntentPrecondition[]): Precon
   return decodedPreconditions
 }
 
-export function decodePrecondition(p: IntentPrecondition): Precondition | undefined {
+export function decodePrecondition(p: TransactionPrecondition): Precondition | undefined {
   if (!p) {
     return undefined
   }
@@ -36,70 +39,64 @@ export function decodePrecondition(p: IntentPrecondition): Precondition | undefi
   let precondition: Precondition | undefined
 
   try {
-    const data = JSON.parse(p.data)
-
     switch (p.type) {
       case 'native-balance':
-        precondition = new NativeBalancePrecondition(
-          Address.from(data.address),
-          data.min ? BigInt(data.min) : undefined,
-          data.max ? BigInt(data.max) : undefined,
-        )
+        precondition = new NativeBalancePrecondition(Address.from(p.ownerAddress), p.minAmount, undefined)
         break
 
       case 'erc20-balance':
         precondition = new Erc20BalancePrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
-          data.min ? BigInt(data.min) : undefined,
-          data.max ? BigInt(data.max) : undefined,
+          Address.from(p.ownerAddress),
+          Address.from(p.tokenAddress),
+          p.minAmount,
+          undefined,
         )
         break
 
       case 'erc20-approval':
         precondition = new Erc20ApprovalPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
-          Address.from(data.operator),
-          BigInt(data.min),
+          Address.from(p.ownerAddress),
+          Address.from(p.tokenAddress),
+          Address.from(p.ownerAddress),
+          p.minAmount,
         )
         break
 
       case 'erc721-ownership':
         precondition = new Erc721OwnershipPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
-          BigInt(data.tokenId),
-          data.owned,
+          Address.from(p.ownerAddress),
+          Address.from(p.tokenAddress),
+          BigInt(0),
+          true,
         )
         break
 
       case 'erc721-approval':
         precondition = new Erc721ApprovalPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
-          BigInt(data.tokenId),
-          Address.from(data.operator),
+          Address.from(p.ownerAddress),
+          Address.from(p.tokenAddress),
+          BigInt(0),
+          Address.from(p.ownerAddress),
         )
         break
 
       case 'erc1155-balance':
         precondition = new Erc1155BalancePrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
-          BigInt(data.tokenId),
-          data.min ? BigInt(data.min) : undefined,
-          data.max ? BigInt(data.max) : undefined,
+          Address.from(p.ownerAddress),
+          Address.from(p.tokenAddress),
+          BigInt(0),
+          p.minAmount,
+          undefined,
         )
         break
 
       case 'erc1155-approval':
         precondition = new Erc1155ApprovalPrecondition(
-          Address.from(data.address),
-          Address.from(data.token),
-          BigInt(data.tokenId),
-          Address.from(data.operator),
-          BigInt(data.min),
+          Address.from(p.ownerAddress),
+          Address.from(p.tokenAddress),
+          BigInt(0),
+          Address.from(p.ownerAddress),
+          p.minAmount,
         )
         break
 
