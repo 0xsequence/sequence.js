@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 3.0.0-beta.1
+
+### Patch Changes
+
+- 3.0.0-beta.1
+
 ## 2.3.8
 
 ### Patch Changes

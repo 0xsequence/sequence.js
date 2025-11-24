@@ -1,0 +1,25 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "docs": "0.1.0",
+    "web": "0.1.0",
+    "@0xsequence/api": "3.0.0",
+    "@0xsequence/builder": "3.0.0",
+    "@0xsequence/guard": "3.0.0",
+    "@0xsequence/identity-instrument": "0.0.0",
+    "@0xsequence/indexer": "3.0.0",
+    "@0xsequence/marketplace": "3.0.0",
+    "@0xsequence/metadata": "3.0.0",
+    "@0xsequence/relayer": "3.0.0",
+    "@0xsequence/abi": "3.0.0",
+    "@0xsequence/wallet-core": "0.0.0",
+    "@0xsequence/dapp-client": "0.0.0",
+    "@0xsequence/wallet-primitives": "0.0.0",
+    "@0xsequence/wallet-wdk": "0.0.0",
+    "@repo/eslint-config": "0.0.0",
+    "@repo/typescript-config": "0.0.0",
+    "@repo/ui": "0.0.0"
+  },
+  "changesets": ["wild-feet-carry"]
+}
