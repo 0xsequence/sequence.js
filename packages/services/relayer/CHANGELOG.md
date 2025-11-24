@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.0-beta.2
+
+### Patch Changes
+
+- 3.0.0-beta.2 with identity instrument updates
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.0-beta.2
+
 ## 3.0.0-beta.1
 
 ### Patch Changes
