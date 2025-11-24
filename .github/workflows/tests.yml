@@ -23,7 +23,7 @@ jobs:
   tests:
     name: Run all tests
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [build]
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install-dependencies
