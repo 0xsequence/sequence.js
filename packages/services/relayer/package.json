@@ -27,9 +27,9 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
-    "@types/node": "^22.15.29",
+    "@types/node": "^24.10.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.14"
   },
   "dependencies": {
     "@0xsequence/wallet-primitives": "workspace:^",

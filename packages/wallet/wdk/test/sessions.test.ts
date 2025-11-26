@@ -204,258 +204,242 @@ for (const extension of ALL_EXTENSIONS) {
       return txHash
     }
 
-    it(
-      'should add the session manager leaf when not present',
-      async () => {
-        // Recreate the wallet specifically for this test
-        const identitySignerMnemonic = Mnemonic.random(Mnemonic.english)
-        const identitySignerPk = Mnemonic.toPrivateKey(identitySignerMnemonic, { as: 'Hex' })
-        const identitySignerAddress = new CoreSigners.Pk.Pk(identitySignerPk).address
-        const walletAddress = await wdk.manager.wallets.signUp({
-          kind: 'mnemonic',
-          mnemonic: identitySignerMnemonic,
-          noGuard: true,
-          noSessionManager: true,
-        })
-        if (!walletAddress) {
-          throw new Error('Failed to create wallet')
-        }
+    it('should add the session manager leaf when not present', { timeout: 60000 }, async () => {
+      // Recreate the wallet specifically for this test
+      const identitySignerMnemonic = Mnemonic.random(Mnemonic.english)
+      const identitySignerPk = Mnemonic.toPrivateKey(identitySignerMnemonic, { as: 'Hex' })
+      const identitySignerAddress = new CoreSigners.Pk.Pk(identitySignerPk).address
+      const walletAddress = await wdk.manager.wallets.signUp({
+        kind: 'mnemonic',
+        mnemonic: identitySignerMnemonic,
+        noGuard: true,
+        noSessionManager: true,
+      })
+      if (!walletAddress) {
+        throw new Error('Failed to create wallet')
+      }
 
-        // Initialize the wdk components
-        wdk.identitySignerAddress = identitySignerAddress
-        wdk.manager.registerMnemonicUI(async (respond) => {
-          await respond(identitySignerMnemonic)
-        })
+      // Initialize the wdk components
+      wdk.identitySignerAddress = identitySignerAddress
+      wdk.manager.registerMnemonicUI(async (respond) => {
+        await respond(identitySignerMnemonic)
+      })
 
-        // Create wallet in core
-        const coreWallet = new CoreWallet(walletAddress, {
-          stateProvider,
-        })
+      // Create wallet in core
+      const coreWallet = new CoreWallet(walletAddress, {
+        stateProvider,
+      })
 
-        dapp.wallet = coreWallet
-        dapp.sessionManager = new CoreSigners.SessionManager(coreWallet, {
-          provider,
-          sessionManagerAddress: Extensions.Rc4.sessions,
-        })
+      dapp.wallet = coreWallet
+      dapp.sessionManager = new CoreSigners.SessionManager(coreWallet, {
+        provider,
+        sessionManagerAddress: Extensions.Rc4.sessions,
+      })
 
-        // At this point the wallet should NOT have a session topology
-        await expect(wdk.manager.sessions.getTopology(walletAddress)).rejects.toThrow('Session manager not found')
+      // At this point the wallet should NOT have a session topology
+      await expect(wdk.manager.sessions.getTopology(walletAddress)).rejects.toThrow('Session manager not found')
 
-        // Create the explicit session signer
-        const e = await dapp.pkStore.generateAndStore()
-        const s = await dapp.pkStore.getEncryptedPkStore(e.address)
-        if (!s) {
-          throw new Error('Failed to create pk store')
-        }
-        const explicitSession: ExplicitSession = {
-          type: 'explicit',
-          sessionAddress: e.address,
-          chainId,
-          valueLimit: 0n,
-          deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
-          permissions: [
-            {
-              target: EMITTER_ADDRESS,
-              rules: [],
-            },
-          ],
-        }
-        const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
-        // Add to manager
-        dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
+      // Create the explicit session signer
+      const e = await dapp.pkStore.generateAndStore()
+      const s = await dapp.pkStore.getEncryptedPkStore(e.address)
+      if (!s) {
+        throw new Error('Failed to create pk store')
+      }
+      const explicitSession: ExplicitSession = {
+        type: 'explicit',
+        sessionAddress: e.address,
+        chainId,
+        valueLimit: 0n,
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: EMITTER_ADDRESS,
+            rules: [],
+          },
+        ],
+      }
+      const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
+      // Add to manager
+      dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-        await setupExplicitSession(explicitSession)
+      await setupExplicitSession(explicitSession)
 
-        // Create a call payload
-        const call: Payload.Call = {
-          to: EMITTER_ADDRESS,
-          value: 0n,
-          data: AbiFunction.encodeData(EMITTER_ABI[0]),
-          gasLimit: 0n,
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert',
-        }
+      // Create a call payload
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_ABI[0]),
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
 
-        // Sign and send the transaction
-        await signAndSend(call)
-      },
-      { timeout: 60000 },
-    )
+      // Sign and send the transaction
+      await signAndSend(call)
+    })
 
-    it(
-      'should create and sign with an explicit session',
-      async () => {
-        // Create the explicit session signer
-        const e = await dapp.pkStore.generateAndStore()
-        const s = await dapp.pkStore.getEncryptedPkStore(e.address)
-        if (!s) {
-          throw new Error('Failed to create pk store')
-        }
-        const explicitSession: ExplicitSession = {
-          type: 'explicit',
-          sessionAddress: e.address,
-          chainId,
-          valueLimit: 0n,
-          deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
-          permissions: [
-            {
-              target: EMITTER_ADDRESS,
-              rules: [
-                {
-                  // Require the explicitEmit selector
-                  cumulative: false,
-                  operation: Permission.ParameterOperation.EQUAL,
-                  value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0]), { size: 32 }),
-                  offset: 0n,
-                  mask: Bytes.fromHex('0xffffffff', { size: 32 }),
-                },
-              ],
-            },
-          ],
-        }
-        const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
-        // Add to manager
-        dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
+    it('should create and sign with an explicit session', { timeout: 60000 }, async () => {
+      // Create the explicit session signer
+      const e = await dapp.pkStore.generateAndStore()
+      const s = await dapp.pkStore.getEncryptedPkStore(e.address)
+      if (!s) {
+        throw new Error('Failed to create pk store')
+      }
+      const explicitSession: ExplicitSession = {
+        type: 'explicit',
+        sessionAddress: e.address,
+        chainId,
+        valueLimit: 0n,
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: EMITTER_ADDRESS,
+            rules: [
+              {
+                // Require the explicitEmit selector
+                cumulative: false,
+                operation: Permission.ParameterOperation.EQUAL,
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0]), { size: 32 }),
+                offset: 0n,
+                mask: Bytes.fromHex('0xffffffff', { size: 32 }),
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
+      // Add to manager
+      dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-        await setupExplicitSession(explicitSession)
+      await setupExplicitSession(explicitSession)
 
-        // Create a call payload
-        const call: Payload.Call = {
-          to: EMITTER_ADDRESS,
-          value: 0n,
-          data: AbiFunction.encodeData(EMITTER_ABI[0]),
-          gasLimit: 0n,
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert',
-        }
+      // Create a call payload
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_ABI[0]),
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
 
-        // Sign and send the transaction
-        await signAndSend(call)
-      },
-      { timeout: 60000 },
-    )
+      // Sign and send the transaction
+      await signAndSend(call)
+    })
 
-    it(
-      'should modify an explicit session permission',
-      async () => {
-        // First we create the explicit sessions signer
-        const e = await dapp.pkStore.generateAndStore()
-        const s = await dapp.pkStore.getEncryptedPkStore(e.address)
-        if (!s) {
-          throw new Error('Failed to create pk store')
-        }
-        // Create the initial permissions
-        let explicitSession: ExplicitSession = {
-          type: 'explicit',
-          sessionAddress: e.address,
-          chainId,
-          valueLimit: 0n,
-          deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
-          permissions: [
-            {
-              target: EMITTER_ADDRESS,
-              rules: [
-                {
-                  // Require the explicitEmit selector
-                  cumulative: false,
-                  operation: Permission.ParameterOperation.EQUAL,
-                  value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0]), { size: 32 }),
-                  offset: 0n,
-                  mask: Bytes.fromHex('0xffffffff', { size: 32 }),
-                },
-              ],
-            },
-          ],
-        }
-        const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
-        // Add to manager
-        dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
+    it('should modify an explicit session permission', { timeout: 60000 }, async () => {
+      // First we create the explicit sessions signer
+      const e = await dapp.pkStore.generateAndStore()
+      const s = await dapp.pkStore.getEncryptedPkStore(e.address)
+      if (!s) {
+        throw new Error('Failed to create pk store')
+      }
+      // Create the initial permissions
+      let explicitSession: ExplicitSession = {
+        type: 'explicit',
+        sessionAddress: e.address,
+        chainId,
+        valueLimit: 0n,
+        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        permissions: [
+          {
+            target: EMITTER_ADDRESS,
+            rules: [
+              {
+                // Require the explicitEmit selector
+                cumulative: false,
+                operation: Permission.ParameterOperation.EQUAL,
+                value: Bytes.fromHex(AbiFunction.getSelector(EMITTER_ABI[0]), { size: 32 }),
+                offset: 0n,
+                mask: Bytes.fromHex('0xffffffff', { size: 32 }),
+              },
+            ],
+          },
+        ],
+      }
+      const explicitSigner = new CoreSigners.Session.Explicit(s, explicitSession)
+      // Add to manager
+      dapp.sessionManager = dapp.sessionManager.withExplicitSigner(explicitSigner)
 
-        await setupExplicitSession(explicitSession)
+      await setupExplicitSession(explicitSession)
 
-        // Create a call payload
-        const call: Payload.Call = {
-          to: EMITTER_ADDRESS,
-          value: 0n,
-          data: AbiFunction.encodeData(EMITTER_ABI[0]),
-          gasLimit: 0n,
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert',
-        }
+      // Create a call payload
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_ABI[0]),
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
 
-        // Sign and send the transaction
-        await signAndSend(call)
+      // Sign and send the transaction
+      await signAndSend(call)
 
-        // Now we modify the permissions target contract to zero address
-        // This should cause any session call to the EMITTER_ADDRESS contract to fail
-        explicitSession.permissions[0].target = '0x0000000000000000000000000000000000000000'
+      // Now we modify the permissions target contract to zero address
+      // This should cause any session call to the EMITTER_ADDRESS contract to fail
+      explicitSession.permissions[0].target = '0x0000000000000000000000000000000000000000'
 
-        await setupExplicitSession(explicitSession, true)
+      await setupExplicitSession(explicitSession, true)
 
-        // Sign and send the transaction
-        // Should fail with 'No signer supported for call'
-        await expect(signAndSend(call)).rejects.toThrow('No signer supported for call')
-      },
-      { timeout: 60000 },
-    )
+      // Sign and send the transaction
+      // Should fail with 'No signer supported for call'
+      await expect(signAndSend(call)).rejects.toThrow('No signer supported for call')
+    })
 
-    it(
-      'should create and sign with an implicit session',
-      async () => {
-        // Create the implicit session signer
-        const e = await dapp.pkStore.generateAndStore()
-        const s = await dapp.pkStore.getEncryptedPkStore(e.address)
-        if (!s) {
-          throw new Error('Failed to create pk store')
-        }
+    it('should create and sign with an implicit session', { timeout: 60000 }, async () => {
+      // Create the implicit session signer
+      const e = await dapp.pkStore.generateAndStore()
+      const s = await dapp.pkStore.getEncryptedPkStore(e.address)
+      if (!s) {
+        throw new Error('Failed to create pk store')
+      }
 
-        // Request the session authorization from the WDK
-        const requestId = await wdk.manager.sessions.prepareAuthorizeImplicitSession(dapp.wallet.address, e.address, {
-          target: 'https://example.com',
-        })
+      // Request the session authorization from the WDK
+      const requestId = await wdk.manager.sessions.prepareAuthorizeImplicitSession(dapp.wallet.address, e.address, {
+        target: 'https://example.com',
+      })
 
-        // Sign the request (Wallet UI action)
-        const sigRequest = await wdk.manager.signatures.get(requestId)
-        const identitySigner = sigRequest.signers[0]
-        if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
-          throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
-        }
-        const handled = await identitySigner.handle()
-        if (!handled) {
-          throw new Error('Failed to handle identity signer')
-        }
+      // Sign the request (Wallet UI action)
+      const sigRequest = await wdk.manager.signatures.get(requestId)
+      const identitySigner = sigRequest.signers[0]
+      if (!identitySigner || (identitySigner.status !== 'actionable' && identitySigner.status !== 'ready')) {
+        throw new Error(`Identity signer not found or not ready/actionable: ${identitySigner?.status}`)
+      }
+      const handled = await identitySigner.handle()
+      if (!handled) {
+        throw new Error('Failed to handle identity signer')
+      }
 
-        // Complete the request
-        const { attestation, signature: identitySignature } =
-          await wdk.manager.sessions.completeAuthorizeImplicitSession(requestId)
+      // Complete the request
+      const { attestation, signature: identitySignature } =
+        await wdk.manager.sessions.completeAuthorizeImplicitSession(requestId)
 
-        // Load the implicit signer
-        const implicitSigner = new CoreSigners.Session.Implicit(
-          s,
-          attestation,
-          identitySignature,
-          dapp.sessionManager.address,
-        )
-        dapp.sessionManager = dapp.sessionManager.withImplicitSigner(implicitSigner)
+      // Load the implicit signer
+      const implicitSigner = new CoreSigners.Session.Implicit(
+        s,
+        attestation,
+        identitySignature,
+        dapp.sessionManager.address,
+      )
+      dapp.sessionManager = dapp.sessionManager.withImplicitSigner(implicitSigner)
 
-        // Create a call payload
-        const call: Payload.Call = {
-          to: EMITTER_ADDRESS,
-          value: 0n,
-          data: AbiFunction.encodeData(EMITTER_ABI[1]), // implicitEmit
-          gasLimit: 0n,
-          delegateCall: false,
-          onlyFallback: false,
-          behaviorOnError: 'revert',
-        }
+      // Create a call payload
+      const call: Payload.Call = {
+        to: EMITTER_ADDRESS,
+        value: 0n,
+        data: AbiFunction.encodeData(EMITTER_ABI[1]), // implicitEmit
+        gasLimit: 0n,
+        delegateCall: false,
+        onlyFallback: false,
+        behaviorOnError: 'revert',
+      }
 
-        // Sign and send the transaction
-        await signAndSend(call)
-      },
-      { timeout: 60000 },
-    )
+      // Sign and send the transaction
+      await signAndSend(call)
+    })
   })
 }

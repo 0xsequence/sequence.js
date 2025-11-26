@@ -22,16 +22,16 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:^",
-    "@types/node": "^22.15.29",
-    "@types/yargs": "^17.0.33",
-    "concurrently": "^8.2.2",
-    "esbuild": "^0.25.5",
-    "nodemon": "^3.1.10",
+    "@types/node": "^24.10.1",
+    "@types/yargs": "^17.0.35",
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.27.0",
+    "nodemon": "^3.1.11",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "@0xsequence/wallet-primitives": "workspace:^",
     "ox": "^0.7.2",
-    "yargs": "^17.7.2"
+    "yargs": "^18.0.0"
   }
 }
