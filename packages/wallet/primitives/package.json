@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
-    "@vitest/coverage-v8": "^4.0.14 ",
+    "@vitest/coverage-v8": "^4.0.14",
     "typescript": "^5.8.3",
     "vitest": "^4.0.14"
   },

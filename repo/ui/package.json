@@ -19,7 +19,7 @@
     "@types/node": "^20.17.57",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
-    "typescript": "5.5.4"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "react": "^19.1.0",
