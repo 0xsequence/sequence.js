@@ -147,7 +147,10 @@ export enum ChainId {
   SANDBOX_TESTNET = 6252,
 
   // ARC
-  ARC_TESTNET = 5042002
+  ARC_TESTNET = 5042002,
+
+  // HYPEREVM
+  HYPEREVM = 999
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1213,6 +1216,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'USDC',
       name: 'USDC',
+      decimals: 18
+    }
+  },
+
+  [ChainId.HYPEREVM]: {
+    chainId: ChainId.HYPEREVM,
+    type: NetworkType.MAINNET,
+    name: 'hyperevm',
+    title: 'HyperEVM',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HYPEREVM}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'HyperEVM',
+      rootUrl: 'https://www.hyperscan.com/'
+    },
+    nativeToken: {
+      symbol: 'HYPE',
+      name: 'HYPE',
       decimals: 18
     }
   }
