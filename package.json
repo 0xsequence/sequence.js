@@ -36,7 +36,7 @@
   "syncpack": {
     "source": [
       "package.json",
-      "packages/**/*/package.json"
+      "packages/**/package.json"
     ],
     "versionGroups": [
       {

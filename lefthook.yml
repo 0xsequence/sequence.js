@@ -3,6 +3,11 @@ pre-commit:
     prettier:
       glob: '**/*.{js,jsx,ts,tsx,json,md,yml,yaml}'
       run: pnpm prettier --write {staged_files} && git add {staged_files}
+    syncpack:
+      glob:
+        - "package.json"
+        - "packages/**/package.json"
+      run: pnpm deps:lint
 
 pre-push:
   commands:
