@@ -15,18 +15,28 @@
     "dev:server": "node packages/wallet/primitives-cli/dist/index.js server",
     "reinstall": "rimraf -g ./**/node_modules && pnpm install",
     "test:anvil": "anvil --fork-url https://nodes.sequence.app/arbitrum",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "deps:lint": "syncpack list-mismatches",
+    "deps:fix": "syncpack fix-mismatches",
+    "deps:sort": "syncpack format"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",
     "lefthook": "^2.0.4",
     "prettier": "^3.5.3",
     "rimraf": "^6.1.2",
+    "syncpack": "^13.0.4",
     "turbo": "^2.6.1",
     "typescript": "5.8.3"
   },
   "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=18"
+  },
+  "syncpack": {
+    "source": [
+      "package.json",
+      "packages/**/*/package.json"
+    ]
   }
 }
