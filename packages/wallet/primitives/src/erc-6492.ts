@@ -1,5 +1,5 @@
 import { AbiFunction, AbiParameters, Address, Bytes, Hex, Provider } from 'ox'
-import { WrappedSignature } from 'ox/erc6492'
+import { SignatureErc6492 } from 'ox/erc6492'
 import { DEPLOY } from './constants.js'
 import { Context } from './context.js'
 
@@ -29,7 +29,7 @@ export function wrap<T extends Bytes.Bytes | Hex.Hex>(
       [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
       [to, Hex.from(data), Hex.from(signature)],
     ),
-    WrappedSignature.magicBytes,
+    SignatureErc6492.magicBytes,
   )
 
   switch (typeof signature) {
@@ -46,12 +46,12 @@ export function decode<T extends Bytes.Bytes | Hex.Hex>(
   switch (typeof signature) {
     case 'object':
       if (
-        Bytes.toHex(signature.subarray(-WrappedSignature.magicBytes.slice(2).length / 2)) ===
-        WrappedSignature.magicBytes
+        Bytes.toHex(signature.subarray(-SignatureErc6492.magicBytes.slice(2).length / 2)) ===
+        SignatureErc6492.magicBytes
       ) {
         const [to, data, decoded] = AbiParameters.decode(
           [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
-          signature.subarray(0, -WrappedSignature.magicBytes.slice(2).length / 2),
+          signature.subarray(0, -SignatureErc6492.magicBytes.slice(2).length / 2),
         )
         return { signature: Hex.toBytes(decoded) as T, erc6492: { to, data: Hex.toBytes(data) as T } }
       } else {
@@ -59,11 +59,11 @@ export function decode<T extends Bytes.Bytes | Hex.Hex>(
       }
 
     case 'string':
-      if (signature.endsWith(WrappedSignature.magicBytes.slice(2))) {
+      if (signature.endsWith(SignatureErc6492.magicBytes.slice(2))) {
         try {
           const [to, data, decoded] = AbiParameters.decode(
             [{ type: 'address' }, { type: 'bytes' }, { type: 'bytes' }],
-            signature.slice(0, -WrappedSignature.magicBytes.slice(2).length) as Hex.Hex,
+            signature.slice(0, -SignatureErc6492.magicBytes.slice(2).length) as Hex.Hex,
           )
           return { signature: decoded as T, erc6492: { to, data: data as T } }
         } catch {
