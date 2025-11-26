@@ -28,6 +28,11 @@
     "turbo": "^2.6.1",
     "typescript": "^5.8.3"
   },
+  "pnpm": {
+    "overrides": {
+      "ox": "^0.9.17"
+    }
+  },
   "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=18"
