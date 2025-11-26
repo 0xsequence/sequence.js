@@ -41,7 +41,7 @@
     "@0xsequence/wallet-primitives": "workspace:^",
     "idb": "^8.0.3",
     "jwt-decode": "^4.0.0",
-    "ox": "^0.7.2",
+    "ox": "^0.9.17",
     "uuid": "^13.0.0"
   }
 }

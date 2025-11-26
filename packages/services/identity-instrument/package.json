@@ -27,6 +27,6 @@
   "dependencies": {
     "json-canonicalize": "^2.0.0",
     "jwt-decode": "^4.0.0",
-    "ox": "^0.7.2"
+    "ox": "^0.9.17"
   }
 }
