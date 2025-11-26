@@ -17,8 +17,7 @@
     "test:anvil": "anvil --fork-url https://nodes.sequence.app/arbitrum",
     "clean": "turbo clean",
     "deps:lint": "syncpack list-mismatches",
-    "deps:fix": "syncpack fix-mismatches",
-    "deps:sort": "syncpack format"
+    "deps:fix": "syncpack fix-mismatches"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",
