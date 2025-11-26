@@ -1,4 +1,3 @@
-import { BrowserNavigationCrossOriginPolicyEnum } from 'happy-dom'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({

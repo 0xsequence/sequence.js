@@ -1,20 +1,17 @@
+import { Extensions } from '@0xsequence/wallet-primitives'
 import { AbiEvent, AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it } from 'vitest'
-
 import { Attestation, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'
 import { Envelope, Signers, State, Utils, Wallet } from '../src/index.js'
-
+import { ExplicitSessionConfig } from '../src/utils/session/types.js'
 import {
-  EMITTER_FUNCTIONS,
   EMITTER_ADDRESS1,
   EMITTER_ADDRESS2,
   EMITTER_EVENT_TOPICS,
+  EMITTER_FUNCTIONS,
   LOCAL_RPC_URL,
   USDC_ADDRESS,
 } from './constants'
-import { Extensions } from '@0xsequence/wallet-primitives'
-import { ExplicitSessionConfig } from '../src/utils/session/types.js'
-
 const { PermissionBuilder, ERC20PermissionBuilder } = Utils
 
 function randomAddress(): Address.Address {
@@ -605,10 +602,26 @@ for (const extension of ALL_EXTENSIONS) {
       transaction: { to: Address.Address; data: Hex.Hex },
       expectedEventTopic?: Hex.Hex,
     ) => {
+      // Generate and use a random sender address to prevent race conditions
+      const senderAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
+      await provider.request({
+        method: 'anvil_setBalance',
+        params: [senderAddress, Hex.fromNumber(1000000000000000000n)],
+      })
+      await provider.request({
+        method: 'anvil_impersonateAccount',
+        params: [senderAddress],
+      })
+
       console.log('Simulating transaction', transaction)
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
-        params: [transaction],
+        params: [
+          {
+            ...transaction,
+            from: senderAddress,
+          },
+        ],
       })
       console.log('Transaction hash:', txHash)
 

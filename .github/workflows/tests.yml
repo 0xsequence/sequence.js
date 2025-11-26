@@ -33,6 +33,7 @@ jobs:
           version: nightly
       - name: Start Anvil in background
         run: anvil --fork-url https://nodes.sequence.app/arbitrum &
+      - run: pnpm build
       - run: pnpm test
 
   # NOTE: if you'd like to see example of how to run

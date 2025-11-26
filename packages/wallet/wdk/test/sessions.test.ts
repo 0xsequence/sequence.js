@@ -1,10 +1,10 @@
-import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport, Secp256k1 } from 'ox'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, State } from '../../core/src/index.js'
-import { Attestation, Constants, Extensions, Network, Payload, Permission } from '../../primitives/src/index.js'
-import { Sequence } from '../src/index.js'
-import { CAN_RUN_LIVE, EMITTER_ABI, EMITTER_ADDRESS, PRIVATE_KEY, RPC_URL } from './constants'
 import { ExplicitSession } from '../../core/src/utils/session/types.js'
+import { Extensions, Network, Payload, Permission } from '../../primitives/src/index.js'
+import { Sequence } from '../src/index.js'
+import { EMITTER_ABI, EMITTER_ADDRESS, LOCAL_RPC_URL } from './constants'
 
 const ALL_EXTENSIONS = [
   {
@@ -67,26 +67,17 @@ for (const extension of ALL_EXTENSIONS) {
     }
 
     beforeEach(async () => {
-      // Create provider or use arbitrum sepolia
-      if (RPC_URL) {
-        provider = Provider.from(
-          RpcTransport.fromHttp(RPC_URL, {
-            fetchOptions: {
-              headers: {
-                'x-requested-with': 'XMLHttpRequest',
-              },
+      // Create provider using LOCAL_RPC_URL
+      provider = Provider.from(
+        RpcTransport.fromHttp(LOCAL_RPC_URL, {
+          fetchOptions: {
+            headers: {
+              'x-requested-with': 'XMLHttpRequest',
             },
-          }),
-        )
-        chainId = Number(await provider.request({ method: 'eth_chainId' }))
-      } else {
-        provider = vi.mocked<Provider.Provider>({
-          request: vi.fn(),
-          on: vi.fn(),
-          removeListener: vi.fn(),
-        })
-        chainId = Network.ChainId.MAINNET
-      }
+          },
+        }),
+      )
+      chainId = Number(await provider.request({ method: 'eth_chainId' }))
 
       // Create state provider
       stateProvider = new State.Local.Provider()
@@ -99,7 +90,7 @@ for (const extension of ALL_EXTENSIONS) {
           {
             chainId,
             type: Network.NetworkType.MAINNET,
-            rpcUrl: RPC_URL ?? 'XXX',
+            rpcUrl: LOCAL_RPC_URL,
             name: 'XXX',
             blockExplorer: { url: 'XXX' },
             nativeCurrency: {
@@ -185,18 +176,32 @@ for (const extension of ALL_EXTENSIONS) {
       const transaction = await dapp.wallet.buildTransaction(provider, signedEnvelope)
       console.log('tx', transaction)
 
+      // Generate and use a random sender address to prevent race conditions
+      const senderAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
+      await provider.request({
+        method: 'anvil_setBalance',
+        params: [senderAddress, Hex.fromNumber(1000000000000000000n)],
+      })
+      await provider.request({
+        method: 'anvil_impersonateAccount',
+        params: [senderAddress],
+      })
+
       // Send the transaction
-      if (CAN_RUN_LIVE && PRIVATE_KEY) {
-        // Load the sender
-        const senderPk = Hex.from(PRIVATE_KEY as `0x${string}`)
-        const pkRelayer = new Relayer.Standard.PkRelayer(senderPk, provider)
-        const tx = await pkRelayer.relay(transaction.to, transaction.data, chainId, undefined)
-        console.log('Transaction sent', tx)
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-        const receipt = await provider.request({ method: 'eth_getTransactionReceipt', params: [tx.opHash] })
-        console.log('Transaction receipt', receipt)
-        return tx.opHash
-      }
+      const txHash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            ...transaction,
+            from: senderAddress,
+          },
+        ],
+      })
+      console.log('Transaction sent', txHash)
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      const receipt = await provider.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
+      console.log('Transaction receipt', receipt)
+      return txHash
     }
 
     it(
@@ -243,6 +248,7 @@ for (const extension of ALL_EXTENSIONS) {
           throw new Error('Failed to create pk store')
         }
         const explicitSession: ExplicitSession = {
+          type: 'explicit',
           sessionAddress: e.address,
           chainId,
           valueLimit: 0n,
@@ -271,34 +277,10 @@ for (const extension of ALL_EXTENSIONS) {
           behaviorOnError: 'revert',
         }
 
-        if (!RPC_URL) {
-          // Configure mock provider
-          ;(provider as any).request.mockImplementation(({ method, params }) => {
-            if (method === 'eth_chainId') {
-              return Promise.resolve(chainId.toString())
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
-              // Undeployed wallet
-              return Promise.resolve('0x')
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
-              // Nonce is 0
-              return Promise.resolve('0x00')
-            }
-            if (
-              method === 'eth_call' &&
-              params[0].data?.startsWith(AbiFunction.getSelector(Constants.GET_LIMIT_USAGE))
-            ) {
-              // Return 0 for usage limit (no usage yet)
-              return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
-            }
-          })
-        }
-
         // Sign and send the transaction
         await signAndSend(call)
       },
-      PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
+      { timeout: 60000 },
     )
 
     it(
@@ -311,6 +293,7 @@ for (const extension of ALL_EXTENSIONS) {
           throw new Error('Failed to create pk store')
         }
         const explicitSession: ExplicitSession = {
+          type: 'explicit',
           sessionAddress: e.address,
           chainId,
           valueLimit: 0n,
@@ -348,34 +331,10 @@ for (const extension of ALL_EXTENSIONS) {
           behaviorOnError: 'revert',
         }
 
-        if (!RPC_URL) {
-          // Configure mock provider
-          ;(provider as any).request.mockImplementation(({ method, params }) => {
-            if (method === 'eth_chainId') {
-              return Promise.resolve(chainId.toString())
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
-              // Undeployed wallet
-              return Promise.resolve('0x')
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
-              // Nonce is 0
-              return Promise.resolve('0x00')
-            }
-            if (
-              method === 'eth_call' &&
-              params[0].data?.startsWith(AbiFunction.getSelector(Constants.GET_LIMIT_USAGE))
-            ) {
-              // Return 0 for usage limit (no usage yet)
-              return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
-            }
-          })
-        }
-
         // Sign and send the transaction
         await signAndSend(call)
       },
-      PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
+      { timeout: 60000 },
     )
 
     it(
@@ -389,6 +348,7 @@ for (const extension of ALL_EXTENSIONS) {
         }
         // Create the initial permissions
         let explicitSession: ExplicitSession = {
+          type: 'explicit',
           sessionAddress: e.address,
           chainId,
           valueLimit: 0n,
@@ -424,30 +384,6 @@ for (const extension of ALL_EXTENSIONS) {
           delegateCall: false,
           onlyFallback: false,
           behaviorOnError: 'revert',
-        }
-
-        if (!RPC_URL) {
-          // Configure mock provider
-          ;(provider as any).request.mockImplementation(({ method, params }) => {
-            if (method === 'eth_chainId') {
-              return Promise.resolve(chainId.toString())
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
-              // Undeployed wallet
-              return Promise.resolve('0x')
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
-              // Nonce is 0
-              return Promise.resolve('0x00')
-            }
-            if (
-              method === 'eth_call' &&
-              params[0].data?.startsWith(AbiFunction.getSelector(Constants.GET_LIMIT_USAGE))
-            ) {
-              // Return 0 for usage limit (no usage yet)
-              return Promise.resolve('0x0000000000000000000000000000000000000000000000000000000000000000')
-            }
-          })
         }
 
         // Sign and send the transaction
@@ -463,7 +399,7 @@ for (const extension of ALL_EXTENSIONS) {
         // Should fail with 'No signer supported for call'
         await expect(signAndSend(call)).rejects.toThrow('No signer supported for call')
       },
-      PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
+      { timeout: 60000 },
     )
 
     it(
@@ -516,38 +452,10 @@ for (const extension of ALL_EXTENSIONS) {
           behaviorOnError: 'revert',
         }
 
-        if (!RPC_URL) {
-          // Configure mock provider
-          ;(provider as any).request.mockImplementation(({ method, params }) => {
-            if (method === 'eth_chainId') {
-              return Promise.resolve(chainId.toString())
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.GET_IMPLEMENTATION)) {
-              // Undeployed wallet
-              return Promise.resolve('0x')
-            }
-            if (method === 'eth_call' && params[0].data === AbiFunction.encodeData(Constants.READ_NONCE, [0n])) {
-              // Nonce is 0
-              return Promise.resolve('0x00')
-            }
-            if (
-              method === 'eth_call' &&
-              Address.isEqual(params[0].from, dapp.sessionManager.address) &&
-              Address.isEqual(params[0].to, call.to)
-            ) {
-              // Implicit request simulation result
-              const expectedResult = Bytes.toHex(
-                Attestation.generateImplicitRequestMagic(attestation, dapp.wallet.address),
-              )
-              return Promise.resolve(expectedResult)
-            }
-          })
-        }
-
         // Sign and send the transaction
         await signAndSend(call)
       },
-      PRIVATE_KEY || RPC_URL ? { timeout: 60000 } : undefined,
+      { timeout: 60000 },
     )
   })
 }
