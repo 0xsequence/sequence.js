@@ -14,7 +14,7 @@ import { PasskeysHandler } from './handlers/passkeys.js'
 import { GuardRole } from './guards.js'
 
 export type StartSignUpWithRedirectArgs = {
-  kind: 'google-pkce' | 'apple'
+  kind: 'google-pkce' | 'apple' | `custom-${string}`
   target: string
   metadata: { [key: string]: string }
 }
@@ -55,7 +55,7 @@ export type CompleteRedirectArgs = CommonSignupArgs & {
 }
 
 export type AuthCodeSignupArgs = CommonSignupArgs & {
-  kind: 'google-pkce' | 'apple'
+  kind: 'google-pkce' | 'apple' | `custom-${string}`
   commitment: AuthCommitment
   code: string
   target: string
@@ -692,10 +692,30 @@ export class Wallets implements WalletsInterface {
         }
       }
     }
+
+    if (args.kind.startsWith('custom-')) {
+      // TODO: support other custom auth methods (e.g. id-token)
+      const handler = this.shared.handlers.get(args.kind) as AuthCodeHandler
+      if (!handler) {
+        throw new Error('handler-not-registered')
+      }
+
+      const [signer, metadata] = await handler.completeAuth(args.commitment, args.code)
+      return {
+        signer,
+        extra: {
+          signerKind: args.kind,
+        },
+        loginEmail: metadata.email,
+      }
+    }
+
+    throw new Error('invalid-signup-kind')
   }
 
   async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
-    const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
+    const kind = args.kind.startsWith('custom-') ? args.kind : 'login-' + args.kind
+    const handler = this.shared.handlers.get(kind) as AuthCodeHandler
     if (!handler) {
       throw new Error('handler-not-registered')
     }
@@ -720,7 +740,8 @@ export class Wallets implements WalletsInterface {
         use4337: args.use4337,
       })
     } else {
-      const handler = this.shared.handlers.get('login-' + commitment.kind) as AuthCodeHandler
+      const kind = commitment.kind.startsWith('custom-') ? commitment.kind : 'login-' + commitment.kind
+      const handler = this.shared.handlers.get(kind) as AuthCodeHandler
       if (!handler) {
         throw new Error('handler-not-registered')
       }

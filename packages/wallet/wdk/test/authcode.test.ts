@@ -129,6 +129,7 @@ describe('AuthCodeHandler', () => {
     authCodeHandler = new AuthCodeHandler(
       'google-pkce',
       'https://accounts.google.com',
+      'https://accounts.google.com/o/oauth2/v2/auth',
       'test-audience',
       mockIdentityInstrument,
       mockSignatures,
@@ -148,6 +149,7 @@ describe('AuthCodeHandler', () => {
       const handler = new AuthCodeHandler(
         'google-pkce',
         'https://accounts.google.com',
+        'https://accounts.google.com/o/oauth2/v2/auth',
         'google-client-id',
         mockIdentityInstrument,
         mockSignatures,
@@ -165,6 +167,7 @@ describe('AuthCodeHandler', () => {
       const handler = new AuthCodeHandler(
         'apple',
         'https://appleid.apple.com',
+        'https://appleid.apple.com/auth/authorize',
         'apple-client-id',
         mockIdentityInstrument,
         mockSignatures,
@@ -189,6 +192,7 @@ describe('AuthCodeHandler', () => {
       const googleHandler = new AuthCodeHandler(
         'google-pkce',
         'https://accounts.google.com',
+        'https://accounts.google.com/o/oauth2/v2/auth',
         'test-audience',
         mockIdentityInstrument,
         mockSignatures,
@@ -203,6 +207,7 @@ describe('AuthCodeHandler', () => {
       const appleHandler = new AuthCodeHandler(
         'apple',
         'https://appleid.apple.com',
+        'https://appleid.apple.com/auth/authorize',
         'test-audience',
         mockIdentityInstrument,
         mockSignatures,
@@ -293,6 +298,7 @@ describe('AuthCodeHandler', () => {
       const appleHandler = new AuthCodeHandler(
         'apple',
         'https://appleid.apple.com',
+        'https://appleid.apple.com/auth/authorize',
         'apple-client-id',
         mockIdentityInstrument,
         mockSignatures,
@@ -491,13 +497,14 @@ describe('AuthCodeHandler', () => {
     })
   })
 
-  // === OAUTH URL METHOD ===
+  // === OAUTH URL PROPERTY ===
 
-  describe('oauthUrl()', () => {
+  describe('oauthUrl', () => {
     it('Should return Google OAuth URL for Google issuer', () => {
       const googleHandler = new AuthCodeHandler(
         'google-pkce',
         'https://accounts.google.com',
+        'https://accounts.google.com/o/oauth2/v2/auth',
         'test-audience',
         mockIdentityInstrument,
         mockSignatures,
@@ -505,7 +512,7 @@ describe('AuthCodeHandler', () => {
         mockAuthKeys,
       )
 
-      const url = googleHandler['oauthUrl']()
+      const url = googleHandler['oauthUrl']
       expect(url).toBe('https://accounts.google.com/o/oauth2/v2/auth')
     })
 
@@ -513,6 +520,7 @@ describe('AuthCodeHandler', () => {
       const appleHandler = new AuthCodeHandler(
         'apple',
         'https://appleid.apple.com',
+        'https://appleid.apple.com/auth/authorize',
         'test-audience',
         mockIdentityInstrument,
         mockSignatures,
@@ -520,22 +528,8 @@ describe('AuthCodeHandler', () => {
         mockAuthKeys,
       )
 
-      const url = appleHandler['oauthUrl']()
+      const url = appleHandler['oauthUrl']
       expect(url).toBe('https://appleid.apple.com/auth/authorize')
-    })
-
-    it('Should throw error for unsupported issuer', () => {
-      const unsupportedHandler = new AuthCodeHandler(
-        'google-pkce',
-        'https://unsupported.provider.com',
-        'test-audience',
-        mockIdentityInstrument,
-        mockSignatures,
-        mockAuthCommitments,
-        mockAuthKeys,
-      )
-
-      expect(() => unsupportedHandler['oauthUrl']()).toThrow('unsupported-issuer')
     })
   })
 
@@ -709,38 +703,6 @@ describe('AuthCodeHandler', () => {
 
       expect(signer).toBeInstanceOf(IdentitySigner)
       expect(metadata.email).toBe('test@example.com')
-    })
-
-    it('Should handle different OAuth providers correctly', async () => {
-      const providers = [
-        {
-          signupKind: 'google-pkce' as const,
-          issuer: 'https://accounts.google.com',
-          expectedUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-        },
-        {
-          signupKind: 'apple' as const,
-          issuer: 'https://appleid.apple.com',
-          expectedUrl: 'https://appleid.apple.com/auth/authorize',
-        },
-      ]
-
-      for (const provider of providers) {
-        const handler = new AuthCodeHandler(
-          provider.signupKind,
-          provider.issuer,
-          'test-audience',
-          mockIdentityInstrument,
-          mockSignatures,
-          mockAuthCommitments,
-          mockAuthKeys,
-        )
-        handler.setRedirectUri('https://example.com/callback')
-
-        const url = await handler.commitAuth('/target', false)
-        expect(url).toContain(provider.expectedUrl)
-        expect(handler.kind).toBe(`login-${provider.signupKind}`)
-      }
     })
 
     it('Should handle signup vs login flows correctly', async () => {
