@@ -25,8 +25,8 @@
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^22.15.29",
     "@vitest/coverage-v8": "^4.0.14 ",
-    "dotenv": "^16.5.0",
-    "fake-indexeddb": "^6.0.1",
+    "dotenv": "^17.2.3",
+    "fake-indexeddb": "^6.2.5",
     "typescript": "^5.8.3",
     "vitest": "^4.0.14"
   },
