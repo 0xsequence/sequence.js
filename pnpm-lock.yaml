@@ -142,7 +142,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^3.2.1
-        version: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+        version: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
 
   packages/services/identity-instrument:
     dependencies:
@@ -167,7 +167,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^3.2.1
-        version: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+        version: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
 
   packages/services/indexer:
     devDependencies:
@@ -231,7 +231,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^3.2.4
-        version: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+        version: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
 
   packages/utils/abi:
     devDependencies:
@@ -274,7 +274,7 @@ importers:
         version: 22.18.10
       '@vitest/coverage-v8':
         specifier: ^3.2.4
-        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@17.6.3))
+        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@20.0.10))
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -286,7 +286,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^3.2.1
-        version: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+        version: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
 
   packages/wallet/dapp-client:
     dependencies:
@@ -314,7 +314,7 @@ importers:
         version: 22.18.10
       '@vitest/coverage-v8':
         specifier: ^3.2.4
-        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@17.6.3))
+        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@20.0.10))
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -322,14 +322,14 @@ importers:
         specifier: ^6.0.1
         version: 6.2.3
       happy-dom:
-        specifier: ^17.2.2
-        version: 17.6.3
+        specifier: ^20.0.10
+        version: 20.0.10
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
       vitest:
         specifier: ^3.2.1
-        version: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+        version: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
 
   packages/wallet/primitives:
     dependencies:
@@ -342,13 +342,13 @@ importers:
         version: link:../../../repo/typescript-config
       '@vitest/coverage-v8':
         specifier: ^3.2.4
-        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@17.6.3))
+        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@20.0.10))
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
       vitest:
         specifier: ^3.2.1
-        version: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+        version: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
 
   packages/wallet/primitives-cli:
     dependencies:
@@ -428,7 +428,7 @@ importers:
         version: 22.18.10
       '@vitest/coverage-v8':
         specifier: ^3.2.4
-        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@17.6.3))
+        version: 3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@20.0.10))
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -436,14 +436,14 @@ importers:
         specifier: ^6.0.1
         version: 6.2.3
       happy-dom:
-        specifier: ^17.2.2
-        version: 17.6.3
+        specifier: ^20.0.10
+        version: 20.0.10
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
       vitest:
         specifier: ^3.2.1
-        version: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+        version: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
 
   repo/eslint-config:
     devDependencies:
@@ -1279,6 +1279,9 @@ packages:
 
   '@types/tinycolor2@1.4.6':
     resolution: {integrity: sha512-iEN8J0BoMnsWBqjVbWH/c0G0Hh7O21lpR2/+PrvAVgWdzL7eexIFm4JN/Wn10PTcmNdtS6U67r499mlWMXOxNw==}
+
+  '@types/whatwg-mimetype@3.0.2':
+    resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -2145,8 +2148,8 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  happy-dom@17.6.3:
-    resolution: {integrity: sha512-UVIHeVhxmxedbWPCfgS55Jg2rDfwf2BCKeylcPSqazLz5w3Kri7Q4xdBJubsr/+VUzFLh0VjIvh13RaDA2/Xug==}
+  happy-dom@20.0.10:
+    resolution: {integrity: sha512-6umCCHcjQrhP5oXhrHQQvLB0bwb1UzHAHdsXy+FjtKoYjUhmNZsQL8NivwM1vDvNEChJabVrUYxUnp/ZdYmy2g==}
     engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
@@ -3592,10 +3595,6 @@ packages:
   wcwidth@1.0.1:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
 
-  webidl-conversions@7.0.0:
-    resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
-    engines: {node: '>=12'}
-
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
     engines: {node: '>=12'}
@@ -4395,6 +4394,8 @@ snapshots:
 
   '@types/tinycolor2@1.4.6': {}
 
+  '@types/whatwg-mimetype@3.0.2': {}
+
   '@types/yargs-parser@21.0.3': {}
 
   '@types/yargs@17.0.33':
@@ -4494,7 +4495,7 @@ snapshots:
       '@typescript-eslint/types': 8.46.1
       eslint-visitor-keys: 4.2.1
 
-  '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@17.6.3))':
+  '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/node@22.18.10)(happy-dom@20.0.10))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
@@ -4509,7 +4510,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.1
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.18.10)(happy-dom@17.6.3)
+      vitest: 3.2.4(@types/node@22.18.10)(happy-dom@20.0.10)
     transitivePeerDependencies:
       - supports-color
 
@@ -5519,9 +5520,10 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  happy-dom@17.6.3:
+  happy-dom@20.0.10:
     dependencies:
-      webidl-conversions: 7.0.0
+      '@types/node': 20.19.21
+      '@types/whatwg-mimetype': 3.0.2
       whatwg-mimetype: 3.0.0
 
   has-bigints@1.1.0: {}
@@ -7048,7 +7050,7 @@ snapshots:
       '@types/node': 22.18.10
       fsevents: 2.3.3
 
-  vitest@3.2.4(@types/node@22.18.10)(happy-dom@17.6.3):
+  vitest@3.2.4(@types/node@22.18.10)(happy-dom@20.0.10):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
@@ -7075,7 +7077,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.18.10
-      happy-dom: 17.6.3
+      happy-dom: 20.0.10
     transitivePeerDependencies:
       - jiti
       - less
@@ -7093,8 +7095,6 @@ snapshots:
   wcwidth@1.0.1:
     dependencies:
       defaults: 1.0.4
-
-  webidl-conversions@7.0.0: {}
 
   whatwg-mimetype@3.0.0: {}
 
