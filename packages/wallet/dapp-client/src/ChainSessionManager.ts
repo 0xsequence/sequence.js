@@ -538,7 +538,7 @@ export class ChainSessionManager {
       const { userEmail, loginMethod, guard } = connectResponse
       const savedRequest = await this.sequenceStorage.peekPendingRequest()
       const savedPayload = savedRequest?.payload as CreateNewSessionPayload | undefined
-      const explicitSessionRequested = !!savedPayload?.session
+      const explicitSessionRequested = (savedPayload?.session?.permissions?.length ?? 0) > 0
       const implicitSessionRequested = savedPayload?.includeImplicitSession ?? false
       const needsTempPk = explicitSessionRequested || implicitSessionRequested
       const tempPk = needsTempPk ? await this.sequenceStorage.getAndClearTempSessionPk() : null
