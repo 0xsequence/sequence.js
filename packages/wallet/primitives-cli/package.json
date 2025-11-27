@@ -27,7 +27,7 @@
     "concurrently": "^9.2.1",
     "esbuild": "^0.27.0",
     "nodemon": "^3.1.11",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@0xsequence/wallet-primitives": "workspace:^",

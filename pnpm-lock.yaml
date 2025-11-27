@@ -25,13 +25,13 @@ importers:
         version: 6.1.2
       syncpack:
         specifier: ^13.0.4
-        version: 13.0.4(typescript@5.8.3)
+        version: 13.0.4(typescript@5.9.3)
       turbo:
         specifier: ^2.6.1
         version: 2.6.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   extras/docs:
     dependencies:
@@ -116,8 +116,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/services/builder:
     devDependencies:
@@ -128,14 +128,14 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/services/guard:
     dependencies:
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -144,8 +144,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
@@ -160,7 +160,7 @@ importers:
         version: 4.0.0
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -169,8 +169,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
@@ -184,8 +184,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/services/marketplace:
     devDependencies:
@@ -196,8 +196,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/services/metadata:
     devDependencies:
@@ -208,8 +208,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/services/relayer:
     dependencies:
@@ -218,13 +218,13 @@ importers:
         version: link:../../wallet/primitives
       mipd:
         specifier: ^0.0.7
-        version: 0.0.7(typescript@5.8.3)
+        version: 0.0.7(typescript@5.9.3)
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
       viem:
         specifier: ^2.40.3
-        version: 2.40.3(typescript@5.8.3)
+        version: 2.40.3(typescript@5.9.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -233,8 +233,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
@@ -248,8 +248,8 @@ importers:
         specifier: ^24.10.1
         version: 24.10.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/wallet/core:
     dependencies:
@@ -264,13 +264,13 @@ importers:
         version: link:../primitives
       mipd:
         specifier: ^0.0.7
-        version: 0.0.7(typescript@5.8.3)
+        version: 0.0.7(typescript@5.9.3)
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
       viem:
         specifier: ^2.40.3
-        version: 2.40.3(typescript@5.8.3)
+        version: 2.40.3(typescript@5.9.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -288,8 +288,8 @@ importers:
         specifier: ^6.2.5
         version: 6.2.5
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
@@ -310,7 +310,7 @@ importers:
         version: link:../primitives
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -331,8 +331,8 @@ importers:
         specifier: ^20.0.10
         version: 20.0.10
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
@@ -341,7 +341,7 @@ importers:
     dependencies:
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:^
@@ -350,8 +350,8 @@ importers:
         specifier: ^4.0.14
         version: 4.0.14(vitest@4.0.14(@types/node@24.10.1)(happy-dom@20.0.10))
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
@@ -363,7 +363,7 @@ importers:
         version: link:../primitives
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
       yargs:
         specifier: ^18.0.0
         version: 18.0.0
@@ -390,8 +390,8 @@ importers:
         specifier: ^3.1.11
         version: 3.1.11
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/wallet/wdk:
     dependencies:
@@ -421,7 +421,7 @@ importers:
         version: 4.0.0
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.8.3)
+        version: 0.9.17(typescript@5.9.3)
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -445,8 +445,8 @@ importers:
         specifier: ^20.0.10
         version: 20.0.10
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
@@ -3700,6 +3700,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   uglify-js@3.19.3:
     resolution: {integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==}
     engines: {node: '>=0.8.0'}
@@ -4873,13 +4878,13 @@ snapshots:
       '@vitest/pretty-format': 4.0.14
       tinyrainbow: 3.0.3
 
-  abitype@1.1.0(typescript@5.8.3):
+  abitype@1.1.0(typescript@5.9.3):
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
-  abitype@1.1.1(typescript@5.8.3):
+  abitype@1.1.1(typescript@5.9.3):
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:
@@ -5212,14 +5217,14 @@ snapshots:
 
   core-js-pure@3.46.0: {}
 
-  cosmiconfig@9.0.0(typescript@5.8.3):
+  cosmiconfig@9.0.0(typescript@5.9.3):
     dependencies:
       env-paths: 2.2.1
       import-fresh: 3.3.1
       js-yaml: 4.1.0
       parse-json: 5.2.0
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   create-require@1.1.1: {}
 
@@ -6397,9 +6402,9 @@ snapshots:
 
   minipass@7.1.2: {}
 
-  mipd@0.0.7(typescript@5.8.3):
+  mipd@0.0.7(typescript@5.9.3):
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   mkdirp@0.5.6:
     dependencies:
@@ -6590,7 +6595,7 @@ snapshots:
       object-keys: 1.1.1
       safe-push-apply: 1.0.0
 
-  ox@0.9.17(typescript@5.8.3):
+  ox@0.9.17(typescript@5.9.3):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -6598,10 +6603,10 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@5.8.3)
+      abitype: 1.1.1(typescript@5.9.3)
       eventemitter3: 5.0.1
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - zod
 
@@ -7210,12 +7215,12 @@ snapshots:
       lower-case: 1.1.4
       upper-case: 1.1.3
 
-  syncpack@13.0.4(typescript@5.8.3):
+  syncpack@13.0.4(typescript@5.9.3):
     dependencies:
       chalk: 5.6.2
       chalk-template: 1.1.2
       commander: 13.1.0
-      cosmiconfig: 9.0.0(typescript@5.8.3)
+      cosmiconfig: 9.0.0(typescript@5.9.3)
       effect: 3.19.6
       enquirer: 2.4.1
       fast-check: 3.23.2
@@ -7380,6 +7385,8 @@ snapshots:
 
   typescript@5.8.3: {}
 
+  typescript@5.9.3: {}
+
   uglify-js@3.19.3:
     optional: true
 
@@ -7427,18 +7434,18 @@ snapshots:
 
   validate-npm-package-name@6.0.2: {}
 
-  viem@2.40.3(typescript@5.8.3):
+  viem@2.40.3(typescript@5.9.3):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.0(typescript@5.8.3)
+      abitype: 1.1.0(typescript@5.9.3)
       isows: 1.0.7(ws@8.18.3)
-      ox: 0.9.17(typescript@5.8.3)
+      ox: 0.9.17(typescript@5.9.3)
       ws: 8.18.3
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
