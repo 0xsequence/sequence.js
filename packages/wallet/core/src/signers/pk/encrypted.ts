@@ -2,8 +2,8 @@ import { Hex, Address, PublicKey, Secp256k1, Bytes } from 'ox'
 import { PkStore } from './index.js'
 
 export interface EncryptedData {
-  iv: Uint8Array
-  data: ArrayBuffer
+  iv: BufferSource
+  data: BufferSource
   keyPointer: string
   address: Address.Address
   publicKey: PublicKey.PublicKey

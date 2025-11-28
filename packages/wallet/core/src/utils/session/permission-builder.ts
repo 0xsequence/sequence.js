@@ -59,8 +59,8 @@ export class PermissionBuilder {
       throw new Error(`cannot call exactCalldata() after calling allowAll() or adding rules`)
     }
     for (let offset = 0; offset < calldata.length; offset += 32) {
-      let value = calldata.slice(offset, offset + 32)
-      let mask = Permission.MASK.BYTES32
+      let value: Bytes.Bytes = calldata.slice(offset, offset + 32)
+      let mask: Bytes.Bytes = Permission.MASK.BYTES32
       if (value.length < 32) {
         mask = Bytes.fromHex(`0x${'ff'.repeat(value.length)}${'00'.repeat(32 - value.length)}`)
         value = Bytes.padRight(value, 32)

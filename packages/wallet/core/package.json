@@ -27,7 +27,7 @@
     "@vitest/coverage-v8": "^4.0.14",
     "dotenv": "^17.2.3",
     "fake-indexeddb": "^6.2.5",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.14"
   },
   "dependencies": {

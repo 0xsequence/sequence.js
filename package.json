@@ -26,7 +26,7 @@
     "rimraf": "^6.1.2",
     "syncpack": "^13.0.4",
     "turbo": "^2.6.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   },
   "pnpm": {
     "overrides": {
