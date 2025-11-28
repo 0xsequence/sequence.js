@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 3.0.0-beta.3
+
+### Patch Changes
+
+- 3.0.0-beta.3 with fixes
+
 ## 3.0.0-beta.2
 
 ### Patch Changes

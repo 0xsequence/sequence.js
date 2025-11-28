@@ -1,5 +1,5 @@
 {
-  "mode": "exit",
+  "mode": "pre",
   "tag": "beta",
   "initialVersions": {
     "docs": "0.1.0",
@@ -21,5 +21,5 @@
     "@repo/typescript-config": "0.0.0",
     "@repo/ui": "0.0.0"
   },
-  "changesets": ["plain-feet-stare", "wild-feet-carry"]
+  "changesets": ["open-toes-marry", "plain-feet-stare", "wild-feet-carry"]
 }
