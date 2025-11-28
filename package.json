@@ -33,7 +33,7 @@
       "ox": "^0.9.17"
     }
   },
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.24.0",
   "engines": {
     "node": ">=18"
   },
