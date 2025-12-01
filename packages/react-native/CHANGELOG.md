@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.36
+
+### Patch Changes
+
+- API interface updates, new chains
+- Updated dependencies
+  - @0xsequence/waas@2.3.36
+
 ## 2.3.35
 
 ### Patch Changes
