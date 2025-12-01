@@ -35,6 +35,10 @@ const ALL_EXTENSIONS = [
     name: 'Rc4',
     ...Extensions.Rc4,
   },
+  {
+    name: 'Rc5',
+    ...Extensions.Rc5,
+  },
 ]
 
 // Handle the increment call being first or last depending on the session manager version

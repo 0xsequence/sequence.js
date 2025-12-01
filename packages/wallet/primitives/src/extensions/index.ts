@@ -30,5 +30,11 @@ export const Rc4: Extensions = {
   sessions: '0x00000000000030Bcc832F7d657f50D6Be35C92b3',
 }
 
+export const Rc5: Extensions = {
+  passkeys: '0x0000000000005204F3711851EAD52CC9c241499a',
+  recovery: '0x000000000000AB36D17eB1150116371520565205',
+  sessions: '0x00000000000030Bcc832F7d657f50D6Be35C92b3',
+}
+
 export * as Passkeys from './passkeys.js'
 export * as Recovery from './recovery.js'
