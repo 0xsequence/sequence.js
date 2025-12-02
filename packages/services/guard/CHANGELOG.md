@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 3.0.0-beta.4
+
+### Patch Changes
+
+- RC5 upgrade
+
 ## 3.0.0-beta.3
 
 ### Patch Changes

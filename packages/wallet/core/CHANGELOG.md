@@ -1,5 +1,15 @@
 # @0xsequence/wallet-core
 
+## 3.0.0-beta.4
+
+### Patch Changes
+
+- RC5 upgrade
+- Updated dependencies
+  - @0xsequence/guard@3.0.0-beta.4
+  - @0xsequence/relayer@3.0.0-beta.4
+  - @0xsequence/wallet-primitives@3.0.0-beta.4
+
 ## 3.0.0-beta.3
 
 ### Patch Changes
