@@ -2,26 +2,44 @@ import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport, Sec
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, State } from '../../core/src/index.js'
 import { ExplicitSession } from '../../core/src/utils/session/types.js'
-import { Extensions, Network, Payload, Permission } from '../../primitives/src/index.js'
+import { Context, Extensions, Network, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
 import { EMITTER_ABI, EMITTER_ADDRESS, LOCAL_RPC_URL } from './constants'
 
-const ALL_EXTENSIONS = [
+const ALL_EXTENSIONS: {
+  name: string
+  extensions: Extensions.Extensions
+  context: Context.Context
+  context4337?: Context.Context
+}[] = [
   {
     name: 'Dev1',
-    ...Extensions.Dev1,
+    extensions: Extensions.Dev1,
+    context: Context.Dev1,
   },
   {
     name: 'Dev2',
-    ...Extensions.Dev2,
+    extensions: Extensions.Dev2,
+    context: Context.Dev2,
+    context4337: Context.Dev2_4337,
   },
   {
     name: 'Rc3',
-    ...Extensions.Rc3,
+    extensions: Extensions.Rc3,
+    context: Context.Rc3,
+    context4337: Context.Rc3_4337,
   },
   {
     name: 'Rc4',
-    ...Extensions.Rc4,
+    extensions: Extensions.Rc4,
+    context: Context.Rc4,
+    context4337: Context.Rc4_4337,
+  },
+  {
+    name: 'Rc5',
+    extensions: Extensions.Rc5,
+    context: Context.Rc5,
+    context4337: Context.Rc5_4337,
   },
 ]
 
@@ -85,6 +103,9 @@ for (const extension of ALL_EXTENSIONS) {
       // Create manager
       const opts = Sequence.applyManagerOptionsDefaults({
         stateProvider,
+        extensions: extension.extensions,
+        context: extension.context,
+        context4337: extension.context4337 ?? extension.context,
         relayers: [], // No relayers needed for testing
         networks: [
           {
@@ -143,7 +164,7 @@ for (const extension of ALL_EXTENSIONS) {
         wallet: coreWallet,
         sessionManager: new CoreSigners.SessionManager(coreWallet, {
           provider,
-          sessionManagerAddress: Extensions.Rc4.sessions,
+          sessionManagerAddress: extension.extensions.sessions,
         }),
       }
     })
@@ -233,7 +254,7 @@ for (const extension of ALL_EXTENSIONS) {
       dapp.wallet = coreWallet
       dapp.sessionManager = new CoreSigners.SessionManager(coreWallet, {
         provider,
-        sessionManagerAddress: Extensions.Rc4.sessions,
+        sessionManagerAddress: extension.extensions.sessions,
       })
 
       // At this point the wallet should NOT have a session topology

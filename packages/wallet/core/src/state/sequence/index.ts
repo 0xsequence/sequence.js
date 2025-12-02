@@ -369,6 +369,7 @@ const passkeySigners = [
   Extensions.Dev2.passkeys,
   Extensions.Rc3.passkeys,
   Extensions.Rc4.passkeys,
+  Extensions.Rc5.passkeys,
 ].map(Address.checksum)
 
 const recoverSapientSignatureCompactSignature =
