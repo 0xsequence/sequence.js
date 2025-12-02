@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.3.37
+
+### Patch Changes
+
+- API updates
+- Updated dependencies
+  - @0xsequence/account@2.3.37
+  - @0xsequence/signhub@2.3.37
+  - @0xsequence/utils@2.3.37
+  - @0xsequence/core@2.3.37
+
 ## 2.3.36
 
 ### Patch Changes

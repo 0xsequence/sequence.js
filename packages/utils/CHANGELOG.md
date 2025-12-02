@@ -1,5 +1,11 @@
 # @0xsequence/utils
 
+## 2.3.37
+
+### Patch Changes
+
+- API updates
+
 ## 2.3.36
 
 ### Patch Changes

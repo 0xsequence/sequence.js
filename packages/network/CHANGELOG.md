@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.37
+
+### Patch Changes
+
+- API updates
+- Updated dependencies
+  - @0xsequence/indexer@2.3.37
+  - @0xsequence/relayer@2.3.37
+  - @0xsequence/utils@2.3.37
+  - @0xsequence/core@2.3.37
+
 ## 2.3.36
 
 ### Patch Changes
