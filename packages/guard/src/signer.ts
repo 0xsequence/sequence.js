@@ -91,7 +91,8 @@ export class GuardSigner implements signers.SapientSigner {
           wallet: signedProof.walletAddress,
           timestamp: signedProof.timestamp.getTime(),
           signer: signedProof.signerAddress,
-          signature: signedProof.signature
+          signature: signedProof.signature,
+          chainId: 1
         }
       })
     }
@@ -104,12 +105,12 @@ export class GuardSigner implements signers.SapientSigner {
 
     if (pin === undefined) {
       await this.guard.resetPIN(
-        { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature },
+        { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature, chainId: 1 },
         { Authorization: `BEARER ${proof.jwt}` }
       )
     } else {
       await this.guard.setPIN(
-        { pin, timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature },
+        { pin, timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature, chainId: 1 },
         { Authorization: `BEARER ${proof.jwt}` }
       )
     }
@@ -123,7 +124,7 @@ export class GuardSigner implements signers.SapientSigner {
     const signedProof = await signAuthUpdateProof(proof)
 
     const { uri } = await this.guard.createTOTP(
-      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature },
+      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature, chainId: 1 },
       { Authorization: `BEARER ${proof.jwt}` }
     )
 
@@ -139,7 +140,7 @@ export class GuardSigner implements signers.SapientSigner {
     const signedProof = await signAuthUpdateProof(proof)
 
     await this.guard.resetTOTP(
-      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature },
+      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature, chainId: 1 },
       { Authorization: `BEARER ${proof.jwt}` }
     )
   }
@@ -156,7 +157,8 @@ export class GuardSigner implements signers.SapientSigner {
           wallet: signedProof.walletAddress,
           timestamp: signedProof.timestamp.getTime(),
           signer: signedProof.signerAddress,
-          signature: signedProof.signature
+          signature: signedProof.signature,
+          chainId: 1
         }
       })
     }
@@ -166,7 +168,7 @@ export class GuardSigner implements signers.SapientSigner {
     const signedProof = await signAuthUpdateProof(proof)
 
     const { codes } = await this.guard.recoveryCodes(
-      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature },
+      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature, chainId: 1 },
       { Authorization: `BEARER ${proof.jwt}` }
     )
 
@@ -177,7 +179,7 @@ export class GuardSigner implements signers.SapientSigner {
     const signedProof = await signAuthUpdateProof(proof)
 
     const { codes } = await this.guard.resetRecoveryCodes(
-      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature },
+      { timestamp: signedProof.timestamp.getTime(), signature: signedProof.signature, chainId: 1 },
       { Authorization: `BEARER ${proof.jwt}` }
     )
 
