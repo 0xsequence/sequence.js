@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.38
+
+### Patch Changes
+
+- Add Etherlink Shadownet
+- Updated dependencies
+  - @0xsequence/migration@2.3.38
+  - @0xsequence/replacer@2.3.38
+  - @0xsequence/utils@2.3.38
+  - @0xsequence/core@2.3.38
+
 ## 2.3.37
 
 ### Patch Changes

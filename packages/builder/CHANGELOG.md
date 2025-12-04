@@ -1,5 +1,11 @@
 # @0xsequence/builder
 
+## 2.3.38
+
+### Patch Changes
+
+- Add Etherlink Shadownet
+
 ## 2.3.37
 
 ### Patch Changes

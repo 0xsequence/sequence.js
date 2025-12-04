@@ -1,5 +1,14 @@
 # @0xsequence/tests
 
+## 2.3.38
+
+### Patch Changes
+
+- Add Etherlink Shadownet
+- Updated dependencies
+  - @0xsequence/utils@2.3.38
+  - @0xsequence/core@2.3.38
+
 ## 2.3.37
 
 ### Patch Changes

@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 2.3.38
+
+### Patch Changes
+
+- Add Etherlink Shadownet
+- Updated dependencies
+  - @0xsequence/migration@2.3.38
+  - @0xsequence/metadata@2.3.38
+  - @0xsequence/provider@2.3.38
+  - @0xsequence/sessions@2.3.38
+  - @0xsequence/account@2.3.38
+  - @0xsequence/indexer@2.3.38
+  - @0xsequence/network@2.3.38
+  - @0xsequence/relayer@2.3.38
+  - @0xsequence/signhub@2.3.38
+  - @0xsequence/wallet@2.3.38
+  - @0xsequence/guard@2.3.38
+  - @0xsequence/utils@2.3.38
+  - @0xsequence/auth@2.3.38
+  - @0xsequence/core@2.3.38
+  - @0xsequence/abi@2.3.38
+  - @0xsequence/api@2.3.38
+
 ## 2.3.37
 
 ### Patch Changes

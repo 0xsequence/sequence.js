@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.38
+
+### Patch Changes
+
+- Add Etherlink Shadownet
+- Updated dependencies
+  - @0xsequence/waas@2.3.38
+
 ## 2.3.37
 
 ### Patch Changes
