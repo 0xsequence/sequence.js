@@ -226,12 +226,17 @@ describe('Account signer', () => {
 
           beforeEach(async () => {
             class LocalRelayerWithFee extends LocalRelayer {
+              public feeOptions: FeeOption[]
+              public quote: FeeQuote
+
               constructor(
                 options: LocalRelayerOptions | ethers.Signer,
-                public feeOptions: FeeOption[],
-                public quote: FeeQuote
+                feeOptions: FeeOption[],
+                quote: FeeQuote
               ) {
                 super(options)
+                this.feeOptions = feeOptions
+                this.quote = quote
               }
 
               async getFeeOptions(
