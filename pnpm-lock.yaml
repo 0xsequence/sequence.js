@@ -239,6 +239,18 @@ importers:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(happy-dom@20.0.10)
 
+  packages/services/userdata:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:^
+        version: link:../../../repo/typescript-config
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/utils/abi:
     devDependencies:
       '@repo/typescript-config':
