@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/userdata",
-  "version": "3.0.0-beta.4",
+  "version": "3.0.0-beta.5",
   "description": "userdata sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/services/userdata",
   "author": "Sequence Platforms Inc.",
