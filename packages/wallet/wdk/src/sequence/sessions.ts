@@ -342,11 +342,11 @@ export class Sessions implements SessionsInterface {
       if (identityKind === Kinds.LocalDevice) {
         const hasLocalDevice = await this.shared.modules.devices.has(identitySigner)
         if (!hasLocalDevice) {
-          console.warn('Implicit session identity signer not on this device, skipping', identitySigner)
+          console.warn('Identity signer not on this device, skipping', identitySigner)
           continue
         }
       }
-      console.log('Implicit session will use identity signer', identitySigner, 'kind', identityKind)
+
       handler = iHandler
       identitySignerAddress = identitySigner
       break
