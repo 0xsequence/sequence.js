@@ -336,11 +336,20 @@ export class Sessions implements SessionsInterface {
         continue
       }
       const iHandler = this.shared.handlers.get(identityKind)
-      if (iHandler) {
-        handler = iHandler
-        identitySignerAddress = identitySigner
-        break
+      if (!iHandler) {
+        continue
       }
+      if (identityKind === Kinds.LocalDevice) {
+        const hasLocalDevice = await this.shared.modules.devices.has(identitySigner)
+        if (!hasLocalDevice) {
+          console.warn('Identity signer not on this device, skipping', identitySigner)
+          continue
+        }
+      }
+
+      handler = iHandler
+      identitySignerAddress = identitySigner
+      break
     }
 
     if (!handler || !identitySignerAddress) {
