@@ -50,7 +50,7 @@ describe('Recovery', () => {
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
     await provider.request({
       method: 'anvil_setBalance',
-      params: [wallet!, '0x1'],
+      params: [wallet!, '0x3635c9adc5dea0000'], // 0.1 ETH
     })
 
     // Create a new recovery payload
@@ -189,7 +189,7 @@ describe('Recovery', () => {
       params: [wallet!, 'latest'],
     })
     expect(balance).toBeDefined()
-    expect(balance).toBe('0x0')
+    expect(balance).toBe('0x3635c9adc5de9ffff') // 0.1 ETH - 1 wei
 
     // Refresh the queued recovery payloads, the executed one
     // should be removed
