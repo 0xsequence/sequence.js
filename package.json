@@ -20,12 +20,12 @@
     "deps:fix": "syncpack fix-mismatches"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.4",
-    "lefthook": "^2.0.4",
-    "prettier": "^3.5.3",
+    "@changesets/cli": "^2.29.8",
+    "lefthook": "^2.0.12",
+    "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
     "syncpack": "^13.0.4",
-    "turbo": "^2.6.1",
+    "turbo": "^2.6.3",
     "typescript": "^5.9.3"
   },
   "pnpm": {
