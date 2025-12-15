@@ -40,7 +40,9 @@
   "syncpack": {
     "source": [
       "package.json",
-      "packages/**/package.json"
+      "packages/**/package.json",
+      "extras/**/package.json",
+      "repo/**/package.json"
     ],
     "versionGroups": [
       {

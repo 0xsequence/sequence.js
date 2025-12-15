@@ -21,7 +21,7 @@
     }
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
+    "@repo/eslint-config": "workspace:^",
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^24.10.1",
     "@types/yargs": "^17.0.35",

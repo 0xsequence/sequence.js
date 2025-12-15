@@ -12,18 +12,18 @@
     "clean": "rimraf .next"
   },
   "dependencies": {
-    "@repo/ui": "workspace:*",
+    "@repo/ui": "workspace:^",
     "next": "^15.5.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/node": "^20.17.57",
+    "@repo/eslint-config": "workspace:^",
+    "@repo/typescript-config": "workspace:^",
+    "@types/node": "^24.10.1",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.28.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   }
 }
