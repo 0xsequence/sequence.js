@@ -48,6 +48,7 @@ describe('Recovery', () => {
 
     // Transfer 1 wei to the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+    const [from] = (await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[]
     await provider.request({
       method: 'anvil_setBalance',
       params: [wallet!, '0x3635c9adc5dea0000'], // 0.1 ETH
@@ -107,6 +108,7 @@ describe('Recovery', () => {
       method: 'eth_sendTransaction',
       params: [
         {
+          from,
           to,
           data,
         },
@@ -279,6 +281,7 @@ describe('Recovery', () => {
 
     // Transfer 1 wei to the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+    const [from] = (await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[]
     await provider.request({
       method: 'anvil_setBalance',
       params: [wallet!, '0x1'],
@@ -320,7 +323,7 @@ describe('Recovery', () => {
     const { to, data } = await manager.recovery.completePayload(requestId2)
     await provider.request({
       method: 'eth_sendTransaction',
-      params: [{ to, data }],
+      params: [{ from, to, data }],
     })
 
     // Wait for payload to become valid
@@ -428,6 +431,7 @@ describe('Recovery', () => {
 
     // Transfer some wei to the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+    const [from] = (await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[]
     await provider.request({
       method: 'anvil_setBalance',
       params: [wallet!, '0x10'],
@@ -466,7 +470,7 @@ describe('Recovery', () => {
       // Send transactions sequentially to avoid nonce conflicts
       await provider.request({
         method: 'eth_sendTransaction',
-        params: [{ to, data }],
+        params: [{ from, to, data }],
       })
 
       // Small delay to ensure transaction ordering
