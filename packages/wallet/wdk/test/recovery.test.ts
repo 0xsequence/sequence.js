@@ -4,6 +4,14 @@ import { Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { LOCAL_RPC_URL, newManager } from './constants'
 
+async function feeParams(provider: Provider.Provider) {
+  const gasPrice = (await provider.request({ method: 'eth_gasPrice', params: [] as any })) as `0x${string}`
+  return {
+    maxFeePerGas: gasPrice,
+    maxPriorityFeePerGas: '0x0' as const,
+  }
+}
+
 describe('Recovery', () => {
   it('Should execute a recovery', async () => {
     const manager = newManager({
@@ -106,6 +114,7 @@ describe('Recovery', () => {
     const { to, data } = await manager.recovery.completePayload(requestId2)
 
     // Send this transaction to anvil so we queue the payload
+    const fees1 = await feeParams(provider)
     await provider.request({
       method: 'eth_sendTransaction',
       params: [
@@ -113,6 +122,7 @@ describe('Recovery', () => {
           from: relayerFrom,
           to,
           data,
+          ...fees1,
         },
       ],
     })
@@ -325,9 +335,10 @@ describe('Recovery', () => {
 
     // Complete the recovery payload and send to blockchain
     const { to, data } = await manager.recovery.completePayload(requestId2)
+    const fees2 = await feeParams(provider)
     await provider.request({
       method: 'eth_sendTransaction',
-      params: [{ from: relayerFrom, to, data }],
+      params: [{ from: relayerFrom, to, data, ...fees2 }],
     })
 
     // Wait for payload to become valid
@@ -472,11 +483,12 @@ describe('Recovery', () => {
       await (signer as SignerReady).handle()
 
       const { to, data } = await manager.recovery.completePayload(requestId)
+      const fees = await feeParams(provider)
 
       // Send transactions sequentially to avoid nonce conflicts
       await provider.request({
         method: 'eth_sendTransaction',
-        params: [{ from: relayerFrom, to, data }],
+        params: [{ from: relayerFrom, to, data, ...fees }],
       })
 
       // Small delay to ensure transaction ordering
