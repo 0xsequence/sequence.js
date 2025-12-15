@@ -48,7 +48,9 @@ describe('Recovery', () => {
 
     // Transfer 1 wei to the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-    const [relayerFrom] = (await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[]
+    const relayerFrom =
+      ((await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[])[0] ??
+      ('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' as const)
     await provider.request({
       method: 'anvil_setBalance',
       params: [wallet!, '0x3635c9adc5dea0000'], // 0.1 ETH
@@ -281,7 +283,9 @@ describe('Recovery', () => {
 
     // Transfer 1 wei to the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-    const [relayerFrom] = (await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[]
+    const relayerFrom =
+      ((await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[])[0] ??
+      ('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' as const)
     await provider.request({
       method: 'anvil_setBalance',
       params: [wallet!, '0x1'],
@@ -431,7 +435,9 @@ describe('Recovery', () => {
 
     // Transfer some wei to the wallet
     const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
-    const [relayerFrom] = (await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[]
+    const relayerFrom =
+      ((await provider.request({ method: 'eth_accounts', params: [] as any })) as `0x${string}`[])[0] ??
+      ('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' as const)
     await provider.request({
       method: 'anvil_setBalance',
       params: [wallet!, '0x10'],
