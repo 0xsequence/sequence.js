@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.39
+
+### Patch Changes
+
+- Add incentiv mainnet
+
 ## 2.3.38
 
 ### Patch Changes

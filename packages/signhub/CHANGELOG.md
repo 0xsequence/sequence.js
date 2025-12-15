@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.3.39
+
+### Patch Changes
+
+- Add incentiv mainnet
+- Updated dependencies
+  - @0xsequence/core@2.3.39
+
 ## 2.3.38
 
 ### Patch Changes

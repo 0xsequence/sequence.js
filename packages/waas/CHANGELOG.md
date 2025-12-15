@@ -1,5 +1,15 @@
 # @0xsequence/waas
 
+## 2.3.39
+
+### Patch Changes
+
+- Add incentiv mainnet
+- Updated dependencies
+  - @0xsequence/network@2.3.39
+  - @0xsequence/utils@2.3.39
+  - @0xsequence/core@2.3.39
+
 ## 2.3.38
 
 ### Patch Changes
