@@ -14,16 +14,16 @@
   "dependencies": {
     "@repo/ui": "workspace:^",
     "next": "^15.5.9",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:^",
     "@repo/typescript-config": "workspace:^",
-    "@types/node": "^24.10.1",
-    "@types/react": "^19.2.6",
+    "@types/node": "^25.0.2",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "eslint": "^9.28.0",
+    "eslint": "^9.39.2",
     "typescript": "^5.9.3"
   }
 }
