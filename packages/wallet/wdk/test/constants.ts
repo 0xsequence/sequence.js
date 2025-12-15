@@ -1,9 +1,10 @@
 import { config as dotenvConfig } from 'dotenv'
 import { Abi, Address, Provider, RpcTransport } from 'ox'
-import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence'
-import { mockEthereum } from './setup'
-import { Signers as CoreSigners, State, Relayer } from '@0xsequence/wallet-core'
-import * as Db from '../src/dbs'
+import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence/index.js'
+import { mockEthereum } from './setup.js'
+import { Signers as CoreSigners, State, Bundler } from '@0xsequence/wallet-core'
+import { Relayer } from '@0xsequence/relayer'
+import * as Db from '../src/dbs/index.js'
 import { Network } from '@0xsequence/wallet-primitives'
 
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
@@ -81,16 +82,16 @@ export function newRemoteManager(
     : `_testrun_${testIdCounter}`
 
   let relayers: Relayer.Relayer[] = []
-  let bundlers: Relayer.Bundler[] = []
+  let bundlers: Bundler.Bundler[] = []
 
   if (remoteManagerOptions.network.relayerPk) {
     const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))
-    relayers.push(new Relayer.Standard.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
+    relayers.push(new Relayer.PkRelayer(remoteManagerOptions.network.relayerPk as `0x${string}`, provider))
   }
 
   if (remoteManagerOptions.network.bundlerUrl) {
     bundlers.push(
-      new Relayer.Bundlers.PimlicoBundler(
+      new Bundler.Bundlers.PimlicoBundler(
         remoteManagerOptions.network.bundlerUrl,
         Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl)),
       ),

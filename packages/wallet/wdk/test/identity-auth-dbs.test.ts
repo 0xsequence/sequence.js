@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Manager } from '../src/sequence'
-import { Address, Hex, Bytes } from 'ox'
-import { IdentityInstrument } from '@0xsequence/identity-instrument'
-import * as Db from '../src/dbs'
-import { LOCAL_RPC_URL } from './constants'
+import { Manager } from '../src/sequence/index.js'
+import * as Db from '../src/dbs/index.js'
+import { LOCAL_RPC_URL } from './constants.js'
 import { State } from '@0xsequence/wallet-core'
 import { Network } from '@0xsequence/wallet-primitives'
 

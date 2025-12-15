@@ -4,7 +4,7 @@ import { Signers as CoreSigners, Wallet as CoreWallet, Envelope, State } from '.
 import { ExplicitSession } from '../../core/src/utils/session/types.js'
 import { Context, Extensions, Network, Payload, Permission } from '../../primitives/src/index.js'
 import { Sequence } from '../src/index.js'
-import { EMITTER_ABI, EMITTER_ADDRESS, LOCAL_RPC_URL } from './constants'
+import { EMITTER_ABI, EMITTER_ADDRESS, LOCAL_RPC_URL } from './constants.js'
 
 const ALL_EXTENSIONS: {
   name: string
@@ -402,7 +402,7 @@ for (const extension of ALL_EXTENSIONS) {
 
       // Now we modify the permissions target contract to zero address
       // This should cause any session call to the EMITTER_ADDRESS contract to fail
-      explicitSession.permissions[0].target = '0x0000000000000000000000000000000000000000'
+      explicitSession.permissions[0]!.target = '0x0000000000000000000000000000000000000000'
 
       await setupExplicitSession(explicitSession, true)
 

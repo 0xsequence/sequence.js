@@ -37,6 +37,7 @@ export type ManagerOptions = {
 
   extensions?: Extensions.Extensions
   context?: Context.Context
+  context4337?: Context.Context
   guest?: Address.Address
 
   encryptedPksDb?: CoreSigners.Pk.Encrypted.EncryptedPksDb
