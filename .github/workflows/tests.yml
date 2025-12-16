@@ -30,7 +30,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: v1.5.0
       - name: Start Anvil in background
         run: anvil --fork-url https://nodes.sequence.app/arbitrum &
       - run: pnpm build
