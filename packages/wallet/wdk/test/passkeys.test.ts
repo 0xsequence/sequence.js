@@ -3,10 +3,10 @@ import { Address, Hex } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { Signers, State } from '@0xsequence/wallet-core'
 import { Extensions } from '@0xsequence/wallet-primitives'
-import { PasskeysHandler } from '../src/sequence/handlers/passkeys'
-import { Signatures } from '../src/sequence/signatures'
-import { BaseSignatureRequest } from '../src/sequence/types/signature-request'
-import { Kinds } from '../src/sequence/types/signer'
+import { PasskeysHandler } from '../src/sequence/handlers/passkeys.js'
+import { Signatures } from '../src/sequence/signatures.js'
+import { BaseSignatureRequest } from '../src/sequence/types/signature-request.js'
+import { Kinds } from '../src/sequence/types/signer.js'
 
 // Mock dependencies with proper vi.fn() types
 const mockAddSignature = vi.fn()

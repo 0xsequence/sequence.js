@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Manager } from '../src/sequence'
-import { GuardHandler } from '../src/sequence/handlers/guard'
+import { Manager } from '../src/sequence/index.js'
+import { GuardHandler } from '../src/sequence/handlers/guard.js'
 import { Address, Bytes, Hex, TypedData } from 'ox'
 import { Config, Constants, Network, Payload } from '@0xsequence/wallet-primitives'
-import { Kinds } from '../src/sequence/types/signer'
-import { newManager } from './constants'
-import { GuardRole, Guards } from '../src/sequence/guards'
+import { Kinds } from '../src/sequence/types/signer.js'
+import { newManager } from './constants.js'
+import { GuardRole, Guards } from '../src/sequence/guards.js'
 
 // Mock fetch globally for guard API calls
 const mockFetch = vi.fn()
@@ -163,7 +163,7 @@ describe('GuardHandler', () => {
       expect(result).toBe(true)
       expect(mockAddSignature).toHaveBeenCalledOnce()
 
-      const [requestId, signatureData] = mockAddSignature.mock.calls[0]
+      const [requestId, signatureData] = mockAddSignature.mock.calls[0]!
       expect(requestId).toBe('test-request-id')
       expect(signatureData.address).toBe(guards.getByRole('wallet').address)
       expect(signatureData.signature).toBeDefined()
@@ -247,7 +247,7 @@ describe('GuardHandler', () => {
       expect(mockCallback).toHaveBeenCalledOnce()
       expect(mockAddSignature).toHaveBeenCalledOnce()
 
-      const [requestId, signatureData] = mockAddSignature.mock.calls[0]
+      const [requestId, signatureData] = mockAddSignature.mock.calls[0]!
       expect(requestId).toBe('test-request-id')
       expect(signatureData.address).toBe(guards.getByRole('wallet').address)
       expect(signatureData.signature).toBeDefined()
@@ -300,7 +300,7 @@ describe('GuardHandler', () => {
         signatures: [],
       })
 
-      expect(mockFetch.mock.calls[0][0]).toContain(customGuardUrl)
+      expect(mockFetch.mock.calls[0]![0]).toContain(customGuardUrl)
 
       await customManager.stop()
     })

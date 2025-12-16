@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex, Bytes } from 'ox'
 import * as Identity from '@0xsequence/identity-instrument'
-import { AuthCodePkceHandler } from '../src/sequence/handlers/authcode-pkce'
-import { Signatures } from '../src/sequence/signatures'
-import * as Db from '../src/dbs'
-import { IdentitySigner } from '../src/identity/signer'
+import { AuthCodePkceHandler } from '../src/sequence/handlers/authcode-pkce.js'
+import { Signatures } from '../src/sequence/signatures.js'
+import * as Db from '../src/dbs/index.js'
+import { IdentitySigner } from '../src/identity/signer.js'
 
 describe('AuthCodePkceHandler', () => {
   let handler: AuthCodePkceHandler

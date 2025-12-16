@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex, Bytes } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { IdentityInstrument, IdentityType, KeyType, AuthCodeChallenge } from '@0xsequence/identity-instrument'
-import { AuthCodeHandler } from '../src/sequence/handlers/authcode'
-import { Signatures } from '../src/sequence/signatures'
-import * as Db from '../src/dbs'
-import { IdentitySigner } from '../src/identity/signer'
-import { BaseSignatureRequest } from '../src/sequence/types/signature-request'
+import { AuthCodeHandler } from '../src/sequence/handlers/authcode.js'
+import { Signatures } from '../src/sequence/signatures.js'
+import * as Db from '../src/dbs/index.js'
+import { IdentitySigner } from '../src/identity/signer.js'
+import { BaseSignatureRequest } from '../src/sequence/types/signature-request.js'
 
 // Mock the global crypto API
 const mockCryptoSubtle = {
@@ -254,7 +254,7 @@ describe('AuthCodeHandler', () => {
 
       // Verify commitment was saved
       expect(mockAuthCommitmentsSet).toHaveBeenCalledOnce()
-      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0][0]
+      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
 
       expect(commitmentCall.kind).toBe('google-pkce')
       expect(commitmentCall.signer).toBe(signer)
@@ -279,7 +279,7 @@ describe('AuthCodeHandler', () => {
       const result = await authCodeHandler.commitAuth('/target', false, customState)
 
       // Verify commitment uses custom state
-      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0][0]
+      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
       expect(commitmentCall.id).toBe(customState)
       expect(result).toContain(`state=${customState}`)
     })
@@ -287,7 +287,7 @@ describe('AuthCodeHandler', () => {
     it('Should generate random state when not provided', async () => {
       const result = await authCodeHandler.commitAuth('/target', false)
 
-      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0][0]
+      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
       expect(commitmentCall.id).toBeDefined()
       expect(typeof commitmentCall.id).toBe('string')
       expect(commitmentCall.id.startsWith('0x')).toBe(true)
@@ -316,7 +316,7 @@ describe('AuthCodeHandler', () => {
     it('Should create commitment without signer', async () => {
       const result = await authCodeHandler.commitAuth('/target', true)
 
-      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0][0]
+      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
       expect(commitmentCall.signer).toBeUndefined()
       expect(commitmentCall.isSignUp).toBe(true)
     })
@@ -348,12 +348,12 @@ describe('AuthCodeHandler', () => {
 
       // Verify commitVerifier was called
       expect(mockCommitVerifier).toHaveBeenCalledOnce()
-      const commitVerifierCall = mockCommitVerifier.mock.calls[0]
+      const commitVerifierCall = mockCommitVerifier.mock.calls[0]!
       expect(commitVerifierCall[1]).toBeInstanceOf(AuthCodeChallenge)
 
       // Verify completeAuth was called
       expect(mockCompleteAuth).toHaveBeenCalledOnce()
-      const completeAuthCall = mockCompleteAuth.mock.calls[0]
+      const completeAuthCall = mockCompleteAuth.mock.calls[0]!
       expect(completeAuthCall[1]).toBeInstanceOf(AuthCodeChallenge)
 
       // Verify results
@@ -490,7 +490,7 @@ describe('AuthCodeHandler', () => {
       expect(window.location.href).toContain('https://accounts.google.com/o/oauth2/v2/auth')
       expect(mockAuthCommitmentsSet).toHaveBeenCalledOnce()
 
-      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0][0]
+      const commitmentCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
       expect(commitmentCall.target).toBe(window.location.pathname)
       expect(commitmentCall.isSignUp).toBe(false)
       expect(commitmentCall.signer).toBe(testWallet)
@@ -711,14 +711,14 @@ describe('AuthCodeHandler', () => {
       // Test signup flow
       await authCodeHandler.commitAuth('/signup-target', true, 'signup-state')
 
-      const signupCall = mockAuthCommitmentsSet.mock.calls[0][0]
+      const signupCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
       expect(signupCall.isSignUp).toBe(true)
       expect(signupCall.target).toBe('/signup-target')
 
       // Test login flow
       await authCodeHandler.commitAuth('/login-target', false, 'login-state')
 
-      const loginCall = mockAuthCommitmentsSet.mock.calls[1][0]
+      const loginCall = mockAuthCommitmentsSet.mock.calls[1]![0]!
       expect(loginCall.isSignUp).toBe(false)
       expect(loginCall.target).toBe('/login-target')
     })

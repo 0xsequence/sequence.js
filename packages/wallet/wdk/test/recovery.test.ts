@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { Manager, QueuedRecoveryPayload, SignerReady, TransactionDefined } from '../src/sequence'
+import { QueuedRecoveryPayload, SignerReady, TransactionDefined } from '../src/sequence/index.js'
 import { Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
-import { LOCAL_RPC_URL, newManager } from './constants'
+import { LOCAL_RPC_URL, newManager } from './constants.js'
 
 describe('Recovery', () => {
   it('Should execute a recovery', async () => {
@@ -159,7 +159,7 @@ describe('Recovery', () => {
     expect(tx.status).toBe('defined')
     expect((tx as TransactionDefined).relayerOptions.length).toBe(1)
 
-    const localRelayer = (tx as TransactionDefined).relayerOptions[0]
+    const localRelayer = (tx as TransactionDefined).relayerOptions[0]!
     expect(localRelayer).toBeDefined()
     expect(localRelayer.relayerId).toBe('local')
 
@@ -332,7 +332,7 @@ describe('Recovery', () => {
     expect(Array.isArray(fetchedPayloads)).toBeTruthy()
     expect(fetchedPayloads.length).toBe(1)
 
-    const fetchedPayload = fetchedPayloads[0]
+    const fetchedPayload = fetchedPayloads[0]!
     expect(fetchedPayload).toBeDefined()
     expect(fetchedPayload.wallet).toBe(wallet)
     expect(fetchedPayload.chainId).toBe(Network.ChainId.ARBITRUM)
@@ -390,8 +390,8 @@ describe('Recovery', () => {
     expect(updatedPayloads.length).toBe(fetchedPayloads2.length)
 
     if (updatedPayloads.length > 0 && fetchedPayloads.length > 0) {
-      const updated = updatedPayloads[0]
-      const fetched = fetchedPayloads[0]
+      const updated = updatedPayloads[0]!
+      const fetched = fetchedPayloads[0]!
 
       expect(updated.id).toBe(fetched.id)
       expect(updated.wallet).toBe(fetched.wallet)
