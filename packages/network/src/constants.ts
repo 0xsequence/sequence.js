@@ -1066,7 +1066,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: false,
     blockExplorer: {
       name: 'Monad Explorer',
-      rootUrl: 'https://mainnet-beta.monvision.io/'
+      rootUrl: 'https://monvision.io/'
     },
     nativeToken: {
       symbol: 'MON',
@@ -1121,7 +1121,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     testnet: true,
     blockExplorer: {
       name: 'Incentiv Testnet Explorer v2',
-      rootUrl: 'https://explorer.testnet.incentiv.net/'
+      rootUrl: 'https://explorer-testnet.incentiv.io/'
     },
     nativeToken: {
       symbol: 'TCENT',
