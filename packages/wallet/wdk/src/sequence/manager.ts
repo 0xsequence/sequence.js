@@ -59,6 +59,8 @@ export type ManagerOptions = {
   guardUrl?: string
   guardAddresses?: Record<GuardRole, Address.Address>
 
+  nonWitnessableSigners?: Address.Address[]
+
   // The default guard topology MUST have a placeholder address for the guard address
   defaultGuardTopology?: Config.Topology
   defaultRecoverySettings?: RecoverySettings
@@ -123,6 +125,8 @@ export const ManagerOptionsDefaults = {
   },
   bundlers: [],
 
+  nonWitnessableSigners: [] as Address.Address[],
+
   guardUrl: 'https://guard.sequence.app',
   guardAddresses: {
     wallet: '0x26f3D30F41FA897309Ae804A2AFf15CEb1dA5742',
@@ -183,11 +187,41 @@ export const CreateWalletOptionsDefaults = {
 }
 
 export function applyManagerOptionsDefaults(options?: ManagerOptions) {
-  return {
+  const merged = {
     ...ManagerOptionsDefaults,
     ...options,
     identity: { ...ManagerOptionsDefaults.identity, ...options?.identity },
   }
+
+  // Merge and normalize non-witnessable signers.
+  // We always include the sessions extension address for the active extensions set.
+  const nonWitnessable = new Set<string>()
+  for (const address of ManagerOptionsDefaults.nonWitnessableSigners ?? []) {
+    nonWitnessable.add(address.toLowerCase())
+  }
+  for (const address of options?.nonWitnessableSigners ?? []) {
+    nonWitnessable.add(address.toLowerCase())
+  }
+  nonWitnessable.add(merged.extensions.sessions.toLowerCase())
+
+  // Include static signer leaves from the guard topology (e.g. recovery guard signer),
+  // but ignore the placeholder address that is later replaced per-role.
+  if (merged.defaultGuardTopology) {
+    const guardTopologySigners = Config.getSigners(merged.defaultGuardTopology)
+    for (const signer of guardTopologySigners.signers) {
+      if (Address.isEqual(signer, Constants.PlaceholderAddress)) {
+        continue
+      }
+      nonWitnessable.add(signer.toLowerCase())
+    }
+    for (const signer of guardTopologySigners.sapientSigners) {
+      nonWitnessable.add(signer.address.toLowerCase())
+    }
+  }
+
+  merged.nonWitnessableSigners = Array.from(nonWitnessable) as Address.Address[]
+
+  return merged
 }
 
 export type RecoverySettings = {
@@ -220,6 +254,8 @@ export type Sequence = {
   readonly networks: Network.Network[]
   readonly relayers: Relayer.Relayer[]
   readonly bundlers: Bundler.Bundler[]
+
+  readonly nonWitnessableSigners: ReadonlySet<Address.Address>
 
   readonly defaultGuardTopology: Config.Topology
   readonly defaultRecoverySettings: RecoverySettings
@@ -407,6 +443,10 @@ export class Manager {
         networks: ops.networks,
         relayers,
         bundlers: ops.bundlers,
+
+        nonWitnessableSigners: new Set(
+          (ops.nonWitnessableSigners ?? []).map((address) => address.toLowerCase() as Address.Address),
+        ),
 
         defaultGuardTopology: ops.defaultGuardTopology,
         defaultRecoverySettings: ops.defaultRecoverySettings,
