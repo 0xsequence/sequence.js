@@ -24,6 +24,9 @@ describe('Signers.kindOf', () => {
     // Sessions extension signer (sapient leaf) never publishes a witness.
     await signers.kindOf(wallet, extensions.sessions, imageHash)
 
+    // Passkeys module is a known sapient signer kind.
+    expect(await signers.kindOf(wallet, extensions.passkeys, imageHash)).toBe(Kinds.LoginPasskey)
+
     // Sequence dev multisig (default guard topology leaf) never publishes a witness.
     await signers.kindOf(wallet, '0x007a47e6BF40C1e0ed5c01aE42fDC75879140bc4')
 
