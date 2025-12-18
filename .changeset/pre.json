@@ -4,23 +4,30 @@
   "initialVersions": {
     "docs": "0.1.0",
     "web": "0.1.0",
-    "@0xsequence/api": "3.0.0-beta.4",
-    "@0xsequence/builder": "3.0.0-beta.4",
-    "@0xsequence/guard": "3.0.0-beta.4",
-    "@0xsequence/identity-instrument": "3.0.0-beta.4",
-    "@0xsequence/indexer": "3.0.0-beta.4",
-    "@0xsequence/marketplace": "3.0.0-beta.4",
-    "@0xsequence/metadata": "3.0.0-beta.4",
-    "@0xsequence/relayer": "3.0.0-beta.4",
-    "@0xsequence/userdata": "3.0.0-beta.4",
-    "@0xsequence/abi": "3.0.0-beta.4",
-    "@0xsequence/wallet-core": "3.0.0-beta.4",
-    "@0xsequence/dapp-client": "3.0.0-beta.4",
-    "@0xsequence/wallet-primitives": "3.0.0-beta.4",
-    "@0xsequence/wallet-wdk": "3.0.0-beta.4",
-    "@repo/eslint-config": "0.0.1-beta.0",
-    "@repo/typescript-config": "0.0.1-beta.0",
-    "@repo/ui": "0.0.1-beta.0"
+    "@0xsequence/api": "3.0.0-beta.5",
+    "@0xsequence/builder": "3.0.0-beta.5",
+    "@0xsequence/guard": "3.0.0-beta.5",
+    "@0xsequence/identity-instrument": "3.0.0-beta.5",
+    "@0xsequence/indexer": "3.0.0-beta.5",
+    "@0xsequence/marketplace": "3.0.0-beta.5",
+    "@0xsequence/metadata": "3.0.0-beta.5",
+    "@0xsequence/relayer": "3.0.0-beta.5",
+    "@0xsequence/userdata": "3.0.0-beta.5",
+    "@0xsequence/abi": "3.0.0-beta.5",
+    "@0xsequence/wallet-core": "3.0.0-beta.5",
+    "@0xsequence/dapp-client": "3.0.0-beta.5",
+    "@0xsequence/wallet-primitives": "3.0.0-beta.5",
+    "@0xsequence/wallet-wdk": "3.0.0-beta.5",
+    "@repo/eslint-config": "0.0.1-beta.1",
+    "@repo/typescript-config": "0.0.1-beta.1",
+    "@repo/ui": "0.0.1-beta.1"
   },
-  "changesets": ["goofy-laws-serve", "open-toes-marry", "plain-feet-stare", "wild-feet-carry", "wise-heads-buy"]
+  "changesets": [
+    "cyan-radios-relax",
+    "goofy-laws-serve",
+    "open-toes-marry",
+    "plain-feet-stare",
+    "wild-feet-carry",
+    "wise-heads-buy"
+  ]
 }
