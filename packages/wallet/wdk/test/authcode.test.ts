@@ -311,6 +311,8 @@ describe('AuthCodeHandler', () => {
 
       expect(result).toContain('https://appleid.apple.com/auth/authorize?')
       expect(result).toContain('client_id=apple-client-id')
+      const resultUrl = new URL(result)
+      expect(resultUrl.searchParams.get('scope')).toBe('name email')
     })
 
     it('Should create commitment without signer', async () => {
