@@ -45,11 +45,12 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       isSignUp,
     })
 
+    const scope = this.signupKind === 'apple' ? 'name email' : 'openid profile email'
     const searchParams = new URLSearchParams({
       client_id: this.audience,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'openid profile email',
+      scope,
       state,
     })
 
