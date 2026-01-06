@@ -1,5 +1,16 @@
 # @0xsequence/dapp-client
 
+## 3.0.0-beta.7
+
+### Patch Changes
+
+- Apple auth fix
+- Updated dependencies
+  - @0xsequence/guard@3.0.0-beta.7
+  - @0xsequence/relayer@3.0.0-beta.7
+  - @0xsequence/wallet-core@3.0.0-beta.7
+  - @0xsequence/wallet-primitives@3.0.0-beta.7
+
 ## 3.0.0-beta.6
 
 ### Patch Changes
