@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.0-beta.8
+
+### Patch Changes
+
+- Apple auth fixes
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.0-beta.8
+
 ## 3.0.0-beta.7
 
 ### Patch Changes
