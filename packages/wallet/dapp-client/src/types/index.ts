@@ -21,7 +21,7 @@ export const RequestActionType = {
   SEND_WALLET_TRANSACTION: 'sendWalletTransaction',
 } as const
 
-export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic'
+export type LoginMethod = 'google' | 'apple' | 'email' | 'passkey' | 'mnemonic' | 'eoa'
 
 export interface GuardConfig {
   url: string
