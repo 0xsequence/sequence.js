@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.0-beta.9
+
+### Patch Changes
+
+- dapp client updates for EOA login
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.0-beta.9
+
 ## 3.0.0-beta.8
 
 ### Patch Changes
