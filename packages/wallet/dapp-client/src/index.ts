@@ -35,7 +35,17 @@ export {
   SigningError,
   ModifyExplicitSessionError,
 } from './utils/errors.js'
-export { getExplorerUrl, jsonReplacers, jsonRevivers } from './utils/index.js'
+export {
+  createExplicitSessionConfig,
+  getExplorerUrl,
+  getNetwork,
+  getRelayerUrl,
+  getRpcUrl,
+  jsonReplacers,
+  jsonRevivers,
+  VALUE_FORWARDER_ADDRESS,
+} from './utils/index.js'
+export type { ExplicitSessionParams, NativeTokenSpending, SessionDuration } from './utils/index.js'
 export type {
   SequenceStorage,
   ExplicitSessionData,
@@ -46,6 +56,14 @@ export type {
 } from './utils/storage.js'
 export { WebStorage } from './utils/storage.js'
 
-export { Attestation, Permission, Extensions, SessionConfig, Constants, Payload } from '@0xsequence/wallet-primitives'
+export {
+  Attestation,
+  Permission,
+  Extensions,
+  SessionConfig,
+  Constants,
+  Payload,
+  Network,
+} from '@0xsequence/wallet-primitives'
 export type { ExplicitSessionConfig, ExplicitSession, ImplicitSession, Session } from '@0xsequence/wallet-core'
 export { Signers, Wallet, Utils, Envelope, State } from '@0xsequence/wallet-core'

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Network } from '@0xsequence/wallet-primitives'
-import { Bytes, Hex } from 'ox'
+import type { ExplicitSessionConfig } from '@0xsequence/wallet-core'
+import { Network, Permission } from '@0xsequence/wallet-primitives'
+import { Bytes, Hex, type Address } from 'ox'
+export { VALUE_FORWARDER_ADDRESS } from './constants.js'
 
 type JsonReplacer = (key: string, value: any) => any
 type JsonReviver = (key: string, value: any) => any
@@ -123,6 +125,50 @@ const uint8ArrayReviver: JsonReviver = (key, value) => {
 
 export const jsonRevivers = chainRevivers([mapReviver, bigIntReviver, uint8ArrayReviver])
 export const jsonReplacers = chainReplacers([mapReplacer, bigIntReplacer, uint8ArrayReplacer])
+
+export type SessionDuration = {
+  days?: number
+  hours?: number
+  minutes?: number
+}
+
+export type NativeTokenSpending = {
+  valueLimit: bigint
+  allowedRecipients?: Address.Address[]
+}
+
+export type ExplicitSessionParams = {
+  chainId: number
+  expiresIn: SessionDuration
+  permissions: Permission.Permission[]
+  nativeTokenSpending?: NativeTokenSpending
+}
+
+export const createExplicitSessionConfig = (params: ExplicitSessionParams): ExplicitSessionConfig => {
+  const nowInSeconds = BigInt(Math.floor(Date.now() / 1000))
+  const { days = 0, hours = 0, minutes = 0 } = params.expiresIn
+  const sessionLifetimeSeconds = days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60
+  const deadline = nowInSeconds + BigInt(sessionLifetimeSeconds)
+
+  if (params.permissions.length === 0) {
+    throw new Error('createExplicitSessionConfig: At least one permission is required.')
+  }
+
+  const nativeTokenSpending = params.nativeTokenSpending
+  const valueLimit = nativeTokenSpending?.valueLimit ?? 0n
+  const nativeTokenReceivers = [...(nativeTokenSpending?.allowedRecipients || [])]
+  const nativeTokenSpendingPermissions = nativeTokenReceivers.map((receiver) => ({
+    target: receiver,
+    rules: [],
+  }))
+
+  return {
+    chainId: params.chainId,
+    valueLimit,
+    deadline,
+    permissions: [...params.permissions, ...nativeTokenSpendingPermissions],
+  }
+}
 
 /**
  * Apply a template to a string.
