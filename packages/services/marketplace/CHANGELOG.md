@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 3.0.0-beta.10
+
+### Patch Changes
+
+- dapp-client updates
+
 ## 3.0.0-beta.9
 
 ### Patch Changes

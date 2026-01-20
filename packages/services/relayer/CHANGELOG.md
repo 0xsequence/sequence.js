@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.0-beta.10
+
+### Patch Changes
+
+- dapp-client updates
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.0-beta.10
+
 ## 3.0.0-beta.9
 
 ### Patch Changes
