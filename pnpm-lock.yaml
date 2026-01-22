@@ -370,6 +370,9 @@ importers:
 
   packages/wallet/primitives-cli:
     dependencies:
+      '@0xsequence/wallet-core':
+        specifier: workspace:^
+        version: link:../core
       '@0xsequence/wallet-primitives':
         specifier: workspace:^
         version: link:../primitives
