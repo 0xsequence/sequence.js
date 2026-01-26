@@ -378,10 +378,7 @@ export class DappTransport {
       return
     }
 
-    const isPotentiallyValidSource =
-      this.walletWindow && (event.source === this.walletWindow || !this.walletWindow.closed)
-
-    if (!isPotentiallyValidSource && event.data?.type !== MessageType.WALLET_OPENED) {
+    if (!this.walletWindow || event.source !== this.walletWindow) {
       return
     }
 
