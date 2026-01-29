@@ -79,9 +79,10 @@ export interface Writer {
 
 export type MaybePromise<T> = T | Promise<T>
 
-export * as Local from './local/index.js'
-export * from './utils.js'
-export * as Remote from './remote/index.js'
 export * from './cached.js'
-export * as Sequence from './sequence/index.js'
 export * from './debug.js'
+export * from './utils.js'
+export * as Arweave from './arweave/index.js'
+export * as Local from './local/index.js'
+export * as Remote from './remote/index.js'
+export * as Sequence from './sequence/index.js'
