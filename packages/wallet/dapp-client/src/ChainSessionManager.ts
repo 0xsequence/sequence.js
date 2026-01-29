@@ -856,10 +856,13 @@ export class ChainSessionManager {
     }))
     try {
       const signedCall = await this._buildAndSignCalls(callsToSend)
-      this.lastSignedCallCache = {
-        fingerprint: this._fingerprintCalls(callsToSend),
-        signedCall,
-        createdAtMs: Date.now(),
+      const fingerprint = this._fingerprintCalls(callsToSend)
+      if (fingerprint) {
+        this.lastSignedCallCache = {
+          fingerprint,
+          signedCall,
+          createdAtMs: Date.now(),
+        }
       }
       const feeOptions = await this.relayer.feeOptions(signedCall.to, this.chainId, callsToSend)
       return feeOptions.options
