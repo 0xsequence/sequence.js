@@ -816,19 +816,6 @@ export class ChainSessionManager {
       await this.sessionManager.findSignersForCalls(this.wallet.address, this.chainId, calls)
       return true
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Signer supporting call is expired')) {
-        // Extract the expired signer address from the message with address regex
-        const expiredSignerAddress = error.message.match(/(0x[0-9a-fA-F]{40})/)?.[1]
-        if (expiredSignerAddress) {
-          // Refresh the session
-          await this._refreshExplicitSession(Address.from(expiredSignerAddress))
-          // Retry the permission check
-          return this.hasPermission(transactions)
-        } else {
-          // Could not parse error message. Rethrow as this shouldn't happen.
-          throw error
-        }
-      }
       // An error from findSignersForCalls indicates a permission failure.
       console.warn(
         `Permission check failed for chain ${this.chainId}:`,
