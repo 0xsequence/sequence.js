@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 3.0.0-beta.12
+
+### Patch Changes
+
+- Beta release with dapp connector fixes
+
 ## 3.0.0-beta.11
 
 ### Patch Changes

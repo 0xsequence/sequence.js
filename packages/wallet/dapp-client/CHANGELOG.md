@@ -1,5 +1,16 @@
 # @0xsequence/dapp-client
 
+## 3.0.0-beta.12
+
+### Patch Changes
+
+- Beta release with dapp connector fixes
+- Updated dependencies
+  - @0xsequence/guard@3.0.0-beta.12
+  - @0xsequence/relayer@3.0.0-beta.12
+  - @0xsequence/wallet-core@3.0.0-beta.12
+  - @0xsequence/wallet-primitives@3.0.0-beta.12
+
 ## 3.0.0-beta.11
 
 ### Patch Changes
