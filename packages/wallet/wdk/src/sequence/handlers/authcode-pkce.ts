@@ -5,6 +5,7 @@ import { Signatures } from '../signatures.js'
 import * as Identity from '@0xsequence/identity-instrument'
 import { IdentitySigner } from '../../identity/signer.js'
 import { AuthCodeHandler } from './authcode.js'
+import type { WdkEnv } from '../../env.js'
 
 export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
   constructor(
@@ -16,8 +17,9 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
     signatures: Signatures,
     commitments: Db.AuthCommitments,
     authKeys: Db.AuthKeys,
+    env?: WdkEnv,
   ) {
-    super(signupKind, issuer, oauthUrl, audience, nitro, signatures, commitments, authKeys)
+    super(signupKind, issuer, oauthUrl, audience, nitro, signatures, commitments, authKeys, env)
   }
 
   public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
@@ -40,7 +42,7 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
       isSignUp,
     })
 
-    const searchParams = new URLSearchParams({
+    const searchParams = this.serializeQuery({
       code_challenge: codeChallenge,
       code_challenge_method: 'S256',
       client_id: this.audience,
@@ -51,7 +53,7 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
       state,
     })
 
-    return `${this.oauthUrl}?${searchParams.toString()}`
+    return `${this.oauthUrl}?${searchParams}`
   }
 
   public async completeAuth(

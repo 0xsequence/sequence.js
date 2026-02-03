@@ -6,6 +6,7 @@ import * as Identity from '@0xsequence/identity-instrument'
 import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
 import { IdentitySigner } from '../../identity/signer.js'
 import { IdentityHandler } from './identity.js'
+import type { NavigationLike, WdkEnv } from '../../env.js'
 
 export class AuthCodeHandler extends IdentityHandler implements Handler {
   protected redirectUri: string = ''
@@ -19,8 +20,9 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     signatures: Signatures,
     protected readonly commitments: Db.AuthCommitments,
     authKeys: Db.AuthKeys,
+    env?: WdkEnv,
   ) {
-    super(nitro, authKeys, signatures, Identity.IdentityType.OIDC)
+    super(nitro, authKeys, signatures, Identity.IdentityType.OIDC, env)
   }
 
   public get kind() {
@@ -45,7 +47,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       isSignUp,
     })
 
-    const searchParams = new URLSearchParams({
+    const searchParams = this.serializeQuery({
       client_id: this.audience,
       redirect_uri: this.redirectUri,
       response_type: 'code',
@@ -53,7 +55,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       ...(this.signupKind === 'apple' ? {} : { scope: 'openid profile email' }),
     })
 
-    return `${this.oauthUrl}?${searchParams.toString()}`
+    return `${this.oauthUrl}?${searchParams}`
   }
 
   public async completeAuth(
@@ -94,10 +96,29 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       status: 'actionable',
       message: 'request-redirect',
       handle: async () => {
-        const url = await this.commitAuth(window.location.pathname, false, request.id, address)
-        window.location.href = url
+        const navigation = this.getNavigation()
+        const url = await this.commitAuth(navigation.getPathname(), false, request.id, address)
+        navigation.redirect(url)
         return true
       },
     }
+  }
+
+  protected serializeQuery(params: Record<string, string>): string {
+    const searchParamsCtor = this.env.urlSearchParams ?? (globalThis as any).URLSearchParams
+    if (searchParamsCtor) {
+      return new searchParamsCtor(params).toString()
+    }
+    return Object.entries(params)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&')
+  }
+
+  private getNavigation(): NavigationLike {
+    const navigation = this.env.navigation
+    if (!navigation) {
+      throw new Error('navigation is not available')
+    }
+    return navigation
   }
 }

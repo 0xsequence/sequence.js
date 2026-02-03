@@ -1,33 +1,35 @@
-import { Signers, State } from '@0xsequence/wallet-core'
+import { State } from '@0xsequence/wallet-core'
 import { Address, Hex } from 'ox'
 import { Kinds } from '../types/signer.js'
 import { Signatures } from '../signatures.js'
-import { Extensions } from '@0xsequence/wallet-primitives'
+import { Config, Extensions } from '@0xsequence/wallet-primitives'
 import { Handler } from './handler.js'
 import { SignerActionable, SignerUnavailable, BaseSignatureRequest } from '../types/index.js'
+import type { PasskeyProvider, PasskeySigner } from '../passkeys-provider.js'
 
 export class PasskeysHandler implements Handler {
   kind = Kinds.LoginPasskey
-  private readySigners = new Map<string, Signers.Passkey.Passkey>()
+  private readySigners = new Map<string, PasskeySigner>()
 
   constructor(
     private readonly signatures: Signatures,
     private readonly extensions: Pick<Extensions.Extensions, 'passkeys'>,
     private readonly stateReader: State.Reader,
+    private readonly passkeyProvider: PasskeyProvider,
   ) {}
 
   onStatusChange(cb: () => void): () => void {
     return () => {}
   }
 
-  public addReadySigner(signer: Signers.Passkey.Passkey) {
+  public addReadySigner(signer: PasskeySigner) {
     // Use credentialId as key to match specific passkey instances
     this.readySigners.set(signer.credentialId, signer)
   }
 
-  private async loadPasskey(wallet: Address.Address, imageHash: Hex.Hex): Promise<Signers.Passkey.Passkey | undefined> {
+  private async loadPasskey(wallet: Address.Address, imageHash: Hex.Hex): Promise<PasskeySigner | undefined> {
     try {
-      return await Signers.Passkey.Passkey.loadFromWitness(this.stateReader, this.extensions, wallet, imageHash)
+      return await this.passkeyProvider.loadFromWitness(this.stateReader, this.extensions, wallet, imageHash)
     } catch (e) {
       console.warn('Failed to load passkey:', e)
       return undefined
@@ -55,7 +57,7 @@ export class PasskeysHandler implements Handler {
     }
 
     // First check if we have a ready signer that matches the imageHash
-    let passkey: Signers.Passkey.Passkey | undefined
+    let passkey: PasskeySigner | undefined
 
     // Look for a ready signer with matching imageHash
     for (const readySigner of this.readySigners.values()) {
@@ -91,12 +93,10 @@ export class PasskeysHandler implements Handler {
       message: 'request-interaction-with-passkey',
       imageHash: imageHash,
       handle: async () => {
-        const signature = await passkey.signSapient(
-          request.envelope.wallet,
-          request.envelope.chainId,
-          request.envelope.payload,
-          imageHash,
+        const normalized = Config.normalizeSignerSignature(
+          passkey.signSapient(request.envelope.wallet, request.envelope.chainId, request.envelope.payload, imageHash),
         )
+        const signature = await normalized.signature
         await this.signatures.addSignature(request.id, {
           address,
           imageHash,

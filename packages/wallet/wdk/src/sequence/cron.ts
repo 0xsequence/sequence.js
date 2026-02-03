@@ -17,12 +17,14 @@ export class Cron {
   private readonly STORAGE_KEY = 'sequence-cron-jobs'
   private isStopping: boolean = false
   private currentCheckJobsPromise: Promise<void> = Promise.resolve()
+  private readonly env: Shared['env']
 
   /**
    * Initializes the Cron scheduler and starts the periodic job checker.
    * @param shared Shared context for modules and logging.
    */
   constructor(private readonly shared: Shared) {
+    this.env = shared.env
     this.start()
   }
 
@@ -33,7 +35,11 @@ export class Cron {
   private start() {
     if (this.isStopping) return
     this.executeCheckJobsChain()
-    this.checkInterval = setInterval(() => this.executeCheckJobsChain(), 60 * 1000)
+    const setIntervalFn = this.env.timers?.setInterval ?? (globalThis as any).setInterval
+    if (!setIntervalFn) {
+      return
+    }
+    this.checkInterval = setIntervalFn(() => this.executeCheckJobsChain(), 60 * 1000)
   }
 
   /**
@@ -58,7 +64,10 @@ export class Cron {
     this.isStopping = true
 
     if (this.checkInterval) {
-      clearInterval(this.checkInterval)
+      const clearIntervalFn = this.env.timers?.clearInterval ?? (globalThis as any).clearInterval
+      if (clearIntervalFn) {
+        clearIntervalFn(this.checkInterval)
+      }
       this.checkInterval = undefined
       this.shared.modules.logger.log('Cron: Interval cleared.')
     }
@@ -104,52 +113,60 @@ export class Cron {
     }
 
     try {
-      await navigator.locks.request('sequence-cron-jobs', async (lock: Lock | null) => {
-        if (this.isStopping) {
-          return
-        }
-        if (!lock) {
-          return
-        }
-
-        const now = Date.now()
-        const storage = await this.getStorageState()
-
-        for (const [id, job] of this.jobs) {
+      const locks = this.env.locks ?? (globalThis as any).navigator?.locks
+      if (locks?.request) {
+        await locks.request('sequence-cron-jobs', async (lock: Lock | null) => {
           if (this.isStopping) {
-            break
+            return
           }
-
-          const lastRun = storage.get(id)?.lastRun ?? job.lastRun
-          const timeSinceLastRun = now - lastRun
-
-          if (timeSinceLastRun >= job.interval) {
-            try {
-              await job.handler()
-              if (!this.isStopping) {
-                job.lastRun = now
-                storage.set(id, { lastRun: now })
-              }
-            } catch (error) {
-              if (error instanceof DOMException && error.name === 'AbortError') {
-                this.shared.modules.logger.log(`Cron: Job ${id} was aborted.`)
-              } else {
-                console.error(`Cron job ${id} failed:`, error)
-              }
-            }
+          if (!lock) {
+            return
           }
-        }
-
-        if (!this.isStopping) {
-          await this.syncWithStorage()
-        }
-      })
+          await this.runJobs()
+        })
+      } else {
+        await this.runJobs()
+      }
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (this.isAbortError(error)) {
         this.shared.modules.logger.log('Cron: navigator.locks.request was aborted.')
       } else {
         console.error('Cron: Error in navigator.locks.request:', error)
       }
+    }
+  }
+
+  private async runJobs(): Promise<void> {
+    const now = Date.now()
+    const storage = await this.getStorageState()
+
+    for (const [id, job] of this.jobs) {
+      if (this.isStopping) {
+        break
+      }
+
+      const lastRun = storage.get(id)?.lastRun ?? job.lastRun
+      const timeSinceLastRun = now - lastRun
+
+      if (timeSinceLastRun >= job.interval) {
+        try {
+          await job.handler()
+          if (!this.isStopping) {
+            job.lastRun = now
+            storage.set(id, { lastRun: now })
+          }
+        } catch (error) {
+          if (this.isAbortError(error)) {
+            this.shared.modules.logger.log(`Cron: Job ${id} was aborted.`)
+          } else {
+            console.error(`Cron job ${id} failed:`, error)
+          }
+        }
+      }
+    }
+
+    if (!this.isStopping) {
+      await this.syncWithStorage()
     }
   }
 
@@ -159,7 +176,11 @@ export class Cron {
    */
   private async getStorageState(): Promise<Map<string, { lastRun: number }>> {
     if (this.isStopping) return new Map()
-    const state = localStorage.getItem(this.STORAGE_KEY)
+    const storage = this.env.storage
+    if (!storage) {
+      return new Map()
+    }
+    const state = storage.getItem(this.STORAGE_KEY)
     return new Map(state ? JSON.parse(state) : [])
   }
 
@@ -168,7 +189,19 @@ export class Cron {
    */
   private async syncWithStorage() {
     if (this.isStopping) return
+    const storage = this.env.storage
+    if (!storage) {
+      return
+    }
     const state = Array.from(this.jobs.entries()).map(([id, job]) => [id, { lastRun: job.lastRun }])
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state))
+    storage.setItem(this.STORAGE_KEY, JSON.stringify(state))
+  }
+
+  private isAbortError(error: unknown): boolean {
+    const domException = (globalThis as any).DOMException
+    if (domException && error instanceof domException) {
+      return (error as DOMException).name === 'AbortError'
+    }
+    return (error as any)?.name === 'AbortError'
   }
 }

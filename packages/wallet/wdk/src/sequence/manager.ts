@@ -5,6 +5,7 @@ import { createAttestationVerifyingFetch } from '@0xsequence/tee-verifier'
 import { Config, Constants, Context, Extensions, Network } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 import * as Db from '../dbs/index.js'
+import { resolveWdkEnv, type WdkEnv } from '../env.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
 import { Guards, GuardRole } from './guards.js'
@@ -31,6 +32,7 @@ import { GuardHandler, PromptCodeHandler } from './handlers/guard.js'
 import { PasskeyCredential } from '../dbs/index.js'
 import { PromptMnemonicHandler } from './handlers/mnemonic.js'
 import { PromptOtpHandler } from './handlers/otp.js'
+import { defaultPasskeyProvider, type PasskeyProvider } from './passkeys-provider.js'
 
 export type ManagerOptions = {
   verbose?: boolean
@@ -52,6 +54,9 @@ export type ManagerOptions = {
 
   dbPruningInterval?: number
 
+  env?: WdkEnv
+  passkeyProvider?: PasskeyProvider
+
   stateProvider?: State.Provider
   networks?: Network.Network[]
   relayers?: Relayer.Relayer[] | (() => Relayer.Relayer[])
@@ -70,7 +75,7 @@ export type ManagerOptions = {
 
   identity?: {
     url?: string
-    fetch?: typeof window.fetch
+    fetch?: typeof fetch
     verifyAttestation?: boolean
     expectedPcr0?: string[]
     scope?: string
@@ -95,6 +100,72 @@ export type ManagerOptions = {
   }
 }
 
+export type ResolvedIdentityOptions = {
+  url: string
+  fetch?: typeof fetch
+  verifyAttestation: boolean
+  expectedPcr0?: string[]
+  scope?: string
+  email: {
+    enabled: boolean
+  }
+  google: {
+    enabled: boolean
+    clientId: string
+  }
+  apple: {
+    enabled: boolean
+    clientId: string
+  }
+  customProviders?: {
+    kind: `custom-${string}`
+    authMethod: 'id-token' | 'authcode' | 'authcode-pkce'
+    issuer: string
+    oauthUrl: string
+    clientId: string
+  }[]
+}
+
+export type ResolvedManagerOptions = {
+  verbose: boolean
+
+  extensions: Extensions.Extensions
+  context: Context.Context
+  context4337: Context.Context
+  guest: Address.Address
+
+  encryptedPksDb: CoreSigners.Pk.Encrypted.EncryptedPksDb
+  managerDb: Db.Wallets
+  transactionsDb: Db.Transactions
+  signaturesDb: Db.Signatures
+  messagesDb: Db.Messages
+  authCommitmentsDb: Db.AuthCommitments
+  authKeysDb: Db.AuthKeys
+  recoveryDb: Db.Recovery
+  passkeyCredentialsDb: Db.PasskeyCredentials
+
+  dbPruningInterval: number
+
+  env: WdkEnv
+  passkeyProvider: PasskeyProvider
+
+  stateProvider: State.Provider
+  networks: Network.Network[]
+  relayers: Relayer.Relayer[] | (() => Relayer.Relayer[])
+  bundlers: Bundler.Bundler[]
+  guardUrl: string
+  guardAddresses: Record<GuardRole, Address.Address>
+
+  nonWitnessableSigners: Address.Address[]
+
+  defaultGuardTopology: Config.Topology
+  defaultRecoverySettings: RecoverySettings
+
+  multiInjectedProviderDiscovery: boolean
+
+  identity: ResolvedIdentityOptions
+}
+
 export const ManagerOptionsDefaults = {
   verbose: false,
 
@@ -115,7 +186,9 @@ export const ManagerOptionsDefaults = {
 
   dbPruningInterval: 1000 * 60 * 60 * 24, // 24 hours
 
-  stateProvider: new State.Sequence.Provider(),
+  passkeyProvider: defaultPasskeyProvider,
+
+  stateProvider: typeof fetch !== 'undefined' ? new State.Sequence.Provider(undefined, fetch) : undefined,
   networks: Network.ALL,
   relayers: () => {
     if (typeof window !== 'undefined') {
@@ -186,12 +259,44 @@ export const CreateWalletOptionsDefaults = {
   useGuard: false,
 }
 
-export function applyManagerOptionsDefaults(options?: ManagerOptions) {
-  const merged = {
-    ...ManagerOptionsDefaults,
-    ...options,
-    identity: { ...ManagerOptionsDefaults.identity, ...options?.identity },
+export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedManagerOptions {
+  const env = resolveWdkEnv(options?.env)
+
+  const identity: ResolvedIdentityOptions = {
+    ...ManagerOptionsDefaults.identity,
+    ...options?.identity,
+    email: { ...ManagerOptionsDefaults.identity.email, ...options?.identity?.email },
+    google: { ...ManagerOptionsDefaults.identity.google, ...options?.identity?.google },
+    apple: { ...ManagerOptionsDefaults.identity.apple, ...options?.identity?.apple },
   }
+
+  if (!identity.fetch && env.fetch) {
+    identity.fetch = env.fetch
+  }
+
+  let encryptedPksDb = options?.encryptedPksDb ?? ManagerOptionsDefaults.encryptedPksDb
+  if (!options?.encryptedPksDb && options?.env) {
+    encryptedPksDb = new CoreSigners.Pk.Encrypted.EncryptedPksDb(undefined, undefined, env)
+  }
+
+  let authKeysDb = options?.authKeysDb ?? ManagerOptionsDefaults.authKeysDb
+  if (!options?.authKeysDb && options?.env) {
+    authKeysDb = new Db.AuthKeys(undefined, env)
+  }
+
+  let stateProvider = options?.stateProvider ?? ManagerOptionsDefaults.stateProvider
+  if (!options?.stateProvider && options?.env?.fetch) {
+    stateProvider = new State.Sequence.Provider(undefined, options.env.fetch)
+  } else if (!stateProvider && env.fetch) {
+    stateProvider = new State.Sequence.Provider(undefined, env.fetch)
+  }
+
+  if (!stateProvider) {
+    throw new Error('stateProvider is required. Provide ManagerOptions.stateProvider or env.fetch')
+  }
+
+  const extensions = options?.extensions ?? ManagerOptionsDefaults.extensions
+  const defaultGuardTopology = options?.defaultGuardTopology ?? ManagerOptionsDefaults.defaultGuardTopology
 
   // Merge and normalize non-witnessable signers.
   // We always include the sessions extension address for the active extensions set.
@@ -202,12 +307,12 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions) {
   for (const address of options?.nonWitnessableSigners ?? []) {
     nonWitnessable.add(address.toLowerCase())
   }
-  nonWitnessable.add(merged.extensions.sessions.toLowerCase())
+  nonWitnessable.add(extensions.sessions.toLowerCase())
 
   // Include static signer leaves from the guard topology (e.g. recovery guard signer),
   // but ignore the placeholder address that is later replaced per-role.
-  if (merged.defaultGuardTopology) {
-    const guardTopologySigners = Config.getSigners(merged.defaultGuardTopology)
+  if (defaultGuardTopology) {
+    const guardTopologySigners = Config.getSigners(defaultGuardTopology)
     for (const signer of guardTopologySigners.signers) {
       if (Address.isEqual(signer, Constants.PlaceholderAddress)) {
         continue
@@ -219,9 +324,46 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions) {
     }
   }
 
-  merged.nonWitnessableSigners = Array.from(nonWitnessable) as Address.Address[]
+  return {
+    verbose: options?.verbose ?? ManagerOptionsDefaults.verbose,
 
-  return merged
+    extensions,
+    context: options?.context ?? ManagerOptionsDefaults.context,
+    context4337: options?.context4337 ?? ManagerOptionsDefaults.context4337,
+    guest: options?.guest ?? ManagerOptionsDefaults.guest,
+
+    encryptedPksDb,
+    managerDb: options?.managerDb ?? ManagerOptionsDefaults.managerDb,
+    transactionsDb: options?.transactionsDb ?? ManagerOptionsDefaults.transactionsDb,
+    signaturesDb: options?.signaturesDb ?? ManagerOptionsDefaults.signaturesDb,
+    messagesDb: options?.messagesDb ?? ManagerOptionsDefaults.messagesDb,
+    authCommitmentsDb: options?.authCommitmentsDb ?? ManagerOptionsDefaults.authCommitmentsDb,
+    recoveryDb: options?.recoveryDb ?? ManagerOptionsDefaults.recoveryDb,
+    authKeysDb,
+    passkeyCredentialsDb: options?.passkeyCredentialsDb ?? ManagerOptionsDefaults.passkeyCredentialsDb,
+
+    dbPruningInterval: options?.dbPruningInterval ?? ManagerOptionsDefaults.dbPruningInterval,
+
+    env,
+    passkeyProvider: options?.passkeyProvider ?? ManagerOptionsDefaults.passkeyProvider,
+
+    stateProvider,
+    networks: options?.networks ?? ManagerOptionsDefaults.networks,
+    relayers: options?.relayers ?? ManagerOptionsDefaults.relayers,
+    bundlers: options?.bundlers ?? ManagerOptionsDefaults.bundlers,
+    guardUrl: options?.guardUrl ?? ManagerOptionsDefaults.guardUrl,
+    guardAddresses: options?.guardAddresses ?? ManagerOptionsDefaults.guardAddresses,
+
+    nonWitnessableSigners: Array.from(nonWitnessable) as Address.Address[],
+
+    defaultGuardTopology,
+    defaultRecoverySettings: options?.defaultRecoverySettings ?? ManagerOptionsDefaults.defaultRecoverySettings,
+
+    multiInjectedProviderDiscovery:
+      options?.multiInjectedProviderDiscovery ?? ManagerOptionsDefaults.multiInjectedProviderDiscovery,
+
+    identity,
+  }
 }
 
 export type RecoverySettings = {
@@ -283,6 +425,8 @@ export type Shared = {
 
   readonly sequence: Sequence
   readonly databases: Databases
+  readonly env: WdkEnv
+  readonly passkeyProvider: PasskeyProvider
 
   readonly handlers: Map<string, Handler>
 
@@ -469,6 +613,9 @@ export class Manager {
         pruningInterval: ops.dbPruningInterval,
       },
 
+      env: ops.env,
+      passkeyProvider: ops.passkeyProvider,
+
       modules: {} as any,
       handlers: new Map(),
     }
@@ -501,6 +648,7 @@ export class Manager {
       modules.signatures,
       shared.sequence.extensions,
       shared.sequence.stateProvider,
+      shared.passkeyProvider,
     )
     shared.handlers.set(Kinds.LoginPasskey, this.passkeysHandler)
 
@@ -523,7 +671,7 @@ export class Manager {
     const identityInstrument = new IdentityInstrument(ops.identity.url, ops.identity.scope, verifyingFetch)
 
     if (ops.identity.email?.enabled) {
-      this.otpHandler = new OtpHandler(identityInstrument, modules.signatures, shared.databases.authKeys)
+      this.otpHandler = new OtpHandler(identityInstrument, modules.signatures, shared.databases.authKeys, shared.env)
       shared.handlers.set(Kinds.LoginEmailOtp, this.otpHandler)
     }
     if (ops.identity.google?.enabled) {
@@ -538,6 +686,7 @@ export class Manager {
           modules.signatures,
           shared.databases.authCommitments,
           shared.databases.authKeys,
+          shared.env,
         ),
       )
     }
@@ -553,6 +702,7 @@ export class Manager {
           modules.signatures,
           shared.databases.authCommitments,
           shared.databases.authKeys,
+          shared.env,
         ),
       )
     }
@@ -573,6 +723,7 @@ export class Manager {
                 modules.signatures,
                 shared.databases.authCommitments,
                 shared.databases.authKeys,
+                shared.env,
               ),
             )
             break
@@ -588,6 +739,7 @@ export class Manager {
                 modules.signatures,
                 shared.databases.authCommitments,
                 shared.databases.authKeys,
+                shared.env,
               ),
             )
             break

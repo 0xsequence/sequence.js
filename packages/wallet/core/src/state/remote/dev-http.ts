@@ -4,10 +4,16 @@ import { Provider } from '../index.js'
 
 export class DevHttpProvider implements Provider {
   private readonly baseUrl: string
+  private readonly fetcher: typeof fetch
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, fetcher?: typeof fetch) {
     // Remove trailing slash if present
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+    const resolvedFetch = fetcher ?? (globalThis as any).fetch
+    if (!resolvedFetch) {
+      throw new Error('fetch is not available')
+    }
+    this.fetcher = resolvedFetch
   }
 
   private async request<T>(method: 'GET' | 'POST', path: string, body?: any): Promise<T> {
@@ -24,7 +30,7 @@ export class DevHttpProvider implements Provider {
 
     let response: Response
     try {
-      response = await fetch(url, options)
+      response = await this.fetcher(url, options)
     } catch (networkError) {
       // Handle immediate network errors (e.g., DNS resolution failure, refused connection)
       console.error(`Network error during ${method} request to ${url}:`, networkError)

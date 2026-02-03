@@ -4,6 +4,7 @@ import * as Identity from '@0xsequence/identity-instrument'
 import { Signatures } from '../signatures.js'
 import { BaseSignatureRequest } from '../types/signature-request.js'
 import { IdentitySigner, toIdentityAuthKey } from '../../identity/signer.js'
+import { resolveWdkEnv, type WdkEnv } from '../../env.js'
 
 export const identityTypeToHex = (identityType?: Identity.IdentityType): Hex.Hex => {
   // Bytes4
@@ -19,12 +20,17 @@ export const identityTypeToHex = (identityType?: Identity.IdentityType): Hex.Hex
 }
 
 export class IdentityHandler {
+  protected readonly env: WdkEnv
+
   constructor(
     private readonly nitro: Identity.IdentityInstrument,
     private readonly authKeys: Db.AuthKeys,
     private readonly signatures: Signatures,
     public readonly identityType: Identity.IdentityType,
-  ) {}
+    env?: WdkEnv,
+  ) {
+    this.env = resolveWdkEnv(env)
+  }
 
   public onStatusChange(cb: () => void): () => void {
     return this.authKeys.addListener(cb)
@@ -37,7 +43,7 @@ export class IdentityHandler {
       throw new Error('no-auth-key')
     }
 
-    const res = await this.nitro.commitVerifier(toIdentityAuthKey(authKey), challenge)
+    const res = await this.nitro.commitVerifier(toIdentityAuthKey(authKey, this.env.crypto), challenge)
     return res
   }
 
@@ -47,7 +53,7 @@ export class IdentityHandler {
       throw new Error('no-auth-key')
     }
 
-    const res = await this.nitro.completeAuth(toIdentityAuthKey(authKey), challenge)
+    const res = await this.nitro.completeAuth(toIdentityAuthKey(authKey, this.env.crypto), challenge)
 
     authKey.identitySigner = res.signer.address
     authKey.expiresAt = new Date(Date.now() + 1000 * 60 * 3) // 3 minutes
@@ -55,7 +61,7 @@ export class IdentityHandler {
     await this.authKeys.delBySigner(authKey.identitySigner)
     await this.authKeys.set(authKey)
 
-    const signer = new IdentitySigner(this.nitro, authKey)
+    const signer = new IdentitySigner(this.nitro, authKey, this.env.crypto)
     return { signer, email: res.identity.email }
   }
 
@@ -72,13 +78,17 @@ export class IdentityHandler {
     if (!authKey) {
       return undefined
     }
-    return new IdentitySigner(this.nitro, authKey)
+    return new IdentitySigner(this.nitro, authKey, this.env.crypto)
   }
 
   private async getAuthKey(signer: string): Promise<Db.AuthKey | undefined> {
     let authKey = await this.authKeys.getBySigner(signer)
     if (!signer && !authKey) {
-      const keyPair = await window.crypto.subtle.generateKey(
+      const crypto = this.env.crypto ?? (globalThis as any).crypto
+      if (!crypto?.subtle) {
+        throw new Error('crypto.subtle is not available')
+      }
+      const keyPair = await crypto.subtle.generateKey(
         {
           name: 'ECDSA',
           namedCurve: 'P-256',
@@ -86,7 +96,7 @@ export class IdentityHandler {
         false,
         ['sign', 'verify'],
       )
-      const publicKey = await window.crypto.subtle.exportKey('raw', keyPair.publicKey)
+      const publicKey = await crypto.subtle.exportKey('raw', keyPair.publicKey)
       authKey = {
         address: Hex.fromBytes(new Uint8Array(publicKey)),
         identitySigner: '',
