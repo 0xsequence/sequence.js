@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/guard",
-  "version": "2.3.39",
+  "version": "2.3.40",
   "description": "guard sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/guard",
   "source": "src/index.ts",

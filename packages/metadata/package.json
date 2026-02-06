@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/metadata",
-  "version": "2.3.39",
+  "version": "2.3.40",
   "description": "metadata sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/metadata",
   "source": "src/index.ts",

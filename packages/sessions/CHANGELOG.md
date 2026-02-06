@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.40
+
+### Patch Changes
+
+- Remove legacy etherlink testnet
+- Updated dependencies
+  - @0xsequence/migration@2.3.40
+  - @0xsequence/replacer@2.3.40
+  - @0xsequence/utils@2.3.40
+  - @0xsequence/core@2.3.40
+
 ## 2.3.39
 
 ### Patch Changes

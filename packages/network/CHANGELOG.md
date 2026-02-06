@@ -1,5 +1,16 @@
 # @0xsequence/network
 
+## 2.3.40
+
+### Patch Changes
+
+- Remove legacy etherlink testnet
+- Updated dependencies
+  - @0xsequence/indexer@2.3.40
+  - @0xsequence/relayer@2.3.40
+  - @0xsequence/utils@2.3.40
+  - @0xsequence/core@2.3.40
+
 ## 2.3.39
 
 ### Patch Changes

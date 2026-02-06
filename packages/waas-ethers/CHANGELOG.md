@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.40
+
+### Patch Changes
+
+- Remove legacy etherlink testnet
+- Updated dependencies
+  - @0xsequence/waas@2.3.40
+
 ## 2.3.39
 
 ### Patch Changes

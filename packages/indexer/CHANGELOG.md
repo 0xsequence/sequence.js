@@ -1,5 +1,11 @@
 # @0xsequence/indexer
 
+## 2.3.40
+
+### Patch Changes
+
+- Remove legacy etherlink testnet
+
 ## 2.3.39
 
 ### Patch Changes
