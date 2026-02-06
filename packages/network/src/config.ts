@@ -134,7 +134,7 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.MOONBEAM),
   createNetworkConfig(ChainId.MOONBASE_ALPHA),
   createNetworkConfig(ChainId.ETHERLINK),
-  createNetworkConfig(ChainId.ETHERLINK_TESTNET),
+  createNetworkConfig(ChainId.ETHERLINK_TESTNET, { disabled: true }),
   createNetworkConfig(ChainId.ETHERLINK_SHADOWNET_TESTNET),
   createNetworkConfig(ChainId.SOMNIA),
   createNetworkConfig(ChainId.SOMNIA_TESTNET),
