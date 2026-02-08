@@ -851,7 +851,11 @@ export class ChainSessionManager {
           createdAtMs: Date.now(),
         }
       }
-      const feeOptions = await this.relayer.feeOptions(signedCall.to, this.chainId, callsToSend)
+      // IMPORTANT: feeOptions must be computed in the context of the *user wallet*.
+      // Using signedCall.to can point at a guest/relayer wallet endpoint address which breaks
+      // FeeOptions simulation for undeployed wallets on some networks (e.g. Arbitrum).
+      if (!this.wallet) throw new InitializationError('Session is not initialized.')
+      const feeOptions = await this.relayer.feeOptions(this.wallet.address, this.chainId, callsToSend)
       return feeOptions.options
     } catch (err) {
       throw new FeeOptionError(`Failed to get fee options: ${err instanceof Error ? err.message : String(err)}`)
