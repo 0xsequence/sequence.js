@@ -310,7 +310,7 @@ describe('Relayer', () => {
       const isAvailable = await mockRelayer.isAvailable(TEST_WALLET_ADDRESS, TEST_CHAIN_ID)
       expect(isAvailable).toBe(true)
 
-      const feeOptions = await mockRelayer.feeOptions(TEST_WALLET_ADDRESS, TEST_CHAIN_ID, [])
+      const feeOptions = await mockRelayer.feeOptions(TEST_WALLET_ADDRESS, TEST_CHAIN_ID, TEST_TO_ADDRESS, [])
       expect(feeOptions.options).toEqual([])
 
       const relayResult = await mockRelayer.relay(TEST_TO_ADDRESS, TEST_DATA, TEST_CHAIN_ID)

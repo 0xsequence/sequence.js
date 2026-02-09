@@ -134,6 +134,7 @@ export class RpcRelayer implements Relayer {
   async feeOptions(
     wallet: Address.Address,
     chainId: number,
+    to: Address.Address,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     const callsStruct: Payload.Calls = { type: 'call', space: 0n, nonce: 0n, calls: calls }
@@ -142,8 +143,8 @@ export class RpcRelayer implements Relayer {
     try {
       const result = await this.client.feeOptions(
         {
-          wallet: wallet,
-          to: wallet,
+          wallet,
+          to,
           data: Bytes.toHex(data),
         },
         { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
