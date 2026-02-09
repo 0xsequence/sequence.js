@@ -114,9 +114,10 @@ export class PkRelayer implements Relayer {
   feeOptions(
     wallet: Address.Address,
     chainId: number,
+    to: Address.Address,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
-    return this.relayer.feeOptions(wallet, chainId, calls)
+    return this.relayer.feeOptions(wallet, chainId, to, calls)
   }
 
   async relay(to: Address.Address, data: Hex.Hex, chainId: number, _?: FeeQuote): Promise<{ opHash: Hex.Hex }> {
