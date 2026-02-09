@@ -1,5 +1,15 @@
 # @0xsequence/wallet-core
 
+## 3.0.0-beta.13
+
+### Patch Changes
+
+- Userdata service updates
+- Updated dependencies
+  - @0xsequence/guard@3.0.0-beta.13
+  - @0xsequence/relayer@3.0.0-beta.13
+  - @0xsequence/wallet-primitives@3.0.0-beta.13
+
 ## 3.0.0-beta.12
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 3.0.0-beta.13
+
+### Patch Changes
+
+- Userdata service updates
+
 ## 3.0.0-beta.12
 
 ### Patch Changes
