@@ -150,7 +150,10 @@ export enum ChainId {
   ARC_TESTNET = 5042002,
 
   // HYPEREVM
-  HYPEREVM = 999
+  HYPEREVM = 999,
+
+  // SONIC
+  SONIC = 146
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1234,6 +1237,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'HYPE',
       name: 'HYPE',
+      decimals: 18
+    }
+  },
+
+  [ChainId.SONIC]: {
+    chainId: ChainId.SONIC,
+    type: NetworkType.MAINNET,
+    name: 'sonic',
+    title: 'Sonic',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SONIC}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Sonic',
+      rootUrl: 'https://sonicscan.org/'
+    },
+    nativeToken: {
+      symbol: 'Sonic',
+      name: 'Sonic',
       decimals: 18
     }
   }
