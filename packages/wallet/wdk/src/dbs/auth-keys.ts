@@ -68,7 +68,10 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
       if (result !== undefined) {
         return result
       } else if (attempt < 2) {
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        const setTimeoutFn = this.env?.timers?.setTimeout ?? (globalThis as any).setTimeout
+        if (setTimeoutFn) {
+          await new Promise((resolve) => setTimeoutFn(resolve, 50))
+        }
         return this.getBySigner(signer, attempt + 1)
       } else {
         try {
