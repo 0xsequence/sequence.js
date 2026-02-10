@@ -36,9 +36,9 @@ export class SequenceRelayer implements Relayer {
   async feeOptions(
     wallet: Address.Address,
     _chainId: number,
+    to: Address.Address,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
-    const to = wallet // TODO: this might be the guest module
     const execute = AbiFunction.from('function execute(bytes calldata _payload, bytes calldata _signature)')
     const payload = Payload.encode({ type: 'call', space: 0n, nonce: 0n, calls }, to)
     const signature = '0x0001' // TODO: use a stub signature

@@ -54,25 +54,12 @@ export class LocalRelayer implements Relayer {
   }
 
   feeOptions(
-    wallet: Address.Address,
-    chainId: number,
-    calls: Payload.Call[],
+    _wallet: Address.Address,
+    _chainId: number,
+    _to: Address.Address,
+    _calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     return Promise.resolve({ options: [] })
-  }
-
-  private decodeCalls(data: Hex.Hex): Payload.Calls {
-    const executeSelector = AbiFunction.getSelector(Constants.EXECUTE)
-
-    let packedPayload
-    if (data.startsWith(executeSelector)) {
-      const decode = AbiFunction.decodeData(Constants.EXECUTE, data)
-      packedPayload = decode[0]
-    } else {
-      packedPayload = data
-    }
-
-    return Payload.decode(Bytes.fromHex(packedPayload))
   }
 
   async relay(

@@ -347,7 +347,11 @@ export class Transactions implements TransactionsInterface {
               return []
             }
 
-            const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, tx.envelope.payload.calls)
+            // Determine the to address for the built transaction
+            const walletStatus = await wallet.getStatus(provider)
+            const to = walletStatus.isDeployed ? wallet.address : wallet.guest
+
+            const feeOptions = await relayer.feeOptions(tx.wallet, tx.envelope.chainId, to, tx.envelope.payload.calls)
 
             if (feeOptions.options.length === 0) {
               const { name, icon } = relayer instanceof Relayer.EIP6963.EIP6963Relayer ? relayer.info : {}
