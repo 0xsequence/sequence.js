@@ -1,5 +1,11 @@
 # @0xsequence/wallet-primitives
 
+## 3.0.0-beta.14
+
+### Patch Changes
+
+- Relayer fee options fix
+
 ## 3.0.0-beta.13
 
 ### Patch Changes
