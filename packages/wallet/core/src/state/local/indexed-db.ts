@@ -1,5 +1,6 @@
 import { Context, Payload, Signature, Config, GenericTree } from '@0xsequence/wallet-primitives'
 import { Address, Hex } from 'ox'
+import type { CoreEnv } from '../../env.js'
 import { Store } from './index.js'
 
 const DB_VERSION = 1
@@ -16,15 +17,27 @@ export class IndexedDbStore implements Store {
   private _db: IDBDatabase | null = null
   private dbName: string
 
-  constructor(dbName: string = 'sequence-indexeddb') {
+  constructor(
+    dbName: string = 'sequence-indexeddb',
+    private readonly env?: CoreEnv,
+  ) {
     this.dbName = dbName
+  }
+
+  private getIndexedDB(): IDBFactory {
+    const globalObj = globalThis as any
+    const indexedDb = this.env?.indexedDB ?? globalObj.indexedDB ?? globalObj.window?.indexedDB
+    if (!indexedDb) {
+      throw new Error('indexedDB is not available')
+    }
+    return indexedDb
   }
 
   private async openDB(): Promise<IDBDatabase> {
     if (this._db) return this._db
 
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, DB_VERSION)
+      const request = this.getIndexedDB().open(this.dbName, DB_VERSION)
 
       request.onupgradeneeded = () => {
         const db = request.result

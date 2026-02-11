@@ -1,17 +1,22 @@
 import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
-import { Signers, State } from '@0xsequence/wallet-core'
+import { Signers, State, type CryptoLike } from '@0xsequence/wallet-core'
 import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
 import { AuthKey } from '../dbs/auth-keys.js'
 import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 import * as Identity from '@0xsequence/identity-instrument'
 
-export function toIdentityAuthKey(authKey: AuthKey): Identity.AuthKey {
+export function toIdentityAuthKey(authKey: AuthKey, crypto?: CryptoLike): Identity.AuthKey {
+  const globalObj = globalThis as any
+  const resolvedCrypto = crypto ?? globalObj.window?.crypto ?? globalObj.crypto
+  if (!resolvedCrypto?.subtle) {
+    throw new Error('crypto.subtle is not available')
+  }
   return {
     address: authKey.address,
     keyType: Identity.KeyType.WebCrypto_Secp256r1,
     signer: authKey.identitySigner,
     async sign(digest: Bytes.Bytes) {
-      const authKeySignature = await window.crypto.subtle.sign(
+      const authKeySignature = await resolvedCrypto.subtle.sign(
         {
           name: 'ECDSA',
           hash: 'SHA-256',
@@ -28,6 +33,7 @@ export class IdentitySigner implements Signers.Signer {
   constructor(
     readonly identityInstrument: IdentityInstrument,
     readonly authKey: AuthKey,
+    private readonly crypto?: CryptoLike,
   ) {}
 
   get address(): Address.Address {
@@ -47,7 +53,7 @@ export class IdentitySigner implements Signers.Signer {
   }
 
   async signDigest(digest: Bytes.Bytes): Promise<SequenceSignature.SignatureOfSignerLeafHash> {
-    const sigHex = await this.identityInstrument.sign(toIdentityAuthKey(this.authKey), digest)
+    const sigHex = await this.identityInstrument.sign(toIdentityAuthKey(this.authKey, this.crypto), digest)
     const sig = Signature.fromHex(sigHex)
     return {
       type: 'hash',

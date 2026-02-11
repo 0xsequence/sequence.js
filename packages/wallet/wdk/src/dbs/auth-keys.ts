@@ -1,5 +1,6 @@
 import { Generic, Migration } from './generic.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
+import type { WdkEnv } from '../env.js'
 
 const TABLE_NAME = 'auth-keys'
 
@@ -11,9 +12,12 @@ export type AuthKey = {
 }
 
 export class AuthKeys extends Generic<AuthKey, 'address'> {
-  private expirationTimers = new Map<string, number>()
+  private expirationTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
-  constructor(dbName: string = 'sequence-auth-keys') {
+  constructor(
+    dbName: string = 'sequence-auth-keys',
+    private readonly env?: WdkEnv,
+  ) {
     super(dbName, TABLE_NAME, 'address', [
       (
         db: IDBPDatabase<unknown>,
@@ -64,7 +68,10 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
       if (result !== undefined) {
         return result
       } else if (attempt < 2) {
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        const setTimeoutFn = this.env?.timers?.setTimeout ?? (globalThis as any).setTimeout
+        if (setTimeoutFn) {
+          await new Promise((resolve) => setTimeoutFn(resolve, 50))
+        }
         return this.getBySigner(signer, attempt + 1)
       } else {
         try {
@@ -108,7 +115,11 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
       await this.del(authKey.address.toLowerCase())
       return
     }
-    const timer = window.setTimeout(() => {
+    const setTimeoutFn = this.env?.timers?.setTimeout ?? (globalThis as any).setTimeout
+    if (!setTimeoutFn) {
+      return
+    }
+    const timer = setTimeoutFn(() => {
       console.log('removing expired auth key', authKey)
       this.del(authKey.address.toLowerCase())
     }, delay)
@@ -118,7 +129,10 @@ export class AuthKeys extends Generic<AuthKey, 'address'> {
   private clearExpiration(address: string): void {
     const timer = this.expirationTimers.get(address.toLowerCase())
     if (timer) {
-      window.clearTimeout(timer)
+      const clearTimeoutFn = this.env?.timers?.clearTimeout ?? (globalThis as any).clearTimeout
+      if (clearTimeoutFn) {
+        clearTimeoutFn(timer)
+      }
       this.expirationTimers.delete(address.toLowerCase())
     }
   }

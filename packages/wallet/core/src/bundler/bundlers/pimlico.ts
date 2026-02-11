@@ -21,11 +21,17 @@ export class PimlicoBundler implements Bundler {
 
   public readonly provider: Provider.Provider
   public readonly bundlerRpcUrl: string
+  private readonly fetcher: typeof fetch
 
-  constructor(bundlerRpcUrl: string, provider: Provider.Provider | string) {
+  constructor(bundlerRpcUrl: string, provider: Provider.Provider | string, fetcher?: typeof fetch) {
     this.id = `pimlico-erc4337-${bundlerRpcUrl}`
     this.provider = typeof provider === 'string' ? Provider.from(RpcTransport.fromHttp(provider)) : provider
     this.bundlerRpcUrl = bundlerRpcUrl
+    const resolvedFetch = fetcher ?? (globalThis as any).fetch
+    if (!resolvedFetch) {
+      throw new Error('fetch is not available')
+    }
+    this.fetcher = resolvedFetch
   }
 
   async isAvailable(entrypoint: Address.Address, chainId: number): Promise<boolean> {
@@ -165,7 +171,7 @@ export class PimlicoBundler implements Bundler {
 
   private async bundlerRpc<T>(method: string, params: any[]): Promise<T> {
     const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
-    const res = await fetch(this.bundlerRpcUrl, {
+    const res = await this.fetcher(this.bundlerRpcUrl, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body,

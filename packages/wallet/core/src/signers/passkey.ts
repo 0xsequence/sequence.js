@@ -5,12 +5,15 @@ import { WebAuthnP256 } from 'ox'
 import { State } from '../index.js'
 import { SapientSigner, Witnessable } from './index.js'
 
+export type WebAuthnLike = Pick<typeof WebAuthnP256, 'createCredential' | 'sign'>
+
 export type PasskeyOptions = {
   extensions: Pick<Extensions.Extensions, 'passkeys'>
   publicKey: Extensions.Passkeys.PublicKey
   credentialId: string
   embedMetadata?: boolean
   metadata?: Extensions.Passkeys.PasskeyMetadata
+  webauthn?: WebAuthnLike
 }
 
 export type CreatePasskeyOptions = {
@@ -18,6 +21,11 @@ export type CreatePasskeyOptions = {
   requireUserVerification?: boolean
   credentialName?: string
   embedMetadata?: boolean
+  webauthn?: WebAuthnLike
+}
+
+export type FindPasskeyOptions = {
+  webauthn?: WebAuthnLike
 }
 
 export type WitnessMessage = {
@@ -45,6 +53,7 @@ export class Passkey implements SapientSigner, Witnessable {
   public readonly imageHash: Hex.Hex
   public readonly embedMetadata: boolean
   public readonly metadata?: Extensions.Passkeys.PasskeyMetadata
+  private readonly webauthn: WebAuthnLike
 
   constructor(options: PasskeyOptions) {
     this.address = options.extensions.passkeys
@@ -53,6 +62,7 @@ export class Passkey implements SapientSigner, Witnessable {
     this.embedMetadata = options.embedMetadata ?? false
     this.imageHash = Extensions.Passkeys.rootFor(options.publicKey)
     this.metadata = options.metadata
+    this.webauthn = options.webauthn ?? WebAuthnP256
   }
 
   static async loadFromWitness(
@@ -60,6 +70,7 @@ export class Passkey implements SapientSigner, Witnessable {
     extensions: Pick<Extensions.Extensions, 'passkeys'>,
     wallet: Address.Address,
     imageHash: Hex.Hex,
+    options?: FindPasskeyOptions,
   ) {
     // In the witness we will find the public key, and may find the credential id
     const witness = await stateReader.getWitnessForSapient(wallet, extensions.passkeys, imageHash)
@@ -90,13 +101,15 @@ export class Passkey implements SapientSigner, Witnessable {
       publicKey: message.publicKey,
       embedMetadata: decodedSignature.embedMetadata,
       metadata,
+      webauthn: options?.webauthn,
     })
   }
 
   static async create(extensions: Pick<Extensions.Extensions, 'passkeys'>, options?: CreatePasskeyOptions) {
+    const webauthn = options?.webauthn ?? WebAuthnP256
     const name = options?.credentialName ?? `Sequence (${Date.now()})`
 
-    const credential = await WebAuthnP256.createCredential({
+    const credential = await webauthn.createCredential({
       user: {
         name,
       },
@@ -120,6 +133,7 @@ export class Passkey implements SapientSigner, Witnessable {
       },
       embedMetadata: options?.embedMetadata,
       metadata,
+      webauthn,
     })
 
     if (options?.stateProvider) {
@@ -132,8 +146,10 @@ export class Passkey implements SapientSigner, Witnessable {
   static async find(
     stateReader: State.Reader,
     extensions: Pick<Extensions.Extensions, 'passkeys'>,
+    options?: FindPasskeyOptions,
   ): Promise<Passkey | undefined> {
-    const response = await WebAuthnP256.sign({ challenge: Hex.random(32) })
+    const webauthn = options?.webauthn ?? WebAuthnP256
+    const response = await webauthn.sign({ challenge: Hex.random(32) })
     if (!response.raw) throw new Error('No credential returned')
 
     const authenticatorDataBytes = Bytes.fromHex(response.metadata.authenticatorData)
@@ -218,7 +234,7 @@ export class Passkey implements SapientSigner, Witnessable {
       console.warn('Multiple signers found for passkey', flattened)
     }
 
-    return Passkey.loadFromWitness(stateReader, extensions, flattened[0]!.wallet, flattened[0]!.imageHash)
+    return Passkey.loadFromWitness(stateReader, extensions, flattened[0]!.wallet, flattened[0]!.imageHash, options)
   }
 
   async signSapient(
@@ -234,7 +250,7 @@ export class Passkey implements SapientSigner, Witnessable {
 
     const challenge = Hex.fromBytes(Payload.hash(wallet, chainId, payload))
 
-    const response = await WebAuthnP256.sign({
+    const response = await this.webauthn.sign({
       challenge,
       credentialId: this.credentialId,
       userVerification: this.publicKey.requireUserVerification ? 'required' : 'discouraged',

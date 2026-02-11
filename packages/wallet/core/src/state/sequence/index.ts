@@ -9,13 +9,17 @@ import {
   TransactionRequest,
 } from 'ox'
 import { normalizeAddressKeys, Provider as ProviderInterface } from '../index.js'
-import { Sessions, SignatureType } from './sessions.gen.js'
+import { Sessions, SignatureType, type Fetch } from './sessions.gen.js'
 
 export class Provider implements ProviderInterface {
   private readonly service: Sessions
 
-  constructor(host = 'https://keymachine.sequence.app') {
-    this.service = new Sessions(host, fetch)
+  constructor(host = 'https://keymachine.sequence.app', fetcher?: Fetch) {
+    const resolvedFetch = fetcher ?? (globalThis as any).fetch
+    if (!resolvedFetch) {
+      throw new Error('fetch is not available')
+    }
+    this.service = new Sessions(host, resolvedFetch)
   }
 
   async getConfiguration(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
