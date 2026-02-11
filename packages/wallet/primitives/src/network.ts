@@ -105,6 +105,7 @@ export const ChainId = {
   // ETHERLINK
   ETHERLINK: 42793,
   ETHERLINK_TESTNET: 128123,
+  ETHERLINK_SHADOWNET_TESTNET = 127823,
 
   // MOONBEAM
   MOONBEAM: 1284,
@@ -799,15 +800,15 @@ export const ALL: Network[] = [
     },
   },
   {
-    chainId: ChainId.ETHERLINK_TESTNET,
+    chainId: ChainId.ETHERLINK_SHADOWNET_TESTNET,
     type: NetworkType.TESTNET,
-    name: 'etherlink-testnet',
-    title: 'Etherlink Testnet',
-    rpcUrl: getRpcUrl('etherlink-testnet'),
-    logoUrl: getLogoUrl(ChainId.ETHERLINK_TESTNET),
+    name: 'etherlink-shadownet-testnet',
+    title: 'Etherlink Shadownet Testnet',
+    rpcUrl: getRpcUrl('etherlink-shadownet-testnet'),
+    logoUrl: getLogoUrl(ChainId.ETHERLINK_SHADOWNET_TESTNET),
     blockExplorer: {
-      name: 'Etherlink Testnet Explorer',
-      url: 'https://testnet.explorer.etherlink.com/',
+      name: 'Etherlink Shadownet Testnet Explorer',
+      url: 'https://shadownet.explorer.etherlink.com/',
     },
     nativeCurrency: {
       symbol: 'XTZ',
