@@ -1,5 +1,11 @@
 # @0xsequence/guard
 
+## 3.0.0-beta.15
+
+### Patch Changes
+
+- New chains, minor fixes
+
 ## 3.0.0-beta.14
 
 ### Patch Changes

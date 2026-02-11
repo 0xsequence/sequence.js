@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/builder",
-  "version": "3.0.0-beta.14",
+  "version": "3.0.0-beta.15",
   "description": "builder sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/services/builder",
   "author": "Sequence Platforms Inc.",

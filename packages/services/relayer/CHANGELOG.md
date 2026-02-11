@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.0-beta.15
+
+### Patch Changes
+
+- New chains, minor fixes
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.0-beta.15
+
 ## 3.0.0-beta.14
 
 ### Patch Changes
