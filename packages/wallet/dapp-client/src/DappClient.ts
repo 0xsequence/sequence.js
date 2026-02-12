@@ -14,8 +14,10 @@ import {
   GetFeeTokensResponse,
   GuardConfig,
   LoginMethod,
+  EthAuthSettings,
   RandomPrivateKeyFn,
   RequestActionType,
+  ETHAuthProof,
   SendWalletTransactionPayload,
   SequenceSessionStorage,
   SignMessagePayload,
@@ -408,6 +410,13 @@ export class DappClient {
   }
 
   /**
+   * Returns the latest persisted ETHAuth proof, if one has been received from the wallet.
+   */
+  public async getEthAuthProof(): Promise<ETHAuthProof | null> {
+    return this.sequenceStorage.getEthAuthProof()
+  }
+
+  /**
    * Restores a sessionless connection that was previously persisted via {@link disconnect} or a connect flow.
    * @returns A promise that resolves to true if a sessionless connection was applied.
    */
@@ -559,6 +568,7 @@ export class DappClient {
       preferredLoginMethod?: LoginMethod
       email?: string
       includeImplicitSession?: boolean
+      ethAuth?: EthAuthSettings
     } = {},
   ): Promise<void> {
     if (this.isInitialized) {
@@ -614,6 +624,7 @@ export class DappClient {
       preferredLoginMethod?: LoginMethod
       email?: string
       includeImplicitSession?: boolean
+      ethAuth?: EthAuthSettings
     } = {},
   ): Promise<void> {
     if (!this.isInitialized || !this.hasSessionlessConnection || !this.walletAddress) {

@@ -28,12 +28,32 @@ export interface GuardConfig {
   moduleAddresses: Map<Address.Address, Address.Address>
 }
 
+export interface EthAuthSettings {
+  app?: string
+  /** expiry number (in seconds) that is used for ETHAuth proof. Default is 1 week in seconds. */
+  expiry?: number
+  /** origin hint of the dapp's host opening the wallet. This value will automatically
+   * be determined and verified for integrity, and can be omitted. */
+  origin?: string
+  /** authorizeNonce is an optional number to be passed as ETHAuth's nonce claim for replay protection. **/
+  nonce?: number
+}
+
+export interface ETHAuthProof {
+  // eip712 typed-data payload for ETHAuth domain as input
+  typedData: Payload.TypedDataToSign
+
+  // signature encoded in an ETHAuth proof string
+  ewtString: string
+}
+
 // --- Payloads for Transport ---
 
 export interface CreateNewSessionPayload {
   origin?: string
   session?: ExplicitSession
   includeImplicitSession?: boolean
+  ethAuth?: EthAuthSettings
   preferredLoginMethod?: LoginMethod
   email?: string
 }
@@ -81,6 +101,7 @@ export interface CreateNewSessionResponse {
   userEmail?: string
   loginMethod?: LoginMethod
   guard?: GuardConfig
+  ethAuthProof?: ETHAuthProof
 }
 
 export interface SignatureResponse {

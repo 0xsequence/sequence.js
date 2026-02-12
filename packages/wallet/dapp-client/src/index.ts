@@ -24,6 +24,8 @@ export type {
   FeeToken,
   FeeOption,
   TransportMessage,
+  EthAuthSettings,
+  ETHAuthProof,
 } from './types/index.js'
 export { RequestActionType, TransportMode, MessageType } from './types/index.js'
 export {
