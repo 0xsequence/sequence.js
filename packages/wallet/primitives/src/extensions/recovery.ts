@@ -203,7 +203,7 @@ export function parseBranch(encoded: Bytes.Bytes): { nodes: Tree[]; leftover: By
  */
 export function trimTopology(topology: Tree, signer: Address.Address): Tree {
   if (isRecoveryLeaf(topology)) {
-    if (topology.signer === signer) {
+    if (Address.isEqual(topology.signer, signer)) {
       return topology
     } else {
       return hashConfiguration(topology)

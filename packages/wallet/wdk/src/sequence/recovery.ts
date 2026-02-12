@@ -530,60 +530,64 @@ export class Recovery implements RecoveryInterface {
 
     for (const signer of signers) {
       for (const { chainId, provider } of providers) {
-        const totalPayloads = await Extensions.Recovery.totalQueuedPayloads(
-          provider,
-          this.shared.sequence.extensions.recovery,
-          wallet,
-          signer.address,
-        )
-
-        for (let i = 0n; i < totalPayloads; i++) {
-          const payloadHash = await Extensions.Recovery.queuedPayloadHashOf(
+        try {
+          const totalPayloads = await Extensions.Recovery.totalQueuedPayloads(
             provider,
             this.shared.sequence.extensions.recovery,
             wallet,
             signer.address,
-            i,
           )
 
-          const timestamp = await Extensions.Recovery.timestampForQueuedPayload(
-            provider,
-            this.shared.sequence.extensions.recovery,
-            wallet,
-            signer.address,
-            payloadHash,
-          )
+          for (let i = 0n; i < totalPayloads; i++) {
+            const payloadHash = await Extensions.Recovery.queuedPayloadHashOf(
+              provider,
+              this.shared.sequence.extensions.recovery,
+              wallet,
+              signer.address,
+              i,
+            )
 
-          const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
+            const timestamp = await Extensions.Recovery.timestampForQueuedPayload(
+              provider,
+              this.shared.sequence.extensions.recovery,
+              wallet,
+              signer.address,
+              payloadHash,
+            )
 
-          // If ready, we need to check if it was executed already
-          // for this, we check if the wallet nonce for the given space
-          // is greater than the nonce in the payload
-          if (timestamp < Date.now() / 1000 && payload && Payload.isCalls(payload.payload)) {
-            const nonce = await this.shared.modules.wallets.getNonce(chainId, wallet, payload.payload.space)
-            if (nonce > i) {
-              continue
+            const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
+
+            // If ready, we need to check if it was executed already
+            // for this, we check if the wallet nonce for the given space
+            // is greater than the nonce in the payload
+            if (timestamp < Date.now() / 1000 && payload && Payload.isCalls(payload.payload)) {
+              const nonce = await this.shared.modules.wallets.getNonce(chainId, wallet, payload.payload.space)
+              if (nonce > i) {
+                continue
+              }
             }
+
+            // The id is the index + signer address + chainId + wallet address
+            const id = `${i}-${signer.address}-${chainId}-${wallet}`
+
+            // Create a new payload
+            const payloadEntry: QueuedRecoveryPayload = {
+              id,
+              index: i,
+              recoveryModule: this.shared.sequence.extensions.recovery,
+              wallet: wallet,
+              signer: signer.address,
+              chainId,
+              startTimestamp: timestamp,
+              endTimestamp: timestamp + signer.requiredDeltaTime,
+              payloadHash,
+              payload: payload?.payload,
+            }
+
+            payloads.push(payloadEntry)
           }
-
-          // The id is the index + signer address + chainId + wallet address
-          const id = `${i}-${signer.address}-${chainId}-${wallet}`
-
-          // Create a new payload
-          const payloadEntry: QueuedRecoveryPayload = {
-            id,
-            index: i,
-            recoveryModule: this.shared.sequence.extensions.recovery,
-            wallet: wallet,
-            signer: signer.address,
-            chainId,
-            startTimestamp: timestamp,
-            endTimestamp: timestamp + signer.requiredDeltaTime,
-            payloadHash,
-            payload: payload?.payload,
-          }
-
-          payloads.push(payloadEntry)
+        } catch (err) {
+          console.error('Recovery.fetchQueuedPayloads error', err)
         }
       }
     }
