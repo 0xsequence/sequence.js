@@ -284,7 +284,7 @@ export class Recovery implements RecoveryInterface {
     }
 
     await this.updateRecoveryModule(modules, (leaves) => {
-      const next = leaves.filter((l) => l.signer !== address)
+      const next = leaves.filter((l) => !Address.isEqual(l.signer, address))
       if (next.length === 0) {
         return [
           {
