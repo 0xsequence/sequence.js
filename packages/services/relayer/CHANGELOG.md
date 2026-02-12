@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.0-beta.16
+
+### Patch Changes
+
+- ethauth support
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.0-beta.16
+
 ## 3.0.0-beta.15
 
 ### Patch Changes

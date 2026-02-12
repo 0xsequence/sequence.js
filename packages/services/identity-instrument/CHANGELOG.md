@@ -1,5 +1,11 @@
 # @0xsequence/identity-instrument
 
+## 3.0.0-beta.16
+
+### Patch Changes
+
+- ethauth support
+
 ## 3.0.0-beta.15
 
 ### Patch Changes
