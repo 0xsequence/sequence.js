@@ -5,6 +5,7 @@ import {
   SignMessagePayload,
   SignTypedDataPayload,
   GuardConfig,
+  ETHAuthProof,
   SendWalletTransactionPayload,
   ModifyExplicitSessionPayload,
   CreateNewSessionPayload,
@@ -81,6 +82,10 @@ export interface SequenceStorage {
   getSessionlessConnection(): Promise<SessionlessConnectionData | null>
   clearSessionlessConnection(): Promise<void>
 
+  saveEthAuthProof(proof: ETHAuthProof): Promise<void>
+  getEthAuthProof(): Promise<ETHAuthProof | null>
+  clearEthAuthProof(): Promise<void>
+
   saveSessionlessConnectionSnapshot?(sessionData: SessionlessConnectionData): Promise<void>
   getSessionlessConnectionSnapshot?(): Promise<SessionlessConnectionData | null>
   clearSessionlessConnectionSnapshot?(): Promise<void>
@@ -94,6 +99,7 @@ const STORE_NAME = 'userKeys'
 const IMPLICIT_SESSIONS_IDB_KEY = 'SequenceImplicitSession'
 const EXPLICIT_SESSIONS_IDB_KEY = 'SequenceExplicitSession'
 const SESSIONLESS_CONNECTION_IDB_KEY = 'SequenceSessionlessConnection'
+const ETH_AUTH_PROOF_IDB_KEY = 'SequenceEthAuthProof'
 const SESSIONLESS_CONNECTION_SNAPSHOT_IDB_KEY = 'SequenceSessionlessConnectionSnapshot'
 
 const PENDING_REDIRECT_REQUEST_KEY = 'SequencePendingRedirect'
@@ -305,6 +311,15 @@ export class WebStorage implements SequenceStorage {
     }
   }
 
+  async saveEthAuthProof(proof: ETHAuthProof): Promise<void> {
+    try {
+      await this.setIDBItem(ETH_AUTH_PROOF_IDB_KEY, proof)
+    } catch (error) {
+      console.error('Failed to save ETHAuth proof:', error)
+      throw error
+    }
+  }
+
   async getSessionlessConnection(): Promise<SessionlessConnectionData | null> {
     try {
       return (await this.getIDBItem<SessionlessConnectionData>(SESSIONLESS_CONNECTION_IDB_KEY)) ?? null
@@ -314,11 +329,29 @@ export class WebStorage implements SequenceStorage {
     }
   }
 
+  async getEthAuthProof(): Promise<ETHAuthProof | null> {
+    try {
+      return (await this.getIDBItem<ETHAuthProof>(ETH_AUTH_PROOF_IDB_KEY)) ?? null
+    } catch (error) {
+      console.error('Failed to retrieve ETHAuth proof:', error)
+      return null
+    }
+  }
+
   async clearSessionlessConnection(): Promise<void> {
     try {
       await this.deleteIDBItem(SESSIONLESS_CONNECTION_IDB_KEY)
     } catch (error) {
       console.error('Failed to clear sessionless connection:', error)
+      throw error
+    }
+  }
+
+  async clearEthAuthProof(): Promise<void> {
+    try {
+      await this.deleteIDBItem(ETH_AUTH_PROOF_IDB_KEY)
+    } catch (error) {
+      console.error('Failed to clear ETHAuth proof:', error)
       throw error
     }
   }
@@ -363,6 +396,7 @@ export class WebStorage implements SequenceStorage {
       await this.clearExplicitSessions()
       await this.clearImplicitSession()
       await this.clearSessionlessConnection()
+      await this.clearEthAuthProof()
       await this.clearSessionlessConnectionSnapshot()
     } catch (error) {
       console.error('Failed to clear all data:', error)
