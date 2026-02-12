@@ -31,6 +31,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@0xsequence/wallet-core": "workspace:^",
     "@0xsequence/wallet-primitives": "workspace:^",
     "ox": "^0.9.17",
     "yargs": "^18.0.0"
