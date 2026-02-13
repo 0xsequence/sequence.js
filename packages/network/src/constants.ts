@@ -153,7 +153,10 @@ export enum ChainId {
   HYPEREVM = 999,
 
   // SONIC
-  SONIC = 146
+  SONIC = 146,
+
+  // BERACHAIN
+  BERACHAIN = 80094
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1255,6 +1258,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'Sonic',
       name: 'Sonic',
+      decimals: 18
+    }
+  },
+
+  [ChainId.BERACHAIN]: {
+    chainId: ChainId.BERACHAIN,
+    type: NetworkType.MAINNET,
+    name: 'berachain',
+    title: 'Berachain',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BERACHAIN}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Berachain',
+      rootUrl: 'https://berascan.com/'
+    },
+    nativeToken: {
+      symbol: 'Berachain',
+      name: 'Berachain',
       decimals: 18
     }
   }
