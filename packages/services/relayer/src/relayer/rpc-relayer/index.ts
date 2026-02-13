@@ -7,7 +7,7 @@ import {
   TransactionPrecondition,
   ETHTxnStatus,
 } from './relayer.gen.js'
-import { Address, Hex } from 'ox'
+import { Address, Hex, AbiFunction } from 'ox'
 import { Constants, Payload, Network } from '@0xsequence/wallet-primitives'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
 import { decodePrecondition } from '../../preconditions/index.js'
