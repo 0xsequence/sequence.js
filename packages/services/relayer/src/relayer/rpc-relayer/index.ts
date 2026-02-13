@@ -7,7 +7,7 @@ import {
   TransactionPrecondition,
   ETHTxnStatus,
 } from './relayer.gen.js'
-import { Address, Hex, Bytes, AbiFunction } from 'ox'
+import { Address, Hex } from 'ox'
 import { Constants, Payload, Network } from '@0xsequence/wallet-primitives'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
 import { decodePrecondition } from '../../preconditions/index.js'
@@ -137,23 +137,21 @@ export class RpcRelayer implements Relayer {
     to: Address.Address,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
-    // NOTE: The relayer backend simulates a call to `to` with calldata `data`.
-    // For undeployed wallets, `to` may be the guest module, so `data` must be valid
-    // calldata for the guest module (i.e. execute(payload, stubSig)), not the raw
-    // v3 payload bytes.
+    // IMPORTANT:
+    // The relayer FeeOptions endpoint simulates `eth_call(to, data)`.
+    // wallet-webapp-v3 requests FeeOptions with `to = wallet` and `data = Payload.encode(calls, self=wallet)`.
+    // This works for undeployed wallets and avoids guest-module simulation pitfalls.
     const callsStruct: Payload.Calls = { type: 'call', space: 0n, nonce: 0n, calls: calls }
 
-    const execute = AbiFunction.from('function execute(bytes calldata _payload, bytes calldata _signature)')
-    const payload = Payload.encode(callsStruct, to)
-    const stubSignature = '0x0001'
-    const data = AbiFunction.encodeData(execute, [Bytes.toHex(payload), stubSignature])
+    const feeOptionsTo = wallet
+    const data = Payload.encode(callsStruct, wallet)
 
     try {
       const result = await this.client.feeOptions(
         {
           wallet,
-          to,
-          data,
+          to: feeOptionsTo,
+          data: Hex.fromBytes(data),
         },
         { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
       )
