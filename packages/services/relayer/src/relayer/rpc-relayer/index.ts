@@ -137,15 +137,23 @@ export class RpcRelayer implements Relayer {
     to: Address.Address,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+    // NOTE: The relayer backend simulates a call to `to` with calldata `data`.
+    // For undeployed wallets, `to` may be the guest module, so `data` must be valid
+    // calldata for the guest module (i.e. execute(payload, stubSig)), not the raw
+    // v3 payload bytes.
     const callsStruct: Payload.Calls = { type: 'call', space: 0n, nonce: 0n, calls: calls }
-    const data = Payload.encode(callsStruct)
+
+    const execute = AbiFunction.from('function execute(bytes calldata _payload, bytes calldata _signature)')
+    const payload = Payload.encode(callsStruct, to)
+    const stubSignature = '0x0001'
+    const data = AbiFunction.encodeData(execute, [Bytes.toHex(payload), stubSignature])
 
     try {
       const result = await this.client.feeOptions(
         {
           wallet,
           to,
-          data: Bytes.toHex(data),
+          data,
         },
         { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
       )
