@@ -130,6 +130,15 @@ export const ChainId = {
 
   // ARC
   ARC_TESTNET: 5042002,
+
+  // HYPEREVM
+  HYPEREVM: 999,
+
+  // SONIC
+  SONIC: 146,
+
+  // BERACHAIN
+  BERACHAIN: 80094,
 } as const
 
 export type ChainId = (typeof ChainId)[keyof typeof ChainId]
@@ -958,6 +967,61 @@ export const ALL: Network[] = [
       decimals: 6,
     },
   },
+
+  {
+    chainId: ChainId.HYPEREVM,
+    type: NetworkType.MAINNET,
+    name: 'hyperevm',
+    title: 'HyperEVM',
+    rpcUrl: getRpcUrl('hyperevm'),
+    logoUrl: getLogoUrl(ChainId.HYPEREVM),
+    blockExplorer: {
+      name: 'HyperEVM Explorer',
+      url: 'https://www.hyperscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'HYPE',
+      name: 'HYPE',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.BERACHAIN,
+    type: NetworkType.MAINNET,
+    name: 'berachain',
+    title: 'Berachain',
+    rpcUrl: getRpcUrl('berachain'),
+    logoUrl: getLogoUrl(ChainId.BERACHAIN),
+    blockExplorer: {
+      name: 'Berachain Explorer',
+      url: 'https://berascan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'BEAR',
+      name: 'BEAR',
+      decimals: 18,
+    },
+  },
+
+  {
+    chainId: ChainId.SONIC,
+    type: NetworkType.MAINNET,
+    name: 'sonic',
+    title: 'Sonic',
+    rpcUrl: getRpcUrl('sonic'),
+    logoUrl: getLogoUrl(ChainId.SONIC),
+    blockExplorer: {
+      name: 'Sonic Explorer',
+      url: 'https://sonicscan.com/',
+    },
+    nativeCurrency: {
+      symbol: 'S',
+      name: 'Sonic',
+      decimals: 18,
+    },
+  },
+
 ]
 
 function getRpcUrl(networkName: string): string {
