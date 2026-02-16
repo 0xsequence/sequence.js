@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.3.41
+
+### Patch Changes
+
+- Add new chains, indexer upgrade
+
 ## 2.3.40
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.3.41
+
+### Patch Changes
+
+- Add new chains, indexer upgrade
+- Updated dependencies
+  - @0xsequence/wallet@2.3.41
+  - @0xsequence/core@2.3.41
+  - @0xsequence/abi@2.3.41
+
 ## 2.3.40
 
 ### Patch Changes

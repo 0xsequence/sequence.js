@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.41
+
+### Patch Changes
+
+- Add new chains, indexer upgrade
+- Updated dependencies
+  - @0xsequence/waas@2.3.41
+
 ## 2.3.40
 
 ### Patch Changes

@@ -1,5 +1,28 @@
 # 0xsequence
 
+## 2.3.41
+
+### Patch Changes
+
+- Add new chains, indexer upgrade
+- Updated dependencies
+  - @0xsequence/migration@2.3.41
+  - @0xsequence/metadata@2.3.41
+  - @0xsequence/provider@2.3.41
+  - @0xsequence/sessions@2.3.41
+  - @0xsequence/account@2.3.41
+  - @0xsequence/indexer@2.3.41
+  - @0xsequence/network@2.3.41
+  - @0xsequence/relayer@2.3.41
+  - @0xsequence/signhub@2.3.41
+  - @0xsequence/wallet@2.3.41
+  - @0xsequence/guard@2.3.41
+  - @0xsequence/utils@2.3.41
+  - @0xsequence/auth@2.3.41
+  - @0xsequence/core@2.3.41
+  - @0xsequence/abi@2.3.41
+  - @0xsequence/api@2.3.41
+
 ## 2.3.40
 
 ### Patch Changes

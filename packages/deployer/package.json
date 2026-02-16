@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/deployer",
-  "version": "2.3.40",
+  "version": "2.3.41",
   "description": "deployer sub-package for Sequence",
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/deployer",
   "source": "src/index.ts",
