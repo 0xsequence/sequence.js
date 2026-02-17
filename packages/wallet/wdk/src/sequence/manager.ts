@@ -233,6 +233,7 @@ export const ManagerOptionsDefaults = {
   defaultRecoverySettings: {
     requiredDeltaTime: 2592000n, // 30 days (in seconds)
     minTimestamp: 0n,
+    includeTestnets: false,
   },
 
   multiInjectedProviderDiscovery: true,
@@ -369,6 +370,7 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedM
 export type RecoverySettings = {
   requiredDeltaTime: bigint
   minTimestamp: bigint
+  includeTestnets?: boolean
 }
 
 export type Databases = {

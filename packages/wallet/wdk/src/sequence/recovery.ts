@@ -1,11 +1,15 @@
 import { Envelope } from '@0xsequence/wallet-core'
 import { Config, Constants, Extensions, GenericTree, Payload } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider, RpcTransport } from 'ox'
+import { Abi, AbiFunction, Address, Hex, Provider, RpcTransport } from 'ox'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { Shared } from './manager.js'
 import { Actions, Module } from './types/index.js'
 import { QueuedRecoveryPayload } from './types/recovery.js'
 import { Kinds, RecoverySigner } from './types/signer.js'
+
+const AGGREGATE3 = Abi.from([
+  'function aggregate3((address target, bool allowFailure, bytes callData)[] calls) external payable returns ((bool success, bytes returnData)[])',
+])[0]!
 
 export interface RecoveryInterface {
   /**
@@ -514,9 +518,16 @@ export class Recovery implements RecoveryInterface {
   async fetchQueuedPayloads(wallet: Address.Address, chainId?: number): Promise<QueuedRecoveryPayload[]> {
     // Create providers for each network
     const providers = this.shared.sequence.networks
-      .filter((network) => (chainId ? network.chainId === chainId : true))
+      .filter((network) =>
+        chainId
+          ? network.chainId === chainId
+          : !this.shared.sequence.defaultRecoverySettings.includeTestnets
+            ? network.type !== 'testnet'
+            : true,
+      )
       .map((network) => ({
         chainId: network.chainId,
+        multicall3Address: network.contracts?.multicall3,
         provider: Provider.from(RpcTransport.fromHttp(network.rpcUrl)),
       }))
 
@@ -526,73 +537,167 @@ export class Recovery implements RecoveryInterface {
       return []
     }
 
+    const recoveryExtension = this.shared.sequence.extensions.recovery
     const payloads: QueuedRecoveryPayload[] = []
 
-    for (const signer of signers) {
-      for (const { chainId, provider } of providers) {
+    await Promise.all(
+      providers.map(async ({ chainId, provider, multicall3Address }) => {
         try {
-          const totalPayloads = await Extensions.Recovery.totalQueuedPayloads(
-            provider,
-            this.shared.sequence.extensions.recovery,
-            wallet,
-            signer.address,
-          )
+          let totalPayloadsBySigner: bigint[]
 
-          for (let i = 0n; i < totalPayloads; i++) {
-            const payloadHash = await Extensions.Recovery.queuedPayloadHashOf(
+          if (multicall3Address) {
+            try {
+              // Batch all totalQueuedPayloads calls for every signer into a single Multicall3 request.
+              // This reduces N signer calls per network down to 1 call per network.
+              totalPayloadsBySigner = await this.fetchTotalQueuedPayloadsBatched(
+                provider,
+                recoveryExtension,
+                wallet,
+                signers,
+                multicall3Address,
+              )
+            } catch (err) {
+              console.error(
+                `Recovery.fetchQueuedPayloads multicall3 failed for chainId ${chainId}, retrying with individual calls:`,
+                err,
+              )
+              totalPayloadsBySigner = await this.fetchTotalQueuedPayloadsFallback(
+                provider,
+                recoveryExtension,
+                wallet,
+                signers,
+              )
+            }
+          } else {
+            totalPayloadsBySigner = await this.fetchTotalQueuedPayloadsFallback(
               provider,
-              this.shared.sequence.extensions.recovery,
+              recoveryExtension,
               wallet,
-              signer.address,
-              i,
+              signers,
             )
+          }
 
-            const timestamp = await Extensions.Recovery.timestampForQueuedPayload(
-              provider,
-              this.shared.sequence.extensions.recovery,
-              wallet,
-              signer.address,
-              payloadHash,
-            )
+          for (let s = 0; s < signers.length; s++) {
+            const signer = signers[s]!
+            const totalPayloads = totalPayloadsBySigner[s]!
+            if (totalPayloads === 0n) continue
 
-            const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
+            // Only make individual calls for the rare case where payloads actually exist
+            for (let i = 0n; i < totalPayloads; i++) {
+              const payloadHash = await Extensions.Recovery.queuedPayloadHashOf(
+                provider,
+                recoveryExtension,
+                wallet,
+                signer.address,
+                i,
+              )
 
-            // If ready, we need to check if it was executed already
-            // for this, we check if the wallet nonce for the given space
-            // is greater than the nonce in the payload
-            if (timestamp < Date.now() / 1000 && payload && Payload.isCalls(payload.payload)) {
-              const nonce = await this.shared.modules.wallets.getNonce(chainId, wallet, payload.payload.space)
-              if (nonce > i) {
-                continue
+              const timestamp = await Extensions.Recovery.timestampForQueuedPayload(
+                provider,
+                recoveryExtension,
+                wallet,
+                signer.address,
+                payloadHash,
+              )
+
+              const payload = await this.shared.sequence.stateProvider.getPayload(payloadHash)
+
+              // If ready, we need to check if it was executed already
+              // for this, we check if the wallet nonce for the given space
+              // is greater than the nonce in the payload
+              if (timestamp < Date.now() / 1000 && payload && Payload.isCalls(payload.payload)) {
+                const nonce = await this.shared.modules.wallets.getNonce(chainId, wallet, payload.payload.space)
+                if (nonce > i) {
+                  continue
+                }
               }
+
+              // The id is the index + signer address + chainId + wallet address
+              const id = `${i}-${signer.address}-${chainId}-${wallet}`
+
+              const payloadEntry: QueuedRecoveryPayload = {
+                id,
+                index: i,
+                recoveryModule: recoveryExtension,
+                wallet: wallet,
+                signer: signer.address,
+                chainId,
+                startTimestamp: timestamp,
+                endTimestamp: timestamp + signer.requiredDeltaTime,
+                payloadHash,
+                payload: payload?.payload,
+              }
+
+              payloads.push(payloadEntry)
             }
-
-            // The id is the index + signer address + chainId + wallet address
-            const id = `${i}-${signer.address}-${chainId}-${wallet}`
-
-            // Create a new payload
-            const payloadEntry: QueuedRecoveryPayload = {
-              id,
-              index: i,
-              recoveryModule: this.shared.sequence.extensions.recovery,
-              wallet: wallet,
-              signer: signer.address,
-              chainId,
-              startTimestamp: timestamp,
-              endTimestamp: timestamp + signer.requiredDeltaTime,
-              payloadHash,
-              payload: payload?.payload,
-            }
-
-            payloads.push(payloadEntry)
           }
         } catch (err) {
-          console.error('Recovery.fetchQueuedPayloads error', err)
+          console.error(`Recovery.fetchQueuedPayloads error for chainId ${chainId}:`, err)
         }
-      }
-    }
+      }),
+    )
 
     return payloads
+  }
+
+  private async fetchTotalQueuedPayloadsBatched(
+    provider: Provider.Provider,
+    recoveryExtension: Address.Address,
+    wallet: Address.Address,
+    signers: RecoverySigner[],
+    multicall3Address: Address.Address,
+  ): Promise<bigint[]> {
+    const calls = signers.map((signer) => ({
+      target: recoveryExtension,
+      allowFailure: true,
+      callData: AbiFunction.encodeData(Extensions.Recovery.TOTAL_QUEUED_PAYLOADS, [wallet, signer.address]),
+    }))
+
+    const response = await provider.request({
+      method: 'eth_call',
+      params: [
+        {
+          to: multicall3Address,
+          data: AbiFunction.encodeData(AGGREGATE3, [calls]),
+        },
+        'latest',
+      ],
+    })
+
+    const results = AbiFunction.decodeResult(AGGREGATE3, response) as readonly {
+      success: boolean
+      returnData: Hex.Hex
+    }[]
+
+    return results.map((result) => {
+      if (!result.success || result.returnData === '0x') {
+        return 0n
+      }
+      return Hex.toBigInt(result.returnData)
+    })
+  }
+
+  private fetchTotalQueuedPayloadsFallback = async (
+    provider: Provider.Provider,
+    recoveryExtension: Address.Address,
+    wallet: Address.Address,
+    signers: RecoverySigner[],
+  ): Promise<bigint[]> => {
+    const result: bigint[] = signers.map(() => 0n)
+
+    // Fallback to individual calls if the multicall3 call fails
+    for (let s = 0; s < signers.length; s++) {
+      const signer = signers[s]!
+      const totalPayloads = await Extensions.Recovery.totalQueuedPayloads(
+        provider,
+        recoveryExtension,
+        wallet,
+        signer.address,
+      )
+      result[s] = totalPayloads
+    }
+
+    return result
   }
 
   async encodeRecoverySignature(imageHash: Hex.Hex, signer: Address.Address) {
