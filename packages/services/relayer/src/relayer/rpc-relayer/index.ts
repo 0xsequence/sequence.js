@@ -49,12 +49,14 @@ const networkToChain = (network: Network.Network): Chain => {
           },
         }
       : undefined,
-    contracts: network.ensAddress
-      ? {
-          ensUniversalResolver: {
-            address: network.ensAddress as `0x${string}`,
+    contracts: network.contracts
+      ? Object.entries(network.contracts).reduce(
+          (acc, [name, address]) => {
+            acc[name] = { address }
+            return acc
           },
-        }
+          {} as Record<string, { address: Address.Address }>,
+        )
       : undefined,
   } as Chain
 }
