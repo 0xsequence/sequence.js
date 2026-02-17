@@ -1,5 +1,11 @@
 # @0xsequence/identity-instrument
 
+## 3.0.0-beta.18
+
+### Patch Changes
+
+- multicall3 optimization
+
 ## 3.0.0-beta.17
 
 ### Patch Changes

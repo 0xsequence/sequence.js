@@ -1,5 +1,15 @@
 # @0xsequence/wallet-core
 
+## 3.0.0-beta.18
+
+### Patch Changes
+
+- multicall3 optimization
+- Updated dependencies
+  - @0xsequence/guard@3.0.0-beta.18
+  - @0xsequence/relayer@3.0.0-beta.18
+  - @0xsequence/wallet-primitives@3.0.0-beta.18
+
 ## 3.0.0-beta.17
 
 ### Patch Changes

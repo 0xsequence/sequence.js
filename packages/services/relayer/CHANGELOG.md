@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.0-beta.18
+
+### Patch Changes
+
+- multicall3 optimization
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.0-beta.18
+
 ## 3.0.0-beta.17
 
 ### Patch Changes
