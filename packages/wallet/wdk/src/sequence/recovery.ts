@@ -518,7 +518,13 @@ export class Recovery implements RecoveryInterface {
   async fetchQueuedPayloads(wallet: Address.Address, chainId?: number): Promise<QueuedRecoveryPayload[]> {
     // Create providers for each network
     const providers = this.shared.sequence.networks
-      .filter((network) => (chainId ? network.chainId === chainId : true))
+      .filter((network) =>
+        chainId
+          ? network.chainId === chainId
+          : !this.shared.sequence.defaultRecoverySettings.includeTestnets
+            ? network.type !== 'testnet'
+            : true,
+      )
       .map((network) => ({
         chainId: network.chainId,
         multicall3Address: network.contracts?.multicall3,
