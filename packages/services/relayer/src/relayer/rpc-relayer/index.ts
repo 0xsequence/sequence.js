@@ -7,7 +7,7 @@ import {
   TransactionPrecondition,
   ETHTxnStatus,
 } from './relayer.gen.js'
-import { Address, Hex, Bytes, AbiFunction } from 'ox'
+import { Address, Hex, AbiFunction } from 'ox'
 import { Constants, Payload, Network } from '@0xsequence/wallet-primitives'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
 import { decodePrecondition } from '../../preconditions/index.js'
@@ -137,15 +137,21 @@ export class RpcRelayer implements Relayer {
     to: Address.Address,
     calls: Payload.Call[],
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+    // IMPORTANT:
+    // The relayer FeeOptions endpoint simulates `eth_call(to, data)`.
+    // wallet-webapp-v3 requests FeeOptions with `to = wallet` and `data = Payload.encode(calls, self=wallet)`.
+    // This works for undeployed wallets and avoids guest-module simulation pitfalls.
     const callsStruct: Payload.Calls = { type: 'call', space: 0n, nonce: 0n, calls: calls }
-    const data = Payload.encode(callsStruct)
+
+    const feeOptionsTo = wallet
+    const data = Payload.encode(callsStruct, wallet)
 
     try {
       const result = await this.client.feeOptions(
         {
           wallet,
-          to,
-          data: Bytes.toHex(data),
+          to: feeOptionsTo,
+          data: Hex.fromBytes(data),
         },
         { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
       )
