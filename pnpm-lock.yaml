@@ -109,6 +109,9 @@ importers:
 
   packages/services/api:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -121,6 +124,9 @@ importers:
 
   packages/services/builder:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -137,6 +143,9 @@ importers:
         specifier: ^0.9.17
         version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -162,6 +171,9 @@ importers:
         specifier: ^0.9.17
         version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -177,6 +189,9 @@ importers:
 
   packages/services/indexer:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -189,6 +204,9 @@ importers:
 
   packages/services/marketplace:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -201,6 +219,9 @@ importers:
 
   packages/services/metadata:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -226,6 +247,9 @@ importers:
         specifier: ^2.40.3
         version: 2.42.1(typescript@5.9.3)(zod@4.2.0)
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -241,6 +265,9 @@ importers:
 
   packages/services/userdata:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -253,6 +280,9 @@ importers:
 
   packages/utils/abi:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -284,6 +314,9 @@ importers:
         specifier: ^2.40.3
         version: 2.42.1(typescript@5.9.3)(zod@4.2.0)
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -324,6 +357,9 @@ importers:
         specifier: ^0.9.17
         version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -355,6 +391,9 @@ importers:
         specifier: ^0.9.17
         version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config
@@ -438,6 +477,9 @@ importers:
         specifier: ^13.0.0
         version: 13.0.0
     devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:^
+        version: link:../../../repo/eslint-config
       '@repo/typescript-config':
         specifier: workspace:^
         version: link:../../../repo/typescript-config

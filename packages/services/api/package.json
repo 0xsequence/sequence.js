@@ -12,7 +12,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "echo",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0"
   },
   "exports": {
     ".": {
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^25.3.0",
+    "@repo/eslint-config": "workspace:^",
     "typescript": "^5.9.3"
   }
 }

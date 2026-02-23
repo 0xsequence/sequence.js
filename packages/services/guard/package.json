@@ -15,7 +15,8 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0"
   },
   "exports": {
     ".": {
@@ -24,6 +25,7 @@
     }
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:^",
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^25.3.0",
     "typescript": "^5.9.3",

@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint . --max-warnings 0"
   },
   "exports": {
     ".": {
@@ -19,6 +20,7 @@
     }
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:^",
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^25.3.0",
     "typescript": "^5.9.3",
