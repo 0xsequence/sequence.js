@@ -1,6 +1,6 @@
-export * from './metadata.gen'
+export * from './metadata.gen.js'
 
-import { Metadata as MetadataRpc, Collections as CollectionsRpc } from './metadata.gen'
+import { Metadata as MetadataRpc, Collections as CollectionsRpc } from './metadata.gen.js'
 
 export class SequenceMetadata extends MetadataRpc {
   constructor(
