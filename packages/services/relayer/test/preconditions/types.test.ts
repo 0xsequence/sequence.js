@@ -179,7 +179,7 @@ describe('Preconditions Types', () => {
         TEST_ADDRESS,
         TOKEN_ADDRESS,
         OPERATOR_ADDRESS,
-        undefined as any,
+        undefined as unknown as bigint,
       )
 
       const error = precondition.isValid()
@@ -224,7 +224,7 @@ describe('Preconditions Types', () => {
     })
 
     it('should validate tokenId is required', () => {
-      const precondition = new Erc721OwnershipPrecondition(TEST_ADDRESS, TOKEN_ADDRESS, undefined as any)
+      const precondition = new Erc721OwnershipPrecondition(TEST_ADDRESS, TOKEN_ADDRESS, undefined as unknown as bigint)
 
       const error = precondition.isValid()
       expect(error).toBeInstanceOf(Error)
@@ -271,7 +271,7 @@ describe('Preconditions Types', () => {
       const precondition = new Erc721ApprovalPrecondition(
         TEST_ADDRESS,
         TOKEN_ADDRESS,
-        undefined as any,
+        undefined as unknown as bigint,
         OPERATOR_ADDRESS,
       )
 
@@ -319,7 +319,7 @@ describe('Preconditions Types', () => {
     })
 
     it('should validate tokenId is required', () => {
-      const precondition = new Erc1155BalancePrecondition(TEST_ADDRESS, TOKEN_ADDRESS, undefined as any)
+      const precondition = new Erc1155BalancePrecondition(TEST_ADDRESS, TOKEN_ADDRESS, undefined as unknown as bigint)
 
       const error = precondition.isValid()
       expect(error).toBeInstanceOf(Error)
@@ -402,7 +402,7 @@ describe('Preconditions Types', () => {
       const precondition = new Erc1155ApprovalPrecondition(
         TEST_ADDRESS,
         TOKEN_ADDRESS,
-        undefined as any,
+        undefined as unknown as bigint,
         OPERATOR_ADDRESS,
         1000000n,
       )
@@ -432,7 +432,7 @@ describe('Preconditions Types', () => {
         TOKEN_ADDRESS,
         123n,
         OPERATOR_ADDRESS,
-        undefined as any,
+        undefined as unknown as bigint,
       )
 
       const error = precondition.isValid()

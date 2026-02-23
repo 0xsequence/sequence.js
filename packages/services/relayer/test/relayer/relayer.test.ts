@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { Address, Hex } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
-import { Relayer, RelayerGen } from '@0xsequence/relayer'
+import { Relayer, RpcRelayerGen } from '@0xsequence/relayer'
 
 // Test addresses and data
 const TEST_WALLET_ADDRESS = Address.from('0x1234567890123456789012345678901234567890')
@@ -127,7 +127,7 @@ describe('Relayer', () => {
           symbol: 'ETH',
           decimals: 18,
           logoURL: 'https://example.com/eth.png',
-          type: 'NATIVE' as RelayerGen.FeeTokenType,
+          type: 'NATIVE' as RpcRelayerGen.FeeTokenType,
           contractAddress: undefined,
         },
         to: TEST_TO_ADDRESS,
@@ -319,7 +319,7 @@ describe('Relayer', () => {
       const statusResult = await mockRelayer.status(TEST_OP_HASH, TEST_CHAIN_ID)
       expect(statusResult.status).toBe('confirmed')
 
-      const preconditionResult = await mockRelayer.checkPrecondition({} as any)
+      const preconditionResult = await mockRelayer.checkPrecondition({} as { type: string })
       expect(preconditionResult).toBe(true)
     })
   })

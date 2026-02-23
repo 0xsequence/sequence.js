@@ -36,8 +36,8 @@ describe('Preconditions Codec', () => {
 
   describe('decodePrecondition', () => {
     it('should return undefined for null/undefined input', () => {
-      expect(decodePrecondition(null as any)).toBeUndefined()
-      expect(decodePrecondition(undefined as any)).toBeUndefined()
+      expect(decodePrecondition(null as unknown as TransactionPrecondition)).toBeUndefined()
+      expect(decodePrecondition(undefined as unknown as TransactionPrecondition)).toBeUndefined()
     })
 
     it('should decode native balance precondition with only min', () => {
@@ -231,8 +231,8 @@ describe('Preconditions Codec', () => {
     it('should handle malformed addresses gracefully', () => {
       const intent: TransactionPrecondition = {
         type: 'native-balance',
-        ownerAddress: 'invalid-address' as any,
-        tokenAddress: NATIVE_TOKEN_ADDRESS,
+        ownerAddress: 'invalid-address',
+        tokenAddress: NATIVE_TOKEN_ADDRESS.toString(),
         chainId: ARBITRUM_CHAIN_ID,
         minAmount: BigInt('1000000000000000000'),
       }
@@ -243,13 +243,13 @@ describe('Preconditions Codec', () => {
     })
 
     it('should handle malformed BigInt values gracefully', () => {
-      const intent: TransactionPrecondition = {
+      const intent = {
         type: 'native-balance',
-        ownerAddress: TEST_ADDRESS,
-        tokenAddress: NATIVE_TOKEN_ADDRESS,
+        ownerAddress: TEST_ADDRESS.toString(),
+        tokenAddress: NATIVE_TOKEN_ADDRESS.toString(),
         chainId: ARBITRUM_CHAIN_ID,
-        minAmount: 'not-a-number' as any,
-      }
+        minAmount: 'not-a-number',
+      } as unknown as TransactionPrecondition
 
       const result = decodePrecondition(intent)
       expect(result).toBeUndefined()
@@ -316,8 +316,8 @@ describe('Preconditions Codec', () => {
         },
         {
           type: 'native-balance',
-          ownerAddress: 'invalid-address' as any,
-          tokenAddress: NATIVE_TOKEN_ADDRESS,
+          ownerAddress: 'invalid-address',
+          tokenAddress: NATIVE_TOKEN_ADDRESS.toString(),
           chainId: ARBITRUM_CHAIN_ID,
           minAmount: BigInt('1000000000000000000'),
         },
