@@ -19,6 +19,8 @@ jobs:
       - uses: ./.github/actions/install-dependencies
       - run: pnpm clean
       - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm lint
 
   tests:
     name: Run all tests
