@@ -15,7 +15,7 @@ export class SequenceMetadata extends MetadataRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey
@@ -47,7 +47,7 @@ export class SequenceCollections extends CollectionsRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt auth header to requests
     // if its been set on the client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
 

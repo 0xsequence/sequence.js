@@ -8,6 +8,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

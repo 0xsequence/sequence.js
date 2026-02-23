@@ -15,7 +15,7 @@ export class SequenceBuilderClient extends BuilderRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include access key auth header to requests
     // if its been set on the api client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const projectAccessKey = this.projectAccessKey
     if (projectAccessKey && projectAccessKey.length > 0) {

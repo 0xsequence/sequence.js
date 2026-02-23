@@ -8,6 +8,7 @@
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/services/metadata",
   "author": "Sequence Platforms ULC",
   "license": "Apache-2.0",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

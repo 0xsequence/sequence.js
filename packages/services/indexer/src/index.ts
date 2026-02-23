@@ -17,7 +17,7 @@ export class SequenceIndexer extends IndexerRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the api client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey
@@ -50,7 +50,7 @@ export class SequenceIndexerGateway extends IndexerGatewayRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the api client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey
