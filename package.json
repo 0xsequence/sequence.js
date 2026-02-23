@@ -16,15 +16,15 @@
     "reinstall": "rimraf -g ./**/node_modules && pnpm install",
     "test:anvil": "anvil --fork-url https://nodes.sequence.app/arbitrum",
     "clean": "turbo clean",
-    "deps:lint": "syncpack list-mismatches",
-    "deps:fix": "syncpack fix-mismatches"
+    "deps:lint": "syncpack lint --dependency-types prod,dev",
+    "deps:fix": "syncpack fix"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
     "lefthook": "^2.0.12",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "rimraf": "^6.1.2",
-    "syncpack": "^13.0.4",
+    "syncpack": "^14.0.0",
     "turbo": "^2.6.3",
     "typescript": "^5.9.3"
   },
