@@ -143,7 +143,7 @@ describe('Private Key Signers', () => {
         await pk.witness(mockStateWriter, testWallet)
 
         expect(mockStateWriter.saveWitnesses).toHaveBeenCalledTimes(1)
-        const [wallet, chainId, payload, witness] = vi.mocked(mockStateWriter.saveWitnesses).mock.calls[0]
+        const [wallet, chainId, _payload, witness] = vi.mocked(mockStateWriter.saveWitnesses).mock.calls[0]
 
         expect(wallet).toBe(testWallet)
         expect(chainId).toBe(0)

@@ -1,11 +1,4 @@
-import {
-  Constants,
-  Extensions,
-  Payload,
-  Permission,
-  SessionConfig,
-  SessionSignature,
-} from '@0xsequence/wallet-primitives'
+import { Constants, Payload, Permission, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
 import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider } from 'ox'
 import { MemoryPkStore, PkStore } from '../pk/index.js'
 import { ExplicitSessionSigner, SessionSignerValidity, UsageLimit } from './session.js'
@@ -323,7 +316,7 @@ export class Explicit implements ExplicitSessionSigner {
           Bytes.fromHex(call.data).slice(Number(rule.offset), Number(rule.offset) + 32),
           32,
         )
-        let value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
+        const value: Bytes.Bytes = callDataValue.map((b, i) => b & rule.mask[i]!)
         if (Bytes.toBigInt(value) === 0n) continue
 
         // Add to list

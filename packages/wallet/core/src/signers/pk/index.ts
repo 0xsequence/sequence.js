@@ -52,7 +52,7 @@ export class Pk implements SignerInterface, Witnessable {
     return { ...signature, type: 'hash' }
   }
 
-  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
+  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: object): Promise<void> {
     const payload = Payload.fromMessage(
       Hex.fromString(
         JSON.stringify({

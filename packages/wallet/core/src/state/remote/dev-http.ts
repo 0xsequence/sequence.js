@@ -44,12 +44,12 @@ export class DevHttpProvider implements Provider {
         const errorText = await response.text()
         const errorJson = await Utils.fromJSON(errorText)
         errorPayload = { ...errorPayload, ...errorJson }
-      } catch (e) {
+      } catch {
         try {
           // If JSON parsing fails, try getting text for better error message
           const errorText = await response.text()
           errorPayload.body = errorText
-        } catch (textErr) {
+        } catch {
           // Ignore if reading text also fails
         }
       }
@@ -105,7 +105,7 @@ export class DevHttpProvider implements Provider {
         throw new Error(
           `Failed to parse JSON response from server. Status: ${response.status}. Body: "${text}". Original error: ${error instanceof Error ? error.message : String(error)}`,
         )
-      } catch (readError) {
+      } catch {
         throw new Error(
           `Failed to parse JSON response from server and could not read response body as text. Status: ${response.status}. Original error: ${error instanceof Error ? error.message : String(error)}`,
         )
