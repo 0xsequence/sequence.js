@@ -248,7 +248,7 @@ describe('Utils', () => {
 
       it('should revive Uint8Array values', () => {
         const reviver = createJSONReviver()
-        const result = reviver('test', { __uint8array: [1, 2, 3, 255] })
+        const result = reviver('test', { __uint8array: [1, 2, 3, 255] }) as Uint8Array
 
         expect(result).toBeInstanceOf(Uint8Array)
         expect(Array.from(result)).toEqual([1, 2, 3, 255])
@@ -314,7 +314,7 @@ describe('Utils', () => {
 
       it('should handle empty Uint8Array', () => {
         const reviver = createJSONReviver()
-        const result = reviver('test', { __uint8array: [] })
+        const result = reviver('test', { __uint8array: [] }) as Uint8Array
 
         expect(result).toBeInstanceOf(Uint8Array)
         expect(result.length).toBe(0)
@@ -401,7 +401,7 @@ describe('Utils', () => {
 
       it('should deserialize objects with BigInt', () => {
         const json = '{"value":{"__bigint":"0x75bcd15"},"name":"test"}'
-        const result = fromJSON(json)
+        const result = fromJSON(json) as { value: bigint; name: string }
 
         expect(result.value).toBe(123456789n)
         expect(result.name).toBe('test')
@@ -409,7 +409,7 @@ describe('Utils', () => {
 
       it('should deserialize objects with Uint8Array', () => {
         const json = '{"data":{"__uint8array":[1,2,3]},"name":"test"}'
-        const result = fromJSON(json)
+        const result = fromJSON(json) as { data: Uint8Array; name: string }
 
         expect(result.data).toBeInstanceOf(Uint8Array)
         expect(Array.from(result.data)).toEqual([1, 2, 3])
