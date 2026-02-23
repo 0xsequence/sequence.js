@@ -24,13 +24,13 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
-    "@types/node": "^25.0.2",
-    "@vitest/coverage-v8": "^4.0.15",
-    "dotenv": "^17.2.3",
+    "@types/node": "^25.3.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "dotenv": "^17.3.1",
     "fake-indexeddb": "^6.2.5",
-    "happy-dom": "^20.0.11",
+    "happy-dom": "^20.7.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "@0xsequence/guard": "workspace:^",
