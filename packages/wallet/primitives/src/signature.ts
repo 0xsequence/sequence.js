@@ -1,4 +1,4 @@
-import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1, Signature } from 'ox'
+import { AbiFunction, AbiParameters, Address, Bytes, Hash, Hex, Provider, Secp256k1 } from 'ox'
 import {
   Config,
   Leaf,
@@ -22,7 +22,7 @@ import { RECOVER_SAPIENT_SIGNATURE, RECOVER_SAPIENT_SIGNATURE_COMPACT, IS_VALID_
 import { wrap, decode } from './erc-6492.js'
 import { fromConfigUpdate, hash, Parented } from './payload.js'
 import { minBytesFor, packRSY, unpackRSY } from './utils.js'
-import { Constants, Network } from './index.js'
+import { Constants } from './index.js'
 
 export const FLAG_SIGNATURE_HASH = 0
 export const FLAG_ADDRESS = 1
@@ -1218,7 +1218,7 @@ async function recoverTopology(
               weight: topology.weight,
             }
 
-          default:
+          default: {
             const provider = 'provider' in options!.provider ? options!.provider.provider : options!.provider
             const block = 'block' in options!.provider ? options!.provider.block : undefined
 
@@ -1254,6 +1254,7 @@ async function recoverTopology(
                 }
               }
             }
+          }
         }
 
       case 'sapient':
@@ -1264,7 +1265,7 @@ async function recoverTopology(
           case 'assume-valid':
             throw new Error(`unable to validate sapient signer ${topology.signature.address} signature`)
 
-          default:
+          default: {
             const provider = 'provider' in options!.provider ? options!.provider.provider : options!.provider
             const block = 'block' in options!.provider ? options!.provider.block : undefined
 
@@ -1298,6 +1299,7 @@ async function recoverTopology(
               },
               weight: topology.weight,
             }
+          }
         }
     }
   } else if (isRawNestedLeaf(topology)) {
