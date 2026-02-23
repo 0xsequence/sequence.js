@@ -1,4 +1,4 @@
-import { Generic, Migration } from './generic.js'
+import { Generic } from './generic.js'
 import { Wallet } from '../sequence/types/wallet.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 

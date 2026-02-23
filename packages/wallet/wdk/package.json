@@ -12,7 +12,7 @@
     "dev": "tsc --watch",
     "test": "vitest run && npm run test:ssr",
     "test:coverage": "vitest run --coverage",
-    "test:ssr": "node test/test-ssr-safety.mjs",
+    "test:ssr": "node test/test-ssr-safety.js",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist",
     "lint": "eslint . --max-warnings 0"

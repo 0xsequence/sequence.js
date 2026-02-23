@@ -191,7 +191,7 @@ export class Provider implements ProviderInterface {
           throw new Error(`unexpected compact sapient signature by ${signer}`)
       }
     } catch {
-      //
+      // ignore
     }
   }
 
@@ -228,7 +228,7 @@ export class Provider implements ProviderInterface {
           }
       }
     } catch {
-      //
+      // ignore
     }
   }
 

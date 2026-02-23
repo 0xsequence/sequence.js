@@ -1,5 +1,5 @@
 import { Message } from '../sequence/types/message-request.js'
-import { Generic, Migration } from './generic.js'
+import { Generic } from './generic.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 
 const TABLE_NAME = 'messages'

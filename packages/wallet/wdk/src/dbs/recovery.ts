@@ -1,4 +1,4 @@
-import { Generic, Migration } from './generic.js'
+import { Generic } from './generic.js'
 import { QueuedRecoveryPayload } from '../sequence/types/recovery.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 

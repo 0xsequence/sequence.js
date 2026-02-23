@@ -496,7 +496,7 @@ export class Transactions implements TransactionsInterface {
     let tx: Transaction | undefined
     try {
       tx = await this.get(transactionOrSignatureId)
-    } catch (e) {
+    } catch {
       // If not found, it might be a signature ID
       const signature = await this.shared.modules.signatures.get(transactionOrSignatureId)
       if (!signature) {

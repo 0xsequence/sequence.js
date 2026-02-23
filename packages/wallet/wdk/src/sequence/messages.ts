@@ -242,7 +242,7 @@ export class Messages implements MessagesInterface {
       const message = await this.getByMessageOrSignatureId(messageOrSignatureId)
       await this.shared.databases.signatures.del(message.signatureId)
       await this.shared.databases.messages.del(message.id)
-    } catch (error) {
+    } catch {
       // Ignore
     }
   }

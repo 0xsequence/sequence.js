@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest'
 import { Address, Hex } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
-import { IdentityInstrument, IdentityType, KeyType, OtpChallenge } from '@0xsequence/identity-instrument'
+import { IdentityInstrument, IdentityType, KeyType } from '@0xsequence/identity-instrument'
 import { OtpHandler, PromptOtpHandler } from '../src/sequence/handlers/otp.js'
 import { Signatures } from '../src/sequence/signatures.js'
 import * as Db from '../src/dbs/index.js'

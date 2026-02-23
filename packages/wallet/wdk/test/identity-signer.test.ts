@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest'
-import { Address, Bytes, Hex } from 'ox'
+import { Address, Hex } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
 import { State } from '@0xsequence/wallet-core'
