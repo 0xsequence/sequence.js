@@ -1,6 +1,6 @@
-export * from './marketplace.gen'
+export * from './marketplace.gen.js'
 
-import { Marketplace as MarketplaceRpc } from './marketplace.gen'
+import { Marketplace as MarketplaceRpc } from './marketplace.gen.js'
 
 export class MarketplaceIndexer extends MarketplaceRpc {
   constructor(

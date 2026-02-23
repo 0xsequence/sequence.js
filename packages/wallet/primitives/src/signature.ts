@@ -618,7 +618,7 @@ export function fillLeaves(
 export function encodeChainedSignature(signatures: RawSignature[]): Uint8Array {
   let flag = 0x01
 
-  let sigForCheckpointer = signatures[signatures.length - 1]
+  const sigForCheckpointer = signatures[signatures.length - 1]
 
   if (sigForCheckpointer?.configuration.checkpointer) {
     flag |= 0x40
@@ -723,7 +723,7 @@ export function encodeTopology(
     const isBranching = isNode(topology[1]!) || isRawNode(topology[1]!)
 
     if (isBranching) {
-      let encoded1Size = minBytesFor(BigInt(encoded1.length))
+      const encoded1Size = minBytesFor(BigInt(encoded1.length))
       if (encoded1Size > 15) {
         throw new Error('Branch too large')
       }
@@ -799,7 +799,7 @@ export function encodeTopology(
     } else if (topology.signature.type === 'erc1271') {
       let flag = FLAG_SIGNATURE_ERC1271 << 4
 
-      let bytesForSignatureSize = minBytesFor(BigInt(topology.signature.data.length))
+      const bytesForSignatureSize = minBytesFor(BigInt(topology.signature.data.length))
       if (bytesForSignatureSize > 3) {
         throw new Error('Signature too large')
       }
@@ -826,7 +826,7 @@ export function encodeTopology(
       let flag = (topology.signature.type === 'sapient' ? FLAG_SIGNATURE_SAPIENT : FLAG_SIGNATURE_SAPIENT_COMPACT) << 4
 
       const signatureBytes = Bytes.fromHex(topology.signature.data)
-      let bytesForSignatureSize = minBytesFor(BigInt(signatureBytes.length))
+      const bytesForSignatureSize = minBytesFor(BigInt(signatureBytes.length))
       if (bytesForSignatureSize > 3) {
         throw new Error('Signature too large')
       }

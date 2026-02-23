@@ -1,6 +1,6 @@
-export * from './api.gen'
+export * from './api.gen.js'
 
-import { API as ApiRpc } from './api.gen'
+import { API as ApiRpc } from './api.gen.js'
 
 export class SequenceAPIClient extends ApiRpc {
   constructor(

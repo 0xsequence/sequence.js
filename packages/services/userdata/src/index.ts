@@ -1,6 +1,6 @@
-export * from './userdata.gen'
+export * from './userdata.gen.js'
 
-import { UserData as UserdataRpc } from './userdata.gen'
+import { UserData as UserdataRpc } from './userdata.gen.js'
 
 export class SequenceUserdataClient extends UserdataRpc {
   constructor(

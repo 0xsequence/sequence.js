@@ -1,6 +1,6 @@
-export * from './builder.gen'
+export * from './builder.gen.js'
 
-import { Builder as BuilderRpc } from './builder.gen'
+import { Builder as BuilderRpc } from './builder.gen.js'
 
 export class SequenceBuilderClient extends BuilderRpc {
   constructor(

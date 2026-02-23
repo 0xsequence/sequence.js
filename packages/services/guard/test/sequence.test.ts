@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Guard } from '../src/sequence'
-import { PayloadType } from '../src/client/guard.gen'
+import { Guard } from '../src/sequence.js'
+import { PayloadType } from '../src/client/guard.gen.js'
 import { Address, Bytes, Hex } from 'ox'
 
 // Mock fetch globally for guard API calls
