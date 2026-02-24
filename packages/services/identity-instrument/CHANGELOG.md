@@ -1,5 +1,11 @@
 # @0xsequence/identity-instrument
 
+## 3.0.0-beta.19
+
+### Patch Changes
+
+- Final RC before 3.0.0
+
 ## 3.0.0-beta.18
 
 ### Patch Changes

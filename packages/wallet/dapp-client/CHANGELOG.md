@@ -1,5 +1,16 @@
 # @0xsequence/dapp-client
 
+## 3.0.0-beta.19
+
+### Patch Changes
+
+- Final RC before 3.0.0
+- Updated dependencies
+  - @0xsequence/guard@3.0.0-beta.19
+  - @0xsequence/relayer@3.0.0-beta.19
+  - @0xsequence/wallet-core@3.0.0-beta.19
+  - @0xsequence/wallet-primitives@3.0.0-beta.19
+
 ## 3.0.0-beta.18
 
 ### Patch Changes
