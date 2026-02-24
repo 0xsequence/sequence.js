@@ -1,8 +1,8 @@
-export * from './indexer.gen'
-export * as IndexerGateway from './indexergw.gen'
+export * from './indexer.gen.js'
+export * as IndexerGateway from './indexergw.gen.js'
 
-import { Indexer as IndexerRpc } from './indexer.gen'
-import { IndexerGateway as IndexerGatewayRpc } from './indexergw.gen'
+import { Indexer as IndexerRpc } from './indexer.gen.js'
+import { IndexerGateway as IndexerGatewayRpc } from './indexergw.gen.js'
 
 export class SequenceIndexer extends IndexerRpc {
   constructor(
@@ -17,7 +17,7 @@ export class SequenceIndexer extends IndexerRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the api client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey
@@ -50,7 +50,7 @@ export class SequenceIndexerGateway extends IndexerGatewayRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the api client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey

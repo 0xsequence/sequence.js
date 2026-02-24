@@ -1,6 +1,6 @@
-export * from './metadata.gen'
+export * from './metadata.gen.js'
 
-import { Metadata as MetadataRpc, Collections as CollectionsRpc } from './metadata.gen'
+import { Metadata as MetadataRpc, Collections as CollectionsRpc } from './metadata.gen.js'
 
 export class SequenceMetadata extends MetadataRpc {
   constructor(
@@ -15,7 +15,7 @@ export class SequenceMetadata extends MetadataRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey
@@ -47,7 +47,7 @@ export class SequenceCollections extends CollectionsRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt auth header to requests
     // if its been set on the client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
 

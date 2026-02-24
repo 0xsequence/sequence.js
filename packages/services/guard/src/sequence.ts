@@ -1,4 +1,4 @@
-import { Address, Hex, Signature, Bytes, Hash } from 'ox'
+import { Address, Hex, Signature, Bytes } from 'ox'
 import * as Client from './client/guard.gen.js'
 import * as Types from './types.js'
 

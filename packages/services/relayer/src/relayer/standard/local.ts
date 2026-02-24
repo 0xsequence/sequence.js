@@ -1,9 +1,18 @@
-import { Constants, Payload } from '@0xsequence/wallet-primitives'
+import { Payload } from '@0xsequence/wallet-primitives'
 import { EIP1193Provider } from 'mipd'
-import { AbiFunction, Address, Bytes, Hex, TransactionReceipt } from 'ox'
+import { AbiFunction, Address, Hex, TransactionReceipt } from 'ox'
 import { FeeOption, FeeQuote, OperationStatus, Relayer } from '../index.js'
 import { FeeToken, TransactionPrecondition } from '../rpc-relayer/relayer.gen.js'
-import { decodePrecondition } from '../../preconditions/index.js'
+import {
+  decodePrecondition,
+  Erc1155ApprovalPrecondition,
+  Erc1155BalancePrecondition,
+  Erc20ApprovalPrecondition,
+  Erc20BalancePrecondition,
+  Erc721ApprovalPrecondition,
+  Erc721OwnershipPrecondition,
+  NativeBalancePrecondition,
+} from '../../preconditions/index.js'
 import {
   erc20BalanceOf,
   erc20Allowance,
@@ -23,7 +32,7 @@ export interface GenericProvider {
 }
 
 export class LocalRelayer implements Relayer {
-  public readonly kind: 'relayer' = 'relayer'
+  public readonly kind = 'relayer'
   public readonly type = 'local'
   public readonly id = 'local'
 
@@ -34,7 +43,7 @@ export class LocalRelayer implements Relayer {
   }
 
   static createFromWindow(window: Window): LocalRelayer | undefined {
-    const eth = (window as any).ethereum
+    const eth = (window as { ethereum?: EIP1193Provider }).ethereum
     if (!eth) {
       console.warn('Window.ethereum not found, skipping local relayer')
       return undefined
@@ -164,8 +173,8 @@ export class LocalRelayer implements Relayer {
 
     switch (decoded.type()) {
       case 'native-balance': {
-        const native = decoded as any
-        const balance = await this.provider.getBalance(native.address.toString())
+        const native = decoded as NativeBalancePrecondition
+        const balance = await this.provider.getBalance(native.address)
         if (native.min !== undefined && balance < native.min) {
           return false
         }
@@ -176,10 +185,10 @@ export class LocalRelayer implements Relayer {
       }
 
       case 'erc20-balance': {
-        const erc20 = decoded as any
-        const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address.toString()])
+        const erc20 = decoded as Erc20BalancePrecondition
+        const data = AbiFunction.encodeData(erc20BalanceOf, [erc20.address])
         const result = await this.provider.call({
-          to: erc20.token.toString(),
+          to: erc20.token,
           data,
         })
         const balance = BigInt(result)
@@ -193,10 +202,10 @@ export class LocalRelayer implements Relayer {
       }
 
       case 'erc20-approval': {
-        const erc20 = decoded as any
-        const data = AbiFunction.encodeData(erc20Allowance, [erc20.address.toString(), erc20.operator.toString()])
+        const erc20 = decoded as Erc20ApprovalPrecondition
+        const data = AbiFunction.encodeData(erc20Allowance, [erc20.address, erc20.operator])
         const result = await this.provider.call({
-          to: erc20.token.toString(),
+          to: erc20.token,
           data,
         })
         const allowance = BigInt(result)
@@ -204,10 +213,10 @@ export class LocalRelayer implements Relayer {
       }
 
       case 'erc721-ownership': {
-        const erc721 = decoded as any
+        const erc721 = decoded as Erc721OwnershipPrecondition
         const data = AbiFunction.encodeData(erc721OwnerOf, [erc721.tokenId])
         const result = await this.provider.call({
-          to: erc721.token.toString(),
+          to: erc721.token,
           data,
         })
         const owner = '0x' + result.slice(26)
@@ -216,10 +225,10 @@ export class LocalRelayer implements Relayer {
       }
 
       case 'erc721-approval': {
-        const erc721 = decoded as any
+        const erc721 = decoded as Erc721ApprovalPrecondition
         const data = AbiFunction.encodeData(erc721GetApproved, [erc721.tokenId])
         const result = await this.provider.call({
-          to: erc721.token.toString(),
+          to: erc721.token,
           data,
         })
         const approved = '0x' + result.slice(26)
@@ -227,10 +236,10 @@ export class LocalRelayer implements Relayer {
       }
 
       case 'erc1155-balance': {
-        const erc1155 = decoded as any
-        const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address.toString(), erc1155.tokenId])
+        const erc1155 = decoded as Erc1155BalancePrecondition
+        const data = AbiFunction.encodeData(erc1155BalanceOf, [erc1155.address, erc1155.tokenId])
         const result = await this.provider.call({
-          to: erc1155.token.toString(),
+          to: erc1155.token,
           data,
         })
         const balance = BigInt(result)
@@ -244,13 +253,10 @@ export class LocalRelayer implements Relayer {
       }
 
       case 'erc1155-approval': {
-        const erc1155 = decoded as any
-        const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [
-          erc1155.address.toString(),
-          erc1155.operator.toString(),
-        ])
+        const erc1155 = decoded as Erc1155ApprovalPrecondition
+        const data = AbiFunction.encodeData(erc1155IsApprovedForAll, [erc1155.address, erc1155.operator])
         const result = await this.provider.call({
-          to: erc1155.token.toString(),
+          to: erc1155.token,
           data,
         })
         return BigInt(result) === 1n
@@ -327,7 +333,7 @@ export class EIP1193ProviderAdapter implements GenericProvider {
     const rpcReceipt = await this.provider.request({ method: 'eth_getTransactionReceipt', params: [txHash] })
 
     if (rpcReceipt) {
-      const receipt = TransactionReceipt.fromRpc(rpcReceipt as any)
+      const receipt = TransactionReceipt.fromRpc(rpcReceipt as Parameters<typeof TransactionReceipt.fromRpc>[0])
       if (receipt?.status === 'success') {
         return 'success'
       } else if (receipt?.status === 'reverted') {

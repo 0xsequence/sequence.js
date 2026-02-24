@@ -1,4 +1,4 @@
-import { Generic, Migration } from './generic.js'
+import { Generic } from './generic.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 import { Address } from 'ox'
 import { Extensions } from '@0xsequence/wallet-primitives'

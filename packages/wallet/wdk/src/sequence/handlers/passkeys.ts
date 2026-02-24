@@ -18,7 +18,7 @@ export class PasskeysHandler implements Handler {
     private readonly passkeyProvider: PasskeyProvider,
   ) {}
 
-  onStatusChange(cb: () => void): () => void {
+  onStatusChange(_cb: () => void): () => void {
     return () => {}
   }
 

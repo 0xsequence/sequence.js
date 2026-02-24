@@ -6,7 +6,6 @@ import * as Envelope from '../src/envelope.js'
 
 // Test addresses and data
 const TEST_ADDRESS_1 = Address.from('0x1234567890123456789012345678901234567890')
-const TEST_ADDRESS_2 = Address.from('0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
 const TEST_ADDRESS_3 = Address.from('0x9876543210987654321098765432109876543210')
 const TEST_WALLET = Address.from('0xfedcbafedcbafedcbafedcbafedcbafedcbafe00')
 const TEST_IMAGE_HASH = Hex.from('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')

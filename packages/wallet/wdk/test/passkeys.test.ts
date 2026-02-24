@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Hex } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
-import { Signers, State } from '@0xsequence/wallet-core'
+import { State } from '@0xsequence/wallet-core'
 import { Extensions } from '@0xsequence/wallet-primitives'
 import { PasskeysHandler } from '../src/sequence/handlers/passkeys.js'
 import { Signatures } from '../src/sequence/signatures.js'

@@ -14,7 +14,6 @@ import {
   FLAG_SIGNATURE_SAPIENT,
   FLAG_SIGNATURE_SAPIENT_COMPACT,
   RSY,
-  SignatureOfSignerLeafEthSign,
   SignatureOfSignerLeafHash,
   SignatureOfSignerLeafErc1271,
   SignatureOfSapientSignerLeaf,
@@ -42,7 +41,7 @@ import {
   recover,
 } from '../src/signature.js'
 import { packRSY } from '../src/utils.js'
-import { Config, SignerLeaf, SapientSignerLeaf } from '../src/config.js'
+import { SignerLeaf, SapientSignerLeaf, SubdigestLeaf, Topology, NestedLeaf } from '../src/config.js'
 import * as Payload from '../src/payload.js'
 import { ChainId } from '../src/network.js'
 
@@ -60,11 +59,6 @@ describe('Signature', () => {
 
   const sampleHashSignature: SignatureOfSignerLeafHash = {
     type: 'hash',
-    ...sampleRSY,
-  }
-
-  const sampleEthSignSignature: SignatureOfSignerLeafEthSign = {
-    type: 'eth_sign',
     ...sampleRSY,
   }
 
@@ -377,7 +371,7 @@ describe('Signature', () => {
         expect(result.nodes).toHaveLength(1)
         expect(result.leftover).toHaveLength(0)
 
-        const node = result.nodes[0] as any
+        const node = result.nodes[0] as SubdigestLeaf
         expect(node.type).toBe('subdigest')
         expect(node.digest).toBe(digest)
       })
@@ -517,7 +511,7 @@ describe('Signature', () => {
       })
 
       it('should throw for invalid topology', () => {
-        expect(() => encodeTopology({} as any)).toThrow('Invalid topology')
+        expect(() => encodeTopology({} as Topology)).toThrow('Invalid topology')
       })
     })
 
@@ -696,9 +690,9 @@ describe('Signature', () => {
 
         const signatureProvider = () => sampleHashSignature
 
-        const result = fillLeaves(nestedTopology, signatureProvider)
-        expect((result as any).type).toBe('nested')
-        expect((result as any).tree).toHaveProperty('signature')
+        const result = fillLeaves(nestedTopology, signatureProvider) as NestedLeaf
+        expect(result.type).toBe('nested')
+        expect(result.tree).toHaveProperty('signature')
       })
 
       it('should handle topology without signatures', () => {
@@ -751,12 +745,12 @@ describe('Signature', () => {
 
         const result = fillLeaves(binaryTree, signatureProvider)
         expect(Array.isArray(result)).toBe(true)
-        expect((result as any)[0]).toHaveProperty('signature')
-        expect((result as any)[1]).toHaveProperty('signature')
+        expect(result[0]).toHaveProperty('signature')
+        expect(result[1]).toHaveProperty('signature')
       })
 
       it('should throw for invalid topology', () => {
-        expect(() => fillLeaves({} as any, () => undefined)).toThrow('Invalid topology')
+        expect(() => fillLeaves({} as Topology, () => undefined)).toThrow('Invalid topology')
       })
     })
   })
@@ -917,7 +911,7 @@ describe('Signature', () => {
           },
         ]
 
-        signatures.forEach(({ topology, name }) => {
+        signatures.forEach(({ topology }) => {
           const signature = {
             noChainId: false,
             configuration: {
@@ -1760,7 +1754,7 @@ describe('Signature', () => {
           },
         ]
 
-        for (const { name, payload } of payloadTypes) {
+        for (const { payload } of payloadTypes) {
           const sapientSignature: RawSignature = {
             noChainId: false,
             configuration: {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Address, Hex, Bytes } from 'ox'
 import * as Identity from '@0xsequence/identity-instrument'
 import { AuthCodePkceHandler } from '../src/sequence/handlers/authcode-pkce.js'
 import { Signatures } from '../src/sequence/signatures.js'
@@ -68,7 +67,7 @@ describe('AuthCodePkceHandler', () => {
     handler.setRedirectUri('https://example.com/auth/callback')
 
     // Mock inherited methods
-    vi.spyOn(handler as any, 'nitroCommitVerifier').mockImplementation(async (challenge) => {
+    vi.spyOn(handler as any, 'nitroCommitVerifier').mockImplementation(async () => {
       return {
         verifier: 'mock-verifier-code',
         loginHint: 'user@example.com',
@@ -76,7 +75,7 @@ describe('AuthCodePkceHandler', () => {
       }
     })
 
-    vi.spyOn(handler as any, 'nitroCompleteAuth').mockImplementation(async (challenge) => {
+    vi.spyOn(handler as any, 'nitroCompleteAuth').mockImplementation(async () => {
       return {
         signer: mockIdentitySigner,
         email: 'user@example.com',

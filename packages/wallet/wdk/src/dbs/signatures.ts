@@ -1,5 +1,5 @@
 import { BaseSignatureRequest } from '../sequence/index.js'
-import { Generic, Migration } from './generic.js'
+import { Generic } from './generic.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 
 const TABLE_NAME = 'envelopes'

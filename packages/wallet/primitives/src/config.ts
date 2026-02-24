@@ -2,7 +2,6 @@ import { Address, Bytes, Hash, Hex } from 'ox'
 import {
   isRawConfig,
   isRawNestedLeaf,
-  isRawNode,
   isRawSignerLeaf,
   isSignedSapientSignerLeaf,
   isSignedSignerLeaf,
@@ -55,6 +54,49 @@ export type Leaf = SignerLeaf | SapientSignerLeaf | SubdigestLeaf | AnyAddressSu
 
 export type Topology = Node | Leaf
 
+/** Encoded topology types for JSON serialization */
+type EncodedSignerLeaf = {
+  type: 'signer'
+  address: Address.Address
+  weight: string
+}
+
+type EncodedSapientSignerLeaf = {
+  type: 'sapient-signer'
+  address: Address.Address
+  weight: string
+  imageHash: Hex.Hex
+}
+
+type EncodedSubdigestLeaf = {
+  type: 'subdigest'
+  digest: Hex.Hex
+}
+
+type EncodedAnyAddressSubdigestLeaf = {
+  type: 'any-address-subdigest'
+  digest: Hex.Hex
+}
+
+type EncodedNestedLeaf = {
+  type: 'nested'
+  tree: EncodedTopology
+  weight: string
+  threshold: string
+}
+
+type EncodedNodeLeaf = Hex.Hex
+
+export type EncodedLeaf =
+  | EncodedSignerLeaf
+  | EncodedSapientSignerLeaf
+  | EncodedSubdigestLeaf
+  | EncodedAnyAddressSubdigestLeaf
+  | EncodedNestedLeaf
+  | EncodedNodeLeaf
+export type EncodedNode = [EncodedTopology, EncodedTopology]
+export type EncodedTopology = EncodedNode | EncodedLeaf
+
 export type Config = {
   threshold: bigint
   checkpoint: bigint
@@ -62,39 +104,39 @@ export type Config = {
   checkpointer?: Address.Address
 }
 
-export function isSignerLeaf(cand: any): cand is SignerLeaf {
-  return typeof cand === 'object' && cand !== null && cand.type === 'signer'
+export function isSignerLeaf(cand: unknown): cand is SignerLeaf {
+  return typeof cand === 'object' && cand !== null && 'type' in cand && cand.type === 'signer'
 }
 
-export function isSapientSignerLeaf(cand: any): cand is SapientSignerLeaf {
-  return typeof cand === 'object' && cand !== null && cand.type === 'sapient-signer'
+export function isSapientSignerLeaf(cand: unknown): cand is SapientSignerLeaf {
+  return typeof cand === 'object' && cand !== null && 'type' in cand && cand.type === 'sapient-signer'
 }
 
-export function isSubdigestLeaf(cand: any): cand is SubdigestLeaf {
-  return typeof cand === 'object' && cand !== null && cand.type === 'subdigest'
+export function isSubdigestLeaf(cand: unknown): cand is SubdigestLeaf {
+  return typeof cand === 'object' && cand !== null && 'type' in cand && cand.type === 'subdigest'
 }
 
-export function isAnyAddressSubdigestLeaf(cand: any): cand is AnyAddressSubdigestLeaf {
-  return typeof cand === 'object' && cand !== null && cand.type === 'any-address-subdigest'
+export function isAnyAddressSubdigestLeaf(cand: unknown): cand is AnyAddressSubdigestLeaf {
+  return typeof cand === 'object' && cand !== null && 'type' in cand && cand.type === 'any-address-subdigest'
 }
 
-export function isNodeLeaf(cand: any): cand is NodeLeaf {
-  return Hex.validate(cand) && cand.length === 66
+export function isNodeLeaf(cand: unknown): cand is NodeLeaf {
+  return typeof cand === 'string' && Hex.validate(cand) && cand.length === 66
 }
 
-export function isNestedLeaf(cand: any): cand is NestedLeaf {
-  return typeof cand === 'object' && cand !== null && cand.type === 'nested'
+export function isNestedLeaf(cand: unknown): cand is NestedLeaf {
+  return typeof cand === 'object' && cand !== null && 'type' in cand && cand.type === 'nested'
 }
 
-export function isNode(cand: any): cand is Node {
+export function isNode(cand: unknown): cand is Node {
   return Array.isArray(cand) && cand.length === 2 && isTopology(cand[0]) && isTopology(cand[1])
 }
 
-export function isConfig(cand: any): cand is Config {
-  return typeof cand === 'object' && 'threshold' in cand && 'checkpoint' in cand && 'topology' in cand
+export function isConfig(cand: unknown): cand is Config {
+  return typeof cand === 'object' && cand !== null && 'threshold' in cand && 'checkpoint' in cand && 'topology' in cand
 }
 
-export function isLeaf(cand: Topology): cand is Leaf {
+export function isLeaf(cand: unknown): cand is Leaf {
   return (
     isSignerLeaf(cand) ||
     isSapientSignerLeaf(cand) ||
@@ -105,7 +147,7 @@ export function isLeaf(cand: Topology): cand is Leaf {
   )
 }
 
-export function isTopology(cand: any): cand is Topology {
+export function isTopology(cand: unknown): cand is Topology {
   return isNode(cand) || isLeaf(cand)
 }
 
@@ -310,7 +352,7 @@ export function configFromJson(json: string): Config {
   }
 }
 
-function encodeTopology(top: Topology): any {
+function encodeTopology(top: Topology): EncodedTopology {
   if (isNode(top)) {
     return [encodeTopology(top[0]), encodeTopology(top[1])]
   } else if (isSignerLeaf(top)) {
@@ -350,7 +392,7 @@ function encodeTopology(top: Topology): any {
   throw new Error('Invalid topology')
 }
 
-function decodeTopology(obj: any): Topology {
+function decodeTopology(obj: EncodedTopology): Topology {
   if (Array.isArray(obj)) {
     if (obj.length !== 2) {
       throw new Error('Invalid node structure in JSON')

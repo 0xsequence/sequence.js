@@ -1,6 +1,6 @@
-export * from './api.gen'
+export * from './api.gen.js'
 
-import { API as ApiRpc } from './api.gen'
+import { API as ApiRpc } from './api.gen.js'
 
 export class SequenceAPIClient extends ApiRpc {
   constructor(
@@ -15,7 +15,7 @@ export class SequenceAPIClient extends ApiRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the api client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey

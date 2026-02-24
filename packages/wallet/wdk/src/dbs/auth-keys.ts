@@ -1,4 +1,4 @@
-import { Generic, Migration } from './generic.js'
+import { Generic } from './generic.js'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 import type { WdkEnv } from '../env.js'
 

@@ -104,13 +104,6 @@ describe('Passkeys', () => {
     y: testPublicKeyY,
   }
 
-  const samplePublicKeyWithHashMetadata: PublicKey = {
-    requireUserVerification: true,
-    x: testPublicKeyX,
-    y: testPublicKeyY,
-    metadata: testMetadataHash,
-  }
-
   // Realistic authenticator data based on WebAuthn spec and ox patterns
   // This represents actual WebAuthn authenticator data structure
   const sampleAuthenticatorData = Bytes.fromHex(
@@ -196,7 +189,7 @@ describe('Passkeys', () => {
           { name: 'special chars', credentialId: '!@#$%^&*()_+{}|:"<>?[]\\;\',./' },
         ]
 
-        testCases.forEach(({ name, credentialId }) => {
+        testCases.forEach(({ credentialId }) => {
           const metadata: PasskeyMetadata = { credentialId }
           const tree = metadataTree(metadata)
           expect(GenericTree.isLeaf(tree)).toBe(true)
@@ -709,7 +702,7 @@ describe('Passkeys', () => {
         },
       ]
 
-      specialCharTests.forEach(({ name, credentialId, clientData }) => {
+      specialCharTests.forEach(({ credentialId, clientData }) => {
         if (credentialId) {
           const unicodeMetadata: PasskeyMetadata = { credentialId }
           const tree = metadataTree(unicodeMetadata)
@@ -787,7 +780,7 @@ describe('Passkeys', () => {
         { userVerification: true, metadata: true, description: 'User verification with metadata' },
       ]
 
-      testCombinations.forEach(({ userVerification, metadata, description }) => {
+      testCombinations.forEach(({ userVerification, metadata }) => {
         const pubKey = createValidPublicKey({
           requireUserVerification: userVerification,
           ...(metadata && { metadata: samplePasskeyMetadata }),

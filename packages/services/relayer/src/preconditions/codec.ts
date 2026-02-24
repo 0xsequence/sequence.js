@@ -36,6 +36,11 @@ export function decodePrecondition(p: TransactionPrecondition): Precondition | u
     return undefined
   }
 
+  if (typeof p.minAmount !== 'bigint') {
+    console.warn(`Failed to decode precondition: minAmount must be a bigint`)
+    return undefined
+  }
+
   let precondition: Precondition | undefined
 
   try {
@@ -118,73 +123,92 @@ export function decodePrecondition(p: TransactionPrecondition): Precondition | u
 }
 
 export function encodePrecondition(p: Precondition): string {
-  const data: any = {}
-
   switch (p.type()) {
     case 'native-balance': {
       const native = p as NativeBalancePrecondition
-      data.address = native.address.toString()
-      if (native.min !== undefined) data.min = native.min.toString()
-      if (native.max !== undefined) data.max = native.max.toString()
-      break
+      const data = {
+        address: native.address.toString(),
+        ...(native.min !== undefined && { min: native.min.toString() }),
+        ...(native.max !== undefined && { max: native.max.toString() }),
+      }
+
+      return JSON.stringify(data)
     }
 
     case 'erc20-balance': {
       const erc20 = p as Erc20BalancePrecondition
-      data.address = erc20.address.toString()
-      data.token = erc20.token.toString()
-      if (erc20.min !== undefined) data.min = erc20.min.toString()
-      if (erc20.max !== undefined) data.max = erc20.max.toString()
-      break
+      const data = {
+        address: erc20.address.toString(),
+        token: erc20.token.toString(),
+        ...(erc20.min !== undefined && { min: erc20.min.toString() }),
+        ...(erc20.max !== undefined && { max: erc20.max.toString() }),
+      }
+
+      return JSON.stringify(data)
     }
 
     case 'erc20-approval': {
       const erc20 = p as Erc20ApprovalPrecondition
-      data.address = erc20.address.toString()
-      data.token = erc20.token.toString()
-      data.operator = erc20.operator.toString()
-      data.min = erc20.min.toString()
-      break
+      const data = {
+        address: erc20.address.toString(),
+        token: erc20.token.toString(),
+        operator: erc20.operator.toString(),
+        min: erc20.min.toString(),
+      }
+
+      return JSON.stringify(data)
     }
 
     case 'erc721-ownership': {
       const erc721 = p as Erc721OwnershipPrecondition
-      data.address = erc721.address.toString()
-      data.token = erc721.token.toString()
-      data.tokenId = erc721.tokenId.toString()
-      if (erc721.owned !== undefined) data.owned = erc721.owned
-      break
+      const data = {
+        address: erc721.address.toString(),
+        token: erc721.token.toString(),
+        tokenId: erc721.tokenId.toString(),
+        ...(erc721.owned !== undefined && { owned: erc721.owned }),
+      }
+
+      return JSON.stringify(data)
     }
 
     case 'erc721-approval': {
       const erc721 = p as Erc721ApprovalPrecondition
-      data.address = erc721.address.toString()
-      data.token = erc721.token.toString()
-      data.tokenId = erc721.tokenId.toString()
-      data.operator = erc721.operator.toString()
-      break
+      const data = {
+        address: erc721.address.toString(),
+        token: erc721.token.toString(),
+        tokenId: erc721.tokenId.toString(),
+        operator: erc721.operator.toString(),
+      }
+
+      return JSON.stringify(data)
     }
 
     case 'erc1155-balance': {
       const erc1155 = p as Erc1155BalancePrecondition
-      data.address = erc1155.address.toString()
-      data.token = erc1155.token.toString()
-      data.tokenId = erc1155.tokenId.toString()
-      if (erc1155.min !== undefined) data.min = erc1155.min.toString()
-      if (erc1155.max !== undefined) data.max = erc1155.max.toString()
-      break
+      const data = {
+        address: erc1155.address.toString(),
+        token: erc1155.token.toString(),
+        tokenId: erc1155.tokenId.toString(),
+        ...(erc1155.min !== undefined && { min: erc1155.min.toString() }),
+        ...(erc1155.max !== undefined && { max: erc1155.max.toString() }),
+      }
+
+      return JSON.stringify(data)
     }
 
     case 'erc1155-approval': {
       const erc1155 = p as Erc1155ApprovalPrecondition
-      data.address = erc1155.address.toString()
-      data.token = erc1155.token.toString()
-      data.tokenId = erc1155.tokenId.toString()
-      data.operator = erc1155.operator.toString()
-      data.min = erc1155.min.toString()
-      break
+      const data = {
+        address: erc1155.address.toString(),
+        token: erc1155.token.toString(),
+        tokenId: erc1155.tokenId.toString(),
+        operator: erc1155.operator.toString(),
+        min: erc1155.min.toString(),
+      }
+
+      return JSON.stringify(data)
     }
   }
 
-  return JSON.stringify(data)
+  return JSON.stringify({})
 }

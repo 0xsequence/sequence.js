@@ -158,11 +158,11 @@ export class ChainSessionManager {
     listener: ChainSessionManagerEventMap[K],
   ): () => void {
     if (!this.eventListeners[event]) {
-      this.eventListeners[event] = new Set() as any
+      this.eventListeners[event] = new Set<ChainSessionManagerEventMap[K]>()
     }
-    ;(this.eventListeners[event] as any).add(listener)
+    this.eventListeners[event].add(listener)
     return () => {
-      ;(this.eventListeners[event] as any)?.delete(listener)
+      this.eventListeners[event]?.delete(listener)
     }
   }
 

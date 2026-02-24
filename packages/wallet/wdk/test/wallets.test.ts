@@ -73,9 +73,9 @@ describe('Wallets', () => {
   it('Should register and unregister wallet selector', async () => {
     manager = newManager()
 
-    let selectorCalls = 0
+    let _selectorCalls = 0
     const mockSelector = async () => {
-      selectorCalls++
+      _selectorCalls++
       return 'create-new' as const
     }
 
@@ -160,7 +160,7 @@ describe('Wallets', () => {
     const mnemonic = Mnemonic.random(Mnemonic.english)
 
     // Create initial wallet
-    const firstWallet = await manager!.wallets.signUp({
+    const _firstWallet = await manager!.wallets.signUp({
       mnemonic,
       kind: 'mnemonic',
       noGuard: true,
@@ -705,8 +705,8 @@ describe('Wallets', () => {
 
   it('Should trigger an update when a wallet is logged in', async () => {
     const manager = newManager()
-
-    let wallet: any | undefined
+    // eslint-disable-next-line
+    let wallet: Address.Address | undefined
 
     let callbackCalls = 0
     let unregisterCallback: (() => void) | undefined

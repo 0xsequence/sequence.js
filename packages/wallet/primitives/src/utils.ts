@@ -1,4 +1,4 @@
-import { AbiParameters, Bytes, Hash, Hex } from 'ox'
+import { Bytes } from 'ox'
 
 export function minBytesFor(val: bigint): number {
   return Math.ceil(val.toString(16).length / 2)
@@ -7,7 +7,7 @@ export function minBytesFor(val: bigint): number {
 // ERC-2098
 export function packRSY({ r, s, yParity }: { r: bigint; s: bigint; yParity: number }): Bytes.Bytes {
   const rBytes = Bytes.padLeft(Bytes.fromNumber(r), 32)
-  let sBytes = Bytes.padLeft(Bytes.fromNumber(s), 32)
+  const sBytes = Bytes.padLeft(Bytes.fromNumber(s), 32)
   if (yParity % 2 === 1) {
     sBytes[0]! |= 0x80
   }

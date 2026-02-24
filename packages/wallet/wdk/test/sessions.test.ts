@@ -358,7 +358,7 @@ for (const extension of ALL_EXTENSIONS) {
         throw new Error('Failed to create pk store')
       }
       // Create the initial permissions
-      let explicitSession: ExplicitSession = {
+      const explicitSession: ExplicitSession = {
         type: 'explicit',
         sessionAddress: e.address,
         chainId,

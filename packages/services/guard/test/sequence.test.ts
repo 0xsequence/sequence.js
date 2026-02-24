@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Guard } from '../src/sequence'
-import { PayloadType } from '../src/client/guard.gen'
+import { Guard } from '../src/sequence.js'
+import { PayloadType } from '../src/client/guard.gen.js'
 import { Address, Bytes, Hex } from 'ox'
 
 // Mock fetch globally for guard API calls
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+globalThis.fetch = mockFetch
 
 describe('Sequence', () => {
   describe('GuardSigner', () => {
@@ -86,7 +86,7 @@ describe('Sequence', () => {
           ok: true,
         })
 
-        await guard.signPayload(testWallet, 1, PayloadType.ConfigUpdate, testMessageDigest, testMessage)
+        await guard.signPayload(testWallet, customChainId, PayloadType.ConfigUpdate, testMessageDigest, testMessage)
 
         const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(requestBody.request.chainId).toBe(1)

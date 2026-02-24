@@ -13,7 +13,7 @@ export class DevicesHandler implements Handler {
     private readonly devices: Devices,
   ) {}
 
-  onStatusChange(cb: () => void): () => void {
+  onStatusChange(_cb: () => void): () => void {
     return () => {}
   }
 

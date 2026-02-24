@@ -203,7 +203,7 @@ export class Provider implements ProviderInterface {
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<{ imageHash: Hex.Hex; signature: Signature.RawSignature }[]> {
-    let fromConfig = await this.store.loadConfig(fromImageHash)
+    const fromConfig = await this.store.loadConfig(fromImageHash)
     if (!fromConfig) {
       return []
     }
@@ -384,7 +384,7 @@ export class Provider implements ProviderInterface {
 
       if (Signature.isSignatureOfSapientSignerLeaf(topology.signature)) {
         switch (topology.signature.address.toLowerCase()) {
-          case this.extensions.passkeys.toLowerCase():
+          case this.extensions.passkeys.toLowerCase(): {
             const decoded = Extensions.Passkeys.decode(Bytes.fromHex(topology.signature.data))
 
             if (!Extensions.Passkeys.isValidSignature(subdigest, decoded)) {
@@ -397,6 +397,8 @@ export class Provider implements ProviderInterface {
               Extensions.Passkeys.rootFor(decoded.publicKey),
               topology.signature,
             )
+          }
+
           default:
             throw new Error(`Unsupported sapient signer: ${topology.signature.address}`)
         }

@@ -190,7 +190,9 @@ export class Provider implements ProviderInterface {
         case SignatureType.SapientCompact:
           throw new Error(`unexpected compact sapient signature by ${signer}`)
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 
   async getWitnessForSapient(
@@ -225,7 +227,9 @@ export class Provider implements ProviderInterface {
             signature: { type: 'sapient_compact', address: signer, data: witness.signature },
           }
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 
   async getConfigurationUpdates(
@@ -384,7 +388,7 @@ const recoverSapientSignatureCompactFunction = AbiFunction.from(recoverSapientSi
 class PasskeySignatureValidator implements oxProvider.Provider {
   request: oxProvider.Provider['request'] = (async (request) => {
     switch (request.method) {
-      case 'eth_call':
+      case 'eth_call': {
         if (!request.params || !Array.isArray(request.params) || request.params.length === 0) {
           throw new Error('eth_call requires transaction parameters')
         }
@@ -410,6 +414,7 @@ class PasskeySignatureValidator implements oxProvider.Provider {
         } else {
           throw new Error(`invalid passkey signature ${signature} for digest ${digest}`)
         }
+      }
 
       default:
         throw new Error(`method ${request.method} not implemented`)

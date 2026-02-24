@@ -1,13 +1,13 @@
-import * as erc5719 from './erc5719'
-import * as erc1271 from './erc1271'
-import * as erc6492 from './erc6492'
-import * as factory from './factory'
-import * as mainModule from './mainModule'
-import * as mainModuleUpgradable from './mainModuleUpgradable'
-import * as moduleHooks from './moduleHooks'
-import * as sequenceUtils from './sequenceUtils'
-import * as requireFreshSigner from './libs/requireFreshSigners'
-import * as walletProxyHook from './walletProxyHook'
+import * as erc5719 from './erc5719.js'
+import * as erc1271 from './erc1271.js'
+import * as erc6492 from './erc6492.js'
+import * as factory from './factory.js'
+import * as mainModule from './mainModule.js'
+import * as mainModuleUpgradable from './mainModuleUpgradable.js'
+import * as moduleHooks from './moduleHooks.js'
+import * as sequenceUtils from './sequenceUtils.js'
+import * as requireFreshSigner from './libs/requireFreshSigners.js'
+import * as walletProxyHook from './walletProxyHook.js'
 
 /**
  * @deprecated import directly from @0xsequence/abi/* instead, omitting "walletContracts"

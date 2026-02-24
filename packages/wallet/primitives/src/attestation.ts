@@ -1,4 +1,4 @@
-import { Address, Bytes, Hash } from 'ox'
+import { Address, Bytes, Hash, Hex } from 'ox'
 
 export type Attestation = {
   approvedSigner: Address.Address
@@ -12,6 +12,18 @@ export type Attestation = {
 export type AuthData = {
   redirectUrl: string // bytes
   issuedAt: bigint // uint64
+}
+
+type EncodedAttestation = {
+  approvedSigner: Address.Address
+  identityType: Hex.Hex
+  issuerHash: Hex.Hex
+  audienceHash: Hex.Hex
+  applicationData: Hex.Hex
+  authData: {
+    redirectUrl: string
+    issuedAt: string
+  }
 }
 
 // Encoding and decoding
@@ -76,9 +88,9 @@ export function toJson(attestation: Attestation, indent?: number): string {
   return JSON.stringify(encodeForJson(attestation), null, indent)
 }
 
-export function encodeForJson(attestation: Attestation): any {
+export function encodeForJson(attestation: Attestation): EncodedAttestation {
   return {
-    approvedSigner: attestation.approvedSigner.toString(),
+    approvedSigner: attestation.approvedSigner,
     identityType: Bytes.toHex(attestation.identityType),
     issuerHash: Bytes.toHex(attestation.issuerHash),
     audienceHash: Bytes.toHex(attestation.audienceHash),
@@ -94,7 +106,7 @@ export function fromJson(json: string): Attestation {
   return fromParsed(JSON.parse(json))
 }
 
-export function fromParsed(parsed: any): Attestation {
+export function fromParsed(parsed: EncodedAttestation): Attestation {
   return {
     approvedSigner: Address.from(parsed.approvedSigner),
     identityType: Bytes.fromHex(parsed.identityType),

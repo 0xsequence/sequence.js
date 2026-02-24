@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Address, Hex, Bytes } from 'ox'
+import { Address, Hex } from 'ox'
 import { Network, Payload } from '@0xsequence/wallet-primitives'
 import { IdentityInstrument, IdentityType, KeyType, AuthCodeChallenge } from '@0xsequence/identity-instrument'
 import { AuthCodeHandler } from '../src/sequence/handlers/authcode.js'
@@ -45,8 +45,8 @@ class MockURLSearchParams {
   }
 }
 
-// @ts-ignore - Override global URLSearchParams for testing
-global.URLSearchParams = MockURLSearchParams as any
+// Override global URLSearchParams for testing
+globalThis.URLSearchParams = MockURLSearchParams as any
 
 // Mock dependencies with proper vi.fn() types
 const mockCommitVerifier = vi.fn()
@@ -285,8 +285,7 @@ describe('AuthCodeHandler', () => {
     })
 
     it('Should generate random state when not provided', async () => {
-      const result = await authCodeHandler.commitAuth('/target', false)
-
+      await authCodeHandler.commitAuth('/target', false)
       const commitmentCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
       expect(commitmentCall.id).toBeDefined()
       expect(typeof commitmentCall.id).toBe('string')
@@ -316,8 +315,7 @@ describe('AuthCodeHandler', () => {
     })
 
     it('Should create commitment without signer', async () => {
-      const result = await authCodeHandler.commitAuth('/target', true)
-
+      await authCodeHandler.commitAuth('/target', true)
       const commitmentCall = mockAuthCommitmentsSet.mock.calls[0]![0]!
       expect(commitmentCall.signer).toBeUndefined()
       expect(commitmentCall.isSignUp).toBe(true)
@@ -329,7 +327,7 @@ describe('AuthCodeHandler', () => {
   describe('completeAuth()', () => {
     it('Should complete auth flow with code and return signer', async () => {
       const authCode = 'test-auth-code-123'
-      const mockSigner = {} as IdentitySigner
+      // const mockSigner = {} as IdentitySigner
       const mockEmail = 'test@example.com'
 
       mockCommitVerifier.mockResolvedValueOnce(undefined)

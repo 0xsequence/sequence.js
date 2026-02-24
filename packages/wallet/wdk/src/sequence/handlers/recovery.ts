@@ -76,7 +76,7 @@ export class RecoveryHandler implements Handler {
           return true
         },
       }
-    } catch (e) {
+    } catch {
       return {
         address,
         handler: this,

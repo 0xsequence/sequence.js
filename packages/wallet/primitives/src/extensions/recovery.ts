@@ -1,7 +1,6 @@
 import { Abi, AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
 import * as GenericTree from '../generic-tree.js'
 import { Signature } from '../index.js'
-import * as Network from '../network.js'
 import * as Payload from '../payload.js'
 import { packRSY } from '../utils.js'
 
@@ -56,21 +55,21 @@ export type Tree = Branch | GenericTree.Node | RecoveryLeaf
 /**
  * Type guard to check if a value is a RecoveryLeaf
  */
-export function isRecoveryLeaf(cand: any): cand is RecoveryLeaf {
-  return typeof cand === 'object' && cand !== null && cand.type === 'leaf'
+export function isRecoveryLeaf(cand: unknown): cand is RecoveryLeaf {
+  return typeof cand === 'object' && cand !== null && 'type' in cand && cand.type === 'leaf'
 }
 
 /**
  * Type guard to check if a value is a Node (pair of subtrees)
  */
-export function isBranch(cand: any): cand is Branch {
+export function isBranch(cand: unknown): cand is Branch {
   return Array.isArray(cand) && cand.length === 2 && isTree(cand[0]) && isTree(cand[1])
 }
 
 /**
  * Type guard to check if a value is a Topology
  */
-export function isTree(cand: any): cand is Tree {
+export function isTree(cand: unknown): cand is Tree {
   return isRecoveryLeaf(cand) || GenericTree.isNode(cand) || isBranch(cand)
 }
 
@@ -437,10 +436,10 @@ export function fromGenericTree(tree: GenericTree.Tree): Tree {
  */
 export function encodeCalldata(
   wallet: Address.Address,
-  payload: Payload.Recovery<any>,
+  payload: Payload.Recovery<Payload.MayRecoveryPayload>,
   signer: Address.Address,
   signature: Signature.SignatureOfSignerLeaf,
-) {
+): Hex.Hex {
   let signatureBytes: Hex.Hex
 
   if (signature.type === 'erc1271') {

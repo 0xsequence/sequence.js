@@ -16,7 +16,7 @@ type PimlicoGasPrice = {
 }
 
 export class PimlicoBundler implements Bundler {
-  public readonly kind: 'bundler' = 'bundler'
+  public readonly kind = 'bundler'
   public readonly id: string
 
   public readonly provider: Provider.Provider
@@ -119,7 +119,7 @@ export class PimlicoBundler implements Bundler {
       let pimlico: PimlicoStatusResp | undefined
       try {
         pimlico = await this.bundlerRpc<PimlicoStatusResp>('pimlico_getUserOperationStatus', [opHash])
-      } catch (_) {
+      } catch {
         /* ignore - not Pimlico or endpoint down */
       }
 

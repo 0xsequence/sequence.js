@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   Manager,
   SignerActionable,
@@ -522,12 +522,12 @@ describe('Transactions', () => {
     })
 
     let transactionsList: Transaction[] = []
-    let updateCount = 0
+    let _updateCount = 0
 
     // Use onTransactionsUpdate to verify list functionality
     const unsubscribe = manager.transactions.onTransactionsUpdate((txs) => {
       transactionsList = txs
-      updateCount++
+      _updateCount++
     })
 
     // Initially should be empty

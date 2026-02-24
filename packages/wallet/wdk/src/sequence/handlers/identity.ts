@@ -1,4 +1,4 @@
-import { Hex, Bytes } from 'ox'
+import { Hex } from 'ox'
 import * as Db from '../../dbs/index.js'
 import * as Identity from '@0xsequence/identity-instrument'
 import { Signatures } from '../signatures.js'

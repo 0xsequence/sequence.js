@@ -88,7 +88,7 @@ describe('Address', () => {
     })
 
     it('should work with Dev1 context', () => {
-      const { stage2, ...dev1Context } = Dev1
+      const { stage2: _, ...dev1Context } = Dev1
       const address = from(sampleConfig, dev1Context)
 
       expect(() => Address.assert(address)).not.toThrow()
@@ -96,53 +96,53 @@ describe('Address', () => {
     })
 
     it('should work with Dev2 context', () => {
-      const { stage2, ...dev2Context } = Dev2
+      const { stage2: _stage2_1, ...dev2Context } = Dev2
       const address = from(sampleConfig, dev2Context)
 
       expect(() => Address.assert(address)).not.toThrow()
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be different from Dev1
-      const { stage2: _, ...dev1Context } = Dev1
+      const { stage2: _stage2_2, ...dev1Context } = Dev1
       const dev1Address = from(sampleConfig, dev1Context)
       expect(address).not.toBe(dev1Address)
     })
 
     it('should work with Rc3 context', () => {
-      const { stage2, ...rc3Context } = Rc3
+      const { stage2: _stage2_1, ...rc3Context } = Rc3
       const address = from(sampleConfig, rc3Context)
 
       expect(() => Address.assert(address)).not.toThrow()
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be different from Dev2
-      const { stage2: _, ...dev2Context } = Dev2
+      const { stage2: _stage2_2, ...dev2Context } = Dev2
       const dev2Address = from(sampleConfig, dev2Context)
       expect(address).not.toBe(dev2Address)
     })
 
     it('should work with Rc4 context', () => {
-      const { stage2, ...rc4Context } = Rc4
+      const { stage2: _stage2_1, ...rc4Context } = Rc4
       const address = from(sampleConfig, rc4Context)
 
       expect(() => Address.assert(address)).not.toThrow()
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be different from Dev2
-      const { stage2: _, ...dev2Context } = Dev2
+      const { stage2: _stage2_2, ...dev2Context } = Dev2
       const dev2Address = from(sampleConfig, dev2Context)
       expect(address).not.toBe(dev2Address)
     })
 
     it('should work with Rc5 context', () => {
-      const { stage2, ...rc5Context } = Rc5
+      const { stage2: _stage2_1, ...rc5Context } = Rc5
       const address = from(sampleConfig, rc5Context)
 
       expect(() => Address.assert(address)).not.toThrow()
       expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/)
 
       // Should be different from Dev2
-      const { stage2: _, ...dev2Context } = Dev2
+      const { stage2: _stage2_2, ...dev2Context } = Dev2
       const dev2Address = from(sampleConfig, dev2Context)
       expect(address).not.toBe(dev2Address)
     })

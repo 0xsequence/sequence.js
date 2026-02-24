@@ -561,7 +561,7 @@ export class Manager {
     const ops = applyManagerOptionsDefaults(options)
 
     // Build relayers list
-    let relayers: Relayer.Relayer[] = []
+    const relayers: Relayer.Relayer[] = []
 
     // Add EIP-6963 relayers if enabled
     if (ops.multiInjectedProviderDiscovery) {

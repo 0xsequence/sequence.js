@@ -81,7 +81,9 @@ export class Signers {
       if (isWitnessExtraSignerKind(message)) {
         return toKnownKind(message.signerKind)
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
 
     return undefined
   }

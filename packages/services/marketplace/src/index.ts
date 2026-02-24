@@ -1,6 +1,6 @@
-export * from './marketplace.gen'
+export * from './marketplace.gen.js'
 
-import { Marketplace as MarketplaceRpc } from './marketplace.gen'
+import { Marketplace as MarketplaceRpc } from './marketplace.gen.js'
 
 export class MarketplaceIndexer extends MarketplaceRpc {
   constructor(
@@ -15,7 +15,7 @@ export class MarketplaceIndexer extends MarketplaceRpc {
   _fetch = (input: RequestInfo, init?: RequestInit): Promise<Response> => {
     // automatically include jwt and access key auth header to requests
     // if its been set on the api client
-    const headers: { [key: string]: any } = {}
+    const headers: Record<string, string> = {}
 
     const jwtAuth = this.jwtAuth
     const projectAccessKey = this.projectAccessKey

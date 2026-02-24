@@ -93,8 +93,9 @@ export class MnemonicHandler implements Handler {
       handler: this,
       status: 'actionable',
       message: 'enter-mnemonic',
-      handle: () =>
-        new Promise(async (resolve, reject) => {
+      handle: () => {
+        // eslint-disable-next-line no-async-promise-executor
+        return new Promise(async (resolve, reject) => {
           const respond: RespondFn = async (mnemonic) => {
             const signer = MnemonicHandler.toSigner(mnemonic)
             if (!signer) {
@@ -117,7 +118,8 @@ export class MnemonicHandler implements Handler {
             resolve(true)
           }
           await onPromptMnemonic(respond)
-        }),
+        })
+      },
     }
   }
 }

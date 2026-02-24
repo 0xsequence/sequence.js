@@ -8,11 +8,13 @@
   "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/services/metadata",
   "author": "Sequence Platforms ULC",
   "license": "Apache-2.0",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "echo",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0"
   },
   "exports": {
     ".": {
@@ -21,6 +23,7 @@
     }
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:^",
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^25.3.0",
     "typescript": "^5.9.3"

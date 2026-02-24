@@ -7,6 +7,7 @@ import { Relayer } from '@0xsequence/relayer'
 import * as Db from '../src/dbs/index.js'
 import { Network } from '@0xsequence/wallet-primitives'
 
+// eslint-disable-next-line turbo/no-undeclared-env-vars
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
 
@@ -14,6 +15,7 @@ export const EMITTER_ADDRESS: Address.Address = '0xb7bE532959236170064cf099e1a33
 export const EMITTER_ABI = Abi.from(['function explicitEmit()', 'function implicitEmit()'])
 
 // Environment variables
+// eslint-disable-next-line turbo/no-undeclared-env-vars
 export const LOCAL_RPC_URL = process.env.LOCAL_RPC_URL || 'http://localhost:8545'
 
 let testIdCounter = 0
@@ -81,8 +83,8 @@ export function newRemoteManager(
     ? `_${remoteManagerOptions.tag}_testrun_${testIdCounter}`
     : `_testrun_${testIdCounter}`
 
-  let relayers: Relayer.Relayer[] = []
-  let bundlers: Bundler.Bundler[] = []
+  const relayers: Relayer.Relayer[] = []
+  const bundlers: Bundler.Bundler[] = []
 
   if (remoteManagerOptions.network.relayerPk) {
     const provider = Provider.from(RpcTransport.fromHttp(remoteManagerOptions.network.rpcUrl))

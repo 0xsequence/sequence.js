@@ -1,4 +1,4 @@
-import { Address, Hex, Bytes, Secp256k1, Hash } from 'ox'
+import { Address, Hex, Bytes, Secp256k1 } from 'ox'
 import * as Client from './client/guard.gen.js'
 import * as Types from './types.js'
 
@@ -11,12 +11,13 @@ export class Guard implements Types.Guard {
   }
 
   async signPayload(
-    wallet: Address.Address,
-    chainId: number,
-    type: Client.PayloadType,
+    _wallet: Address.Address,
+    _chainId: number,
+    _type: Client.PayloadType,
     digest: Bytes.Bytes,
-    message: Bytes.Bytes,
-    signatures?: Client.Signature[],
+    _message: Bytes.Bytes,
+    _signatures?: Client.Signature[],
+    _token?: Client.AuthToken,
   ) {
     return Secp256k1.sign({ privateKey: this.privateKey, payload: digest })
   }

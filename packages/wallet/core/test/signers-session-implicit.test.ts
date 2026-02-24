@@ -236,7 +236,6 @@ describe('Implicit Session', () => {
         },
       }
       const identitySignature = createValidIdentitySignature(attestation)
-      const topology = createValidTopology()
 
       // This should throw an error during construction due to future issued time
       expect(() => {
@@ -250,7 +249,6 @@ describe('Implicit Session', () => {
         approvedSigner: randomAddress(), // Different approved signer
       }
       const identitySignature = createValidIdentitySignature(attestation)
-      const topology = createValidTopology()
 
       // This should throw an error during construction due to mismatched approved signer
       expect(() => {

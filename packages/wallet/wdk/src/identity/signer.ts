@@ -1,6 +1,6 @@
-import { Address, Signature, Hex, Bytes, PersonalMessage } from 'ox'
+import { Address, Signature, Hex, Bytes } from 'ox'
 import { Signers, State, type CryptoLike } from '@0xsequence/wallet-core'
-import { IdentityInstrument, KeyType } from '@0xsequence/identity-instrument'
+import { IdentityInstrument } from '@0xsequence/identity-instrument'
 import { AuthKey } from '../dbs/auth-keys.js'
 import { Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 import * as Identity from '@0xsequence/identity-instrument'
@@ -61,7 +61,7 @@ export class IdentitySigner implements Signers.Signer {
     }
   }
 
-  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: Object): Promise<void> {
+  async witness(stateWriter: State.Writer, wallet: Address.Address, extra?: object): Promise<void> {
     const payload = Payload.fromMessage(
       Hex.fromString(
         JSON.stringify({
