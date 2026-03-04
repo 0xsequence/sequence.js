@@ -1,5 +1,30 @@
 # @0xsequence/builder
 
+## 3.0.0
+
+### Patch Changes
+
+- f68be62: ethauth support
+- 49d8a2f: New chains, minor fixes
+- 3411232: Beta release with dapp connector fixes
+- 23cb9e9: New chains, relayer rpc fix
+- f5f6a7a: dapp-client updates
+- e7de3b1: Fix signer 404 error, minor fixes
+- 493836f: multicall3 optimization
+- 30e1f1a: 3.0.0 beta
+- d5017e8: Beta release for v3
+- 24a5fab: Final RC before 3.0.0
+- e5e1a03: Apple auth fixes
+- 0b63113: Apple auth fix
+- a89134a: Userdata service updates
+- 7c6c811: 3.0.0-beta.3 with fixes
+- 3.0.0 release
+- 98ce38b: 3.0.0-beta.2 with identity instrument updates
+- 747e6b5: Relayer fee options fix
+- 40c19ff: dapp client updates for EOA login
+- 6d5de25: 3.0.0-beta.1
+- 934acd1: RC5 upgrade
+
 ## 3.0.0-beta.19
 
 ### Patch Changes
