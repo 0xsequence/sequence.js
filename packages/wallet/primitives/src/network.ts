@@ -457,7 +457,7 @@ export const ALL: Network[] = [
     chainId: ChainId.BASE,
     type: NetworkType.MAINNET,
     name: 'base',
-    title: 'Base (Coinbase)',
+    title: 'Base',
     rpcUrl: getRpcUrl('base'),
     logoUrl: getLogoUrl(ChainId.BASE),
     blockExplorer: {
@@ -1173,7 +1173,6 @@ export const ALL: Network[] = [
       decimals: 18,
     },
   },
-
 ]
 
 function getRpcUrl(networkName: string): string {
