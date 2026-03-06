@@ -1,5 +1,5 @@
-import { Payload, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
-import { Address, Hex, Provider } from 'ox'
+import { Constants, Payload, SessionConfig, SessionSignature } from '@0xsequence/wallet-primitives'
+import { AbiFunction, Address, Hex, Provider } from 'ox'
 
 export type SessionSignerInvalidReason =
   | 'Expired'
@@ -67,4 +67,12 @@ export function isExplicitSessionSigner(signer: SessionSigner): signer is Explic
 
 export function isImplicitSessionSigner(signer: SessionSigner): signer is ImplicitSessionSigner {
   return 'identitySigner' in signer
+}
+
+export function isIncrementCall(call: Payload.Call, sessionManagerAddress: Address.Address): boolean {
+  return (
+    Address.isEqual(call.to, sessionManagerAddress) &&
+    Hex.size(call.data) >= 4 &&
+    Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
+  )
 }
