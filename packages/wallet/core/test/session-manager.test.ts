@@ -1644,6 +1644,60 @@ for (const extension of ALL_EXTENSIONS) {
         },
         timeout,
       )
+
+      it('signSapient handles selector-only self increment call consistently', async () => {
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
+        const explicitSigner = new Signers.Session.Explicit(Secp256k1.randomPrivateKey(), {
+          chainId: 0,
+          valueLimit: 0n,
+          deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+          permissions: [PermissionBuilder.for(EMITTER_ADDRESS1).allowAll().build()],
+        })
+
+        const sessionTopology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+          ...explicitSigner.sessionPermissions,
+          signer: explicitSigner.address,
+        })
+        await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+        const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+        const wallet = await Wallet.fromConfiguration(
+          {
+            threshold: 1n,
+            checkpoint: 0n,
+            topology: [{ type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash }, Hex.random(32)],
+          },
+          { stateProvider },
+        )
+        const sessionManager = new Signers.SessionManager(wallet, {
+          sessionManagerAddress: extension.sessions,
+          explicitSigners: [explicitSigner],
+        })
+
+        const payload: Payload.Parented = {
+          type: 'call',
+          nonce: 0n,
+          space: 0n,
+          calls: [
+            {
+              to: extension.sessions,
+              data: AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT),
+              value: 0n,
+              gasLimit: 0n,
+              delegateCall: false,
+              onlyFallback: false,
+              behaviorOnError: 'revert',
+            },
+          ],
+          parentWallets: [wallet.address],
+        }
+
+        const signature = await sessionManager.signSapient(wallet.address, 0, payload, imageHash)
+        expect(signature.type).toBe('sapient')
+      })
     })
   })
 }
