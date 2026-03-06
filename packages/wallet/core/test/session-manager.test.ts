@@ -731,7 +731,7 @@ for (const extension of ALL_EXTENSIONS) {
     )
 
     it(
-      'signs a payload using an explicit session',
+      'signs a payload using an explicit session with allowAll and value limit',
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
@@ -804,7 +804,7 @@ for (const extension of ALL_EXTENSIONS) {
     )
 
     it(
-      'signs a payload using an explicit session',
+      'signs using explicit session with onlyOnce, consumes usage and rejects second call',
       async () => {
         const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
         const chainId = Number(await provider.request({ method: 'eth_chainId' }))
