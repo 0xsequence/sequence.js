@@ -128,6 +128,7 @@ export const ChainId = {
   SOMNIA: 5031,
 
   // INCENTIV
+  INCENTIV: 24101,
   INCENTIV_TESTNET_V2: 28802,
 
   // KATANA
@@ -1033,6 +1034,27 @@ export const ALL: Network[] = [
     },
     contracts: {
       multicall3: SEQUENCE_MULTICALL3_ADDRESS,
+    },
+  },
+
+  {
+    chainId: ChainId.INCENTIV,
+    type: NetworkType.MAINNET,
+    name: 'incentiv',
+    title: 'Incentiv',
+    rpcUrl: getRpcUrl('incentiv'),
+    logoUrl: getLogoUrl(ChainId.INCENTIV),
+    blockExplorer: {
+      name: 'Incentiv Explorer',
+      url: 'https://explorer.incentiv.io/',
+    },
+    nativeCurrency: {
+      symbol: 'CENT',
+      name: 'CENT',
+      decimals: 18,
+    },
+    contracts: {
+      multicall3: DEFAULT_MULTICALL3_ADDRESS,
     },
   },
 
