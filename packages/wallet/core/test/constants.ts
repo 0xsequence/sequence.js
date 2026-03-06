@@ -5,6 +5,8 @@ import { Abi, AbiEvent, Address } from 'ox'
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
 dotenvConfig({ path: envFile })
 
+// Contracts are deployed on Arbitrum
+
 // Requires https://example.com redirectUrl
 export const EMITTER_ADDRESS1: Address.Address = '0xad90eB52BC180Bd9f66f50981E196f3E996278D3'
 // Requires https://another-example.com redirectUrl

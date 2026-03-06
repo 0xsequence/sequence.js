@@ -1,4 +1,4 @@
-import { Extensions } from '@0xsequence/wallet-primitives'
+import { Constants, Extensions } from '@0xsequence/wallet-primitives'
 import { AbiEvent, AbiFunction, Address, Bytes, Hex, Provider, RpcTransport, Secp256k1 } from 'ox'
 import { describe, expect, it } from 'vitest'
 import { Attestation, GenericTree, Payload, Permission, SessionConfig } from '../../primitives/src/index.js'
@@ -1357,5 +1357,293 @@ for (const extension of ALL_EXTENSIONS) {
       },
       timeout,
     )
+
+    it(
+      'two explicit sessions with same value limit: exhaust first then second send uses second session (increment from non-increment calls only)',
+      async () => {
+        const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+        const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+        const identityPrivateKey = Secp256k1.randomPrivateKey()
+        const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+        const stateProvider = new State.Local.Provider()
+
+        const targetAddress = randomAddress()
+        const valueLimit = 500000000000000000n // 0.5 ETH per session
+
+        const sessionPermission: ExplicitSessionConfig = {
+          chainId,
+          valueLimit,
+          deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+          permissions: [PermissionBuilder.for(targetAddress).allowAll().build()],
+        }
+
+        const explicitPrivateKey1 = Secp256k1.randomPrivateKey()
+        const explicitSigner1 = new Signers.Session.Explicit(explicitPrivateKey1, {
+          ...sessionPermission,
+        })
+
+        const explicitPrivateKey2 = Secp256k1.randomPrivateKey()
+        const explicitSigner2 = new Signers.Session.Explicit(explicitPrivateKey2, {
+          ...sessionPermission,
+        })
+
+        let sessionTopology = SessionConfig.addExplicitSession(SessionConfig.emptySessionsTopology(identityAddress), {
+          ...sessionPermission,
+          signer: explicitSigner1.address,
+        })
+        sessionTopology = SessionConfig.addExplicitSession(sessionTopology, {
+          ...sessionPermission,
+          signer: explicitSigner2.address,
+        })
+        await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+        const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+        const wallet = await Wallet.fromConfiguration(
+          {
+            threshold: 1n,
+            checkpoint: 0n,
+            topology: [{ type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash }, Hex.random(32)],
+          },
+          { stateProvider },
+        )
+        // Fund wallet with 2 ETH so we can send 0.5 ETH twice (each tx needs value + gas)
+        await provider.request({
+          method: 'anvil_setBalance',
+          params: [wallet.address, Hex.fromNumber(2n * 1000000000000000000n)],
+        })
+
+        const sessionManager = new Signers.SessionManager(wallet, {
+          provider,
+          sessionManagerAddress: extension.sessions,
+          explicitSigners: [explicitSigner1, explicitSigner2],
+        })
+
+        const call: Payload.Call = {
+          to: targetAddress,
+          value: valueLimit, // one full limit
+          data: '0x' as Hex.Hex,
+          gasLimit: 0n,
+          delegateCall: false,
+          onlyFallback: false,
+          behaviorOnError: 'revert',
+        }
+
+        // First send: uses first session (exhausts it)
+        const increment1 = await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+        expect(increment1).not.toBeNull()
+        const calls1 = includeIncrement([call], increment1!, extension.sessions)
+        const tx1 = await buildAndSignCall(wallet, sessionManager, calls1, provider, chainId)
+        await simulateTransaction(provider, tx1)
+
+        // Second send: same call. First session is exhausted so findSignersForCalls picks second session.
+        // Payload is [call, increment] (or [increment, call]). signSapient must derive expectedIncrement
+        // from non-increment calls only so it matches the increment we built for the second session.
+        const increment2 = await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+        expect(increment2).not.toBeNull()
+        const calls2 = includeIncrement([call], increment2!, extension.sessions)
+        const tx2 = await buildAndSignCall(wallet, sessionManager, calls2, provider, chainId)
+        await simulateTransaction(provider, tx2)
+      },
+      timeout,
+    )
+
+    describe('increment built from non-increment calls only', () => {
+      it(
+        'prepareIncrement returns null when calls contain only an increment call (no non-increment calls)',
+        async () => {
+          const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+          const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+          const identityPrivateKey = Secp256k1.randomPrivateKey()
+          const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+          const stateProvider = new State.Local.Provider()
+
+          const sessionPermission: ExplicitSessionConfig = {
+            chainId,
+            valueLimit: 0n,
+            deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+            permissions: [PermissionBuilder.for(EMITTER_ADDRESS1).allowAll().build()],
+          }
+          const explicitSigner = new Signers.Session.Explicit(Secp256k1.randomPrivateKey(), sessionPermission)
+          const sessionTopology = SessionConfig.addExplicitSession(
+            SessionConfig.emptySessionsTopology(identityAddress),
+            {
+              ...sessionPermission,
+              signer: explicitSigner.address,
+            },
+          )
+          await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+          const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+          const wallet = await Wallet.fromConfiguration(
+            {
+              threshold: 1n,
+              checkpoint: 0n,
+              topology: [
+                { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+                Hex.random(32),
+              ],
+            },
+            { stateProvider },
+          )
+          const sessionManager = new Signers.SessionManager(wallet, {
+            provider,
+            sessionManagerAddress: extension.sessions,
+            explicitSigners: [explicitSigner],
+          })
+
+          // Only an increment call (no non-increment calls). Contract would reject payload with only self-call; we return null.
+          const incrementOnlyCall: Payload.Call = {
+            to: extension.sessions,
+            data: AbiFunction.encodeData(Constants.INCREMENT_USAGE_LIMIT, [[]]),
+            value: 0n,
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          }
+          const result = await sessionManager.prepareIncrement(wallet.address, chainId, [incrementOnlyCall])
+          expect(result).toBeNull()
+        },
+        timeout,
+      )
+
+      it(
+        'prepareIncrement([increment, nonIncrementCall]) produces same increment data as prepareIncrement([nonIncrementCall])',
+        async () => {
+          const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+          const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+          const identityPrivateKey = Secp256k1.randomPrivateKey()
+          const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+          const stateProvider = new State.Local.Provider()
+
+          const sessionPermission: ExplicitSessionConfig = {
+            chainId,
+            valueLimit: 0n,
+            deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+            permissions: [PermissionBuilder.for(EMITTER_ADDRESS1).forFunction(EMITTER_FUNCTIONS[0]).onlyOnce().build()],
+          }
+          const explicitSigner = new Signers.Session.Explicit(Secp256k1.randomPrivateKey(), sessionPermission)
+          const sessionTopology = SessionConfig.addExplicitSession(
+            SessionConfig.emptySessionsTopology(identityAddress),
+            {
+              ...sessionPermission,
+              signer: explicitSigner.address,
+            },
+          )
+          await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+          const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+          const wallet = await Wallet.fromConfiguration(
+            {
+              threshold: 1n,
+              checkpoint: 0n,
+              topology: [
+                { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+                Hex.random(32),
+              ],
+            },
+            { stateProvider },
+          )
+          const sessionManager = new Signers.SessionManager(wallet, {
+            provider,
+            sessionManagerAddress: extension.sessions,
+            explicitSigners: [explicitSigner],
+          })
+
+          const nonIncrementCall: Payload.Call = {
+            to: EMITTER_ADDRESS1,
+            value: 0n,
+            data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]),
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          }
+
+          const fromNonIncrementOnly = await sessionManager.prepareIncrement(wallet.address, chainId, [
+            nonIncrementCall,
+          ])
+          expect(fromNonIncrementOnly).not.toBeNull()
+
+          // Pass [staleIncrement, nonIncrementCall] — increment is ignored when building; result should match
+          const withStaleIncrement = await sessionManager.prepareIncrement(wallet.address, chainId, [
+            fromNonIncrementOnly!,
+            nonIncrementCall,
+          ])
+          expect(withStaleIncrement).not.toBeNull()
+          expect(withStaleIncrement!.data).toEqual(fromNonIncrementOnly!.data)
+        },
+        timeout,
+      )
+
+      it(
+        'payload with implicit and explicit: increment built only from explicit non-increment call',
+        async () => {
+          const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+          const chainId = Number(await provider.request({ method: 'eth_chainId' }))
+
+          const identityPrivateKey = Secp256k1.randomPrivateKey()
+          const identityAddress = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey: identityPrivateKey }))
+          const stateProvider = new State.Local.Provider()
+
+          const redirectUrl = 'https://example.com'
+          const implicitSigner = await createImplicitSigner(redirectUrl, identityPrivateKey)
+          const sessionPermission: ExplicitSessionConfig = {
+            chainId,
+            valueLimit: 0n,
+            deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+            permissions: [PermissionBuilder.for(EMITTER_ADDRESS1).forFunction(EMITTER_FUNCTIONS[0]).onlyOnce().build()],
+          }
+          const explicitSigner = new Signers.Session.Explicit(Secp256k1.randomPrivateKey(), sessionPermission)
+
+          // Topology: identity + blacklist (implicit) + explicit session
+          let sessionTopology = SessionConfig.emptySessionsTopology(identityAddress)
+          sessionTopology = SessionConfig.addExplicitSession(sessionTopology, {
+            ...sessionPermission,
+            signer: explicitSigner.address,
+          })
+          await stateProvider.saveTree(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+          const imageHash = GenericTree.hash(SessionConfig.sessionsTopologyToConfigurationTree(sessionTopology))
+
+          const wallet = await Wallet.fromConfiguration(
+            {
+              threshold: 1n,
+              checkpoint: 0n,
+              topology: [
+                { type: 'sapient-signer', address: extension.sessions, weight: 1n, imageHash },
+                Hex.random(32),
+              ],
+            },
+            { stateProvider },
+          )
+          const sessionManager = new Signers.SessionManager(wallet, {
+            provider,
+            sessionManagerAddress: extension.sessions,
+            implicitSigners: [implicitSigner],
+            explicitSigners: [explicitSigner],
+          })
+
+          // Explicit call only (onlyOnce produces an increment; implicit does not match this target)
+          const call: Payload.Call = {
+            to: EMITTER_ADDRESS1,
+            value: 0n,
+            data: AbiFunction.encodeData(EMITTER_FUNCTIONS[0]),
+            gasLimit: 0n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          }
+          const increment = await sessionManager.prepareIncrement(wallet.address, chainId, [call])
+          expect(increment).not.toBeNull()
+          const calls = includeIncrement([call], increment!, extension.sessions)
+          const transaction = await buildAndSignCall(wallet, sessionManager, calls, provider, chainId)
+          await simulateTransaction(provider, transaction, EMITTER_EVENT_TOPICS[0])
+        },
+        timeout,
+      )
+    })
   })
 }
