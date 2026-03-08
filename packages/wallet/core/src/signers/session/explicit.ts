@@ -230,11 +230,7 @@ export class Explicit implements ExplicitSessionSigner {
   ): Promise<SessionSignature.SessionCallSignature> {
     const call = payload.calls[callIdx]!
     let permissionIndex: number
-    if (
-      Address.isEqual(call.to, sessionManagerAddress) &&
-      Hex.size(call.data) > 4 &&
-      Hex.isEqual(Hex.slice(call.data, 0, 4), AbiFunction.getSelector(Constants.INCREMENT_USAGE_LIMIT))
-    ) {
+    if (isIncrementCall(call, sessionManagerAddress)) {
       // Permission check not required. Use the first permission
       permissionIndex = 0
     } else {
