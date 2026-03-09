@@ -1,5 +1,15 @@
 # @0xsequence/wallet-core
 
+## 3.0.1
+
+### Patch Changes
+
+- Network and session fixes
+- Updated dependencies
+  - @0xsequence/guard@3.0.1
+  - @0xsequence/relayer@3.0.1
+  - @0xsequence/wallet-primitives@3.0.1
+
 ## 3.0.0
 
 ### Patch Changes

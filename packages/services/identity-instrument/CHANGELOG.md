@@ -1,5 +1,11 @@
 # @0xsequence/identity-instrument
 
+## 3.0.1
+
+### Patch Changes
+
+- Network and session fixes
+
 ## 3.0.0
 
 ### Patch Changes
