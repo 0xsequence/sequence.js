@@ -1198,6 +1198,7 @@ export class Wallets implements WalletsInterface {
         this.shared.databases.manager.del(wallet),
         this.shared.modules.devices.remove(walletEntry.device),
       ])
+      await this._cleanupWalletData(wallet)
       return undefined as any
     }
 
@@ -1251,6 +1252,31 @@ export class Wallets implements WalletsInterface {
     await this.completeConfigurationUpdate(requestId)
     await this.shared.databases.manager.del(request.wallet)
     await this.shared.modules.devices.remove(walletEntry.device)
+    await this._cleanupWalletData(request.wallet)
+  }
+
+  private async _cleanupWalletData(wallet: Address.Address): Promise<void> {
+    const [sigs, txns, msgs, recovery] = await Promise.all([
+      this.shared.databases.signatures.list(),
+      this.shared.databases.transactions.list(),
+      this.shared.databases.messages.list(),
+      this.shared.databases.recovery.list(),
+    ])
+
+    await Promise.all([
+      ...sigs.filter((s) => Address.isEqual(s.wallet, wallet)).map((s) => this.shared.databases.signatures.del(s.id)),
+      ...txns.filter((t) => Address.isEqual(t.wallet, wallet)).map((t) => this.shared.databases.transactions.del(t.id)),
+      ...msgs.filter((m) => Address.isEqual(m.wallet, wallet)).map((m) => this.shared.databases.messages.del(m.id)),
+      ...recovery.filter((r) => Address.isEqual(r.wallet, wallet)).map((r) => this.shared.databases.recovery.del(r.id)),
+    ])
+
+    try {
+      const { loginTopology } = await this.getConfigurationParts(wallet)
+      const loginSigners = Config.getSigners(loginTopology)
+      await Promise.all(loginSigners.signers.map((s) => this.shared.databases.authKeys.delBySigner(s.toString())))
+    } catch {
+      // Don't fail logout if config lookup fails (e.g. offline)
+    }
   }
 
   async getConfiguration(wallet: Address.Address) {
