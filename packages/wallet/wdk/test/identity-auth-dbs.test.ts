@@ -356,6 +356,42 @@ describe('Identity Authentication Databases', () => {
       expect(handlers.has('login-google-pkce')).toBe(true)
     })
 
+    it('Should register the Google ID token handler when configured explicitly', async () => {
+      manager = new Manager({
+        stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore(`manager-google-idtoken-${Date.now()}`)),
+        networks: [
+          {
+            name: 'Test Network',
+            type: Network.NetworkType.MAINNET,
+            rpcUrl: LOCAL_RPC_URL,
+            chainId: Network.ChainId.ARBITRUM,
+            blockExplorer: { url: 'https://arbiscan.io' },
+            nativeCurrency: {
+              name: 'Ether',
+              symbol: 'ETH',
+              decimals: 18,
+            },
+          },
+        ],
+        relayers: [],
+        authCommitmentsDb,
+        authKeysDb,
+        identity: {
+          url: 'https://dev-identity.sequence-dev.app',
+          fetch: window.fetch,
+          google: {
+            enabled: true,
+            clientId: 'test-google-client-id',
+            authMethod: 'id-token',
+          },
+        },
+      })
+
+      const handlers = (manager as any).shared.handlers
+      expect(handlers.has('login-google-id-token')).toBe(true)
+      expect(handlers.has('login-google-pkce')).toBe(false)
+    })
+
     it('Should use auth databases when email authentication is enabled', async () => {
       manager = new Manager({
         stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore(`manager-email-${Date.now()}`)),
@@ -423,6 +459,51 @@ describe('Identity Authentication Databases', () => {
       // Verify that Apple handler is registered and uses our databases
       const handlers = (manager as any).shared.handlers
       expect(handlers.has('login-apple')).toBe(true)
+    })
+
+    it('Should register custom ID token providers without enabling redirect flow for them', async () => {
+      manager = new Manager({
+        stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore(`manager-custom-idtoken-${Date.now()}`)),
+        networks: [
+          {
+            name: 'Test Network',
+            type: Network.NetworkType.MAINNET,
+            rpcUrl: LOCAL_RPC_URL,
+            chainId: Network.ChainId.ARBITRUM,
+            blockExplorer: { url: 'https://arbiscan.io' },
+            nativeCurrency: {
+              name: 'Ether',
+              symbol: 'ETH',
+              decimals: 18,
+            },
+          },
+        ],
+        relayers: [],
+        authCommitmentsDb,
+        authKeysDb,
+        identity: {
+          url: 'https://dev-identity.sequence-dev.app',
+          fetch: window.fetch,
+          customProviders: [
+            {
+              kind: 'custom-google-native',
+              authMethod: 'id-token',
+              issuer: 'https://accounts.google.com',
+              clientId: 'test-google-client-id',
+            },
+          ],
+        },
+      })
+
+      const handlers = (manager as any).shared.handlers
+      expect(handlers.has('custom-google-native')).toBe(true)
+      await expect(
+        manager.wallets.startSignUpWithRedirect({
+          kind: 'custom-google-native',
+          target: '/home',
+          metadata: {},
+        }),
+      ).rejects.toThrow('handler-does-not-support-redirect')
     })
   })
 })

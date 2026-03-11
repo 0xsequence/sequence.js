@@ -3,6 +3,7 @@ import { Config, Constants, Payload } from '@0xsequence/wallet-primitives'
 import { Address, Hex, Provider, RpcTransport } from 'ox'
 import { AuthCommitment } from '../dbs/auth-commitments.js'
 import { AuthCodeHandler } from './handlers/authcode.js'
+import { IdTokenHandler } from './handlers/idtoken.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { Shared } from './manager.js'
@@ -49,6 +50,16 @@ export type EmailOtpSignupArgs = CommonSignupArgs & {
   email: string
 }
 
+export type GoogleIdTokenSignupArgs = CommonSignupArgs & {
+  kind: 'google-id-token'
+  idToken: string
+}
+
+export type CustomIdTokenSignupArgs = CommonSignupArgs & {
+  kind: `custom-${string}`
+  idToken: string
+}
+
 export type CompleteRedirectArgs = CommonSignupArgs & {
   state: string
   code: string
@@ -62,7 +73,13 @@ export type AuthCodeSignupArgs = CommonSignupArgs & {
   isRedirect: boolean
 }
 
-export type SignupArgs = PasskeySignupArgs | MnemonicSignupArgs | EmailOtpSignupArgs | AuthCodeSignupArgs
+export type SignupArgs =
+  | PasskeySignupArgs
+  | MnemonicSignupArgs
+  | EmailOtpSignupArgs
+  | GoogleIdTokenSignupArgs
+  | CustomIdTokenSignupArgs
+  | AuthCodeSignupArgs
 
 export type LoginToWalletArgs = {
   wallet: Address.Address
@@ -180,6 +197,7 @@ export interface WalletsInterface {
    *   - `kind: 'mnemonic'`: Uses a mnemonic phrase as the login credential.
    *   - `kind: 'passkey'`: Prompts the user to create a WebAuthn passkey.
    *   - `kind: 'email-otp'`: Initiates an OTP flow to the user's email.
+   *   - `kind: 'google-id-token'`: Completes an OIDC ID token flow when Google is configured with `authMethod: 'id-token'`.
    *   - `kind: 'google-pkce' | 'apple'`: Completes an OAuth redirect flow.
    *   Common options like `noGuard` or `noRecovery` can customize the wallet's security features.
    * @returns A promise that resolves to the address of the newly created wallet, or `undefined` if the sign-up was aborted.
@@ -361,7 +379,11 @@ export function isLoginToPasskeyArgs(args: LoginArgs): args is LoginToPasskeyArg
 }
 
 export function isAuthCodeArgs(args: SignupArgs): args is AuthCodeSignupArgs {
-  return 'kind' in args && (args.kind === 'google-pkce' || args.kind === 'apple')
+  return 'code' in args && 'commitment' in args
+}
+
+export function isIdTokenArgs(args: SignupArgs): args is GoogleIdTokenSignupArgs | CustomIdTokenSignupArgs {
+  return 'idToken' in args
 }
 
 function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
@@ -674,6 +696,25 @@ export class Wallets implements WalletsInterface {
         }
       }
 
+      case 'google-id-token': {
+        const handler = this.shared.handlers.get(Kinds.LoginGoogleIdToken) as IdTokenHandler
+        if (!handler) {
+          throw new Error('handler-not-registered')
+        }
+
+        const [signer, metadata] = await handler.completeAuth(args.idToken)
+        const loginEmail = metadata.email
+        this.shared.modules.logger.log('Created new id token signer:', signer.address)
+
+        return {
+          signer,
+          extra: {
+            signerKind: Kinds.LoginGoogleIdToken,
+          },
+          loginEmail,
+        }
+      }
+
       case 'google-pkce':
       case 'apple': {
         const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
@@ -696,7 +737,22 @@ export class Wallets implements WalletsInterface {
     }
 
     if (args.kind.startsWith('custom-')) {
-      // TODO: support other custom auth methods (e.g. id-token)
+      if (isIdTokenArgs(args)) {
+        const handler = this.shared.handlers.get(args.kind) as IdTokenHandler
+        if (!handler) {
+          throw new Error('handler-not-registered')
+        }
+
+        const [signer, metadata] = await handler.completeAuth(args.idToken)
+        return {
+          signer,
+          extra: {
+            signerKind: args.kind,
+          },
+          loginEmail: metadata.email,
+        }
+      }
+
       const handler = this.shared.handlers.get(args.kind) as AuthCodeHandler
       if (!handler) {
         throw new Error('handler-not-registered')
@@ -717,9 +773,12 @@ export class Wallets implements WalletsInterface {
 
   async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
     const kind = args.kind.startsWith('custom-') ? args.kind : 'login-' + args.kind
-    const handler = this.shared.handlers.get(kind) as AuthCodeHandler
+    const handler = this.shared.handlers.get(kind)
     if (!handler) {
       throw new Error('handler-not-registered')
+    }
+    if (!(handler instanceof AuthCodeHandler)) {
+      throw new Error('handler-does-not-support-redirect')
     }
     return handler.commitAuth(args.target, true)
   }
@@ -743,9 +802,12 @@ export class Wallets implements WalletsInterface {
       })
     } else {
       const kind = commitment.kind.startsWith('custom-') ? commitment.kind : 'login-' + commitment.kind
-      const handler = this.shared.handlers.get(kind) as AuthCodeHandler
+      const handler = this.shared.handlers.get(kind)
       if (!handler) {
         throw new Error('handler-not-registered')
+      }
+      if (!(handler instanceof AuthCodeHandler)) {
+        throw new Error('handler-does-not-support-redirect')
       }
 
       await handler.completeAuth(commitment, args.code)
