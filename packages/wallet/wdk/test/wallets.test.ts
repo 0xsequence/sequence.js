@@ -6,6 +6,7 @@ import { Config, Constants, Network } from '@0xsequence/wallet-primitives'
 import { AuthCodePkceHandler } from '../src/sequence/handlers/authcode-pkce.js'
 import { IdTokenHandler } from '../src/sequence/handlers/idtoken.js'
 import { MnemonicHandler } from '../src/sequence/handlers/mnemonic.js'
+import { Kinds } from '../src/sequence/types/signer.js'
 
 describe('Wallets', () => {
   let manager: Manager | undefined
@@ -38,7 +39,7 @@ describe('Wallets', () => {
       },
     })
 
-    const handler = (manager as any).shared.handlers.get('login-google-id-token') as IdTokenHandler
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as IdTokenHandler
     const loginMnemonic = Mnemonic.random(Mnemonic.english)
     const loginSigner = MnemonicHandler.toSigner(loginMnemonic)
     if (!loginSigner) {
@@ -61,12 +62,12 @@ describe('Wallets', () => {
 
     const walletEntry = await manager.wallets.get(wallet!)
     expect(walletEntry).toBeDefined()
-    expect(walletEntry!.loginType).toBe('login-google-id-token')
+    expect(walletEntry!.loginType).toBe(Kinds.LoginGoogle)
     expect(walletEntry!.loginEmail).toBe('google-user@example.com')
 
     const configuration = await manager.wallets.getConfiguration(wallet!)
     expect(configuration.login).toHaveLength(1)
-    expect(configuration.login[0]!.kind).toBe('login-google-id-token')
+    expect(configuration.login[0]!.kind).toBe(Kinds.LoginGoogle)
   })
 
   it('Should register and unregister Google ID token UI callbacks through the manager', async () => {
@@ -80,7 +81,7 @@ describe('Wallets', () => {
       },
     })
 
-    const handler = (manager as any).shared.handlers.get('login-google-id-token') as IdTokenHandler
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as IdTokenHandler
     const promptIdToken = vi.fn()
 
     const unregister = manager.registerIdTokenUI(promptIdToken)
@@ -102,7 +103,7 @@ describe('Wallets', () => {
       },
     })
 
-    const handler = (manager as any).shared.handlers.get('login-google-pkce') as AuthCodePkceHandler
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as AuthCodePkceHandler
     expect(handler).toBeInstanceOf(AuthCodePkceHandler)
 
     const commitAuthSpy = vi

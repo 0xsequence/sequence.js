@@ -15,7 +15,9 @@ export class Guards {
       throw new Error(`Guard address for role ${role} not found`)
     }
 
-    return new Signers.Guard(new Guard.Sequence.Guard(this.shared.sequence.guardUrl, guardAddress))
+    return new Signers.Guard(
+      new Guard.Sequence.Guard(this.shared.sequence.guardUrl, guardAddress, this.shared.env.fetch),
+    )
   }
 
   getByAddress(address: Address.Address): [GuardRole, Signers.Guard] | undefined {

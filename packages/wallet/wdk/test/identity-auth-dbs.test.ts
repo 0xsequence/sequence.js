@@ -351,9 +351,11 @@ describe('Identity Authentication Databases', () => {
         },
       })
 
-      // Verify that Google handler is registered and uses our databases
+      // Verify that Google is registered under the canonical signer kind while
+      // still using the PKCE flow by default.
       const handlers = (manager as any).shared.handlers
-      expect(handlers.has('login-google-pkce')).toBe(true)
+      expect(handlers.has('login-google')).toBe(true)
+      expect(handlers.has('login-google-pkce')).toBe(false)
     })
 
     it('Should register the Google ID token handler when configured explicitly', async () => {
@@ -388,7 +390,8 @@ describe('Identity Authentication Databases', () => {
       })
 
       const handlers = (manager as any).shared.handlers
-      expect(handlers.has('login-google-id-token')).toBe(true)
+      expect(handlers.has('login-google-id-token')).toBe(false)
+      expect(handlers.has('login-google')).toBe(true)
       expect(handlers.has('login-google-pkce')).toBe(false)
     })
 

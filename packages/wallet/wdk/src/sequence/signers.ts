@@ -12,6 +12,10 @@ function toKnownKind(kind: string): Kind {
     return kind as Kind
   }
 
+  if (kind === Kinds.LoginGoogleIdToken || kind === Kinds.LoginGooglePkce) {
+    return Kinds.LoginGoogle
+  }
+
   if (Object.values(Kinds).includes(kind as (typeof Kinds)[keyof typeof Kinds])) {
     return kind as Kind
   }

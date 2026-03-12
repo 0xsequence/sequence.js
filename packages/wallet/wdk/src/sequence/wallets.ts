@@ -14,6 +14,30 @@ import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
 import { PasskeysHandler } from './handlers/passkeys.js'
 import type { PasskeySigner } from './passkeys-provider.js'
 
+function getGoogleHandlerKind(): typeof Kinds.LoginGoogle {
+  return Kinds.LoginGoogle
+}
+
+function getSignupHandlerKey(kind: SignupArgs['kind'] | StartSignUpWithRedirectArgs['kind'] | AuthCommitment['kind']) {
+  if (kind === 'google-pkce') {
+    return getGoogleHandlerKind()
+  }
+  if (kind.startsWith('custom-')) {
+    return kind
+  }
+  return 'login-' + kind
+}
+
+function getSignerKindForSignup(kind: SignupArgs['kind'] | AuthCommitment['kind']) {
+  if (kind === 'google-id-token' || kind === 'google-pkce') {
+    return getGoogleHandlerKind()
+  }
+  if (kind.startsWith('custom-')) {
+    return kind
+  }
+  return ('login-' + kind) as string
+}
+
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple' | `custom-${string}`
   target: string
@@ -697,7 +721,7 @@ export class Wallets implements WalletsInterface {
       }
 
       case 'google-id-token': {
-        const handler = this.shared.handlers.get(Kinds.LoginGoogleIdToken) as IdTokenHandler
+        const handler = this.shared.handlers.get(getGoogleHandlerKind()) as IdTokenHandler
         if (!handler) {
           throw new Error('handler-not-registered')
         }
@@ -709,7 +733,7 @@ export class Wallets implements WalletsInterface {
         return {
           signer,
           extra: {
-            signerKind: Kinds.LoginGoogleIdToken,
+            signerKind: getGoogleHandlerKind(),
           },
           loginEmail,
         }
@@ -717,7 +741,7 @@ export class Wallets implements WalletsInterface {
 
       case 'google-pkce':
       case 'apple': {
-        const handler = this.shared.handlers.get('login-' + args.kind) as AuthCodeHandler
+        const handler = this.shared.handlers.get(getSignupHandlerKey(args.kind)) as AuthCodeHandler
         if (!handler) {
           throw new Error('handler-not-registered')
         }
@@ -729,7 +753,7 @@ export class Wallets implements WalletsInterface {
         return {
           signer,
           extra: {
-            signerKind: 'login-' + args.kind,
+            signerKind: getSignerKindForSignup(args.kind),
           },
           loginEmail,
         }
@@ -772,7 +796,7 @@ export class Wallets implements WalletsInterface {
   }
 
   async startSignUpWithRedirect(args: StartSignUpWithRedirectArgs) {
-    const kind = args.kind.startsWith('custom-') ? args.kind : 'login-' + args.kind
+    const kind = getSignupHandlerKey(args.kind)
     const handler = this.shared.handlers.get(kind)
     if (!handler) {
       throw new Error('handler-not-registered')
@@ -801,8 +825,8 @@ export class Wallets implements WalletsInterface {
         use4337: args.use4337,
       })
     } else {
-      const kind = commitment.kind.startsWith('custom-') ? commitment.kind : 'login-' + commitment.kind
-      const handler = this.shared.handlers.get(kind)
+      const handlerKind = getSignupHandlerKey(commitment.kind)
+      const handler = this.shared.handlers.get(handlerKind)
       if (!handler) {
         throw new Error('handler-not-registered')
       }

@@ -31,7 +31,7 @@ describe('Sessions ID token attestation', () => {
     expect(wallet).toBeDefined()
 
     const signersModule = (manager as any).shared.modules.signers
-    vi.spyOn(signersModule, 'kindOf').mockResolvedValue(Kinds.LoginGoogleIdToken)
+    vi.spyOn(signersModule, 'kindOf').mockResolvedValue(Kinds.LoginGoogle)
 
     const sessionAddress = OxAddress.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
     const requestId = await manager.sessions.prepareAuthorizeImplicitSession(wallet!, sessionAddress, {

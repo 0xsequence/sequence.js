@@ -687,7 +687,7 @@ export class Manager {
     if (ops.identity.google?.enabled) {
       if (ops.identity.google.authMethod === 'id-token') {
         shared.handlers.set(
-          Kinds.LoginGoogleIdToken,
+          Kinds.LoginGoogle,
           new IdTokenHandler(
             'google-id-token',
             'https://accounts.google.com',
@@ -700,7 +700,7 @@ export class Manager {
         )
       } else {
         shared.handlers.set(
-          Kinds.LoginGooglePkce,
+          Kinds.LoginGoogle,
           new AuthCodePkceHandler(
             'google-pkce',
             'https://accounts.google.com',
