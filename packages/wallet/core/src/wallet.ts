@@ -342,7 +342,7 @@ export class Wallet {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (Address.isEqual(call.to, this.address)) {
+        if (Address.isEqual(call.to, this.address) && call.data !== '0x') {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }
@@ -455,7 +455,7 @@ export class Wallet {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (Address.isEqual(call.to, this.address)) {
+        if (Address.isEqual(call.to, this.address) && call.data !== '0x') {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }
