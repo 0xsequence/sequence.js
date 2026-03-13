@@ -96,7 +96,9 @@ export class IdTokenHandler extends IdentityHandler implements Handler {
       handle: async () => {
         try {
           const { signer } = await this.handleAuth(onPromptIdToken)
-          if (!Address.isEqual(signer.address as Address.Address, address)) {
+          const signerAddress = (await signer.address) as Address.Address
+          if (!Address.isEqual(signerAddress, address)) {
+            await this.clearAuthKeySigner(signerAddress)
             throw new Error('id-token-signer-mismatch')
           }
           return true

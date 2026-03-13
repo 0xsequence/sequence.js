@@ -81,6 +81,10 @@ export class IdentityHandler {
     return new IdentitySigner(this.nitro, authKey, this.env.crypto)
   }
 
+  protected async clearAuthKeySigner(address: string): Promise<void> {
+    await this.authKeys.delBySigner(address)
+  }
+
   private async getAuthKey(signer: string): Promise<Db.AuthKey | undefined> {
     let authKey = await this.authKeys.getBySigner(signer)
     if (!signer && !authKey) {
