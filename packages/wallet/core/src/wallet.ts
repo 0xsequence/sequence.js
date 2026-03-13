@@ -334,13 +334,6 @@ export class Wallet {
   ): Promise<Envelope.Envelope<Payload.Calls4337_07>> {
     const space = options.space ?? 0n
 
-    const isNativeSelfTransfer = (call: Payload.Call): boolean =>
-      Address.isEqual(call.to, this.address) &&
-      call.value > 0n &&
-      Hex.size(call.data) === 0 &&
-      !call.delegateCall &&
-      !call.onlyFallback
-
     // If safe mode is set, then we check that the transaction
     // is not "dangerous", aka it does not have any delegate calls
     // or calls to the wallet contract itself
@@ -349,7 +342,7 @@ export class Wallet {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (Address.isEqual(call.to, this.address) && !isNativeSelfTransfer(call)) {
+        if (Address.isEqual(call.to, this.address) && call.data !== '0x') {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }
@@ -454,13 +447,6 @@ export class Wallet {
   ): Promise<Envelope.Envelope<Payload.Calls>> {
     const space = options?.space ?? 0n
 
-    const isNativeSelfTransfer = (call: Payload.Call): boolean =>
-      Address.isEqual(call.to, this.address) &&
-      call.value > 0n &&
-      Hex.size(call.data) === 0 &&
-      !call.delegateCall &&
-      !call.onlyFallback
-
     // If safe mode is set, then we check that the transaction
     // is not "dangerous", aka it does not have any delegate calls
     // or calls to the wallet contract itself
@@ -469,7 +455,7 @@ export class Wallet {
         if (call.delegateCall) {
           throw new Error('delegate calls are not allowed in safe mode')
         }
-        if (Address.isEqual(call.to, this.address) && !isNativeSelfTransfer(call)) {
+        if (Address.isEqual(call.to, this.address) && call.data !== '0x') {
           throw new Error('calls to the wallet contract itself are not allowed in safe mode')
         }
       }
