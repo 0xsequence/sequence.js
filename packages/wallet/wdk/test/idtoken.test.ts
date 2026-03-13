@@ -299,5 +299,27 @@ describe('IdTokenHandler', () => {
 
       expect(handled).toBe(false)
     })
+
+    it('Should return false when actionable handle authenticates the wrong signer', async () => {
+      vi.spyOn(idTokenHandler as any, 'getAuthKeySigner').mockResolvedValue(undefined)
+      vi.spyOn(idTokenHandler, 'completeAuth').mockResolvedValue([
+        {
+          ...mockIdentitySigner,
+          address: '0x9999999999999999999999999999999999999999',
+        } as unknown as IdentitySigner,
+        { email: 'other-user@example.com' },
+      ])
+
+      mockPromptIdToken.mockImplementation(async (_kind, respond) => {
+        await respond('header.payload.signature')
+      })
+
+      idTokenHandler.registerUI(mockPromptIdToken)
+
+      const status = await idTokenHandler.status(testWallet, undefined, testRequest)
+      const handled = await (status as any).handle()
+
+      expect(handled).toBe(false)
+    })
   })
 })

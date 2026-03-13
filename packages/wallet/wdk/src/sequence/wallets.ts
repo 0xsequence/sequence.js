@@ -38,6 +38,17 @@ function getSignerKindForSignup(kind: SignupArgs['kind'] | AuthCommitment['kind'
   return ('login-' + kind) as string
 }
 
+function getIdTokenSignupHandler(shared: Shared, kind: typeof Kinds.LoginGoogle | `custom-${string}`): IdTokenHandler {
+  const handler = shared.handlers.get(kind)
+  if (!handler) {
+    throw new Error('handler-not-registered')
+  }
+  if (!(handler instanceof IdTokenHandler)) {
+    throw new Error('handler-does-not-support-id-token')
+  }
+  return handler
+}
+
 export type StartSignUpWithRedirectArgs = {
   kind: 'google-pkce' | 'apple' | `custom-${string}`
   target: string
@@ -721,11 +732,7 @@ export class Wallets implements WalletsInterface {
       }
 
       case 'google-id-token': {
-        const handler = this.shared.handlers.get(getGoogleHandlerKind()) as IdTokenHandler
-        if (!handler) {
-          throw new Error('handler-not-registered')
-        }
-
+        const handler = getIdTokenSignupHandler(this.shared, getGoogleHandlerKind())
         const [signer, metadata] = await handler.completeAuth(args.idToken)
         const loginEmail = metadata.email
         this.shared.modules.logger.log('Created new id token signer:', signer.address)
@@ -762,11 +769,7 @@ export class Wallets implements WalletsInterface {
 
     if (args.kind.startsWith('custom-')) {
       if (isIdTokenArgs(args)) {
-        const handler = this.shared.handlers.get(args.kind) as IdTokenHandler
-        if (!handler) {
-          throw new Error('handler-not-registered')
-        }
-
+        const handler = getIdTokenSignupHandler(this.shared, args.kind)
         const [signer, metadata] = await handler.completeAuth(args.idToken)
         return {
           signer,

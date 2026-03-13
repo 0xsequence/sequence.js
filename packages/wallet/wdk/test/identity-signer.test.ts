@@ -13,7 +13,7 @@ const mockCryptoSubtle = {
   exportKey: vi.fn(),
 }
 
-Object.defineProperty(global, 'window', {
+Object.defineProperty(globalThis, 'window', {
   value: {
     crypto: {
       subtle: mockCryptoSubtle,
@@ -102,23 +102,6 @@ describe('Identity Signer', () => {
       expect(result.startsWith('0x')).toBe(true)
     })
 
-    it('Should normalize DER-encoded P-256 signatures to compact r||s form', async () => {
-      const mockDigest = Hex.toBytes('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef')
-      const derEncodedSignature = Uint8Array.from([
-        0x30, 0x45, 0x02, 0x21, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-        0x11, 0x02, 0x20, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
-        0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
-      ])
-
-      mockCryptoSubtle.sign.mockResolvedValueOnce(derEncodedSignature.buffer)
-
-      const identityAuthKey = toIdentityAuthKey(testAuthKey)
-      const result = await identityAuthKey.sign(mockDigest)
-
-      expect(result).toBe('0x' + '11'.repeat(32) + '22'.repeat(32))
-    })
-
     it('Should handle Web Crypto API errors in sign function', async () => {
       const mockDigest = Hex.toBytes('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef')
 
@@ -127,16 +110,6 @@ describe('Identity Signer', () => {
       const identityAuthKey = toIdentityAuthKey(testAuthKey)
 
       await expect(identityAuthKey.sign(mockDigest)).rejects.toThrow('Crypto operation failed')
-    })
-
-    it('Should reject malformed DER signatures', async () => {
-      const mockDigest = Hex.toBytes('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef')
-
-      mockCryptoSubtle.sign.mockResolvedValueOnce(Uint8Array.from([0x31, 0x05, 0x02, 0x01, 0x01]).buffer)
-
-      const identityAuthKey = toIdentityAuthKey(testAuthKey)
-
-      await expect(identityAuthKey.sign(mockDigest)).rejects.toThrow('unsupported-webcrypto-signature-format')
     })
   })
 

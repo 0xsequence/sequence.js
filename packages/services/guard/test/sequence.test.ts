@@ -94,10 +94,14 @@ describe('Sequence', () => {
 
       it('Should throw error when guard service fails', async () => {
         mockFetch.mockRejectedValueOnce(new Error('Network error'))
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
         await expect(
           guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
         ).rejects.toThrow('Error signing with guard')
+
+        expect(consoleErrorSpy).not.toHaveBeenCalled()
+        consoleErrorSpy.mockRestore()
       })
 
       it('Should throw error when guard service returns invalid response', async () => {
@@ -114,6 +118,21 @@ describe('Sequence', () => {
         await expect(
           guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
         ).rejects.toThrow('Error signing with guard')
+      })
+
+      it('Should preserve the original guard failure as cause', async () => {
+        mockFetch.mockRejectedValueOnce(new Error('Network error'))
+
+        try {
+          await guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage)
+          throw new Error('Expected signPayload to throw')
+        } catch (error) {
+          expect(error).toBeInstanceOf(Error)
+          expect((error as Error).message).toBe('Error signing with guard')
+          expect((error as Error & { cause?: unknown }).cause).toBeInstanceOf(Error)
+          expect((error as Error & { cause?: Error }).cause?.name).toBe('WebrpcRequestFailed')
+          expect((error as Error & { cause?: Error }).cause?.message).toBe('request failed')
+        }
       })
 
       it('Should include proper headers and signer address in request', async () => {

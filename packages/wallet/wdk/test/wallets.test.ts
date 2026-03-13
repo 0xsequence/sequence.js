@@ -5,6 +5,7 @@ import { newManager } from './constants.js'
 import { Config, Constants, Network } from '@0xsequence/wallet-primitives'
 import { AuthCodePkceHandler } from '../src/sequence/handlers/authcode-pkce.js'
 import { IdTokenHandler } from '../src/sequence/handlers/idtoken.js'
+import { IdentitySigner } from '../src/identity/signer.js'
 import { MnemonicHandler } from '../src/sequence/handlers/mnemonic.js'
 import { Kinds } from '../src/sequence/types/signer.js'
 
@@ -48,7 +49,7 @@ describe('Wallets', () => {
 
     const completeAuthSpy = vi
       .spyOn(handler, 'completeAuth')
-      .mockResolvedValue([loginSigner, { email: 'google-user@example.com' }])
+      .mockResolvedValue([loginSigner as unknown as IdentitySigner, { email: 'google-user@example.com' }])
 
     const wallet = await manager.wallets.signUp({
       kind: 'google-id-token',
@@ -118,6 +119,49 @@ describe('Wallets', () => {
 
     expect(url).toBe('https://accounts.google.com/o/oauth2/v2/auth?state=test-state')
     expect(commitAuthSpy).toHaveBeenCalledWith('/auth/return', true)
+  })
+
+  it('Should reject google-id-token signup when Google is configured for redirect auth', async () => {
+    manager = newManager({
+      identity: {
+        google: {
+          enabled: true,
+          clientId: 'test-google-client-id',
+        },
+      },
+    })
+
+    await expect(
+      manager.wallets.signUp({
+        kind: 'google-id-token',
+        idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
+        noGuard: true,
+      }),
+    ).rejects.toThrow('handler-does-not-support-id-token')
+  })
+
+  it('Should reject custom ID token signup when the provider uses redirect auth', async () => {
+    manager = newManager({
+      identity: {
+        customProviders: [
+          {
+            kind: 'custom-oidc',
+            authMethod: 'authcode',
+            issuer: 'https://issuer.example.com',
+            oauthUrl: 'https://issuer.example.com/oauth/authorize',
+            clientId: 'test-custom-client-id',
+          },
+        ],
+      },
+    })
+
+    await expect(
+      manager.wallets.signUp({
+        kind: 'custom-oidc',
+        idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
+        noGuard: true,
+      }),
+    ).rejects.toThrow('handler-does-not-support-id-token')
   })
 
   it('Should get a specific wallet by address', async () => {
