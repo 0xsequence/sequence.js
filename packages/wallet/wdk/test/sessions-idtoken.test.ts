@@ -53,4 +53,45 @@ describe('Sessions ID token attestation', () => {
     expect(Hex.fromBytes(attestation.applicationData)).toBe('0x1234')
     expect(Hex.fromBytes(attestation.identityType)).toBe('0x00000002')
   })
+
+  it('Should include issuer and audience hashes for apple implicit session authorization', async () => {
+    manager = newManager({
+      identity: {
+        apple: {
+          enabled: true,
+          clientId: 'test-apple-client-id',
+        },
+      },
+    })
+
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    const signersModule = (manager as any).shared.modules.signers
+    vi.spyOn(signersModule, 'kindOf').mockResolvedValue(Kinds.LoginApple)
+
+    const sessionAddress = OxAddress.fromPublicKey(Secp256k1.getPublicKey({ privateKey: Secp256k1.randomPrivateKey() }))
+    const requestId = await manager.sessions.prepareAuthorizeImplicitSession(wallet!, sessionAddress, {
+      target: 'https://example.com',
+      applicationData: '0x1234',
+    })
+
+    const request = await manager.signatures.get(requestId)
+    expect(request.action).toBe('session-implicit-authorize')
+    expect(Payload.isSessionImplicitAuthorize(request.envelope.payload)).toBe(true)
+
+    if (!Payload.isSessionImplicitAuthorize(request.envelope.payload)) {
+      throw new Error('Expected session implicit authorize payload')
+    }
+
+    const attestation = request.envelope.payload.attestation
+    expect(Hex.fromBytes(attestation.issuerHash)).toBe(Hash.keccak256(Hex.fromString('https://appleid.apple.com')))
+    expect(Hex.fromBytes(attestation.audienceHash)).toBe(Hash.keccak256(Hex.fromString('test-apple-client-id')))
+    expect(Hex.fromBytes(attestation.applicationData)).toBe('0x1234')
+    expect(Hex.fromBytes(attestation.identityType)).toBe('0x00000002')
+  })
 })

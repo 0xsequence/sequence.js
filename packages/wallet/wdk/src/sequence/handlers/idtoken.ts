@@ -102,6 +102,9 @@ export class IdTokenHandler extends IdentityHandler implements Handler {
           const { signer } = await this.handleAuth(onPromptIdToken)
           const signerAddress = (await signer.address) as Address.Address
           if (!Address.isEqual(signerAddress, address)) {
+            // ID-token auth prompts are keyed by provider kind, not the requested signer address.
+            // For example, a user can pick a different Google account in the account picker and
+            // return a token for a different identity than this request expects.
             await this.clearAuthKeySigner(signerAddress)
             throw new Error('id-token-signer-mismatch')
           }

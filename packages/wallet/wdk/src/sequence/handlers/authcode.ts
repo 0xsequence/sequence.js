@@ -28,6 +28,8 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
 
   public get kind() {
     if (this.signupKind === 'google-pkce') {
+      // Keep Google PKCE on the canonical kind so Google signers created before
+      // canonicalization still resolve as `login-google`.
       return Kinds.LoginGoogle
     }
     return 'login-' + this.signupKind

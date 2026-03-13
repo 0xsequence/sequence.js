@@ -13,6 +13,7 @@ function toKnownKind(kind: string): Kind {
   }
 
   if (kind === 'login-google-pkce') {
+    // Normalize legacy Google PKCE witnesses while the canonical signer kind is `login-google`.
     return Kinds.LoginGoogle
   }
 

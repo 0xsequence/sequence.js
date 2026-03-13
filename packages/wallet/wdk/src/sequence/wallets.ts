@@ -14,13 +14,9 @@ import { Wallet, WalletSelectionUiHandler } from './types/wallet.js'
 import { PasskeysHandler } from './handlers/passkeys.js'
 import type { PasskeySigner } from './passkeys-provider.js'
 
-function getGoogleHandlerKind(): typeof Kinds.LoginGoogle {
-  return Kinds.LoginGoogle
-}
-
 function getSignupHandlerKey(kind: SignupArgs['kind'] | StartSignUpWithRedirectArgs['kind'] | AuthCommitment['kind']) {
   if (kind === 'google-pkce') {
-    return getGoogleHandlerKind()
+    return Kinds.LoginGoogle
   }
   if (kind.startsWith('custom-')) {
     return kind
@@ -30,7 +26,7 @@ function getSignupHandlerKey(kind: SignupArgs['kind'] | StartSignUpWithRedirectA
 
 function getSignerKindForSignup(kind: SignupArgs['kind'] | AuthCommitment['kind']) {
   if (kind === 'google-id-token' || kind === 'google-pkce') {
-    return getGoogleHandlerKind()
+    return Kinds.LoginGoogle
   }
   if (kind.startsWith('custom-')) {
     return kind
@@ -85,13 +81,8 @@ export type EmailOtpSignupArgs = CommonSignupArgs & {
   email: string
 }
 
-export type GoogleIdTokenSignupArgs = CommonSignupArgs & {
-  kind: 'google-id-token'
-  idToken: string
-}
-
-export type CustomIdTokenSignupArgs = CommonSignupArgs & {
-  kind: `custom-${string}`
+export type IdTokenSignupArgs = CommonSignupArgs & {
+  kind: 'google-id-token' | `custom-${string}`
   idToken: string
 }
 
@@ -112,8 +103,7 @@ export type SignupArgs =
   | PasskeySignupArgs
   | MnemonicSignupArgs
   | EmailOtpSignupArgs
-  | GoogleIdTokenSignupArgs
-  | CustomIdTokenSignupArgs
+  | IdTokenSignupArgs
   | AuthCodeSignupArgs
 
 export type LoginToWalletArgs = {
@@ -417,7 +407,7 @@ export function isAuthCodeArgs(args: SignupArgs): args is AuthCodeSignupArgs {
   return 'code' in args && 'commitment' in args
 }
 
-export function isIdTokenArgs(args: SignupArgs): args is GoogleIdTokenSignupArgs | CustomIdTokenSignupArgs {
+export function isIdTokenArgs(args: SignupArgs): args is IdTokenSignupArgs {
   return 'idToken' in args
 }
 
@@ -732,7 +722,7 @@ export class Wallets implements WalletsInterface {
       }
 
       case 'google-id-token': {
-        const handler = getIdTokenSignupHandler(this.shared, getGoogleHandlerKind())
+        const handler = getIdTokenSignupHandler(this.shared, Kinds.LoginGoogle)
         const [signer, metadata] = await handler.completeAuth(args.idToken)
         const loginEmail = metadata.email
         this.shared.modules.logger.log('Created new id token signer:', signer.address)
@@ -740,7 +730,7 @@ export class Wallets implements WalletsInterface {
         return {
           signer,
           extra: {
-            signerKind: getGoogleHandlerKind(),
+            signerKind: Kinds.LoginGoogle,
           },
           loginEmail,
         }
