@@ -94,14 +94,10 @@ describe('Sequence', () => {
 
       it('Should throw error when guard service fails', async () => {
         mockFetch.mockRejectedValueOnce(new Error('Network error'))
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
         await expect(
           guard.signPayload(testWallet, 42161, PayloadType.ConfigUpdate, testMessageDigest, testMessage),
         ).rejects.toThrow('Error signing with guard')
-
-        expect(consoleErrorSpy).not.toHaveBeenCalled()
-        consoleErrorSpy.mockRestore()
       })
 
       it('Should throw error when guard service returns invalid response', async () => {

@@ -49,6 +49,7 @@ export class Guard implements Types.Guard {
       if (error instanceof Client.RequiresPINError) {
         throw new Types.AuthRequiredError('PIN')
       }
+      console.error(error)
       throw new Error('Error signing with guard', { cause: error })
     }
   }
