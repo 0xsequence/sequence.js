@@ -98,7 +98,7 @@ describe('IdTokenHandler', () => {
       expect(handler.issuer).toBe('https://accounts.google.com')
       expect(handler.audience).toBe('test-google-client-id')
       expect(handler.identityType).toBe(IdentityType.OIDC)
-      expect(handler.kind).toBe(Kinds.LoginGoogleIdToken)
+      expect(handler.kind).toBe(Kinds.LoginGoogle)
     })
 
     it('Should initialize without a registered UI callback', () => {

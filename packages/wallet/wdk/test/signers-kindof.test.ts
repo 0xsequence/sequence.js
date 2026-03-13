@@ -38,7 +38,7 @@ describe('Signers.kindOf', () => {
     expect(getWitnessFor).toHaveBeenCalledTimes(1)
   })
 
-  it('normalizes legacy Google signer kinds to the canonical Google signer kind', async () => {
+  it('normalizes legacy Google PKCE signer kind to the canonical Google signer kind', async () => {
     const getWitnessFor = vi.fn().mockResolvedValue({
       payload: {
         type: 'message',
@@ -56,15 +56,6 @@ describe('Signers.kindOf', () => {
     const signers = (manager as any).shared.modules.signers
     const wallet = '0x1111111111111111111111111111111111111111'
     const signer = '0x2222222222222222222222222222222222222222'
-
-    await expect(signers.kindOf(wallet, signer)).resolves.toBe(Kinds.LoginGoogle)
-
-    getWitnessFor.mockResolvedValueOnce({
-      payload: {
-        type: 'message',
-        message: '0x' + Buffer.from(JSON.stringify({ signerKind: 'login-google-id-token' }), 'utf8').toString('hex'),
-      },
-    })
 
     await expect(signers.kindOf(wallet, signer)).resolves.toBe(Kinds.LoginGoogle)
   })

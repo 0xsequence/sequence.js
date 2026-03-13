@@ -326,7 +326,7 @@ describe('AuthCodePkceHandler', () => {
 
   describe('Integration and Edge Cases', () => {
     it('Should have correct kind property', () => {
-      expect(handler.kind).toBe('login-google-pkce')
+      expect(handler.kind).toBe('login-google')
     })
 
     it('Should handle redirect URI configuration', () => {

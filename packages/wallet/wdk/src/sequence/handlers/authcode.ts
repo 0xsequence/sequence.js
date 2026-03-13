@@ -6,6 +6,7 @@ import * as Identity from '@0xsequence/identity-instrument'
 import { SignerUnavailable, SignerReady, SignerActionable, BaseSignatureRequest } from '../types/signature-request.js'
 import { IdentitySigner } from '../../identity/signer.js'
 import { IdentityHandler } from './identity.js'
+import { Kinds } from '../types/signer.js'
 import type { NavigationLike, WdkEnv } from '../../env.js'
 
 export class AuthCodeHandler extends IdentityHandler implements Handler {
@@ -26,6 +27,9 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
   }
 
   public get kind() {
+    if (this.signupKind === 'google-pkce') {
+      return Kinds.LoginGoogle
+    }
     return 'login-' + this.signupKind
   }
 

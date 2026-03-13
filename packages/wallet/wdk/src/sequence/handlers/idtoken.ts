@@ -7,6 +7,7 @@ import { Signatures } from '../signatures.js'
 import { SignerActionable, SignerReady, SignerUnavailable, BaseSignatureRequest } from '../types/signature-request.js'
 import { IdentitySigner } from '../../identity/signer.js'
 import { IdentityHandler } from './identity.js'
+import { Kinds } from '../types/signer.js'
 import type { WdkEnv } from '../../env.js'
 
 type RespondFn = (idToken: string) => Promise<void>
@@ -29,6 +30,9 @@ export class IdTokenHandler extends IdentityHandler implements Handler {
   }
 
   public get kind() {
+    if (this.signupKind === 'google-id-token') {
+      return Kinds.LoginGoogle
+    }
     return 'login-' + this.signupKind
   }
 

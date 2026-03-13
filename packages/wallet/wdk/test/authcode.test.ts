@@ -188,7 +188,7 @@ describe('AuthCodeHandler', () => {
   // === KIND GETTER ===
 
   describe('kind getter', () => {
-    it('Should return login-google-pkce for Google PKCE handler', () => {
+    it('Should return login-google for Google PKCE handler', () => {
       const googleHandler = new AuthCodeHandler(
         'google-pkce',
         'https://accounts.google.com',
@@ -200,7 +200,7 @@ describe('AuthCodeHandler', () => {
         mockAuthKeys,
       )
 
-      expect(googleHandler.kind).toBe('login-google-pkce')
+      expect(googleHandler.kind).toBe('login-google')
     })
 
     it('Should return login-apple for Apple handler', () => {

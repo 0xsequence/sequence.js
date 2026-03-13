@@ -12,7 +12,7 @@ function toKnownKind(kind: string): Kind {
     return kind as Kind
   }
 
-  if (kind === Kinds.LoginGoogleIdToken || kind === Kinds.LoginGooglePkce) {
+  if (kind === 'login-google-pkce') {
     return Kinds.LoginGoogle
   }
 
