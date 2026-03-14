@@ -37,4 +37,26 @@ describe('Signers.kindOf', () => {
     await signers.kindOf(wallet, '0x2222222222222222222222222222222222222222')
     expect(getWitnessFor).toHaveBeenCalledTimes(1)
   })
+
+  it('normalizes legacy Google PKCE signer kind to the canonical Google signer kind', async () => {
+    const getWitnessFor = vi.fn().mockResolvedValue({
+      payload: {
+        type: 'message',
+        message: '0x' + Buffer.from(JSON.stringify({ signerKind: 'login-google-pkce' }), 'utf8').toString('hex'),
+      },
+    })
+
+    const manager = newManager({
+      stateProvider: {
+        getWitnessFor,
+        getWitnessForSapient: vi.fn(),
+      } as any,
+    })
+
+    const signers = (manager as any).shared.modules.signers
+    const wallet = '0x1111111111111111111111111111111111111111'
+    const signer = '0x2222222222222222222222222222222222222222'
+
+    await expect(signers.kindOf(wallet, signer)).resolves.toBe(Kinds.LoginGoogle)
+  })
 })

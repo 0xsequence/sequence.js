@@ -50,7 +50,7 @@ export class Guard implements Types.Guard {
         throw new Types.AuthRequiredError('PIN')
       }
       console.error(error)
-      throw new Error('Error signing with guard')
+      throw new Error('Error signing with guard', { cause: error })
     }
   }
 }

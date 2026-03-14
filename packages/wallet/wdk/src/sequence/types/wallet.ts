@@ -36,7 +36,7 @@ export interface Wallet {
 
   /**
    * A string identifier for the authentication method used for this session.
-   * Examples: 'login-mnemonic', 'login-passkey', 'login-google-pkce'.
+   * Examples: 'login-mnemonic', 'login-passkey', 'login-google'.
    * @property
    */
   loginType: string

@@ -9,7 +9,9 @@ import {
   SessionConfig,
 } from '@0xsequence/wallet-primitives'
 import { Address, Bytes, Hash, Hex } from 'ox'
+import { AuthCodeHandler } from './handlers/authcode.js'
 import { AuthCodePkceHandler } from './handlers/authcode-pkce.js'
+import { IdTokenHandler } from './handlers/idtoken.js'
 import { IdentityHandler, identityTypeToHex } from './handlers/identity.js'
 import { Handler } from './handlers/index.js'
 import { ManagerOptionsDefaults, Shared } from './manager.js'
@@ -362,7 +364,11 @@ export class Sessions implements SessionsInterface {
     let audienceHash: Hex.Hex = '0x'
     if (handler instanceof IdentityHandler) {
       identityType = handler.identityType
-      if (handler instanceof AuthCodePkceHandler) {
+      if (
+        handler instanceof AuthCodeHandler ||
+        handler instanceof AuthCodePkceHandler ||
+        handler instanceof IdTokenHandler
+      ) {
         issuerHash = Hash.keccak256(Hex.fromString(handler.issuer))
         audienceHash = Hash.keccak256(Hex.fromString(handler.audience))
       }

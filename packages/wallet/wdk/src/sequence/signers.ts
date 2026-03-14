@@ -12,6 +12,11 @@ function toKnownKind(kind: string): Kind {
     return kind as Kind
   }
 
+  if (kind === 'login-google-pkce') {
+    // Normalize legacy Google PKCE witnesses while the canonical signer kind is `login-google`.
+    return Kinds.LoginGoogle
+  }
+
   if (Object.values(Kinds).includes(kind as (typeof Kinds)[keyof typeof Kinds])) {
     return kind as Kind
   }

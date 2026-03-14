@@ -13,7 +13,7 @@ const mockCryptoSubtle = {
   exportKey: vi.fn(),
 }
 
-Object.defineProperty(global, 'window', {
+Object.defineProperty(globalThis, 'window', {
   value: {
     crypto: {
       subtle: mockCryptoSubtle,

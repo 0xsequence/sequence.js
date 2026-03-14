@@ -1,8 +1,13 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Manager, SignerActionable, SignerReady } from '../src/sequence/index.js'
 import { Mnemonic, Address } from 'ox'
 import { newManager } from './constants.js'
 import { Config, Constants, Network } from '@0xsequence/wallet-primitives'
+import { AuthCodePkceHandler } from '../src/sequence/handlers/authcode-pkce.js'
+import { IdTokenHandler } from '../src/sequence/handlers/idtoken.js'
+import { IdentitySigner } from '../src/identity/signer.js'
+import { MnemonicHandler } from '../src/sequence/handlers/mnemonic.js'
+import { Kinds } from '../src/sequence/types/signer.js'
 
 describe('Wallets', () => {
   let manager: Manager | undefined
@@ -22,6 +27,141 @@ describe('Wallets', () => {
     })
     expect(wallet).toBeDefined()
     await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
+  })
+
+  it('Should create a new wallet using google-id-token when Google ID token auth is enabled', async () => {
+    manager = newManager({
+      identity: {
+        google: {
+          enabled: true,
+          clientId: 'test-google-client-id',
+          authMethod: 'id-token',
+        },
+      },
+    })
+
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as IdTokenHandler
+    const loginMnemonic = Mnemonic.random(Mnemonic.english)
+    const loginSigner = MnemonicHandler.toSigner(loginMnemonic)
+    if (!loginSigner) {
+      throw new Error('Failed to create login signer for test')
+    }
+
+    const completeAuthSpy = vi
+      .spyOn(handler, 'completeAuth')
+      .mockResolvedValue([loginSigner as unknown as IdentitySigner, { email: 'google-user@example.com' }])
+
+    const wallet = await manager.wallets.signUp({
+      kind: 'google-id-token',
+      idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
+      noGuard: true,
+    })
+
+    expect(wallet).toBeDefined()
+    expect(completeAuthSpy).toHaveBeenCalledWith('eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.')
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
+
+    const walletEntry = await manager.wallets.get(wallet!)
+    expect(walletEntry).toBeDefined()
+    expect(walletEntry!.loginType).toBe(Kinds.LoginGoogle)
+    expect(walletEntry!.loginEmail).toBe('google-user@example.com')
+
+    const configuration = await manager.wallets.getConfiguration(wallet!)
+    expect(configuration.login).toHaveLength(1)
+    expect(configuration.login[0]!.kind).toBe(Kinds.LoginGoogle)
+  })
+
+  it('Should register and unregister Google ID token UI callbacks through the manager', async () => {
+    manager = newManager({
+      identity: {
+        google: {
+          enabled: true,
+          clientId: 'test-google-client-id',
+          authMethod: 'id-token',
+        },
+      },
+    })
+
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as IdTokenHandler
+    const promptIdToken = vi.fn()
+
+    const unregister = manager.registerIdTokenUI(promptIdToken)
+
+    expect(handler['onPromptIdToken']).toBe(promptIdToken)
+
+    unregister()
+
+    expect(handler['onPromptIdToken']).toBeUndefined()
+  })
+
+  it('Should keep Google PKCE redirect flow as the default when authMethod is not specified', async () => {
+    manager = newManager({
+      identity: {
+        google: {
+          enabled: true,
+          clientId: 'test-google-client-id',
+        },
+      },
+    })
+
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as AuthCodePkceHandler
+    expect(handler).toBeInstanceOf(AuthCodePkceHandler)
+
+    const commitAuthSpy = vi
+      .spyOn(handler, 'commitAuth')
+      .mockResolvedValue('https://accounts.google.com/o/oauth2/v2/auth?state=test-state')
+
+    const url = await manager.wallets.startSignUpWithRedirect({
+      kind: 'google-pkce',
+      target: '/auth/return',
+      metadata: {},
+    })
+
+    expect(url).toBe('https://accounts.google.com/o/oauth2/v2/auth?state=test-state')
+    expect(commitAuthSpy).toHaveBeenCalledWith('/auth/return', true)
+  })
+
+  it('Should reject google-id-token signup when Google is configured for redirect auth', async () => {
+    manager = newManager({
+      identity: {
+        google: {
+          enabled: true,
+          clientId: 'test-google-client-id',
+        },
+      },
+    })
+
+    await expect(
+      manager.wallets.signUp({
+        kind: 'google-id-token',
+        idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
+        noGuard: true,
+      }),
+    ).rejects.toThrow('handler-does-not-support-id-token')
+  })
+
+  it('Should reject custom ID token signup when the provider uses redirect auth', async () => {
+    manager = newManager({
+      identity: {
+        customProviders: [
+          {
+            kind: 'custom-oidc',
+            authMethod: 'authcode',
+            issuer: 'https://issuer.example.com',
+            oauthUrl: 'https://issuer.example.com/oauth/authorize',
+            clientId: 'test-custom-client-id',
+          },
+        ],
+      },
+    })
+
+    await expect(
+      manager.wallets.signUp({
+        kind: 'custom-oidc',
+        idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
+        noGuard: true,
+      }),
+    ).rejects.toThrow('handler-does-not-support-id-token')
   })
 
   it('Should get a specific wallet by address', async () => {
