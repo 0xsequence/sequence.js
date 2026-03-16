@@ -28,13 +28,19 @@ function getSignerKindForSignup(kind: SignupArgs['kind'] | AuthCommitment['kind'
   if (kind === 'google-id-token' || kind === 'google-pkce') {
     return Kinds.LoginGoogle
   }
+  if (kind === 'apple-id-token' || kind === 'apple') {
+    return Kinds.LoginApple
+  }
   if (kind.startsWith('custom-')) {
     return kind
   }
   return ('login-' + kind) as string
 }
 
-function getIdTokenSignupHandler(shared: Shared, kind: typeof Kinds.LoginGoogle | `custom-${string}`): IdTokenHandler {
+function getIdTokenSignupHandler(
+  shared: Shared,
+  kind: typeof Kinds.LoginGoogle | typeof Kinds.LoginApple | `custom-${string}`,
+): IdTokenHandler {
   const handler = shared.handlers.get(kind)
   if (!handler) {
     throw new Error('handler-not-registered')
@@ -82,7 +88,7 @@ export type EmailOtpSignupArgs = CommonSignupArgs & {
 }
 
 export type IdTokenSignupArgs = CommonSignupArgs & {
-  kind: 'google-id-token' | `custom-${string}`
+  kind: 'google-id-token' | 'apple-id-token' | `custom-${string}`
   idToken: string
 }
 
@@ -222,7 +228,7 @@ export interface WalletsInterface {
    *   - `kind: 'mnemonic'`: Uses a mnemonic phrase as the login credential.
    *   - `kind: 'passkey'`: Prompts the user to create a WebAuthn passkey.
    *   - `kind: 'email-otp'`: Initiates an OTP flow to the user's email.
-   *   - `kind: 'google-id-token'`: Completes an OIDC ID token flow when Google is configured with `authMethod: 'id-token'`.
+   *   - `kind: 'google-id-token' | 'apple-id-token'`: Completes an OIDC ID token flow when the provider is configured with `authMethod: 'id-token'`.
    *   - `kind: 'google-pkce' | 'apple'`: Completes an OAuth redirect flow.
    *   Common options like `noGuard` or `noRecovery` can customize the wallet's security features.
    * @returns A promise that resolves to the address of the newly created wallet, or `undefined` if the sign-up was aborted.
@@ -721,8 +727,12 @@ export class Wallets implements WalletsInterface {
         }
       }
 
-      case 'google-id-token': {
-        const handler = getIdTokenSignupHandler(this.shared, Kinds.LoginGoogle)
+      case 'google-id-token':
+      case 'apple-id-token': {
+        const handler = getIdTokenSignupHandler(
+          this.shared,
+          args.kind === 'google-id-token' ? Kinds.LoginGoogle : Kinds.LoginApple,
+        )
         const [signer, metadata] = await handler.completeAuth(args.idToken)
         const loginEmail = metadata.email
         this.shared.modules.logger.log('Created new id token signer:', signer.address)
@@ -730,7 +740,7 @@ export class Wallets implements WalletsInterface {
         return {
           signer,
           extra: {
-            signerKind: Kinds.LoginGoogle,
+            signerKind: getSignerKindForSignup(args.kind),
           },
           loginEmail,
         }

@@ -60,6 +60,7 @@ describe('Sessions ID token attestation', () => {
         apple: {
           enabled: true,
           clientId: 'test-apple-client-id',
+          authMethod: 'id-token',
         },
       },
     })

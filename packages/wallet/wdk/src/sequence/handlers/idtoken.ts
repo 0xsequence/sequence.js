@@ -12,13 +12,16 @@ import type { WdkEnv } from '../../env.js'
 
 type RespondFn = (idToken: string) => Promise<void>
 
-export type PromptIdTokenHandler = (kind: 'google-id-token' | `custom-${string}`, respond: RespondFn) => Promise<void>
+export type PromptIdTokenHandler = (
+  kind: 'google-id-token' | 'apple-id-token' | `custom-${string}`,
+  respond: RespondFn,
+) => Promise<void>
 
 export class IdTokenHandler extends IdentityHandler implements Handler {
   private onPromptIdToken: undefined | PromptIdTokenHandler
 
   constructor(
-    public readonly signupKind: 'google-id-token' | `custom-${string}`,
+    public readonly signupKind: 'google-id-token' | 'apple-id-token' | `custom-${string}`,
     public readonly issuer: string,
     public readonly audience: string,
     nitro: Identity.IdentityInstrument,
@@ -32,6 +35,9 @@ export class IdTokenHandler extends IdentityHandler implements Handler {
   public get kind() {
     if (this.signupKind === 'google-id-token') {
       return Kinds.LoginGoogle
+    }
+    if (this.signupKind === 'apple-id-token') {
+      return Kinds.LoginApple
     }
     return 'login-' + this.signupKind
   }

@@ -71,6 +71,48 @@ describe('Wallets', () => {
     expect(configuration.login[0]!.kind).toBe(Kinds.LoginGoogle)
   })
 
+  it('Should create a new wallet using apple-id-token when Apple ID token auth is enabled', async () => {
+    manager = newManager({
+      identity: {
+        apple: {
+          enabled: true,
+          clientId: 'test-apple-client-id',
+          authMethod: 'id-token',
+        },
+      },
+    })
+
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginApple) as IdTokenHandler
+    const loginMnemonic = Mnemonic.random(Mnemonic.english)
+    const loginSigner = MnemonicHandler.toSigner(loginMnemonic)
+    if (!loginSigner) {
+      throw new Error('Failed to create login signer for test')
+    }
+
+    const completeAuthSpy = vi
+      .spyOn(handler, 'completeAuth')
+      .mockResolvedValue([loginSigner as unknown as IdentitySigner, { email: 'apple-user@example.com' }])
+
+    const wallet = await manager.wallets.signUp({
+      kind: 'apple-id-token',
+      idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
+      noGuard: true,
+    })
+
+    expect(wallet).toBeDefined()
+    expect(completeAuthSpy).toHaveBeenCalledWith('eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.')
+    await expect(manager.wallets.has(wallet!)).resolves.toBeTruthy()
+
+    const walletEntry = await manager.wallets.get(wallet!)
+    expect(walletEntry).toBeDefined()
+    expect(walletEntry!.loginType).toBe(Kinds.LoginApple)
+    expect(walletEntry!.loginEmail).toBe('apple-user@example.com')
+
+    const configuration = await manager.wallets.getConfiguration(wallet!)
+    expect(configuration.login).toHaveLength(1)
+    expect(configuration.login[0]!.kind).toBe(Kinds.LoginApple)
+  })
+
   it('Should register and unregister Google ID token UI callbacks through the manager', async () => {
     manager = newManager({
       identity: {
@@ -134,6 +176,25 @@ describe('Wallets', () => {
     await expect(
       manager.wallets.signUp({
         kind: 'google-id-token',
+        idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
+        noGuard: true,
+      }),
+    ).rejects.toThrow('handler-does-not-support-id-token')
+  })
+
+  it('Should reject apple-id-token signup when Apple is configured for redirect auth', async () => {
+    manager = newManager({
+      identity: {
+        apple: {
+          enabled: true,
+          clientId: 'test-apple-client-id',
+        },
+      },
+    })
+
+    await expect(
+      manager.wallets.signUp({
+        kind: 'apple-id-token',
         idToken: 'eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDB9.',
         noGuard: true,
       }),

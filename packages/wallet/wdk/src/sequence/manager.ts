@@ -107,6 +107,7 @@ export type ManagerOptions = {
     apple?: {
       enabled: boolean
       clientId: string
+      authMethod?: 'authcode' | 'id-token'
     }
     customProviders?: CustomIdentityProvider[]
   }
@@ -129,6 +130,7 @@ export type ResolvedIdentityOptions = {
   apple: {
     enabled: boolean
     clientId: string
+    authMethod: 'authcode' | 'id-token'
   }
   customProviders?: CustomIdentityProvider[]
 }
@@ -260,6 +262,7 @@ export const ManagerOptionsDefaults = {
     apple: {
       enabled: false,
       clientId: '',
+      authMethod: 'authcode' as const,
     },
   },
 }
@@ -716,20 +719,35 @@ export class Manager {
       }
     }
     if (ops.identity.apple?.enabled) {
-      shared.handlers.set(
-        Kinds.LoginApple,
-        new AuthCodeHandler(
-          'apple',
-          'https://appleid.apple.com',
-          'https://appleid.apple.com/auth/authorize',
-          ops.identity.apple.clientId,
-          identityInstrument,
-          modules.signatures,
-          shared.databases.authCommitments,
-          shared.databases.authKeys,
-          shared.env,
-        ),
-      )
+      if (ops.identity.apple.authMethod === 'id-token') {
+        shared.handlers.set(
+          Kinds.LoginApple,
+          new IdTokenHandler(
+            'apple-id-token',
+            'https://appleid.apple.com',
+            ops.identity.apple.clientId,
+            identityInstrument,
+            modules.signatures,
+            shared.databases.authKeys,
+            shared.env,
+          ),
+        )
+      } else {
+        shared.handlers.set(
+          Kinds.LoginApple,
+          new AuthCodeHandler(
+            'apple',
+            'https://appleid.apple.com',
+            'https://appleid.apple.com/auth/authorize',
+            ops.identity.apple.clientId,
+            identityInstrument,
+            modules.signatures,
+            shared.databases.authCommitments,
+            shared.databases.authKeys,
+            shared.env,
+          ),
+        )
+      }
     }
     if (ops.identity.customProviders?.length) {
       for (const provider of ops.identity.customProviders) {

@@ -395,6 +395,42 @@ describe('Identity Authentication Databases', () => {
       expect(handlers.has('login-google-pkce')).toBe(false)
     })
 
+    it('Should register the Apple ID token handler when configured explicitly', async () => {
+      manager = new Manager({
+        stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore(`manager-apple-idtoken-${Date.now()}`)),
+        networks: [
+          {
+            name: 'Test Network',
+            type: Network.NetworkType.MAINNET,
+            rpcUrl: LOCAL_RPC_URL,
+            chainId: Network.ChainId.ARBITRUM,
+            blockExplorer: { url: 'https://arbiscan.io' },
+            nativeCurrency: {
+              name: 'Ether',
+              symbol: 'ETH',
+              decimals: 18,
+            },
+          },
+        ],
+        relayers: [],
+        authCommitmentsDb,
+        authKeysDb,
+        identity: {
+          url: 'https://dev-identity.sequence-dev.app',
+          fetch: window.fetch,
+          apple: {
+            enabled: true,
+            clientId: 'test-apple-client-id',
+            authMethod: 'id-token',
+          },
+        },
+      })
+
+      const handlers = (manager as any).shared.handlers
+      expect(handlers.has('login-apple-id-token')).toBe(false)
+      expect(handlers.has('login-apple')).toBe(true)
+    })
+
     it('Should use auth databases when email authentication is enabled', async () => {
       manager = new Manager({
         stateProvider: new State.Local.Provider(new State.Local.IndexedDbStore(`manager-email-${Date.now()}`)),

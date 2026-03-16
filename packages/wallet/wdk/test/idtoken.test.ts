@@ -101,6 +101,22 @@ describe('IdTokenHandler', () => {
       expect(handler.kind).toBe(Kinds.LoginGoogle)
     })
 
+    it('Should normalize apple-id-token handlers to login-apple', () => {
+      const handler = new IdTokenHandler(
+        'apple-id-token',
+        'https://appleid.apple.com',
+        'test-apple-client-id',
+        mockNitroInstrument,
+        mockSignatures,
+        mockAuthKeys,
+      )
+
+      expect(handler.signupKind).toBe('apple-id-token')
+      expect(handler.issuer).toBe('https://appleid.apple.com')
+      expect(handler.audience).toBe('test-apple-client-id')
+      expect(handler.kind).toBe(Kinds.LoginApple)
+    })
+
     it('Should initialize without a registered UI callback', () => {
       expect(idTokenHandler['onPromptIdToken']).toBeUndefined()
     })
