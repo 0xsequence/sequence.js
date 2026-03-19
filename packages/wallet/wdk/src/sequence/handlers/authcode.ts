@@ -8,6 +8,7 @@ import { IdentitySigner } from '../../identity/signer.js'
 import { IdentityHandler } from './identity.js'
 import { Kinds } from '../types/signer.js'
 import type { NavigationLike, WdkEnv } from '../../env.js'
+import type { CommitAuthArgs } from '../../dbs/auth-commitments.js'
 
 export class AuthCodeHandler extends IdentityHandler implements Handler {
   protected redirectUri: string = ''
@@ -39,20 +40,23 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     this.redirectUri = redirectUri
   }
 
-  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string, wallet?: string) {
-    if (!state) {
-      state = Hex.fromBytes(Bytes.random(32))
-    }
+  public async commitAuth(target: string, args: CommitAuthArgs) {
+    const state = args.state ?? Hex.fromBytes(Bytes.random(32))
 
-    await this.commitments.set({
+    const base = {
       id: state,
-      kind: this.signupKind,
-      signer,
+      kind: this.signupKind as Db.AuthCommitment['kind'],
       target,
       metadata: {},
-      isSignUp,
-      wallet,
-    })
+    }
+
+    if (args.type === 'reauth') {
+      await this.commitments.set({ ...base, type: 'reauth', signer: args.signer })
+    } else if (args.type === 'add-signer') {
+      await this.commitments.set({ ...base, type: 'add-signer', wallet: args.wallet })
+    } else {
+      await this.commitments.set({ ...base, type: 'auth' })
+    }
 
     const searchParams = this.serializeQuery({
       client_id: this.audience,
@@ -70,7 +74,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     code: string,
   ): Promise<[IdentitySigner, { [key: string]: string }]> {
     let challenge = new Identity.AuthCodeChallenge(this.issuer, this.audience, this.redirectUri, code)
-    if (commitment.signer) {
+    if (commitment.type === 'reauth') {
       challenge = challenge.withSigner({ address: commitment.signer, keyType: Identity.KeyType.Ethereum_Secp256k1 })
     }
     await this.nitroCommitVerifier(challenge)
@@ -104,7 +108,11 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       message: 'request-redirect',
       handle: async () => {
         const navigation = this.getNavigation()
-        const url = await this.commitAuth(navigation.getPathname(), false, request.id, address)
+        const url = await this.commitAuth(navigation.getPathname(), {
+          type: 'reauth',
+          state: request.id,
+          signer: address,
+        })
         navigation.redirect(url)
         return true
       },

@@ -339,9 +339,15 @@ export interface WalletsInterface {
    * via a redirect-based OAuth flow. It validates the wallet, generates the necessary challenges and state,
    * stores them locally, and returns a URL. Your application should redirect the user to this URL.
    *
+   * After the redirect callback, call `completeRedirect` with the returned state and code. This will
+   * create a pending `AddLoginSigner` signature request internally. The caller can then discover
+   * the pending request through the signatures module and call `completeAddLoginSigner` with the requestId
+   * once it has been signed.
+   *
    * @param args Arguments specifying the wallet, provider (`kind`), and the `target` URL for the redirect callback.
    * @returns A promise that resolves to the full OAuth URL to which the user should be redirected.
    * @see {completeRedirect} for the second step of this flow.
+   * @see {completeAddLoginSigner} to finalize after signing.
    */
   startAddLoginSignerWithRedirect(args: StartAddLoginSignerWithRedirectArgs): Promise<string>
 
@@ -488,6 +494,20 @@ export function isAuthCodeArgs(args: SignupArgs): args is AuthCodeSignupArgs {
 
 export function isIdTokenArgs(args: SignupArgs): args is IdTokenSignupArgs {
   return 'idToken' in args
+}
+
+function addLoginSignerToSignupArgs(args: AddLoginSignerArgs): SignupArgs {
+  switch (args.kind) {
+    case 'mnemonic':
+      return { kind: 'mnemonic', mnemonic: args.mnemonic }
+    case 'email-otp':
+      return { kind: 'email-otp', email: args.email }
+    default: {
+      // google-id-token, apple-id-token, custom-*
+      const _args = args as { kind: string; idToken: string }
+      return { kind: _args.kind as IdTokenSignupArgs['kind'], idToken: _args.idToken }
+    }
+  }
 }
 
 function buildCappedTree(members: { address: Address.Address; imageHash?: Hex.Hex }[]): Config.Topology {
@@ -880,7 +900,7 @@ export class Wallets implements WalletsInterface {
     if (!(handler instanceof AuthCodeHandler)) {
       throw new Error('handler-does-not-support-redirect')
     }
-    return handler.commitAuth(args.target, true)
+    return handler.commitAuth(args.target, { type: 'auth' })
   }
 
   async startAddLoginSignerWithRedirect(args: StartAddLoginSignerWithRedirectArgs) {
@@ -900,7 +920,7 @@ export class Wallets implements WalletsInterface {
     if (!(handler instanceof AuthCodeHandler)) {
       throw new Error('handler-does-not-support-redirect')
     }
-    return handler.commitAuth(args.target, true, undefined, undefined, args.wallet)
+    return handler.commitAuth(args.target, { type: 'add-signer', wallet: args.wallet })
   }
 
   async completeRedirect(args: CompleteRedirectArgs): Promise<string> {
@@ -909,62 +929,62 @@ export class Wallets implements WalletsInterface {
       throw new Error('invalid-state')
     }
 
-    // If commitment has a wallet, this is an add-login-signer redirect
-    if (commitment.wallet) {
-      const handlerKind = getSignupHandlerKey(commitment.kind)
-      const handler = this.shared.handlers.get(handlerKind)
-      if (!handler) {
-        throw new Error('handler-not-registered')
-      }
-      if (!(handler instanceof AuthCodeHandler)) {
-        throw new Error('handler-does-not-support-redirect')
+    switch (commitment.type) {
+      case 'add-signer': {
+        const handlerKind = getSignupHandlerKey(commitment.kind)
+        const handler = this.shared.handlers.get(handlerKind)
+        if (!handler) {
+          throw new Error('handler-not-registered')
+        }
+        if (!(handler instanceof AuthCodeHandler)) {
+          throw new Error('handler-does-not-support-redirect')
+        }
+
+        const walletAddress = commitment.wallet as Address.Address
+        const walletEntry = await this.get(walletAddress)
+        if (!walletEntry) {
+          throw new Error('wallet-not-found')
+        }
+        if (walletEntry.status !== 'ready') {
+          throw new Error('wallet-not-ready')
+        }
+
+        const [signer] = await handler.completeAuth(commitment, args.code)
+        const signerKind = getSignerKindForSignup(commitment.kind)
+
+        await this.addLoginSignerFromPrepared(walletAddress, {
+          signer,
+          extra: { signerKind },
+        })
+        break
       }
 
-      const walletAddress = commitment.wallet as Address.Address
-      const walletEntry = await this.get(walletAddress)
-      if (!walletEntry) {
-        throw new Error('wallet-not-found')
-      }
-      if (walletEntry.status !== 'ready') {
-        throw new Error('wallet-not-ready')
-      }
-
-      const [signer] = await handler.completeAuth(commitment, args.code)
-      const signerKind = getSignerKindForSignup(commitment.kind)
-
-      await this.addLoginSignerFromPrepared(walletAddress, {
-        signer,
-        extra: { signerKind },
-      })
-
-      if (!commitment.target) {
-        throw new Error('invalid-state')
-      }
-      return commitment.target
-    }
-
-    // commitment.isSignUp and signUp also mean 'signIn' from wallet's perspective
-    if (commitment.isSignUp) {
-      await this.signUp({
-        kind: commitment.kind,
-        commitment,
-        code: args.code,
-        noGuard: args.noGuard,
-        target: commitment.target,
-        isRedirect: true,
-        use4337: args.use4337,
-      })
-    } else {
-      const handlerKind = getSignupHandlerKey(commitment.kind)
-      const handler = this.shared.handlers.get(handlerKind)
-      if (!handler) {
-        throw new Error('handler-not-registered')
-      }
-      if (!(handler instanceof AuthCodeHandler)) {
-        throw new Error('handler-does-not-support-redirect')
+      case 'auth': {
+        await this.signUp({
+          kind: commitment.kind,
+          commitment,
+          code: args.code,
+          noGuard: args.noGuard,
+          target: commitment.target,
+          isRedirect: true,
+          use4337: args.use4337,
+        })
+        break
       }
 
-      await handler.completeAuth(commitment, args.code)
+      case 'reauth': {
+        const handlerKind = getSignupHandlerKey(commitment.kind)
+        const handler = this.shared.handlers.get(handlerKind)
+        if (!handler) {
+          throw new Error('handler-not-registered')
+        }
+        if (!(handler instanceof AuthCodeHandler)) {
+          throw new Error('handler-does-not-support-redirect')
+        }
+
+        await handler.completeAuth(commitment, args.code)
+        break
+      }
     }
 
     if (!commitment.target) {
@@ -1409,7 +1429,8 @@ export class Wallets implements WalletsInterface {
       throw new Error('wallet-not-ready')
     }
 
-    const loginSigner = await this.prepareSignUp(args as unknown as SignupArgs)
+    const signupArgs = addLoginSignerToSignupArgs(args)
+    const loginSigner = await this.prepareSignUp(signupArgs)
     return this.addLoginSignerFromPrepared(args.wallet, loginSigner)
   }
 

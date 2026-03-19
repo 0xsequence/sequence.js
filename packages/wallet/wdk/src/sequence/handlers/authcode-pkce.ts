@@ -6,6 +6,7 @@ import * as Identity from '@0xsequence/identity-instrument'
 import { IdentitySigner } from '../../identity/signer.js'
 import { AuthCodeHandler } from './authcode.js'
 import type { WdkEnv } from '../../env.js'
+import type { CommitAuthArgs } from '../../dbs/auth-commitments.js'
 
 export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
   constructor(
@@ -22,26 +23,30 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
     super(signupKind, issuer, oauthUrl, audience, nitro, signatures, commitments, authKeys, env)
   }
 
-  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string, wallet?: string) {
+  public async commitAuth(target: string, args: CommitAuthArgs) {
     let challenge = new Identity.AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
-    if (signer) {
-      challenge = challenge.withSigner({ address: signer, keyType: Identity.KeyType.Ethereum_Secp256k1 })
+    if (args.type === 'reauth') {
+      challenge = challenge.withSigner({ address: args.signer, keyType: Identity.KeyType.Ethereum_Secp256k1 })
     }
     const { verifier, loginHint, challenge: codeChallenge } = await this.nitroCommitVerifier(challenge)
-    if (!state) {
-      state = Hex.fromBytes(Bytes.random(32))
-    }
+    const state = args.state ?? Hex.fromBytes(Bytes.random(32))
 
-    await this.commitments.set({
+    const base = {
       id: state,
-      kind: this.signupKind,
+      kind: this.signupKind as Db.AuthCommitment['kind'],
       verifier,
       challenge: codeChallenge,
       target,
       metadata: {},
-      isSignUp,
-      wallet,
-    })
+    }
+
+    if (args.type === 'reauth') {
+      await this.commitments.set({ ...base, type: 'reauth', signer: args.signer })
+    } else if (args.type === 'add-signer') {
+      await this.commitments.set({ ...base, type: 'add-signer', wallet: args.wallet })
+    } else {
+      await this.commitments.set({ ...base, type: 'auth' })
+    }
 
     const searchParams = this.serializeQuery({
       code_challenge: codeChallenge,

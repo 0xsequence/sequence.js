@@ -1,4 +1,4 @@
-export type { AuthCommitment } from './auth-commitments.js'
+export type { AuthCommitment, CommitAuthArgs } from './auth-commitments.js'
 export { AuthCommitments } from './auth-commitments.js'
 
 export type { AuthKey } from './auth-keys.js'
