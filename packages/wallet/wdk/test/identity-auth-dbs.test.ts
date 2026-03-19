@@ -34,7 +34,7 @@ describe('Identity Authentication Databases', () => {
         verifier: 'test-verifier-code',
         challenge: 'test-challenge-hash',
         target: 'test-target-url',
-        isSignUp: true,
+        type: 'reauth',
         signer: '0x1234567890123456789012345678901234567890',
       }
 
@@ -66,7 +66,7 @@ describe('Identity Authentication Databases', () => {
           response_mode: 'form_post',
         },
         target: 'apple-redirect-url',
-        isSignUp: false,
+        type: 'auth',
       }
 
       await authCommitmentsDb.set(appleCommitment)
@@ -74,7 +74,7 @@ describe('Identity Authentication Databases', () => {
 
       expect(retrieved).toBeDefined()
       expect(retrieved!.kind).toBe('apple')
-      expect(retrieved!.isSignUp).toBe(false)
+      expect(retrieved!.type).toBe('auth')
       expect(retrieved!.metadata.response_type).toBe('code id_token')
     })
 
@@ -85,21 +85,22 @@ describe('Identity Authentication Databases', () => {
           kind: 'google-pkce',
           metadata: {},
           target: 'target-1',
-          isSignUp: true,
+          type: 'auth',
         },
         {
           id: 'commit-2',
           kind: 'apple',
           metadata: {},
           target: 'target-2',
-          isSignUp: false,
+          type: 'reauth',
+          signer: '0x1234567890123456789012345678901234567890',
         },
         {
           id: 'commit-3',
           kind: 'google-pkce',
           metadata: {},
           target: 'target-3',
-          isSignUp: true,
+          type: 'auth',
         },
       ]
 
@@ -129,7 +130,7 @@ describe('Identity Authentication Databases', () => {
         kind: 'google-pkce',
         metadata: {},
         target: 'init-target',
-        isSignUp: true,
+        type: 'auth',
       }
 
       await freshDb.set(testCommitment)
