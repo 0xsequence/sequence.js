@@ -39,7 +39,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
     this.redirectUri = redirectUri
   }
 
-  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
+  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string, wallet?: string) {
     if (!state) {
       state = Hex.fromBytes(Bytes.random(32))
     }
@@ -51,6 +51,7 @@ export class AuthCodeHandler extends IdentityHandler implements Handler {
       target,
       metadata: {},
       isSignUp,
+      wallet,
     })
 
     const searchParams = this.serializeQuery({

@@ -22,7 +22,7 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
     super(signupKind, issuer, oauthUrl, audience, nitro, signatures, commitments, authKeys, env)
   }
 
-  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string) {
+  public async commitAuth(target: string, isSignUp: boolean, state?: string, signer?: string, wallet?: string) {
     let challenge = new Identity.AuthCodePkceChallenge(this.issuer, this.audience, this.redirectUri)
     if (signer) {
       challenge = challenge.withSigner({ address: signer, keyType: Identity.KeyType.Ethereum_Secp256k1 })
@@ -40,6 +40,7 @@ export class AuthCodePkceHandler extends AuthCodeHandler implements Handler {
       target,
       metadata: {},
       isSignUp,
+      wallet,
     })
 
     const searchParams = this.serializeQuery({

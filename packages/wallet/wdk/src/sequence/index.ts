@@ -9,12 +9,15 @@ export { Sessions } from './sessions.js'
 export { Signatures } from './signatures.js'
 export type {
   StartSignUpWithRedirectArgs,
+  StartAddLoginSignerWithRedirectArgs,
   CommonSignupArgs,
   PasskeySignupArgs,
   MnemonicSignupArgs,
   EmailOtpSignupArgs,
   CompleteRedirectArgs,
   SignupArgs,
+  AddLoginSignerArgs,
+  RemoveLoginSignerArgs,
   LoginToWalletArgs,
   LoginToMnemonicArgs,
   LoginToPasskeyArgs,

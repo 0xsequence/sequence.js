@@ -12,6 +12,7 @@ export type AuthCommitment = {
   target: string
   isSignUp: boolean
   signer?: string
+  wallet?: string
 }
 
 export class AuthCommitments extends Generic<AuthCommitment, 'id'> {
