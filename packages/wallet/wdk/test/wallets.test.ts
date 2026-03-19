@@ -160,7 +160,7 @@ describe('Wallets', () => {
     })
 
     expect(url).toBe('https://accounts.google.com/o/oauth2/v2/auth?state=test-state')
-    expect(commitAuthSpy).toHaveBeenCalledWith('/auth/return', true)
+    expect(commitAuthSpy).toHaveBeenCalledWith('/auth/return', { type: 'auth' })
   })
 
   it('Should reject google-id-token signup when Google is configured for redirect auth', async () => {
