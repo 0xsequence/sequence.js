@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.42
+
+### Patch Changes
+
+- Disable deprecated chains
+- Updated dependencies
+  - @0xsequence/migration@2.3.42
+  - @0xsequence/replacer@2.3.42
+  - @0xsequence/utils@2.3.42
+  - @0xsequence/core@2.3.42
+
 ## 2.3.41
 
 ### Patch Changes

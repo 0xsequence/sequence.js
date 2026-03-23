@@ -1,5 +1,20 @@
 # @0xsequence/account
 
+## 2.3.42
+
+### Patch Changes
+
+- Disable deprecated chains
+- Updated dependencies
+  - @0xsequence/migration@2.3.42
+  - @0xsequence/sessions@2.3.42
+  - @0xsequence/network@2.3.42
+  - @0xsequence/relayer@2.3.42
+  - @0xsequence/wallet@2.3.42
+  - @0xsequence/utils@2.3.42
+  - @0xsequence/core@2.3.42
+  - @0xsequence/abi@2.3.42
+
 ## 2.3.41
 
 ### Patch Changes

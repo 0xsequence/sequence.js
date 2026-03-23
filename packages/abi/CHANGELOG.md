@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.42
+
+### Patch Changes
+
+- Disable deprecated chains
+
 ## 2.3.41
 
 ### Patch Changes

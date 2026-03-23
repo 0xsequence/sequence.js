@@ -1,5 +1,13 @@
 # @0xsequence/waas-ethers
 
+## 2.3.42
+
+### Patch Changes
+
+- Disable deprecated chains
+- Updated dependencies
+  - @0xsequence/waas@2.3.42
+
 ## 2.3.41
 
 ### Patch Changes
