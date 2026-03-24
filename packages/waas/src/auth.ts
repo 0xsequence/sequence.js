@@ -46,7 +46,6 @@ import {
 import { WaasAuthenticator, AnswerIncorrectError, Chain, EmailAlreadyInUseError, Session } from './clients/authenticator.gen'
 import { NoPrivateKeyError } from './errors'
 import { SimpleNetwork, WithSimpleNetwork } from './networks'
-import { EmailAuth } from './email'
 import { ethers } from 'ethers'
 import { getDefaultSubtleCryptoBackend, SubtleCryptoBackend } from './subtle-crypto'
 import { getDefaultSecureStoreBackend, SecureStoreBackend } from './secure-store'
@@ -177,8 +176,6 @@ export class SequenceWaaS {
 
   private readonly deviceName: StoreObj<string | undefined>
 
-  private emailClient: EmailAuth | undefined
-
   // The last Date header value returned by the server, used for users with desynchronised clocks
   private lastDate: Date | undefined
 
@@ -276,23 +273,6 @@ export class SequenceWaaS {
     }
 
     return response
-  }
-
-  public get email() {
-    if (this.emailClient) {
-      return this.emailClient
-    }
-
-    if (!this.config.emailRegion) {
-      throw new Error('Missing emailRegion')
-    }
-
-    if (!this.config.emailClientId) {
-      throw new Error('Missing emailClientId')
-    }
-
-    this.emailClient = new EmailAuth(this.config.emailRegion, this.config.emailClientId)
-    return this.emailClient
   }
 
   async onValidationRequired(callback: () => void) {
