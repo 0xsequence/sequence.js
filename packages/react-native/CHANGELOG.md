@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.43
+
+### Patch Changes
+
+- Remove cognito dependency from waas
+- Updated dependencies
+  - @0xsequence/waas@2.3.43
+
 ## 2.3.42
 
 ### Patch Changes

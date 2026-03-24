@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 2.3.43
+
+### Patch Changes
+
+- Remove cognito dependency from waas
+
 ## 2.3.42
 
 ### Patch Changes

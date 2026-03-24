@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.43
+
+### Patch Changes
+
+- Remove cognito dependency from waas
+- Updated dependencies
+  - @0xsequence/migration@2.3.43
+  - @0xsequence/replacer@2.3.43
+  - @0xsequence/utils@2.3.43
+  - @0xsequence/core@2.3.43
+
 ## 2.3.42
 
 ### Patch Changes

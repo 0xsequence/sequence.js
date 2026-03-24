@@ -1,5 +1,21 @@
 # @0xsequence/provider
 
+## 2.3.43
+
+### Patch Changes
+
+- Remove cognito dependency from waas
+- Updated dependencies
+  - @0xsequence/migration@2.3.43
+  - @0xsequence/account@2.3.43
+  - @0xsequence/network@2.3.43
+  - @0xsequence/relayer@2.3.43
+  - @0xsequence/wallet@2.3.43
+  - @0xsequence/utils@2.3.43
+  - @0xsequence/auth@2.3.43
+  - @0xsequence/core@2.3.43
+  - @0xsequence/abi@2.3.43
+
 ## 2.3.42
 
 ### Patch Changes

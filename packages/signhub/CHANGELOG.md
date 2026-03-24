@@ -1,5 +1,13 @@
 # @0xsequence/signhub
 
+## 2.3.43
+
+### Patch Changes
+
+- Remove cognito dependency from waas
+- Updated dependencies
+  - @0xsequence/core@2.3.43
+
 ## 2.3.42
 
 ### Patch Changes
