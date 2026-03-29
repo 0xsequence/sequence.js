@@ -84,7 +84,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
     page: proto.Page
     transactions: proto.MetaTxnLog[]
   }> {
-    return { page: { page: 0, pageSize: 100 }, transactions: [] }
+    return { page: { page: 0, pageSize: 100, more: false, column: '', sort: [] }, transactions: [] }
   }
 
   async getTransactionCost(
@@ -98,7 +98,7 @@ export class LocalRelayer extends ProviderRelayer implements Relayer {
   }
 
   async listGasSponsors(args: proto.ListGasSponsorsArgs): Promise<proto.ListGasSponsorsReturn> {
-    return { page: { page: 0, pageSize: 100 }, gasSponsors: [] }
+    return { page: { page: 0, pageSize: 100, more: false, column: '', sort: [] }, gasSponsors: [] }
   }
 
   async addGasSponsor(args: proto.AddGasSponsorArgs): Promise<proto.AddGasSponsorReturn> {
