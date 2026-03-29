@@ -157,7 +157,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   packages/services/identity-instrument:
     dependencies:
@@ -185,7 +185,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   packages/services/indexer:
     devDependencies:
@@ -261,7 +261,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   packages/services/userdata:
     devDependencies:
@@ -325,7 +325,7 @@ importers:
         version: 25.3.0
       '@vitest/coverage-v8':
         specifier: ^4.0.18
-        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.8))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.9))
       dotenv:
         specifier: ^17.3.1
         version: 17.3.1
@@ -337,7 +337,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   packages/wallet/dapp-client:
     dependencies:
@@ -368,7 +368,7 @@ importers:
         version: 25.3.0
       '@vitest/coverage-v8':
         specifier: ^4.0.18
-        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.8))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.9))
       dotenv:
         specifier: ^17.3.1
         version: 17.3.1
@@ -376,14 +376,14 @@ importers:
         specifier: ^6.2.5
         version: 6.2.5
       happy-dom:
-        specifier: ^20.8.8
-        version: 20.8.8
+        specifier: ^20.8.9
+        version: 20.8.9
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   packages/wallet/primitives:
     dependencies:
@@ -399,13 +399,13 @@ importers:
         version: link:../../../repo/typescript-config
       '@vitest/coverage-v8':
         specifier: ^4.0.18
-        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.8))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.9))
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   packages/wallet/primitives-cli:
     dependencies:
@@ -488,7 +488,7 @@ importers:
         version: 25.3.0
       '@vitest/coverage-v8':
         specifier: ^4.0.18
-        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.8))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.9))
       dotenv:
         specifier: ^17.3.1
         version: 17.3.1
@@ -496,14 +496,14 @@ importers:
         specifier: ^6.2.5
         version: 6.2.5
       happy-dom:
-        specifier: ^20.8.8
-        version: 20.8.8
+        specifier: ^20.8.9
+        version: 20.8.9
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+        version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   repo/eslint-config:
     devDependencies:
@@ -530,7 +530,7 @@ importers:
         version: 7.0.1(eslint@9.39.2)
       eslint-plugin-turbo:
         specifier: ^2.6.3
-        version: 2.6.3(eslint@9.39.2)(turbo@2.8.20)
+        version: 2.6.3(eslint@9.39.2)(turbo@2.8.21)
       globals:
         specifier: ^16.5.0
         version: 16.5.0
@@ -1326,13 +1326,13 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
-  '@turbo/darwin-64@2.8.20':
-    resolution: {integrity: sha512-FQ9EX1xMU5nbwjxXxM3yU88AQQ6Sqc6S44exPRroMcx9XZHqqppl5ymJF0Ig/z3nvQNwDmz1Gsnvxubo+nXWjQ==}
+  '@turbo/darwin-64@2.8.21':
+    resolution: {integrity: sha512-kfGoM0Iw8ZNZpbds+4IzOe0hjvHldqJwUPRAjXJi3KBxg/QOZL95N893SRoMtf2aJ+jJ3dk32yPkp8rvcIjP9g==}
     cpu: [x64]
     os: [darwin]
 
-  '@turbo/darwin-arm64@2.8.20':
-    resolution: {integrity: sha512-Gpyh9ATFGThD6/s9L95YWY54cizg/VRWl2B67h0yofG8BpHf67DFAh9nuJVKG7bY0+SBJDAo5cMur+wOl9YOYw==}
+  '@turbo/darwin-arm64@2.8.21':
+    resolution: {integrity: sha512-o9HEflxUEyr987x0cTUzZBhDOyL6u95JmdmlkH2VyxAw7zq2sdtM5e72y9ufv2N5SIoOBw1fVn9UES5VY5H6vQ==}
     cpu: [arm64]
     os: [darwin]
 
@@ -1340,23 +1340,23 @@ packages:
     resolution: {integrity: sha512-PK38N1fHhDUyjLi0mUjv0RbX0xXGwDLQeRSGsIlLcVpP1B5fwodSIwIYXc9vJok26Yne94BX5AGjueYsUT3uUw==}
     hasBin: true
 
-  '@turbo/linux-64@2.8.20':
-    resolution: {integrity: sha512-p2QxWUYyYUgUFG0b0kR+pPi8t7c9uaVlRtjTTI1AbCvVqkpjUfCcReBn6DgG/Hu8xrWdKLuyQFaLYFzQskZbcA==}
+  '@turbo/linux-64@2.8.21':
+    resolution: {integrity: sha512-uTxlCcXWy5h1fSSymP8XSJ+AudzEHMDV3IDfKX7+DGB8kgJ+SLoTUAH7z4OFA7I/l2sznz0upPdbNNZs91YMag==}
     cpu: [x64]
     os: [linux]
 
-  '@turbo/linux-arm64@2.8.20':
-    resolution: {integrity: sha512-Gn5yjlZGLRZWarLWqdQzv0wMqyBNIdq1QLi48F1oY5Lo9kiohuf7BPQWtWxeNVS2NgJ1+nb/DzK1JduYC4AWOA==}
+  '@turbo/linux-arm64@2.8.21':
+    resolution: {integrity: sha512-cdHIcxNcihHHkCHp0Y4Zb60K4Qz+CK4xw1gb6s/t/9o4SMeMj+hTBCtoW6QpPnl9xPYmxuTou8Zw6+cylTnREg==}
     cpu: [arm64]
     os: [linux]
 
-  '@turbo/windows-64@2.8.20':
-    resolution: {integrity: sha512-vyaDpYk/8T6Qz5V/X+ihKvKFEZFUoC0oxYpC1sZanK6gaESJlmV3cMRT3Qhcg4D2VxvtC2Jjs9IRkrZGL+exLw==}
+  '@turbo/windows-64@2.8.21':
+    resolution: {integrity: sha512-/iBj4OzbqEY8CX+eaeKbBTMZv2CLXNrt0692F7HnK7LcyYwyDecaAiSET6ZzL4opT7sbwkKvzAC/fhqT3Quu1A==}
     cpu: [x64]
     os: [win32]
 
-  '@turbo/windows-arm64@2.8.20':
-    resolution: {integrity: sha512-voicVULvUV5yaGXo0Iue13BcHGYW3u0VgqSbfQwBaHbpj1zLjYV4KIe+7fYIo6DO8FVUJzxFps3ODCQG/Wy2Qw==}
+  '@turbo/windows-arm64@2.8.21':
+    resolution: {integrity: sha512-95tMA/ZbIidJFUUtkmqioQ1gf3n3I1YbRP3ZgVdWTVn2qVbkodcIdGXBKRHHrIbRsLRl99SiHi/L7IxhpZDagQ==}
     cpu: [arm64]
     os: [win32]
 
@@ -2286,8 +2286,8 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  happy-dom@20.8.8:
-    resolution: {integrity: sha512-5/F8wxkNxYtsN0bXfMwIyNLZ9WYsoOYPbmoluqVJqv8KBUbcyKZawJ7uYK4WTX8IHBLYv+VXIwfeNDPy1oKMwQ==}
+  happy-dom@20.8.9:
+    resolution: {integrity: sha512-Tz23LR9T9jOGVZm2x1EPdXqwA37G/owYMxRwU0E4miurAtFsPMQ1d2Jc2okUaSjZqAFz2oEn3FLXC5a0a+siyA==}
     engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
@@ -3585,8 +3585,8 @@ packages:
     resolution: {integrity: sha512-OxbzDES66+x7nnKGg2MwBA1ypVsZoDTLHpeaP4giyiHSixbsiTaMyeJqbEyvBdp5Cm28fc+8GG6RdQtic0ijwQ==}
     hasBin: true
 
-  turbo@2.8.20:
-    resolution: {integrity: sha512-Rb4qk5YT8RUwwdXtkLpkVhNEe/lor6+WV7S5tTlLpxSz6MjV5Qi8jGNn4gS6NAvrYGA/rNrE6YUQM85sCZUDbQ==}
+  turbo@2.8.21:
+    resolution: {integrity: sha512-FlJ8OD5Qcp0jTAM7E4a/RhUzRNds2GzKlyxHKA6N247VLy628rrxAGlMpIXSz6VB430+TiQDJ/SMl6PL1lu6wQ==}
     hasBin: true
 
   type-check@0.4.0:
@@ -4577,10 +4577,10 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
-  '@turbo/darwin-64@2.8.20':
+  '@turbo/darwin-64@2.8.21':
     optional: true
 
-  '@turbo/darwin-arm64@2.8.20':
+  '@turbo/darwin-arm64@2.8.21':
     optional: true
 
   '@turbo/gen@1.13.4(@types/node@25.3.0)(typescript@5.9.3)':
@@ -4603,16 +4603,16 @@ snapshots:
       - supports-color
       - typescript
 
-  '@turbo/linux-64@2.8.20':
+  '@turbo/linux-64@2.8.21':
     optional: true
 
-  '@turbo/linux-arm64@2.8.20':
+  '@turbo/linux-arm64@2.8.21':
     optional: true
 
-  '@turbo/windows-64@2.8.20':
+  '@turbo/windows-64@2.8.21':
     optional: true
 
-  '@turbo/windows-arm64@2.8.20':
+  '@turbo/windows-arm64@2.8.21':
     optional: true
 
   '@turbo/workspaces@1.13.4(@types/node@25.3.0)':
@@ -4780,7 +4780,7 @@ snapshots:
       '@typescript-eslint/types': 8.50.0
       eslint-visitor-keys: 4.2.1
 
-  '@vitest/coverage-v8@4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.8))':
+  '@vitest/coverage-v8@4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.9))':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.0.18
@@ -4792,7 +4792,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.8)
+      vitest: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
 
   '@vitest/expect@4.0.18':
     dependencies:
@@ -5482,11 +5482,11 @@ snapshots:
       string.prototype.matchall: 4.0.12
       string.prototype.repeat: 1.0.0
 
-  eslint-plugin-turbo@2.6.3(eslint@9.39.2)(turbo@2.8.20):
+  eslint-plugin-turbo@2.6.3(eslint@9.39.2)(turbo@2.8.21):
     dependencies:
       dotenv: 16.0.3
       eslint: 9.39.2
-      turbo: 2.8.20
+      turbo: 2.8.21
 
   eslint-scope@8.4.0:
     dependencies:
@@ -5797,7 +5797,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  happy-dom@20.8.8:
+  happy-dom@20.8.9:
     dependencies:
       '@types/node': 25.3.0
       '@types/whatwg-mimetype': 3.0.2
@@ -7185,14 +7185,14 @@ snapshots:
       turbo-windows-64: 2.8.10
       turbo-windows-arm64: 2.8.10
 
-  turbo@2.8.20:
+  turbo@2.8.21:
     optionalDependencies:
-      '@turbo/darwin-64': 2.8.20
-      '@turbo/darwin-arm64': 2.8.20
-      '@turbo/linux-64': 2.8.20
-      '@turbo/linux-arm64': 2.8.20
-      '@turbo/windows-64': 2.8.20
-      '@turbo/windows-arm64': 2.8.20
+      '@turbo/darwin-64': 2.8.21
+      '@turbo/darwin-arm64': 2.8.21
+      '@turbo/linux-64': 2.8.21
+      '@turbo/linux-arm64': 2.8.21
+      '@turbo/windows-64': 2.8.21
+      '@turbo/windows-arm64': 2.8.21
 
   type-check@0.4.0:
     dependencies:
@@ -7322,7 +7322,7 @@ snapshots:
       '@types/node': 25.3.0
       fsevents: 2.3.3
 
-  vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.8):
+  vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.9):
     dependencies:
       '@vitest/expect': 4.0.18
       '@vitest/mocker': 4.0.18(vite@7.3.0(@types/node@25.3.0))
@@ -7346,7 +7346,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 25.3.0
-      happy-dom: 20.8.8
+      happy-dom: 20.8.9
     transitivePeerDependencies:
       - jiti
       - less
