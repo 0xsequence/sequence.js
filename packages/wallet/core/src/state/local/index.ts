@@ -285,7 +285,6 @@ export class Provider implements ProviderInterface {
         }),
       ])
 
-      let totalWeight = 0n
       const encoded = Signature.fillLeaves(fromConfig.topology, (leaf) => {
         if (Config.isSapientSignerLeaf(leaf)) {
           const sapientSignature = signaturesOfSigners.find(
@@ -295,7 +294,6 @@ export class Provider implements ProviderInterface {
           )?.signature
 
           if (sapientSignature) {
-            totalWeight += leaf.weight
             return sapientSignature
           }
         }
@@ -305,15 +303,21 @@ export class Provider implements ProviderInterface {
           return undefined
         }
 
-        totalWeight += leaf.weight
         return signature
       })
+
+      const topologyContext: Config.TopologyWeightContext = {
+        wallet,
+        chainId: candidate.payload.chainId,
+        payload: candidate.payload.content,
+      }
+      const { weight: totalWeight } = Config.getWeight(encoded, () => false, topologyContext)
 
       if (totalWeight < fromConfig.threshold) {
         continue
       }
 
-      const minimalTopology = Config.minimiseSignedTopology(encoded, fromConfig.threshold)
+      const minimalTopology = Config.minimiseSignedTopology(encoded, fromConfig.threshold, topologyContext)
 
       best = {
         nextImageHash: candidate.nextImageHash,

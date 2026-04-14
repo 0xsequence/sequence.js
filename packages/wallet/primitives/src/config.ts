@@ -10,6 +10,8 @@ import {
   SignatureOfSapientSignerLeaf,
   SignatureOfSignerLeaf,
 } from './signature.js'
+import { hash as hashPayload } from './payload.js'
+import type { Parented } from './payload.js'
 import { Constants } from './index.js'
 
 export type SignerLeaf = {
@@ -102,6 +104,19 @@ export type Config = {
   checkpoint: bigint
   topology: Topology
   checkpointer?: Address.Address
+}
+
+export type TopologyWeightContext = {
+  wallet: Address.Address
+  chainId: number
+  payload: Parented
+}
+
+export const MATCHING_SUBDIGEST_WEIGHT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+
+type ResolvedTopologyWeightContext = {
+  digest: Bytes.Bytes
+  anyAddressDigest: Bytes.Bytes
 }
 
 export function isSignerLeaf(cand: unknown): cand is SignerLeaf {
@@ -209,6 +224,41 @@ export function findSignerLeaf(
 export function getWeight(
   topology: RawTopology | RawConfig | Config,
   canSign: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
+  context?: TopologyWeightContext,
+): { weight: bigint; maxWeight: bigint } {
+  return getWeightWithContext(topology, canSign, resolveTopologyWeightContext(context))
+}
+
+function resolveTopologyWeightContext(context?: TopologyWeightContext): ResolvedTopologyWeightContext | undefined {
+  if (!context) {
+    return undefined
+  }
+
+  return {
+    digest: hashPayload(context.wallet, context.chainId, context.payload),
+    anyAddressDigest: hashPayload(Constants.ZeroAddress, context.chainId, context.payload),
+  }
+}
+
+function getSubdigestWeight(
+  topology: SubdigestLeaf | AnyAddressSubdigestLeaf,
+  context?: ResolvedTopologyWeightContext,
+): bigint {
+  if (!context) {
+    return 0n
+  }
+
+  if (isSubdigestLeaf(topology)) {
+    return Bytes.isEqual(Bytes.fromHex(topology.digest), context.digest) ? MATCHING_SUBDIGEST_WEIGHT : 0n
+  }
+
+  return Bytes.isEqual(Bytes.fromHex(topology.digest), context.anyAddressDigest) ? MATCHING_SUBDIGEST_WEIGHT : 0n
+}
+
+function getWeightWithContext(
+  topology: RawTopology | RawConfig | Config,
+  canSign: (signer: SignerLeaf | SapientSignerLeaf) => boolean,
+  context?: ResolvedTopologyWeightContext,
 ): { weight: bigint; maxWeight: bigint } {
   topology = isRawConfig(topology) || isConfig(topology) ? topology.topology : topology
 
@@ -223,11 +273,13 @@ export function getWeight(
   } else if (isSapientSignerLeaf(topology)) {
     return { weight: 0n, maxWeight: canSign(topology) ? topology.weight : 0n }
   } else if (isSubdigestLeaf(topology)) {
-    return { weight: 0n, maxWeight: 0n }
+    const weight = getSubdigestWeight(topology, context)
+    return { weight, maxWeight: weight }
   } else if (isAnyAddressSubdigestLeaf(topology)) {
-    return { weight: 0n, maxWeight: 0n }
+    const weight = getSubdigestWeight(topology, context)
+    return { weight, maxWeight: weight }
   } else if (isRawNestedLeaf(topology)) {
-    const { weight, maxWeight } = getWeight(topology.tree, canSign)
+    const { weight, maxWeight } = getWeightWithContext(topology.tree, canSign, context)
     return {
       weight: weight >= topology.threshold ? topology.weight : 0n,
       maxWeight: maxWeight >= topology.threshold ? topology.weight : 0n,
@@ -235,7 +287,10 @@ export function getWeight(
   } else if (isNodeLeaf(topology)) {
     return { weight: 0n, maxWeight: 0n }
   } else {
-    const [left, right] = [getWeight(topology[0], canSign), getWeight(topology[1], canSign)]
+    const [left, right] = [
+      getWeightWithContext(topology[0], canSign, context),
+      getWeightWithContext(topology[1], canSign, context),
+    ]
     return { weight: left.weight + right.weight, maxWeight: left.maxWeight + right.maxWeight }
   }
 }
@@ -250,7 +305,10 @@ function stripSignedState(leaf: SignerLeaf | SapientSignerLeaf): SignerLeaf | Sa
   return rest
 }
 
-function buildMinimisedTopologyPlans(topology: Topology): Array<MinimisedTopologyPlan | undefined> {
+function buildMinimisedTopologyPlans(
+  topology: Topology,
+  context?: ResolvedTopologyWeightContext,
+): Array<MinimisedTopologyPlan | undefined> {
   if (isSignedSignerLeaf(topology) || isSignedSapientSignerLeaf(topology)) {
     return [
       { weight: 0n, topology: stripSignedState(topology) },
@@ -258,18 +316,16 @@ function buildMinimisedTopologyPlans(topology: Topology): Array<MinimisedTopolog
     ]
   }
 
-  if (
-    isSignerLeaf(topology) ||
-    isSapientSignerLeaf(topology) ||
-    isSubdigestLeaf(topology) ||
-    isAnyAddressSubdigestLeaf(topology) ||
-    isNodeLeaf(topology)
-  ) {
+  if (isSubdigestLeaf(topology) || isAnyAddressSubdigestLeaf(topology)) {
+    return [{ weight: getSubdigestWeight(topology, context), topology }]
+  }
+
+  if (isSignerLeaf(topology) || isSapientSignerLeaf(topology) || isNodeLeaf(topology)) {
     return [{ weight: 0n, topology }]
   }
 
   if (isNestedLeaf(topology)) {
-    return buildMinimisedTopologyPlans(topology.tree).map((plan) => {
+    return buildMinimisedTopologyPlans(topology.tree, context).map((plan) => {
       if (!plan) {
         return undefined
       }
@@ -285,8 +341,8 @@ function buildMinimisedTopologyPlans(topology: Topology): Array<MinimisedTopolog
   }
 
   if (isNode(topology)) {
-    const leftPlans = buildMinimisedTopologyPlans(topology[0])
-    const rightPlans = buildMinimisedTopologyPlans(topology[1])
+    const leftPlans = buildMinimisedTopologyPlans(topology[0], context)
+    const rightPlans = buildMinimisedTopologyPlans(topology[1], context)
     const plans = new Array<MinimisedTopologyPlan | undefined>(leftPlans.length + rightPlans.length - 1)
 
     for (let total = 0; total < plans.length; total++) {
@@ -318,8 +374,8 @@ function buildMinimisedTopologyPlans(topology: Topology): Array<MinimisedTopolog
   throw new Error('Invalid topology')
 }
 
-export function minimiseSignedTopology(topology: Topology, threshold: bigint): Topology {
-  const plans = buildMinimisedTopologyPlans(topology)
+export function minimiseSignedTopology(topology: Topology, threshold: bigint, context?: TopologyWeightContext): Topology {
+  const plans = buildMinimisedTopologyPlans(topology, resolveTopologyWeightContext(context))
   return plans.find((plan) => plan && plan.weight >= threshold)?.topology ?? topology
 }
 

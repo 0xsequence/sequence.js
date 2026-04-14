@@ -7,6 +7,7 @@ import {
   SignerLeaf,
   SubdigestLeaf,
   AnyAddressSubdigestLeaf,
+  MATCHING_SUBDIGEST_WEIGHT,
   Topology,
   hashConfiguration,
   isNestedLeaf,
@@ -1312,17 +1313,13 @@ async function recoverTopology(
   } else if (isSubdigestLeaf(topology)) {
     return {
       topology,
-      weight: Bytes.isEqual(Bytes.fromHex(topology.digest), digest)
-        ? 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
-        : 0n,
+      weight: Bytes.isEqual(Bytes.fromHex(topology.digest), digest) ? MATCHING_SUBDIGEST_WEIGHT : 0n,
     }
   } else if (isAnyAddressSubdigestLeaf(topology)) {
     const anyAddressOpHash = hash(Constants.ZeroAddress, chainId, payload)
     return {
       topology,
-      weight: Bytes.isEqual(Bytes.fromHex(topology.digest), anyAddressOpHash)
-        ? 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
-        : 0n,
+      weight: Bytes.isEqual(Bytes.fromHex(topology.digest), anyAddressOpHash) ? MATCHING_SUBDIGEST_WEIGHT : 0n,
     }
   } else if (isNodeLeaf(topology)) {
     return { topology, weight: 0n }

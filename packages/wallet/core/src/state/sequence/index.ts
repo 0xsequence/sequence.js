@@ -244,12 +244,17 @@ export class Provider implements ProviderInterface {
         Hex.assert(toImageHash)
         Hex.assert(signature)
 
+        const payload = Payload.fromConfigUpdate(toImageHash)
         const decoded = Signature.decodeSignature(Hex.toBytes(signature))
 
-        const { configuration } = await Signature.recover(decoded, wallet, 0, Payload.fromConfigUpdate(toImageHash), {
+        const { configuration } = await Signature.recover(decoded, wallet, 0, payload, {
           provider: passkeySignatureValidator,
         })
-        const topology = Config.minimiseSignedTopology(configuration.topology, configuration.threshold)
+        const topology = Config.minimiseSignedTopology(configuration.topology, configuration.threshold, {
+          wallet,
+          chainId: 0,
+          payload,
+        })
 
         return { imageHash: toImageHash, signature: { ...decoded, configuration: { ...configuration, topology } } }
       }),

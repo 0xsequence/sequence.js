@@ -24,6 +24,7 @@ import {
   getSigners,
   findSignerLeaf,
   getWeight,
+  MATCHING_SUBDIGEST_WEIGHT,
   minimiseSignedTopology,
   hashConfiguration,
   flatLeavesToTopology,
@@ -36,6 +37,7 @@ import {
   normalizeSignerSignature,
   replaceAddress,
 } from '../src/config.js'
+import { fromConfigUpdate, hash as hashPayload } from '../src/payload.js'
 
 describe('Config', () => {
   const testAddress1 = '0x742d35cc6635c0532925a3b8d563a6b35b7f05f1'
@@ -507,6 +509,59 @@ describe('Config', () => {
         '0x3000000000000000000000000000000000000004',
       ])
       expect(getWeight(result, () => false).weight).toBe(7n)
+    })
+
+    it('should strip signer signatures when a matching subdigest satisfies the threshold', () => {
+      const payload = fromConfigUpdate(
+        '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as `0x${string}`,
+      )
+      const topology = flatLeavesToTopology([
+        {
+          type: 'subdigest',
+          digest: Bytes.toHex(hashPayload(testAddress1, 0, payload)) as `0x${string}`,
+        },
+        signSigner('0x4000000000000000000000000000000000000001', 1n, 31n),
+        signSigner('0x4000000000000000000000000000000000000002', 1n, 33n),
+      ])
+
+      expect(signedAddresses(minimiseSignedTopology(topology, 1n))).toEqual([
+        '0x4000000000000000000000000000000000000001',
+      ])
+
+      const result = minimiseSignedTopology(topology, 1n, {
+        wallet: testAddress1,
+        chainId: 0,
+        payload,
+      })
+
+      expect(signedAddresses(result)).toEqual([])
+      expect(getWeight(result, () => false, { wallet: testAddress1, chainId: 0, payload }).weight).toBe(
+        MATCHING_SUBDIGEST_WEIGHT,
+      )
+    })
+
+    it('should strip signer signatures when a matching any-address subdigest satisfies the threshold', () => {
+      const payload = fromConfigUpdate(
+        '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' as `0x${string}`,
+      )
+      const topology = flatLeavesToTopology([
+        {
+          type: 'any-address-subdigest',
+          digest: Bytes.toHex(
+            hashPayload('0x0000000000000000000000000000000000000000', 0, payload),
+          ) as `0x${string}`,
+        },
+        signSigner('0x5000000000000000000000000000000000000001', 1n, 41n),
+        signSigner('0x5000000000000000000000000000000000000002', 1n, 43n),
+      ])
+
+      const result = minimiseSignedTopology(topology, 1n, {
+        wallet: testAddress1,
+        chainId: 0,
+        payload,
+      })
+
+      expect(signedAddresses(result)).toEqual([])
     })
   })
 
