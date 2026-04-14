@@ -313,6 +313,8 @@ export class Provider implements ProviderInterface {
         continue
       }
 
+      const minimalTopology = Config.minimiseSignedTopology(encoded, fromConfig.threshold)
+
       best = {
         nextImageHash: candidate.nextImageHash,
         checkpoint: candidate.config!.checkpoint,
@@ -321,7 +323,7 @@ export class Provider implements ProviderInterface {
           configuration: {
             threshold: fromConfig.threshold,
             checkpoint: fromConfig.checkpoint,
-            topology: encoded,
+            topology: minimalTopology,
           },
         },
       }

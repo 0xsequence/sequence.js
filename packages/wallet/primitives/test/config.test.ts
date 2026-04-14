@@ -24,6 +24,7 @@ import {
   getSigners,
   findSignerLeaf,
   getWeight,
+  minimiseSignedTopology,
   hashConfiguration,
   flatLeavesToTopology,
   configToJson,
@@ -89,6 +90,37 @@ describe('Config', () => {
     checkpoint: 100n,
     topology: sampleNestedLeaf,
     checkpointer: testAddress1,
+  }
+
+  function signedAddresses(topology: Topology): string[] {
+    if (isNode(topology)) {
+      return [...signedAddresses(topology[0]), ...signedAddresses(topology[1])]
+    }
+
+    if (isNestedLeaf(topology)) {
+      return signedAddresses(topology.tree)
+    }
+
+    if ((isSignerLeaf(topology) || isSapientSignerLeaf(topology)) && topology.signature) {
+      return [topology.address]
+    }
+
+    return []
+  }
+
+  function signSigner(address: string, weight: bigint, nonce: bigint): SignerLeaf {
+    return {
+      type: 'signer',
+      address,
+      weight,
+      signed: true,
+      signature: {
+        type: 'hash',
+        r: nonce,
+        s: nonce + 1n,
+        yParity: 0,
+      },
+    }
   }
 
   describe('Type Guards', () => {
@@ -414,6 +446,67 @@ describe('Config', () => {
       const result = getWeight(sampleNodeLeaf, () => true)
       expect(result.weight).toBe(0n)
       expect(result.maxWeight).toBe(0n)
+    })
+  })
+
+  describe('minimiseSignedTopology', () => {
+    it('should prefer the smallest signature count that still meets threshold', () => {
+      const topology = flatLeavesToTopology([
+        signSigner('0x1000000000000000000000000000000000000001', 4n, 1n),
+        signSigner('0x1000000000000000000000000000000000000002', 4n, 3n),
+        signSigner('0x1000000000000000000000000000000000000003', 4n, 5n),
+        signSigner('0x1000000000000000000000000000000000000004', 6n, 7n),
+        signSigner('0x1000000000000000000000000000000000000005', 6n, 9n),
+      ])
+
+      const result = minimiseSignedTopology(topology, 12n)
+
+      expect(signedAddresses(result)).toEqual([
+        '0x1000000000000000000000000000000000000004',
+        '0x1000000000000000000000000000000000000005',
+      ])
+      expect(getWeight(result, () => false).weight).toBe(12n)
+    })
+
+    it('should keep earlier signers when equal-count solutions tie', () => {
+      const topology = flatLeavesToTopology([
+        signSigner('0x2000000000000000000000000000000000000001', 1n, 11n),
+        signSigner('0x2000000000000000000000000000000000000002', 1n, 13n),
+        signSigner('0x2000000000000000000000000000000000000003', 1n, 15n),
+      ])
+
+      const result = minimiseSignedTopology(topology, 2n)
+
+      expect(signedAddresses(result)).toEqual([
+        '0x2000000000000000000000000000000000000001',
+        '0x2000000000000000000000000000000000000002',
+      ])
+    })
+
+    it('should minimise nested signers while preserving nested thresholds', () => {
+      const nested: NestedLeaf = {
+        type: 'nested',
+        weight: 4n,
+        threshold: 2n,
+        tree: flatLeavesToTopology([
+          signSigner('0x3000000000000000000000000000000000000001', 1n, 21n),
+          signSigner('0x3000000000000000000000000000000000000002', 1n, 23n),
+          signSigner('0x3000000000000000000000000000000000000003', 1n, 25n),
+        ]),
+      }
+      const topology: Topology = [
+        nested,
+        signSigner('0x3000000000000000000000000000000000000004', 3n, 27n),
+      ]
+
+      const result = minimiseSignedTopology(topology, 5n)
+
+      expect(signedAddresses(result)).toEqual([
+        '0x3000000000000000000000000000000000000001',
+        '0x3000000000000000000000000000000000000002',
+        '0x3000000000000000000000000000000000000004',
+      ])
+      expect(getWeight(result, () => false).weight).toBe(7n)
     })
   })
 

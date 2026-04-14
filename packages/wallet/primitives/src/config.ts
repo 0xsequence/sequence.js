@@ -240,6 +240,89 @@ export function getWeight(
   }
 }
 
+type MinimisedTopologyPlan = {
+  weight: bigint
+  topology: Topology
+}
+
+function stripSignedState(leaf: SignerLeaf | SapientSignerLeaf): SignerLeaf | SapientSignerLeaf {
+  const { signed: _signed, signature: _signature, ...rest } = leaf
+  return rest
+}
+
+function buildMinimisedTopologyPlans(topology: Topology): Array<MinimisedTopologyPlan | undefined> {
+  if (isSignedSignerLeaf(topology) || isSignedSapientSignerLeaf(topology)) {
+    return [
+      { weight: 0n, topology: stripSignedState(topology) },
+      { weight: topology.weight, topology },
+    ]
+  }
+
+  if (
+    isSignerLeaf(topology) ||
+    isSapientSignerLeaf(topology) ||
+    isSubdigestLeaf(topology) ||
+    isAnyAddressSubdigestLeaf(topology) ||
+    isNodeLeaf(topology)
+  ) {
+    return [{ weight: 0n, topology }]
+  }
+
+  if (isNestedLeaf(topology)) {
+    return buildMinimisedTopologyPlans(topology.tree).map((plan) => {
+      if (!plan) {
+        return undefined
+      }
+
+      return {
+        weight: plan.weight >= topology.threshold ? topology.weight : 0n,
+        topology: {
+          ...topology,
+          tree: plan.topology,
+        },
+      }
+    })
+  }
+
+  if (isNode(topology)) {
+    const leftPlans = buildMinimisedTopologyPlans(topology[0])
+    const rightPlans = buildMinimisedTopologyPlans(topology[1])
+    const plans = new Array<MinimisedTopologyPlan | undefined>(leftPlans.length + rightPlans.length - 1)
+
+    for (let total = 0; total < plans.length; total++) {
+      const maxLeft = Math.min(total, leftPlans.length - 1)
+      const minLeft = Math.max(0, total - (rightPlans.length - 1))
+
+      // Iterate from right to left so earlier topology positions win ties.
+      for (let leftCount = maxLeft; leftCount >= minLeft; leftCount--) {
+        const leftPlan = leftPlans[leftCount]
+        const rightPlan = rightPlans[total - leftCount]
+
+        if (!leftPlan || !rightPlan) {
+          continue
+        }
+
+        const weight = leftPlan.weight + rightPlan.weight
+        if (!plans[total] || weight > plans[total]!.weight) {
+          plans[total] = {
+            weight,
+            topology: [leftPlan.topology, rightPlan.topology],
+          }
+        }
+      }
+    }
+
+    return plans
+  }
+
+  throw new Error('Invalid topology')
+}
+
+export function minimiseSignedTopology(topology: Topology, threshold: bigint): Topology {
+  const plans = buildMinimisedTopologyPlans(topology)
+  return plans.find((plan) => plan && plan.weight >= threshold)?.topology ?? topology
+}
+
 export function hashConfiguration(topology: Topology | Config): Bytes.Bytes {
   if (isConfig(topology)) {
     let root = hashConfiguration(topology.topology)
