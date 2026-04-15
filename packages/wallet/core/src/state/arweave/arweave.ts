@@ -36,9 +36,11 @@ export async function findItems(
   const edges: Array<{ cursor: string; node: { id: string; tags: Array<{ name: string; value: string }> } }> = []
 
   for (let hasNextPage = true; hasNextPage && (maxResults === undefined || edges.length < maxResults); ) {
+    const results = maxResults === undefined ? pageSize : Math.min(pageSize, maxResults - edges.length)
+
     const query = `
       query {
-        transactions(sort: HEIGHT_DESC, ${edges.length ? `first: ${pageSize}, after: "${edges[edges.length - 1]!.cursor}"` : `first: ${pageSize}`}, tags: [${tags.join(', ')}]${owners.length ? `, owners: [${owners.map((owner) => `"${owner}"`).join(', ')}]` : ''}) {
+        transactions(sort: HEIGHT_DESC, ${edges.length ? `first: ${results}, after: "${edges[edges.length - 1]!.cursor}"` : `first: ${results}`}, tags: [${tags.join(', ')}]${owners.length ? `, owners: [${owners.map((owner) => `"${owner}"`).join(', ')}]` : ''}) {
           pageInfo {
             hasNextPage
           }
@@ -77,7 +79,7 @@ export async function findItems(
       data: { transactions },
     } = await response.json()
 
-    edges.push(...transactions.edges)
+    edges.push(...transactions.edges.slice(0, results))
 
     hasNextPage = transactions.pageInfo.hasNextPage
   }
