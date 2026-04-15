@@ -76,10 +76,6 @@ const PAYLOAD_VERSION_FILTER = {
   'Minor-Version': '2',
 } as const
 
-function isPlainSignatureType(type: SignatureType): type is (typeof PLAIN_SIGNATURE_TYPES)[number] {
-  return (PLAIN_SIGNATURE_TYPES as readonly SignatureType[]).includes(type)
-}
-
 function isSapientSignatureType(type: SignatureType): type is (typeof SAPIENT_SIGNATURE_TYPES)[number] {
   return (SAPIENT_SIGNATURE_TYPES as readonly SignatureType[]).includes(type)
 }
