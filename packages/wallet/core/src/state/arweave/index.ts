@@ -52,6 +52,7 @@ type WitnessMap<TSignature> = {
 type Candidate = {
   nextImageHash: Hex.Hex
   checkpoint: bigint
+  noChainId: boolean
   signatureEntries: Map<string, ItemEntry>
 }
 
@@ -647,6 +648,147 @@ export class Reader implements ReaderInterface {
     fromImageHash: Hex.Hex,
     options?: { allUpdates?: boolean },
   ): Promise<Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }>> {
+    const normalizedWallet = normalizeAddress(wallet)
+    const signatureRecords = new Map<string, Promise<ArweaveSignatureRecord | ArweaveSapientSignatureRecord>>()
+    const loadSignatureRecord = (entry: ItemEntry): Promise<ArweaveSignatureRecord | ArweaveSapientSignatureRecord> => {
+      const cached = signatureRecords.get(entry.id)
+      if (cached) {
+        return cached
+      }
+
+      const promise = isSapientSignatureType(entry.tags['Signature-Type'] as SignatureType)
+        ? this.loadRecord<ArweaveSapientSignatureRecord>(entry)
+        : this.loadRecord<ArweaveSignatureRecord>(entry)
+
+      signatureRecords.set(entry.id, promise)
+      return promise
+    }
+
+    const updates: Array<{ imageHash: Hex.Hex; signature: Signature.RawSignature }> = []
+    let currentImageHash = normalizeHex(fromImageHash)
+
+    top: while (true) {
+      const currentConfig = await this.getConfiguration(currentImageHash)
+      if (!currentConfig) {
+        return updates
+      }
+
+      const { signers, sapientSigners } = Config.getSigners(currentConfig)
+      const [plainEntries, sapientEntries] = await Promise.all([
+        signers.length
+          ? this.findEntries({
+              Type: 'config update',
+              Wallet: normalizedWallet,
+              Signer: signers.map(normalizeAddress),
+              'Signature-Type': [...PLAIN_SIGNATURE_TYPES],
+            })
+          : Promise.resolve([]),
+        Promise.all(
+          sapientSigners.map(({ address, imageHash }) =>
+            this.findEntries({
+              Type: 'config update',
+              Wallet: normalizedWallet,
+              Signer: normalizeAddress(address),
+              'Image-Hash': normalizeHex(imageHash),
+              'Signature-Type': [...SAPIENT_SIGNATURE_TYPES],
+            }),
+          ),
+        ),
+      ])
+
+      const candidates = new Map<string, Candidate>()
+      const addCandidate = (entry: ItemEntry, key: string) => {
+        const checkpoint = BigInt(entry.tags['To-Checkpoint']!)
+        if (checkpoint <= currentConfig.checkpoint) {
+          return
+        }
+
+        const nextImageHash = normalizeHex(entry.tags['To-Config'] as Hex.Hex)
+        const candidateKey = `${checkpoint}:${nextImageHash.toLowerCase()}`
+        const candidate = candidates.get(candidateKey)
+
+        if (candidate) {
+          if (!candidate.signatureEntries.has(key)) {
+            candidate.signatureEntries.set(key, entry)
+          }
+
+          return
+        }
+
+        candidates.set(candidateKey, {
+          nextImageHash,
+          checkpoint,
+          noChainId: entry.tags['Major-Version'] !== '1',
+          signatureEntries: new Map([[key, entry]]),
+        })
+      }
+
+      for (const entry of plainEntries) {
+        addCandidate(entry, signerKey(entry.tags.Signer as Address.Address))
+      }
+
+      for (const entries of sapientEntries) {
+        for (const entry of entries) {
+          addCandidate(
+            entry,
+            sapientSignerKey(entry.tags.Signer as Address.Address, entry.tags['Image-Hash'] as Hex.Hex),
+          )
+        }
+      }
+
+      const sortedCandidates = [...candidates.values()].sort((left, right) => {
+        if (left.checkpoint === right.checkpoint) {
+          return 0
+        }
+
+        if (options?.allUpdates) {
+          return left.checkpoint < right.checkpoint ? -1 : 1
+        }
+
+        return left.checkpoint > right.checkpoint ? -1 : 1
+      })
+
+      for (const candidate of sortedCandidates) {
+        const signatures = new Map<string, Signature.SignatureOfSignerLeaf | Signature.SignatureOfSapientSignerLeaf>()
+        const records = await Promise.all([...candidate.signatureEntries.values()].map(loadSignatureRecord))
+
+        for (const record of records) {
+          if (isSapientSignatureType(record['Signature-Type'])) {
+            const sapientRecord = record as ArweaveSapientSignatureRecord
+            signatures.set(
+              sapientSignerKey(sapientRecord.Signer, sapientRecord['Image-Hash']),
+              fromSapientSignatureRecord(sapientRecord),
+            )
+          } else {
+            signatures.set(signerKey(record.Signer), fromSignatureRecord(record as ArweaveSignatureRecord))
+          }
+        }
+
+        const topology = toRecoveredLikeTopology(fillTopologyWithSignatures(currentConfig, signatures))
+        const { weight } = Config.getWeight(topology, () => false)
+        if (weight < currentConfig.threshold) {
+          continue
+        }
+
+        updates.push({
+          imageHash: candidate.nextImageHash,
+          signature: {
+            noChainId: candidate.noChainId,
+            configuration: {
+              threshold: currentConfig.threshold,
+              checkpoint: currentConfig.checkpoint,
+              checkpointer: currentConfig.checkpointer,
+              topology,
+            },
+          },
+        })
+
+        currentImageHash = candidate.nextImageHash
+        continue top
+      }
+
+      return updates
+    }
   }
 
   async getTree(imageHash: Hex.Hex): Promise<GenericTree.Tree | undefined> {
