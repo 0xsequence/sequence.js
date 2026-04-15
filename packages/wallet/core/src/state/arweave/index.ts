@@ -56,6 +56,19 @@ type Candidate = {
   signatureEntries: Map<string, ItemEntry>
 }
 
+type TopologyChoice = {
+  topology: Config.Topology
+  weight: bigint
+  signatures: number
+  size: number
+  signatureMask: string
+}
+
+type TopologyChoiceSet = {
+  slotCount: number
+  choices: Map<string, TopologyChoice>
+}
+
 const PLAIN_SIGNATURE_TYPES = ['eip-712', 'eth_sign', 'erc-1271'] satisfies SignatureType[]
 const SAPIENT_SIGNATURE_TYPES = ['sapient', 'sapient-compact'] satisfies SignatureType[]
 const PAYLOAD_VERSION_FILTER = {
@@ -417,6 +430,175 @@ function fillTopologyWithSignatures(
   })
 }
 
+function clampWeight(weight: bigint, cap: bigint): bigint {
+  return weight > cap ? cap : weight
+}
+
+function zeroMask(length: number): string {
+  return '0'.repeat(length)
+}
+
+function compareChoices(left: TopologyChoice, right: TopologyChoice): number {
+  if (left.signatures !== right.signatures) {
+    return left.signatures - right.signatures
+  }
+
+  if (left.size !== right.size) {
+    return left.size - right.size
+  }
+
+  if (left.signatureMask !== right.signatureMask) {
+    return left.signatureMask > right.signatureMask ? -1 : 1
+  }
+
+  return 0
+}
+
+function dominatesChoice(left: TopologyChoice, right: TopologyChoice): boolean {
+  return (
+    left.weight >= right.weight &&
+    left.signatures <= right.signatures &&
+    left.size <= right.size &&
+    left.signatureMask >= right.signatureMask
+  )
+}
+
+function makeChoice(
+  topology: Config.Topology,
+  weight: bigint,
+  signatures: number,
+  signatureMask: string,
+): TopologyChoice {
+  return {
+    topology,
+    weight,
+    signatures,
+    size: Signature.encodeTopology(topology).length,
+    signatureMask,
+  }
+}
+
+function addChoice(choiceSet: TopologyChoiceSet, choice: TopologyChoice): void {
+  const key = choice.weight.toString()
+  const existing = choiceSet.choices.get(key)
+
+  if (!existing || compareChoices(choice, existing) < 0) {
+    choiceSet.choices.set(key, choice)
+  }
+}
+
+function pruneChoiceSet(choiceSet: TopologyChoiceSet): TopologyChoiceSet {
+  const choices = [...choiceSet.choices.values()]
+  const pruned = new Map<string, TopologyChoice>()
+
+  for (const candidate of choices) {
+    const dominated = choices.some((other) => other !== candidate && dominatesChoice(other, candidate))
+    if (!dominated) {
+      pruned.set(candidate.weight.toString(), candidate)
+    }
+  }
+
+  return { ...choiceSet, choices: pruned }
+}
+
+function buildTopologyChoiceSet(topology: Config.Topology, cap: bigint): TopologyChoiceSet {
+  if (Signature.isSignedSignerLeaf(topology)) {
+    const choices: TopologyChoiceSet = { slotCount: 1, choices: new Map() }
+    addChoice(
+      choices,
+      makeChoice({ type: 'signer', address: topology.address, weight: topology.weight }, 0n, 0, '0'),
+    )
+
+    if (topology.weight > 0n) {
+      addChoice(choices, makeChoice(topology, clampWeight(topology.weight, cap), 1, '1'))
+    }
+
+    return choices
+  }
+
+  if (Signature.isSignedSapientSignerLeaf(topology)) {
+    const choices: TopologyChoiceSet = { slotCount: 1, choices: new Map() }
+    addChoice(choices, makeChoice(Hex.fromBytes(Config.hashConfiguration(topology)), 0n, 0, '0'))
+
+    if (topology.weight > 0n) {
+      addChoice(choices, makeChoice(topology, clampWeight(topology.weight, cap), 1, '1'))
+    }
+
+    return choices
+  }
+
+  if (Config.isSignerLeaf(topology)) {
+    return {
+      slotCount: 0,
+      choices: new Map([[0n.toString(), makeChoice(topology, 0n, 0, '')]]),
+    }
+  }
+
+  if (Config.isSapientSignerLeaf(topology)) {
+    return {
+      slotCount: 0,
+      choices: new Map([[0n.toString(), makeChoice(Hex.fromBytes(Config.hashConfiguration(topology)), 0n, 0, '')]]),
+    }
+  }
+
+  if (Config.isSubdigestLeaf(topology) || Config.isAnyAddressSubdigestLeaf(topology) || Config.isNodeLeaf(topology)) {
+    return {
+      slotCount: 0,
+      choices: new Map([[0n.toString(), makeChoice(topology, 0n, 0, '')]]),
+    }
+  }
+
+  if (Config.isNestedLeaf(topology)) {
+    const treeChoices = buildTopologyChoiceSet(topology.tree, topology.threshold)
+    const choices: TopologyChoiceSet = { slotCount: treeChoices.slotCount, choices: new Map() }
+    addChoice(choices, makeChoice(Hex.fromBytes(Config.hashConfiguration(topology)), 0n, 0, zeroMask(treeChoices.slotCount)))
+
+    const satisfied = treeChoices.choices.get(topology.threshold.toString())
+    if (satisfied && topology.weight > 0n) {
+      addChoice(
+        choices,
+        makeChoice(
+          { ...topology, tree: satisfied.topology },
+          clampWeight(topology.weight, cap),
+          satisfied.signatures,
+          satisfied.signatureMask,
+        ),
+      )
+    }
+
+    return pruneChoiceSet(choices)
+  }
+
+  const leftChoices = buildTopologyChoiceSet(topology[0], cap)
+  const rightChoices = buildTopologyChoiceSet(topology[1], cap)
+  const choices: TopologyChoiceSet = {
+    slotCount: leftChoices.slotCount + rightChoices.slotCount,
+    choices: new Map(),
+  }
+
+  addChoice(choices, makeChoice(Hex.fromBytes(Config.hashConfiguration(topology)), 0n, 0, zeroMask(choices.slotCount)))
+
+  for (const leftChoice of leftChoices.choices.values()) {
+    for (const rightChoice of rightChoices.choices.values()) {
+      addChoice(
+        choices,
+        makeChoice(
+          [leftChoice.topology, rightChoice.topology],
+          clampWeight(leftChoice.weight + rightChoice.weight, cap),
+          leftChoice.signatures + rightChoice.signatures,
+          `${leftChoice.signatureMask}${rightChoice.signatureMask}`,
+        ),
+      )
+    }
+  }
+
+  return pruneChoiceSet(choices)
+}
+
+function minimizeTopologyForThreshold(topology: Config.Topology, threshold: bigint): Config.Topology | undefined {
+  return buildTopologyChoiceSet(topology, threshold).choices.get(threshold.toString())?.topology
+}
+
 export class Reader implements ReaderInterface {
   constructor(private readonly options: Options = defaults) {}
 
@@ -764,7 +946,13 @@ export class Reader implements ReaderInterface {
           }
         }
 
-        const topology = toRecoveredLikeTopology(fillTopologyWithSignatures(currentConfig, signatures))
+        const filledTopology = fillTopologyWithSignatures(currentConfig, signatures)
+        const minimalTopology = minimizeTopologyForThreshold(filledTopology, currentConfig.threshold)
+        if (!minimalTopology) {
+          continue
+        }
+
+        const topology = toRecoveredLikeTopology(minimalTopology)
         const { weight } = Config.getWeight(topology, () => false)
         if (weight < currentConfig.threshold) {
           continue
