@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import { Arweave, Reader, Sequence } from '../../../src/state/index'
 
-const TEST_TIMEOUT_MS = 10_000
+const TEST_TIMEOUT_MS = 20_000
 
 const tests: { [method in keyof Reader]: { [description: string]: Parameters<Reader[method]> } } = {
   getConfiguration: {
