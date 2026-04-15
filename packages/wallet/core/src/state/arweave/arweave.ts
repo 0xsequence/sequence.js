@@ -19,7 +19,7 @@ export async function findItems(
   options?: Options & { pageSize?: number; maxResults?: number },
 ): Promise<{ [id: string]: { [tag: string]: string } }> {
   const namespace = options?.namespace ?? defaults.namespace
-  const owners = options?.owners
+  const owners = options?.owners ?? defaults.owners
   const graphqlUrl = options?.graphqlUrl ?? defaults.graphqlUrl
   const rateLimitRetryDelayMs = options?.rateLimitRetryDelayMs ?? defaults.rateLimitRetryDelayMs
   const pageSize = options?.pageSize ?? 100
@@ -38,7 +38,7 @@ export async function findItems(
   for (let hasNextPage = true; hasNextPage && (maxResults === undefined || edges.length < maxResults); ) {
     const query = `
       query {
-        transactions(sort: HEIGHT_DESC, ${edges.length ? `first: ${pageSize}, after: "${edges[edges.length - 1]!.cursor}"` : `first: ${pageSize}`}, tags: [${tags.join(', ')}]${owners === undefined ? '' : `, owners: [${owners.map((owner) => `"${owner}"`).join(', ')}]`}) {
+        transactions(sort: HEIGHT_DESC, ${edges.length ? `first: ${pageSize}, after: "${edges[edges.length - 1]!.cursor}"` : `first: ${pageSize}`}, tags: [${tags.join(', ')}]${owners.length ? `, owners: [${owners.map((owner) => `"${owner}"`).join(', ')}]` : ''}) {
           pageInfo {
             hasNextPage
           }
