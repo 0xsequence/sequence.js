@@ -757,6 +757,10 @@ export class Reader implements ReaderInterface {
           },
         },
       }
+
+      if (options?.allUpdates) {
+        break
+      }
     }
 
     if (!best) {
