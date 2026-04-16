@@ -39,7 +39,7 @@ export enum ChainId {
   // Polygon
   POLYGON = 137,
   POLYGON_MUMBAI = 80001, // network is deprecated
-  POLYGON_ZKEVM = 1101, // network is deprecated
+  POLYGON_ZKEVM = 1101,
   POLYGON_AMOY = 80002,
 
   // BSC
@@ -77,8 +77,8 @@ export enum ChainId {
   HOMEVERSE = 19011,
 
   // Xai
-  XAI = 660279, // network is deprecated
-  XAI_SEPOLIA = 37714555429, // netwoprk is deprecated
+  XAI = 660279,
+  XAI_SEPOLIA = 37714555429,
 
   // TELOS
   TELOS = 40,
@@ -93,8 +93,8 @@ export enum ChainId {
   APECHAIN_TESTNET = 33111,
 
   // Blast
-  BLAST = 81457, // network is deprecated
-  BLAST_SEPOLIA = 168587773, // network is deprecated
+  BLAST = 81457,
+  BLAST_SEPOLIA = 168587773,
 
   // Borne
   BORNE_TESTNET = 94984, // network is deprecated
@@ -108,7 +108,7 @@ export enum ChainId {
   SONEIUM = 1868,
 
   // TOY Testnet
-  TOY_TESTNET = 21000000, // network is deprecated
+  TOY_TESTNET = 21000000,
 
   // Immutable zkEVM
   IMMUTABLE_ZKEVM = 13371,
@@ -136,9 +136,9 @@ export enum ChainId {
   SOMNIA = 5031,
 
   // INCENTIV TESTNET
-  INCENTIV_TESTNET = 11690, // network is deprecated
-  INCENTIV_TESTNET_V2 = 28802, // network is deprecated
-  INCENTIV = 24101, // network is deprecated
+  INCENTIV_TESTNET = 11690, // deprecated
+  INCENTIV_TESTNET_V2 = 28802,
+  INCENTIV = 24101,
 
   // Katana
   KATANA = 747474,
@@ -156,7 +156,10 @@ export enum ChainId {
   SONIC = 146,
 
   // BERACHAIN
-  BERACHAIN = 80094
+  BERACHAIN = 80094,
+
+  // TEMPO
+  TEMPO = 4217
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1276,6 +1279,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'Berachain',
       name: 'Berachain',
+      decimals: 18
+    }
+  },
+
+  [ChainId.TEMPO]: {
+    chainId: ChainId.TEMPO,
+    type: NetworkType.MAINNET,
+    name: 'tempo',
+    title: 'Tempo',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TEMPO}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Tempo',
+      rootUrl: 'https://explore.tempo.xyz/'
+    },
+    nativeToken: {
+      symbol: 'USD',
+      name: 'USD',
       decimals: 18
     }
   }
