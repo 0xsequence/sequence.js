@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 3.0.6
+
+### Patch Changes
+
+- userdata upgrade, arweave support
+
 ## 3.0.5
 
 ### Patch Changes

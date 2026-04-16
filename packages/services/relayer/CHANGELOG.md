@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.6
+
+### Patch Changes
+
+- userdata upgrade, arweave support
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.6
+
 ## 3.0.5
 
 ### Patch Changes
