@@ -78,7 +78,7 @@ export enum ChainId {
 
   // Xai
   XAI = 660279, // network is deprecated
-  XAI_SEPOLIA = 37714555429, // netwoprk is deprecated
+  XAI_SEPOLIA = 37714555429, // network is deprecated
 
   // TELOS
   TELOS = 40,
@@ -108,7 +108,7 @@ export enum ChainId {
   SONEIUM = 1868,
 
   // TOY Testnet
-  TOY_TESTNET = 21000000, // network is deprecated
+  TOY_TESTNET = 21000000,
 
   // Immutable zkEVM
   IMMUTABLE_ZKEVM = 13371,
@@ -137,8 +137,8 @@ export enum ChainId {
 
   // INCENTIV TESTNET
   INCENTIV_TESTNET = 11690, // network is deprecated
-  INCENTIV_TESTNET_V2 = 28802, // network is deprecated
-  INCENTIV = 24101, // network is deprecated
+  INCENTIV_TESTNET_V2 = 28802,
+  INCENTIV = 24101,
 
   // Katana
   KATANA = 747474,
@@ -156,7 +156,10 @@ export enum ChainId {
   SONIC = 146,
 
   // BERACHAIN
-  BERACHAIN = 80094
+  BERACHAIN = 80094,
+
+  // TEMPO
+  TEMPO = 4217
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -334,7 +337,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.BSC]: {
     chainId: ChainId.BSC,
@@ -652,7 +656,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'XAI',
       name: 'XAI',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.XAI_SEPOLIA]: {
     chainId: ChainId.XAI_SEPOLIA,
@@ -669,7 +674,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'sXAI',
       name: 'Sepolia XAI',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.B3]: {
     chainId: ChainId.B3,
@@ -753,7 +759,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.BLAST_SEPOLIA]: {
     chainId: ChainId.BLAST_SEPOLIA,
@@ -770,7 +777,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'ETH',
       name: 'Ether',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.TELOS]: {
     chainId: ChainId.TELOS,
@@ -1276,6 +1284,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'Berachain',
       name: 'Berachain',
+      decimals: 18
+    }
+  },
+
+  [ChainId.TEMPO]: {
+    chainId: ChainId.TEMPO,
+    type: NetworkType.MAINNET,
+    name: 'tempo',
+    title: 'Tempo',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TEMPO}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Tempo',
+      rootUrl: 'https://explore.tempo.xyz/'
+    },
+    nativeToken: {
+      symbol: 'USD',
+      name: 'USD',
       decimals: 18
     }
   }
