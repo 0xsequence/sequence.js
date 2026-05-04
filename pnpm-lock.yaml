@@ -15,23 +15,23 @@ importers:
         specifier: ^2.29.8
         version: 2.29.8(@types/node@25.3.0)
       lefthook:
-        specifier: ^2.1.1
-        version: 2.1.1
+        specifier: ^2.1.6
+        version: 2.1.6
       prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
+        specifier: ^3.8.3
+        version: 3.8.3
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
       syncpack:
-        specifier: ^14.0.0
-        version: 14.0.0
+        specifier: ^14.3.1
+        version: 14.3.1
       turbo:
-        specifier: ^2.8.10
-        version: 2.8.10
+        specifier: ^2.9.8
+        version: 2.9.8
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   extras/docs:
     dependencies:
@@ -67,8 +67,8 @@ importers:
         specifier: ^9.39.2
         version: 9.39.2
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   extras/web:
     dependencies:
@@ -104,8 +104,8 @@ importers:
         specifier: ^9.39.2
         version: 9.39.2
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/services/api:
     devDependencies:
@@ -119,8 +119,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/services/builder:
     devDependencies:
@@ -134,14 +134,14 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/services/guard:
     dependencies:
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:^
@@ -153,8 +153,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
@@ -169,7 +169,7 @@ importers:
         version: 4.0.0
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:^
@@ -181,8 +181,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
@@ -199,8 +199,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/services/marketplace:
     devDependencies:
@@ -214,8 +214,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/services/metadata:
     devDependencies:
@@ -229,8 +229,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/services/relayer:
     dependencies:
@@ -239,13 +239,13 @@ importers:
         version: link:../../wallet/primitives
       mipd:
         specifier: ^0.0.7
-        version: 0.0.7(typescript@5.9.3)
+        version: 0.0.7(typescript@6.0.3)
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
       viem:
         specifier: ^2.40.3
-        version: 2.42.1(typescript@5.9.3)(zod@4.2.0)
+        version: 2.42.1(typescript@6.0.3)(zod@4.2.0)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:^
@@ -257,8 +257,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
@@ -275,8 +275,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/utils/abi:
     devDependencies:
@@ -290,8 +290,8 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/wallet/core:
     dependencies:
@@ -306,13 +306,13 @@ importers:
         version: link:../primitives
       mipd:
         specifier: ^0.0.7
-        version: 0.0.7(typescript@5.9.3)
+        version: 0.0.7(typescript@6.0.3)
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
       viem:
         specifier: ^2.40.3
-        version: 2.42.1(typescript@5.9.3)(zod@4.2.0)
+        version: 2.42.1(typescript@6.0.3)(zod@4.2.0)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:^
@@ -333,8 +333,8 @@ importers:
         specifier: ^6.2.5
         version: 6.2.5
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
@@ -355,7 +355,7 @@ importers:
         version: link:../primitives
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:^
@@ -379,8 +379,8 @@ importers:
         specifier: ^20.8.9
         version: 20.8.9
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
@@ -389,7 +389,7 @@ importers:
     dependencies:
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:^
@@ -401,8 +401,8 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(happy-dom@20.8.9))
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
@@ -414,7 +414,7 @@ importers:
         version: link:../primitives
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
       yargs:
         specifier: ^18.0.0
         version: 18.0.0
@@ -441,8 +441,8 @@ importers:
         specifier: ^3.1.14
         version: 3.1.14
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/wallet/wdk:
     dependencies:
@@ -472,7 +472,7 @@ importers:
         version: 4.0.0
       ox:
         specifier: ^0.9.17
-        version: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+        version: 0.9.17(typescript@6.0.3)(zod@4.2.0)
       uuid:
         specifier: ^14.0.0
         version: 14.0.0
@@ -499,8 +499,8 @@ importers:
         specifier: ^20.8.9
         version: 20.8.9
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(happy-dom@20.8.9)
@@ -530,16 +530,16 @@ importers:
         version: 7.0.1(eslint@9.39.2)
       eslint-plugin-turbo:
         specifier: ^2.6.3
-        version: 2.6.3(eslint@9.39.2)(turbo@2.8.21)
+        version: 2.6.3(eslint@9.39.2)(turbo@2.9.8)
       globals:
         specifier: ^16.5.0
         version: 16.5.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       typescript-eslint:
         specifier: ^8.49.0
-        version: 8.50.0(eslint@9.39.2)(typescript@5.9.3)
+        version: 8.50.0(eslint@9.39.2)(typescript@6.0.3)
 
   repo/typescript-config: {}
 
@@ -560,7 +560,7 @@ importers:
         version: link:../typescript-config
       '@turbo/gen':
         specifier: ^1.13.4
-        version: 1.13.4(@types/node@25.3.0)(typescript@5.9.3)
+        version: 1.13.4(@types/node@25.3.0)(typescript@6.0.3)
       '@types/node':
         specifier: ^25.3.0
         version: 25.3.0
@@ -571,8 +571,8 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.7)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
 packages:
 
@@ -1326,13 +1326,13 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
-  '@turbo/darwin-64@2.8.21':
-    resolution: {integrity: sha512-kfGoM0Iw8ZNZpbds+4IzOe0hjvHldqJwUPRAjXJi3KBxg/QOZL95N893SRoMtf2aJ+jJ3dk32yPkp8rvcIjP9g==}
+  '@turbo/darwin-64@2.9.8':
+    resolution: {integrity: sha512-zU1P95ygDpsQ+2QHh7CVTqvYwi9UBlhKWzoIyUnP3vUoge7H9SQEzrd8dj+XcTrslAp9Db3vIBcXtMVoTEYDnA==}
     cpu: [x64]
     os: [darwin]
 
-  '@turbo/darwin-arm64@2.8.21':
-    resolution: {integrity: sha512-o9HEflxUEyr987x0cTUzZBhDOyL6u95JmdmlkH2VyxAw7zq2sdtM5e72y9ufv2N5SIoOBw1fVn9UES5VY5H6vQ==}
+  '@turbo/darwin-arm64@2.9.8':
+    resolution: {integrity: sha512-nKRFI5ZhCGUi4eXNlrojzWcT/CehMj0raot1WE4lw5qf66ZxZHbRbBqcwNEy+ZLY7RkJJRY+TaU89fuj3BcgGg==}
     cpu: [arm64]
     os: [darwin]
 
@@ -1340,23 +1340,23 @@ packages:
     resolution: {integrity: sha512-PK38N1fHhDUyjLi0mUjv0RbX0xXGwDLQeRSGsIlLcVpP1B5fwodSIwIYXc9vJok26Yne94BX5AGjueYsUT3uUw==}
     hasBin: true
 
-  '@turbo/linux-64@2.8.21':
-    resolution: {integrity: sha512-uTxlCcXWy5h1fSSymP8XSJ+AudzEHMDV3IDfKX7+DGB8kgJ+SLoTUAH7z4OFA7I/l2sznz0upPdbNNZs91YMag==}
+  '@turbo/linux-64@2.9.8':
+    resolution: {integrity: sha512-Wf/kQpVDCaWM3P5d6lKvJnqjYn/ofUBGbT4h4vRFrdC4N6B/nsun03S2kQNJJMXpXg39woeS4CI367RMU3/OAg==}
     cpu: [x64]
     os: [linux]
 
-  '@turbo/linux-arm64@2.8.21':
-    resolution: {integrity: sha512-cdHIcxNcihHHkCHp0Y4Zb60K4Qz+CK4xw1gb6s/t/9o4SMeMj+hTBCtoW6QpPnl9xPYmxuTou8Zw6+cylTnREg==}
+  '@turbo/linux-arm64@2.9.8':
+    resolution: {integrity: sha512-v6S3HuKVoa9CEx16IxKj1i/+crxXx22A9O80zW1350zyUlcX0T/zLOxVf1k+ruK/7ssXnDJVg8uSYOxlYRedlA==}
     cpu: [arm64]
     os: [linux]
 
-  '@turbo/windows-64@2.8.21':
-    resolution: {integrity: sha512-/iBj4OzbqEY8CX+eaeKbBTMZv2CLXNrt0692F7HnK7LcyYwyDecaAiSET6ZzL4opT7sbwkKvzAC/fhqT3Quu1A==}
+  '@turbo/windows-64@2.9.8':
+    resolution: {integrity: sha512-JaefWOJNBazDylAn3f+lLB34XMNu8nEBbgPRP/Ewysg81cBubGfcyyyzpQOGVuMwfaqdNAE/kitG7w3AbJn9/g==}
     cpu: [x64]
     os: [win32]
 
-  '@turbo/windows-arm64@2.8.21':
-    resolution: {integrity: sha512-95tMA/ZbIidJFUUtkmqioQ1gf3n3I1YbRP3ZgVdWTVn2qVbkodcIdGXBKRHHrIbRsLRl99SiHi/L7IxhpZDagQ==}
+  '@turbo/windows-arm64@2.9.8':
+    resolution: {integrity: sha512-Or6ljjB4TiiwCdVKDYWew0SokQ9kep5zruL8P3nbum9WdkH5XA41rQID4Ulc215Z+R3DrB+qXSHPsJjU3/n2ng==}
     cpu: [arm64]
     os: [win32]
 
@@ -2638,58 +2638,58 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
-  lefthook-darwin-arm64@2.1.1:
-    resolution: {integrity: sha512-O/RS1j03/Fnq5zCzEb2r7UOBsqPeBuf1C5pMkIJcO4TSE6hf3rhLUkcorKc2M5ni/n5zLGtzQUXHV08/fSAT3Q==}
+  lefthook-darwin-arm64@2.1.6:
+    resolution: {integrity: sha512-hyB7eeiX78BS66f70byTJacDLC/xV1vgMv9n+idFUsrM7J3Udd/ag9Ag5NP3t0eN0EqQqAtrNnt35EH01lxnRQ==}
     cpu: [arm64]
     os: [darwin]
 
-  lefthook-darwin-x64@2.1.1:
-    resolution: {integrity: sha512-mm/kdKl81ROPoYnj9XYk5JDqj+/6Al8w/SSPDfhItkLJyl4pqS+hWUOP6gDGrnuRk8S0DvJ2+hzhnDsQnZohWQ==}
+  lefthook-darwin-x64@2.1.6:
+    resolution: {integrity: sha512-5Ka6cFxiH83krt+OMRQtmS6zqoZR5SLXSudLjTbZA1c3ZqF0+dqkeb4XcB6plx6WR0GFizabuc6Bi3iXPIe1eQ==}
     cpu: [x64]
     os: [darwin]
 
-  lefthook-freebsd-arm64@2.1.1:
-    resolution: {integrity: sha512-F7JXlKmjxGqGbCWPLND0bVB4DMQezIe48pEwTlUQZbxh450c2gP5Q8FdttMZKOT163kBGGTqJAJSEC6zW+QSxA==}
+  lefthook-freebsd-arm64@2.1.6:
+    resolution: {integrity: sha512-VswyOg5CVN3rMaOJ2HtnkltiMKgFHW/wouWxXsV8RxSa4tgWOKxM0EmSXi8qc2jX+LRga6B0uOY6toXS01zWxA==}
     cpu: [arm64]
     os: [freebsd]
 
-  lefthook-freebsd-x64@2.1.1:
-    resolution: {integrity: sha512-Po8/lJMqNzKSZPuEI46dLuWoBoXtAxCuRpeOh6DAV/M4RhBynaCu8rLMZ9BqF7cVbZEWoplOmYo6HdOuiYpCkQ==}
+  lefthook-freebsd-x64@2.1.6:
+    resolution: {integrity: sha512-vXsCUFYuVwrVWwcypB7Zt2Hf+5pl1V1la7ZfvGYZaTRURu0zF/XUnMF/nOz/PebGv0f4x/iOWXWwP7E42xRWsg==}
     cpu: [x64]
     os: [freebsd]
 
-  lefthook-linux-arm64@2.1.1:
-    resolution: {integrity: sha512-mI2ljFgPEqHxI8vrN9nKgnVu63Rz1KisDbPwlvs7BTYNwq3sncdK5ukpGR4zzWdh6saNJ5tCtHEtep5GQI11nw==}
+  lefthook-linux-arm64@2.1.6:
+    resolution: {integrity: sha512-WDJiQhJdZOvKORZd+kF/ms2l6NSsXzdA9ahflyr65V90AC4jES223W8VtEMbGPUtHuGWMEZ/v/XvwlWv0Ioz9g==}
     cpu: [arm64]
     os: [linux]
 
-  lefthook-linux-x64@2.1.1:
-    resolution: {integrity: sha512-m3G/FaxC+crxeg9XeaUuHfEoL+i9gbkg2Hp2KD2IcVVIxprqlyqf0Hb8zbLV2NMXuo5RSGokJu44oAoTO3Ou2g==}
+  lefthook-linux-x64@2.1.6:
+    resolution: {integrity: sha512-C18nCd7nTX1AVL4TcvwMmLAO1VI1OuGluIOTjiPkBQ746Ls1HhL5rl//jMPACmT28YmxIQJ2ZcLPNmhvEVBZvw==}
     cpu: [x64]
     os: [linux]
 
-  lefthook-openbsd-arm64@2.1.1:
-    resolution: {integrity: sha512-gz/8FJPvhjOdOFt1GmFvuvDOe+W+BBRjoeAT1/mTgkN7HCXMXgqNjjvakQKQeGz1I1v08wXG1ZNf5y+T9XBCDQ==}
+  lefthook-openbsd-arm64@2.1.6:
+    resolution: {integrity: sha512-mZOMxM8HiPxVFXDO3PtCUbH4GB8rkveXhsgXF27oAZTYVzQ3gO9vT6r/pxit6msqRXz3fvcwimLVJgb8eRsa8A==}
     cpu: [arm64]
     os: [openbsd]
 
-  lefthook-openbsd-x64@2.1.1:
-    resolution: {integrity: sha512-ch3lyMUtbmtWUufaQVn4IoEs/2hjK51XqaCdY1mh5ca//VctR1peknIwQ5feHu+vATCDviWQ7HsdNDewm3HMPg==}
+  lefthook-openbsd-x64@2.1.6:
+    resolution: {integrity: sha512-sG9ALLZSnnMOfXu+B7SmxFhJhuoAh4bqi5En5aaHJET48TqrLOcWWZuH+7ArFM6gr/U5KfSUvdmHFmY8WqCcIg==}
     cpu: [x64]
     os: [openbsd]
 
-  lefthook-windows-arm64@2.1.1:
-    resolution: {integrity: sha512-mm3PZhKDs9FE/jQDimkfWxtoj9xQ2k8uw2MdhtC825bhvIh+MEi0WFj/MOW+ug0RBg0I55tGYzZ5aVuozAWpTQ==}
+  lefthook-windows-arm64@2.1.6:
+    resolution: {integrity: sha512-lD8yFWY4Csuljd0Rqs7EQaySC0VvDf7V3rN1FhRMUISTRDHutebIom1Loc8ckQPvKYGC6mftT9k0GvipsS+Brw==}
     cpu: [arm64]
     os: [win32]
 
-  lefthook-windows-x64@2.1.1:
-    resolution: {integrity: sha512-1L2oGIzmhfOTxfwbe5mpSQ+m3ilpvGNymwIhn4UHq6hwHsUL6HEhODqx02GfBn6OXpVIr56bvdBAusjL/SVYGQ==}
+  lefthook-windows-x64@2.1.6:
+    resolution: {integrity: sha512-q4z2n3xucLscoWiyMwFViEj3N8MDSkPulMwcJYuCYFHoPhP1h+icqNu7QRLGYj6AnVrCQweiUJY3Tb2X+GbD/A==}
     cpu: [x64]
     os: [win32]
 
-  lefthook@2.1.1:
-    resolution: {integrity: sha512-Tl9h9c+sG3ShzTHKuR3LAIblnnh+Mgxnm2Ul7yu9cu260Z27LEbO3V6Zw4YZFP59/2rlD42pt/llYsQCkkCFzw==}
+  lefthook@2.1.6:
+    resolution: {integrity: sha512-w9sBoR0mdN+kJc3SB85VzpiAAl451/rxdCRcZlwW71QLjkeH3EBQFgc4VMj5apePychYDHAlqEWTB8J8JK/j1Q==}
     hasBin: true
 
   levn@0.4.1:
@@ -3071,8 +3071,8 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  prettier@3.8.1:
-    resolution: {integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==}
+  prettier@3.8.3:
+    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -3432,50 +3432,49 @@ packages:
   swap-case@1.1.2:
     resolution: {integrity: sha512-BAmWG6/bx8syfc6qXPprof3Mn5vQgf5dwdUNJhsNqU9WdPt5P+ES/wQ5bxfijy8zwZgZZHslC3iAsxsuQMCzJQ==}
 
-  syncpack-darwin-arm64@14.0.0:
-    resolution: {integrity: sha512-mEcku9YkOHfM6JOxhq9McgeLvd4djsJvRwNONZXHeoJ6+yqC96DdxZwFjkw3e8Vn95wsxsrwY5ZjMExs5Gbacw==}
+  syncpack-darwin-arm64@14.3.1:
+    resolution: {integrity: sha512-WtHbqXCEDSRzdqTIroYqYSMW/0yQ8dYvpucQ6SKsbVE86K5wjFd37TOIDFM5NLudCYASJpy4FXv7G/HxHAyRLw==}
     cpu: [arm64]
     os: [darwin]
 
-  syncpack-darwin-x64@14.0.0:
-    resolution: {integrity: sha512-qSj3bT3SIZA5NLM5PNVeExapyOrdmptlGSMu0SLVHj9hata/Vqh3xWgwq7wB9uajmlrHljeJ84R/NKAHyzFewA==}
+  syncpack-darwin-x64@14.3.1:
+    resolution: {integrity: sha512-K+Zx1TN67vllDLrouc6YISOhhWm7RxrRE7087ea36T85WNq4JvI+M3UBJoxRjaJ+0v3wBA2YmBzEHzJg8skAww==}
     cpu: [x64]
     os: [darwin]
 
-  syncpack-linux-arm64-musl@14.0.0:
-    resolution: {integrity: sha512-i57Chz0tHP7ybKElPLhoygl6Cab1fxyUKS9xRgezX5NDrNxKUgrvqBfYd7288/QKB4C8+IcYHugFPjZjoFlAIA==}
+  syncpack-linux-arm64-musl@14.3.1:
+    resolution: {integrity: sha512-gZTLgIS0irmZx2HjZqco9YsbYe6sz/5Lce/yKmTBdCaHCpurb+TZA97nu5FxXSAA0HKs3Nzi8CDjNzv+yAQUXw==}
     cpu: [arm64]
     os: [linux]
 
-  syncpack-linux-arm64@14.0.0:
-    resolution: {integrity: sha512-votlkb4P/0Bxd9yhBWCSUOjZwaii+LfFn1tZZVN5dfs8qcjcLeqfdG5zbnlJSzZhS3T+BfzejFW+Z95OxZag0A==}
+  syncpack-linux-arm64@14.3.1:
+    resolution: {integrity: sha512-+5fXNoKz2ZqQszplZGp6J9ZKL6JW1hr3BMjEkklYz+jufX9rH/MWY0hcRCfHJSuvcTUrsYo/koqU/UnBiANjGg==}
     cpu: [arm64]
     os: [linux]
 
-  syncpack-linux-x64-musl@14.0.0:
-    resolution: {integrity: sha512-RKyp+29UlLGE8oYkd3UfwgjWUHN4dLHDyarv0dS6gWVpWM6qHtHS339KBc9JcIS7FD1vNGnQ3GmSaAodxDlkMA==}
+  syncpack-linux-x64-musl@14.3.1:
+    resolution: {integrity: sha512-NK+1Qm762bbXDYqAz2+++NlJ9jONX+3Hrulp4XpytFEIGABiy8wIzouBpxZkppf30+1mxt4o8LMtZ8P54/ObNA==}
     cpu: [x64]
     os: [linux]
 
-  syncpack-linux-x64@14.0.0:
-    resolution: {integrity: sha512-sZGy4+uL+P/+nI0yc9jwW/R22u9lw0+NXDYC/9ts9eYiWFyO4+luOeosvVKbED1OavUp/GQJqNV+9KHjMwq0Fw==}
+  syncpack-linux-x64@14.3.1:
+    resolution: {integrity: sha512-v1Y4D0oB2uIx+Npy1eD384adOSKvrjtu3VodjcQ/2aK4rTjVZl3k4eOA5py4I4Qdt6+zC6n+t5KrGuiaiBlbWQ==}
     cpu: [x64]
     os: [linux]
 
-  syncpack-windows-arm64@14.0.0:
-    resolution: {integrity: sha512-aNtr0F6HkA7M0azDuDkt//DlPWlplFa4kmvHXirwDmJQ9u3SAvN3ZItW4ZYS96ZbiV1DgO15jIKBI7rDkzcwrQ==}
+  syncpack-windows-arm64@14.3.1:
+    resolution: {integrity: sha512-xf+i8B5dDc3AIG8ZFF215gLQF0PKXQC6I8skmEfGy36oFh3VTAJKBjgEg6P8R3FC9/kRzkWFcDZmNLkbKN6YmA==}
     cpu: [arm64]
     os: [win32]
 
-  syncpack-windows-x64@14.0.0:
-    resolution: {integrity: sha512-usMH61wlonssfh2Q8SJDiiAcsXVzuPzRl8XdHqdavR3XeCSGBIW9ieJpPfiKvDPWslekufWD+GhLNoH+8vV0Cg==}
+  syncpack-windows-x64@14.3.1:
+    resolution: {integrity: sha512-gjbWwc05RcekcrLHOi5gq0JKvhoIMNqbUnAvPZLu46/+HrYuuJiUqruoj6y/GbCuvoQ880E820GF1pQFW9xNXA==}
     cpu: [x64]
     os: [win32]
 
-  syncpack@14.0.0:
-    resolution: {integrity: sha512-OfAa3Oip5YC9Ad1jEs92Hw08Wy4JfdpdeequIwaJGsQG0tJtb8gpQfCdLuBefsk6n8WiUdt/5qmzcW+BDXtzbQ==}
+  syncpack@14.3.1:
+    resolution: {integrity: sha512-TCqOY6Z7TH5yHV3saI6sHb5XRsZ8m2DaI4FQMonKT7UoCKL2WBiI54PLEFDSv1F2sL1BZA5e1opprf190ohirg==}
     engines: {node: '>=14.17.0'}
-    deprecated: 'pnpm users: upgrade to 14.0.2 or newer'
     hasBin: true
 
   term-size@2.2.1:
@@ -3551,42 +3550,8 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
-  turbo-darwin-64@2.8.10:
-    resolution: {integrity: sha512-A03fXh+B7S8mL3PbdhTd+0UsaGrhfyPkODvzBDpKRY7bbeac4MDFpJ7I+Slf2oSkCEeSvHKR7Z4U71uKRUfX7g==}
-    cpu: [x64]
-    os: [darwin]
-
-  turbo-darwin-arm64@2.8.10:
-    resolution: {integrity: sha512-sidzowgWL3s5xCHLeqwC9M3s9M0i16W1nuQF3Mc7fPHpZ+YPohvcbVFBB2uoRRHYZg6yBnwD4gyUHKTeXfwtXA==}
-    cpu: [arm64]
-    os: [darwin]
-
-  turbo-linux-64@2.8.10:
-    resolution: {integrity: sha512-YK9vcpL3TVtqonB021XwgaQhY9hJJbKKUhLv16osxV0HkcQASQWUqR56yMge7puh6nxU67rQlTq1b7ksR1T3KA==}
-    cpu: [x64]
-    os: [linux]
-
-  turbo-linux-arm64@2.8.10:
-    resolution: {integrity: sha512-3+j2tL0sG95iBJTm+6J8/45JsETQABPqtFyYjVjBbi6eVGdtNTiBmHNKrbvXRlQ3ZbUG75bKLaSSDHSEEN+btQ==}
-    cpu: [arm64]
-    os: [linux]
-
-  turbo-windows-64@2.8.10:
-    resolution: {integrity: sha512-hdeF5qmVY/NFgiucf8FW0CWJWtyT2QPm5mIsX0W1DXAVzqKVXGq+Zf+dg4EUngAFKjDzoBeN6ec2Fhajwfztkw==}
-    cpu: [x64]
-    os: [win32]
-
-  turbo-windows-arm64@2.8.10:
-    resolution: {integrity: sha512-QGdr/Q8LWmj+ITMkSvfiz2glf0d7JG0oXVzGL3jxkGqiBI1zXFj20oqVY0qWi+112LO9SVrYdpHS0E/oGFrMbQ==}
-    cpu: [arm64]
-    os: [win32]
-
-  turbo@2.8.10:
-    resolution: {integrity: sha512-OxbzDES66+x7nnKGg2MwBA1ypVsZoDTLHpeaP4giyiHSixbsiTaMyeJqbEyvBdp5Cm28fc+8GG6RdQtic0ijwQ==}
-    hasBin: true
-
-  turbo@2.8.21:
-    resolution: {integrity: sha512-FlJ8OD5Qcp0jTAM7E4a/RhUzRNds2GzKlyxHKA6N247VLy628rrxAGlMpIXSz6VB430+TiQDJ/SMl6PL1lu6wQ==}
+  turbo@2.9.8:
+    resolution: {integrity: sha512-REEB2rVTVDTf4hav1gJ5dIsGylWZrNonvjXFtk1dCi8gND3PhZtnYkyry1bra/Fo+iP6ctTEZbg6vWfdfHq/1A==}
     hasBin: true
 
   type-check@0.4.0:
@@ -3620,8 +3585,8 @@ packages:
       eslint: ^8.57.0 || ^9.0.0
       typescript: '>=4.8.4 <6.0.0'
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -4577,13 +4542,13 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
-  '@turbo/darwin-64@2.8.21':
+  '@turbo/darwin-64@2.9.8':
     optional: true
 
-  '@turbo/darwin-arm64@2.8.21':
+  '@turbo/darwin-arm64@2.9.8':
     optional: true
 
-  '@turbo/gen@1.13.4(@types/node@25.3.0)(typescript@5.9.3)':
+  '@turbo/gen@1.13.4(@types/node@25.3.0)(typescript@6.0.3)':
     dependencies:
       '@turbo/workspaces': 1.13.4(@types/node@25.3.0)
       chalk: 2.4.2
@@ -4593,7 +4558,7 @@ snapshots:
       minimatch: 9.0.5
       node-plop: 0.26.3
       proxy-agent: 6.5.0
-      ts-node: 10.9.2(@types/node@25.3.0)(typescript@5.9.3)
+      ts-node: 10.9.2(@types/node@25.3.0)(typescript@6.0.3)
       update-check: 1.5.4
       validate-npm-package-name: 5.0.1
     transitivePeerDependencies:
@@ -4603,16 +4568,16 @@ snapshots:
       - supports-color
       - typescript
 
-  '@turbo/linux-64@2.8.21':
+  '@turbo/linux-64@2.9.8':
     optional: true
 
-  '@turbo/linux-arm64@2.8.21':
+  '@turbo/linux-arm64@2.9.8':
     optional: true
 
-  '@turbo/windows-64@2.8.21':
+  '@turbo/windows-64@2.9.8':
     optional: true
 
-  '@turbo/windows-arm64@2.8.21':
+  '@turbo/windows-arm64@2.9.8':
     optional: true
 
   '@turbo/workspaces@1.13.4(@types/node@25.3.0)':
@@ -4689,40 +4654,40 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@typescript-eslint/eslint-plugin@8.50.0(@typescript-eslint/parser@8.50.0(eslint@9.39.2)(typescript@5.9.3))(eslint@9.39.2)(typescript@5.9.3)':
+  '@typescript-eslint/eslint-plugin@8.50.0(@typescript-eslint/parser@8.50.0(eslint@9.39.2)(typescript@6.0.3))(eslint@9.39.2)(typescript@6.0.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.50.0(eslint@9.39.2)(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.50.0(eslint@9.39.2)(typescript@6.0.3)
       '@typescript-eslint/scope-manager': 8.50.0
-      '@typescript-eslint/type-utils': 8.50.0(eslint@9.39.2)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.50.0(eslint@9.39.2)(typescript@5.9.3)
+      '@typescript-eslint/type-utils': 8.50.0(eslint@9.39.2)(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.50.0(eslint@9.39.2)(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.50.0
       eslint: 9.39.2
       ignore: 7.0.5
       natural-compare: 1.4.0
-      ts-api-utils: 2.1.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.1.0(typescript@6.0.3)
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.50.0(eslint@9.39.2)(typescript@5.9.3)':
+  '@typescript-eslint/parser@8.50.0(eslint@9.39.2)(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.50.0
       '@typescript-eslint/types': 8.50.0
-      '@typescript-eslint/typescript-estree': 8.50.0(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.50.0(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.50.0
       debug: 4.4.3(supports-color@5.5.0)
       eslint: 9.39.2
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/project-service@8.50.0(typescript@5.9.3)':
+  '@typescript-eslint/project-service@8.50.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.50.0(typescript@5.9.3)
+      '@typescript-eslint/tsconfig-utils': 8.50.0(typescript@6.0.3)
       '@typescript-eslint/types': 8.50.0
       debug: 4.4.3(supports-color@5.5.0)
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
@@ -4731,47 +4696,47 @@ snapshots:
       '@typescript-eslint/types': 8.50.0
       '@typescript-eslint/visitor-keys': 8.50.0
 
-  '@typescript-eslint/tsconfig-utils@8.50.0(typescript@5.9.3)':
+  '@typescript-eslint/tsconfig-utils@8.50.0(typescript@6.0.3)':
     dependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
-  '@typescript-eslint/type-utils@8.50.0(eslint@9.39.2)(typescript@5.9.3)':
+  '@typescript-eslint/type-utils@8.50.0(eslint@9.39.2)(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/types': 8.50.0
-      '@typescript-eslint/typescript-estree': 8.50.0(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.50.0(eslint@9.39.2)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.50.0(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.50.0(eslint@9.39.2)(typescript@6.0.3)
       debug: 4.4.3(supports-color@5.5.0)
       eslint: 9.39.2
-      ts-api-utils: 2.1.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.1.0(typescript@6.0.3)
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
   '@typescript-eslint/types@8.50.0': {}
 
-  '@typescript-eslint/typescript-estree@8.50.0(typescript@5.9.3)':
+  '@typescript-eslint/typescript-estree@8.50.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.50.0(typescript@5.9.3)
-      '@typescript-eslint/tsconfig-utils': 8.50.0(typescript@5.9.3)
+      '@typescript-eslint/project-service': 8.50.0(typescript@6.0.3)
+      '@typescript-eslint/tsconfig-utils': 8.50.0(typescript@6.0.3)
       '@typescript-eslint/types': 8.50.0
       '@typescript-eslint/visitor-keys': 8.50.0
       debug: 4.4.3(supports-color@5.5.0)
       minimatch: 9.0.5
       semver: 7.7.3
       tinyglobby: 0.2.15
-      ts-api-utils: 2.1.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.1.0(typescript@6.0.3)
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.50.0(eslint@9.39.2)(typescript@5.9.3)':
+  '@typescript-eslint/utils@8.50.0(eslint@9.39.2)(typescript@6.0.3)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.0(eslint@9.39.2)
       '@typescript-eslint/scope-manager': 8.50.0
       '@typescript-eslint/types': 8.50.0
-      '@typescript-eslint/typescript-estree': 8.50.0(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.50.0(typescript@6.0.3)
       eslint: 9.39.2
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
@@ -4833,14 +4798,14 @@ snapshots:
       '@vitest/pretty-format': 4.0.18
       tinyrainbow: 3.0.3
 
-  abitype@1.1.0(typescript@5.9.3)(zod@4.2.0):
+  abitype@1.1.0(typescript@6.0.3)(zod@4.2.0):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
       zod: 4.2.0
 
-  abitype@1.2.2(typescript@5.9.3)(zod@4.2.0):
+  abitype@1.2.2(typescript@6.0.3)(zod@4.2.0):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
       zod: 4.2.0
 
   acorn-jsx@5.3.2(acorn@8.15.0):
@@ -5482,11 +5447,11 @@ snapshots:
       string.prototype.matchall: 4.0.12
       string.prototype.repeat: 1.0.0
 
-  eslint-plugin-turbo@2.6.3(eslint@9.39.2)(turbo@2.8.21):
+  eslint-plugin-turbo@2.6.3(eslint@9.39.2)(turbo@2.9.8):
     dependencies:
       dotenv: 16.0.3
       eslint: 9.39.2
-      turbo: 2.8.21
+      turbo: 2.9.8
 
   eslint-scope@8.4.0:
     dependencies:
@@ -6162,48 +6127,48 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  lefthook-darwin-arm64@2.1.1:
+  lefthook-darwin-arm64@2.1.6:
     optional: true
 
-  lefthook-darwin-x64@2.1.1:
+  lefthook-darwin-x64@2.1.6:
     optional: true
 
-  lefthook-freebsd-arm64@2.1.1:
+  lefthook-freebsd-arm64@2.1.6:
     optional: true
 
-  lefthook-freebsd-x64@2.1.1:
+  lefthook-freebsd-x64@2.1.6:
     optional: true
 
-  lefthook-linux-arm64@2.1.1:
+  lefthook-linux-arm64@2.1.6:
     optional: true
 
-  lefthook-linux-x64@2.1.1:
+  lefthook-linux-x64@2.1.6:
     optional: true
 
-  lefthook-openbsd-arm64@2.1.1:
+  lefthook-openbsd-arm64@2.1.6:
     optional: true
 
-  lefthook-openbsd-x64@2.1.1:
+  lefthook-openbsd-x64@2.1.6:
     optional: true
 
-  lefthook-windows-arm64@2.1.1:
+  lefthook-windows-arm64@2.1.6:
     optional: true
 
-  lefthook-windows-x64@2.1.1:
+  lefthook-windows-x64@2.1.6:
     optional: true
 
-  lefthook@2.1.1:
+  lefthook@2.1.6:
     optionalDependencies:
-      lefthook-darwin-arm64: 2.1.1
-      lefthook-darwin-x64: 2.1.1
-      lefthook-freebsd-arm64: 2.1.1
-      lefthook-freebsd-x64: 2.1.1
-      lefthook-linux-arm64: 2.1.1
-      lefthook-linux-x64: 2.1.1
-      lefthook-openbsd-arm64: 2.1.1
-      lefthook-openbsd-x64: 2.1.1
-      lefthook-windows-arm64: 2.1.1
-      lefthook-windows-x64: 2.1.1
+      lefthook-darwin-arm64: 2.1.6
+      lefthook-darwin-x64: 2.1.6
+      lefthook-freebsd-arm64: 2.1.6
+      lefthook-freebsd-x64: 2.1.6
+      lefthook-linux-arm64: 2.1.6
+      lefthook-linux-x64: 2.1.6
+      lefthook-openbsd-arm64: 2.1.6
+      lefthook-openbsd-x64: 2.1.6
+      lefthook-windows-arm64: 2.1.6
+      lefthook-windows-x64: 2.1.6
 
   levn@0.4.1:
     dependencies:
@@ -6298,9 +6263,9 @@ snapshots:
 
   minipass@7.1.3: {}
 
-  mipd@0.0.7(typescript@5.9.3):
+  mipd@0.0.7(typescript@6.0.3):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   mkdirp@0.5.6:
     dependencies:
@@ -6470,7 +6435,7 @@ snapshots:
       object-keys: 1.1.1
       safe-push-apply: 1.0.0
 
-  ox@0.9.17(typescript@5.9.3)(zod@4.2.0):
+  ox@0.9.17(typescript@6.0.3)(zod@4.2.0):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -6478,10 +6443,10 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.2(typescript@5.9.3)(zod@4.2.0)
+      abitype: 1.2.2(typescript@6.0.3)(zod@4.2.0)
       eventemitter3: 5.0.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - zod
 
@@ -6606,7 +6571,7 @@ snapshots:
 
   prettier@2.8.8: {}
 
-  prettier@3.8.1: {}
+  prettier@3.8.3: {}
 
   prop-types@15.8.1:
     dependencies:
@@ -7058,40 +7023,40 @@ snapshots:
       lower-case: 1.1.4
       upper-case: 1.1.3
 
-  syncpack-darwin-arm64@14.0.0:
+  syncpack-darwin-arm64@14.3.1:
     optional: true
 
-  syncpack-darwin-x64@14.0.0:
+  syncpack-darwin-x64@14.3.1:
     optional: true
 
-  syncpack-linux-arm64-musl@14.0.0:
+  syncpack-linux-arm64-musl@14.3.1:
     optional: true
 
-  syncpack-linux-arm64@14.0.0:
+  syncpack-linux-arm64@14.3.1:
     optional: true
 
-  syncpack-linux-x64-musl@14.0.0:
+  syncpack-linux-x64-musl@14.3.1:
     optional: true
 
-  syncpack-linux-x64@14.0.0:
+  syncpack-linux-x64@14.3.1:
     optional: true
 
-  syncpack-windows-arm64@14.0.0:
+  syncpack-windows-arm64@14.3.1:
     optional: true
 
-  syncpack-windows-x64@14.0.0:
+  syncpack-windows-x64@14.3.1:
     optional: true
 
-  syncpack@14.0.0:
+  syncpack@14.3.1:
     optionalDependencies:
-      syncpack-darwin-arm64: 14.0.0
-      syncpack-darwin-x64: 14.0.0
-      syncpack-linux-arm64: 14.0.0
-      syncpack-linux-arm64-musl: 14.0.0
-      syncpack-linux-x64: 14.0.0
-      syncpack-linux-x64-musl: 14.0.0
-      syncpack-windows-arm64: 14.0.0
-      syncpack-windows-x64: 14.0.0
+      syncpack-darwin-arm64: 14.3.1
+      syncpack-darwin-x64: 14.3.1
+      syncpack-linux-arm64: 14.3.1
+      syncpack-linux-arm64-musl: 14.3.1
+      syncpack-linux-x64: 14.3.1
+      syncpack-linux-x64-musl: 14.3.1
+      syncpack-windows-arm64: 14.3.1
+      syncpack-windows-x64: 14.3.1
 
   term-size@2.2.1: {}
 
@@ -7132,11 +7097,11 @@ snapshots:
 
   tree-kill@1.2.2: {}
 
-  ts-api-utils@2.1.0(typescript@5.9.3):
+  ts-api-utils@2.1.0(typescript@6.0.3):
     dependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
-  ts-node@10.9.2(@types/node@25.3.0)(typescript@5.9.3):
+  ts-node@10.9.2(@types/node@25.3.0)(typescript@6.0.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
@@ -7150,7 +7115,7 @@ snapshots:
       create-require: 1.1.1
       diff: 4.0.2
       make-error: 1.3.6
-      typescript: 5.9.3
+      typescript: 6.0.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
@@ -7158,41 +7123,14 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  turbo-darwin-64@2.8.10:
-    optional: true
-
-  turbo-darwin-arm64@2.8.10:
-    optional: true
-
-  turbo-linux-64@2.8.10:
-    optional: true
-
-  turbo-linux-arm64@2.8.10:
-    optional: true
-
-  turbo-windows-64@2.8.10:
-    optional: true
-
-  turbo-windows-arm64@2.8.10:
-    optional: true
-
-  turbo@2.8.10:
+  turbo@2.9.8:
     optionalDependencies:
-      turbo-darwin-64: 2.8.10
-      turbo-darwin-arm64: 2.8.10
-      turbo-linux-64: 2.8.10
-      turbo-linux-arm64: 2.8.10
-      turbo-windows-64: 2.8.10
-      turbo-windows-arm64: 2.8.10
-
-  turbo@2.8.21:
-    optionalDependencies:
-      '@turbo/darwin-64': 2.8.21
-      '@turbo/darwin-arm64': 2.8.21
-      '@turbo/linux-64': 2.8.21
-      '@turbo/linux-arm64': 2.8.21
-      '@turbo/windows-64': 2.8.21
-      '@turbo/windows-arm64': 2.8.21
+      '@turbo/darwin-64': 2.9.8
+      '@turbo/darwin-arm64': 2.9.8
+      '@turbo/linux-64': 2.9.8
+      '@turbo/linux-arm64': 2.9.8
+      '@turbo/windows-64': 2.9.8
+      '@turbo/windows-arm64': 2.9.8
 
   type-check@0.4.0:
     dependencies:
@@ -7233,18 +7171,18 @@ snapshots:
       possible-typed-array-names: 1.1.0
       reflect.getprototypeof: 1.0.10
 
-  typescript-eslint@8.50.0(eslint@9.39.2)(typescript@5.9.3):
+  typescript-eslint@8.50.0(eslint@9.39.2)(typescript@6.0.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.50.0(@typescript-eslint/parser@8.50.0(eslint@9.39.2)(typescript@5.9.3))(eslint@9.39.2)(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.50.0(eslint@9.39.2)(typescript@5.9.3)
-      '@typescript-eslint/typescript-estree': 8.50.0(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.50.0(eslint@9.39.2)(typescript@5.9.3)
+      '@typescript-eslint/eslint-plugin': 8.50.0(@typescript-eslint/parser@8.50.0(eslint@9.39.2)(typescript@6.0.3))(eslint@9.39.2)(typescript@6.0.3)
+      '@typescript-eslint/parser': 8.50.0(eslint@9.39.2)(typescript@6.0.3)
+      '@typescript-eslint/typescript-estree': 8.50.0(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.50.0(eslint@9.39.2)(typescript@6.0.3)
       eslint: 9.39.2
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  typescript@5.9.3: {}
+  typescript@6.0.3: {}
 
   uglify-js@3.19.3:
     optional: true
@@ -7293,18 +7231,18 @@ snapshots:
 
   validate-npm-package-name@5.0.1: {}
 
-  viem@2.42.1(typescript@5.9.3)(zod@4.2.0):
+  viem@2.42.1(typescript@6.0.3)(zod@4.2.0):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.0(typescript@5.9.3)(zod@4.2.0)
+      abitype: 1.1.0(typescript@6.0.3)(zod@4.2.0)
       isows: 1.0.7(ws@8.18.3)
-      ox: 0.9.17(typescript@5.9.3)(zod@4.2.0)
+      ox: 0.9.17(typescript@6.0.3)(zod@4.2.0)
       ws: 8.18.3
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
