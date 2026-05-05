@@ -1,5 +1,11 @@
 # @0xsequence/marketplace
 
+## 3.0.7
+
+### Patch Changes
+
+- Minor bug fixes
+
 ## 3.0.6
 
 ### Patch Changes
