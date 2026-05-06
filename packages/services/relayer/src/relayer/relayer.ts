@@ -18,6 +18,7 @@ export interface Relayer {
     chainId: number,
     to: Address.Address,
     calls: Payload.Call[],
+    data?: Hex.Hex,
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }>
 
   relay(to: Address.Address, data: Hex.Hex, chainId: number, quote?: FeeQuote): Promise<{ opHash: Hex.Hex }>

@@ -91,13 +91,11 @@ describe('Relayer', () => {
     })
 
     it('should return false for non-objects', () => {
-      // These will throw due to the 'in' operator, so we need to test the actual behavior
-      expect(() => Relayer.isRelayer(null)).toThrow()
-      expect(() => Relayer.isRelayer(undefined)).toThrow()
-      expect(() => Relayer.isRelayer('string')).toThrow()
-      expect(() => Relayer.isRelayer(123)).toThrow()
-      expect(() => Relayer.isRelayer(true)).toThrow()
-      // Arrays and objects should not throw, but should return false
+      expect(Relayer.isRelayer(null)).toBe(false)
+      expect(Relayer.isRelayer(undefined)).toBe(false)
+      expect(Relayer.isRelayer('string')).toBe(false)
+      expect(Relayer.isRelayer(123)).toBe(false)
+      expect(Relayer.isRelayer(true)).toBe(false)
       expect(Relayer.isRelayer([])).toBe(false)
     })
 
@@ -321,6 +319,61 @@ describe('Relayer', () => {
 
       const preconditionResult = await mockRelayer.checkPrecondition({} as { type: string })
       expect(preconditionResult).toBe(true)
+    })
+  })
+
+  describe('RpcRelayer.feeOptions', () => {
+    const mockCall: Payload.Call = {
+      to: TEST_TO_ADDRESS,
+      value: 0n,
+      data: TEST_DATA,
+      gasLimit: 21000n,
+      delegateCall: false,
+      onlyFallback: false,
+      behaviorOnError: 'revert',
+    }
+
+    const makeRelayer = () => {
+      const requests: Array<{ input: RequestInfo; init?: RequestInit }> = []
+      const fetchImpl = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
+        requests.push({ input, init })
+        return new Response(JSON.stringify({ options: [], sponsored: false }), { status: 200 })
+      })
+
+      return {
+        relayer: new Relayer.RpcRelayer('https://relayer.test', TEST_CHAIN_ID, 'https://rpc.test', fetchImpl),
+        requests,
+      }
+    }
+
+    it('should send provided transaction target and data when available', async () => {
+      const { relayer, requests } = makeRelayer()
+
+      await relayer.feeOptions(TEST_WALLET_ADDRESS, TEST_CHAIN_ID, TEST_TO_ADDRESS, [mockCall], TEST_DATA)
+
+      expect(requests).toHaveLength(1)
+      expect(requests[0]!.input).toBe('https://relayer.test/rpc/Relayer/FeeOptions')
+      expect(JSON.parse(requests[0]!.init!.body as string)).toEqual({
+        wallet: TEST_WALLET_ADDRESS,
+        to: TEST_TO_ADDRESS,
+        data: TEST_DATA,
+      })
+    })
+
+    it('should encode calls for the provided target when transaction data is not provided', async () => {
+      const { relayer, requests } = makeRelayer()
+
+      await relayer.feeOptions(TEST_WALLET_ADDRESS, TEST_CHAIN_ID, TEST_TO_ADDRESS, [mockCall])
+
+      const expectedData = Hex.fromBytes(
+        Payload.encode({ type: 'call', space: 0n, nonce: 0n, calls: [mockCall] }, TEST_TO_ADDRESS),
+      )
+
+      expect(JSON.parse(requests[0]!.init!.body as string)).toEqual({
+        wallet: TEST_WALLET_ADDRESS,
+        to: TEST_TO_ADDRESS,
+        data: expectedData,
+      })
     })
   })
 
