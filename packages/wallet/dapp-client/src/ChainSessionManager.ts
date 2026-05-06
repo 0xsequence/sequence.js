@@ -865,7 +865,13 @@ export class ChainSessionManager {
       }
       const walletAddress = this.walletAddress
       if (!walletAddress) throw new InitializationError('Wallet is not initialized.')
-      const feeOptions = await this.relayer.feeOptions(walletAddress, this.chainId, signedCall.to, callsToSend)
+      const feeOptions = await this.relayer.feeOptions(
+        walletAddress,
+        this.chainId,
+        signedCall.to,
+        callsToSend,
+        signedCall.data,
+      )
       return feeOptions.options
     } catch (err) {
       throw new FeeOptionError(`Failed to get fee options: ${err instanceof Error ? err.message : String(err)}`)

@@ -149,22 +149,24 @@ export class RpcRelayer implements Relayer {
     chainId: number,
     to: Address.Address,
     calls: Payload.Call[],
+    data?: Hex.Hex,
   ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
     // IMPORTANT:
     // The relayer FeeOptions endpoint simulates `eth_call(to, data)`.
-    // wallet-webapp-v3 requests FeeOptions with `to = wallet` and `data = Payload.encode(calls, self=wallet)`.
-    // This works for undeployed wallets and avoids guest-module simulation pitfalls.
-    const callsStruct: Payload.Calls = { type: 'call', space: 0n, nonce: 0n, calls: calls }
+    // Callers that already built a wallet transaction should pass its `to` and `data`.
+    // This is required for undeployed wallets because the transaction must target the
+    // guest module and include the deploy call before executing from the wallet.
+    const callsStruct: Payload.Calls = { type: 'call', space: 0n, nonce: 0n, calls }
 
-    const feeOptionsTo = wallet
-    const data = Payload.encode(callsStruct, wallet)
+    const feeOptionsTo = to
+    const feeOptionsData = data ?? Hex.fromBytes(Payload.encode(callsStruct, to))
 
     try {
       const result = await this.client.feeOptions(
         {
           wallet,
           to: feeOptionsTo,
-          data: Hex.fromBytes(data),
+          data: feeOptionsData,
         },
         { ...(this.projectAccessKey ? { 'X-Access-Key': this.projectAccessKey } : undefined) },
       )

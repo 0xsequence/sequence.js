@@ -494,6 +494,56 @@ export class Wallet {
     }
   }
 
+  async buildFeeOptionsTransaction(
+    provider: Provider.Provider,
+    payload: Payload.Calls,
+  ): Promise<{ to: Address.Address; data: Hex.Hex }> {
+    const status = await this.getStatus(provider)
+    const signature = '0x0001' as Hex.Hex
+
+    const executeData = AbiFunction.encodeData(Constants.EXECUTE, [Bytes.toHex(Payload.encode(payload)), signature])
+
+    if (status.isDeployed) {
+      return {
+        to: this.address,
+        data: executeData,
+      }
+    }
+
+    const deploy = await this.buildDeployTransaction()
+
+    return {
+      to: this.guest,
+      data: Bytes.toHex(
+        Payload.encode({
+          type: 'call',
+          space: 0n,
+          nonce: 0n,
+          calls: [
+            {
+              to: deploy.to,
+              value: 0n,
+              data: deploy.data,
+              gasLimit: 0n,
+              delegateCall: false,
+              onlyFallback: false,
+              behaviorOnError: 'revert',
+            },
+            {
+              to: this.address,
+              value: 0n,
+              data: executeData,
+              gasLimit: 0n,
+              delegateCall: false,
+              onlyFallback: false,
+              behaviorOnError: 'revert',
+            },
+          ],
+        }),
+      ),
+    }
+  }
+
   async buildTransaction(provider: Provider.Provider, envelope: Envelope.Signed<Payload.Calls>) {
     const status = await this.getStatus(provider)
 
