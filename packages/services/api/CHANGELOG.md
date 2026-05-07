@@ -1,5 +1,11 @@
 # @0xsequence/api
 
+## 3.0.9
+
+### Patch Changes
+
+- Fee options fixes
+
 ## 3.0.8
 
 ### Patch Changes

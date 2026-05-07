@@ -1,5 +1,17 @@
 # @0xsequence/wallet-wdk
 
+## 3.0.9
+
+### Patch Changes
+
+- Fee options fixes
+- Updated dependencies
+  - @0xsequence/guard@3.0.9
+  - @0xsequence/identity-instrument@3.0.9
+  - @0xsequence/relayer@3.0.9
+  - @0xsequence/wallet-core@3.0.9
+  - @0xsequence/wallet-primitives@3.0.9
+
 ## 3.0.8
 
 ### Patch Changes
