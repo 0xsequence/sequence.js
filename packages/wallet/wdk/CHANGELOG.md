@@ -1,5 +1,17 @@
 # @0xsequence/wallet-wdk
 
+## 3.0.8
+
+### Patch Changes
+
+- Bug fix for relayer fee options handling
+- Updated dependencies
+  - @0xsequence/guard@3.0.8
+  - @0xsequence/identity-instrument@3.0.8
+  - @0xsequence/relayer@3.0.8
+  - @0xsequence/wallet-core@3.0.8
+  - @0xsequence/wallet-primitives@3.0.8
+
 ## 3.0.7
 
 ### Patch Changes

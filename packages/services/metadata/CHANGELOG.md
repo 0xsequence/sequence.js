@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 3.0.8
+
+### Patch Changes
+
+- Bug fix for relayer fee options handling
+
 ## 3.0.7
 
 ### Patch Changes
