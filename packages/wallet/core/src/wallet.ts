@@ -25,6 +25,51 @@ export const DefaultWalletOptions: WalletOptions = {
   guest: Constants.DefaultGuestAddress,
 }
 
+const FeeOptionsStubSignature: SequenceSignature.SignatureOfSignerLeaf = {
+  type: 'eth_sign',
+  r: 0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+  s: 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0n,
+  yParity: 0,
+}
+
+function stubFeeOptionsTopology(topology: Config.Topology): SequenceSignature.RawTopology {
+  if (Array.isArray(topology)) {
+    return [stubFeeOptionsTopology(topology[0]), stubFeeOptionsTopology(topology[1])]
+  }
+
+  if (Config.isSignerLeaf(topology)) {
+    return {
+      type: 'unrecovered-signer',
+      weight: topology.weight,
+      signature: FeeOptionsStubSignature,
+    }
+  }
+
+  if (Config.isNestedLeaf(topology)) {
+    return {
+      type: 'nested',
+      weight: topology.weight,
+      threshold: topology.threshold,
+      tree: stubFeeOptionsTopology(topology.tree),
+    }
+  }
+
+  return topology
+}
+
+function buildFeeOptionsStubSignature(status: WalletStatusWithOnchain): Hex.Hex {
+  return Bytes.toHex(
+    SequenceSignature.encodeSignature({
+      noChainId: status.chainId === 0,
+      configuration: {
+        ...status.configuration,
+        topology: stubFeeOptionsTopology(status.configuration.topology),
+      },
+      suffix: status.pendingUpdates.map(({ signature }) => signature),
+    }),
+  )
+}
+
 export type WalletStatus = {
   address: Address.Address
   isDeployed: boolean
@@ -499,7 +544,7 @@ export class Wallet {
     payload: Payload.Calls,
   ): Promise<{ to: Address.Address; data: Hex.Hex }> {
     const status = await this.getStatus(provider)
-    const signature = '0x0001' as Hex.Hex
+    const signature = buildFeeOptionsStubSignature(status)
 
     const executeData = AbiFunction.encodeData(Constants.EXECUTE, [Bytes.toHex(Payload.encode(payload)), signature])
 
