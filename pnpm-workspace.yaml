@@ -1,4 +1,4 @@
-minimumReleaseAge: 20160 # 60 * 24 * 7 * 2 = do not install package releases that are not at least 2 weeks old
+minimumReleaseAge: 10080 # 60 * 24 * 7 = do not install package releases that are not at least 1 week old
 # DO NOT REMOVE OR MODIFY minimumReleaseAge without approval
 # list packages to be excluded from minimum release limitation
 
