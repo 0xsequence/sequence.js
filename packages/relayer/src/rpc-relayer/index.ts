@@ -80,7 +80,7 @@ export class RpcRelayer implements Relayer {
 
     while (isCancelled === undefined || !isCancelled()) {
       try {
-        const { receipt } = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnId })
+        const { receipt, metaTxnEnqueued } = await this.service.getMetaTxnReceipt({ metaTxID: metaTxnId })
 
         if (
           receipt &&
@@ -88,7 +88,7 @@ export class RpcRelayer implements Relayer {
           receipt.txnReceipt !== 'null' &&
           FINAL_STATUSES.includes(receipt.status as proto.ETHTxnStatus)
         ) {
-          return { receipt }
+          return { receipt, metaTxnEnqueued }
         }
       } catch (e) {
         fails++
