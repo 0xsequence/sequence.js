@@ -644,7 +644,6 @@ export interface RepairSenderReturn {
 export interface GetMetaTransactionsArgs {
   projectId: number
   page?: Page
-  includeNonSponsored?: boolean
 }
 
 export interface GetMetaTransactionsReturn {
