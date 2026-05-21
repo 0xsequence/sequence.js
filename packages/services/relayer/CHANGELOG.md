@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.0.10
+
+### Patch Changes
+
+- Minor network updates, relayer interface
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.10
+
 ## 3.0.9
 
 ### Patch Changes
