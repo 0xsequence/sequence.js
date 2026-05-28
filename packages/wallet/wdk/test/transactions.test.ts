@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  isStandardRelayerOption,
   Manager,
   SignerActionable,
   Transaction,
@@ -55,6 +56,14 @@ describe('Transactions', () => {
 
     expect(tx.relayerOptions.length).toBe(1)
     expect(tx.relayerOptions[0]!.id).toBeDefined()
+
+    // PkRelayer/LocalRelayer never report sponsorship, so sponsored should be
+    // explicitly false (not undefined) and failed should remain undefined.
+    const firstOption = tx.relayerOptions[0]!
+    if (isStandardRelayerOption(firstOption)) {
+      expect(firstOption.sponsored).toBe(false)
+      expect(firstOption.failed).toBeUndefined()
+    }
 
     const sigId = await manager.transactions.selectRelayer(txId!, tx.relayerOptions[0]!.id)
     expect(sigId).toBeDefined()
@@ -168,6 +177,14 @@ describe('Transactions', () => {
 
     expect(tx.relayerOptions.length).toBe(1)
     expect(tx.relayerOptions[0]!.id).toBeDefined()
+
+    // PkRelayer/LocalRelayer never report sponsorship, so sponsored should be
+    // explicitly false (not undefined) and failed should remain undefined.
+    const firstOption = tx.relayerOptions[0]!
+    if (isStandardRelayerOption(firstOption)) {
+      expect(firstOption.sponsored).toBe(false)
+      expect(firstOption.failed).toBeUndefined()
+    }
 
     const sigId = await manager.transactions.selectRelayer(txId!, tx.relayerOptions[0]!.id)
     expect(sigId).toBeDefined()

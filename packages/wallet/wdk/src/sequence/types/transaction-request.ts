@@ -21,6 +21,8 @@ export type StandardRelayerOption = BaseRelayerOption & {
   kind: 'standard'
   feeOption?: Relayer.FeeOption
   quote?: Relayer.FeeQuote
+  sponsored?: boolean
+  failed?: boolean
   name?: string
   icon?: string
 }

@@ -371,6 +371,8 @@ export class Transactions implements TransactionsInterface {
                   id: uuidv7(),
                   relayerType: relayer.type,
                   relayerId: relayer.id,
+                  sponsored: feeOptions.sponsored,
+                  failed: feeOptions.failed,
                   name,
                   icon,
                 } as StandardRelayerOption,
@@ -383,6 +385,8 @@ export class Transactions implements TransactionsInterface {
               feeOption,
               relayerType: relayer.type,
               relayerId: relayer.id,
+              sponsored: feeOptions.sponsored,
+              failed: feeOptions.failed,
               quote: feeOptions.quote,
             }))
           }),

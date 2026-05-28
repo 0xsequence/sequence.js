@@ -27,5 +27,6 @@ export type {
   TransactionRequest,
   TransactionRequested,
 } from './transaction-request.js'
+export { isERC4337RelayerOption, isStandardRelayerOption } from './transaction-request.js'
 export type { Wallet } from './wallet.js'
 export type { Module } from './module.js'
