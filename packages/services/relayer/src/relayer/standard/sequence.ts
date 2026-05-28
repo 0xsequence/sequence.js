@@ -17,7 +17,12 @@ export class SequenceRelayer implements Relayer {
     return true
   }
 
-  async feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }> {
+  async feeTokens(): Promise<{
+    isFeeRequired: boolean
+    tokens?: FeeToken[]
+    paymentAddress?: Address.Address
+    failed?: boolean
+  }> {
     const { isFeeRequired, tokens, paymentAddress } = await this.service.feeTokens()
     if (isFeeRequired) {
       Address.assert(paymentAddress)
@@ -39,17 +44,18 @@ export class SequenceRelayer implements Relayer {
     to: Address.Address,
     calls: Payload.Call[],
     transactionData?: Hex.Hex,
-  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote; sponsored: boolean; failed?: boolean }> {
     const execute = AbiFunction.from('function execute(bytes calldata _payload, bytes calldata _signature)')
     const payload = Payload.encode({ type: 'call', space: 0n, nonce: 0n, calls }, to)
     const signature = '0x0001' // TODO: use a stub signature
     const data = transactionData ?? AbiFunction.encodeData(execute, [Bytes.toHex(payload), signature])
 
-    const { options, quote } = await this.service.feeOptions({ wallet, to, data })
+    const { options, quote, sponsored } = await this.service.feeOptions({ wallet, to, data })
 
     return {
       options,
       quote: quote ? { _tag: 'FeeQuote', _quote: quote } : undefined,
+      sponsored,
     }
   }
 

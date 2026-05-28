@@ -123,7 +123,12 @@ export class RpcRelayer implements Relayer {
     return Promise.resolve(this.chainId === chainId)
   }
 
-  async feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: RpcFeeToken[]; paymentAddress?: Address.Address }> {
+  async feeTokens(): Promise<{
+    isFeeRequired: boolean
+    tokens?: RpcFeeToken[]
+    paymentAddress?: Address.Address
+    failed?: boolean
+  }> {
     try {
       const { isFeeRequired, tokens, paymentAddress } = await this.client.feeTokens()
       if (isFeeRequired) {
@@ -140,7 +145,7 @@ export class RpcRelayer implements Relayer {
       }
     } catch (e) {
       console.warn('RpcRelayer.feeTokens failed:', e)
-      return { isFeeRequired: false }
+      return { isFeeRequired: false, failed: true }
     }
   }
 
@@ -150,7 +155,7 @@ export class RpcRelayer implements Relayer {
     to: Address.Address,
     calls: Payload.Call[],
     data?: Hex.Hex,
-  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote; sponsored: boolean; failed?: boolean }> {
     // IMPORTANT:
     // The relayer FeeOptions endpoint simulates `eth_call(to, data)`.
     // Callers that already built a wallet transaction should pass its `to` and `data`.
@@ -182,10 +187,10 @@ export class RpcRelayer implements Relayer {
         gasLimit: option.gasLimit,
       }))
 
-      return { options, quote }
+      return { options, quote, sponsored: result.sponsored }
     } catch (e) {
       console.warn('RpcRelayer.feeOptions failed:', e)
-      return { options: [] }
+      return { options: [], sponsored: false, failed: true }
     }
   }
 

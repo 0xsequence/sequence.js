@@ -23,7 +23,12 @@ export class EIP6963Relayer implements Relayer {
     return this.relayer.isAvailable(wallet, chainId)
   }
 
-  feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }> {
+  feeTokens(): Promise<{
+    isFeeRequired: boolean
+    tokens?: FeeToken[]
+    paymentAddress?: Address.Address
+    failed?: boolean
+  }> {
     return this.relayer.feeTokens()
   }
 
@@ -32,7 +37,7 @@ export class EIP6963Relayer implements Relayer {
     chainId: number,
     to: Address.Address,
     calls: Payload.Call[],
-  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote; sponsored: boolean; failed?: boolean }> {
     return this.relayer.feeOptions(wallet, chainId, to, calls)
   }
 

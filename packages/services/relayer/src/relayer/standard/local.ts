@@ -56,7 +56,12 @@ export class LocalRelayer implements Relayer {
     return new LocalRelayer(new EIP1193ProviderAdapter(provider))
   }
 
-  feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }> {
+  feeTokens(): Promise<{
+    isFeeRequired: boolean
+    tokens?: FeeToken[]
+    paymentAddress?: Address.Address
+    failed?: boolean
+  }> {
     return Promise.resolve({
       isFeeRequired: false,
     })
@@ -67,8 +72,8 @@ export class LocalRelayer implements Relayer {
     _chainId: number,
     _to: Address.Address,
     _calls: Payload.Call[],
-  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
-    return Promise.resolve({ options: [] })
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote; sponsored: boolean; failed?: boolean }> {
+    return Promise.resolve({ options: [], sponsored: false })
   }
 
   async relay(

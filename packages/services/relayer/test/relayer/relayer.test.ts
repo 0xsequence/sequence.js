@@ -294,6 +294,7 @@ describe('Relayer', () => {
       vi.mocked(mockRelayer.feeOptions).mockResolvedValue({
         options: [],
         quote: undefined,
+        sponsored: false,
       })
       vi.mocked(mockRelayer.relay).mockResolvedValue({
         opHash: TEST_OP_HASH,
@@ -374,6 +375,60 @@ describe('Relayer', () => {
         to: TEST_TO_ADDRESS,
         data: expectedData,
       })
+    })
+
+    it('should propagate sponsored:true from the server', async () => {
+      const fetchImpl = vi.fn(
+        async () => new Response(JSON.stringify({ options: [], sponsored: true }), { status: 200 }),
+      )
+      const relayer = new Relayer.RpcRelayer('https://relayer.test', TEST_CHAIN_ID, 'https://rpc.test', fetchImpl)
+
+      const result = await relayer.feeOptions(TEST_WALLET_ADDRESS, TEST_CHAIN_ID, TEST_TO_ADDRESS, [mockCall])
+
+      expect(result.sponsored).toBe(true)
+      expect(result.options).toEqual([])
+      expect(result.failed).toBeUndefined()
+    })
+
+    it('should propagate sponsored:false from the server', async () => {
+      const fetchImpl = vi.fn(
+        async () => new Response(JSON.stringify({ options: [], sponsored: false }), { status: 200 }),
+      )
+      const relayer = new Relayer.RpcRelayer('https://relayer.test', TEST_CHAIN_ID, 'https://rpc.test', fetchImpl)
+
+      const result = await relayer.feeOptions(TEST_WALLET_ADDRESS, TEST_CHAIN_ID, TEST_TO_ADDRESS, [mockCall])
+
+      expect(result.sponsored).toBe(false)
+      expect(result.failed).toBeUndefined()
+    })
+
+    it('should return sponsored:false and failed:true when the server errors', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const fetchImpl = vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: 'Aborted', code: 1005, msg: 'simulation failed' }), { status: 400 }),
+      )
+      const relayer = new Relayer.RpcRelayer('https://relayer.test', TEST_CHAIN_ID, 'https://rpc.test', fetchImpl)
+
+      const result = await relayer.feeOptions(TEST_WALLET_ADDRESS, TEST_CHAIN_ID, TEST_TO_ADDRESS, [mockCall])
+
+      expect(result).toEqual({ options: [], sponsored: false, failed: true })
+      expect(warn).toHaveBeenCalled()
+      warn.mockRestore()
+    })
+  })
+
+  describe('RpcRelayer.feeTokens', () => {
+    it('should return failed:true when the server errors', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const fetchImpl = vi.fn(async () => new Response('boom', { status: 500 }))
+      const relayer = new Relayer.RpcRelayer('https://relayer.test', TEST_CHAIN_ID, 'https://rpc.test', fetchImpl)
+
+      const result = await relayer.feeTokens()
+
+      expect(result).toEqual({ isFeeRequired: false, failed: true })
+      expect(warn).toHaveBeenCalled()
+      warn.mockRestore()
     })
   })
 

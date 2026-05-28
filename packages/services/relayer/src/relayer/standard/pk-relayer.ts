@@ -107,7 +107,12 @@ export class PkRelayer implements Relayer {
     return providerChainId === chainId
   }
 
-  feeTokens(): Promise<{ isFeeRequired: boolean; tokens?: FeeToken[]; paymentAddress?: Address.Address }> {
+  feeTokens(): Promise<{
+    isFeeRequired: boolean
+    tokens?: FeeToken[]
+    paymentAddress?: Address.Address
+    failed?: boolean
+  }> {
     return this.relayer.feeTokens()
   }
 
@@ -116,7 +121,7 @@ export class PkRelayer implements Relayer {
     chainId: number,
     to: Address.Address,
     calls: Payload.Call[],
-  ): Promise<{ options: FeeOption[]; quote?: FeeQuote }> {
+  ): Promise<{ options: FeeOption[]; quote?: FeeQuote; sponsored: boolean; failed?: boolean }> {
     return this.relayer.feeOptions(wallet, chainId, to, calls)
   }
 
