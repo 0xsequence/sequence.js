@@ -879,6 +879,54 @@ export class ChainSessionManager {
   }
 
   /**
+   * Checks whether the given transactions would be sponsored by an active
+   * relayer policy on this chain.
+   *
+   * Returns `true` only when the relayer's `/FeeOptions` endpoint explicitly
+   * reports sponsorship. A failed quote, network error, or absence of
+   * sponsorship all return `false`, so a `true` result is always safe to
+   * surface as "free gas" in UI.
+   */
+  async isSponsored(calls: Transaction[]): Promise<boolean> {
+    const callsToSend = calls.map((tx) => ({
+      to: tx.to,
+      value: tx.value,
+      data: tx.data,
+      gasLimit: tx.gasLimit ?? BigInt(0),
+      delegateCall: tx.delegateCall ?? false,
+      onlyFallback: tx.onlyFallback ?? false,
+      behaviorOnError: tx.behaviorOnError ?? ('revert' as const),
+    }))
+    try {
+      const signedCall = await this._buildAndSignCalls(callsToSend)
+      const fingerprint = this._fingerprintCalls(callsToSend)
+      if (fingerprint) {
+        this.lastSignedCallCache = {
+          fingerprint,
+          signedCall,
+          createdAtMs: Date.now(),
+        }
+      }
+      const walletAddress = this.walletAddress
+      if (!walletAddress) throw new InitializationError('Wallet is not initialized.')
+      const feeOptions = await this.relayer.feeOptions(
+        walletAddress,
+        this.chainId,
+        signedCall.to,
+        callsToSend,
+        signedCall.data,
+      )
+      return feeOptions.sponsored === true && !feeOptions.failed
+    } catch (err) {
+      console.warn(
+        `isSponsored check failed for chain ${this.chainId}:`,
+        err instanceof Error ? err.message : String(err),
+      )
+      return false
+    }
+  }
+
+  /**
    * Builds, signs, and sends a batch of transactions.
    * @param transactions The transactions to be sent.
    * @param feeOption (Optional) The fee option to use for sponsoring the transaction. If provided, a token transfer call will be prepended.

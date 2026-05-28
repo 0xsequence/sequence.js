@@ -807,6 +807,30 @@ export class DappClient {
   }
 
   /**
+   * Checks whether the given transactions would be sponsored on `chainId`.
+   *
+   * Returns `true` only when the relayer's `/FeeOptions` endpoint explicitly
+   * reports sponsorship. A failed quote, network error, or absence of
+   * sponsorship all return `false`, so a `true` result is always safe to
+   * surface as "free gas" in UI.
+   *
+   * Prefer this over inferring sponsorship from an empty `getFeeOptions`
+   * array — a swallowed `/FeeOptions` error also produces an empty array.
+   *
+   * @example
+   * if (await dappClient.isSponsored(1, transactions)) {
+   *   // safe to show "Free gas, sponsored by app"
+   * } else {
+   *   const feeOptions = await dappClient.getFeeOptions(1, transactions)
+   *   // present feeOptions[0..n] to the user as payment choices
+   * }
+   */
+  async isSponsored(chainId: number, transactions: Transaction[]): Promise<boolean> {
+    const chainSessionManager = await this.getOrInitializeChainManager(chainId)
+    return await chainSessionManager.isSponsored(transactions)
+  }
+
+  /**
    * Fetches fee tokens for a chain.
    * @returns A promise that resolves with the fee tokens response. {@link GetFeeTokensResponse}
    * @throws If the fee tokens cannot be fetched. {@link InitializationError}
