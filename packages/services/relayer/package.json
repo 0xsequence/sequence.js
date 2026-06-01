@@ -31,7 +31,7 @@
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^25.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "@0xsequence/wallet-primitives": "workspace:^",
