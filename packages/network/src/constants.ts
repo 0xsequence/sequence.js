@@ -39,7 +39,6 @@ export enum ChainId {
   // Polygon
   POLYGON = 137,
   POLYGON_MUMBAI = 80001, // network is deprecated
-  POLYGON_ZKEVM = 1101, // network is deprecated
   POLYGON_AMOY = 80002,
 
   // BSC
@@ -77,8 +76,6 @@ export enum ChainId {
   HOMEVERSE = 19011,
 
   // Xai
-  XAI = 660279, // network is deprecated
-  XAI_SEPOLIA = 37714555429, // network is deprecated
 
   // TELOS
   TELOS = 40,
@@ -93,8 +90,6 @@ export enum ChainId {
   APECHAIN_TESTNET = 33111,
 
   // Blast
-  BLAST = 81457, // network is deprecated
-  BLAST_SEPOLIA = 168587773, // network is deprecated
 
   // Borne
   BORNE_TESTNET = 94984, // network is deprecated
@@ -108,7 +103,6 @@ export enum ChainId {
   SONEIUM = 1868,
 
   // TOY Testnet
-  TOY_TESTNET = 21000000,
 
   // Immutable zkEVM
   IMMUTABLE_ZKEVM = 13371,
@@ -127,8 +121,7 @@ export enum ChainId {
   MOONBEAM = 1284,
   MOONBASE_ALPHA = 1287,
 
-  // MONAD_TESTNET
-  MONAD_TESTNET = 10143,
+  // MONAD
   MONAD = 143,
 
   // SOMNIA
@@ -137,14 +130,11 @@ export enum ChainId {
 
   // INCENTIV TESTNET
   INCENTIV_TESTNET = 11690, // network is deprecated
-  INCENTIV_TESTNET_V2 = 28802,
-  INCENTIV = 24101,
 
   // Katana
   KATANA = 747474,
 
   // SANDBOX
-  SANDBOX_TESTNET = 6252,
 
   // ARC
   ARC = 5042,
@@ -326,23 +316,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Amoy POL',
       decimals: 18
     }
-  },
-  [ChainId.POLYGON_ZKEVM]: {
-    chainId: ChainId.POLYGON_ZKEVM,
-    type: NetworkType.MAINNET,
-    name: 'polygon-zkevm',
-    title: 'Polygon zkEVM',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_ZKEVM}.webp`,
-    blockExplorer: {
-      name: 'Polygonscan (zkEVM)',
-      rootUrl: 'https://zkevm.polygonscan.com/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    },
-    deprecated: true
   },
   [ChainId.BSC]: {
     chainId: ChainId.BSC,
@@ -646,41 +619,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.XAI]: {
-    chainId: ChainId.XAI,
-    type: NetworkType.MAINNET,
-    name: 'xai',
-    title: 'Xai',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI}.webp`,
-    blockExplorer: {
-      name: 'Xai Explorer',
-      rootUrl: 'https://explorer.xai-chain.net/'
-    },
-    nativeToken: {
-      symbol: 'XAI',
-      name: 'XAI',
-      decimals: 18
-    },
-    deprecated: true
-  },
-  [ChainId.XAI_SEPOLIA]: {
-    chainId: ChainId.XAI_SEPOLIA,
-    type: NetworkType.TESTNET,
-    name: 'xai-sepolia',
-    title: 'Xai Sepolia',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI_SEPOLIA}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Xai Sepolia Explorer',
-      rootUrl: 'https://testnet-explorer-v2.xai-chain.net/'
-    },
-    nativeToken: {
-      symbol: 'sXAI',
-      name: 'Sepolia XAI',
-      decimals: 18
-    },
-    deprecated: true
-  },
   [ChainId.B3]: {
     chainId: ChainId.B3,
     type: NetworkType.MAINNET,
@@ -748,41 +686,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'ApeCoin',
       decimals: 18
     }
-  },
-  [ChainId.BLAST]: {
-    chainId: ChainId.BLAST,
-    type: NetworkType.MAINNET,
-    name: 'blast',
-    title: 'Blast',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST}.webp`,
-    blockExplorer: {
-      name: 'Blast Explorer',
-      rootUrl: 'https://blastscan.io/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    },
-    deprecated: true
-  },
-  [ChainId.BLAST_SEPOLIA]: {
-    chainId: ChainId.BLAST_SEPOLIA,
-    type: NetworkType.TESTNET,
-    name: 'blast-sepolia',
-    title: 'Blast Sepolia',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST_SEPOLIA}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Blast Sepolia Explorer',
-      rootUrl: 'https://sepolia.blastexplorer.io/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    },
-    deprecated: true
   },
   [ChainId.TELOS]: {
     chainId: ChainId.TELOS,
@@ -899,23 +802,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.TOY_TESTNET]: {
-    chainId: ChainId.TOY_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'toy-testnet',
-    title: 'TOY (Testnet)',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TOY_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'TOY Testnet Explorer',
-      rootUrl: 'https://toy-chain-testnet.explorer.caldera.xyz/'
-    },
-    nativeToken: {
-      symbol: 'TOY',
-      name: 'TOY',
       decimals: 18
     }
   },
@@ -1058,23 +944,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.MONAD_TESTNET]: {
-    chainId: ChainId.MONAD_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'monad-testnet',
-    title: 'Monad Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Monad Testnet Explorer',
-      rootUrl: 'https://testnet.monadexplorer.com/'
-    },
-    nativeToken: {
-      symbol: 'MON',
-      name: 'MON',
-      decimals: 18
-    }
-  },
+
   [ChainId.MONAD]: {
     chainId: ChainId.MONAD,
     type: NetworkType.MAINNET,
@@ -1128,42 +998,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     },
     deprecated: true
-  },
-
-  [ChainId.INCENTIV_TESTNET_V2]: {
-    chainId: ChainId.INCENTIV_TESTNET_V2,
-    type: NetworkType.TESTNET,
-    name: 'incentiv-testnet-v2',
-    title: 'Incentiv Testnet v2',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV_TESTNET_V2}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Incentiv Testnet Explorer v2',
-      rootUrl: 'https://explorer-testnet.incentiv.io/'
-    },
-    nativeToken: {
-      symbol: 'TCENT',
-      name: 'TCENT',
-      decimals: 18
-    }
-  },
-
-  [ChainId.INCENTIV]: {
-    chainId: ChainId.INCENTIV,
-    type: NetworkType.MAINNET,
-    name: 'incentiv',
-    title: 'Incentiv',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Incentiv',
-      rootUrl: 'https://explorer.incentiv.io/'
-    },
-    nativeToken: {
-      symbol: 'CENT',
-      name: 'CENT',
-      decimals: 18
-    }
   },
 
   [ChainId.SOMNIA]: {
