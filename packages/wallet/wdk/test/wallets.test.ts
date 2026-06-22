@@ -163,6 +163,109 @@ describe('Wallets', () => {
     expect(commitAuthSpy).toHaveBeenCalledWith('/auth/return', { type: 'auth' })
   })
 
+  it('Should expose added login signer metadata from redirect when requested', async () => {
+    manager = newManager({
+      identity: {
+        google: {
+          enabled: true,
+          clientId: 'test-google-client-id',
+        },
+      },
+    })
+
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as AuthCodePkceHandler
+    const addedSigner = MnemonicHandler.toSigner(Mnemonic.random(Mnemonic.english))
+    if (!addedSigner) {
+      throw new Error('Failed to create added login signer for test')
+    }
+
+    const completeAuthSpy = vi
+      .spyOn(handler, 'completeAuth')
+      .mockResolvedValue([addedSigner as unknown as IdentitySigner, { email: 'secondary-google-user@example.com' }])
+
+    const state = 'add-signer-state-with-metadata'
+    await (manager as any).shared.databases.authCommitments.set({
+      id: state,
+      kind: 'google-pkce',
+      metadata: {},
+      target: '/account/signers',
+      type: 'add-signer',
+      wallet: wallet!,
+    })
+
+    const result = await manager.wallets.completeRedirect({
+      state,
+      code: 'auth-code',
+      includeMetadata: true,
+    })
+
+    expect(completeAuthSpy).toHaveBeenCalledWith(expect.objectContaining({ id: state }), 'auth-code')
+    expect(result).toEqual({
+      target: '/account/signers',
+      addedLoginSigner: {
+        wallet,
+        signer: {
+          address: await addedSigner.address,
+          kind: Kinds.LoginGoogle,
+          email: 'secondary-google-user@example.com',
+        },
+      },
+    })
+  })
+
+  it('Should keep returning the redirect target string when metadata is not requested', async () => {
+    manager = newManager({
+      identity: {
+        google: {
+          enabled: true,
+          clientId: 'test-google-client-id',
+        },
+      },
+    })
+
+    const wallet = await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: true,
+    })
+    expect(wallet).toBeDefined()
+
+    const handler = (manager as any).shared.handlers.get(Kinds.LoginGoogle) as AuthCodePkceHandler
+    const addedSigner = MnemonicHandler.toSigner(Mnemonic.random(Mnemonic.english))
+    if (!addedSigner) {
+      throw new Error('Failed to create added login signer for test')
+    }
+
+    vi.spyOn(handler, 'completeAuth').mockResolvedValue([
+      addedSigner as unknown as IdentitySigner,
+      { email: 'secondary-google-user@example.com' },
+    ])
+
+    const state = 'add-signer-state-without-metadata'
+    await (manager as any).shared.databases.authCommitments.set({
+      id: state,
+      kind: 'google-pkce',
+      metadata: {},
+      target: '/account/signers',
+      type: 'add-signer',
+      wallet: wallet!,
+    })
+
+    const result = await manager.wallets.completeRedirect({
+      state,
+      code: 'auth-code',
+    })
+
+    expect(result).toBe('/account/signers')
+  })
+
   it('Should reject google-id-token signup when Google is configured for redirect auth', async () => {
     manager = newManager({
       identity: {

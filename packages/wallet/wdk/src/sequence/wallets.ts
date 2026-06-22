@@ -101,6 +101,23 @@ export type IdTokenSignupArgs = CommonSignupArgs & {
 export type CompleteRedirectArgs = CommonSignupArgs & {
   state: string
   code: string
+  includeMetadata?: false
+}
+
+export type CompleteRedirectWithMetadataArgs = Omit<CompleteRedirectArgs, 'includeMetadata'> & {
+  includeMetadata: true
+}
+
+export type CompleteRedirectMetadataResult = {
+  target: string
+  addedLoginSigner?: {
+    wallet: Address.Address
+    signer: {
+      address: Address.Address
+      kind: string
+      email?: string
+    }
+  }
 }
 
 export type AuthCodeSignupArgs = CommonSignupArgs & {
@@ -278,6 +295,7 @@ export interface WalletsInterface {
    * @param args The arguments containing the `state` and `code` from the redirect, along with original sign-up options.
    * @returns A promise that resolves to target path that should be redirected to.
    */
+  completeRedirect(args: CompleteRedirectWithMetadataArgs): Promise<CompleteRedirectMetadataResult>
   completeRedirect(args: CompleteRedirectArgs): Promise<string>
 
   /**
@@ -923,11 +941,17 @@ export class Wallets implements WalletsInterface {
     return handler.commitAuth(args.target, { type: 'add-signer', wallet: args.wallet })
   }
 
-  async completeRedirect(args: CompleteRedirectArgs): Promise<string> {
+  async completeRedirect(args: CompleteRedirectWithMetadataArgs): Promise<CompleteRedirectMetadataResult>
+  async completeRedirect(args: CompleteRedirectArgs): Promise<string>
+  async completeRedirect(
+    args: CompleteRedirectArgs | CompleteRedirectWithMetadataArgs,
+  ): Promise<string | CompleteRedirectMetadataResult> {
     const commitment = await this.shared.databases.authCommitments.get(args.state)
     if (!commitment) {
       throw new Error('invalid-state')
     }
+
+    let addedLoginSigner: CompleteRedirectMetadataResult['addedLoginSigner']
 
     switch (commitment.type) {
       case 'add-signer': {
@@ -949,13 +973,31 @@ export class Wallets implements WalletsInterface {
           throw new Error('wallet-not-ready')
         }
 
-        const [signer] = await handler.completeAuth(commitment, args.code)
+        const [signer, metadata] = await handler.completeAuth(commitment, args.code)
         const signerKind = getSignerKindForSignup(commitment.kind)
+        const signerAddress = await signer.address
 
         await this.addLoginSignerFromPrepared(walletAddress, {
           signer,
           extra: { signerKind },
         })
+
+        const addedSigner: {
+          address: Address.Address
+          kind: string
+          email?: string
+        } = {
+          address: signerAddress,
+          kind: signerKind,
+        }
+        if (metadata?.email !== undefined) {
+          addedSigner.email = metadata.email
+        }
+
+        addedLoginSigner = {
+          wallet: walletAddress,
+          signer: addedSigner,
+        }
         break
       }
 
@@ -989,6 +1031,16 @@ export class Wallets implements WalletsInterface {
 
     if (!commitment.target) {
       throw new Error('invalid-state')
+    }
+
+    if (args.includeMetadata) {
+      const result: CompleteRedirectMetadataResult = {
+        target: commitment.target,
+      }
+      if (addedLoginSigner) {
+        result.addedLoginSigner = addedLoginSigner
+      }
+      return result
     }
 
     return commitment.target
