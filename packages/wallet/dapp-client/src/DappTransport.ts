@@ -14,9 +14,26 @@ import {
 
 const isBrowserEnvironment = typeof window !== 'undefined' && typeof document !== 'undefined'
 
+const bytesToBinaryString = (bytes: Uint8Array) => {
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+  }
+  return binary
+}
+
+const binaryStringToBytes = (value: string) => {
+  const bytes = new Uint8Array(value.length)
+  for (let i = 0; i < value.length; i += 1) {
+    bytes[i] = value.charCodeAt(i)
+  }
+  return bytes
+}
+
 const base64Encode = (value: string) => {
-  if (typeof btoa !== 'undefined') {
-    return btoa(value)
+  if (typeof btoa !== 'undefined' && typeof TextEncoder !== 'undefined') {
+    return btoa(bytesToBinaryString(new TextEncoder().encode(value)))
   }
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(value, 'utf-8').toString('base64')
@@ -25,8 +42,13 @@ const base64Encode = (value: string) => {
 }
 
 const base64Decode = (value: string) => {
-  if (typeof atob !== 'undefined') {
-    return atob(value)
+  if (typeof atob !== 'undefined' && typeof TextDecoder !== 'undefined') {
+    const decoded = atob(value)
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(binaryStringToBytes(decoded))
+    } catch {
+      return decoded
+    }
   }
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(value, 'base64').toString('utf-8')
