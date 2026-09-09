@@ -71,10 +71,6 @@ export enum ChainId {
   BASE_GOERLI = 84531, // network is deprecated
   BASE_SEPOLIA = 84532,
 
-  // HOMEVERSE
-  HOMEVERSE_TESTNET = 40875,
-  HOMEVERSE = 19011,
-
   // Xai
 
   // TELOS
@@ -116,10 +112,6 @@ export enum ChainId {
   ETHERLINK = 42793,
   ETHERLINK_TESTNET = 128123,
   ETHERLINK_SHADOWNET_TESTNET = 127823,
-
-  // MOONBEAM
-  MOONBEAM = 1284,
-  MOONBASE_ALPHA = 1287,
 
   // MONAD
   MONAD = 143,
@@ -588,39 +580,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.HOMEVERSE]: {
-    chainId: ChainId.HOMEVERSE,
-    type: NetworkType.MAINNET,
-    name: 'homeverse',
-    title: 'Oasys Homeverse',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE}.webp`,
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer',
-      rootUrl: 'https://explorer.oasys.homeverse.games/'
-    },
-    nativeToken: {
-      symbol: 'OAS',
-      name: 'OAS',
-      decimals: 18
-    }
-  },
-  [ChainId.HOMEVERSE_TESTNET]: {
-    chainId: ChainId.HOMEVERSE_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'homeverse-testnet',
-    title: 'Oasys Homeverse Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer (Testnet)',
-      rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
-    },
-    nativeToken: {
-      symbol: 'tOAS',
-      name: 'Testnet OAS',
-      decimals: 18
-    }
-  },
   [ChainId.B3]: {
     chainId: ChainId.B3,
     type: NetworkType.MAINNET,
@@ -858,40 +817,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.MOONBEAM]: {
-    chainId: ChainId.MOONBEAM,
-    type: NetworkType.MAINNET,
-    name: 'moonbeam',
-    title: 'Moonbeam',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBEAM}.webp`,
-    testnet: false,
-    blockExplorer: {
-      name: 'Moonscan',
-      rootUrl: 'https://moonscan.io/'
-    },
-    nativeToken: {
-      symbol: 'GLMR',
-      name: 'GLMR',
-      decimals: 18
-    }
-  },
-  [ChainId.MOONBASE_ALPHA]: {
-    chainId: ChainId.MOONBASE_ALPHA,
-    type: NetworkType.TESTNET,
-    name: 'moonbase-alpha',
-    title: 'Moonbase Alpha',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBASE_ALPHA}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Moonscan (Moonbase Alpha)',
-      rootUrl: 'https://moonbase.moonscan.io/'
-    },
-    nativeToken: {
-      symbol: 'GLMR',
-      name: 'GLMR',
       decimals: 18
     }
   },
