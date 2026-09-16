@@ -148,7 +148,11 @@ export enum ChainId {
   ARC = 5042,
 
   // SKALE BASE TESTNET
-  SKALE_BASE_TESTNET = 324705682
+  SKALE_BASE_TESTNET = 324705682,
+
+  // ROBINHOOD
+  ROBINHOOD = 4663,
+  ROBINHOOD_TESTNET = 46630
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1118,6 +1122,34 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'USDC',
       name: 'USDC',
+      decimals: 18
+    }
+  },
+
+  [ChainId.ROBINHOOD]: {
+    chainId: ChainId.ROBINHOOD,
+    type: NetworkType.MAINNET,
+    name: 'robinhood',
+    title: 'Robinhood',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD}.webp`,
+    testnet: false,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.ROBINHOOD_TESTNET]: {
+    chainId: ChainId.ROBINHOOD_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'robinhood-testnet',
+    title: 'Robinhood Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD_TESTNET}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
       decimals: 18
     }
   }
