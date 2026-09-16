@@ -159,7 +159,10 @@ export enum ChainId {
   BERACHAIN = 80094,
 
   // TEMPO
-  TEMPO = 4217
+  TEMPO = 4217,
+
+  // ROBINHOOD
+  ROBINHOOD = 4663
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1302,6 +1305,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'USD',
       name: 'USD',
+      decimals: 18
+    }
+  },
+
+  [ChainId.ROBINHOOD]: {
+    chainId: ChainId.ROBINHOOD,
+    type: NetworkType.MAINNET,
+    name: 'robinhood',
+    title: 'Robinhood Chain',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Robinhood Explorer',
+      rootUrl: 'https://robin.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'Ether',
       decimals: 18
     }
   }
