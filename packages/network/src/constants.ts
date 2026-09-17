@@ -129,7 +129,6 @@ export enum ChainId {
   // SANDBOX
 
   // ARC
-  ARC = 5042,
   ARC_TESTNET = 5042002,
 
   // HYPEREVM
@@ -968,42 +967,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     }
   },
 
-  [ChainId.SANDBOX_TESTNET]: {
-    chainId: ChainId.SANDBOX_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'sandbox-testnet',
-    title: 'Sandbox Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SANDBOX_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Sandbox Testnet Explorer',
-      rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz/'
-    },
-    nativeToken: {
-      symbol: 'SAND',
-      name: 'SAND',
-      decimals: 18
-    }
-  },
-
-  [ChainId.ARC]: {
-    chainId: ChainId.ARC,
-    type: NetworkType.MAINNET,
-    name: 'arc',
-    title: 'Arc',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARC}.webp`,
-    testnet: false,
-    blockExplorer: {
-      name: 'Arc Explorer',
-      rootUrl: 'https://arc.etherscan.io/'
-    },
-    nativeToken: {
-      symbol: 'USDC',
-      name: 'USDC',
-      decimals: 18
-    }
-  },
-
   [ChainId.ARC_TESTNET]: {
     chainId: ChainId.ARC_TESTNET,
     type: NetworkType.TESTNET,
@@ -1133,6 +1096,10 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Robinhood',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD}.webp`,
     testnet: false,
+    blockExplorer: {
+      name: 'Robinhood Chain Explorer',
+      rootUrl: 'https://robinhoodchain.blockscout.com/'
+    },
     nativeToken: {
       symbol: 'ETH',
       name: 'ETH',
@@ -1147,6 +1114,10 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Robinhood Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD_TESTNET}.webp`,
     testnet: true,
+    blockExplorer: {
+      name: 'Robinhood Chain Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.chain.robinhood.com/'
+    },
     nativeToken: {
       symbol: 'ETH',
       name: 'ETH',
