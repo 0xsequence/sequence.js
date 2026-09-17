@@ -145,6 +145,7 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.INCENTIV, { disabled: true }),
   createNetworkConfig(ChainId.KATANA),
   createNetworkConfig(ChainId.SANDBOX_TESTNET, { disabled: true }),
+  createNetworkConfig(ChainId.ARC),
   createNetworkConfig(ChainId.ARC_TESTNET),
   createNetworkConfig(ChainId.HYPEREVM),
   createNetworkConfig(ChainId.BERACHAIN),

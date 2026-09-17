@@ -147,6 +147,7 @@ export enum ChainId {
   SANDBOX_TESTNET = 6252,
 
   // ARC
+  ARC = 5042,
   ARC_TESTNET = 5042002,
 
   // HYPEREVM
@@ -1215,6 +1216,24 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'SAND',
       name: 'SAND',
+      decimals: 18
+    }
+  },
+
+  [ChainId.ARC]: {
+    chainId: ChainId.ARC,
+    type: NetworkType.MAINNET,
+    name: 'arc',
+    title: 'Arc',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARC}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'Arc Explorer',
+      rootUrl: 'https://arc.etherscan.io/'
+    },
+    nativeToken: {
+      symbol: 'USDC',
+      name: 'USDC',
       decimals: 18
     }
   },

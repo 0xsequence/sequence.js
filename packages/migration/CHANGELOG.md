@@ -1,5 +1,15 @@
 # @0xsequence/migration
 
+## 2.3.45
+
+### Patch Changes
+
+- Arc Mainnet support
+- Updated dependencies
+  - @0xsequence/wallet@2.3.45
+  - @0xsequence/core@2.3.45
+  - @0xsequence/abi@2.3.45
+
 ## 2.3.44
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @0xsequence/network
 
+## 2.3.45
+
+### Patch Changes
+
+- 968c43e: Add Arc mainnet (chain 5042)
+- Arc Mainnet support
+- Updated dependencies
+  - @0xsequence/indexer@2.3.45
+  - @0xsequence/relayer@2.3.45
+  - @0xsequence/utils@2.3.45
+  - @0xsequence/core@2.3.45
+
 ## 2.3.44
 
 ### Patch Changes

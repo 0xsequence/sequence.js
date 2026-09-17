@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.45
+
+### Patch Changes
+
+- Arc Mainnet support
+- Updated dependencies
+  - @0xsequence/waas@2.3.45
+
 ## 2.3.44
 
 ### Patch Changes
