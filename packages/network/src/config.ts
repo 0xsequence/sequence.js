@@ -150,5 +150,6 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.HYPEREVM),
   createNetworkConfig(ChainId.BERACHAIN),
   createNetworkConfig(ChainId.SONIC),
+  createNetworkConfig(ChainId.ROBINHOOD),
   ...hardhatNetworks
 ])
