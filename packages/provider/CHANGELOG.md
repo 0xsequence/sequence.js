@@ -1,5 +1,22 @@
 # @0xsequence/provider
 
+## 2.3.45
+
+### Patch Changes
+
+- Arc Mainnet support
+- Updated dependencies [968c43e]
+- Updated dependencies
+  - @0xsequence/network@2.3.45
+  - @0xsequence/migration@2.3.45
+  - @0xsequence/account@2.3.45
+  - @0xsequence/relayer@2.3.45
+  - @0xsequence/wallet@2.3.45
+  - @0xsequence/utils@2.3.45
+  - @0xsequence/auth@2.3.45
+  - @0xsequence/core@2.3.45
+  - @0xsequence/abi@2.3.45
+
 ## 2.3.44
 
 ### Patch Changes

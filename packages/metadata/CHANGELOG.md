@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.3.45
+
+### Patch Changes
+
+- Arc Mainnet support
+
 ## 2.3.44
 
 ### Patch Changes

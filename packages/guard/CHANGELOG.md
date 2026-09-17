@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.3.45
+
+### Patch Changes
+
+- Arc Mainnet support
+- Updated dependencies
+  - @0xsequence/account@2.3.45
+  - @0xsequence/signhub@2.3.45
+  - @0xsequence/utils@2.3.45
+  - @0xsequence/core@2.3.45
+
 ## 2.3.44
 
 ### Patch Changes
