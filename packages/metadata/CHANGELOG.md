@@ -1,5 +1,11 @@
 # @0xsequence/metadata
 
+## 2.3.46
+
+### Patch Changes
+
+- Add Robinhood chain
+
 ## 2.3.45
 
 ### Patch Changes

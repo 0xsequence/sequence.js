@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.46
+
+### Patch Changes
+
+- Add Robinhood chain
+- Updated dependencies
+  - @0xsequence/waas@2.3.46
+
 ## 2.3.45
 
 ### Patch Changes

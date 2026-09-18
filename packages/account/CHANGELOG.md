@@ -1,5 +1,21 @@
 # @0xsequence/account
 
+## 2.3.46
+
+### Patch Changes
+
+- Add Robinhood chain
+- Updated dependencies [6e101b9]
+- Updated dependencies
+  - @0xsequence/network@2.3.46
+  - @0xsequence/migration@2.3.46
+  - @0xsequence/sessions@2.3.46
+  - @0xsequence/relayer@2.3.46
+  - @0xsequence/wallet@2.3.46
+  - @0xsequence/utils@2.3.46
+  - @0xsequence/core@2.3.46
+  - @0xsequence/abi@2.3.46
+
 ## 2.3.45
 
 ### Patch Changes

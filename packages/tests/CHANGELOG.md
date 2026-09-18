@@ -1,5 +1,14 @@
 # @0xsequence/tests
 
+## 2.3.46
+
+### Patch Changes
+
+- Add Robinhood chain
+- Updated dependencies
+  - @0xsequence/utils@2.3.46
+  - @0xsequence/core@2.3.46
+
 ## 2.3.45
 
 ### Patch Changes

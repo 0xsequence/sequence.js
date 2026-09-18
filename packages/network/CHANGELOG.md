@@ -1,5 +1,17 @@
 # @0xsequence/network
 
+## 2.3.46
+
+### Patch Changes
+
+- 6e101b9: Add Robinhood Chain (chain 4663)
+- Add Robinhood chain
+- Updated dependencies
+  - @0xsequence/indexer@2.3.46
+  - @0xsequence/relayer@2.3.46
+  - @0xsequence/utils@2.3.46
+  - @0xsequence/core@2.3.46
+
 ## 2.3.45
 
 ### Patch Changes
