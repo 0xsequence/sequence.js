@@ -143,8 +143,21 @@ export enum ChainId {
   // TEMPO
   TEMPO = 4217,
 
+  // ARC
+  ARC = 5042,
+
+  // SKALE BASE TESTNET
+  SKALE_BASE_TESTNET = 324705682,
+
   // ROBINHOOD
-  ROBINHOOD = 4663
+  ROBINHOOD = 4663,
+  ROBINHOOD_TESTNET = 46630,
+
+  // X LAYER
+  XLAYER = 196,
+
+  // KATANA BOKUTO TESTNET
+  KATANA_BOKUTO = 737373
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -1050,20 +1063,34 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     }
   },
 
-  [ChainId.ROBINHOOD]: {
-    chainId: ChainId.ROBINHOOD,
-    type: NetworkType.MAINNET,
-    name: 'robinhood',
-    title: 'Robinhood Chain',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD}.webp`,
-    testnet: false,
+  [ChainId.SKALE_BASE_TESTNET]: {
+    chainId: ChainId.SKALE_BASE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-base-testnet',
+    title: 'Skale Base Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_BASE_TESTNET}.webp`,
+    testnet: true,
     blockExplorer: {
-      name: 'Robinhood Explorer',
-      rootUrl: 'https://robin.etherscan.io/'
+      name: 'Skale Base Testnet',
+      rootUrl: 'https://base-sepolia-testnet-explorer.skalenodes.com/'
     },
     nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
+      symbol: 'sFUEL',
+      name: 'sFUEL',
+      decimals: 18
+    }
+  },
+
+  [ChainId.ARC]: {
+    chainId: ChainId.ARC,
+    type: NetworkType.MAINNET,
+    name: 'arc',
+    title: 'ARC',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARC}.webp`,
+    testnet: false,
+    nativeToken: {
+      symbol: 'USDC',
+      name: 'USDC',
       decimals: 18
     }
   },
@@ -1096,6 +1123,42 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     blockExplorer: {
       name: 'Robinhood Chain Testnet Explorer',
       rootUrl: 'https://explorer.testnet.chain.robinhood.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.XLAYER]: {
+    chainId: ChainId.XLAYER,
+    type: NetworkType.MAINNET,
+    name: 'xlayer',
+    title: 'X Layer',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XLAYER}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'OKLink',
+      rootUrl: 'https://www.oklink.com/xlayer/'
+    },
+    nativeToken: {
+      symbol: 'OKB',
+      name: 'OKB',
+      decimals: 18
+    }
+  },
+
+  [ChainId.KATANA_BOKUTO]: {
+    chainId: ChainId.KATANA_BOKUTO,
+    type: NetworkType.TESTNET,
+    name: 'katana-bokuto',
+    title: 'Katana Bokuto Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.KATANA_BOKUTO}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Bokutoscan',
+      rootUrl: 'https://bokuto.katanascan.com/'
     },
     nativeToken: {
       symbol: 'ETH',
