@@ -86,7 +86,7 @@ export enum ChainId {
 
   // B3 Sepolia
   B3 = 8333,
-  B3_SEPOLIA = 1993,
+  B3_SEPOLIA = 1993, // network is deprecated
 
   // APE Chain
   APECHAIN = 33139,
@@ -101,7 +101,7 @@ export enum ChainId {
 
   // SKALE Nebula
   SKALE_NEBULA = 1482601649,
-  SKALE_NEBULA_TESTNET = 37084624,
+  SKALE_NEBULA_TESTNET = 37084624, // network is deprecated
 
   // Soneium Minato
   SONEIUM_MINATO = 1946,
@@ -705,6 +705,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'B3 Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
     testnet: true,
+    deprecated: true,
     blockExplorer: {
       name: 'B3 Sepolia Explorer',
       rootUrl: 'https://sepolia.explorer.b3.fun/'
@@ -858,6 +859,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'SKALE Nebula Gaming Hub Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
     testnet: true,
+    deprecated: true,
     blockExplorer: {
       name: 'SKALE Nebula Gaming Hub Testnet Explorer',
       rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/'
