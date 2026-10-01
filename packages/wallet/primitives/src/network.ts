@@ -70,17 +70,12 @@ export const ChainId = {
   BASE: 8453,
   BASE_SEPOLIA: 84532,
 
-  // HOMEVERSE
-  HOMEVERSE_TESTNET: 40875,
-  HOMEVERSE: 19011,
-
   // TELOS
   TELOS: 40,
   TELOS_TESTNET: 41,
 
   // B3 Sepolia
   B3: 8333,
-  B3_SEPOLIA: 1993,
 
   // APE Chain
   APECHAIN: 33139,
@@ -88,7 +83,6 @@ export const ChainId = {
 
   // SKALE Nebula
   SKALE_NEBULA: 1482601649,
-  SKALE_NEBULA_TESTNET: 37084624,
 
   // Soneium Minato
   SONEIUM_MINATO: 1946,
@@ -101,10 +95,6 @@ export const ChainId = {
   // ETHERLINK
   ETHERLINK: 42793,
   ETHERLINK_SHADOWNET_TESTNET: 127823,
-
-  // MOONBEAM
-  MOONBEAM: 1284,
-  MOONBASE_ALPHA: 1287,
 
   // MONAD
   MONAD: 143,
@@ -454,46 +444,6 @@ export const ALL: Network[] = [
     },
   },
   {
-    chainId: ChainId.HOMEVERSE,
-    type: NetworkType.MAINNET,
-    name: 'homeverse',
-    title: 'Oasys Homeverse',
-    rpcUrl: getRpcUrl('homeverse'),
-    logoUrl: getLogoUrl(ChainId.HOMEVERSE),
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer',
-      url: 'https://explorer.oasys.homeverse.games/',
-    },
-    nativeCurrency: {
-      symbol: 'OAS',
-      name: 'OAS',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.HOMEVERSE_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'homeverse-testnet',
-    title: 'Oasys Homeverse Testnet',
-    rpcUrl: getRpcUrl('homeverse-testnet'),
-    logoUrl: getLogoUrl(ChainId.HOMEVERSE_TESTNET),
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer (Testnet)',
-      url: 'https://explorer.testnet.oasys.homeverse.games/',
-    },
-    nativeCurrency: {
-      symbol: 'tOAS',
-      name: 'Testnet OAS',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: SEQUENCE_MULTICALL3_ADDRESS,
-    },
-  },
-  {
     chainId: ChainId.B3,
     type: NetworkType.MAINNET,
     name: 'b3',
@@ -503,26 +453,6 @@ export const ALL: Network[] = [
     blockExplorer: {
       name: 'B3 Explorer',
       url: 'https://explorer.b3.fun/',
-    },
-    nativeCurrency: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.B3_SEPOLIA,
-    type: NetworkType.TESTNET,
-    name: 'b3-sepolia',
-    title: 'B3 Sepolia',
-    rpcUrl: getRpcUrl('b3-sepolia'),
-    logoUrl: getLogoUrl(ChainId.B3_SEPOLIA),
-    blockExplorer: {
-      name: 'B3 Sepolia Explorer',
-      url: 'https://sepolia.explorer.b3.fun/',
     },
     nativeCurrency: {
       symbol: 'ETH',
@@ -634,26 +564,6 @@ export const ALL: Network[] = [
     },
   },
   {
-    chainId: ChainId.SKALE_NEBULA_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'skale-nebula-testnet',
-    title: 'SKALE Nebula Gaming Hub Testnet',
-    rpcUrl: getRpcUrl('skale-nebula-testnet'),
-    logoUrl: getLogoUrl(ChainId.SKALE_NEBULA_TESTNET),
-    blockExplorer: {
-      name: 'SKALE Nebula Gaming Hub Testnet Explorer',
-      url: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/',
-    },
-    nativeCurrency: {
-      symbol: 'sFUEL',
-      name: 'SKALE Fuel',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
     chainId: ChainId.SONEIUM,
     type: NetworkType.MAINNET,
     name: 'soneium',
@@ -727,46 +637,6 @@ export const ALL: Network[] = [
     nativeCurrency: {
       symbol: 'IMX',
       name: 'IMX',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.MOONBEAM,
-    type: NetworkType.MAINNET,
-    name: 'moonbeam',
-    title: 'Moonbeam',
-    rpcUrl: getRpcUrl('moonbeam'),
-    logoUrl: getLogoUrl(ChainId.MOONBEAM),
-    blockExplorer: {
-      name: 'Moonscan',
-      url: 'https://moonscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'GLMR',
-      name: 'GLMR',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.MOONBASE_ALPHA,
-    type: NetworkType.TESTNET,
-    name: 'moonbase-alpha',
-    title: 'Moonbase Alpha',
-    rpcUrl: getRpcUrl('moonbase-alpha'),
-    logoUrl: getLogoUrl(ChainId.MOONBASE_ALPHA),
-    blockExplorer: {
-      name: 'Moonscan (Moonbase Alpha)',
-      url: 'https://moonbase.moonscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'GLMR',
-      name: 'GLMR',
       decimals: 18,
     },
     contracts: {
