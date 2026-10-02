@@ -1,5 +1,11 @@
 # @0xsequence/userdata
 
+## 3.0.13
+
+### Patch Changes
+
+- Remove dead networks
+
 ## 3.0.12
 
 ### Patch Changes

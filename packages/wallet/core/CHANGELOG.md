@@ -1,5 +1,15 @@
 # @0xsequence/wallet-core
 
+## 3.0.13
+
+### Patch Changes
+
+- Remove dead networks
+- Updated dependencies
+  - @0xsequence/guard@3.0.13
+  - @0xsequence/relayer@3.1.2
+  - @0xsequence/wallet-primitives@3.0.13
+
 ## 3.0.12
 
 ### Patch Changes

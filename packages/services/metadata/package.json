@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/metadata",
-  "version": "3.0.12",
+  "version": "3.0.13",
   "publishConfig": {
     "access": "public"
   },

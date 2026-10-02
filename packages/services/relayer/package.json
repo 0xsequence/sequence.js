@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/relayer",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "type": "module",
   "publishConfig": {
     "access": "public"

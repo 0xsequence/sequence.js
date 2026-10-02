@@ -1,5 +1,13 @@
 # @0xsequence/relayer
 
+## 3.1.2
+
+### Patch Changes
+
+- Remove dead networks
+- Updated dependencies
+  - @0xsequence/wallet-primitives@3.0.13
+
 ## 3.1.1
 
 ### Patch Changes
