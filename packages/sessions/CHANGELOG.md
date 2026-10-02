@@ -1,5 +1,16 @@
 # @0xsequence/sessions
 
+## 2.3.47
+
+### Patch Changes
+
+- Remove dead networks
+- Updated dependencies
+  - @0xsequence/migration@2.3.47
+  - @0xsequence/replacer@2.3.47
+  - @0xsequence/utils@2.3.47
+  - @0xsequence/core@2.3.47
+
 ## 2.3.46
 
 ### Patch Changes

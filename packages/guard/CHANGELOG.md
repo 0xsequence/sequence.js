@@ -1,5 +1,16 @@
 # @0xsequence/guard
 
+## 2.3.47
+
+### Patch Changes
+
+- Remove dead networks
+- Updated dependencies
+  - @0xsequence/account@2.3.47
+  - @0xsequence/signhub@2.3.47
+  - @0xsequence/utils@2.3.47
+  - @0xsequence/core@2.3.47
+
 ## 2.3.46
 
 ### Patch Changes

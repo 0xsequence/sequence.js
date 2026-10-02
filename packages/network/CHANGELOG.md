@@ -1,5 +1,17 @@
 # @0xsequence/network
 
+## 2.3.47
+
+### Patch Changes
+
+- d34710c: Deprecate and disable networks no longer served by Sequence infra: B3 Sepolia (1993), SKALE Nebula Testnet (37084624), Moonbeam (1284), Moonbase Alpha (1287), Oasys Homeverse (19011), Oasys Homeverse Testnet (40875), Borne Testnet (94984) and Monad Testnet (10143)
+- Remove dead networks
+- Updated dependencies
+  - @0xsequence/indexer@2.3.47
+  - @0xsequence/relayer@2.3.47
+  - @0xsequence/utils@2.3.47
+  - @0xsequence/core@2.3.47
+
 ## 2.3.46
 
 ### Patch Changes

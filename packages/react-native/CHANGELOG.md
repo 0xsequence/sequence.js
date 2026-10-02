@@ -1,5 +1,13 @@
 # @0xsequence/react-native
 
+## 2.3.47
+
+### Patch Changes
+
+- Remove dead networks
+- Updated dependencies
+  - @0xsequence/waas@2.3.47
+
 ## 2.3.46
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @0xsequence/abi
 
+## 2.3.47
+
+### Patch Changes
+
+- Remove dead networks
+
 ## 2.3.46
 
 ### Patch Changes

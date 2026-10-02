@@ -1,5 +1,29 @@
 # 0xsequence
 
+## 2.3.47
+
+### Patch Changes
+
+- Remove dead networks
+- Updated dependencies [d34710c]
+- Updated dependencies
+  - @0xsequence/network@2.3.47
+  - @0xsequence/migration@2.3.47
+  - @0xsequence/metadata@2.3.47
+  - @0xsequence/provider@2.3.47
+  - @0xsequence/sessions@2.3.47
+  - @0xsequence/account@2.3.47
+  - @0xsequence/indexer@2.3.47
+  - @0xsequence/relayer@2.3.47
+  - @0xsequence/signhub@2.3.47
+  - @0xsequence/wallet@2.3.47
+  - @0xsequence/guard@2.3.47
+  - @0xsequence/utils@2.3.47
+  - @0xsequence/auth@2.3.47
+  - @0xsequence/core@2.3.47
+  - @0xsequence/abi@2.3.47
+  - @0xsequence/api@2.3.47
+
 ## 2.3.46
 
 ### Patch Changes
