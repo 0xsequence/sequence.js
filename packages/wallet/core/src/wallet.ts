@@ -57,6 +57,37 @@ function stubFeeOptionsTopology(topology: Config.Topology): SequenceSignature.Ra
   return topology
 }
 
+// Pending config updates are chained after the stubbed signature. On-chain, each one is
+// verified against a config-update payload built from the imageHash recovered from the
+// previous link, which the stub makes meaningless. Real signatures in the suffix would then
+// be checked against the wrong digest: ECDSA just recovers a wrong address, but sapient
+// signers (e.g. passkeys) and ERC-1271 signers revert and abort the whole simulation.
+// So every signed leaf in the suffix is stubbed too, keeping its weight.
+function stubFeeOptionsSignedTopology(topology: SequenceSignature.RawTopology): SequenceSignature.RawTopology {
+  if (SequenceSignature.isRawNode(topology)) {
+    return [stubFeeOptionsSignedTopology(topology[0]), stubFeeOptionsSignedTopology(topology[1])]
+  }
+
+  if (SequenceSignature.isRawSignerLeaf(topology)) {
+    return {
+      type: 'unrecovered-signer',
+      weight: topology.weight,
+      signature: FeeOptionsStubSignature,
+    }
+  }
+
+  if (SequenceSignature.isRawNestedLeaf(topology)) {
+    return {
+      type: 'nested',
+      weight: topology.weight,
+      threshold: topology.threshold,
+      tree: stubFeeOptionsSignedTopology(topology.tree),
+    }
+  }
+
+  return topology
+}
+
 function buildFeeOptionsStubSignature(status: WalletStatusWithOnchain): Hex.Hex {
   return Bytes.toHex(
     SequenceSignature.encodeSignature({
@@ -65,7 +96,13 @@ function buildFeeOptionsStubSignature(status: WalletStatusWithOnchain): Hex.Hex 
         ...status.configuration,
         topology: stubFeeOptionsTopology(status.configuration.topology),
       },
-      suffix: status.pendingUpdates.map(({ signature }) => signature),
+      suffix: status.pendingUpdates.map(({ signature }) => ({
+        ...signature,
+        configuration: {
+          ...signature.configuration,
+          topology: stubFeeOptionsSignedTopology(signature.configuration.topology),
+        },
+      })),
     }),
   )
 }
