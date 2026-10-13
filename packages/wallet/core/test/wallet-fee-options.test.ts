@@ -181,4 +181,42 @@ describe('Wallet.buildFeeOptionsTransaction', () => {
     expect(signature).toBe(expectedSignature)
     expect(signature).not.toContain(PASSKEY_SIGNATURE_DATA.slice(2))
   })
+
+  it('stubs recovered sapient signer leaves returned by state providers for pending updates', async () => {
+    const stateProvider = new State.Local.Provider()
+    const wallet = await Wallet.fromConfiguration(configuration, { stateProvider, context: Context.Dev2 })
+    const imageHash = Hex.from(Config.hashConfiguration(configuration))
+
+    const updatedConfiguration: Config.Config = { ...configuration, checkpoint: 1n }
+    const updatedImageHash = Hex.from(Config.hashConfiguration(updatedConfiguration))
+    await stateProvider.saveConfiguration(updatedConfiguration)
+
+    // State providers return recovered leaves (e.g. Sequence provider recovers the config)
+    const pendingSignature = {
+      noChainId: true,
+      configuration: {
+        threshold: 1n,
+        checkpoint: 0n,
+        topology: [
+          {
+            type: 'sapient-signer',
+            address: PASSKEYS_MODULE,
+            imageHash: Hex.padLeft('0x01', 32),
+            weight: 1n,
+            signed: true,
+            signature: { type: 'sapient_compact', address: PASSKEYS_MODULE, data: PASSKEY_SIGNATURE_DATA },
+          },
+          { type: 'signer', address: SIGNER, weight: 1n },
+        ],
+      },
+    } as Signature.RawSignature
+    vi.spyOn(stateProvider, 'getConfigurationUpdates').mockResolvedValue([
+      { imageHash: updatedImageHash, signature: pendingSignature },
+    ])
+
+    const transaction = await wallet.buildFeeOptionsTransaction(providerFor({ deployed: true, imageHash }), payload)
+    const [, signature] = AbiFunction.decodeData(Constants.EXECUTE, transaction.data)
+
+    expect(signature).not.toContain(PASSKEY_SIGNATURE_DATA.slice(2))
+  })
 })
