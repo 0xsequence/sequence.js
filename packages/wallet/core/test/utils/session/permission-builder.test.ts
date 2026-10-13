@@ -509,6 +509,16 @@ describe('PermissionBuilder', () => {
     expect(permission.rules[1].offset).toEqual(4n + 32n) // Second parameter offset
   })
 
+
+  it('should parse tuple parameter signatures', () => {
+    const permission = PermissionBuilder.for(TARGET)
+      .forFunction('function test((address,uint256) pair, bool flag)')
+      .withBoolParam('flag', true)
+      .build()
+
+    expect(permission.rules[1].offset).toEqual(4n + 32n)
+  })
+
   it('should test AbiFunction input', () => {
     const abiFunc = AbiFunction.from('function transfer(address to, uint256 value)')
     const permission = PermissionBuilder.for(TARGET).forFunction(abiFunc).build()
