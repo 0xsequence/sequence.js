@@ -8,6 +8,7 @@
     "build": "pnpm build:packages",
     "dev": "turbo dev",
     "test": "turbo test --concurrency=1",
+    "test:local": "./scripts/with-anvil.sh pnpm test",
     "lint": "turbo lint --continue",
     "format": "prettier --list-different --write \"**/*.{ts,tsx,md}\"",
     "typecheck": "turbo typecheck",
