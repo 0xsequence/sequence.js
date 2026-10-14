@@ -24,7 +24,10 @@
     "dev": "preconstruct dev",
     "postinstall": "preconstruct dev",
     "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc pnpm test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test:release": "node --test scripts/*.test.mjs",
+    "ci:stage-release": "node scripts/stage-npm-packages.mjs",
+    "ci:release-gates": "pnpm build && pnpm lint && pnpm test:release"
   },
   "husky": {
     "hooks": {
@@ -78,6 +81,7 @@
     "prettier": "^3.0.0",
     "puppeteer": "^23.10.3",
     "rimraf": "^6.0.1",
+    "semver": "^7.7.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.1",
     "typescript": "~5.6.3",

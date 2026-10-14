@@ -2,7 +2,11 @@
   "name": "@0xsequence/tests",
   "version": "2.3.47",
   "description": "test tools for sequence.js",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/tests",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/tests"
+  },
   "source": "src/index.ts",
   "main": "dist/0xsequence-tests.cjs.js",
   "module": "dist/0xsequence-tests.esm.js",

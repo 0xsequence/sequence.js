@@ -1,17 +1,15 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@1.4.0/schema.json",
   "changelog": [
-    "@changesets/cli/changelog",
-    { "repo": "0xsequence/sequence.js" }
+    "@changesets/changelog-github",
+    {
+      "repo": "0xsequence/sequence.js"
+    }
   ],
   "commit": false,
-  "linked": [
-    [
-      "@0xsequence/*"
-    ]
-  ],
+  "linked": [["@0xsequence/*"]],
   "access": "public",
-  "baseBranch": "master",
+  "baseBranch": "v2",
   "ignore": [],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
     "updateInternalDependents": "always"
