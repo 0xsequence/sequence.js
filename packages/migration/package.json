@@ -2,7 +2,11 @@
   "name": "@0xsequence/migration",
   "version": "2.3.47",
   "description": "tools for migrating sequence wallets to new versions",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/migration",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/migration"
+  },
   "source": "src/index.ts",
   "main": "dist/0xsequence-migration.cjs.js",
   "module": "dist/0xsequence-migration.esm.js",

@@ -2,7 +2,11 @@
   "name": "@0xsequence/auth",
   "version": "2.3.47",
   "description": "auth sub-package for Sequence",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/auth",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/auth"
+  },
   "source": "src/index.ts",
   "main": "dist/0xsequence-auth.cjs.js",
   "module": "dist/0xsequence-auth.esm.js",

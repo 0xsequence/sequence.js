@@ -2,7 +2,11 @@
   "name": "@0xsequence/signhub",
   "version": "2.3.47",
   "description": "orchestrates a series of signers, provides visibility into the signing process, and to the signers themselves",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/signhub",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/signhub"
+  },
   "source": "src/index.ts",
   "main": "dist/0xsequence-signhub.cjs.js",
   "module": "dist/0xsequence-signhub.esm.js",

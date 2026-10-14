@@ -2,7 +2,11 @@
   "name": "@0xsequence/indexer",
   "version": "2.3.47",
   "description": "indexer sub-package for Sequence",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/indexer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/indexer"
+  },
   "source": "src/index.ts",
   "main": "dist/0xsequence-indexer.cjs.js",
   "module": "dist/0xsequence-indexer.esm.js",
