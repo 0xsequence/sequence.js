@@ -33,10 +33,11 @@ The `Changeset check` CI job fails a PR that touches a package without one.
    (`.github/workflows/npm-release-trigger.yml`), which opens or updates a **`changesets: Release / Deploy`** PR.
    That PR applies the pending changesets, bumps package versions, and updates each `CHANGELOG.md`.
 2. Review and merge that Release PR.
-3. On merge, the same workflow uses npm `11.15.0` and runs the release gates (build, typecheck, lint, release
-   script tests, and the full test suite against an anvil fork). It then packs every publishable package whose
-   version is not yet on npm with pnpm, which rewrites `workspace:` ranges to real versions, and fails if any
-   `workspace:` range remains.
+3. On merge, the same workflow uses npm `11.15.0` and runs the release gates (`ci:release-gates`: build,
+   typecheck, lint, release script tests, and the full test suite against an anvil fork) before the release bot
+   token is minted, so build and test code never sees it. It then packs every publishable package whose version
+   is not yet on npm with pnpm, which rewrites `workspace:` ranges to real versions, and fails if any `workspace:`
+   range remains.
 4. The workflow sends the tarballs to `npm stage publish` under the `latest` dist-tag via **OIDC trusted
    publishing** (no `NPM_TOKEN`). After each package stages, Changesets pushes its package tag (e.g.
    `@0xsequence/wallet-core@3.0.14`) and creates a GitHub Release from its `CHANGELOG.md` entry.
@@ -89,6 +90,10 @@ same on both branches, so one trusted publisher configuration per package covers
   trusted publisher (`--allow-stage-publish`, no `--allow-publish`) for every package on `master` and `v2`, so CI
   can stage but never publish directly. Afterwards, set each package's publishing access to "Require two-factor
   authentication and disallow tokens" and revoke old automation tokens.
-- **GitHub:** install the changesets release bot GitHub App on this repository and add its
-  `CHANGESET_RELEASE_BOT_APP_ID` and `CHANGESET_RELEASE_BOT_APP_PRIVATE_KEY` as repository (or organization)
-  secrets. Commits from the app's token trigger CI on the release PR, which the default `GITHUB_TOKEN` would not.
+- **GitHub:** the release workflow authenticates as the **0xsequence Changesets Release Bot** GitHub App, owned
+  by the `0xsequence` org (Polygon's `0xpolygon-changesets-release-bot` is private to `0xPolygon` and cannot be
+  installed here). The app needs repository permissions **Contents: read & write** and **Pull requests: read &
+  write**, no webhook, and is installed on this repository only. Its App ID and a private key are stored as the
+  repository secrets `CHANGESET_RELEASE_BOT_APP_ID` and `CHANGESET_RELEASE_BOT_APP_PRIVATE_KEY`. The app (not the
+  default `GITHUB_TOKEN`) is required so the release PR triggers CI and its commits are signed. To rotate the key,
+  generate a new one in the app settings, update the secret, then delete the old key.

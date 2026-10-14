@@ -20,7 +20,8 @@
     "deps:lint": "syncpack lint --dependency-types prod,dev",
     "deps:fix": "syncpack fix",
     "test:release": "node --test scripts/*.test.mjs",
-    "ci:stage-release": "pnpm build && pnpm typecheck && pnpm lint && pnpm test:release && pnpm test:local && node scripts/stage-npm-packages.mjs"
+    "ci:stage-release": "node scripts/stage-npm-packages.mjs",
+    "ci:release-gates": "pnpm build && pnpm typecheck && pnpm lint && pnpm test:release && pnpm test:local"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",
