@@ -85,7 +85,7 @@ same on both branches, so one trusted publisher configuration per package covers
 
 ## One-time setup (admins)
 
-- **npm trusted publishers:** run `./scripts/configure-npm-trust.sh` (needs npm ≥ 11.15, an npm login with
+- **npm trusted publishers:** run `./scripts/configure-npm-trust.sh` (runs npm 11.15.0 via `npx`; needs an npm login with
   publish rights, and 2FA). It registers `0xsequence/sequence.js` + `npm-release-trigger.yml` as a **stage-only**
   trusted publisher (`--allow-stage-publish`, no `--allow-publish`) for every package on `master` and `v2`, so CI
   can stage but never publish directly. Afterwards, set each package's publishing access to "Require two-factor

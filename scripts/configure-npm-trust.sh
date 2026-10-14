@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # One-time admin setup: registers .github/workflows/npm-release-trigger.yml as a stage-only
 # npm trusted publisher for every package published from master (v3) or v2 (v2-legacy).
-# Requires npm >= 11.15, an npm login with publish rights and 2FA. Enable "skip 2FA for the
-# next 5 minutes" on the first prompt so the loop does not ask again. See PUBLISHING.md.
+# Runs npm 11.15.0 via npx (the local npm may predate --allow-stage-publish). Requires an npm
+# login with publish rights and 2FA. Enable "skip 2FA for the next 5 minutes" on the first
+# prompt so the loop does not ask again. See PUBLISHING.md.
 set -uo pipefail
 
 REPO="0xsequence/sequence.js"
 WORKFLOW="npm-release-trigger.yml"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Same npm the release workflow uses; --allow-stage-publish needs npm >= 11.15.
+NPM=(npx --yes npm@11.15.0)
 
 packages_on() {
   local ref="$1"
@@ -26,7 +29,7 @@ echo "Configuring stage-only trusted publishing ($REPO, $WORKFLOW) for ${#PACKAG
 failed=()
 for package in "${PACKAGES[@]}"; do
   echo "--- $package"
-  if ! npm trust github "$package" --repo "$REPO" --file "$WORKFLOW" --allow-stage-publish --yes; then
+  if ! "${NPM[@]}" trust github "$package" --repo "$REPO" --file "$WORKFLOW" --allow-stage-publish --yes; then
     failed+=("$package")
   fi
   sleep 2 # npm rate-limits trust changes
@@ -36,4 +39,4 @@ if [ ${#failed[@]} -gt 0 ]; then
   echo "Failed for: ${failed[*]}" >&2
   exit 1
 fi
-echo "Done. Verify with: npm trust list <package>"
+echo "Done. Verify with: npx npm@11.15.0 trust list <package>"
