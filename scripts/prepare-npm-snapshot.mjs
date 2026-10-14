@@ -4,6 +4,8 @@ import { readFile, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
+import semver from 'semver'
+
 // Versions every publishable package as `0.0.0-<tag>-<timestamp>` on the CI runner (never
 // committed) so stage-npm-packages.mjs can stage a throwaway snapshot. See PUBLISHING.md.
 
@@ -18,7 +20,8 @@ export function validateSnapshotTag(tag) {
     /^[a-z][a-z0-9._-]*$/.test(tag),
     'The snapshot tag must start with a lowercase letter and contain only lowercase letters, numbers, dots, underscores, or hyphens.'
   )
-  assert(!/^v?\d+(?:\.\d+){0,2}(?:[-+].*)?$/.test(tag), 'The snapshot tag must not look like a release version.')
+  // npm rejects any dist-tag it can parse as a semver range (e.g. '1.2.3', 'v1.x', 'x').
+  assert.equal(semver.validRange(tag), null, 'The snapshot tag must not be a version or semver range.')
 }
 
 // Every publishable package is bumped so snapshot packages only ever depend on each other,

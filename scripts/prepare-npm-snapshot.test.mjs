@@ -10,7 +10,20 @@ test('accepts safe snapshot tags', () => {
 })
 
 test('rejects release dist-tags, version-like, and malformed snapshot tags', () => {
-  for (const tag of ['', 'latest', 'v2-legacy', '3.0.14', 'v3.0.14', '3.0.14-beta.1', 'beta tag', 'Beta']) {
+  for (const tag of [
+    '',
+    'latest',
+    'v2-legacy',
+    '3.0.14',
+    'v3.0.14',
+    '3.0.14-beta.1',
+    'beta tag',
+    'Beta',
+    'x',
+    'x.x',
+    'v1.x',
+    'v3'
+  ]) {
     assert.throws(() => validateSnapshotTag(tag))
   }
 })
