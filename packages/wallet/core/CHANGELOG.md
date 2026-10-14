@@ -1,5 +1,11 @@
 # @0xsequence/wallet-core
 
+## 3.0.14
+
+### Patch Changes
+
+- [#1031](https://github.com/0xsequence/sequence.js/pull/1031) [`9817c9a`](https://github.com/0xsequence/sequence.js/commit/9817c9aca0721fc181fa3a55fdbda5f39b454273) Thanks [@tolgahan-arikan](https://github.com/tolgahan-arikan)! - Fix fee options simulation failing for wallets with pending config updates signed by sapient or ERC-1271 signers (e.g. passkeys). `buildFeeOptionsTransaction` now stubs the signatures of pending updates in the chained signature suffix, not only the current configuration, so the relayer no longer rejects `FeeOptions` with `InvalidPasskeySignature`.
+
 ## 3.0.13
 
 ### Patch Changes
