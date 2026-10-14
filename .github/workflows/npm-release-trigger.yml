@@ -18,24 +18,25 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Default-deny: each job declares its own permissions.
+permissions: {}
+
 jobs:
   release:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
       pull-requests: write
       id-token: write # required for npm OIDC trusted publishing
     steps:
-      - uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.CHANGESET_RELEASE_BOT_APP_ID }}
-          private-key: ${{ secrets.CHANGESET_RELEASE_BOT_APP_PRIVATE_KEY }}
+      # Nothing pushes over git (changesets github-api mode writes through the API with the
+      # app token below), so do not persist the read-only job token into .git/config.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -46,7 +47,31 @@ jobs:
         run: npm install --global npm@11.15.0
       # The release PR changes package manifests without regenerating the lockfile. Link
       # co-released workspace packages locally so the not-yet-public versions still install.
-      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true
+      # --ignore-scripts: releasing needs no install-time script, and this job holds id-token: write.
+      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true --ignore-scripts
+      # postinstall (preconstruct dev) is skipped by --ignore-scripts; changeset:version needs its links.
+      - run: pnpm dev
+      - name: Detect release PR merge
+        id: pending
+        run: |
+          if find .changeset -name '*.md' ! -name README.md | grep -q .; then
+            echo "changesets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changesets=false" >> "$GITHUB_OUTPUT"
+          fi
+      # Only a merged release PR (no pending changesets) stages packages. Run the gates before
+      # the release bot token exists so build and test code never sees it.
+      - name: Release gates
+        if: steps.pending.outputs.changesets == 'false'
+        run: pnpm run ci:release-gates
+      # Mint the app token last, scoped to what changesets/action uses, so only that step has it.
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.CHANGESET_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.CHANGESET_RELEASE_BOT_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Create release PR or stage versioned packages
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
@@ -67,8 +92,10 @@ jobs:
   snapshot:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: read
+      pull-requests: read # changelog-github PR lookups
       id-token: write # required for npm OIDC trusted publishing
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -82,12 +109,16 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Install npm with staged-publishing support
         run: npm install --global npm@11.15.0
-      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true
+      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true --ignore-scripts
+      # postinstall (preconstruct dev) is skipped by --ignore-scripts; changeset:version needs its links.
+      - run: pnpm dev
       - name: Version snapshot
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
         run: node scripts/prepare-npm-snapshot.mjs
+      - name: Release gates
+        run: pnpm run ci:release-gates
       - name: Stage snapshot packages
         env:
           NPM_STAGE_CREATE_GIT_TAGS: 'false'

@@ -26,7 +26,8 @@
     "coverage": "rimraf ./coverage && rimraf ./.nyc_output && nyc pnpm test",
     "prepare": "husky install",
     "test:release": "node --test scripts/*.test.mjs",
-    "ci:stage-release": "pnpm typecheck && pnpm lint && pnpm build && pnpm test:release && node scripts/stage-npm-packages.mjs"
+    "ci:stage-release": "node scripts/stage-npm-packages.mjs",
+    "ci:release-gates": "pnpm build && pnpm lint && pnpm test:release"
   },
   "husky": {
     "hooks": {

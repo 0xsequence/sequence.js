@@ -11,7 +11,8 @@ approval steps, failure recovery, and one-time setup. The differences on this br
 - **Trigger:** merging changesets into `v2` opens a `changesets: Release / Deploy (v2)` PR; merging that PR stages
   the packages. Versioning runs `pnpm changeset:version`, which also updates the embedded version constant and the
   network names doc.
-- **Release gates:** typecheck, lint, build, and the release script tests. The per-package test matrix in
+- **Release gates:** build (which includes typecheck), lint, and the release script tests, run before the release bot
+  token is minted. The per-package test matrix in
   `tests.yml` already runs on every push to `v2`, including the release PR merge.
 - **Linked versions:** all `@0xsequence/*` packages are `linked`, so a release stages every package at one version.
 
