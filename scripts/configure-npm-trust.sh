@@ -12,18 +12,30 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Same npm the release workflow uses; --allow-stage-publish needs npm >= 11.15.
 NPM=(npx --yes npm@11.15.0)
 
+die() {
+  echo "configure-npm-trust: $*" >&2
+  exit 1
+}
+
 packages_on() {
   local ref="$1"
   git -C "$ROOT" ls-tree -r --name-only "$ref" -- packages |
     grep -E '^packages/([^/]+/)?[^/]+/package\.json$' |
     while read -r manifest; do
-      git -C "$ROOT" show "$ref:$manifest" | jq -r 'select(.private != true and .name != null) | .name'
+      git -C "$ROOT" show "$ref:$manifest" | jq -r 'select(.private != true and .name != null) | .name' || return 1
     done
 }
 
-git -C "$ROOT" fetch --quiet origin master v2
+# Stale or missing refs would configure the wrong package set, so every step here is fatal.
+git -C "$ROOT" fetch --quiet origin master v2 || die "could not fetch origin/master and origin/v2"
+names=""
+for ref in origin/master origin/v2; do
+  ref_names="$(packages_on "$ref")" || die "could not list packages on $ref"
+  [ -n "$ref_names" ] || die "no publishable packages found on $ref"
+  names+="$ref_names"$'\n'
+done
 PACKAGES=()
-while read -r package; do PACKAGES+=("$package"); done < <({ packages_on origin/master; packages_on origin/v2; } | sort -u)
+while read -r package; do [ -n "$package" ] && PACKAGES+=("$package"); done < <(printf '%s' "$names" | sort -u)
 
 echo "Configuring stage-only trusted publishing ($REPO, $WORKFLOW) for ${#PACKAGES[@]} packages."
 failed=()

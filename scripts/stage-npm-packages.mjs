@@ -160,26 +160,22 @@ async function main() {
   const releasePackages = await readReleasePackages()
   const releaseStates = releasePackages.map((releasePackage) => {
     const tag = `${releasePackage.name}@${releasePackage.version}`
+    // A tagged but unpublished version was staged by an earlier run and still awaits approval.
     const tagged = createGitTags && hasGitTag(tag)
-    const published = tagged ? false : isPublished(releasePackage)
+    const published = isPublished(releasePackage)
     return { releasePackage, tag, tagged, published }
   })
   const packagesToStage = releaseStates.filter((state) => !state.tagged && !state.published)
 
-  if (packagesToStage.length === 0) {
-    console.log('No unstaged package versions were found.')
-    await writeSummary(['### npm staged publishing', '', 'No package versions needed staging.'])
-    return
-  }
-
-  const outputDirectory = await mkdtemp(path.join(os.tmpdir(), 'sequence-npm-stage-'))
-  const stagedPackages = []
+  const outputDirectory =
+    packagesToStage.length > 0 ? await mkdtemp(path.join(os.tmpdir(), 'sequence-npm-stage-')) : null
+  const stagedNow = new Set()
   for (const { releasePackage } of packagesToStage) {
     const tarballPath = await packPackage(releasePackage, outputDirectory)
     runChecked('npm', ['stage', 'publish', tarballPath, '--tag', distTag, '--access', 'public', '--provenance'], {
       stdio: 'inherit',
     })
-    stagedPackages.push(releasePackage)
+    stagedNow.add(releasePackage.name)
     // changesets/action v1 creates this package's tag and GitHub Release from this line,
     // even if a later package fails. A retry can then skip the already-staged package by tag.
     if (createGitTags) {
@@ -187,15 +183,30 @@ async function main() {
     }
   }
 
-  await writeSummary([
+  const summary = approvalSummary(releaseStates, stagedNow, distTag)
+  console.log(summary.join('\n'))
+  await writeSummary(summary)
+}
+
+// Lists every unpublished version of the release in dependency order, including versions an
+// earlier (partially failed) run staged, so maintainers approve dependencies first.
+export function approvalSummary(releaseStates, stagedNow, distTag) {
+  const pending = releaseStates.filter((state) => !state.published)
+  if (pending.length === 0) {
+    return ['### npm staged publishing', '', 'No package versions needed staging.']
+  }
+  return [
     '### npm staged publishing',
     '',
-    'Approve in this order (dependencies first):',
+    `Approve in this order (dependencies first); all are staged under \`${distTag}\`:`,
     '',
-    ...stagedPackages.map(({ name, version }) => `1. \`${name}@${version}\` is staged under \`${distTag}\`.`),
+    ...pending.map(({ releasePackage: { name, version } }) => {
+      const origin = stagedNow.has(name) ? 'staged by this run' : 'staged by an earlier run'
+      return `1. \`${name}@${version}\` (${origin})`
+    }),
     '',
     'A maintainer must approve every staged package on npm with 2FA before it is installable.',
-  ])
+  ]
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

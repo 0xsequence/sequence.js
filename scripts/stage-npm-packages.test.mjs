@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  approvalSummary,
   assertTrustedPublishingEnvironment,
   findWorkspaceReferences,
   orderByDependencies,
@@ -87,4 +88,30 @@ test('requires GitHub Actions OIDC before staging', () => {
       ACTIONS_ID_TOKEN_REQUEST_URL: 'https://example.test/oidc',
     }),
   )
+})
+
+test('approval summary keeps earlier-run stages in dependency order and skips published versions', () => {
+  const state = (name, published) => ({ releasePackage: { name, version: '3.0.14' }, published })
+  const summary = approvalSummary(
+    [state('primitives', false), state('abi', true), state('core', false), state('wdk', false)],
+    new Set(['core', 'wdk']),
+    'latest',
+  )
+  assert.deepEqual(
+    summary.filter((line) => line.startsWith('1. ')),
+    [
+      '1. `primitives@3.0.14` (staged by an earlier run)',
+      '1. `core@3.0.14` (staged by this run)',
+      '1. `wdk@3.0.14` (staged by this run)',
+    ],
+  )
+})
+
+test('approval summary reports when nothing is pending', () => {
+  const summary = approvalSummary(
+    [{ releasePackage: { name: 'abi', version: '3.0.14' }, published: true }],
+    new Set(),
+    'latest',
+  )
+  assert.match(summary.join('\n'), /No package versions needed staging/)
 })
