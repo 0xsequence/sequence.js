@@ -2,6 +2,11 @@
   "name": "@0xsequence/dapp-client",
   "version": "3.1.2",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/wallet/dapp-client"
+  },
   "type": "module",
   "publishConfig": {
     "access": "public"

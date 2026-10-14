@@ -18,9 +18,12 @@
     "test:anvil": "anvil --fork-url https://nodes.sequence.app/arbitrum",
     "clean": "turbo clean",
     "deps:lint": "syncpack lint --dependency-types prod,dev",
-    "deps:fix": "syncpack fix"
+    "deps:fix": "syncpack fix",
+    "test:release": "node --test scripts/*.test.mjs",
+    "ci:stage-release": "pnpm build && pnpm typecheck && pnpm lint && pnpm test:release && pnpm test:local && node scripts/stage-npm-packages.mjs"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
     "@changesets/cli": "^2.29.8",
     "lefthook": "^2.1.6",
     "prettier": "^3.8.3",

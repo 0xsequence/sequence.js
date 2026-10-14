@@ -1,0 +1,99 @@
+name: Release
+
+# Staged npm publishing via changesets + OIDC trusted publishing. See PUBLISHING.md.
+# The v2 branch has its own copy of this file (same name, so the same npm trusted publisher
+# applies) that stages under the `v2-legacy` dist-tag.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      snapshot_tag:
+        description: 'npm dist-tag for snapshot (e.g. canary, pre-3.0.14). Non-semver values only.'
+        required: true
+        default: 'snapshot'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write # required for npm OIDC trusted publishing
+    steps:
+      - uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.CHANGESET_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.CHANGESET_RELEASE_BOT_APP_PRIVATE_KEY }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install npm with staged-publishing support
+        run: npm install --global npm@11.15.0
+      # The release gates run the wallet tests, which need a local anvil fork.
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.0
+      # The release PR changes package manifests without regenerating the lockfile. Link
+      # co-released workspace packages locally so the not-yet-public versions still install.
+      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true
+      - name: Create release PR or stage versioned packages
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          title: 'changesets: Release / Deploy'
+          commit: 'release: version packages'
+          commitMode: github-api
+          # When a merged release PR has consumed all changesets, this command packs with
+          # pnpm (rewriting workspace: ranges) and stages the tarballs with npm. Its
+          # `New tag:` output lets the action create package tags and GitHub Releases.
+          publish: pnpm run ci:stage-release
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+  snapshot:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for npm OIDC trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install npm with staged-publishing support
+        run: npm install --global npm@11.15.0
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.0
+      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true
+      - name: Version snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
+        run: node scripts/prepare-npm-snapshot.mjs
+      - name: Stage snapshot packages
+        env:
+          NPM_STAGE_CREATE_GIT_TAGS: 'false'
+          NPM_STAGE_TAG: ${{ inputs.snapshot_tag }}
+        run: pnpm run ci:stage-release
