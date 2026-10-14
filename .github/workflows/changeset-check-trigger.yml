@@ -1,0 +1,13 @@
+name: Changeset check
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check:
+    uses: 0xPolygon/pipelines/.github/workflows/apps-changeset-check.yml@main

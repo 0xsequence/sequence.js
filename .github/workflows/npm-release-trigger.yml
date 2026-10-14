@@ -1,0 +1,126 @@
+name: Release
+
+# Staged npm publishing via changesets + OIDC trusted publishing. See PUBLISHING.md.
+# The v2 branch has its own copy of this file (same name, so the same npm trusted publisher
+# applies) that stages under the `v2-legacy` dist-tag.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      snapshot_tag:
+        description: 'npm dist-tag for snapshot (e.g. canary, pre-3.0.14). Non-semver values only.'
+        required: true
+        default: 'snapshot'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+# Default-deny: each job declares its own permissions.
+permissions: {}
+
+jobs:
+  release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write # required for npm OIDC trusted publishing
+    steps:
+      # Nothing pushes over git (changesets github-api mode writes through the API with the
+      # app token below), so do not persist the read-only job token into .git/config.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install npm with staged-publishing support
+        run: npm install --global npm@11.15.0
+      # The release gates run the wallet tests, which need a local anvil fork.
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.0
+      # The release PR changes package manifests without regenerating the lockfile. Link
+      # co-released workspace packages locally so the not-yet-public versions still install.
+      # --ignore-scripts: releasing needs no install-time script, and this job holds id-token: write.
+      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true --ignore-scripts
+      - name: Detect release PR merge
+        id: pending
+        run: |
+          if find .changeset -name '*.md' ! -name README.md | grep -q .; then
+            echo "changesets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changesets=false" >> "$GITHUB_OUTPUT"
+          fi
+      # Only a merged release PR (no pending changesets) stages packages. Run the gates before
+      # the release bot token exists so build and test code never sees it.
+      - name: Release gates
+        if: steps.pending.outputs.changesets == 'false'
+        run: pnpm run ci:release-gates
+      # Mint the app token last, scoped to what changesets/action uses, so only that step has it.
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.CHANGESET_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.CHANGESET_RELEASE_BOT_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Create release PR or stage versioned packages
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          title: 'changesets: Release / Deploy'
+          commit: 'release: version packages'
+          commitMode: github-api
+          # When a merged release PR has consumed all changesets, this command packs with
+          # pnpm (rewriting workspace: ranges) and stages the tarballs with npm. Its
+          # `New tag:` output lets the action create package tags and GitHub Releases.
+          publish: pnpm run ci:stage-release
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+  snapshot:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: read # changelog-github PR lookups
+      id-token: write # required for npm OIDC trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install npm with staged-publishing support
+        run: npm install --global npm@11.15.0
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.5.0
+      - run: pnpm install --no-frozen-lockfile --config.link-workspace-packages=true --ignore-scripts
+      - name: Version snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SNAPSHOT_TAG: ${{ inputs.snapshot_tag }}
+        run: node scripts/prepare-npm-snapshot.mjs
+      - name: Release gates
+        run: pnpm run ci:release-gates
+      - name: Stage snapshot packages
+        env:
+          NPM_STAGE_CREATE_GIT_TAGS: 'false'
+          NPM_STAGE_TAG: ${{ inputs.snapshot_tag }}
+        run: pnpm run ci:stage-release

@@ -2,6 +2,11 @@
   "name": "@0xsequence/wallet-wdk",
   "version": "3.1.2",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/wallet/wdk"
+  },
   "type": "module",
   "publishConfig": {
     "access": "public"

@@ -2,7 +2,11 @@
   "name": "@0xsequence/abi",
   "version": "3.0.13",
   "description": "abi sub-package for Sequence",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/utils/abi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/utils/abi"
+  },
   "author": "Sequence Platforms ULC",
   "license": "Apache-2.0",
   "publishConfig": {

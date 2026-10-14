@@ -2,7 +2,11 @@
   "name": "@0xsequence/api",
   "version": "3.0.13",
   "description": "api sub-package for Sequence",
-  "repository": "https://github.com/0xsequence/sequence.js/tree/master/packages/services/api",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xsequence/sequence.js.git",
+    "directory": "packages/services/api"
+  },
   "author": "Sequence Platforms ULC",
   "license": "Apache-2.0",
   "publishConfig": {
