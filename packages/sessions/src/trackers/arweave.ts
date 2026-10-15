@@ -578,6 +578,10 @@ async function findItems(
       await new Promise(resolve => setTimeout(resolve, rateLimitRetryDelayMs))
     }
 
+    if (!response.ok) {
+      throw new Error(`${graphqlUrl} returned ${response.status} ${response.statusText}`)
+    }
+
     const {
       data: { transactions }
     } = await response.json()
