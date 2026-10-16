@@ -1,5 +1,14 @@
 # @0xsequence/sessions
 
+## 2.3.48
+
+### Patch Changes
+
+- [#1036](https://github.com/0xsequence/sequence.js/pull/1036) [`ae4d243`](https://github.com/0xsequence/sequence.js/commit/ae4d24348eea8be85e740af4f9a26c4f0587672b) Thanks [@taylanpince](https://github.com/taylanpince)! - Throw a descriptive error when the Arweave GraphQL gateway returns a non-2xx response, instead of failing to parse an HTML error page as JSON
+
+- Updated dependencies []:
+  - @0xsequence/migration@2.3.48
+
 ## 2.3.47
 
 ### Patch Changes

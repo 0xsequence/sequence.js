@@ -1,5 +1,11 @@
 # @0xsequence/relayer
 
+## 2.3.48
+
+### Patch Changes
+
+- [#1030](https://github.com/0xsequence/sequence.js/pull/1030) [`8b23a52`](https://github.com/0xsequence/sequence.js/commit/8b23a5295209179c60c59ca564bc56ea11a4de70) Thanks [@0xPolygonBot](https://github.com/0xPolygonBot)! - Update generated relayer RPC client to the latest relayer schema, adding a `GetMetaTxnStatus` method
+
 ## 2.3.47
 
 ### Patch Changes
