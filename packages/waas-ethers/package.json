@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/waas-ethers",
-  "version": "2.3.47",
+  "version": "2.3.48",
   "description": "waas ethers wrapper",
   "repository": {
     "type": "git",

@@ -1,5 +1,12 @@
 # @0xsequence/migration
 
+## 2.3.48
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @0xsequence/wallet@2.3.48
+
 ## 2.3.47
 
 ### Patch Changes
