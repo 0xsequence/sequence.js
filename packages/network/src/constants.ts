@@ -71,10 +71,6 @@ export enum ChainId {
   BASE_GOERLI = 84531, // network is deprecated
   BASE_SEPOLIA = 84532,
 
-  // HOMEVERSE
-  HOMEVERSE_TESTNET = 40875, // network is deprecated
-  HOMEVERSE = 19011, // network is deprecated
-
   // Xai
 
   // TELOS
@@ -83,7 +79,7 @@ export enum ChainId {
 
   // B3 Sepolia
   B3 = 8333,
-  B3_SEPOLIA = 1993, // network is deprecated
+  B3_SEPOLIA = 1993,
 
   // APE Chain
   APECHAIN = 33139,
@@ -96,7 +92,7 @@ export enum ChainId {
 
   // SKALE Nebula
   SKALE_NEBULA = 1482601649,
-  SKALE_NEBULA_TESTNET = 37084624, // network is deprecated
+  SKALE_NEBULA_TESTNET = 37084624,
 
   // Soneium Minato
   SONEIUM_MINATO = 1946,
@@ -117,12 +113,7 @@ export enum ChainId {
   ETHERLINK_TESTNET = 128123,
   ETHERLINK_SHADOWNET_TESTNET = 127823,
 
-  // MOONBEAM
-  MOONBEAM = 1284, // network is deprecated
-  MOONBASE_ALPHA = 1287, // network is deprecated
-
-  // MONAD_TESTNET
-  MONAD_TESTNET = 10143, // network is deprecated
+  // MONAD
   MONAD = 143,
 
   // SOMNIA
@@ -166,7 +157,11 @@ export enum ChainId {
   XLAYER = 196,
 
   // KATANA BOKUTO TESTNET
-  KATANA_BOKUTO = 737373
+  KATANA_BOKUTO = 737373,
+
+  // BALI (AGGLAYER DEVNETS)
+  BALI_82_OP = 828282,
+  BALI_85_OP = 858585
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -599,41 +594,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.HOMEVERSE]: {
-    chainId: ChainId.HOMEVERSE,
-    type: NetworkType.MAINNET,
-    name: 'homeverse',
-    title: 'Oasys Homeverse',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE}.webp`,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer',
-      rootUrl: 'https://explorer.oasys.homeverse.games/'
-    },
-    nativeToken: {
-      symbol: 'OAS',
-      name: 'OAS',
-      decimals: 18
-    }
-  },
-  [ChainId.HOMEVERSE_TESTNET]: {
-    chainId: ChainId.HOMEVERSE_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'homeverse-testnet',
-    title: 'Oasys Homeverse Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE_TESTNET}.webp`,
-    testnet: true,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer (Testnet)',
-      rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
-    },
-    nativeToken: {
-      symbol: 'tOAS',
-      name: 'Testnet OAS',
-      decimals: 18
-    }
-  },
   [ChainId.B3]: {
     chainId: ChainId.B3,
     type: NetworkType.MAINNET,
@@ -658,7 +618,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'B3 Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
     testnet: true,
-    deprecated: true,
     blockExplorer: {
       name: 'B3 Sepolia Explorer',
       rootUrl: 'https://sepolia.explorer.b3.fun/'
@@ -777,7 +736,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'SKALE Nebula Gaming Hub Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
     testnet: true,
-    deprecated: true,
     blockExplorer: {
       name: 'SKALE Nebula Gaming Hub Testnet Explorer',
       rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/'
@@ -878,42 +836,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.MOONBEAM]: {
-    chainId: ChainId.MOONBEAM,
-    type: NetworkType.MAINNET,
-    name: 'moonbeam',
-    title: 'Moonbeam',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBEAM}.webp`,
-    testnet: false,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Moonscan',
-      rootUrl: 'https://moonscan.io/'
-    },
-    nativeToken: {
-      symbol: 'GLMR',
-      name: 'GLMR',
-      decimals: 18
-    }
-  },
-  [ChainId.MOONBASE_ALPHA]: {
-    chainId: ChainId.MOONBASE_ALPHA,
-    type: NetworkType.TESTNET,
-    name: 'moonbase-alpha',
-    title: 'Moonbase Alpha',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBASE_ALPHA}.webp`,
-    testnet: true,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Moonscan (Moonbase Alpha)',
-      rootUrl: 'https://moonbase.moonscan.io/'
-    },
-    nativeToken: {
-      symbol: 'GLMR',
-      name: 'GLMR',
-      decimals: 18
-    }
-  },
   [ChainId.ETHERLINK]: {
     chainId: ChainId.ETHERLINK,
     type: NetworkType.MAINNET,
@@ -965,24 +887,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.MONAD_TESTNET]: {
-    chainId: ChainId.MONAD_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'monad-testnet',
-    title: 'Monad Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD_TESTNET}.webp`,
-    testnet: true,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Monad Testnet Explorer',
-      rootUrl: 'https://testnet.monadexplorer.com/'
-    },
-    nativeToken: {
-      symbol: 'MON',
-      name: 'MON',
-      decimals: 18
-    }
-  },
+
   [ChainId.MONAD]: {
     chainId: ChainId.MONAD,
     type: NetworkType.MAINNET,
@@ -1261,6 +1166,34 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Bokutoscan',
       rootUrl: 'https://bokuto.katanascan.com/'
     },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.BALI_82_OP]: {
+    chainId: ChainId.BALI_82_OP,
+    type: NetworkType.TESTNET,
+    name: 'bali-82-op',
+    title: 'Bali 82 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BALI_82_OP}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.BALI_85_OP]: {
+    chainId: ChainId.BALI_85_OP,
+    type: NetworkType.TESTNET,
+    name: 'bali-85-op',
+    title: 'Bali 85 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BALI_85_OP}.webp`,
+    testnet: true,
     nativeToken: {
       symbol: 'ETH',
       name: 'ETH',
