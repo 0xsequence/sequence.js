@@ -88,10 +88,6 @@ export const ChainId = {
   SONEIUM_MINATO: 1946,
   SONEIUM: 1868,
 
-  // Immutable zkEVM
-  IMMUTABLE_ZKEVM: 13371,
-  IMMUTABLE_ZKEVM_TESTNET: 13473,
-
   // ETHERLINK
   ETHERLINK: 42793,
   ETHERLINK_SHADOWNET_TESTNET: 127823,
@@ -597,46 +593,6 @@ export const ALL: Network[] = [
     nativeCurrency: {
       symbol: 'ETH',
       name: 'Ether',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.IMMUTABLE_ZKEVM,
-    type: NetworkType.MAINNET,
-    name: 'immutable-zkevm',
-    title: 'Immutable zkEVM',
-    rpcUrl: getRpcUrl('immutable-zkevm'),
-    logoUrl: getLogoUrl(ChainId.IMMUTABLE_ZKEVM),
-    blockExplorer: {
-      name: 'Immutable zkEVM Explorer',
-      url: 'https://explorer.immutable.com/',
-    },
-    nativeCurrency: {
-      symbol: 'IMX',
-      name: 'IMX',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.IMMUTABLE_ZKEVM_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'immutable-zkevm-testnet',
-    title: 'Immutable zkEVM Testnet',
-    rpcUrl: getRpcUrl('immutable-zkevm-testnet'),
-    logoUrl: getLogoUrl(ChainId.IMMUTABLE_ZKEVM_TESTNET),
-    blockExplorer: {
-      name: 'Immutable zkEVM Testnet Explorer',
-      url: 'https://explorer.testnet.immutable.com/',
-    },
-    nativeCurrency: {
-      symbol: 'IMX',
-      name: 'IMX',
       decimals: 18,
     },
     contracts: {
