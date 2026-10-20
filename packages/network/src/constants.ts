@@ -111,8 +111,8 @@ export enum ChainId {
   TOY_TESTNET = 21000000,
 
   // Immutable zkEVM
-  IMMUTABLE_ZKEVM = 13371,
-  IMMUTABLE_ZKEVM_TESTNET = 13473,
+  IMMUTABLE_ZKEVM = 13371, // network is deprecated
+  IMMUTABLE_ZKEVM_TESTNET = 13473, // network is deprecated
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
@@ -930,6 +930,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Immutable zkEVM',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM}.webp`,
     testnet: false,
+    deprecated: true,
     blockExplorer: {
       name: 'Immutable zkEVM Explorer',
       rootUrl: 'https://explorer.immutable.com/'
@@ -947,6 +948,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Immutable zkEVM Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM_TESTNET}.webp`,
     testnet: true,
+    deprecated: true,
     blockExplorer: {
       name: 'Immutable zkEVM Testnet Explorer',
       rootUrl: 'https://explorer.testnet.immutable.com/'
