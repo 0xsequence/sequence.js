@@ -1,5 +1,11 @@
 # @0xsequence/wallet-primitives
 
+## 3.0.14
+
+### Patch Changes
+
+- [#1039](https://github.com/0xsequence/sequence.js/pull/1039) [`12ec713`](https://github.com/0xsequence/sequence.js/commit/12ec713fb7e21731aee634ac3d9b5d402f209445) Thanks [@taylanpince](https://github.com/taylanpince)! - Remove Immutable zkEVM (13371) and Immutable zkEVM Testnet (13473), which are no longer served by Sequence infra
+
 ## 3.0.13
 
 ### Patch Changes
