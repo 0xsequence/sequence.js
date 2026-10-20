@@ -1,5 +1,12 @@
 # @0xsequence/waas
 
+## 2.3.48
+
+### Patch Changes
+
+- Updated dependencies [[`7795be5`](https://github.com/0xsequence/sequence.js/commit/7795be5ac4518715730e18d440f052cf555f0538)]:
+  - @0xsequence/network@2.3.48
+
 ## 2.3.47
 
 ### Patch Changes

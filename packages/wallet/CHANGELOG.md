@@ -1,5 +1,13 @@
 # @0xsequence/wallet
 
+## 2.3.48
+
+### Patch Changes
+
+- Updated dependencies [[`7795be5`](https://github.com/0xsequence/sequence.js/commit/7795be5ac4518715730e18d440f052cf555f0538), [`8b23a52`](https://github.com/0xsequence/sequence.js/commit/8b23a5295209179c60c59ca564bc56ea11a4de70)]:
+  - @0xsequence/network@2.3.48
+  - @0xsequence/relayer@2.3.48
+
 ## 2.3.47
 
 ### Patch Changes

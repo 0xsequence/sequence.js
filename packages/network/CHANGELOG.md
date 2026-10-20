@@ -1,5 +1,14 @@
 # @0xsequence/network
 
+## 2.3.48
+
+### Patch Changes
+
+- [#1040](https://github.com/0xsequence/sequence.js/pull/1040) [`7795be5`](https://github.com/0xsequence/sequence.js/commit/7795be5ac4518715730e18d440f052cf555f0538) Thanks [@taylanpince](https://github.com/taylanpince)! - Deprecate and disable networks no longer served by Sequence infra: Immutable zkEVM (13371) and Immutable zkEVM Testnet (13473)
+
+- Updated dependencies [[`8b23a52`](https://github.com/0xsequence/sequence.js/commit/8b23a5295209179c60c59ca564bc56ea11a4de70)]:
+  - @0xsequence/relayer@2.3.48
+
 ## 2.3.47
 
 ### Patch Changes
