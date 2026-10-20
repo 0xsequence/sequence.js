@@ -1,5 +1,20 @@
 # 0xsequence
 
+## 2.3.48
+
+### Patch Changes
+
+- Updated dependencies [[`ae4d243`](https://github.com/0xsequence/sequence.js/commit/ae4d24348eea8be85e740af4f9a26c4f0587672b), [`7795be5`](https://github.com/0xsequence/sequence.js/commit/7795be5ac4518715730e18d440f052cf555f0538), [`8b23a52`](https://github.com/0xsequence/sequence.js/commit/8b23a5295209179c60c59ca564bc56ea11a4de70)]:
+  - @0xsequence/sessions@2.3.48
+  - @0xsequence/network@2.3.48
+  - @0xsequence/relayer@2.3.48
+  - @0xsequence/account@2.3.48
+  - @0xsequence/auth@2.3.48
+  - @0xsequence/provider@2.3.48
+  - @0xsequence/wallet@2.3.48
+  - @0xsequence/guard@2.3.48
+  - @0xsequence/migration@2.3.48
+
 ## 2.3.47
 
 ### Patch Changes
