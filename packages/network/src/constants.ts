@@ -101,8 +101,8 @@ export enum ChainId {
   // TOY Testnet
 
   // Immutable zkEVM
-  IMMUTABLE_ZKEVM = 13371, // network is deprecated
-  IMMUTABLE_ZKEVM_TESTNET = 13473, // network is deprecated
+  IMMUTABLE_ZKEVM = 13371,
+  IMMUTABLE_ZKEVM_TESTNET = 13473,
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
@@ -161,7 +161,11 @@ export enum ChainId {
 
   // BALI (AGGLAYER DEVNETS)
   BALI_82_OP = 828282,
-  BALI_85_OP = 858585
+  BALI_85_OP = 858585,
+
+  // CARDONA (AGGLAYER DEVNETS)
+  CARDONA_69_OP = 696969,
+  CARDONA_70_OP = 707070
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -787,7 +791,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Immutable zkEVM',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM}.webp`,
     testnet: false,
-    deprecated: true,
     blockExplorer: {
       name: 'Immutable zkEVM Explorer',
       rootUrl: 'https://explorer.immutable.com/'
@@ -805,7 +808,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Immutable zkEVM Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM_TESTNET}.webp`,
     testnet: true,
-    deprecated: true,
     blockExplorer: {
       name: 'Immutable zkEVM Testnet Explorer',
       rootUrl: 'https://explorer.testnet.immutable.com/'
@@ -1193,6 +1195,34 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     name: 'bali-85-op',
     title: 'Bali 85 OP',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BALI_85_OP}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.CARDONA_69_OP]: {
+    chainId: ChainId.CARDONA_69_OP,
+    type: NetworkType.TESTNET,
+    name: 'cardona-69-op',
+    title: 'Cardona 69 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.CARDONA_69_OP}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.CARDONA_70_OP]: {
+    chainId: ChainId.CARDONA_70_OP,
+    type: NetworkType.TESTNET,
+    name: 'cardona-70-op',
+    title: 'Cardona 70 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.CARDONA_70_OP}.webp`,
     testnet: true,
     nativeToken: {
       symbol: 'ETH',
