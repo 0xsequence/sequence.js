@@ -39,7 +39,6 @@ export enum ChainId {
   // Polygon
   POLYGON = 137,
   POLYGON_MUMBAI = 80001, // network is deprecated
-  POLYGON_ZKEVM = 1101, // network is deprecated
   POLYGON_AMOY = 80002,
 
   // BSC
@@ -72,13 +71,7 @@ export enum ChainId {
   BASE_GOERLI = 84531, // network is deprecated
   BASE_SEPOLIA = 84532,
 
-  // HOMEVERSE
-  HOMEVERSE_TESTNET = 40875, // network is deprecated
-  HOMEVERSE = 19011, // network is deprecated
-
   // Xai
-  XAI = 660279, // network is deprecated
-  XAI_SEPOLIA = 37714555429, // network is deprecated
 
   // TELOS
   TELOS = 40,
@@ -86,33 +79,30 @@ export enum ChainId {
 
   // B3 Sepolia
   B3 = 8333,
-  B3_SEPOLIA = 1993, // network is deprecated
+  B3_SEPOLIA = 1993,
 
   // APE Chain
   APECHAIN = 33139,
   APECHAIN_TESTNET = 33111,
 
   // Blast
-  BLAST = 81457, // network is deprecated
-  BLAST_SEPOLIA = 168587773, // network is deprecated
 
   // Borne
   BORNE_TESTNET = 94984, // network is deprecated
 
   // SKALE Nebula
   SKALE_NEBULA = 1482601649,
-  SKALE_NEBULA_TESTNET = 37084624, // network is deprecated
+  SKALE_NEBULA_TESTNET = 37084624,
 
   // Soneium Minato
   SONEIUM_MINATO = 1946,
   SONEIUM = 1868,
 
   // TOY Testnet
-  TOY_TESTNET = 21000000,
 
   // Immutable zkEVM
-  IMMUTABLE_ZKEVM = 13371, // network is deprecated
-  IMMUTABLE_ZKEVM_TESTNET = 13473, // network is deprecated
+  IMMUTABLE_ZKEVM = 13371,
+  IMMUTABLE_ZKEVM_TESTNET = 13473,
 
   // HARDHAT TESTNETS
   HARDHAT = 31337,
@@ -123,12 +113,7 @@ export enum ChainId {
   ETHERLINK_TESTNET = 128123,
   ETHERLINK_SHADOWNET_TESTNET = 127823,
 
-  // MOONBEAM
-  MOONBEAM = 1284, // network is deprecated
-  MOONBASE_ALPHA = 1287, // network is deprecated
-
-  // MONAD_TESTNET
-  MONAD_TESTNET = 10143, // network is deprecated
+  // MONAD
   MONAD = 143,
 
   // SOMNIA
@@ -137,17 +122,13 @@ export enum ChainId {
 
   // INCENTIV TESTNET
   INCENTIV_TESTNET = 11690, // network is deprecated
-  INCENTIV_TESTNET_V2 = 28802,
-  INCENTIV = 24101,
 
   // Katana
   KATANA = 747474,
 
   // SANDBOX
-  SANDBOX_TESTNET = 6252,
 
   // ARC
-  ARC = 5042,
   ARC_TESTNET = 5042002,
 
   // HYPEREVM
@@ -162,8 +143,29 @@ export enum ChainId {
   // TEMPO
   TEMPO = 4217,
 
+  // ARC
+  ARC = 5042,
+
+  // SKALE BASE TESTNET
+  SKALE_BASE_TESTNET = 324705682,
+
   // ROBINHOOD
-  ROBINHOOD = 4663
+  ROBINHOOD = 4663,
+  ROBINHOOD_TESTNET = 46630,
+
+  // X LAYER
+  XLAYER = 196,
+
+  // KATANA BOKUTO TESTNET
+  KATANA_BOKUTO = 737373,
+
+  // BALI (AGGLAYER DEVNETS)
+  BALI_82_OP = 828282,
+  BALI_85_OP = 858585,
+
+  // CARDONA (AGGLAYER DEVNETS)
+  CARDONA_69_OP = 696969,
+  CARDONA_70_OP = 707070
 }
 
 export const networks: Record<ChainId, NetworkMetadata> = {
@@ -326,23 +328,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'Amoy POL',
       decimals: 18
     }
-  },
-  [ChainId.POLYGON_ZKEVM]: {
-    chainId: ChainId.POLYGON_ZKEVM,
-    type: NetworkType.MAINNET,
-    name: 'polygon-zkevm',
-    title: 'Polygon zkEVM',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.POLYGON_ZKEVM}.webp`,
-    blockExplorer: {
-      name: 'Polygonscan (zkEVM)',
-      rootUrl: 'https://zkevm.polygonscan.com/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    },
-    deprecated: true
   },
   [ChainId.BSC]: {
     chainId: ChainId.BSC,
@@ -613,76 +598,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.HOMEVERSE]: {
-    chainId: ChainId.HOMEVERSE,
-    type: NetworkType.MAINNET,
-    name: 'homeverse',
-    title: 'Oasys Homeverse',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE}.webp`,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer',
-      rootUrl: 'https://explorer.oasys.homeverse.games/'
-    },
-    nativeToken: {
-      symbol: 'OAS',
-      name: 'OAS',
-      decimals: 18
-    }
-  },
-  [ChainId.HOMEVERSE_TESTNET]: {
-    chainId: ChainId.HOMEVERSE_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'homeverse-testnet',
-    title: 'Oasys Homeverse Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.HOMEVERSE_TESTNET}.webp`,
-    testnet: true,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Oasys Homeverse Explorer (Testnet)',
-      rootUrl: 'https://explorer.testnet.oasys.homeverse.games/'
-    },
-    nativeToken: {
-      symbol: 'tOAS',
-      name: 'Testnet OAS',
-      decimals: 18
-    }
-  },
-  [ChainId.XAI]: {
-    chainId: ChainId.XAI,
-    type: NetworkType.MAINNET,
-    name: 'xai',
-    title: 'Xai',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI}.webp`,
-    blockExplorer: {
-      name: 'Xai Explorer',
-      rootUrl: 'https://explorer.xai-chain.net/'
-    },
-    nativeToken: {
-      symbol: 'XAI',
-      name: 'XAI',
-      decimals: 18
-    },
-    deprecated: true
-  },
-  [ChainId.XAI_SEPOLIA]: {
-    chainId: ChainId.XAI_SEPOLIA,
-    type: NetworkType.TESTNET,
-    name: 'xai-sepolia',
-    title: 'Xai Sepolia',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XAI_SEPOLIA}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Xai Sepolia Explorer',
-      rootUrl: 'https://testnet-explorer-v2.xai-chain.net/'
-    },
-    nativeToken: {
-      symbol: 'sXAI',
-      name: 'Sepolia XAI',
-      decimals: 18
-    },
-    deprecated: true
-  },
   [ChainId.B3]: {
     chainId: ChainId.B3,
     type: NetworkType.MAINNET,
@@ -707,7 +622,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'B3 Sepolia',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3_SEPOLIA}.webp`,
     testnet: true,
-    deprecated: true,
     blockExplorer: {
       name: 'B3 Sepolia Explorer',
       rootUrl: 'https://sepolia.explorer.b3.fun/'
@@ -751,41 +665,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       name: 'ApeCoin',
       decimals: 18
     }
-  },
-  [ChainId.BLAST]: {
-    chainId: ChainId.BLAST,
-    type: NetworkType.MAINNET,
-    name: 'blast',
-    title: 'Blast',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST}.webp`,
-    blockExplorer: {
-      name: 'Blast Explorer',
-      rootUrl: 'https://blastscan.io/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    },
-    deprecated: true
-  },
-  [ChainId.BLAST_SEPOLIA]: {
-    chainId: ChainId.BLAST_SEPOLIA,
-    type: NetworkType.TESTNET,
-    name: 'blast-sepolia',
-    title: 'Blast Sepolia',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BLAST_SEPOLIA}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Blast Sepolia Explorer',
-      rootUrl: 'https://sepolia.blastexplorer.io/'
-    },
-    nativeToken: {
-      symbol: 'ETH',
-      name: 'Ether',
-      decimals: 18
-    },
-    deprecated: true
   },
   [ChainId.TELOS]: {
     chainId: ChainId.TELOS,
@@ -861,7 +740,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'SKALE Nebula Gaming Hub Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_NEBULA_TESTNET}.webp`,
     testnet: true,
-    deprecated: true,
     blockExplorer: {
       name: 'SKALE Nebula Gaming Hub Testnet Explorer',
       rootUrl: 'https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/'
@@ -906,23 +784,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.TOY_TESTNET]: {
-    chainId: ChainId.TOY_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'toy-testnet',
-    title: 'TOY (Testnet)',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.TOY_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'TOY Testnet Explorer',
-      rootUrl: 'https://toy-chain-testnet.explorer.caldera.xyz/'
-    },
-    nativeToken: {
-      symbol: 'TOY',
-      name: 'TOY',
-      decimals: 18
-    }
-  },
   [ChainId.IMMUTABLE_ZKEVM]: {
     chainId: ChainId.IMMUTABLE_ZKEVM,
     type: NetworkType.MAINNET,
@@ -930,7 +791,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Immutable zkEVM',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM}.webp`,
     testnet: false,
-    deprecated: true,
     blockExplorer: {
       name: 'Immutable zkEVM Explorer',
       rootUrl: 'https://explorer.immutable.com/'
@@ -948,7 +808,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'Immutable zkEVM Testnet',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.IMMUTABLE_ZKEVM_TESTNET}.webp`,
     testnet: true,
-    deprecated: true,
     blockExplorer: {
       name: 'Immutable zkEVM Testnet Explorer',
       rootUrl: 'https://explorer.testnet.immutable.com/'
@@ -976,42 +835,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'ETH',
       name: 'Ether',
-      decimals: 18
-    }
-  },
-  [ChainId.MOONBEAM]: {
-    chainId: ChainId.MOONBEAM,
-    type: NetworkType.MAINNET,
-    name: 'moonbeam',
-    title: 'Moonbeam',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBEAM}.webp`,
-    testnet: false,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Moonscan',
-      rootUrl: 'https://moonscan.io/'
-    },
-    nativeToken: {
-      symbol: 'GLMR',
-      name: 'GLMR',
-      decimals: 18
-    }
-  },
-  [ChainId.MOONBASE_ALPHA]: {
-    chainId: ChainId.MOONBASE_ALPHA,
-    type: NetworkType.TESTNET,
-    name: 'moonbase-alpha',
-    title: 'Moonbase Alpha',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MOONBASE_ALPHA}.webp`,
-    testnet: true,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Moonscan (Moonbase Alpha)',
-      rootUrl: 'https://moonbase.moonscan.io/'
-    },
-    nativeToken: {
-      symbol: 'GLMR',
-      name: 'GLMR',
       decimals: 18
     }
   },
@@ -1066,24 +889,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       decimals: 18
     }
   },
-  [ChainId.MONAD_TESTNET]: {
-    chainId: ChainId.MONAD_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'monad-testnet',
-    title: 'Monad Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.MONAD_TESTNET}.webp`,
-    testnet: true,
-    deprecated: true,
-    blockExplorer: {
-      name: 'Monad Testnet Explorer',
-      rootUrl: 'https://testnet.monadexplorer.com/'
-    },
-    nativeToken: {
-      symbol: 'MON',
-      name: 'MON',
-      decimals: 18
-    }
-  },
+
   [ChainId.MONAD]: {
     chainId: ChainId.MONAD,
     type: NetworkType.MAINNET,
@@ -1139,42 +945,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     deprecated: true
   },
 
-  [ChainId.INCENTIV_TESTNET_V2]: {
-    chainId: ChainId.INCENTIV_TESTNET_V2,
-    type: NetworkType.TESTNET,
-    name: 'incentiv-testnet-v2',
-    title: 'Incentiv Testnet v2',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV_TESTNET_V2}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Incentiv Testnet Explorer v2',
-      rootUrl: 'https://explorer-testnet.incentiv.io/'
-    },
-    nativeToken: {
-      symbol: 'TCENT',
-      name: 'TCENT',
-      decimals: 18
-    }
-  },
-
-  [ChainId.INCENTIV]: {
-    chainId: ChainId.INCENTIV,
-    type: NetworkType.MAINNET,
-    name: 'incentiv',
-    title: 'Incentiv',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.INCENTIV}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Incentiv',
-      rootUrl: 'https://explorer.incentiv.io/'
-    },
-    nativeToken: {
-      symbol: 'CENT',
-      name: 'CENT',
-      decimals: 18
-    }
-  },
-
   [ChainId.SOMNIA]: {
     chainId: ChainId.SOMNIA,
     type: NetworkType.MAINNET,
@@ -1207,42 +977,6 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'ETH',
       name: 'ETH',
-      decimals: 18
-    }
-  },
-
-  [ChainId.SANDBOX_TESTNET]: {
-    chainId: ChainId.SANDBOX_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'sandbox-testnet',
-    title: 'Sandbox Testnet',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SANDBOX_TESTNET}.webp`,
-    testnet: true,
-    blockExplorer: {
-      name: 'Sandbox Testnet Explorer',
-      rootUrl: 'https://sandbox-testnet.explorer.caldera.xyz/'
-    },
-    nativeToken: {
-      symbol: 'SAND',
-      name: 'SAND',
-      decimals: 18
-    }
-  },
-
-  [ChainId.ARC]: {
-    chainId: ChainId.ARC,
-    type: NetworkType.MAINNET,
-    name: 'arc',
-    title: 'Arc',
-    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARC}.webp`,
-    testnet: false,
-    blockExplorer: {
-      name: 'Arc Explorer',
-      rootUrl: 'https://arc.etherscan.io/'
-    },
-    nativeToken: {
-      symbol: 'USDC',
-      name: 'USDC',
       decimals: 18
     }
   },
@@ -1337,20 +1071,162 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     }
   },
 
+  [ChainId.SKALE_BASE_TESTNET]: {
+    chainId: ChainId.SKALE_BASE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-base-testnet',
+    title: 'Skale Base Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_BASE_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Skale Base Testnet',
+      rootUrl: 'https://base-sepolia-testnet-explorer.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'sFUEL',
+      name: 'sFUEL',
+      decimals: 18
+    }
+  },
+
+  [ChainId.ARC]: {
+    chainId: ChainId.ARC,
+    type: NetworkType.MAINNET,
+    name: 'arc',
+    title: 'ARC',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ARC}.webp`,
+    testnet: false,
+    nativeToken: {
+      symbol: 'USDC',
+      name: 'USDC',
+      decimals: 18
+    }
+  },
+
   [ChainId.ROBINHOOD]: {
     chainId: ChainId.ROBINHOOD,
     type: NetworkType.MAINNET,
     name: 'robinhood',
-    title: 'Robinhood Chain',
+    title: 'Robinhood',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD}.webp`,
     testnet: false,
     blockExplorer: {
-      name: 'Robinhood Explorer',
-      rootUrl: 'https://robin.etherscan.io/'
+      name: 'Robinhood Chain Explorer',
+      rootUrl: 'https://robinhoodchain.blockscout.com/'
     },
     nativeToken: {
       symbol: 'ETH',
-      name: 'Ether',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.ROBINHOOD_TESTNET]: {
+    chainId: ChainId.ROBINHOOD_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'robinhood-testnet',
+    title: 'Robinhood Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.ROBINHOOD_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Robinhood Chain Testnet Explorer',
+      rootUrl: 'https://explorer.testnet.chain.robinhood.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.XLAYER]: {
+    chainId: ChainId.XLAYER,
+    type: NetworkType.MAINNET,
+    name: 'xlayer',
+    title: 'X Layer',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.XLAYER}.webp`,
+    testnet: false,
+    blockExplorer: {
+      name: 'OKLink',
+      rootUrl: 'https://www.oklink.com/xlayer/'
+    },
+    nativeToken: {
+      symbol: 'OKB',
+      name: 'OKB',
+      decimals: 18
+    }
+  },
+
+  [ChainId.KATANA_BOKUTO]: {
+    chainId: ChainId.KATANA_BOKUTO,
+    type: NetworkType.TESTNET,
+    name: 'katana-bokuto',
+    title: 'Katana Bokuto Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.KATANA_BOKUTO}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'Bokutoscan',
+      rootUrl: 'https://bokuto.katanascan.com/'
+    },
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.BALI_82_OP]: {
+    chainId: ChainId.BALI_82_OP,
+    type: NetworkType.TESTNET,
+    name: 'bali-82-op',
+    title: 'Bali 82 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BALI_82_OP}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.BALI_85_OP]: {
+    chainId: ChainId.BALI_85_OP,
+    type: NetworkType.TESTNET,
+    name: 'bali-85-op',
+    title: 'Bali 85 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.BALI_85_OP}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.CARDONA_69_OP]: {
+    chainId: ChainId.CARDONA_69_OP,
+    type: NetworkType.TESTNET,
+    name: 'cardona-69-op',
+    title: 'Cardona 69 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.CARDONA_69_OP}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
+      decimals: 18
+    }
+  },
+
+  [ChainId.CARDONA_70_OP]: {
+    chainId: ChainId.CARDONA_70_OP,
+    type: NetworkType.TESTNET,
+    name: 'cardona-70-op',
+    title: 'Cardona 70 OP',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.CARDONA_70_OP}.webp`,
+    testnet: true,
+    nativeToken: {
+      symbol: 'ETH',
+      name: 'ETH',
       decimals: 18
     }
   }
