@@ -126,6 +126,7 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.BORNE_TESTNET, { disabled: true }),
   createNetworkConfig(ChainId.SKALE_NEBULA),
   createNetworkConfig(ChainId.SKALE_NEBULA_TESTNET, { disabled: true }),
+  createNetworkConfig(ChainId.SKALE_BASE_TESTNET),
   createNetworkConfig(ChainId.SONEIUM),
   createNetworkConfig(ChainId.SONEIUM_MINATO),
   createNetworkConfig(ChainId.TOY_TESTNET, { disabled: true }),

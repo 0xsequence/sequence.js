@@ -103,6 +103,9 @@ export enum ChainId {
   SKALE_NEBULA = 1482601649,
   SKALE_NEBULA_TESTNET = 37084624, // network is deprecated
 
+  // SKALE Base
+  SKALE_BASE_TESTNET = 324705682,
+
   // Soneium Minato
   SONEIUM_MINATO = 1946,
   SONEIUM = 1868,
@@ -869,6 +872,23 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     nativeToken: {
       symbol: 'sFUEL',
       name: 'SKALE Fuel',
+      decimals: 18
+    }
+  },
+  [ChainId.SKALE_BASE_TESTNET]: {
+    chainId: ChainId.SKALE_BASE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-base-testnet',
+    title: 'SKALE Base Testnet',
+    logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.SKALE_BASE_TESTNET}.webp`,
+    testnet: true,
+    blockExplorer: {
+      name: 'SKALE Base Testnet Explorer',
+      rootUrl: 'https://base-sepolia-testnet-explorer.skalenodes.com/'
+    },
+    nativeToken: {
+      symbol: 'CREDIT',
+      name: 'Credits',
       decimals: 18
     }
   },
