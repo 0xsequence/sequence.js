@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/wallet",
-  "version": "2.3.48",
+  "version": "2.3.49",
   "description": "wallet sub-package for Sequence",
   "repository": {
     "type": "git",

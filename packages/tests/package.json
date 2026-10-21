@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/tests",
-  "version": "2.3.47",
+  "version": "2.3.49",
   "description": "test tools for sequence.js",
   "repository": {
     "type": "git",

@@ -1,5 +1,15 @@
 # @0xsequence/core
 
+## 2.3.49
+
+### Patch Changes
+
+- [#1042](https://github.com/0xsequence/sequence.js/pull/1042) [`22375c8`](https://github.com/0xsequence/sequence.js/commit/22375c8c96b7f0ca741dc92d5dd0a2aea9a338d9) Thanks [@taylanpince](https://github.com/taylanpince)! - Release all v2 packages at one fixed version so the embedded VERSION matches the release
+
+- Updated dependencies []:
+  - @0xsequence/abi@2.3.49
+  - @0xsequence/utils@2.3.49
+
 ## 2.3.47
 
 ### Patch Changes

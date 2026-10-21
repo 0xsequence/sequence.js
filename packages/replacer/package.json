@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/replacer",
-  "version": "2.3.47",
+  "version": "2.3.49",
   "description": "EIP-5719 client implementation",
   "repository": {
     "type": "git",

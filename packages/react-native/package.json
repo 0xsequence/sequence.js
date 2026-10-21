@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/react-native",
-  "version": "2.3.48",
+  "version": "2.3.49",
   "description": "react-native compat-lib sub-package for Sequence",
   "repository": {
     "type": "git",

@@ -1,5 +1,7 @@
 # @0xsequence/metadata
 
+## 2.3.49
+
 ## 2.3.47
 
 ### Patch Changes

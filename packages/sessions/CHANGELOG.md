@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 2.3.49
+
+### Patch Changes
+
+- Updated dependencies [[`22375c8`](https://github.com/0xsequence/sequence.js/commit/22375c8c96b7f0ca741dc92d5dd0a2aea9a338d9)]:
+  - @0xsequence/core@2.3.49
+  - @0xsequence/migration@2.3.49
+  - @0xsequence/replacer@2.3.49
+  - @0xsequence/utils@2.3.49
+
 ## 2.3.48
 
 ### Patch Changes
