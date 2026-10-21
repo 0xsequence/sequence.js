@@ -84,6 +84,9 @@ export const ChainId = {
   // SKALE Nebula
   SKALE_NEBULA: 1482601649,
 
+  // SKALE Base
+  SKALE_BASE_TESTNET: 324705682,
+
   // Soneium Minato
   SONEIUM_MINATO: 1946,
   SONEIUM: 1868,
@@ -553,6 +556,26 @@ export const ALL: Network[] = [
     nativeCurrency: {
       symbol: 'sFUEL',
       name: 'SKALE Fuel',
+      decimals: 18,
+    },
+    contracts: {
+      multicall3: DEFAULT_MULTICALL3_ADDRESS,
+    },
+  },
+  {
+    chainId: ChainId.SKALE_BASE_TESTNET,
+    type: NetworkType.TESTNET,
+    name: 'skale-base-testnet',
+    title: 'SKALE Base Testnet',
+    rpcUrl: getRpcUrl('skale-base-testnet'),
+    logoUrl: getLogoUrl(ChainId.SKALE_BASE_TESTNET),
+    blockExplorer: {
+      name: 'SKALE Base Testnet Explorer',
+      url: 'https://base-sepolia-testnet-explorer.skalenodes.com/',
+    },
+    nativeCurrency: {
+      symbol: 'CREDIT',
+      name: 'Credits',
       decimals: 18,
     },
     contracts: {
