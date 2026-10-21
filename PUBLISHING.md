@@ -14,8 +14,9 @@ approval steps, failure recovery, and one-time setup. The differences on this br
 - **Release gates:** build (which includes typecheck), lint, and the release script tests, run before the release bot
   token is minted. The per-package test matrix in
   `tests.yml` already runs on every push to `v2`, including the release PR merge.
-- **Fixed versions:** all `@0xsequence/*` packages and `0xsequence` are `fixed`, so any changeset bumps every
-  package and a release stages them all at one version (the one `update-version` embeds from `@0xsequence/core`).
+- **Fixed versions:** all `@0xsequence/*` packages and `0xsequence` are `fixed`, so any non-empty changeset bumps
+  every package and a release stages them all at one version (the one `update-version` embeds from
+  `@0xsequence/core`). Empty changesets bump nothing, so they cannot realign versions on their own.
 
 ## Day-to-day: add a changeset
 
@@ -24,4 +25,5 @@ pnpm changeset
 ```
 
 The `Changeset check` CI job fails a PR into `v2` that touches a package without one
-(`pnpm changeset add --empty` for changes with no consumer impact).
+(`pnpm changeset add --empty` for changes with no consumer impact; an empty changeset satisfies the check but
+releases no packages).
