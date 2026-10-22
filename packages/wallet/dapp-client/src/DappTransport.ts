@@ -14,9 +14,26 @@ import {
 
 const isBrowserEnvironment = typeof window !== 'undefined' && typeof document !== 'undefined'
 
+const bytesToBinaryString = (bytes: Uint8Array) => {
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+  }
+  return binary
+}
+
+const binaryStringToBytes = (value: string) => {
+  const bytes = new Uint8Array(value.length)
+  for (let i = 0; i < value.length; i += 1) {
+    bytes[i] = value.charCodeAt(i)
+  }
+  return bytes
+}
+
 const base64Encode = (value: string) => {
-  if (typeof btoa !== 'undefined') {
-    return btoa(value)
+  if (typeof btoa !== 'undefined' && typeof TextEncoder !== 'undefined') {
+    return btoa(bytesToBinaryString(new TextEncoder().encode(value)))
   }
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(value, 'utf-8').toString('base64')
@@ -24,14 +41,29 @@ const base64Encode = (value: string) => {
   throw new Error('Base64 encoding is not supported in this environment.')
 }
 
-const base64Decode = (value: string) => {
-  if (typeof atob !== 'undefined') {
-    return atob(value)
+const base64Decode = (value: string, encoding?: string) => {
+  if (encoding === 'utf-8') {
+    if (typeof atob !== 'undefined' && typeof TextDecoder !== 'undefined') {
+      const decoded = atob(value)
+      try {
+        return new TextDecoder('utf-8', { fatal: true }).decode(binaryStringToBytes(decoded))
+      } catch {
+        return decoded
+      }
+    }
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(value, 'base64').toString('utf-8')
+    }
+    throw new Error('Base64 decoding is not supported in this environment.')
+  } else {
+    if (typeof atob !== 'undefined') {
+      return atob(value)
+    }
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(value, 'base64').toString('latin1')
+    }
+    throw new Error('Base64 decoding is not supported in this environment.')
   }
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(value, 'base64').toString('utf-8')
-  }
-  throw new Error('Base64 decoding is not supported in this environment.')
 }
 
 enum ConnectionState {
@@ -198,6 +230,7 @@ export class DappTransport {
     url.searchParams.set('id', id)
     url.searchParams.set('redirectUrl', redirectUrl)
     url.searchParams.set('mode', 'redirect')
+    url.searchParams.set('encoding', 'utf-8')
 
     return url.toString()
   }
@@ -237,12 +270,13 @@ export class DappTransport {
 
     const responsePayloadB64 = params.get('payload')
     const responseErrorB64 = params.get('error')
+    const encoding = params.get('encoding') || undefined
 
     if (cleanState) {
       await this.sequenceSessionStorage.removeItem(REDIRECT_REQUEST_KEY)
       if (this.isBrowser && !url && window.history) {
         const cleanUrl = new URL(window.location.href)
-        ;['id', 'payload', 'error', 'mode'].forEach((p) => cleanUrl.searchParams.delete(p))
+        ;['id', 'payload', 'error', 'mode', 'encoding'].forEach((p) => cleanUrl.searchParams.delete(p))
         history.replaceState({}, document.title, cleanUrl.toString())
       }
     }
@@ -250,7 +284,7 @@ export class DappTransport {
     if (responseErrorB64) {
       try {
         return {
-          error: JSON.parse(base64Decode(responseErrorB64), jsonRevivers),
+          error: JSON.parse(base64Decode(responseErrorB64, encoding), jsonRevivers),
           action: originalRequest.action,
         }
       } catch (e) {
@@ -264,7 +298,7 @@ export class DappTransport {
     if (responsePayloadB64) {
       try {
         return {
-          payload: JSON.parse(base64Decode(responsePayloadB64), jsonRevivers),
+          payload: JSON.parse(base64Decode(responsePayloadB64, encoding), jsonRevivers),
           action: originalRequest.action,
         }
       } catch (e) {
