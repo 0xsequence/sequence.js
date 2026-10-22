@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/signhub",
-  "version": "2.3.49",
+  "version": "2.3.50",
   "description": "orchestrates a series of signers, provides visibility into the signing process, and to the signers themselves",
   "repository": {
     "type": "git",
