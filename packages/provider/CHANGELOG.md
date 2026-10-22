@@ -1,5 +1,20 @@
 # @0xsequence/provider
 
+## 2.3.50
+
+### Patch Changes
+
+- Updated dependencies [[`a0f9e61`](https://github.com/0xsequence/sequence.js/commit/a0f9e61638dc76338bdf0d8645f3be7dfeb5d146)]:
+  - @0xsequence/network@2.3.50
+  - @0xsequence/account@2.3.50
+  - @0xsequence/auth@2.3.50
+  - @0xsequence/wallet@2.3.50
+  - @0xsequence/migration@2.3.50
+  - @0xsequence/abi@2.3.50
+  - @0xsequence/core@2.3.50
+  - @0xsequence/relayer@2.3.50
+  - @0xsequence/utils@2.3.50
+
 ## 2.3.49
 
 ### Patch Changes

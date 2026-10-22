@@ -1,5 +1,17 @@
 # @0xsequence/network
 
+## 2.3.50
+
+### Patch Changes
+
+- [#1045](https://github.com/0xsequence/sequence.js/pull/1045) [`a0f9e61`](https://github.com/0xsequence/sequence.js/commit/a0f9e61638dc76338bdf0d8645f3be7dfeb5d146) Thanks [@taylanpince](https://github.com/taylanpince)! - Add SKALE Base Testnet (324705682)
+
+- Updated dependencies []:
+  - @0xsequence/core@2.3.50
+  - @0xsequence/indexer@2.3.50
+  - @0xsequence/relayer@2.3.50
+  - @0xsequence/utils@2.3.50
+
 ## 2.3.49
 
 ### Patch Changes
