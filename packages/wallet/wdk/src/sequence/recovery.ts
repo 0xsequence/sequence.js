@@ -193,17 +193,17 @@ export class Recovery implements RecoveryInterface {
     transformer: (leaves: Extensions.Recovery.RecoveryLeaf[]) => Extensions.Recovery.RecoveryLeaf[],
   ) {
     const ext = this.shared.sequence.extensions.recovery
-    const idx = modules.findIndex((m) => Address.isEqual(m.sapientLeaf.address, ext))
-    if (idx === -1) {
+    const recoveryModule = modules.find((m) => Address.isEqual(m.sapientLeaf.address, ext))
+    if (!recoveryModule) {
       return
     }
 
-    const recoveryModule = modules[idx]
-    if (!recoveryModule) {
-      throw new Error('recovery-module-not-found')
-    }
+    const leaves = await this.getRecoveryLeaves(recoveryModule.sapientLeaf.imageHash)
+    await this.setRecoveryLeaves(recoveryModule, transformer(leaves))
+  }
 
-    const genericTree = await this.shared.sequence.stateProvider.getTree(recoveryModule.sapientLeaf.imageHash)
+  private async getRecoveryLeaves(imageHash: Hex.Hex): Promise<Extensions.Recovery.RecoveryLeaf[]> {
+    const genericTree = await this.shared.sequence.stateProvider.getTree(imageHash)
     if (!genericTree) {
       throw new Error('recovery-module-tree-not-found')
     }
@@ -214,14 +214,76 @@ export class Recovery implements RecoveryInterface {
       throw new Error('recovery-module-tree-incomplete')
     }
 
-    const nextTree = Extensions.Recovery.fromRecoveryLeaves(transformer(leaves))
+    return leaves
+  }
+
+  // Zero address and placeholder leaves are dropped. A recovery tree can't be empty,
+  // so if no signers are left the tree holds only the placeholder leaf, which can never be used.
+  private async setRecoveryLeaves(recoveryModule: Module, leaves: Extensions.Recovery.RecoveryLeaf[]) {
+    const signers = leaves.filter(
+      (l) => !Address.isEqual(l.signer, Constants.ZeroAddress) && !Extensions.Recovery.isPlaceholderLeaf(l),
+    )
+
+    const nextTree = Extensions.Recovery.fromRecoveryLeaves(
+      signers.length > 0 ? signers : [Extensions.Recovery.PLACEHOLDER_LEAF],
+    )
     const nextGeneric = Extensions.Recovery.toGenericTree(nextTree)
     await this.shared.sequence.stateProvider.saveTree(nextGeneric)
-    if (!modules[idx]) {
-      throw new Error('recovery-module-not-found-(unreachable)')
-    }
+    recoveryModule.sapientLeaf.imageHash = GenericTree.hash(nextGeneric)
+  }
 
-    modules[idx].sapientLeaf.imageHash = GenericTree.hash(nextGeneric)
+  private isRecoveryExtension(address: Address.Address): boolean {
+    return [
+      this.shared.sequence.extensions.recovery,
+      Extensions.Dev1.recovery,
+      Extensions.Dev2.recovery,
+      Extensions.Rc3.recovery,
+      Extensions.Rc4.recovery,
+      Extensions.Rc5.recovery,
+    ].some((ext) => Address.isEqual(ext, address))
+  }
+
+  /**
+   * Rewrites any recovery module (of any recovery extension) that contains a zero address leaf,
+   * so these leaves are never carried over to a new configuration.
+   */
+  async cleanModules(modules: Module[]) {
+    for (const module of modules) {
+      if (!this.isRecoveryExtension(module.sapientLeaf.address)) {
+        continue
+      }
+
+      const leaves = await this.getRecoveryLeaves(module.sapientLeaf.imageHash)
+      if (leaves.some((l) => Address.isEqual(l.signer, Constants.ZeroAddress))) {
+        await this.setRecoveryLeaves(module, leaves)
+      }
+    }
+  }
+
+  /**
+   * Throws if the configuration points to a recovery tree that can't be inspected
+   * or that contains a zero address leaf.
+   */
+  async assertConfiguration(configuration: Config.Config) {
+    const recoveryLeaves: Config.SapientSignerLeaf[] = []
+    const scan = (topology: Config.Topology) => {
+      if (Config.isNode(topology)) {
+        scan(topology[0])
+        scan(topology[1])
+      } else if (Config.isNestedLeaf(topology)) {
+        scan(topology.tree)
+      } else if (Config.isSapientSignerLeaf(topology) && this.isRecoveryExtension(topology.address)) {
+        recoveryLeaves.push(topology)
+      }
+    }
+    scan(configuration.topology)
+
+    for (const leaf of recoveryLeaves) {
+      const leaves = await this.getRecoveryLeaves(leaf.imageHash)
+      if (leaves.some((l) => Address.isEqual(l.signer, Constants.ZeroAddress))) {
+        throw new Error('recovery-module-zero-address-signer')
+      }
+    }
   }
 
   public async initRecoveryModule(modules: Module[], address: Address.Address) {
@@ -263,15 +325,20 @@ export class Recovery implements RecoveryInterface {
       throw new Error('recovery-module-not-enabled')
     }
 
+    if (
+      Address.isEqual(address, Constants.ZeroAddress) ||
+      Address.isEqual(address, Extensions.Recovery.PLACEHOLDER_SIGNER)
+    ) {
+      throw new Error('invalid-recovery-signer')
+    }
+
     await this.updateRecoveryModule(modules, (leaves) => {
       if (leaves.some((l) => Address.isEqual(l.signer, address))) {
         return leaves
       }
 
-      const filtered = leaves.filter((l) => !Address.isEqual(l.signer, Constants.ZeroAddress))
-
       return [
-        ...filtered,
+        ...leaves,
         {
           type: 'leaf',
           signer: address,
@@ -287,21 +354,8 @@ export class Recovery implements RecoveryInterface {
       throw new Error('recovery-module-not-enabled')
     }
 
-    await this.updateRecoveryModule(modules, (leaves) => {
-      const next = leaves.filter((l) => !Address.isEqual(l.signer, address))
-      if (next.length === 0) {
-        return [
-          {
-            type: 'leaf',
-            signer: Constants.ZeroAddress,
-            requiredDeltaTime: 0n,
-            minTimestamp: 0n,
-          },
-        ]
-      }
-
-      return next
-    })
+    // If no signers are left, the tree keeps only the placeholder leaf
+    await this.updateRecoveryModule(modules, (leaves) => leaves.filter((l) => !Address.isEqual(l.signer, address)))
   }
 
   async addMnemonic(wallet: Address.Address, mnemonic: string) {
@@ -360,31 +414,22 @@ export class Recovery implements RecoveryInterface {
       return undefined
     }
 
-    const recoveryGenericTree = await this.shared.sequence.stateProvider.getTree(recoveryModule.sapientLeaf.imageHash)
-    if (!recoveryGenericTree) {
-      throw new Error('recovery-module-tree-not-found')
-    }
-
-    const recoveryTree = Extensions.Recovery.fromGenericTree(recoveryGenericTree)
-    const { leaves, isComplete } = Extensions.Recovery.getRecoveryLeaves(recoveryTree)
-    if (!isComplete) {
-      throw new Error('recovery-module-tree-incomplete')
-    }
+    const leaves = (await this.getRecoveryLeaves(recoveryModule.sapientLeaf.imageHash)).filter(
+      (l) => !Address.isEqual(l.signer, Constants.ZeroAddress) && !Extensions.Recovery.isPlaceholderLeaf(l),
+    )
 
     const kos = await this.shared.modules.signers.resolveKinds(
       address,
       leaves.map((l) => l.signer),
     )
 
-    return leaves
-      .filter((l) => !Address.isEqual(l.signer, Constants.ZeroAddress))
-      .map((l) => ({
-        address: l.signer,
-        kind: kos.find((s) => Address.isEqual(s.address, l.signer))?.kind || 'unknown',
-        isRecovery: true,
-        minTimestamp: l.minTimestamp,
-        requiredDeltaTime: l.requiredDeltaTime,
-      }))
+    return leaves.map((l) => ({
+      address: l.signer,
+      kind: kos.find((s) => Address.isEqual(s.address, l.signer))?.kind || 'unknown',
+      isRecovery: true,
+      minTimestamp: l.minTimestamp,
+      requiredDeltaTime: l.requiredDeltaTime,
+    }))
   }
 
   async queuePayload(wallet: Address.Address, chainId: number, payload: Payload.Calls) {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { Address, Bytes, Hex } from 'ox'
+import { Address, Bytes, Hash, Hex } from 'ox'
 
 import {
   FLAG_RECOVERY_LEAF,
@@ -31,6 +31,9 @@ import {
   totalQueuedPayloads,
   queuedPayloadHashOf,
   timestampForQueuedPayload,
+  PLACEHOLDER_SIGNER,
+  PLACEHOLDER_LEAF,
+  isPlaceholderLeaf,
 } from '../src/extensions/recovery.js'
 import * as Payload from '../src/payload.js'
 import * as GenericTree from '../src/generic-tree.js'
@@ -390,6 +393,57 @@ describe('Recovery', () => {
 
       it('should throw for empty leaves array', () => {
         expect(() => fromRecoveryLeaves([])).toThrow('Cannot build a tree with zero leaves')
+      })
+
+      it('should throw for a zero address signer', () => {
+        const zeroLeaf: RecoveryLeaf = {
+          type: 'leaf',
+          signer: '0x0000000000000000000000000000000000000000',
+          requiredDeltaTime: 0n,
+          minTimestamp: 0n,
+        }
+
+        expect(() => fromRecoveryLeaves([zeroLeaf])).toThrow('Recovery leaf signer cannot be the zero address')
+        expect(() => fromRecoveryLeaves([sampleRecoveryLeaf, zeroLeaf, sampleRecoveryLeaf2])).toThrow(
+          'Recovery leaf signer cannot be the zero address',
+        )
+      })
+    })
+
+    describe('placeholder leaf', () => {
+      it('should derive the placeholder signer from a hash', () => {
+        const hash = Hash.keccak256(Bytes.fromString('Sequence recovery placeholder signer'))
+        expect(Address.isEqual(PLACEHOLDER_SIGNER, Address.from(Hex.fromBytes(hash.slice(12))))).toBe(true)
+        expect(Address.validate(PLACEHOLDER_SIGNER)).toBe(true)
+      })
+
+      it('should never be usable', () => {
+        expect(PLACEHOLDER_LEAF.signer).toBe(PLACEHOLDER_SIGNER)
+        expect(PLACEHOLDER_LEAF.minTimestamp).toBe(2n ** 64n - 1n)
+        expect(PLACEHOLDER_LEAF.requiredDeltaTime).toBe(2n ** 24n - 1n)
+      })
+
+      it('should build, encode and round trip a placeholder tree', () => {
+        const tree = fromRecoveryLeaves([PLACEHOLDER_LEAF])
+        expect(tree).toBe(PLACEHOLDER_LEAF)
+        for (const decoded of [decodeTopology(encodeTopology(tree)), fromGenericTree(toGenericTree(tree))]) {
+          expect(isRecoveryLeaf(decoded) && isPlaceholderLeaf(decoded)).toBe(true)
+          expect(hashConfiguration(decoded)).toBe(hashConfiguration(PLACEHOLDER_LEAF))
+        }
+        expect(hashConfiguration(tree)).not.toBe(
+          hashConfiguration({
+            type: 'leaf',
+            signer: '0x0000000000000000000000000000000000000000',
+            requiredDeltaTime: 0n,
+            minTimestamp: 0n,
+          }),
+        )
+      })
+
+      it('should identify placeholder leaves', () => {
+        expect(isPlaceholderLeaf(PLACEHOLDER_LEAF)).toBe(true)
+        expect(isPlaceholderLeaf({ ...PLACEHOLDER_LEAF, minTimestamp: 0n })).toBe(true)
+        expect(isPlaceholderLeaf(sampleRecoveryLeaf)).toBe(false)
       })
     })
 
