@@ -51,4 +51,5 @@ You can use this file as a reference to look up the correct network name slug a 
 | Sepolia | 11155111 | sepolia |
 | Optimism Sepolia | 11155420 | optimism-sepolia |
 | TOY (Testnet) | 21000000 | toy-testnet |
+| SKALE Base Testnet | 324705682 | skale-base-testnet |
 | SKALE Nebula Gaming Hub | 1482601649 | skale-nebula |
