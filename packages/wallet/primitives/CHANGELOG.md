@@ -1,5 +1,11 @@
 # @0xsequence/wallet-primitives
 
+## 3.0.15
+
+### Patch Changes
+
+- [#1044](https://github.com/0xsequence/sequence.js/pull/1044) [`eb3ce9c`](https://github.com/0xsequence/sequence.js/commit/eb3ce9c3a41ccd11c5e7cf1b6f21a40743706295) Thanks [@taylanpince](https://github.com/taylanpince)! - Add SKALE Base Testnet (324705682)
+
 ## 3.0.14
 
 ### Patch Changes
