@@ -5,7 +5,7 @@ import { mockEthereum } from './setup.js'
 import { Signers as CoreSigners, State, Bundler } from '@0xsequence/wallet-core'
 import { Relayer } from '@0xsequence/relayer'
 import * as Db from '../src/dbs/index.js'
-import { Network } from '@0xsequence/wallet-primitives'
+import { Extensions, Network } from '@0xsequence/wallet-primitives'
 
 // eslint-disable-next-line turbo/no-undeclared-env-vars
 const envFile = process.env.CI ? '.env.test' : '.env.test.local'
@@ -137,4 +137,17 @@ export function newRemoteManager(
     recoveryDb: effectiveOptions.recoveryDb || new Db.Recovery('sequence-recovery' + dbSuffix),
     ...effectiveOptions,
   })
+}
+
+// The Rc6 recovery module isn't deployed on Arbitrum yet. The Rc5 one runs the same code, apart
+// from refusing zero address signers, so the fork uses it in its place
+export async function ensureRecoveryModule() {
+  const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+  const code = await provider.request({ method: 'eth_getCode', params: [Extensions.Rc6.recovery, 'latest'] })
+  if (code !== '0x') {
+    return
+  }
+
+  const rc5Code = await provider.request({ method: 'eth_getCode', params: [Extensions.Rc5.recovery, 'latest'] })
+  await provider.request({ method: 'anvil_setCode', params: [Extensions.Rc6.recovery, rc5Code] })
 }

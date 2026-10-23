@@ -11,6 +11,7 @@ const RECOVERY_EXTENSIONS = [
   Extensions.Rc3.recovery,
   Extensions.Rc4.recovery,
   Extensions.Rc5.recovery,
+  Extensions.Rc6.recovery,
 ]
 
 const RECOVERY_LEAF_PREFIX = Bytes.fromString('Sequence recovery leaf:\n')
@@ -94,7 +95,12 @@ function hasZeroSignerLeaf(tree: GenericTree.Tree): boolean {
 }
 
 async function expectValidConfiguration(provider: State.Provider, configuration: Config.Config) {
-  for (const leaf of findRecoverySapientLeaves(configuration.topology)) {
+  // At most one recovery module, and always the current one
+  const recoveryModules = findRecoverySapientLeaves(configuration.topology)
+  expect(recoveryModules.length).toBeLessThanOrEqual(1)
+  expect(recoveryModules.every((leaf) => Address.isEqual(leaf.address, Extensions.Rc6.recovery))).toBe(true)
+
+  for (const leaf of recoveryModules) {
     expect(leaf.imageHash).not.toBe(ZERO_LEAF_IMAGE_HASH)
 
     const tree = await provider.getTree(leaf.imageHash)
@@ -126,9 +132,14 @@ async function expectValidConfigurations(provider: RecordingProvider, from = 0) 
   }
 }
 
-async function recoveryLeaves(manager: Manager, provider: State.Provider, wallet: Address.Address) {
+async function recoveryLeaves(
+  manager: Manager,
+  provider: State.Provider,
+  wallet: Address.Address,
+  extension: Address.Address = Extensions.Rc6.recovery,
+) {
   const { modules } = await manager.wallets.getConfigurationParts(wallet)
-  const recovery = modules.find((m) => Address.isEqual(m.sapientLeaf.address, Extensions.Rc5.recovery))
+  const recovery = modules.find((m) => Address.isEqual(m.sapientLeaf.address, extension))
   if (!recovery) {
     return undefined
   }
@@ -214,7 +225,7 @@ async function writeRecoveryTree(
   provider: State.Provider,
   wallet: Address.Address,
   leaves: Extensions.Recovery.RecoveryLeaf[],
-  extension: Address.Address = Extensions.Rc5.recovery,
+  extension: Address.Address = Extensions.Rc6.recovery,
 ) {
   // Built by hand, as fromRecoveryLeaves refuses zero address signers
   const tree = leaves
@@ -440,6 +451,15 @@ describe('Recovery configuration', () => {
     findRecoverySapientLeaves(withUnknownTree.topology)[0]!.imageHash = Hex.random(32)
     await expect(recovery.assertConfiguration(withUnknownTree)).rejects.toThrow('recovery-module-tree-not-found')
 
+    // Or to the recovery module of an earlier release, or to more than one recovery module
+    const withLegacyModule = structuredClone(configuration)
+    findRecoverySapientLeaves(withLegacyModule.topology)[0]!.address = Extensions.Rc5.recovery
+    await expect(recovery.assertConfiguration(withLegacyModule)).rejects.toThrow('recovery-module-not-migrated')
+
+    const withTwoModules = structuredClone(configuration)
+    withTwoModules.topology = [withTwoModules.topology, findRecoverySapientLeaves(configuration.topology)[0]!]
+    await expect(recovery.assertConfiguration(withTwoModules)).rejects.toThrow('recovery-module-duplicated')
+
     await expect(recovery.assertConfiguration(configuration)).resolves.toBeUndefined()
   })
 
@@ -549,39 +569,46 @@ describe('Recovery configuration', () => {
       ['a zero address leaf next to the device', (device) => [deviceLeaf(device), ZERO_LEAF]],
     ]
 
-    for (const [shapeName, shape] of shapes) {
-      for (const [flowName, flow] of flows) {
-        it(`Should clean ${shapeName} on ${flowName}`, async () => {
-          const provider = new RecordingProvider()
-          const mnemonic = Mnemonic.random(Mnemonic.english)
-          const manager = newManager({ stateProvider: provider }, undefined, `legacy-${flowName}`)
-          const wallet = (await manager.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true }))!
-          const device = await localDevice(manager, wallet)
+    const extensions: [string, Address.Address][] = [
+      ['', Extensions.Rc6.recovery],
+      [' of an earlier recovery module', Extensions.Rc5.recovery],
+    ]
 
-          await writeRecoveryTree(manager, provider, wallet, shape(device))
-          const leaves = await recoveryLeaves(manager, provider, wallet)
-          expect(leaves?.some((l) => Address.isEqual(l.signer, Constants.ZeroAddress))).toBe(true)
-          const from = provider.configurations.length
+    for (const [extensionName, extension] of extensions) {
+      for (const [shapeName, shape] of shapes) {
+        for (const [flowName, flow] of flows) {
+          it(`Should clean ${shapeName}${extensionName} on ${flowName}`, async () => {
+            const provider = new RecordingProvider()
+            const mnemonic = Mnemonic.random(Mnemonic.english)
+            const manager = newManager({ stateProvider: provider }, undefined, `legacy-${flowName}`)
+            const wallet = (await manager.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true }))!
+            const device = await localDevice(manager, wallet)
 
-          const result = await flow({ manager, provider, wallet, mnemonic, device })
+            await writeRecoveryTree(manager, provider, wallet, shape(device), extension)
+            const leaves = await recoveryLeaves(manager, provider, wallet, extension)
+            expect(leaves?.some((l) => Address.isEqual(l.signer, Constants.ZeroAddress))).toBe(true)
+            const from = provider.configurations.length
 
-          // The device is only expected if it was a recovery signer to begin with
-          const deviceWasSigner = shape(device).some((l) => Address.isEqual(l.signer, device))
-          const expectedSigners = result
-            .expected(device)
-            .filter((signer) => deviceWasSigner || !Address.isEqual(signer, device))
-          const nextLeaves = await recoveryLeaves(result.manager, provider, wallet)
-          if (expectedSigners.length === 0) {
-            expectPlaceholder(nextLeaves)
-          } else {
-            expect(nextLeaves?.map((l) => l.signer).sort()).toEqual([...expectedSigners].sort())
-          }
-          await expectValidConfigurations(provider, from)
-        })
+            const result = await flow({ manager, provider, wallet, mnemonic, device })
+
+            // The device is only expected if it was a recovery signer to begin with
+            const deviceWasSigner = shape(device).some((l) => Address.isEqual(l.signer, device))
+            const expectedSigners = result
+              .expected(device)
+              .filter((signer) => deviceWasSigner || !Address.isEqual(signer, device))
+            const nextLeaves = await recoveryLeaves(result.manager, provider, wallet)
+            if (expectedSigners.length === 0) {
+              expectPlaceholder(nextLeaves)
+            } else {
+              expect(nextLeaves?.map((l) => l.signer).sort()).toEqual([...expectedSigners].sort())
+            }
+            await expectValidConfigurations(provider, from)
+          })
+        }
       }
     }
 
-    it('Should clean a zero address leaf of an older recovery extension', async () => {
+    it('Should clean a zero address leaf of an older recovery extension, and move it to the current one', async () => {
       const provider = new RecordingProvider()
       const manager = newManager({ stateProvider: provider })
       const wallet = (await manager.wallets.signUp({
@@ -597,11 +624,138 @@ describe('Recovery configuration', () => {
       await signWithDevice(manager, requestId)
       await manager.sessions.complete(requestId)
 
-      const { modules } = await manager.wallets.getConfigurationParts(wallet)
-      const recovery = modules.find((m) => Address.isEqual(m.sapientLeaf.address, Extensions.Rc3.recovery))
-      const tree = await provider.getTree(recovery!.sapientLeaf.imageHash)
-      expectPlaceholder(Extensions.Recovery.getRecoveryLeaves(Extensions.Recovery.fromGenericTree(tree!)).leaves)
+      expect(await recoveryLeaves(manager, provider, wallet, Extensions.Rc3.recovery)).toBeUndefined()
+      expectPlaceholder(await recoveryLeaves(manager, provider, wallet))
       await expectValidConfigurations(provider, from)
+    })
+  })
+
+  describe('Wallets with the recovery module of an earlier release', () => {
+    it('Should be recognized and moved to the current recovery module on login', async () => {
+      const provider = new RecordingProvider()
+      const mnemonic = Mnemonic.random(Mnemonic.english)
+      const manager1 = newManager({ stateProvider: provider, extensions: Extensions.Rc5 }, undefined, 'earlier-1')
+      const wallet = (await manager1.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true }))!
+      const device1 = await localDevice(manager1, wallet)
+      expect((await recoveryLeaves(manager1, provider, wallet, Extensions.Rc5.recovery))?.map((l) => l.signer)).toEqual(
+        [device1],
+      )
+
+      // A manager on the current release already sees the recovery signers
+      const viewer = newManager({ stateProvider: provider }, undefined, 'earlier-viewer')
+      expect((await viewer.recovery.getSigners(wallet))?.map((s) => s.address)).toEqual([device1])
+
+      const from = provider.configurations.length
+      const manager2 = await loginNewDevice(provider, wallet, mnemonic, 'earlier-2')
+      const device2 = await localDevice(manager2, wallet)
+      expect(await recoveryLeaves(manager2, provider, wallet, Extensions.Rc5.recovery)).toBeUndefined()
+      expect((await recoveryLeaves(manager2, provider, wallet))?.map((l) => l.signer).sort()).toEqual(
+        [device1, device2].sort(),
+      )
+
+      await expectValidConfigurations(provider, from)
+      await Promise.all([manager1.stop(), viewer.stop(), manager2.stop()])
+    })
+
+    it('Should keep the recovery tree when moving to the current recovery module', async () => {
+      const provider = new RecordingProvider()
+      const manager = newManager({ stateProvider: provider })
+      const wallet = (await manager.wallets.signUp({
+        mnemonic: Mnemonic.random(Mnemonic.english),
+        kind: 'mnemonic',
+        noGuard: true,
+      }))!
+      const device = await localDevice(manager, wallet)
+      const signer = Address.from(Hex.random(20))
+
+      await writeRecoveryTree(
+        manager,
+        provider,
+        wallet,
+        [deviceLeaf(device), deviceLeaf(signer)],
+        Extensions.Rc4.recovery,
+      )
+      const { modules: before } = await manager.wallets.getConfigurationParts(wallet)
+      const imageHash = before.find((m) => Address.isEqual(m.sapientLeaf.address, Extensions.Rc4.recovery))!.sapientLeaf
+        .imageHash
+      const from = provider.configurations.length
+
+      const requestId = await manager.sessions.addBlacklistAddress(wallet, Address.from(Hex.random(20)))
+      await signWithDevice(manager, requestId)
+      await manager.sessions.complete(requestId)
+
+      const { modules: after } = await manager.wallets.getConfigurationParts(wallet)
+      const recovery = after.filter((m) => isRecoveryExtension(m.sapientLeaf.address))
+      expect(recovery.length).toBe(1)
+      expect(recovery[0]!.sapientLeaf.address).toBe(Extensions.Rc6.recovery)
+      expect(recovery[0]!.sapientLeaf.imageHash).toBe(imageHash)
+      expect((await manager.recovery.getSigners(wallet))?.map((s) => s.address)).toEqual([device, signer])
+
+      await expectValidConfigurations(provider, from)
+    })
+
+    it('Should merge a second recovery module into the current one', async () => {
+      const provider = new RecordingProvider()
+      const manager = newManager({ stateProvider: provider })
+      const wallet = (await manager.wallets.signUp({
+        mnemonic: Mnemonic.random(Mnemonic.english),
+        kind: 'mnemonic',
+        noGuard: true,
+      }))!
+      const device = await localDevice(manager, wallet)
+      const signer = Address.from(Hex.random(20))
+
+      // Next to the current recovery module, a wallet ends up with one of an earlier release
+      const tree = Extensions.Recovery.toGenericTree(
+        Extensions.Recovery.fromRecoveryLeaves([deviceLeaf(signer), deviceLeaf(device)]),
+      )
+      await provider.saveTree(tree)
+      await writeConfigurationUpdate(manager, wallet, (configuration) => {
+        const [signers, modules] = configuration.topology as Config.Node
+        configuration.topology = [
+          signers,
+          [
+            modules,
+            {
+              type: 'sapient-signer',
+              address: Extensions.Rc5.recovery,
+              weight: 255n,
+              imageHash: GenericTree.hash(tree),
+            },
+          ],
+        ]
+      })
+      const from = provider.configurations.length
+
+      // Adding a recovery signer doesn't add a third module
+      const added = Address.from(Hex.random(20))
+      const requestId = await manager.recovery.addSigner(wallet, added)
+      await signWithDevice(manager, requestId)
+      await manager.recovery.completeUpdate(requestId)
+
+      const { modules } = await manager.wallets.getConfigurationParts(wallet)
+      expect(modules.filter((m) => isRecoveryExtension(m.sapientLeaf.address)).length).toBe(1)
+      expect((await recoveryLeaves(manager, provider, wallet))?.map((l) => l.signer).sort()).toEqual(
+        [device, added, signer].sort(),
+      )
+
+      await expectValidConfigurations(provider, from)
+    })
+
+    it('Should only treat earlier releases as earlier recovery modules', async () => {
+      const recoveryOf = (manager: Manager) => (manager as any).shared.modules.recovery
+
+      const current = recoveryOf(newManager())
+      expect(current.isRecoveryModule(Extensions.Rc6.recovery)).toBe(true)
+      expect(current.isRecoveryModule(Extensions.Rc5.recovery)).toBe(true)
+      expect(current.isRecoveryModule(Extensions.Rc3.recovery)).toBe(true)
+      expect(current.isRecoveryModule(Extensions.Dev2.recovery)).toBe(false)
+
+      // A manager pinned to an earlier release never moves wallets to an older module
+      const pinned = recoveryOf(newManager({ extensions: Extensions.Rc5 }))
+      expect(pinned.isRecoveryModule(Extensions.Rc5.recovery)).toBe(true)
+      expect(pinned.isRecoveryModule(Extensions.Rc4.recovery)).toBe(true)
+      expect(pinned.isRecoveryModule(Extensions.Rc6.recovery)).toBe(false)
     })
   })
 })

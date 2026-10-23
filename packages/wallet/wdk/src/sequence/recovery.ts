@@ -11,6 +11,15 @@ const AGGREGATE3 = Abi.from([
   'function aggregate3((address target, bool allowFailure, bytes callData)[] calls) external payable returns ((bool success, bytes returnData)[])',
 ])[0]!
 
+// Recovery modules of every release, oldest first. Wallets that use the recovery module of an
+// earlier release than the configured one are moved to it on their next configuration update.
+const RECOVERY_RELEASES = [
+  Extensions.Rc3.recovery,
+  Extensions.Rc4.recovery,
+  Extensions.Rc5.recovery,
+  Extensions.Rc6.recovery,
+]
+
 export interface RecoveryInterface {
   /**
    * Retrieves the list of configured recovery signers for a given wallet.
@@ -192,8 +201,7 @@ export class Recovery implements RecoveryInterface {
     modules: Module[],
     transformer: (leaves: Extensions.Recovery.RecoveryLeaf[]) => Extensions.Recovery.RecoveryLeaf[],
   ) {
-    const ext = this.shared.sequence.extensions.recovery
-    const recoveryModule = modules.find((m) => Address.isEqual(m.sapientLeaf.address, ext))
+    const recoveryModule = this.findRecoveryModule(modules)
     if (!recoveryModule) {
       return
     }
@@ -237,15 +245,40 @@ export class Recovery implements RecoveryInterface {
       this.shared.sequence.extensions.recovery,
       Extensions.Dev1.recovery,
       Extensions.Dev2.recovery,
-      Extensions.Rc3.recovery,
-      Extensions.Rc4.recovery,
-      Extensions.Rc5.recovery,
+      ...RECOVERY_RELEASES,
     ].some((ext) => Address.isEqual(ext, address))
+  }
+
+  private isLegacyRecoveryModule(address: Address.Address): boolean {
+    const current = RECOVERY_RELEASES.findIndex((ext) => Address.isEqual(ext, this.shared.sequence.extensions.recovery))
+    const index = RECOVERY_RELEASES.findIndex((ext) => Address.isEqual(ext, address))
+    return index !== -1 && index < current
+  }
+
+  /**
+   * Checks if an address is the recovery module, or the recovery module of an earlier release
+   */
+  isRecoveryModule(address: Address.Address): boolean {
+    return Address.isEqual(address, this.shared.sequence.extensions.recovery) || this.isLegacyRecoveryModule(address)
+  }
+
+  // The current recovery module is preferred over the one of an earlier release
+  private findRecoveryModule(modules: Module[]): Module | undefined {
+    return (
+      modules.find((m) => Address.isEqual(m.sapientLeaf.address, this.shared.sequence.extensions.recovery)) ??
+      modules.find((m) => this.isRecoveryModule(m.sapientLeaf.address))
+    )
+  }
+
+  private async getRecoveryModule(wallet: Address.Address): Promise<Module | undefined> {
+    const { modules } = await this.shared.modules.wallets.getConfigurationParts(wallet)
+    return this.findRecoveryModule(modules)
   }
 
   /**
    * Rewrites any recovery module (of any recovery extension) that contains a zero address leaf,
-   * so these leaves are never carried over to a new configuration.
+   * so these leaves are never carried over to a new configuration. A recovery module of an
+   * earlier release is moved to the current one, keeping its signers.
    */
   async cleanModules(modules: Module[]) {
     for (const module of modules) {
@@ -258,11 +291,41 @@ export class Recovery implements RecoveryInterface {
         await this.setRecoveryLeaves(module, leaves)
       }
     }
+
+    const recoveryModules = modules.filter((m) => this.isRecoveryModule(m.sapientLeaf.address))
+    const recoveryModule = this.findRecoveryModule(recoveryModules)
+    if (!recoveryModule) {
+      return
+    }
+
+    // A wallet has a single recovery module, any other one is merged into it
+    const others = recoveryModules.filter((m) => m !== recoveryModule)
+    if (others.length > 0) {
+      const leaves: Extensions.Recovery.RecoveryLeaf[] = []
+      for (const module of [recoveryModule, ...others]) {
+        leaves.push(...(await this.getRecoveryLeaves(module.sapientLeaf.imageHash)))
+        if (module !== recoveryModule) {
+          modules.splice(modules.indexOf(module), 1)
+        }
+      }
+
+      await this.setRecoveryLeaves(
+        recoveryModule,
+        leaves.filter((l, i) => leaves.findIndex((o) => Address.isEqual(o.signer, l.signer)) === i),
+      )
+    }
+
+    // The recovery tree doesn't depend on the module address, so it is kept as is
+    recoveryModule.sapientLeaf = {
+      ...recoveryModule.sapientLeaf,
+      address: this.shared.sequence.extensions.recovery,
+    }
   }
 
   /**
    * Throws if the configuration points to a recovery tree that can't be inspected
-   * or that contains a zero address leaf.
+   * or that contains a zero address leaf, or if it has more than one recovery module
+   * or the recovery module of an earlier release.
    */
   async assertConfiguration(configuration: Config.Config) {
     const recoveryLeaves: Config.SapientSignerLeaf[] = []
@@ -277,6 +340,13 @@ export class Recovery implements RecoveryInterface {
       }
     }
     scan(configuration.topology)
+
+    if (recoveryLeaves.some((l) => this.isLegacyRecoveryModule(l.address))) {
+      throw new Error('recovery-module-not-migrated')
+    }
+    if (recoveryLeaves.filter((l) => this.isRecoveryModule(l.address)).length > 1) {
+      throw new Error('recovery-module-duplicated')
+    }
 
     for (const leaf of recoveryLeaves) {
       const leaves = await this.getRecoveryLeaves(leaf.imageHash)
@@ -317,7 +387,7 @@ export class Recovery implements RecoveryInterface {
   }
 
   hasRecoveryModule(modules: Module[]): boolean {
-    return modules.some((m) => Address.isEqual(m.sapientLeaf.address, this.shared.sequence.extensions.recovery))
+    return modules.some((m) => this.isRecoveryModule(m.sapientLeaf.address))
   }
 
   async addRecoverySignerToModules(modules: Module[], address: Address.Address) {
@@ -406,14 +476,15 @@ export class Recovery implements RecoveryInterface {
   }
 
   async getSigners(address: Address.Address): Promise<RecoverySigner[] | undefined> {
-    const { raw } = await this.shared.modules.wallets.getConfiguration(address)
-    const recoveryModule = raw.modules.find((m) =>
-      Address.isEqual(m.sapientLeaf.address, this.shared.sequence.extensions.recovery),
-    )
+    const recoveryModule = await this.getRecoveryModule(address)
     if (!recoveryModule) {
       return undefined
     }
 
+    return this.getModuleSigners(address, recoveryModule)
+  }
+
+  private async getModuleSigners(address: Address.Address, recoveryModule: Module): Promise<RecoverySigner[]> {
     const leaves = (await this.getRecoveryLeaves(recoveryModule.sapientLeaf.imageHash)).filter(
       (l) => !Address.isEqual(l.signer, Constants.ZeroAddress) && !Extensions.Recovery.isPlaceholderLeaf(l),
     )
@@ -503,8 +574,14 @@ export class Recovery implements RecoveryInterface {
       validSignature.signature,
     )
 
+    // The payload is queued on the recovery module that the wallet configuration uses
+    const recoveryModule = await this.getRecoveryModule(signature.wallet)
+    if (!recoveryModule) {
+      throw new Error('recovery-module-not-enabled')
+    }
+
     return {
-      to: this.shared.sequence.extensions.recovery,
+      to: recoveryModule.sapientLeaf.address,
       data: calldata,
     }
   }
@@ -576,13 +653,18 @@ export class Recovery implements RecoveryInterface {
         provider: Provider.from(RpcTransport.fromHttp(network.rpcUrl)),
       }))
 
-    // See if they have any recover signers
-    const signers = await this.getSigners(wallet)
-    if (!signers || signers.length === 0) {
+    // See if they have any recover signers, on the recovery module that the wallet configuration uses
+    const recoveryModule = await this.getRecoveryModule(wallet)
+    if (!recoveryModule) {
       return []
     }
 
-    const recoveryExtension = this.shared.sequence.extensions.recovery
+    const signers = await this.getModuleSigners(wallet, recoveryModule)
+    if (signers.length === 0) {
+      return []
+    }
+
+    const recoveryExtension = recoveryModule.sapientLeaf.address
     const payloads: QueuedRecoveryPayload[] = []
 
     await Promise.all(
