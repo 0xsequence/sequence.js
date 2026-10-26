@@ -74,9 +74,6 @@ export const ChainId = {
   TELOS: 40,
   TELOS_TESTNET: 41,
 
-  // B3 Sepolia
-  B3: 8333,
-
   // APE Chain
   APECHAIN: 33139,
   APECHAIN_TESTNET: 33111,
@@ -436,26 +433,6 @@ export const ALL: Network[] = [
     nativeCurrency: {
       symbol: 'sETH',
       name: 'Sepolia Ether',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.B3,
-    type: NetworkType.MAINNET,
-    name: 'b3',
-    title: 'B3',
-    rpcUrl: getRpcUrl('b3'),
-    logoUrl: getLogoUrl(ChainId.B3),
-    blockExplorer: {
-      name: 'B3 Explorer',
-      url: 'https://explorer.b3.fun/',
-    },
-    nativeCurrency: {
-      symbol: 'ETH',
-      name: 'Ether',
       decimals: 18,
     },
     contracts: {
