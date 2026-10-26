@@ -85,7 +85,7 @@ export enum ChainId {
   TELOS_TESTNET = 41,
 
   // B3 Sepolia
-  B3 = 8333,
+  B3 = 8333, // network is deprecated
   B3_SEPOLIA = 1993, // network is deprecated
 
   // APE Chain
@@ -693,6 +693,7 @@ export const networks: Record<ChainId, NetworkMetadata> = {
     title: 'B3',
     logoURI: `https://assets.sequence.info/images/networks/medium/${ChainId.B3}.webp`,
     testnet: false,
+    deprecated: true,
     blockExplorer: {
       name: 'B3 Explorer',
       rootUrl: 'https://explorer.b3.fun/'
