@@ -115,7 +115,7 @@ export const allNetworks = validateAndSortNetworks([
   createNetworkConfig(ChainId.XAI, { disabled: true }),
   createNetworkConfig(ChainId.XAI_SEPOLIA, { disabled: true }),
   createNetworkConfig(ChainId.AVALANCHE_TESTNET),
-  createNetworkConfig(ChainId.B3),
+  createNetworkConfig(ChainId.B3, { disabled: true }),
   createNetworkConfig(ChainId.B3_SEPOLIA, { disabled: true }),
   createNetworkConfig(ChainId.APECHAIN),
   createNetworkConfig(ChainId.APECHAIN_TESTNET),
