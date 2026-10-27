@@ -102,4 +102,21 @@ describe('Arweave signature check', () => {
     } as unknown as ethers.Provider
     expect(await trackers.arweave.checkSignature(failing, signer.address, digest, '0x1234', true)).to.equal(undefined)
   })
+
+  it('Should count a revert from the signer contract as invalid', async () => {
+    const reverting = {
+      getCode: async () => '0x6000',
+      call: async () => {
+        throw ethers.makeError('execution reverted', 'CALL_EXCEPTION', {
+          action: 'call',
+          data: '0x',
+          reason: null,
+          transaction: { to: null, data: '0x' },
+          invocation: null,
+          revert: null
+        })
+      }
+    } as unknown as ethers.Provider
+    expect(await trackers.arweave.checkSignature(reverting, signer.address, digest, '0x1234', true)).to.equal(false)
+  })
 })
