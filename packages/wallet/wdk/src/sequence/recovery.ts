@@ -237,7 +237,17 @@ export class Recovery implements RecoveryInterface {
     )
     const nextGeneric = Extensions.Recovery.toGenericTree(nextTree)
     await this.shared.sequence.stateProvider.saveTree(nextGeneric)
-    recoveryModule.sapientLeaf.imageHash = GenericTree.hash(nextGeneric)
+    const imageHash = GenericTree.hash(nextGeneric)
+    await this.assertRecoveryTree(imageHash)
+    recoveryModule.sapientLeaf.imageHash = imageHash
+  }
+
+  // Throws if the recovery tree can't be inspected or contains a zero address leaf
+  private async assertRecoveryTree(imageHash: Hex.Hex) {
+    const leaves = await this.getRecoveryLeaves(imageHash)
+    if (leaves.some((l) => Address.isEqual(l.signer, Constants.ZeroAddress))) {
+      throw new Error('recovery-module-zero-address-signer')
+    }
   }
 
   private isRecoveryExtension(address: Address.Address): boolean {
@@ -349,10 +359,7 @@ export class Recovery implements RecoveryInterface {
     }
 
     for (const leaf of recoveryLeaves) {
-      const leaves = await this.getRecoveryLeaves(leaf.imageHash)
-      if (leaves.some((l) => Address.isEqual(l.signer, Constants.ZeroAddress))) {
-        throw new Error('recovery-module-zero-address-signer')
-      }
+      await this.assertRecoveryTree(leaf.imageHash)
     }
   }
 
