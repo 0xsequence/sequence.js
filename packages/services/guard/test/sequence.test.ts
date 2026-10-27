@@ -152,6 +152,22 @@ describe('Sequence', () => {
         expect(requestBody.signer).toBe(mockGuardAddress)
       })
 
+      it('Should send the configured client headers', async () => {
+        const customGuard = new Guard('https://guard.sequence.app', testWallet, fetch, {
+          'X-Sequence-Client': 'dapp-client',
+        })
+
+        mockFetch.mockResolvedValueOnce({
+          json: async () => ({ sig: '0x' + '12'.repeat(64) + '1b' }),
+          text: async () => JSON.stringify({ sig: '0x' + '12'.repeat(64) + '1b' }),
+          ok: true,
+        })
+
+        await customGuard.signPayload(testWallet, 42161, PayloadType.Calls, testMessageDigest, testMessage)
+
+        expect(mockFetch.mock.calls[0][1].headers['X-Sequence-Client']).toBe('dapp-client')
+      })
+
       describe('Error Handling', () => {
         it('Should handle malformed guard service response', async () => {
           mockFetch.mockResolvedValueOnce({

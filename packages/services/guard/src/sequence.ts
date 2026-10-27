@@ -6,7 +6,13 @@ export class Guard implements Types.Guard {
   private readonly guard?: Client.Guard
   public readonly address: Address.Address
 
-  constructor(hostname: string, address: Address.Address, fetch?: Client.Fetch) {
+  // `headers` are sent with every signing request, e.g. `X-Sequence-Client` so the guard can tell SDKs apart
+  constructor(
+    hostname: string,
+    address: Address.Address,
+    fetch?: Client.Fetch,
+    private readonly headers?: Record<string, string>,
+  ) {
     if (hostname && address) {
       this.guard = new Client.Guard(hostname, fetch ?? window.fetch)
     }
@@ -27,18 +33,21 @@ export class Guard implements Types.Guard {
     }
 
     try {
-      const res = await this.guard.signWith({
-        signer: this.address,
-        request: {
-          chainId: chainId,
-          msg: Hex.fromBytes(digest),
-          wallet,
-          payloadType: type,
-          payloadData: Hex.fromBytes(message),
-          signatures,
+      const res = await this.guard.signWith(
+        {
+          signer: this.address,
+          request: {
+            chainId: chainId,
+            msg: Hex.fromBytes(digest),
+            wallet,
+            payloadType: type,
+            payloadData: Hex.fromBytes(message),
+            signatures,
+          },
+          token,
         },
-        token,
-      })
+        this.headers,
+      )
 
       Hex.assert(res.sig)
       return Signature.fromHex(res.sig)

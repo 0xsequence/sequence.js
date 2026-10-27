@@ -1,6 +1,10 @@
 import { Config } from '@0xsequence/wallet-primitives'
 import { Address } from 'ox'
 
+// Tells the guard which SDK asks for a co-signature. Only clients that resolve the guard from the wallet configuration
+// send it, so its share of sessions-role requests measures how many dapps can follow a guard key rotation.
+export const GUARD_CLIENT_HEADERS = { 'X-Sequence-Client': 'dapp-client' }
+
 function findModuleGuardLeaf(topology: Config.Topology, moduleAddress: Address.Address): Config.Topology | undefined {
   if (Config.isNode(topology)) {
     return findModuleGuardLeaf(topology[0], moduleAddress) ?? findModuleGuardLeaf(topology[1], moduleAddress)
