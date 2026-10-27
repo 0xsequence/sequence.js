@@ -1371,6 +1371,19 @@ export class Wallets implements WalletsInterface {
 
     await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>)
     await this.shared.modules.signatures.complete(requestId)
+
+    // If this update moved the wallet off a rotated-out guard, ask for the settlement of the new configuration
+    const previous = fromConfig(request.envelope.configuration)
+    if (
+      this.shared.sequence.onGuardSettlement &&
+      this.migrateGuardParts(previous.modules, previous.guardTopology).changed
+    ) {
+      try {
+        await this.prepareGuardSettlement(request.wallet)
+      } catch (error) {
+        this.shared.modules.logger.log('Failed to request guard settlement', error)
+      }
+    }
   }
 
   async login(args: LoginArgs): Promise<string> {

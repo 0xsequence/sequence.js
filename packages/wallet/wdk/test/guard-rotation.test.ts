@@ -178,9 +178,12 @@ describe('Guard rotation', () => {
     await manager!.wallets.completeConfigurationUpdate(migrationId!)
     guardRequests.length = 0
 
-    const settlementId = await manager!.wallets.prepareGuardSettlement(wallet)
-    expect(settlementId).toBeDefined()
-    await signAll(manager!, settlementId!)
+    // Completing the migration queues the settlement request
+    const pending = await manager!.signatures.list()
+    const queued = pending.filter((r) => r.action === 'guard-settlement' && r.status === 'pending')
+    expect(queued.length).toBe(1)
+    const settlementId = queued[0]!.id
+    await signAll(manager!, settlementId)
 
     // The settlement is signed under the new configuration, so the new guard co-signs it
     expect(guardRequests).toEqual([newGuards.wallet])
@@ -210,5 +213,16 @@ describe('Guard rotation', () => {
     const recovered = await SequenceSignature.recover(decoded, wallet, 0, settlement.envelope.payload as Payload.Calls)
     expect(Bytes.toHex(Config.hashConfiguration(recovered.configuration))).toBe(imageHash)
     expect(recovered.weight >= recovered.configuration.threshold).toBe(true)
+  })
+
+  it('Should not queue a settlement when the update did not move the wallet off an old guard', async () => {
+    const wallet = await signUpWithOldGuards()
+
+    const requestId = await manager!.wallets.logout(wallet)
+    await signAll(manager!, requestId)
+    await manager!.wallets.completeConfigurationUpdate(requestId)
+
+    const pending = await manager!.signatures.list()
+    expect(pending.filter((r) => r.action === 'guard-settlement').length).toBe(0)
   })
 })
