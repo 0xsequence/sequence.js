@@ -1,5 +1,16 @@
 # @0xsequence/wallet-wdk
 
+## 3.1.3
+
+### Patch Changes
+
+- [#1048](https://github.com/0xsequence/sequence.js/pull/1048) [`012973f`](https://github.com/0xsequence/sequence.js/commit/012973f1808bb6e870115db0570db12ad96aaf13) Thanks [@Agusx1211](https://github.com/Agusx1211)! - Use an unusable placeholder leaf for recovery trees without signers, clean up zero address recovery leaves on every configuration update, and reject recovery leaves for the zero address
+
+- [#1048](https://github.com/0xsequence/sequence.js/pull/1048) [`012973f`](https://github.com/0xsequence/sequence.js/commit/012973f1808bb6e870115db0570db12ad96aaf13) Thanks [@Agusx1211](https://github.com/Agusx1211)! - Add the rc6 recovery module and use it by default. Wallets with the recovery module of an earlier release are moved to it on their next configuration update, keeping their recovery signers
+
+- Updated dependencies [[`eb3ce9c`](https://github.com/0xsequence/sequence.js/commit/eb3ce9c3a41ccd11c5e7cf1b6f21a40743706295), [`012973f`](https://github.com/0xsequence/sequence.js/commit/012973f1808bb6e870115db0570db12ad96aaf13), [`012973f`](https://github.com/0xsequence/sequence.js/commit/012973f1808bb6e870115db0570db12ad96aaf13), [`87874ae`](https://github.com/0xsequence/sequence.js/commit/87874aed1b79432c8f9ff51a2bae7041bfb36a8b)]:
+  - @0xsequence/wallet-primitives@3.0.15
+
 ## 3.1.2
 
 ### Patch Changes
