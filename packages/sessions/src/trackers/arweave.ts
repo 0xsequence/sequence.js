@@ -27,6 +27,32 @@ export const defaults = {
   rateLimitRetryDelayMs: 5 * 60 * 1000
 }
 
+/**
+ * Groups config update items (newest first, as returned by the query) by target config and signer.
+ * The newest signature of each signer is kept, so a signer that publishes a replacement (e.g. a guard wallet after a
+ * key rotation) is not shadowed by its older, no longer valid signature.
+ */
+export function groupConfigUpdateItems<T extends { toImageHash: string; signer: string }>(
+  items: T[]
+): { signatures: Map<string, Map<string, T>>; candidates: T[] } {
+  const signatures: Map<string, Map<string, T>> = new Map()
+  const candidates: T[] = []
+
+  for (const item of items) {
+    let imageHashSignatures = signatures.get(item.toImageHash)
+    if (!imageHashSignatures) {
+      imageHashSignatures = new Map()
+      signatures.set(item.toImageHash, imageHashSignatures)
+      candidates.push(item)
+    }
+    if (!imageHashSignatures.has(item.signer)) {
+      imageHashSignatures.set(item.signer, item)
+    }
+  }
+
+  return { signatures, candidates }
+}
+
 export class ArweaveReader implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly configs: Map<string, Promise<commons.config.Config | undefined>> = new Map()
   private readonly eip5719?: CachedEIP5719
@@ -110,18 +136,9 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
       }
     )
 
-    const signatures: Map<string, Map<string, (typeof items)[number]>> = new Map()
-    let candidates: typeof items = []
-
-    for (const item of items) {
-      let imageHashSignatures = signatures.get(item.toImageHash)
-      if (!imageHashSignatures) {
-        imageHashSignatures = new Map()
-        signatures.set(item.toImageHash, imageHashSignatures)
-        candidates.push(item)
-      }
-      imageHashSignatures.set(item.signer, item)
-    }
+    const grouped = groupConfigUpdateItems(items)
+    const signatures = grouped.signatures
+    let candidates = grouped.candidates
 
     if (args.longestPath) {
       candidates.sort(({ toCheckpoint: a }, { toCheckpoint: b }) => (a === b ? 0 : a < b ? -1 : 1))
