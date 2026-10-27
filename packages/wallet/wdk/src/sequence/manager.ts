@@ -80,6 +80,10 @@ export type ManagerOptions = {
   bundlers?: Bundler.Bundler[]
   guardUrl?: string
   guardAddresses?: Record<GuardRole, Address.Address>
+  // Guard addresses that were rotated out. Wallets whose configuration still references one of these
+  // keep working (the guard service co-signs for them) and are migrated to `guardAddresses` on the
+  // next configuration update.
+  legacyGuardAddresses?: Partial<Record<GuardRole, Address.Address[]>>
 
   nonWitnessableSigners?: Address.Address[]
 
@@ -164,6 +168,7 @@ export type ResolvedManagerOptions = {
   bundlers: Bundler.Bundler[]
   guardUrl: string
   guardAddresses: Record<GuardRole, Address.Address>
+  legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
 
   nonWitnessableSigners: Address.Address[]
 
@@ -214,6 +219,7 @@ export const ManagerOptionsDefaults = {
     wallet: '0x26f3D30F41FA897309Ae804A2AFf15CEb1dA5742',
     sessions: '0xF6Bc87F5F2edAdb66737E32D37b46423901dfEF1',
   } as Record<GuardRole, Address.Address>,
+  legacyGuardAddresses: {} as Partial<Record<GuardRole, Address.Address[]>>,
 
   defaultGuardTopology: {
     type: 'nested',
@@ -365,6 +371,7 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedM
     bundlers: options?.bundlers ?? ManagerOptionsDefaults.bundlers,
     guardUrl: options?.guardUrl ?? ManagerOptionsDefaults.guardUrl,
     guardAddresses: options?.guardAddresses ?? ManagerOptionsDefaults.guardAddresses,
+    legacyGuardAddresses: options?.legacyGuardAddresses ?? ManagerOptionsDefaults.legacyGuardAddresses,
 
     nonWitnessableSigners: Array.from(nonWitnessable) as Address.Address[],
 
@@ -417,6 +424,7 @@ export type Sequence = {
 
   readonly guardUrl: string
   readonly guardAddresses: Record<GuardRole, Address.Address>
+  readonly legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
 }
 
 export type Modules = {
@@ -610,6 +618,7 @@ export class Manager {
 
         guardUrl: ops.guardUrl,
         guardAddresses: ops.guardAddresses,
+        legacyGuardAddresses: ops.legacyGuardAddresses,
       },
 
       databases: {
