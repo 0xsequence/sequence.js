@@ -7,6 +7,7 @@ import { IdTokenHandler } from './handlers/idtoken.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { Shared } from './manager.js'
+import type { GuardSettlementResult } from './guard-settlement.js'
 import { Device } from './types/device.js'
 import { Action, Actions, Module } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
@@ -446,6 +447,51 @@ export interface WalletsInterface {
    * @returns A promise that resolves when the update has been processed.
    */
   completeConfigurationUpdate(requestId: string): Promise<void>
+
+  /**
+   * Checks whether the wallet's latest configuration still references a rotated-out guard
+   * (one of `ManagerOptions.legacyGuardAddresses`).
+   *
+   * @param wallet The wallet address to check.
+   * @returns A promise that resolves to true if the wallet should call `migrateGuard`.
+   */
+  needsGuardMigration(wallet: Address.Address): Promise<boolean>
+
+  /**
+   * Initiates a configuration update that replaces rotated-out guards with the current guards.
+   *
+   * Any other configuration update (login, logout, session changes, etc.) performs the same
+   * replacement, this method lets a logged-in device migrate without waiting for one.
+   * The update is signed by a device and by the guard currently in the configuration,
+   * finish it with `completeConfigurationUpdate`.
+   *
+   * @param wallet The wallet address to migrate.
+   * @returns A promise that resolves to the signature request id, or undefined if there is nothing to migrate.
+   */
+  migrateGuard(wallet: Address.Address): Promise<string | undefined>
+
+  /**
+   * Requests the signatures for the settlement of the wallet's latest configuration.
+   *
+   * Until the latest configuration is written on a chain, an older one (with a rotated-out guard) stays valid there.
+   * Call it after a guard migration and whenever the wallet opens: it checks the chains where the wallet is deployed or
+   * holds native funds and returns undefined if none of them still has a configuration with a rotated-out guard.
+   * Signed by a device and the current guard. Finish it with `completeGuardSettlement`.
+   *
+   * @param wallet The wallet address.
+   * @returns A promise that resolves to the signature request id, or undefined if no chain needs a settlement.
+   * @throws If the wallet still references a rotated-out guard (call `migrateGuard` first).
+   */
+  prepareGuardSettlement(wallet: Address.Address): Promise<string | undefined>
+
+  /**
+   * Sends a signed settlement through the relayer to every chain that still needs it.
+   * A chain that fails is reported in the result and retried the next time `prepareGuardSettlement` runs.
+   *
+   * @param requestId The ID of the signed settlement request.
+   * @returns One result per chain, with the relayer operation hash or the error.
+   */
+  completeGuardSettlement(requestId: string): Promise<GuardSettlementResult[]>
 
   /**
    * Retrieves the full, resolved configuration of a wallet.
@@ -1227,8 +1273,15 @@ export class Wallets implements WalletsInterface {
 
     const nextLoginTopology = changes.loginTopology ?? loginTopology
     const nextDevicesTopology = changes.devicesTopology ?? devicesTopology
-    const nextModules = changes.modules ?? modules
-    const nextGuardTopology = changes.guardTopology ?? guardTopology
+
+    // Every configuration update also moves the wallet off rotated-out guards, except logouts: the device that
+    // signs a logout is leaving, the next update by a remaining device moves the wallet
+    const skipGuardMigration = action === Actions.Logout || action === Actions.RemoteLogout
+    const migrated = skipGuardMigration
+      ? { modules: changes.modules ?? modules, guardTopology: changes.guardTopology ?? guardTopology }
+      : this.migrateGuardParts(changes.modules ?? modules, changes.guardTopology ?? guardTopology)
+    const nextModules = migrated.modules
+    const nextGuardTopology = migrated.guardTopology
 
     // Every configuration update goes through here, so this also cleans up
     // recovery modules of older configurations
@@ -1252,6 +1305,73 @@ export class Wallets implements WalletsInterface {
     return requestId
   }
 
+  private migrateGuardParts(
+    modules: Module[],
+    guardTopology?: Config.Topology,
+  ): { modules: Module[]; guardTopology?: Config.Topology; changed: boolean } {
+    const guards = this.shared.modules.guards
+    let changed = false
+
+    const nextGuardTopology = guardTopology && guards.migrateTopology(guardTopology, 'wallet')
+    if (nextGuardTopology) {
+      changed = true
+    }
+
+    const nextModules = modules.map((module) => {
+      const guardLeaf = module.guardLeaf && guards.migrateTopology(module.guardLeaf, 'sessions')
+      if (!guardLeaf) {
+        return module
+      }
+      changed = true
+      return { ...module, guardLeaf }
+    })
+
+    return { modules: nextModules, guardTopology: nextGuardTopology ?? guardTopology, changed }
+  }
+
+  /**
+   * Returns true if the configuration names a rotated-out guard (see `ManagerOptions.legacyGuardAddresses`).
+   */
+  public referencesLegacyGuard(configuration: Config.Config): boolean {
+    try {
+      const { modules, guardTopology } = fromConfig(configuration)
+      return this.migrateGuardParts(modules, guardTopology).changed
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Returns true if the wallet's latest configuration still references a rotated-out guard
+   * (see `ManagerOptions.legacyGuardAddresses`).
+   */
+  public async needsGuardMigration(wallet: Address.Address): Promise<boolean> {
+    const { modules, guardTopology } = await this.getConfigurationParts(wallet)
+    return this.migrateGuardParts(modules, guardTopology).changed
+  }
+
+  /**
+   * Requests a configuration update that replaces rotated-out guards with the current ones.
+   * It is signed like any other update (a device plus the guard currently in the configuration).
+   *
+   * @returns The signature request id, or undefined if the wallet does not need to migrate.
+   */
+  public async migrateGuard(wallet: Address.Address): Promise<string | undefined> {
+    if (!(await this.needsGuardMigration(wallet))) {
+      return undefined
+    }
+
+    return this.requestConfigurationUpdate(wallet, {}, Actions.MigrateGuard, 'wallet-webapp')
+  }
+
+  public async prepareGuardSettlement(wallet: Address.Address): Promise<string | undefined> {
+    return this.shared.modules.guardSettlements.request(wallet, 'wallet-webapp')
+  }
+
+  public async completeGuardSettlement(requestId: string): Promise<GuardSettlementResult[]> {
+    return this.shared.modules.guardSettlements.complete(requestId)
+  }
+
   public async completeConfigurationUpdate(requestId: string) {
     const request = await this.shared.modules.signatures.get(requestId)
     if (!Payload.isConfigUpdate(request.envelope.payload)) {
@@ -1269,6 +1389,16 @@ export class Wallets implements WalletsInterface {
 
     await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>)
     await this.shared.modules.signatures.complete(requestId)
+
+    // If this update moved the wallet off a rotated-out guard, ask for the settlement of the new configuration
+    const previous = fromConfig(request.envelope.configuration)
+    if (this.migrateGuardParts(previous.modules, previous.guardTopology).changed) {
+      try {
+        await this.prepareGuardSettlement(request.wallet)
+      } catch (error) {
+        this.shared.modules.logger.log('Failed to request guard settlement', error)
+      }
+    }
   }
 
   async login(args: LoginArgs): Promise<string> {
