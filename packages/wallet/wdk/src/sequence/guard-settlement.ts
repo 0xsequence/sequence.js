@@ -1,39 +1,29 @@
 import { Envelope, Wallet as CoreWallet } from '@0xsequence/wallet-core'
-import { Constants, Payload, Signature } from '@0xsequence/wallet-primitives'
-import { AbiFunction, Address, Bytes, Hash, Hex } from 'ox'
+import { Constants, Network, Payload } from '@0xsequence/wallet-primitives'
+import { AbiFunction, Address, Hash, Hex, Provider, RpcTransport } from 'ox'
 import { Shared } from './manager.js'
 import { Actions } from './types/signature-request.js'
 
-/**
- * Nonce space of guard settlement transactions: the low 160 bits of keccak256("sequence.guard-settlement").
- * A dedicated space keeps the settlement independent from the wallet's regular transactions,
- * and nonce 0 makes it valid exactly once per chain.
- */
-export const GuardSettlementSpace = Hex.toBigInt(
-  Hex.slice(Hash.keccak256(Hex.fromString('sequence.guard-settlement')), 12),
-)
+const GuardSettlementTag = Hex.fromString('sequence.guard-settlement')
 
 /**
- * A signed, chain-agnostic transaction that writes the wallet's configuration on-chain.
- *
- * After a wallet moves to a new guard, its previous configuration (with the old guard) stays valid on every chain
- * where the on-chain configuration is older. Relaying this transaction on a chain closes that gap there.
- * The relayer builds the chain-specific transaction with `Wallet.buildTransaction(provider, envelope)`,
- * which prepends the configuration updates needed on that chain (and deploys the wallet if needed).
+ * Nonce space of the settlement of a configuration: the low 160 bits of
+ * keccak256("sequence.guard-settlement" ‖ imageHash). Each configuration has its own space and the settlement uses
+ * nonce 0, so it is valid once per chain and settlements of successive configurations never collide.
  */
-export type GuardSettlement = {
-  wallet: Address.Address
-  imageHash: Hex.Hex
-  envelope: Envelope.Signed<Payload.Calls>
-  // No-chain-id signature of the settlement payload by the target configuration, without the configuration updates
-  signature: Hex.Hex
+export function guardSettlementSpace(imageHash: Hex.Hex): bigint {
+  return Hex.toBigInt(Hex.slice(Hash.keccak256(Hex.concat(GuardSettlementTag, imageHash)), 12))
 }
 
-export function guardSettlementPayload(wallet: Address.Address, imageHash: Hex.Hex, nonce = 0n): Payload.Calls {
+/**
+ * A transaction that writes the configuration `imageHash` on-chain. It is signed without a chain id, so the same
+ * signature settles every chain.
+ */
+export function guardSettlementPayload(wallet: Address.Address, imageHash: Hex.Hex): Payload.Calls {
   return {
     type: 'call',
-    space: GuardSettlementSpace,
-    nonce,
+    space: guardSettlementSpace(imageHash),
+    nonce: 0n,
     calls: [
       {
         to: wallet,
@@ -48,18 +38,83 @@ export function guardSettlementPayload(wallet: Address.Address, imageHash: Hex.H
   }
 }
 
+export type GuardSettlementResult = {
+  chainId: number
+  opHash?: Hex.Hex
+  error?: string
+}
+
+/**
+ * After a wallet moves to a new guard, its previous configuration (with the old guard) stays valid on every chain
+ * where the on-chain configuration is older. Settlements write the latest configuration on those chains.
+ *
+ * Nothing is stored: every run checks which chains still need it, so a failed send is retried the next time.
+ */
 export class GuardSettlements {
   constructor(private readonly shared: Shared) {}
 
   /**
-   * Requests the signatures for a settlement of the wallet's latest configuration.
-   * Signed by a device and by the guard of that configuration (the new guard after a migration).
+   * Chains where the wallet is deployed or holds native funds, and whose on-chain (or counterfactual) configuration
+   * is older than the latest one and still names a rotated-out guard.
+   */
+  async chainsToSettle(wallet: Address.Address): Promise<Network.Network[]> {
+    const coreWallet = new CoreWallet(wallet, {
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const results = await Promise.all(
+      this.shared.sequence.networks.map(async (network) => {
+        try {
+          const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
+          const status = await coreWallet.getStatus(provider)
+          if (Hex.isEqual(status.onChainImageHash, status.imageHash)) {
+            return undefined
+          }
+
+          if (!status.isDeployed) {
+            const balance = await provider.request({ method: 'eth_getBalance', params: [wallet, 'latest'] })
+            if (Hex.toBigInt(balance) === 0n) {
+              return undefined
+            }
+          }
+
+          const onChainConfiguration = await this.shared.sequence.stateProvider.getConfiguration(
+            status.onChainImageHash,
+          )
+          if (!onChainConfiguration || !this.shared.modules.wallets.referencesLegacyGuard(onChainConfiguration)) {
+            return undefined
+          }
+
+          return network
+        } catch (error) {
+          this.shared.modules.logger.log(`Failed to check guard settlement on chain ${network.chainId}`, error)
+          return undefined
+        }
+      }),
+    )
+
+    return results.filter((network) => network !== undefined)
+  }
+
+  /**
+   * Requests the signatures for the settlement of the wallet's latest configuration, if any chain needs it.
+   * Signed by a device and by the guard of that configuration.
    *
-   * @returns The signature request id, or undefined if the wallet has no guard.
+   * @returns The signature request id, or undefined if no chain needs a settlement.
    */
   async request(wallet: Address.Address, origin?: string): Promise<string | undefined> {
     if (await this.shared.modules.wallets.needsGuardMigration(wallet)) {
       throw new Error('guard-migration-pending')
+    }
+
+    const { guardTopology } = await this.shared.modules.wallets.getConfigurationParts(wallet)
+    if (!guardTopology) {
+      return undefined
+    }
+
+    if ((await this.chainsToSettle(wallet)).length === 0) {
+      return undefined
     }
 
     const coreWallet = new CoreWallet(wallet, {
@@ -67,26 +122,36 @@ export class GuardSettlements {
       guest: this.shared.sequence.guest,
     })
     const status = await coreWallet.getStatus()
+    const payload = guardSettlementPayload(wallet, status.imageHash)
 
-    const { guardTopology } = await this.shared.modules.wallets.getConfigurationParts(wallet)
-    if (!guardTopology) {
-      return undefined
+    // Reuse a pending request for the same configuration
+    const pending = (await this.shared.modules.signatures.list()).find(
+      (request) =>
+        request.action === Actions.GuardSettlement &&
+        request.status === 'pending' &&
+        Address.isEqual(request.wallet, wallet) &&
+        Payload.isCalls(request.envelope.payload) &&
+        request.envelope.payload.space === payload.space,
+    )
+    if (pending) {
+      return pending.id
     }
 
     const envelope: Envelope.Envelope<Payload.Calls> = {
       wallet,
       chainId: 0,
       configuration: status.configuration,
-      payload: guardSettlementPayload(wallet, status.imageHash),
+      payload,
     }
 
     return this.shared.modules.signatures.request(envelope, Actions.GuardSettlement, { origin })
   }
 
   /**
-   * Completes a signed settlement request and saves it with the state provider (the key machine) for relaying.
+   * Sends a signed settlement through the relayer to every chain that still needs it.
+   * Failures are returned per chain; the next `request` retries them.
    */
-  async complete(requestId: string): Promise<GuardSettlement> {
+  async complete(requestId: string): Promise<GuardSettlementResult[]> {
     const request = await this.shared.modules.signatures.get(requestId)
     if (request.action !== Actions.GuardSettlement || !Payload.isCalls(request.envelope.payload)) {
       throw new Error('invalid-request-action')
@@ -97,21 +162,48 @@ export class GuardSettlements {
       throw new Error('insufficient-weight')
     }
 
-    const [imageHash] = AbiFunction.decodeData(Constants.UPDATE_IMAGE_HASH, envelope.payload.calls[0]!.data)
-    const settlement: GuardSettlement = {
-      wallet: envelope.wallet,
-      imageHash,
-      envelope,
-      signature: Bytes.toHex(Signature.encodeSignature(Envelope.encodeSignature(envelope))),
+    const coreWallet = new CoreWallet(envelope.wallet, {
+      stateProvider: this.shared.sequence.stateProvider,
+      guest: this.shared.sequence.guest,
+    })
+
+    const results: GuardSettlementResult[] = []
+    for (const network of await this.chainsToSettle(envelope.wallet)) {
+      try {
+        const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
+        const transaction = await coreWallet.buildTransaction(provider, envelope)
+        results.push({ chainId: network.chainId, opHash: await this.relay(envelope.wallet, network, transaction) })
+      } catch (error) {
+        this.shared.modules.logger.log(`Failed to settle guard on chain ${network.chainId}`, error)
+        results.push({ chainId: network.chainId, error: error instanceof Error ? error.message : String(error) })
+      }
     }
 
-    const stateProvider = this.shared.sequence.stateProvider
-    if (!stateProvider.saveGuardSettlement) {
-      throw new Error('state provider does not support guard settlements')
-    }
-    await stateProvider.saveGuardSettlement(settlement.wallet, settlement.envelope.payload, settlement.signature)
     await this.shared.modules.signatures.complete(requestId)
+    return results
+  }
 
-    return settlement
+  private async relay(
+    wallet: Address.Address,
+    network: Network.Network,
+    transaction: { to: Address.Address; data: Hex.Hex },
+  ): Promise<Hex.Hex> {
+    let lastError: unknown = new Error(`no relayer available for chain ${network.chainId}`)
+
+    for (const relayer of this.shared.sequence.relayers) {
+      try {
+        if (!(await relayer.isAvailable(wallet, network.chainId))) {
+          continue
+        }
+        // The settlement can't pay a fee (its calls are fixed by the signature), so the relay must be sponsored
+        const { quote } = await relayer.feeOptions(wallet, network.chainId, transaction.to, [], transaction.data)
+        const { opHash } = await relayer.relay(transaction.to, transaction.data, network.chainId, quote)
+        return opHash
+      } catch (error) {
+        lastError = error
+      }
+    }
+
+    throw lastError
   }
 }

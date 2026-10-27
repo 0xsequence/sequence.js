@@ -75,10 +75,6 @@ export interface Writer {
   saveConfiguration(config: Config.Config): MaybePromise<void>
   saveDeploy(imageHash: Hex.Hex, context: Context.Context): MaybePromise<void>
   savePayload(wallet: Address.Address, payload: Payload.Parented, chainId: number): MaybePromise<void>
-
-  // Stores a signed guard settlement (a no-chain-id transaction that writes a migrated configuration on-chain)
-  // for a settler to relay. Optional: only providers backed by a key machine support it.
-  saveGuardSettlement?(wallet: Address.Address, payload: Payload.Calls, signature: Hex.Hex): MaybePromise<void>
 }
 
 export type MaybePromise<T> = T | Promise<T>
