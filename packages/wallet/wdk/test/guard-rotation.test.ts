@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Bytes, Hex, Mnemonic, Secp256k1, Signature } from 'ox'
-import { Config } from '@0xsequence/wallet-primitives'
-import { Manager, SignerReady } from '../src/sequence/index.js'
+import { Config, Constants, Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
+import { AbiFunction } from 'ox'
+import { GuardSettlement, GuardSettlementSpace, Manager, SignerReady } from '../src/sequence/index.js'
 import { Kinds } from '../src/sequence/types/signer.js'
 import { newManager } from './constants.js'
 
@@ -73,9 +74,18 @@ describe('Guard rotation', () => {
     sequence.legacyGuardAddresses = { wallet: [oldGuards.wallet], sessions: [oldGuards.sessions] }
   }
 
+  const settlements: GuardSettlement[] = []
+
   async function signUpWithOldGuards() {
+    settlements.length = 0
     manager = newManager(
-      { guardUrl: 'https://guard.test', guardAddresses: { ...oldGuards } },
+      {
+        guardUrl: 'https://guard.test',
+        guardAddresses: { ...oldGuards },
+        onGuardSettlement: async (settlement) => {
+          settlements.push(settlement)
+        },
+      },
       undefined,
       `guard_rotation_${Date.now()}`,
     )
@@ -154,5 +164,51 @@ describe('Guard rotation', () => {
 
     const after = await manager!.wallets.getConfiguration(wallet)
     expect(after.walletGuard?.address).toBe(newGuards.wallet)
+  })
+
+  it('Should sign a chain-agnostic settlement of the migrated configuration with the new guard', async () => {
+    const wallet = await signUpWithOldGuards()
+    rotate(manager!)
+
+    // Settling is refused while the wallet still has the old guard
+    await expect(manager!.wallets.prepareGuardSettlement(wallet)).rejects.toThrow('guard-migration-pending')
+
+    const migrationId = await manager!.wallets.migrateGuard(wallet)
+    await signAll(manager!, migrationId!)
+    await manager!.wallets.completeConfigurationUpdate(migrationId!)
+    guardRequests.length = 0
+
+    const settlementId = await manager!.wallets.prepareGuardSettlement(wallet)
+    expect(settlementId).toBeDefined()
+    await signAll(manager!, settlementId!)
+
+    // The settlement is signed under the new configuration, so the new guard co-signs it
+    expect(guardRequests).toEqual([newGuards.wallet])
+
+    const settlement = await manager!.wallets.completeGuardSettlement(settlementId!)
+    expect(settlements).toEqual([settlement])
+
+    // It writes the latest configuration, with no chain id, in the dedicated nonce space
+    const latest = await (manager as any).shared.modules.wallets.getConfigurationParts(wallet)
+    const imageHash = Bytes.toHex(Config.hashConfiguration(settlement.envelope.configuration))
+    expect(settlement.imageHash).toBe(imageHash)
+    expect(Config.findSignerLeaf(latest.guardTopology, newGuards.wallet)).toBeDefined()
+    expect(settlement.envelope.chainId).toBe(0)
+    expect(settlement.envelope.payload.space).toBe(GuardSettlementSpace)
+    expect(settlement.envelope.payload.nonce).toBe(0n)
+    expect(settlement.envelope.payload.calls).toEqual([
+      expect.objectContaining({
+        to: wallet,
+        data: AbiFunction.encodeData(Constants.UPDATE_IMAGE_HASH, [imageHash]),
+        delegateCall: false,
+      }),
+    ])
+
+    // The signature recovers to the new configuration with enough weight, on any chain
+    const decoded = SequenceSignature.decodeSignature(Bytes.fromHex(settlement.signature))
+    expect(decoded.noChainId).toBe(true)
+    const recovered = await SequenceSignature.recover(decoded, wallet, 0, settlement.envelope.payload as Payload.Calls)
+    expect(Bytes.toHex(Config.hashConfiguration(recovered.configuration))).toBe(imageHash)
+    expect(recovered.weight >= recovered.configuration.threshold).toBe(true)
   })
 })

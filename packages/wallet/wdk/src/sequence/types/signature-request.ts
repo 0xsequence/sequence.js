@@ -17,6 +17,7 @@ export type ActionToPayload = {
   [Actions.RemoveLoginSigner]: Payload.ConfigUpdate
   [Actions.SessionImplicitAuthorize]: Payload.SessionImplicitAuthorize
   [Actions.MigrateGuard]: Payload.ConfigUpdate
+  [Actions.GuardSettlement]: Payload.Calls
 }
 
 export const Actions = {
@@ -33,6 +34,7 @@ export const Actions = {
   RemoveLoginSigner: 'remove-login-signer',
   SessionImplicitAuthorize: 'session-implicit-authorize',
   MigrateGuard: 'migrate-guard',
+  GuardSettlement: 'guard-settlement',
 } as const
 
 export type Action = (typeof Actions)[keyof typeof Actions]

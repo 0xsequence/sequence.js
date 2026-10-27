@@ -9,6 +9,7 @@ import { resolveWdkEnv, type WdkEnv } from '../env.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
 import { Guards, GuardRole } from './guards.js'
+import { GuardSettlement, GuardSettlements } from './guard-settlement.js'
 import { AuthCodeHandler } from './handlers/authcode.js'
 import {
   AuthCodePkceHandler,
@@ -84,6 +85,9 @@ export type ManagerOptions = {
   // keep working (the guard service co-signs for them) and are migrated to `guardAddresses` on the
   // next configuration update.
   legacyGuardAddresses?: Partial<Record<GuardRole, Address.Address[]>>
+  // Receives the signed settlement transaction of a wallet that moved to a new guard, to be relayed on every chain
+  // where the wallet is deployed or funded (see `Wallets.prepareGuardSettlement`).
+  onGuardSettlement?: (settlement: GuardSettlement) => Promise<void>
 
   nonWitnessableSigners?: Address.Address[]
 
@@ -169,6 +173,7 @@ export type ResolvedManagerOptions = {
   guardUrl: string
   guardAddresses: Record<GuardRole, Address.Address>
   legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
+  onGuardSettlement?: (settlement: GuardSettlement) => Promise<void>
 
   nonWitnessableSigners: Address.Address[]
 
@@ -372,6 +377,7 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedM
     guardUrl: options?.guardUrl ?? ManagerOptionsDefaults.guardUrl,
     guardAddresses: options?.guardAddresses ?? ManagerOptionsDefaults.guardAddresses,
     legacyGuardAddresses: options?.legacyGuardAddresses ?? ManagerOptionsDefaults.legacyGuardAddresses,
+    onGuardSettlement: options?.onGuardSettlement,
 
     nonWitnessableSigners: Array.from(nonWitnessable) as Address.Address[],
 
@@ -425,12 +431,14 @@ export type Sequence = {
   readonly guardUrl: string
   readonly guardAddresses: Record<GuardRole, Address.Address>
   readonly legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
+  readonly onGuardSettlement?: (settlement: GuardSettlement) => Promise<void>
 }
 
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
   readonly guards: Guards
+  readonly guardSettlements: GuardSettlements
   readonly wallets: Wallets
   readonly sessions: Sessions
   readonly signers: Signers
@@ -619,6 +627,7 @@ export class Manager {
         guardUrl: ops.guardUrl,
         guardAddresses: ops.guardAddresses,
         legacyGuardAddresses: ops.legacyGuardAddresses,
+        onGuardSettlement: ops.onGuardSettlement,
       },
 
       databases: {
@@ -647,6 +656,7 @@ export class Manager {
       logger: new Logger(shared),
       devices: new Devices(shared),
       guards: new Guards(shared),
+      guardSettlements: new GuardSettlements(shared),
       wallets: new Wallets(shared),
       sessions: new Sessions(shared),
       signers: new Signers(shared),

@@ -7,6 +7,8 @@ export { defaultPasskeyProvider } from './passkeys-provider.js'
 export type { PasskeyProvider, PasskeySigner } from './passkeys-provider.js'
 export { Sessions } from './sessions.js'
 export { Signatures } from './signatures.js'
+export { GuardSettlementSpace, guardSettlementPayload } from './guard-settlement.js'
+export type { GuardSettlement } from './guard-settlement.js'
 export type {
   StartSignUpWithRedirectArgs,
   StartAddLoginSignerWithRedirectArgs,
