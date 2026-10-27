@@ -124,7 +124,8 @@ export async function pickSignature<E>(
 
 /**
  * Checks a signature of `signer` for `digest` on `provider`'s chain. Contract signers are checked with ERC-1271,
- * which hashes `digest` with their own domain; a signer without code can't be checked.
+ * which hashes `digest` with their own domain; a revert counts as invalid. A signer without code, or a failed RPC
+ * call, can't be checked.
  */
 export async function checkSignature(
   provider: ethers.Provider | undefined,
@@ -149,7 +150,11 @@ export async function checkSignature(
       return undefined
     }
     return await commons.EIP1271.isValidEIP1271Signature(signer, ethers.hexlify(digest), signature, provider)
-  } catch {
+  } catch (error) {
+    // The signer's code rejected it (wallets revert on invalid signatures), anything else is a failed check
+    if (ethers.isError(error, 'CALL_EXCEPTION') || ethers.isError(error, 'BAD_DATA')) {
+      return false
+    }
     return undefined
   }
 }
