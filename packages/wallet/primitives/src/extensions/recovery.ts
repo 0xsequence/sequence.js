@@ -1,4 +1,5 @@
 import { Abi, AbiFunction, Address, Bytes, Hex, Provider } from 'ox'
+import { ZeroAddress } from '../constants.js'
 import * as GenericTree from '../generic-tree.js'
 import { Signature } from '../index.js'
 import * as Payload from '../payload.js'
@@ -71,6 +72,32 @@ export function isBranch(cand: unknown): cand is Branch {
  */
 export function isTree(cand: unknown): cand is Tree {
   return isRecoveryLeaf(cand) || GenericTree.isNode(cand) || isBranch(cand)
+}
+
+/**
+ * Signer of the placeholder leaf, derived as the last 20 bytes of
+ * keccak256("Sequence recovery placeholder signer"). Nobody holds a key for it and
+ * no contract can be deployed at it.
+ */
+export const PLACEHOLDER_SIGNER: Address.Address = '0xB7891e3A480839e9601B616892A59328Ea255853'
+
+/**
+ * A recovery tree can't be empty, so a tree without recovery signers holds this leaf instead.
+ * Besides having a keyless signer, its minTimestamp can never be reached, so it can never
+ * be used to queue or execute a payload.
+ */
+export const PLACEHOLDER_LEAF: RecoveryLeaf = {
+  type: 'leaf',
+  signer: PLACEHOLDER_SIGNER,
+  requiredDeltaTime: 16777215n, // max uint24
+  minTimestamp: 18446744073709551615n, // max uint64
+}
+
+/**
+ * Checks if a recovery leaf is a placeholder (its signer is the placeholder signer)
+ */
+export function isPlaceholderLeaf(leaf: RecoveryLeaf): boolean {
+  return Address.isEqual(leaf.signer, PLACEHOLDER_SIGNER)
 }
 
 /**
@@ -311,7 +338,7 @@ function foldNodes(nodes: Tree[]): Tree {
  *
  * @param leaves - Array of recovery leaves
  * @returns A topology tree structure
- * @throws Error if the leaves array is empty
+ * @throws Error if the leaves array is empty or any leaf signer is the zero address
  */
 export function fromRecoveryLeaves(leaves: RecoveryLeaf[]): Tree {
   if (leaves.length === 0) {
@@ -319,7 +346,11 @@ export function fromRecoveryLeaves(leaves: RecoveryLeaf[]): Tree {
   }
 
   if (leaves.length === 1) {
-    return leaves[0] as RecoveryLeaf
+    const leaf = leaves[0] as RecoveryLeaf
+    if (Address.isEqual(leaf.signer, ZeroAddress)) {
+      throw new Error('Recovery leaf signer cannot be the zero address')
+    }
+    return leaf
   }
 
   const mid = Math.floor(leaves.length / 2)

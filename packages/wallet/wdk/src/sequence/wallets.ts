@@ -1142,6 +1142,7 @@ export class Wallets implements WalletsInterface {
     // Create initial configuration
     const initialConfiguration = toConfig(0n, loginTopology, devicesTopology, modules, walletGuardTopology)
     console.log('initialConfiguration', initialConfiguration)
+    await this.shared.modules.recovery.assertConfiguration(initialConfiguration)
 
     // Create wallet
     const context = args.use4337 ? this.shared.sequence.context4337 : this.shared.sequence.context
@@ -1229,15 +1230,20 @@ export class Wallets implements WalletsInterface {
     const nextModules = changes.modules ?? modules
     const nextGuardTopology = changes.guardTopology ?? guardTopology
 
-    const envelope = await wallet.prepareUpdate(
-      toConfig(
-        status.configuration.checkpoint + 1n,
-        nextLoginTopology,
-        nextDevicesTopology,
-        nextModules,
-        nextGuardTopology,
-      ),
+    // Every configuration update goes through here, so this also cleans up
+    // recovery modules of older configurations
+    await this.shared.modules.recovery.cleanModules(nextModules)
+
+    const nextConfiguration = toConfig(
+      status.configuration.checkpoint + 1n,
+      nextLoginTopology,
+      nextDevicesTopology,
+      nextModules,
+      nextGuardTopology,
     )
+    await this.shared.modules.recovery.assertConfiguration(nextConfiguration)
+
+    const envelope = await wallet.prepareUpdate(nextConfiguration)
 
     const requestId = await this.shared.modules.signatures.request(envelope, action, {
       origin,

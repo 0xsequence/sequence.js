@@ -178,7 +178,7 @@ export type ResolvedManagerOptions = {
 export const ManagerOptionsDefaults = {
   verbose: false,
 
-  extensions: Extensions.Rc5,
+  extensions: Extensions.Rc6,
   context: Context.Rc5,
   context4337: Context.Rc5_4337,
   guest: Constants.DefaultGuestAddress,

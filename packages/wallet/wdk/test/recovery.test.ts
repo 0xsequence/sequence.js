@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { QueuedRecoveryPayload, SignerReady, TransactionDefined } from '../src/sequence/index.js'
-import { Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
-import { Network, Payload } from '@0xsequence/wallet-primitives'
-import { LOCAL_RPC_URL, newManager } from './constants.js'
+import { Address, Bytes, Hex, Mnemonic, Provider, RpcTransport } from 'ox'
+import { Extensions, Network, Payload } from '@0xsequence/wallet-primitives'
+import { ensureRecoveryModule, LOCAL_RPC_URL, newManager } from './constants.js'
 
 describe('Recovery', () => {
+  beforeAll(ensureRecoveryModule)
+
   it('Should execute a recovery', async () => {
     const manager = newManager({
       defaultRecoverySettings: {
@@ -499,5 +501,76 @@ describe('Recovery', () => {
       expect(payload.payload).toBeDefined()
       expect(Payload.isCalls(payload.payload!)).toBeTruthy()
     })
+  }, 30000)
+
+  it('Should queue payloads on the recovery module the wallet configuration uses', async () => {
+    const defaultRecoverySettings = { requiredDeltaTime: 2n, minTimestamp: 0n }
+    const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
+
+    // The wallet is created with the recovery module of an earlier release
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+    const manager1 = newManager({ extensions: Extensions.Rc5, defaultRecoverySettings }, undefined, 'earlier-1')
+    const wallet = (await manager1.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true }))!
+
+    const recoveryMnemonic = Mnemonic.random(Mnemonic.english)
+    const addId = await manager1.recovery.addMnemonic(wallet, recoveryMnemonic)
+    const addRequest = await manager1.signatures.get(addId)
+    await (addRequest.signers.find((s) => s.status === 'ready') as SignerReady).handle()
+    await manager1.recovery.completeUpdate(addId)
+
+    const manager2 = newManager({ defaultRecoverySettings }, undefined, 'earlier-2')
+
+    const queue = async () => {
+      const requestId = await manager2.recovery.queuePayload(wallet, Network.ChainId.ARBITRUM, {
+        type: 'call',
+        space: Bytes.toBigInt(Bytes.random(20)),
+        nonce: 0n,
+        calls: [
+          {
+            to: Hex.from(Bytes.random(20)),
+            value: 0n,
+            data: '0x',
+            gasLimit: 1000000n,
+            delegateCall: false,
+            onlyFallback: false,
+            behaviorOnError: 'revert',
+          },
+        ],
+      })
+
+      const unregister = manager2.registerMnemonicUI(async (respond) => respond(recoveryMnemonic))
+      const request = await manager2.signatures.get(requestId)
+      await (request.signers.find((s) => s.handler?.kind === 'login-mnemonic') as SignerReady).handle()
+      unregister()
+
+      const { to, data } = await manager2.recovery.completePayload(requestId)
+      await provider.request({ method: 'eth_sendTransaction', params: [{ to, data }] })
+      return to
+    }
+
+    // Before the wallet moves, payloads are queued on the earlier module
+    expect(await queue()).toBe(Extensions.Rc5.recovery)
+    const before = await manager2.recovery.fetchQueuedPayloads(wallet, Network.ChainId.ARBITRUM)
+    expect(before.map((p) => p.recoveryModule)).toEqual([Extensions.Rc5.recovery])
+
+    // Logging in with the current release moves the wallet to the current module
+    const loginId = await manager2.wallets.login({ wallet })
+    const unregister = manager2.registerMnemonicUI(async (respond) => respond(mnemonic))
+    const loginRequest = await manager2.signatures.get(loginId)
+    await (loginRequest.signers.find((s) => s.handler?.kind === 'login-mnemonic') as SignerReady).handle()
+    unregister()
+    await manager2.wallets.completeLogin(loginId)
+
+    const { modules } = await manager2.wallets.getConfigurationParts(wallet)
+    expect(modules.some((m) => Address.isEqual(m.sapientLeaf.address, Extensions.Rc5.recovery))).toBe(false)
+    expect(modules.some((m) => Address.isEqual(m.sapientLeaf.address, Extensions.Rc6.recovery))).toBe(true)
+
+    // Payloads of the earlier module no longer apply, new ones are queued on the current module
+    await expect(manager2.recovery.fetchQueuedPayloads(wallet, Network.ChainId.ARBITRUM)).resolves.toEqual([])
+    expect(await queue()).toBe(Extensions.Rc6.recovery)
+    const after = await manager2.recovery.fetchQueuedPayloads(wallet, Network.ChainId.ARBITRUM)
+    expect(after.map((p) => p.recoveryModule)).toEqual([Extensions.Rc6.recovery])
+
+    await Promise.all([manager1.stop(), manager2.stop()])
   }, 30000)
 })

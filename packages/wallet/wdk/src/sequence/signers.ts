@@ -42,7 +42,7 @@ export class Signers {
 
     // Some signers are known by the configuration of the wallet development kit, specifically
     // some of the sapient signers, who always share the same address
-    if (Address.isEqual(this.shared.sequence.extensions.recovery, address)) {
+    if (this.shared.modules.recovery.isRecoveryModule(address)) {
       return Kinds.Recovery
     }
     if (
