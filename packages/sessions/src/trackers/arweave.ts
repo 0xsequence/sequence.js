@@ -17,8 +17,10 @@ export interface Options {
   readonly eip5719Provider?: ethers.Provider
   readonly rateLimitRetryDelayMs?: number
   // When a signer published several signatures for the same payload (e.g. a guard wallet after a key rotation),
-  // the newest one that validates on this provider's chain is used. Without it, the newest one is used.
-  readonly validationProvider?: ethers.Provider
+  // the newest one that validates is used. Signatures are checked on the chain they were made for: this returns the
+  // provider for that chain. No-chain-id signatures are checked on the chain returned for chain id 0, which the caller
+  // picks. Without a provider for a chain, signatures on it can't be checked and the newest one is used.
+  readonly validationProviders?: (chainId: bigint) => ethers.Provider | undefined
 }
 
 export const defaults = {
@@ -60,15 +62,25 @@ export function groupConfigUpdateItems<T extends { toImageHash: string; signer: 
 }
 
 /**
- * Returns the first (newest) entry whose signature validates, or the newest one if none validates or there is no
- * validator. Entries whose signature can't be loaded are skipped.
+ * Result of checking a signature on-chain: true (valid), false (invalid), or undefined when it can't be checked
+ * (no provider, signer without code, RPC error).
+ */
+export type Validity = boolean | undefined
+
+/**
+ * Picks a signature among entries ordered newest first:
+ * - the newest entry that validates;
+ * - otherwise the newest entry that could not be checked (it may be valid, the ones checked are not);
+ * - otherwise (every entry checked and invalid, or no validator) the newest entry.
+ * Entries whose signature can't be loaded are skipped.
  */
 export async function pickSignature<E>(
   entries: E[],
   load: (entry: E) => Promise<string>,
-  isValid?: (entry: E, signature: string) => boolean | Promise<boolean>
+  check?: (entry: E, signature: string) => Validity | Promise<Validity>
 ): Promise<{ entry: E; signature: string } | undefined> {
   let newest: { entry: E; signature: string } | undefined
+  let newestUnchecked: { entry: E; signature: string } | undefined
 
   for (const entry of entries) {
     let signature: string
@@ -82,17 +94,64 @@ export async function pickSignature<E>(
     if (newest === undefined) {
       newest = { entry, signature }
     }
-    if (!isValid) {
+    if (!check) {
       return newest
     }
+
+    let validity: Validity
     try {
-      if (await isValid(entry, signature)) {
-        return { entry, signature }
-      }
-    } catch {}
+      validity = await check(entry, signature)
+    } catch {
+      validity = undefined
+    }
+
+    if (validity === true) {
+      return { entry, signature }
+    }
+    if (validity === undefined && newestUnchecked === undefined) {
+      newestUnchecked = { entry, signature }
+    }
   }
 
+  if (newestUnchecked) {
+    return newestUnchecked
+  }
+  if (newest && check) {
+    console.warn('no signature validates, using the newest one')
+  }
   return newest
+}
+
+/**
+ * Checks a signature of `signer` for `digest` on `provider`'s chain. Contract signers are checked with ERC-1271,
+ * which hashes `digest` with their own domain; a signer without code can't be checked.
+ */
+export async function checkSignature(
+  provider: ethers.Provider | undefined,
+  signer: string,
+  digest: ethers.BytesLike,
+  signature: ethers.BytesLike,
+  dynamic: boolean
+): Promise<Validity> {
+  if (!dynamic) {
+    try {
+      return ethers.getAddress(commons.signer.recoverSigner(digest, signature)) === ethers.getAddress(signer)
+    } catch {
+      return false
+    }
+  }
+
+  if (!provider) {
+    return undefined
+  }
+  try {
+    if ((await provider.getCode(signer)) === '0x') {
+      return undefined
+    }
+    return await commons.EIP1271.isValidEIP1271Signature(signer, ethers.hexlify(digest), signature, provider)
+  } catch {
+    return undefined
+  }
 }
 
 export class ArweaveReader implements ConfigTracker, migrator.PresignedMigrationTracker {
@@ -234,13 +293,21 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
           (
             await Promise.all(
               nextCandidateSigners.map(async signer => {
-                const validationProvider = this.options.validationProvider
                 const picked = await pickSignature(
                   nextCandidateItems.get(signer)!,
                   entry => this.loadConfigUpdateSignature(entry),
-                  validationProvider
-                    ? (entry, signature) =>
-                        commons.signer.isValidSignature(signer, entry.subdigest, signature, validationProvider)
+                  this.options.validationProviders
+                    ? (entry, signature) => {
+                        const bytes = ethers.getBytes(signature)
+                        const dynamic = bytes[bytes.length - 1] === commons.signer.SigType.WALLET_BYTES32
+                        return checkSignature(
+                          this.options.validationProviders!(entry.chainId),
+                          signer,
+                          entry.subdigest,
+                          dynamic ? bytes.slice(0, -1) : bytes,
+                          dynamic
+                        )
+                      }
                     : undefined
                 )
                 if (!picked) {
@@ -573,17 +640,17 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
       return { transactions, nonce, signature: signature as string, subdigest }
     }
 
-    // Newest first; with a validation provider on this chain, use the newest migration whose signature validates
-    const validationProvider = this.options.validationProvider
-    const validateOnChain =
-      validationProvider && (await validationProvider.getNetwork()).chainId === BigInt(chainId) ? validationProvider : undefined
+    // Newest first: use the newest migration whose signature validates on its chain. The wallet's ERC-1271 check
+    // takes the transactions digest and applies its own domain (chain id, wallet address).
+    const validationProvider = this.options.validationProviders?.(BigInt(chainId))
     const picked = await pickSignature(
       items,
       item => fetchItem(item.id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl).then(response => response.text()),
-      validateOnChain
+      this.options.validationProviders
         ? async (_item, data) => {
-            const { subdigest, signature } = decode(data)
-            return commons.EIP1271.isValidEIP1271Signature(wallet, subdigest, ethers.getBytes(signature), validateOnChain)
+            const { transactions, nonce, signature } = decode(data)
+            const digest = commons.transaction.digestOfTransactions(nonce, transactions)
+            return checkSignature(validationProvider, wallet, digest, signature, true)
           }
         : undefined
     )
