@@ -2,6 +2,7 @@ import { config as dotenvConfig } from 'dotenv'
 import { Abi, Address, Provider, RpcTransport } from 'ox'
 import { Manager, ManagerOptions, ManagerOptionsDefaults } from '../src/sequence/index.js'
 import { mockEthereum } from './setup.js'
+import { RC6_RECOVERY_CODE } from './rc6-recovery-code.js'
 import { Signers as CoreSigners, State, Bundler } from '@0xsequence/wallet-core'
 import { Relayer } from '@0xsequence/relayer'
 import * as Db from '../src/dbs/index.js'
@@ -139,8 +140,7 @@ export function newRemoteManager(
   })
 }
 
-// The Rc6 recovery module isn't deployed on Arbitrum yet. The Rc5 one runs the same code, apart
-// from refusing zero address signers, so the fork uses it in its place
+// The Rc6 recovery module isn't deployed on Arbitrum yet, so the fork gets its code set at its address
 export async function ensureRecoveryModule() {
   const provider = Provider.from(RpcTransport.fromHttp(LOCAL_RPC_URL))
   const code = await provider.request({ method: 'eth_getCode', params: [Extensions.Rc6.recovery, 'latest'] })
@@ -148,6 +148,5 @@ export async function ensureRecoveryModule() {
     return
   }
 
-  const rc5Code = await provider.request({ method: 'eth_getCode', params: [Extensions.Rc5.recovery, 'latest'] })
-  await provider.request({ method: 'anvil_setCode', params: [Extensions.Rc6.recovery, rc5Code] })
+  await provider.request({ method: 'anvil_setCode', params: [Extensions.Rc6.recovery, RC6_RECOVERY_CODE] })
 }
