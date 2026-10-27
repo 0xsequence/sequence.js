@@ -26,6 +26,7 @@ import {
 } from './utils/errors.js'
 import { SequenceStorage } from './utils/storage.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
+import { getModuleGuardCandidates } from './utils/guard.js'
 
 import {
   CreateNewSessionResponse,
@@ -1114,10 +1115,7 @@ export class ChainSessionManager {
       const signedEnvelope = Envelope.toSigned(envelope, [sapientSignature])
 
       if (!Envelope.reachedThreshold(signedEnvelope) && this.guard?.moduleAddresses.has(signature.address)) {
-        const guard = new Signers.Guard(
-          new Guard.Sequence.Guard(this.guard.url, this.guard.moduleAddresses.get(signature.address)!),
-        )
-        const guardSignature = await guard.signEnvelope(signedEnvelope)
+        const guardSignature = await this._signWithModuleGuard(this.guard, signature.address, signedEnvelope)
         signedEnvelope.signatures.push(guardSignature)
       }
 
@@ -1125,6 +1123,37 @@ export class ChainSessionManager {
     } catch (err) {
       throw new TransactionError(`Transaction failed building: ${err instanceof Error ? err.message : String(err)}`)
     }
+  }
+
+  /**
+   * @private Co-signs a module signature with the module's guard.
+   * The cached guard address may be stale if the wallet moved to a new guard after the dapp connected,
+   * in that case the guard is taken from the wallet's current configuration.
+   */
+  private async _signWithModuleGuard(
+    guardConfig: GuardConfig,
+    moduleAddress: Address.Address,
+    envelope: Envelope.Signed<Payload.Calls>,
+  ): Promise<Envelope.Signature> {
+    const candidates = getModuleGuardCandidates(
+      envelope.configuration,
+      moduleAddress,
+      guardConfig.moduleAddresses.get(moduleAddress),
+    )
+
+    let lastError: unknown = new Error('No guard found for module ' + moduleAddress)
+    for (const guardAddress of candidates) {
+      try {
+        const guard = new Signers.Guard(new Guard.Sequence.Guard(guardConfig.url, guardAddress))
+        const guardSignature = await guard.signEnvelope(envelope)
+        guardConfig.moduleAddresses.set(moduleAddress, guardAddress)
+        return guardSignature
+      } catch (err) {
+        lastError = err
+      }
+    }
+
+    throw lastError
   }
 
   /**
