@@ -26,7 +26,7 @@ import {
 } from './utils/errors.js'
 import { SequenceStorage } from './utils/storage.js'
 import { getRelayerUrl, getRpcUrl } from './utils/index.js'
-import { getModuleGuardCandidates } from './utils/guard.js'
+import { GUARD_CLIENT_HEADERS, getModuleGuardCandidates } from './utils/guard.js'
 
 import {
   CreateNewSessionResponse,
@@ -1144,7 +1144,9 @@ export class ChainSessionManager {
     let lastError: unknown = new Error('No guard found for module ' + moduleAddress)
     for (const guardAddress of candidates) {
       try {
-        const guard = new Signers.Guard(new Guard.Sequence.Guard(guardConfig.url, guardAddress))
+        const guard = new Signers.Guard(
+          new Guard.Sequence.Guard(guardConfig.url, guardAddress, undefined, GUARD_CLIENT_HEADERS),
+        )
         const guardSignature = await guard.signEnvelope(envelope)
         guardConfig.moduleAddresses.set(moduleAddress, guardAddress)
         return guardSignature
