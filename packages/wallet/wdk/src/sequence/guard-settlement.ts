@@ -82,7 +82,8 @@ export class GuardSettlements {
           const onChainConfiguration = await this.shared.sequence.stateProvider.getConfiguration(
             status.onChainImageHash,
           )
-          if (!onChainConfiguration || !this.shared.modules.wallets.referencesLegacyGuard(onChainConfiguration)) {
+          // If the on-chain configuration is unknown, settle anyway
+          if (onChainConfiguration && !this.shared.modules.wallets.referencesLegacyGuard(onChainConfiguration)) {
             return undefined
           }
 
