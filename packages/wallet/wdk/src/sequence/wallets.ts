@@ -484,7 +484,7 @@ export interface WalletsInterface {
   prepareGuardSettlement(wallet: Address.Address): Promise<string | undefined>
 
   /**
-   * Completes a signed settlement request and hands it to `ManagerOptions.onGuardSettlement`.
+   * Completes a signed settlement request and saves it with the state provider (the key machine) for relaying.
    *
    * @param requestId The ID of the signed settlement request.
    * @returns The signed settlement.
@@ -1375,7 +1375,7 @@ export class Wallets implements WalletsInterface {
     // If this update moved the wallet off a rotated-out guard, ask for the settlement of the new configuration
     const previous = fromConfig(request.envelope.configuration)
     if (
-      this.shared.sequence.onGuardSettlement &&
+      this.shared.sequence.stateProvider.saveGuardSettlement &&
       this.migrateGuardParts(previous.modules, previous.guardTopology).changed
     ) {
       try {

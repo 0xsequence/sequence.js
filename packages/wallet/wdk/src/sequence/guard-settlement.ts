@@ -84,7 +84,7 @@ export class GuardSettlements {
   }
 
   /**
-   * Completes a signed settlement request and hands the settlement to `ManagerOptions.onGuardSettlement`.
+   * Completes a signed settlement request and saves it with the state provider (the key machine) for relaying.
    */
   async complete(requestId: string): Promise<GuardSettlement> {
     const request = await this.shared.modules.signatures.get(requestId)
@@ -105,7 +105,11 @@ export class GuardSettlements {
       signature: Bytes.toHex(Signature.encodeSignature(Envelope.encodeSignature(envelope))),
     }
 
-    await this.shared.sequence.onGuardSettlement?.(settlement)
+    const stateProvider = this.shared.sequence.stateProvider
+    if (!stateProvider.saveGuardSettlement) {
+      throw new Error('state provider does not support guard settlements')
+    }
+    await stateProvider.saveGuardSettlement(settlement.wallet, settlement.envelope.payload, settlement.signature)
     await this.shared.modules.signatures.complete(requestId)
 
     return settlement
