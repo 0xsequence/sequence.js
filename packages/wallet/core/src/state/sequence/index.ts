@@ -336,14 +336,6 @@ export class Provider implements ProviderInterface {
     })
   }
 
-  async saveGuardSettlement(wallet: Address.Address, payload: Payload.Calls, signature: Hex.Hex): Promise<void> {
-    await this.service.saveGuardSettlement({
-      wallet,
-      payload: Bytes.toHex(Payload.encode(payload)),
-      signature,
-    })
-  }
-
   async saveUpdate(
     wallet: Address.Address,
     configuration: Config.Config,

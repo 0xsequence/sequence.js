@@ -4,20 +4,12 @@ import { Config, Context, GenericTree, Payload, Signature } from '@0xsequence/wa
 import { normalizeAddressKeys } from './utils.js'
 
 export class Cached implements Provider {
-  // Only available when the source supports it
-  readonly saveGuardSettlement?: Provider['saveGuardSettlement']
-
   constructor(
     private readonly args: {
       readonly source: Provider
       readonly cache: Provider
     },
-  ) {
-    const source = args.source
-    if (source.saveGuardSettlement) {
-      this.saveGuardSettlement = (wallet, payload, signature) => source.saveGuardSettlement!(wallet, payload, signature)
-    }
-  }
+  ) {}
 
   async getConfiguration(imageHash: Hex.Hex): Promise<Config.Config | undefined> {
     const cached = await this.args.cache.getConfiguration(imageHash)
