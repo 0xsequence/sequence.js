@@ -341,7 +341,8 @@ export class Account {
     const presigned = await this.tracker.loadPresignedConfiguration({
       wallet: this.address,
       fromImageHash: fromImageHash,
-      longestPath
+      longestPath,
+      chainId: Number(chainId)
     })
 
     const imageHash = presigned && presigned.length > 0 ? presigned[presigned.length - 1].nextImageHash : fromImageHash
@@ -1048,9 +1049,9 @@ export class Account {
     options?: {
       nonceSpace?: ethers.BigNumberish
       serial?: boolean
-      projectAccessKey?: string,
+      projectAccessKey?: string
       waitForReceipt?: boolean
-    } 
+    }
   ): Promise<commons.transaction.TransactionResponse | undefined> {
     const status = await this.status(chainId)
 
@@ -1066,7 +1067,15 @@ export class Account {
     }
     bundles.push(...childBundles.filter(b => b.transactions.length > 0))
 
-    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback, options?.projectAccessKey, options?.waitForReceipt)
+    return this.sendSignedTransactions(
+      bundles,
+      chainId,
+      quote,
+      undefined,
+      callback,
+      options?.projectAccessKey,
+      options?.waitForReceipt
+    )
   }
 
   async signTypedData(

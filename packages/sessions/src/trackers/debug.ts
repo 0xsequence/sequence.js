@@ -11,6 +11,7 @@ export class DebugConfigTracker implements ConfigTracker, migrator.PresignedMigr
     wallet: string
     fromImageHash: string
     longestPath?: boolean
+    chainId?: number
   }): Promise<PresignedConfigLink[]> {
     console.debug('? loadPresignedConfiguration')
     debug(args, '? ')
