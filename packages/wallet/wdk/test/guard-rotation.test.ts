@@ -3,7 +3,7 @@ import { Address, Bytes, Hex, Mnemonic, Secp256k1, Signature } from 'ox'
 import { State } from '@0xsequence/wallet-core'
 import { Config, Constants, Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 import { AbiFunction } from 'ox'
-import { GuardSettlement, GuardSettlementSpace, Manager, SignerReady } from '../src/sequence/index.js'
+import { GuardSettlementSpace, Manager, SignerReady } from '../src/sequence/index.js'
 import { Kinds } from '../src/sequence/types/signer.js'
 import { newManager } from './constants.js'
 
@@ -75,17 +75,21 @@ describe('Guard rotation', () => {
     sequence.legacyGuardAddresses = { wallet: [oldGuards.wallet], sessions: [oldGuards.sessions] }
   }
 
-  const settlements: GuardSettlement[] = []
+  // Settlements saved to the state provider, as the key machine would store them
+  const savedSettlements: { wallet: Address.Address; payload: Payload.Calls; signature: Hex.Hex }[] = []
 
   async function signUpWithOldGuards() {
-    settlements.length = 0
+    savedSettlements.length = 0
+    const stateProvider = Object.assign(new State.Local.Provider(new State.Local.IndexedDbStore()), {
+      saveGuardSettlement: async (wallet: Address.Address, payload: Payload.Calls, signature: Hex.Hex) => {
+        savedSettlements.push({ wallet, payload, signature })
+      },
+    })
     manager = newManager(
       {
         guardUrl: 'https://guard.test',
         guardAddresses: { ...oldGuards },
-        onGuardSettlement: async (settlement) => {
-          settlements.push(settlement)
-        },
+        stateProvider,
       },
       undefined,
       `guard_rotation_${Date.now()}`,
@@ -190,7 +194,9 @@ describe('Guard rotation', () => {
     expect(guardRequests).toEqual([newGuards.wallet])
 
     const settlement = await manager!.wallets.completeGuardSettlement(settlementId!)
-    expect(settlements).toEqual([settlement])
+    expect(savedSettlements).toEqual([
+      { wallet, payload: settlement.envelope.payload, signature: settlement.signature },
+    ])
 
     // It writes the latest configuration, with no chain id, in the dedicated nonce space
     const latest = await (manager as any).shared.modules.wallets.getConfigurationParts(wallet)
@@ -243,15 +249,11 @@ describe('Guard rotation', () => {
     expect(await manager!.wallets.needsGuardMigration(wallet)).toBe(false)
   })
 
-  it('Should hand settlements to the state provider by default', async () => {
-    const saveGuardSettlement = vi.fn(async () => {})
-    const stateProvider = Object.assign(new State.Local.Provider(new State.Local.IndexedDbStore()), {
-      saveGuardSettlement,
-    })
+  it('Should not queue a settlement when the state provider cannot store it', async () => {
     manager = newManager(
-      { guardUrl: 'https://guard.test', guardAddresses: { ...oldGuards }, stateProvider },
+      { guardUrl: 'https://guard.test', guardAddresses: { ...oldGuards } },
       undefined,
-      `guard_rotation_default_${Date.now()}`,
+      `guard_rotation_no_settlement_${Date.now()}`,
     )
     manager.registerGuardUI(vi.fn())
     const wallet = (await manager.wallets.signUp({
@@ -264,11 +266,8 @@ describe('Guard rotation', () => {
     const migrationId = await manager.wallets.migrateGuard(wallet)
     await signAll(manager, migrationId!)
     await manager.wallets.completeConfigurationUpdate(migrationId!)
-    const queued = (await manager.signatures.list()).filter((r) => r.action === 'guard-settlement')
-    expect(queued.length).toBe(1)
-    await signAll(manager, queued[0]!.id)
-    const settlement = await manager.wallets.completeGuardSettlement(queued[0]!.id)
 
-    expect(saveGuardSettlement).toHaveBeenCalledWith(wallet, settlement.envelope.payload, settlement.signature)
+    const queued = (await manager.signatures.list()).filter((r) => r.action === 'guard-settlement')
+    expect(queued.length).toBe(0)
   })
 })

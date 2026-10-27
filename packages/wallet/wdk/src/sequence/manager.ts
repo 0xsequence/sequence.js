@@ -9,7 +9,7 @@ import { resolveWdkEnv, type WdkEnv } from '../env.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
 import { Guards, GuardRole } from './guards.js'
-import { GuardSettlement, GuardSettlements } from './guard-settlement.js'
+import { GuardSettlements } from './guard-settlement.js'
 import { AuthCodeHandler } from './handlers/authcode.js'
 import {
   AuthCodePkceHandler,
@@ -85,10 +85,6 @@ export type ManagerOptions = {
   // keep working (the guard service co-signs for them) and are migrated to `guardAddresses` on the
   // next configuration update.
   legacyGuardAddresses?: Partial<Record<GuardRole, Address.Address[]>>
-  // Receives the signed settlement transaction of a wallet that moved to a new guard, to be relayed on every chain
-  // where the wallet is deployed or funded (see `Wallets.prepareGuardSettlement`).
-  // Defaults to `stateProvider.saveGuardSettlement` (the key machine) when the state provider supports it.
-  onGuardSettlement?: (settlement: GuardSettlement) => Promise<void>
 
   nonWitnessableSigners?: Address.Address[]
 
@@ -174,7 +170,6 @@ export type ResolvedManagerOptions = {
   guardUrl: string
   guardAddresses: Record<GuardRole, Address.Address>
   legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
-  onGuardSettlement?: (settlement: GuardSettlement) => Promise<void>
 
   nonWitnessableSigners: Address.Address[]
 
@@ -283,17 +278,6 @@ export const CreateWalletOptionsDefaults = {
   useGuard: false,
 }
 
-function defaultGuardSettlementHandler(
-  stateProvider: State.Provider,
-): ((settlement: GuardSettlement) => Promise<void>) | undefined {
-  if (!stateProvider.saveGuardSettlement) {
-    return undefined
-  }
-  return async (settlement) => {
-    await stateProvider.saveGuardSettlement!(settlement.wallet, settlement.envelope.payload, settlement.signature)
-  }
-}
-
 export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedManagerOptions {
   const env = resolveWdkEnv(options?.env)
 
@@ -389,7 +373,6 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedM
     guardUrl: options?.guardUrl ?? ManagerOptionsDefaults.guardUrl,
     guardAddresses: options?.guardAddresses ?? ManagerOptionsDefaults.guardAddresses,
     legacyGuardAddresses: options?.legacyGuardAddresses ?? ManagerOptionsDefaults.legacyGuardAddresses,
-    onGuardSettlement: options?.onGuardSettlement ?? defaultGuardSettlementHandler(stateProvider),
 
     nonWitnessableSigners: Array.from(nonWitnessable) as Address.Address[],
 
@@ -443,7 +426,6 @@ export type Sequence = {
   readonly guardUrl: string
   readonly guardAddresses: Record<GuardRole, Address.Address>
   readonly legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
-  readonly onGuardSettlement?: (settlement: GuardSettlement) => Promise<void>
 }
 
 export type Modules = {
@@ -639,7 +621,6 @@ export class Manager {
         guardUrl: ops.guardUrl,
         guardAddresses: ops.guardAddresses,
         legacyGuardAddresses: ops.legacyGuardAddresses,
-        onGuardSettlement: ops.onGuardSettlement,
       },
 
       databases: {
