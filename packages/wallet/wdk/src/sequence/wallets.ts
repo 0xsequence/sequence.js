@@ -7,6 +7,7 @@ import { IdTokenHandler } from './handlers/idtoken.js'
 import { MnemonicHandler } from './handlers/mnemonic.js'
 import { OtpHandler } from './handlers/otp.js'
 import { Shared } from './manager.js'
+import type { GuardSettlement } from './guard-settlement.js'
 import { Device } from './types/device.js'
 import { Action, Actions, Module } from './types/index.js'
 import { Kinds, SignerWithKind, WitnessExtraSignerKind } from './types/signer.js'
@@ -468,6 +469,27 @@ export interface WalletsInterface {
    * @returns A promise that resolves to the signature request id, or undefined if there is nothing to migrate.
    */
   migrateGuard(wallet: Address.Address): Promise<string | undefined>
+
+  /**
+   * Requests the signatures for a chain-agnostic settlement transaction of the wallet's latest configuration.
+   *
+   * Call it after a guard migration completes. Until the new configuration is written on a chain, the previous
+   * configuration (with the old guard) stays valid there; relaying the settlement on that chain closes the gap.
+   * Signed by a device and the new guard. Finish it with `completeGuardSettlement`.
+   *
+   * @param wallet The wallet address.
+   * @returns A promise that resolves to the signature request id, or undefined if the wallet has no guard.
+   * @throws If the wallet still references a rotated-out guard (call `migrateGuard` first).
+   */
+  prepareGuardSettlement(wallet: Address.Address): Promise<string | undefined>
+
+  /**
+   * Completes a signed settlement request and hands it to `ManagerOptions.onGuardSettlement`.
+   *
+   * @param requestId The ID of the signed settlement request.
+   * @returns The signed settlement.
+   */
+  completeGuardSettlement(requestId: string): Promise<GuardSettlement>
 
   /**
    * Retrieves the full, resolved configuration of a wallet.
@@ -1322,6 +1344,14 @@ export class Wallets implements WalletsInterface {
     }
 
     return this.requestConfigurationUpdate(wallet, {}, Actions.MigrateGuard, 'wallet-webapp')
+  }
+
+  public async prepareGuardSettlement(wallet: Address.Address): Promise<string | undefined> {
+    return this.shared.modules.guardSettlements.request(wallet, 'wallet-webapp')
+  }
+
+  public async completeGuardSettlement(requestId: string): Promise<GuardSettlement> {
+    return this.shared.modules.guardSettlements.complete(requestId)
   }
 
   public async completeConfigurationUpdate(requestId: string) {
