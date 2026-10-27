@@ -1,4 +1,5 @@
 import { expect } from 'chai'
+import { ethers } from 'ethers'
 
 import { trackers } from '../src'
 
@@ -36,6 +37,11 @@ describe('Arweave signature selection', () => {
     if (entry === 'missing') throw new Error('not found')
     return `sig-${entry}`
   }
+  const validity = (map: { [entry: string]: boolean | undefined | 'throw' }) => async (entry: string) => {
+    const v = map[entry]
+    if (v === 'throw') throw new Error('call failed')
+    return v
+  }
 
   it('Should use the newest signature without a validator', async () => {
     const picked = await trackers.arweave.pickSignature(['new', 'old'], load)
@@ -43,15 +49,22 @@ describe('Arweave signature selection', () => {
   })
 
   it('Should fall back to an older signature when the newest does not validate (e.g. after a rollback)', async () => {
-    const picked = await trackers.arweave.pickSignature(['new', 'old'], load, async entry => entry === 'old')
+    const picked = await trackers.arweave.pickSignature(['new', 'old'], load, validity({ new: false, old: true }))
     expect(picked).to.deep.equal({ entry: 'old', signature: 'sig-old' })
   })
 
-  it('Should use the newest signature when none validates, and treat validation errors as invalid', async () => {
-    const picked = await trackers.arweave.pickSignature(['new', 'old'], load, async entry => {
-      if (entry === 'new') throw new Error('call reverted')
-      return false
-    })
+  it('Should prefer a signature that could not be checked over one that is invalid', async () => {
+    const picked = await trackers.arweave.pickSignature(['new', 'old'], load, validity({ new: false, old: undefined }))
+    expect(picked).to.deep.equal({ entry: 'old', signature: 'sig-old' })
+  })
+
+  it('Should treat a failed check as unknown, not invalid', async () => {
+    const picked = await trackers.arweave.pickSignature(['new', 'old'], load, validity({ new: 'throw', old: false }))
+    expect(picked).to.deep.equal({ entry: 'new', signature: 'sig-new' })
+  })
+
+  it('Should use the newest signature when every signature is invalid', async () => {
+    const picked = await trackers.arweave.pickSignature(['new', 'old'], load, validity({ new: false, old: false }))
     expect(picked).to.deep.equal({ entry: 'new', signature: 'sig-new' })
   })
 
@@ -59,5 +72,34 @@ describe('Arweave signature selection', () => {
     const picked = await trackers.arweave.pickSignature(['missing', 'old'], load)
     expect(picked).to.deep.equal({ entry: 'old', signature: 'sig-old' })
     expect(await trackers.arweave.pickSignature(['missing'], load)).to.equal(undefined)
+  })
+})
+
+describe('Arweave signature check', () => {
+  const signer = ethers.Wallet.createRandom()
+  const digest = ethers.keccak256(ethers.toUtf8Bytes('digest'))
+
+  const eip712Signature = (wallet: ethers.HDNodeWallet) => ethers.concat([wallet.signingKey.sign(digest).serialized, '0x01'])
+
+  it('Should check EOA signatures without a provider', async () => {
+    expect(await trackers.arweave.checkSignature(undefined, signer.address, digest, eip712Signature(signer), false)).to.equal(
+      true
+    )
+    const other = ethers.Wallet.createRandom()
+    expect(await trackers.arweave.checkSignature(undefined, signer.address, digest, eip712Signature(other), false)).to.equal(
+      false
+    )
+  })
+
+  it('Should not check contract signatures without a provider or without code', async () => {
+    expect(await trackers.arweave.checkSignature(undefined, signer.address, digest, '0x1234', true)).to.equal(undefined)
+    const noCode = { getCode: async () => '0x' } as unknown as ethers.Provider
+    expect(await trackers.arweave.checkSignature(noCode, signer.address, digest, '0x1234', true)).to.equal(undefined)
+    const failing = {
+      getCode: async () => {
+        throw new Error('rpc down')
+      }
+    } as unknown as ethers.Provider
+    expect(await trackers.arweave.checkSignature(failing, signer.address, digest, '0x1234', true)).to.equal(undefined)
   })
 })
