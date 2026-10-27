@@ -261,6 +261,7 @@ export interface ConfigUpdatesArgs {
   wallet: string
   fromImageHash: string
   allUpdates?: boolean
+  signerConfigs?: { [key: string]: string }
 }
 
 export interface ConfigUpdatesReturn {
@@ -271,6 +272,7 @@ export interface MigrationsArgs {
   fromVersion: number
   fromImageHash: string
   chainID?: string
+  signerConfigs?: { [key: string]: string }
 }
 
 export interface MigrationsReturn {
