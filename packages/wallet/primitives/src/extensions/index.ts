@@ -38,7 +38,7 @@ export const Rc5: Extensions = {
 
 export const Rc6: Extensions = {
   ...Rc5,
-  recovery: '0x3b2E20d990c32bFB8c3fD363b42133743EE647f8',
+  recovery: '0x0000000002BEFBcfaF3a7Cd665AbBbe234672b2F',
 }
 
 export * as Passkeys from './passkeys.js'
