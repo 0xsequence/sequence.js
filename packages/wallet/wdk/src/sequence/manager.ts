@@ -87,6 +87,7 @@ export type ManagerOptions = {
   legacyGuardAddresses?: Partial<Record<GuardRole, Address.Address[]>>
   // Receives the signed settlement transaction of a wallet that moved to a new guard, to be relayed on every chain
   // where the wallet is deployed or funded (see `Wallets.prepareGuardSettlement`).
+  // Defaults to `stateProvider.saveGuardSettlement` (the key machine) when the state provider supports it.
   onGuardSettlement?: (settlement: GuardSettlement) => Promise<void>
 
   nonWitnessableSigners?: Address.Address[]
@@ -282,6 +283,17 @@ export const CreateWalletOptionsDefaults = {
   useGuard: false,
 }
 
+function defaultGuardSettlementHandler(
+  stateProvider: State.Provider,
+): ((settlement: GuardSettlement) => Promise<void>) | undefined {
+  if (!stateProvider.saveGuardSettlement) {
+    return undefined
+  }
+  return async (settlement) => {
+    await stateProvider.saveGuardSettlement!(settlement.wallet, settlement.envelope.payload, settlement.signature)
+  }
+}
+
 export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedManagerOptions {
   const env = resolveWdkEnv(options?.env)
 
@@ -377,7 +389,7 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedM
     guardUrl: options?.guardUrl ?? ManagerOptionsDefaults.guardUrl,
     guardAddresses: options?.guardAddresses ?? ManagerOptionsDefaults.guardAddresses,
     legacyGuardAddresses: options?.legacyGuardAddresses ?? ManagerOptionsDefaults.legacyGuardAddresses,
-    onGuardSettlement: options?.onGuardSettlement,
+    onGuardSettlement: options?.onGuardSettlement ?? defaultGuardSettlementHandler(stateProvider),
 
     nonWitnessableSigners: Array.from(nonWitnessable) as Address.Address[],
 

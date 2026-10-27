@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Address, Bytes, Hex, Mnemonic, Secp256k1, Signature } from 'ox'
+import { State } from '@0xsequence/wallet-core'
 import { Config, Constants, Payload, Signature as SequenceSignature } from '@0xsequence/wallet-primitives'
 import { AbiFunction } from 'ox'
 import { GuardSettlement, GuardSettlementSpace, Manager, SignerReady } from '../src/sequence/index.js'
@@ -224,5 +225,50 @@ describe('Guard rotation', () => {
 
     const pending = await manager!.signatures.list()
     expect(pending.filter((r) => r.action === 'guard-settlement').length).toBe(0)
+  })
+
+  it('Should rotate only the wallet-role guard when only it is rotated out (sessions stays on its guard)', async () => {
+    const wallet = await signUpWithOldGuards()
+    const sequence = (manager as any).shared.sequence
+    sequence.guardAddresses = { wallet: newGuards.wallet, sessions: oldGuards.sessions }
+    sequence.legacyGuardAddresses = { wallet: [oldGuards.wallet] }
+
+    const requestId = await manager!.wallets.migrateGuard(wallet)
+    await signAll(manager!, requestId!)
+    await manager!.wallets.completeConfigurationUpdate(requestId!)
+
+    const after = await manager!.wallets.getConfiguration(wallet)
+    expect(after.walletGuard?.address).toBe(newGuards.wallet)
+    expect(after.moduleGuards.get(sequence.extensions.sessions)?.address).toBe(oldGuards.sessions)
+    expect(await manager!.wallets.needsGuardMigration(wallet)).toBe(false)
+  })
+
+  it('Should hand settlements to the state provider by default', async () => {
+    const saveGuardSettlement = vi.fn(async () => {})
+    const stateProvider = Object.assign(new State.Local.Provider(new State.Local.IndexedDbStore()), {
+      saveGuardSettlement,
+    })
+    manager = newManager(
+      { guardUrl: 'https://guard.test', guardAddresses: { ...oldGuards }, stateProvider },
+      undefined,
+      `guard_rotation_default_${Date.now()}`,
+    )
+    manager.registerGuardUI(vi.fn())
+    const wallet = (await manager.wallets.signUp({
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      kind: 'mnemonic',
+      noGuard: false,
+    }))!
+    rotate(manager)
+
+    const migrationId = await manager.wallets.migrateGuard(wallet)
+    await signAll(manager, migrationId!)
+    await manager.wallets.completeConfigurationUpdate(migrationId!)
+    const queued = (await manager.signatures.list()).filter((r) => r.action === 'guard-settlement')
+    expect(queued.length).toBe(1)
+    await signAll(manager, queued[0]!.id)
+    const settlement = await manager.wallets.completeGuardSettlement(queued[0]!.id)
+
+    expect(saveGuardSettlement).toHaveBeenCalledWith(wallet, settlement.envelope.payload, settlement.signature)
   })
 })
