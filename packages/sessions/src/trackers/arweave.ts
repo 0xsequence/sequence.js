@@ -25,7 +25,7 @@ export interface Options {
 
 export const defaults = {
   namespace: 'Sequence-Sessions',
-  owners: ['0xA27b3EDE035dE132DA35f115bB5614D421f3201f'],
+  owners: ['AZ6R2mG8zxW9q7--iZXGrBknjegHoPzmG5IG-nxvMaM'],
   arweaveUrl: 'https://arweave.net',
   graphqlUrl: 'https://arweave.net/graphql',
   eip5719Provider: undefined,
