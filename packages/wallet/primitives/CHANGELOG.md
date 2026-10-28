@@ -1,5 +1,11 @@
 # @0xsequence/wallet-primitives
 
+## 3.0.16
+
+### Patch Changes
+
+- [#1053](https://github.com/0xsequence/sequence.js/pull/1053) [`2177bda`](https://github.com/0xsequence/sequence.js/commit/2177bdae8b5e5ece5142d9f2fee5fbd75fa13b37) Thanks [@taylanpince](https://github.com/taylanpince)! - Remove Telos (40) and Telos Testnet (41), which Sequence infra is dropping support for
+
 ## 3.0.15
 
 ### Patch Changes
