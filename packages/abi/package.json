@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/abi",
-  "version": "2.3.49",
+  "version": "2.3.50",
   "description": "abi sub-package for Sequence",
   "repository": {
     "type": "git",

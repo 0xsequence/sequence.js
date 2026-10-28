@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/core",
-  "version": "2.3.49",
+  "version": "2.3.50",
   "description": "core primitives for interacting with the sequence wallet contracts",
   "repository": {
     "type": "git",

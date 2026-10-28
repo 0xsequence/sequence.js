@@ -10,8 +10,6 @@ You can use this file as a reference to look up the correct network name slug a 
 | --- | --- | --- |
 | Ethereum | 1 | mainnet |
 | Optimism | 10 | optimism |
-| Telos | 40 | telos |
-| Telos Testnet | 41 | telos-testnet |
 | BNB Smart Chain | 56 | bsc |
 | BNB Smart Chain Testnet | 97 | bsc-testnet |
 | Gnosis Chain | 100 | gnosis |
@@ -26,7 +24,6 @@ You can use this file as a reference to look up the correct network name slug a 
 | Somnia | 5031 | somnia |
 | Arc | 5042 | arc |
 | Sandbox Testnet | 6252 | sandbox-testnet |
-| B3 | 8333 | b3 |
 | Base (Coinbase) | 8453 | base |
 | Incentiv | 24101 | incentiv |
 | Incentiv Testnet v2 | 28802 | incentiv-testnet-v2 |
