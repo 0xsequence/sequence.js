@@ -1,5 +1,14 @@
 # @0xsequence/migration
 
+## 2.3.50
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @0xsequence/wallet@2.3.50
+  - @0xsequence/abi@2.3.50
+  - @0xsequence/core@2.3.50
+
 ## 2.3.49
 
 ### Patch Changes

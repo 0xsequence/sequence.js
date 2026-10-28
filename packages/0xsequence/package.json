@@ -1,6 +1,6 @@
 {
   "name": "0xsequence",
-  "version": "2.3.49",
+  "version": "2.3.50",
   "description": "Sequence: a modular web3 stack and smart wallet for Ethereum chains",
   "repository": {
     "type": "git",

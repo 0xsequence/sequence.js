@@ -1,5 +1,21 @@
 # @0xsequence/network
 
+## 2.3.50
+
+### Patch Changes
+
+- [#1045](https://github.com/0xsequence/sequence.js/pull/1045) [`a0f9e61`](https://github.com/0xsequence/sequence.js/commit/a0f9e61638dc76338bdf0d8645f3be7dfeb5d146) Thanks [@taylanpince](https://github.com/taylanpince)! - Add SKALE Base Testnet (324705682)
+
+- [#1049](https://github.com/0xsequence/sequence.js/pull/1049) [`f324f7d`](https://github.com/0xsequence/sequence.js/commit/f324f7d19f002e522b7887259caf1dca9999c484) Thanks [@tolgahan-arikan](https://github.com/tolgahan-arikan)! - Deprecate and disable B3 (8333), which Sequence infra is dropping support for
+
+- [#1054](https://github.com/0xsequence/sequence.js/pull/1054) [`51839f0`](https://github.com/0xsequence/sequence.js/commit/51839f005613e505f4a5f043ab7ad3407afdf260) Thanks [@taylanpince](https://github.com/taylanpince)! - Deprecate and disable Telos (40) and Telos Testnet (41), which Sequence infra is dropping support for
+
+- Updated dependencies []:
+  - @0xsequence/core@2.3.50
+  - @0xsequence/indexer@2.3.50
+  - @0xsequence/relayer@2.3.50
+  - @0xsequence/utils@2.3.50
+
 ## 2.3.49
 
 ### Patch Changes

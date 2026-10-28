@@ -1,6 +1,6 @@
 {
   "name": "@0xsequence/network",
-  "version": "2.3.49",
+  "version": "2.3.50",
   "description": "network sub-package for Sequence",
   "repository": {
     "type": "git",
