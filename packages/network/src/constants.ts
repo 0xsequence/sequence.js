@@ -81,8 +81,8 @@ export enum ChainId {
   XAI_SEPOLIA = 37714555429, // network is deprecated
 
   // TELOS
-  TELOS = 40,
-  TELOS_TESTNET = 41,
+  TELOS = 40, // network is deprecated
+  TELOS_TESTNET = 41, // network is deprecated
 
   // B3 Sepolia
   B3 = 8333, // network is deprecated
@@ -805,7 +805,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'TLOS',
       name: 'TLOS',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.TELOS_TESTNET]: {
     chainId: ChainId.TELOS_TESTNET,
@@ -821,7 +822,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'TLOS',
       name: 'TLOS',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
   [ChainId.BORNE_TESTNET]: {
     chainId: ChainId.BORNE_TESTNET,
