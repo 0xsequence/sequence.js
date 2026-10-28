@@ -70,10 +70,6 @@ export const ChainId = {
   BASE: 8453,
   BASE_SEPOLIA: 84532,
 
-  // TELOS
-  TELOS: 40,
-  TELOS_TESTNET: 41,
-
   // APE Chain
   APECHAIN: 33139,
   APECHAIN_TESTNET: 33111,
@@ -477,46 +473,6 @@ export const ALL: Network[] = [
     },
     contracts: {
       multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.TELOS,
-    type: NetworkType.MAINNET,
-    name: 'telos',
-    title: 'Telos',
-    rpcUrl: getRpcUrl('telos'),
-    logoUrl: getLogoUrl(ChainId.TELOS),
-    blockExplorer: {
-      name: 'Telos Explorer',
-      url: 'https://explorer.telos.net/network/',
-    },
-    nativeCurrency: {
-      symbol: 'TLOS',
-      name: 'TLOS',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: DEFAULT_MULTICALL3_ADDRESS,
-    },
-  },
-  {
-    chainId: ChainId.TELOS_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'telos-testnet',
-    title: 'Telos Testnet',
-    rpcUrl: getRpcUrl('telos-testnet'),
-    logoUrl: getLogoUrl(ChainId.TELOS_TESTNET),
-    blockExplorer: {
-      name: 'Telos Testnet Explorer',
-      url: 'https://explorer-test.telos.net/network',
-    },
-    nativeCurrency: {
-      symbol: 'TLOS',
-      name: 'TLOS',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: SEQUENCE_MULTICALL3_ADDRESS,
     },
   },
   {
