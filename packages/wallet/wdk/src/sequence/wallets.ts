@@ -81,6 +81,11 @@ export type CommonSignupArgs = {
 export type PasskeySignupArgs = CommonSignupArgs & {
   kind: 'passkey'
   name?: string
+  /**
+   * Signs up with a passkey already stored on this device instead of creating a new one, so the new wallet
+   * shares its login with the wallets that passkey already controls. `name` is ignored when this is set.
+   */
+  credentialId?: string
 }
 
 export type MnemonicSignupArgs = CommonSignupArgs & {
@@ -262,7 +267,7 @@ export interface WalletsInterface {
    *
    * @param args The sign-up arguments, specifying the method and options.
    *   - `kind: 'mnemonic'`: Uses a mnemonic phrase as the login credential.
-   *   - `kind: 'passkey'`: Prompts the user to create a WebAuthn passkey.
+   *   - `kind: 'passkey'`: Prompts the user to create a WebAuthn passkey, or uses the stored passkey given by `credentialId`.
    *   - `kind: 'email-otp'`: Initiates an OTP flow to the user's email.
    *   - `kind: 'google-id-token' | 'apple-id-token'`: Completes an OIDC ID token flow when the provider is configured with `authMethod: 'id-token'`.
    *   - `kind: 'google-pkce' | 'apple'`: Completes an OAuth redirect flow.
@@ -790,6 +795,30 @@ export class Wallets implements WalletsInterface {
   }> {
     switch (args.kind) {
       case 'passkey': {
+        if (args.credentialId) {
+          const credential = await this.shared.databases.passkeyCredentials.getByCredentialId(args.credentialId)
+          if (!credential) {
+            throw new Error('credential-not-found')
+          }
+
+          // The witness must carry the credential id, so other devices can load this passkey for the new wallet
+          const passkeySigner = this.shared.passkeyProvider.fromCredential({
+            credentialId: credential.credentialId,
+            publicKey: credential.publicKey,
+            extensions: this.shared.sequence.extensions,
+            embedMetadata: false,
+            metadata: { credentialId: credential.credentialId },
+          })
+          this.shared.modules.logger.log('Using stored passkey signer:', passkeySigner.address)
+
+          return {
+            signer: passkeySigner,
+            extra: {
+              signerKind: Kinds.LoginPasskey,
+            },
+          }
+        }
+
         const passkeySigner = await this.shared.passkeyProvider.create(this.shared.sequence.extensions, {
           stateProvider: this.shared.sequence.stateProvider,
           credentialName: args.name,
@@ -1196,11 +1225,18 @@ export class Wallets implements WalletsInterface {
     // Store passkey credential ID mapping if this is a passkey signup
     if (args.kind === 'passkey' && this.isPasskeySigner(loginSigner.signer)) {
       try {
-        await this.shared.databases.passkeyCredentials.saveCredential(
-          loginSigner.signer.credentialId,
-          loginSigner.signer.publicKey,
-          wallet.address,
-        )
+        if (args.credentialId) {
+          await this.shared.databases.passkeyCredentials.updateCredential(loginSigner.signer.credentialId, {
+            lastLoginAt: new Date().toISOString(),
+            walletAddress: wallet.address,
+          })
+        } else {
+          await this.shared.databases.passkeyCredentials.saveCredential(
+            loginSigner.signer.credentialId,
+            loginSigner.signer.publicKey,
+            wallet.address,
+          )
+        }
         this.shared.modules.logger.log('Stored passkey credential mapping for wallet:', wallet.address)
       } catch (error) {
         console.error('[Wallets/signUp] Error saving passkey mapping:', error)
