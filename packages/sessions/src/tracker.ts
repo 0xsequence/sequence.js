@@ -24,6 +24,8 @@ export interface ConfigTracker {
     wallet: string
     fromImageHash: string
     longestPath?: boolean
+    // Chain the updates will be used on, lets trackers return the signatures that are valid there
+    chainId?: number
   }) => Promise<PresignedConfigLink[]>
 
   savePresignedConfiguration: (args: PresignedConfig) => Promise<void>

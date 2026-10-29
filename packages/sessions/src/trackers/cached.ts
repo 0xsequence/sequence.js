@@ -14,6 +14,7 @@ export class CachedTracker implements migrator.PresignedMigrationTracker, Config
     wallet: string
     fromImageHash: string
     longestPath?: boolean | undefined
+    chainId?: number
   }): Promise<PresignedConfigLink[]> {
     // We need to check both, and return the one with the highest checkpoint
     // eventually we could try to combine them, but for now we'll just return

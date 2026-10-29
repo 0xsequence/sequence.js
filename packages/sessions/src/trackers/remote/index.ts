@@ -4,26 +4,71 @@ import { ethers } from 'ethers'
 import { ConfigTracker, PresignedConfig, PresignedConfigLink } from '../../tracker'
 import { Sessions, SignatureType, Transaction } from './sessions.gen'
 
+const EXTERNAL_IMAGE_HASH = new ethers.Interface(['function externalImageHash() view returns (bytes32)'])
+
+export interface RemoteConfigTrackerOptions {
+  // Signers that are smart wallets whose own config can change (e.g. guard wallets). For each, the tracker reads the
+  // config the wallet checks signatures against on the target chain, so the key machine returns its signatures that
+  // are valid there.
+  signerWallets?: string[]
+  providerFor?: (chainId: number) => ethers.Provider | undefined
+}
+
 export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMigrationTracker {
   private readonly sessions: Sessions
 
   constructor(
     hostname: string,
-    public readonly onlyRecoverable: boolean = true
+    public readonly onlyRecoverable: boolean = true,
+    private readonly options: RemoteConfigTrackerOptions = {}
   ) {
     this.sessions = new Sessions(hostname, fetch)
+  }
+
+  /**
+   * Image hash each signer wallet checks signatures against on `chainId`, read with `externalImageHash()`.
+   * Signer wallets without code or without that function on the chain are left out (the key machine then returns
+   * their original signatures).
+   */
+  async signerConfigsFor(chainId?: ethers.BigNumberish): Promise<{ [signer: string]: string } | undefined> {
+    const { signerWallets, providerFor } = this.options
+    if (chainId === undefined || BigInt(chainId) === 0n || !signerWallets?.length || !providerFor) {
+      return undefined
+    }
+
+    const provider = providerFor(Number(chainId))
+    if (!provider) {
+      return undefined
+    }
+
+    const entries = await Promise.all(
+      signerWallets.map(async signer => {
+        try {
+          const result = await provider.call({ to: signer, data: EXTERNAL_IMAGE_HASH.encodeFunctionData('externalImageHash') })
+          const [imageHash] = EXTERNAL_IMAGE_HASH.decodeFunctionResult('externalImageHash', result)
+          return imageHash === ethers.ZeroHash ? [] : [[signer, imageHash as string] as const]
+        } catch {
+          return []
+        }
+      })
+    )
+
+    const signerConfigs = Object.fromEntries(entries.flat())
+    return Object.keys(signerConfigs).length > 0 ? signerConfigs : undefined
   }
 
   async loadPresignedConfiguration(args: {
     wallet: string
     fromImageHash: string
     longestPath?: boolean
+    chainId?: number
   }): Promise<PresignedConfigLink[]> {
     try {
       const { updates } = await this.sessions.configUpdates({
         wallet: args.wallet,
         fromImageHash: args.fromImageHash,
-        allUpdates: args.longestPath
+        allUpdates: args.longestPath,
+        signerConfigs: await this.signerConfigsFor(args.chainId)
       })
 
       return updates.map(({ toImageHash, signature }) => ({ wallet: args.wallet, nextImageHash: toImageHash, signature }))
@@ -149,7 +194,13 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     const chainIdString = numberString(chainId)
-    const { migrations } = await this.sessions.migrations({ wallet, fromVersion, fromImageHash, chainID: chainIdString })
+    const { migrations } = await this.sessions.migrations({
+      wallet,
+      fromVersion,
+      fromImageHash,
+      chainID: chainIdString,
+      signerConfigs: await this.signerConfigsFor(chainId)
+    })
 
     const chooseMigration = async (chainId: string): Promise<migrator.SignedMigration | undefined> => {
       const migrations_ = migrations[chainId]
