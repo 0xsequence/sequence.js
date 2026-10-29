@@ -1056,7 +1056,19 @@ export class Wallets implements WalletsInterface {
       const existingWallets = await State.getWalletsFor(this.shared.sequence.stateProvider, loginSigner.signer)
 
       if (existingWallets.length > 0) {
+        // Wallets with a session on this device (they have a device key) are left as they are, so creating
+        // another wallet for the same login doesn't sign them out. Entries without a device key are only
+        // leftovers of an unfinished sign-in and are replaced and cleaned up as before.
+        // Entries can be stored with a different address casing than the state provider returns.
+        const storedWallets = await this.shared.databases.manager.list()
+        const preliminaryWallets: Address.Address[] = []
         for (const wallet of existingWallets) {
+          const existingEntry = storedWallets.find((entry) => Address.isEqual(entry.address, wallet.wallet))
+          if (existingEntry?.device) {
+            continue
+          }
+
+          preliminaryWallets.push(wallet.wallet)
           const preliminaryEntry: Wallet = {
             address: wallet.wallet,
             status: 'logging-in',
@@ -1076,10 +1088,10 @@ export class Wallets implements WalletsInterface {
         })
 
         if (result === 'abort-signup') {
-          for (const wallet of existingWallets) {
-            const finalEntry = await this.shared.databases.manager.get(wallet.wallet)
+          for (const wallet of preliminaryWallets) {
+            const finalEntry = await this.shared.databases.manager.get(wallet)
             if (finalEntry && !finalEntry.device) {
-              await this.shared.databases.manager.del(wallet.wallet)
+              await this.shared.databases.manager.del(wallet)
             }
           }
 
@@ -1090,8 +1102,8 @@ export class Wallets implements WalletsInterface {
         }
 
         if (result === 'create-new') {
-          for (const wallet of existingWallets) {
-            await this.shared.databases.manager.del(wallet.wallet)
+          for (const wallet of preliminaryWallets) {
+            await this.shared.databases.manager.del(wallet)
           }
           // Continue with the signup process
         } else {
