@@ -9,6 +9,18 @@ import { IdentitySigner } from '../src/identity/signer.js'
 import { MnemonicHandler } from '../src/sequence/handlers/mnemonic.js'
 import { Kinds } from '../src/sequence/types/signer.js'
 
+// The state provider returns checksummed wallet addresses. Storing the session entry the same way
+// matches how wallet sessions are stored in apps, where signUp used to overwrite and delete them.
+async function storeChecksummedEntry(manager: Manager, wallet: Address.Address) {
+  const db = (manager as any).shared.databases.manager
+  const entry = await manager.wallets.get(wallet)
+  if (!entry) throw new Error('wallet-entry-not-found')
+  await db.del(entry.address)
+  const checksummedEntry = { ...entry, address: Address.checksum(entry.address) }
+  await db.set(checksummedEntry)
+  return checksummedEntry
+}
+
 describe('Wallets', () => {
   let manager: Manager | undefined
 
@@ -456,6 +468,44 @@ describe('Wallets', () => {
     expect(selectorOptions.context.isRedirect).toBe(false)
     expect(secondWallet).toBeDefined()
     expect(secondWallet).not.toBe(firstWallet) // Should be new wallet
+  })
+
+  it('Should keep a signed-in wallet when the wallet selector creates a new one', async () => {
+    manager = newManager()
+
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+    const firstWallet = await manager!.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+    const firstEntry = await storeChecksummedEntry(manager!, firstWallet!)
+    expect(firstEntry.status).toBe('ready')
+
+    // Same session: the first wallet is still signed in on this device
+    manager!.wallets.registerWalletSelector(async () => 'create-new' as const)
+    const secondWallet = await manager!.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+
+    expect(secondWallet).toBeDefined()
+    expect(Address.isEqual(secondWallet!, firstWallet!)).toBe(false)
+
+    const wallets = await manager!.wallets.list()
+    const keptEntry = wallets.find((wallet) => Address.isEqual(wallet.address, firstWallet!))
+    expect(keptEntry?.status).toBe('ready')
+    expect(keptEntry?.device).toBe(firstEntry.device)
+    expect(wallets.find((wallet) => Address.isEqual(wallet.address, secondWallet!))?.status).toBe('ready')
+  })
+
+  it('Should keep a signed-in wallet when the wallet selector aborts signup', async () => {
+    manager = newManager()
+
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+    const firstWallet = await manager!.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+    const firstEntry = await storeChecksummedEntry(manager!, firstWallet!)
+
+    manager!.wallets.registerWalletSelector(async () => 'abort-signup' as const)
+    const result = await manager!.wallets.signUp({ mnemonic, kind: 'mnemonic', noGuard: true })
+
+    expect(result).toBeUndefined()
+    const keptEntry = (await manager!.wallets.list()).find((wallet) => Address.isEqual(wallet.address, firstWallet!))
+    expect(keptEntry?.status).toBe('ready')
+    expect(keptEntry?.device).toBe(firstEntry.device)
   })
 
   it('Should abort signup when wallet selector returns abort-signup', async () => {
