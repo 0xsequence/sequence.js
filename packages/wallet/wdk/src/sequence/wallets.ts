@@ -801,12 +801,13 @@ export class Wallets implements WalletsInterface {
             throw new Error('credential-not-found')
           }
 
-          // The witness must carry the credential id, so other devices can load this passkey for the new wallet
+          // The witness must carry the credential id, so other devices can load this passkey for the new wallet.
+          // A public key with metadata has it in its image hash, so signatures must embed it to prove that image hash.
           const passkeySigner = this.shared.passkeyProvider.fromCredential({
             credentialId: credential.credentialId,
             publicKey: credential.publicKey,
             extensions: this.shared.sequence.extensions,
-            embedMetadata: false,
+            embedMetadata: credential.publicKey.metadata !== undefined,
             metadata: { credentialId: credential.credentialId },
           })
           this.shared.modules.logger.log('Using stored passkey signer:', passkeySigner.address)
@@ -1428,12 +1429,13 @@ export class Wallets implements WalletsInterface {
           throw new Error('credential-not-found')
         }
 
-        // Create passkey signer from stored credential
+        // Create passkey signer from stored credential. A public key with metadata has it in its image hash, so
+        // signatures must embed it to prove that image hash.
         passkeySigner = this.shared.passkeyProvider.fromCredential({
           credentialId: credential.credentialId,
           publicKey: credential.publicKey,
           extensions: this.shared.sequence.extensions,
-          embedMetadata: false,
+          embedMetadata: credential.publicKey.metadata !== undefined,
           metadata: { credentialId: credential.credentialId },
         })
       } else {

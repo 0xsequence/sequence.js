@@ -108,6 +108,53 @@ describe('Reusing a passkey for another wallet', () => {
     )
   })
 
+  it('signs with the metadata a stored passkey embeds, so its wallets are found under that passkey', async () => {
+    const { webauthn, passkeyProvider } = fakeAuthenticator()
+    // A passkey whose public key carries its credential id, which is part of its image hash
+    const embeddedSigners: (boolean | undefined)[] = []
+    const embeddingProvider: PasskeyProvider = {
+      ...passkeyProvider,
+      create: (extensions, options) => passkeyProvider.create(extensions, { ...options, embedMetadata: true }),
+      fromCredential: (args) => {
+        embeddedSigners.push(args.embedMetadata)
+        return passkeyProvider.fromCredential(args)
+      },
+    }
+    const stateProvider = new State.Local.Provider(new State.Local.IndexedDbStore('passkey-reuse-embedded'))
+    const manager = newManager({ passkeyProvider: embeddingProvider, stateProvider })
+    const extensions = Extensions.Rc6
+
+    await manager.wallets.signUp({ kind: 'passkey', noGuard: true })
+    const [credential] = await manager.getPasskeyCredentials()
+    expect(credential!.publicKey.metadata).toBeDefined()
+    const imageHash = Extensions.Passkeys.rootFor(credential!.publicKey)
+
+    manager.wallets.registerWalletSelector(async () => 'create-new')
+    const secondWallet = await manager.wallets.signUp({
+      kind: 'passkey',
+      credentialId: credential!.credentialId,
+      noGuard: true,
+    })
+
+    // The new wallet's witness proves the passkey's image hash, so it's found under it
+    const loaded = await Signers.Passkey.Passkey.loadFromWitness(stateProvider, extensions, secondWallet!, imageHash, {
+      webauthn,
+    })
+    expect(loaded.embedMetadata).toBe(true)
+
+    // Signing in with the stored passkey embeds the metadata too
+    await expect(
+      manager.wallets.login({
+        kind: 'passkey',
+        credentialId: credential!.credentialId,
+        selectWallet: async () => {
+          throw new Error('stop-after-select')
+        },
+      }),
+    ).rejects.toThrow('stop-after-select')
+    expect(embeddedSigners).toEqual([true, true])
+  })
+
   it('fails sign-up for a passkey that is not stored on this device', async () => {
     const { passkeyProvider } = fakeAuthenticator()
     const manager = newManager({ passkeyProvider })
