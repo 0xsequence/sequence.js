@@ -27,7 +27,7 @@ jobs:
       - run: pnpm format
 
       - name: Commit back
-        uses: 0xsequence/actions/git-commit@d6560e817fb0e198d271e8c72f4a243d02188a8a # v0.0.4
+        uses: 0xsequence/actions/git-commit@930ae7005d427ad77441adbc3562d94ed88dc15d # v0.10.0
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN_GIT_COMMIT }}
         with:
