@@ -1,5 +1,14 @@
 # @0xsequence/wallet-wdk
 
+## 3.1.4
+
+### Patch Changes
+
+- [#1058](https://github.com/0xsequence/sequence.js/pull/1058) [`bcb6ef8`](https://github.com/0xsequence/sequence.js/commit/bcb6ef81bf690179b05d910c3001df25f091a552) Thanks [@tolgahan-arikan](https://github.com/tolgahan-arikan)! - Add `credentialId` to passkey sign-up, so a new wallet can be created with a passkey already stored on this device instead of a new one.
+  Passkey signers built from a stored credential (sign-up with `credentialId`, and login with `credentialId`) now embed the public key's metadata when it has any, so their signatures prove the passkey's image hash.
+
+- [#1058](https://github.com/0xsequence/sequence.js/pull/1058) [`bcb6ef8`](https://github.com/0xsequence/sequence.js/commit/bcb6ef81bf690179b05d910c3001df25f091a552) Thanks [@tolgahan-arikan](https://github.com/tolgahan-arikan)! - Keep wallets that are already signed in on this device when signing up again with the same login. The wallet selector's `create-new` and `abort-signup` results no longer overwrite or delete their sessions, so a second wallet can be created for a login while the first stays signed in
+
 ## 3.1.3
 
 ### Patch Changes
