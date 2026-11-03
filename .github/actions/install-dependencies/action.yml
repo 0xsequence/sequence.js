@@ -5,14 +5,13 @@ runs:
 
   steps:
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version-file: .nvmrc
 
     - name: Setup PNPM
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       with:
-        version: 10
         run_install: false
 
     - name: Get pnpm store directory
@@ -22,7 +21,7 @@ runs:
         echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
     - name: Setup pnpm cache
-      uses: actions/cache@v4
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
       with:
         path: |
           ${{ steps.pnpm-cache.outputs.STORE_PATH }}

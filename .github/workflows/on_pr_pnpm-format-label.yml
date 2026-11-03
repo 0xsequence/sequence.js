@@ -4,20 +4,28 @@ on:
   pull_request:
     types: [labeled]
 
+permissions: {}
+
 jobs:
   proto:
     if: ${{ github.event.label.name == 'pnpm format' }}
     uses: ./.github/workflows/pnpm-format.yml
-    secrets: inherit
+    permissions:
+      contents: read
+    secrets:
+      GH_TOKEN_GIT_COMMIT: ${{ secrets.GH_TOKEN_GIT_COMMIT }}
 
   rm:
     if: ${{ github.event.label.name == 'pnpm format' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
     steps:
       - name: Remove the label
-        run: |
-          LABEL=$(echo "${{ github.event.label.name }}" | sed 's/ /%20/g')
-          curl -X DELETE \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/$LABEL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABEL: ${{ github.event.label.name }}
+        run: gh api -X DELETE "repos/$REPO/issues/$PR_NUMBER/labels/${LABEL// /%20}"

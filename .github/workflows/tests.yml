@@ -2,20 +2,32 @@ on: [push]
 
 name: tests
 
+permissions: {}
+
 jobs:
   install:
     name: Install dependencies
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/install-dependencies
 
   build:
     name: Run build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
     needs: [install]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/install-dependencies
       - run: pnpm clean
       - run: pnpm build
@@ -25,12 +37,17 @@ jobs:
   tests:
     name: Run all tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
     needs: [build]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/install-dependencies
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
         with:
           version: v1.5.0
       - name: Start Anvil in background
