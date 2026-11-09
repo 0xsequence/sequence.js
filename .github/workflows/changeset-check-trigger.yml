@@ -11,4 +11,4 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    uses: 0xPolygon/pipelines/.github/workflows/apps-changeset-check.yml@3c69da7f7438cb371c56851dab2cf00c5d7dbce6 # main
+    uses: 0xPolygon/pipelines/.github/workflows/apps-changeset-check.yml@dc98553bdb87db5a712980a279dadc389b2213b5 # main
