@@ -1,5 +1,15 @@
 # @0xsequence/sessions
 
+## 2.3.51
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @0xsequence/migration@2.3.51
+  - @0xsequence/core@2.3.51
+  - @0xsequence/replacer@2.3.51
+  - @0xsequence/utils@2.3.51
+
 ## 2.3.50
 
 ### Patch Changes

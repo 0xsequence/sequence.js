@@ -1,5 +1,12 @@
 # @0xsequence/waas-ethers
 
+## 2.3.51
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @0xsequence/waas@2.3.51
+
 ## 2.3.50
 
 ### Patch Changes

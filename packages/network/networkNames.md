@@ -21,7 +21,6 @@ You can use this file as a reference to look up the correct network name slug a 
 | Soneium Minato (Testnet) | 1946 | soneium-minato |
 | Tempo | 4217 | tempo |
 | Robinhood Chain | 4663 | robinhood |
-| Somnia | 5031 | somnia |
 | Arc | 5042 | arc |
 | Sandbox Testnet | 6252 | sandbox-testnet |
 | Base (Coinbase) | 8453 | base |
@@ -36,7 +35,6 @@ You can use this file as a reference to look up the correct network name slug a 
 | Etherlink | 42793 | etherlink |
 | Avalanche Testnet | 43113 | avalanche-testnet |
 | Avalanche | 43114 | avalanche |
-| Somnia Testnet | 50312 | somnia-testnet |
 | Polygon Amoy | 80002 | amoy |
 | Berachain | 80094 | berachain |
 | Base Sepolia | 84532 | base-sepolia |

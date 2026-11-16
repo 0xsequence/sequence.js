@@ -1,5 +1,12 @@
 # @0xsequence/deployer
 
+## 2.3.51
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @0xsequence/utils@2.3.51
+
 ## 2.3.50
 
 ### Patch Changes

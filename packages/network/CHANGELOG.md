@@ -1,5 +1,17 @@
 # @0xsequence/network
 
+## 2.3.51
+
+### Patch Changes
+
+- [#1065](https://github.com/0xsequence/sequence.js/pull/1065) [`f92e605`](https://github.com/0xsequence/sequence.js/commit/f92e605ddf13afef1980a3a0752c777c854ef098) Thanks [@taylanpince](https://github.com/taylanpince)! - Deprecate and disable Somnia (5031) and Somnia Testnet (50312), which Sequence infra is dropping support for
+
+- Updated dependencies []:
+  - @0xsequence/core@2.3.51
+  - @0xsequence/indexer@2.3.51
+  - @0xsequence/relayer@2.3.51
+  - @0xsequence/utils@2.3.51
+
 ## 2.3.50
 
 ### Patch Changes

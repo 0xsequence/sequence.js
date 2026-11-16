@@ -1,5 +1,7 @@
 # @0xsequence/marketplace
 
+## 2.3.51
+
 ## 2.3.50
 
 ## 2.3.49
