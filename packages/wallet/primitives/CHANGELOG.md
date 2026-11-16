@@ -1,5 +1,11 @@
 # @0xsequence/wallet-primitives
 
+## 3.0.17
+
+### Patch Changes
+
+- [#1064](https://github.com/0xsequence/sequence.js/pull/1064) [`23bafd3`](https://github.com/0xsequence/sequence.js/commit/23bafd3e0a73186c62a78353da81143f308a4268) Thanks [@taylanpince](https://github.com/taylanpince)! - Remove Somnia (5031) and Somnia Testnet (50312), which Sequence infra is dropping support for
+
 ## 3.0.16
 
 ### Patch Changes
