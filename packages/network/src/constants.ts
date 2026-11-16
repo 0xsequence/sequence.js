@@ -135,8 +135,8 @@ export enum ChainId {
   MONAD = 143,
 
   // SOMNIA
-  SOMNIA_TESTNET = 50312,
-  SOMNIA = 5031,
+  SOMNIA_TESTNET = 50312, // network is deprecated
+  SOMNIA = 5031, // network is deprecated
 
   // INCENTIV TESTNET
   INCENTIV_TESTNET = 11690, // network is deprecated
@@ -1140,7 +1140,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'STT',
       name: 'STT',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
 
   [ChainId.INCENTIV_TESTNET]: {
@@ -1213,7 +1214,8 @@ export const networks: Record<ChainId, NetworkMetadata> = {
       symbol: 'SOMI',
       name: 'SOMI',
       decimals: 18
-    }
+    },
+    deprecated: true
   },
 
   [ChainId.KATANA]: {
