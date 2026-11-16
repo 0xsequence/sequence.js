@@ -1,7 +1,6 @@
 import { Address } from 'ox'
 
 const DEFAULT_MULTICALL3_ADDRESS: Address.Address = '0xcA11bde05977b3631167028862bE2a173976CA11'
-const SEQUENCE_MULTICALL3_ADDRESS: Address.Address = '0xae96419a81516f063744206d4b5E36f3168280f8'
 
 export enum NetworkType {
   MAINNET = 'mainnet',
@@ -90,10 +89,6 @@ export const ChainId = {
 
   // MONAD
   MONAD: 143,
-
-  // SOMNIA
-  SOMNIA_TESTNET: 50312,
-  SOMNIA: 5031,
 
   // KATANA
   KATANA: 747474,
@@ -615,48 +610,6 @@ export const ALL: Network[] = [
       multicall3: DEFAULT_MULTICALL3_ADDRESS,
     },
   },
-  {
-    chainId: ChainId.SOMNIA,
-    type: NetworkType.MAINNET,
-    name: 'somnia',
-    title: 'Somnia',
-    rpcUrl: getRpcUrl('somnia'),
-    logoUrl: getLogoUrl(ChainId.SOMNIA),
-    blockExplorer: {
-      name: 'Somnia Explorer',
-      url: 'https://mainnet.somnia.w3us.site/',
-    },
-    nativeCurrency: {
-      symbol: 'SOMI',
-      name: 'SOMI',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: SEQUENCE_MULTICALL3_ADDRESS,
-    },
-  },
-
-  {
-    chainId: ChainId.SOMNIA_TESTNET,
-    type: NetworkType.TESTNET,
-    name: 'somnia-testnet',
-    title: 'Somnia Testnet',
-    rpcUrl: getRpcUrl('somnia-testnet'),
-    logoUrl: getLogoUrl(ChainId.SOMNIA_TESTNET),
-    blockExplorer: {
-      name: 'Somnia Testnet Explorer',
-      url: 'https://somnia-testnet.socialscan.io/',
-    },
-    nativeCurrency: {
-      symbol: 'STT',
-      name: 'STT',
-      decimals: 18,
-    },
-    contracts: {
-      multicall3: SEQUENCE_MULTICALL3_ADDRESS,
-    },
-  },
-
   {
     chainId: ChainId.KATANA,
     type: NetworkType.MAINNET,
