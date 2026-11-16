@@ -1,8 +1,9 @@
 name: Workflow lint
 
+# zizmor, shared from 0xPolygon/pipelines. No path filter, so it can be made a
+# required check: a check skipped by a path filter stays pending.
 on:
   pull_request:
-    paths: [".github/**"]
   schedule:
     - cron: "41 6 * * 1"
   workflow_dispatch:
@@ -11,17 +12,8 @@ permissions: {}
 
 jobs:
   zizmor:
-    name: zizmor
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
+      contents: read
+      actions: read
       security-events: write # SARIF upload to code scanning
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
-        with:
-          min-severity: medium
-          min-confidence: medium
-          advanced-security: true
+    uses: 0xPolygon/pipelines/.github/workflows/security-zizmor.yml@cb7db0e0135424415839eefb4a81052a84cda278 # main, 2026-11-16
