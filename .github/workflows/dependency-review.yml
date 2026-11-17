@@ -1,6 +1,8 @@
 name: Dependency review
 
-# The check and the shared licence allowlist live in 0xPolygon/pipelines.
+# The check, its thresholds and this repo's licence exemptions
+# (.github/dependency-review/0xsequence/sequence.js.txt) live in 0xPolygon/pipelines,
+# where the security team reviews changes to them.
 on:
   pull_request:
 
@@ -11,21 +13,4 @@ jobs:
     permissions:
       contents: read
       pull-requests: write # comment-summary-in-pr
-    uses: 0xPolygon/pipelines/.github/workflows/security-dependency-review.yml@cb7db0e0135424415839eefb4a81052a84cda278 # main, 2026-11-16
-    with:
-      # Already in the lockfile under copyleft or unparsed licence data; new
-      # dependencies with those licences still fail.
-      allow-dependencies-licenses: >-
-        pkg:npm/@img/sharp-libvips-darwin-arm64,
-        pkg:npm/@img/sharp-libvips-darwin-x64,
-        pkg:npm/@img/sharp-libvips-linux-arm,
-        pkg:npm/@img/sharp-libvips-linux-arm64,
-        pkg:npm/@img/sharp-libvips-linux-ppc64,
-        pkg:npm/@img/sharp-libvips-linux-riscv64,
-        pkg:npm/@img/sharp-libvips-linux-s390x,
-        pkg:npm/@img/sharp-libvips-linux-x64,
-        pkg:npm/@img/sharp-libvips-linuxmusl-arm64,
-        pkg:npm/@img/sharp-libvips-linuxmusl-x64,
-        pkg:npm/@img/sharp-win32-arm64,
-        pkg:npm/@img/sharp-win32-ia32,
-        pkg:npm/@img/sharp-win32-x64
+    uses: 0xPolygon/pipelines/.github/workflows/security-dependency-review.yml@8674784067b26bea487d811e546dffb0c7d0158e # 2026-11-17
