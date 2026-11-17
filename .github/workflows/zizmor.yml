@@ -16,4 +16,4 @@ jobs:
       contents: read
       actions: read
       security-events: write # SARIF upload to code scanning
-    uses: 0xPolygon/pipelines/.github/workflows/security-zizmor.yml@cb7db0e0135424415839eefb4a81052a84cda278 # main, 2026-11-16
+    uses: 0xPolygon/pipelines/.github/workflows/security-zizmor.yml@8674784067b26bea487d811e546dffb0c7d0158e # 2026-11-17
