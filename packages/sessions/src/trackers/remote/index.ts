@@ -149,7 +149,12 @@ export class RemoteConfigTracker implements ConfigTracker, migrator.PresignedMig
     chainId: ethers.BigNumberish
   ): Promise<migrator.SignedMigration | undefined> {
     const chainIdString = numberString(chainId)
-    const { migrations } = await this.sessions.migrations({ wallet, fromVersion, fromImageHash, chainID: chainIdString })
+    const { migrations } = await this.sessions.migrations({
+      wallet,
+      fromVersion,
+      fromImageHash,
+      chainID: chainIdString
+    })
 
     const chooseMigration = async (chainId: string): Promise<migrator.SignedMigration | undefined> => {
       const migrations_ = migrations[chainId]

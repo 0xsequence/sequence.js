@@ -1048,9 +1048,9 @@ export class Account {
     options?: {
       nonceSpace?: ethers.BigNumberish
       serial?: boolean
-      projectAccessKey?: string,
+      projectAccessKey?: string
       waitForReceipt?: boolean
-    } 
+    }
   ): Promise<commons.transaction.TransactionResponse | undefined> {
     const status = await this.status(chainId)
 
@@ -1066,7 +1066,15 @@ export class Account {
     }
     bundles.push(...childBundles.filter(b => b.transactions.length > 0))
 
-    return this.sendSignedTransactions(bundles, chainId, quote, undefined, callback, options?.projectAccessKey, options?.waitForReceipt)
+    return this.sendSignedTransactions(
+      bundles,
+      chainId,
+      quote,
+      undefined,
+      callback,
+      options?.projectAccessKey,
+      options?.waitForReceipt
+    )
   }
 
   async signTypedData(

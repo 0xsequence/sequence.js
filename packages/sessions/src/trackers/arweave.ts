@@ -16,6 +16,11 @@ export interface Options {
   readonly graphqlUrl?: string
   readonly eip5719Provider?: ethers.Provider
   readonly rateLimitRetryDelayMs?: number
+  // When a signer published several signatures for the same payload (e.g. a guard wallet after a key rotation),
+  // the newest one that validates is used. Signatures are checked on the chain they were made for: this returns the
+  // provider for that chain. No-chain-id signatures are checked on the chain returned for chain id 0, which the caller
+  // picks. Without a provider for a chain, signatures on it can't be checked and the newest one is used.
+  readonly validationProviders?: (chainId: bigint) => ethers.Provider | undefined
 }
 
 export const defaults = {
@@ -25,6 +30,133 @@ export const defaults = {
   graphqlUrl: 'https://arweave.net/graphql',
   eip5719Provider: undefined,
   rateLimitRetryDelayMs: 5 * 60 * 1000
+}
+
+/**
+ * Groups config update items (newest first, as returned by the query) by target config and signer.
+ * The newest signature of each signer is kept, so a signer that publishes a replacement (e.g. a guard wallet after a
+ * key rotation) is not shadowed by its older, no longer valid signature.
+ */
+export function groupConfigUpdateItems<T extends { toImageHash: string; signer: string }>(
+  items: T[]
+): { signatures: Map<string, Map<string, T[]>>; candidates: T[] } {
+  const signatures: Map<string, Map<string, T[]>> = new Map()
+  const candidates: T[] = []
+
+  for (const item of items) {
+    let imageHashSignatures = signatures.get(item.toImageHash)
+    if (!imageHashSignatures) {
+      imageHashSignatures = new Map()
+      signatures.set(item.toImageHash, imageHashSignatures)
+      candidates.push(item)
+    }
+    const signerItems = imageHashSignatures.get(item.signer)
+    if (signerItems) {
+      signerItems.push(item)
+    } else {
+      imageHashSignatures.set(item.signer, [item])
+    }
+  }
+
+  return { signatures, candidates }
+}
+
+/**
+ * Result of checking a signature on-chain: true (valid), false (invalid), or undefined when it can't be checked
+ * (no provider, signer without code, RPC error).
+ */
+export type Validity = boolean | undefined
+
+/**
+ * Picks a signature among entries ordered newest first:
+ * - the newest entry that validates;
+ * - otherwise the newest entry that could not be checked (it may be valid, the ones checked are not);
+ * - otherwise (every entry checked and invalid, or no validator) the newest entry.
+ * Entries whose signature can't be loaded are skipped.
+ */
+export async function pickSignature<E>(
+  entries: E[],
+  load: (entry: E) => Promise<string>,
+  check?: (entry: E, signature: string) => Validity | Promise<Validity>
+): Promise<{ entry: E; signature: string } | undefined> {
+  let newest: { entry: E; signature: string } | undefined
+  let newestUnchecked: { entry: E; signature: string } | undefined
+
+  for (const entry of entries) {
+    let signature: string
+    try {
+      signature = await load(entry)
+    } catch (error) {
+      console.warn('unable to load signature:', error)
+      continue
+    }
+
+    if (newest === undefined) {
+      newest = { entry, signature }
+    }
+    if (!check) {
+      return newest
+    }
+
+    let validity: Validity
+    try {
+      validity = await check(entry, signature)
+    } catch {
+      validity = undefined
+    }
+
+    if (validity === true) {
+      return { entry, signature }
+    }
+    if (validity === undefined && newestUnchecked === undefined) {
+      newestUnchecked = { entry, signature }
+    }
+  }
+
+  if (newestUnchecked) {
+    return newestUnchecked
+  }
+  if (newest && check) {
+    console.warn('no signature validates, using the newest one')
+  }
+  return newest
+}
+
+/**
+ * Checks a signature of `signer` for `digest` on `provider`'s chain. Contract signers are checked with ERC-1271,
+ * which hashes `digest` with their own domain; a revert counts as invalid. A signer without code, or a failed RPC
+ * call, can't be checked.
+ */
+export async function checkSignature(
+  provider: ethers.Provider | undefined,
+  signer: string,
+  digest: ethers.BytesLike,
+  signature: ethers.BytesLike,
+  dynamic: boolean
+): Promise<Validity> {
+  if (!dynamic) {
+    try {
+      return ethers.getAddress(commons.signer.recoverSigner(digest, signature)) === ethers.getAddress(signer)
+    } catch {
+      return false
+    }
+  }
+
+  if (!provider) {
+    return undefined
+  }
+  try {
+    if ((await provider.getCode(signer)) === '0x') {
+      return undefined
+    }
+    return await commons.EIP1271.isValidEIP1271Signature(signer, ethers.hexlify(digest), signature, provider)
+  } catch (error) {
+    // The signer's code rejected it (wallets revert on invalid signatures), anything else is a failed check
+    if (ethers.isError(error, 'CALL_EXCEPTION') || ethers.isError(error, 'BAD_DATA')) {
+      return false
+    }
+    return undefined
+  }
 }
 
 export class ArweaveReader implements ConfigTracker, migrator.PresignedMigrationTracker {
@@ -110,18 +242,9 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
       }
     )
 
-    const signatures: Map<string, Map<string, (typeof items)[number]>> = new Map()
-    let candidates: typeof items = []
-
-    for (const item of items) {
-      let imageHashSignatures = signatures.get(item.toImageHash)
-      if (!imageHashSignatures) {
-        imageHashSignatures = new Map()
-        signatures.set(item.toImageHash, imageHashSignatures)
-        candidates.push(item)
-      }
-      imageHashSignatures.set(item.signer, item)
-    }
+    const grouped = groupConfigUpdateItems(items)
+    const signatures = grouped.signatures
+    let candidates = grouped.candidates
 
     if (args.longestPath) {
       candidates.sort(({ toCheckpoint: a }, { toCheckpoint: b }) => (a === b ? 0 : a < b ? -1 : 1))
@@ -135,7 +258,7 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
       const currentImageHash = v2.config.imageHash(currentConfig)
 
       let nextCandidate: (typeof candidates)[number] | undefined
-      let nextCandidateItems: Map<string, (typeof items)[number]>
+      let nextCandidateItems: Map<string, Array<(typeof items)[number]>>
       let nextCandidateSigners: string[] = []
 
       for (const candidate of candidates) {
@@ -175,33 +298,29 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
           (
             await Promise.all(
               nextCandidateSigners.map(async signer => {
-                const { id, subdigest, signatureType } = nextCandidateItems.get(signer)!
-                try {
-                  let signature = await (await fetchItem(id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl)).text()
-                  switch (signatureType) {
-                    case 'eip-712':
-                      signature += '01'
-                      break
-                    case 'eth_sign':
-                      signature += '02'
-                      break
-                    case 'erc-1271':
-                      signature += '03'
-                      break
-                  }
-                  if (this.eip5719) {
-                    try {
-                      signature = ethers.hexlify(await this.eip5719.runByEIP5719(signer, subdigest, signature))
-                    } catch (error) {
-                      console.warn(`unable to run eip-5719 on config update ${id}`)
-                    }
-                  }
-                  const recovered = commons.signer.tryRecoverSigner(subdigest, signature)
-                  return [[signer, { signature, isDynamic: recovered !== signer }] as const]
-                } catch (error) {
-                  console.warn(`unable to fetch signer ${signer} config update ${id}:`, error)
+                const picked = await pickSignature(
+                  nextCandidateItems.get(signer)!,
+                  entry => this.loadConfigUpdateSignature(entry),
+                  this.options.validationProviders
+                    ? (entry, signature) => {
+                        const bytes = ethers.getBytes(signature)
+                        const dynamic = bytes[bytes.length - 1] === commons.signer.SigType.WALLET_BYTES32
+                        return checkSignature(
+                          this.options.validationProviders!(entry.chainId),
+                          signer,
+                          entry.subdigest,
+                          dynamic ? bytes.slice(0, -1) : bytes,
+                          dynamic
+                        )
+                      }
+                    : undefined
+                )
+                if (!picked) {
                   return []
                 }
+                const { signature } = picked
+                const recovered = commons.signer.tryRecoverSigner(picked.entry.subdigest, signature)
+                return [[signer, { signature, isDynamic: recovered !== signer }] as const]
               })
             )
           ).flat()
@@ -432,6 +551,34 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
     )
   }
 
+  private async loadConfigUpdateSignature(entry: {
+    id: string
+    signer: string
+    subdigest: string
+    signatureType: 'eip-712' | 'eth_sign' | 'erc-1271'
+  }): Promise<string> {
+    let signature = await (await fetchItem(entry.id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl)).text()
+    switch (entry.signatureType) {
+      case 'eip-712':
+        signature += '01'
+        break
+      case 'eth_sign':
+        signature += '02'
+        break
+      case 'erc-1271':
+        signature += '03'
+        break
+    }
+    if (this.eip5719) {
+      try {
+        signature = ethers.hexlify(await this.eip5719.runByEIP5719(entry.signer, entry.subdigest, signature))
+      } catch (error) {
+        console.warn(`unable to run eip-5719 on config update ${entry.id}`)
+      }
+    }
+    return signature
+  }
+
   async getMigration(
     address: string,
     fromImageHash: string,
@@ -485,26 +632,45 @@ export class ArweaveReader implements ConfigTracker, migrator.PresignedMigration
         break
       default:
         console.warn(
-          `multiple chain ${chainId} migrations for v${fromVersion} wallet ${wallet} from config ${fromImageHash} at ${items.map(({ id }) => id).join(', ')}, using first`
+          `multiple chain ${chainId} migrations for v${fromVersion} wallet ${wallet} from config ${fromImageHash} at ${items.map(({ id }) => id).join(', ')}, using the newest valid one`
         )
         break
     }
 
-    const { id, toVersion, toImageHash, executor } = items[0]
+    const mainModule = new ethers.Interface(MAIN_MODULE_ABI)
+    const decode = (data: string) => {
+      const [encoded, nonce, signature] = mainModule.decodeFunctionData('execute', data)
+      const transactions = commons.transaction.fromTxAbiEncode(encoded)
+      const subdigest = commons.transaction.subdigestOfTransactions(wallet, chainId, nonce, transactions)
+      return { transactions, nonce, signature: signature as string, subdigest }
+    }
 
-    const [data, toConfig] = await Promise.all([
-      fetchItem(id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl).then(response => response.text()),
-      this.configOfImageHash({ imageHash: toImageHash })
-    ])
+    // Newest first: use the newest migration whose signature validates on its chain. The wallet's ERC-1271 check
+    // takes the transactions digest and applies its own domain (chain id, wallet address).
+    const validationProvider = this.options.validationProviders?.(BigInt(chainId))
+    const picked = await pickSignature(
+      items,
+      item => fetchItem(item.id, this.options.rateLimitRetryDelayMs, this.options.arweaveUrl).then(response => response.text()),
+      this.options.validationProviders
+        ? async (_item, data) => {
+            const { transactions, nonce, signature } = decode(data)
+            const digest = commons.transaction.digestOfTransactions(nonce, transactions)
+            return checkSignature(validationProvider, wallet, digest, signature, true)
+          }
+        : undefined
+    )
+    if (!picked) {
+      throw new Error(`unable to load chain ${chainId} migration for v${fromVersion} wallet ${wallet}`)
+    }
+
+    const { toVersion, toImageHash, executor } = picked.entry
+    const toConfig = await this.configOfImageHash({ imageHash: toImageHash })
 
     if (!toConfig) {
       throw new Error(`unable to find to config ${toImageHash} for migration`)
     }
 
-    const mainModule = new ethers.Interface(MAIN_MODULE_ABI)
-    const [encoded, nonce, signature] = mainModule.decodeFunctionData('execute', data)
-    const transactions = commons.transaction.fromTxAbiEncode(encoded)
-    const subdigest = commons.transaction.subdigestOfTransactions(wallet, chainId, nonce, transactions)
+    const { transactions, nonce, signature, subdigest } = decode(picked.signature)
 
     return {
       tx: { entrypoint: executor, transactions, nonce, chainId, intent: { id: subdigest, wallet }, signature },
