@@ -3,7 +3,13 @@ import { AbiFunction, Address, Bytes, Hex, Mnemonic, Provider, RpcTransport, Sec
 import { Wallet as CoreWallet } from '@0xsequence/wallet-core'
 import { Config, Constants, Payload } from '@0xsequence/wallet-primitives'
 import type { Relayer } from '@0xsequence/relayer'
-import { Actions, guardSettlementSpace, Manager, SignerReady } from '../src/sequence/index.js'
+import {
+  Actions,
+  guardSettlementSpace,
+  Manager,
+  type SignerActionable,
+  type SignerReady,
+} from '../src/sequence/index.js'
 import { Kinds } from '../src/sequence/types/signer.js'
 import { LOCAL_RPC_URL, newManager } from './constants.js'
 
@@ -38,13 +44,14 @@ const relayerAccount: Address.Address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92
 // Stands in for the Sequence relayer: sponsors the settlement and sends it from a funded dev account
 const relayed: { to: Address.Address; data: Hex.Hex; chainId: number }[] = []
 let failNextRelay = false
+let sponsorSettlement = true
 const testRelayer = {
   kind: 'standard',
   type: 'test',
   id: 'test-relayer',
   isAvailable: async () => true,
   feeTokens: async () => ({ isFeeRequired: false }),
-  feeOptions: async () => ({ options: [], sponsored: true }),
+  feeOptions: async () => ({ options: [], sponsored: sponsorSettlement }),
   relay: async (to: Address.Address, data: Hex.Hex, chainId: number) => {
     if (failNextRelay) {
       failNextRelay = false
@@ -127,6 +134,7 @@ describe('Guard rotation', () => {
     guardRequests.length = 0
     relayed.length = 0
     failNextRelay = false
+    sponsorSettlement = true
   })
 
   function rotate(manager: Manager) {
@@ -136,11 +144,12 @@ describe('Guard rotation', () => {
     sequence.legacyGuardAddresses = { wallet: [oldGuards.wallet], sessions: [oldGuards.sessions] }
   }
 
-  async function signUpWithOldGuards() {
+  async function signUpWithOldGuards(mnemonic = Mnemonic.random(Mnemonic.english)) {
     manager = newManager(
       {
         guardUrl: 'https://guard.test',
         guardAddresses: { ...oldGuards },
+        enableGuardMigration: true,
         relayers: [testRelayer],
       },
       undefined,
@@ -149,7 +158,7 @@ describe('Guard rotation', () => {
     manager.registerGuardUI(vi.fn())
 
     const wallet = await manager.wallets.signUp({
-      mnemonic: Mnemonic.random(Mnemonic.english),
+      mnemonic,
       kind: 'mnemonic',
       noGuard: false,
     })
@@ -175,6 +184,74 @@ describe('Guard rotation', () => {
     expect(await manager!.wallets.needsGuardMigration(wallet)).toBe(false)
     expect(await manager!.wallets.migrateGuard(wallet)).toBeUndefined()
   })
+
+  it('Should ignore an undefined legacy guard list', () => {
+    manager = newManager({ legacyGuardAddresses: { wallet: undefined } })
+    expect((manager as any).shared.modules.guards.getByAddress(oldGuards.wallet)).toBeUndefined()
+  })
+
+  it('Should open and sign in a second app with migration off after the first app moves the wallet', async () => {
+    const mnemonic = Mnemonic.random(Mnemonic.english)
+    const wallet = await signUpWithOldGuards(mnemonic)
+    await fund(wallet)
+    const legacyMnemonic = Mnemonic.random(Mnemonic.english)
+    const legacyWallet = await manager!.wallets.signUp({ kind: 'mnemonic', mnemonic: legacyMnemonic, noGuard: false })
+    rotate(manager!)
+    await migrateAndSign(wallet)
+    expect((await manager!.wallets.getConfiguration(wallet)).walletGuard?.address).toBe(newGuards.wallet)
+    const [settlementId] = await pendingSettlement()
+    await signAll(manager!, settlementId!)
+    expect(await manager!.wallets.completeGuardSettlement(settlementId!)).toEqual([
+      { chainId: 42161, opHash: expect.any(String) },
+    ])
+
+    const enabledApp = manager!
+    const stateProvider = (enabledApp as any).shared.sequence.stateProvider
+    await enabledApp.stop()
+    const disabledApp = newManager({
+      stateProvider,
+      guardUrl: 'https://guard.test',
+      guardAddresses: newGuards,
+      legacyGuardAddresses: { wallet: [oldGuards.wallet], sessions: [oldGuards.sessions] },
+      relayers: [testRelayer],
+    })
+    manager = disabledApp
+    disabledApp.registerGuardUI(vi.fn())
+
+    const open = async (app: Manager, address: Address.Address, walletMnemonic: string) => {
+      const id = await app.wallets.login({ wallet: address })
+      const unsubscribe = app.registerMnemonicUI(async (respond) => respond(walletMnemonic))
+      const request = await app.signatures.get(id)
+      const loginSigner = request.signers.find(
+        (signer) => signer.handler?.kind === Kinds.LoginMnemonic && signer.status === 'actionable',
+      )
+      expect(loginSigner).toBeDefined()
+      await (loginSigner as SignerActionable).handle()
+      const ready = await app.signatures.get(id)
+      const guard = ready.signers.find((signer) => signer.handler?.kind === Kinds.Guard && signer.status === 'ready')
+      await (guard as SignerReady).handle()
+      await app.wallets.completeLogin(id)
+      unsubscribe()
+      expect((await app.wallets.get(address))?.status).toBe('ready')
+    }
+    guardRequests.length = 0
+    await open(disabledApp, wallet, mnemonic)
+    expect(guardRequests).toEqual([newGuards.wallet])
+    expect((await disabledApp.wallets.getConfiguration(wallet)).walletGuard?.address).toBe(newGuards.wallet)
+    await open(disabledApp, legacyWallet!, legacyMnemonic)
+    expect(guardRequests).toEqual([newGuards.wallet, oldGuards.wallet])
+    expect((await disabledApp.wallets.getConfiguration(legacyWallet!)).walletGuard?.address).toBe(oldGuards.wallet)
+    expect(await disabledApp.wallets.prepareGuardSettlement(wallet)).toBeUndefined()
+    expect(await disabledApp.wallets.migrateGuard(legacyWallet!)).toBeUndefined()
+    expect(await pendingSettlement()).toEqual([])
+
+    const newWallet = await disabledApp.wallets.signUp({
+      kind: 'mnemonic',
+      mnemonic: Mnemonic.random(Mnemonic.english),
+      noGuard: false,
+    })
+    expect((await disabledApp.wallets.getConfiguration(newWallet!)).walletGuard?.address).toBe(newGuards.wallet)
+  }, 30_000)
 
   it('Should migrate a wallet to the new guards, co-signed by the old guard', async () => {
     const wallet = await signUpWithOldGuards()
@@ -303,6 +380,28 @@ describe('Guard rotation', () => {
 
     expect(await pendingSettlement()).toEqual([])
     expect(await manager!.wallets.prepareGuardSettlement(wallet)).toBeUndefined()
+  }, 30_000)
+
+  it('Should request no signatures while the chain is unsponsored', async () => {
+    const wallet = await signUpWithOldGuards()
+    await fund(wallet)
+    rotate(manager!)
+    sponsorSettlement = false
+
+    await migrateAndSign(wallet)
+
+    expect(await pendingSettlement()).toEqual([])
+    expect(await manager!.wallets.prepareGuardSettlement(wallet)).toBeUndefined()
+    expect(guardRequests).toEqual([oldGuards.wallet])
+    expect(relayed).toEqual([])
+
+    sponsorSettlement = true
+    const settlementId = await manager!.wallets.prepareGuardSettlement(wallet)
+    expect(settlementId).toBeDefined()
+    await signAll(manager!, settlementId!)
+    sponsorSettlement = false
+    expect(await manager!.wallets.completeGuardSettlement(settlementId!)).toEqual([])
+    expect(relayed).toEqual([])
   }, 30_000)
 
   it('Should retry a failed settlement the next time the wallet opens', async () => {

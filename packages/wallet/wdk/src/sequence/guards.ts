@@ -26,8 +26,7 @@ export class Guards {
       }
     }
 
-    // Wallets that have not migrated yet still reference a rotated-out guard,
-    // the guard service keeps co-signing for those addresses until they migrate.
+    // Existing wallets can continue to sign with any configured legacy guard.
     const role = this.legacyRoleOf(address)
     if (role) {
       return [role, new Signers.Guard(new Guard.Sequence.Guard(this.shared.sequence.guardUrl, address))]
@@ -37,9 +36,12 @@ export class Guards {
   }
 
   legacyRoleOf(address: Address.Address): GuardRole | undefined {
-    const roles = Object.entries(this.shared.sequence.legacyGuardAddresses) as [GuardRole, Address.Address[]][]
+    const roles = Object.entries(this.shared.sequence.legacyGuardAddresses) as [
+      GuardRole,
+      Address.Address[] | undefined,
+    ][]
     for (const [role, legacyAddresses] of roles) {
-      if (legacyAddresses.some((legacyAddress) => Address.isEqual(legacyAddress, address))) {
+      if (legacyAddresses?.some((legacyAddress) => Address.isEqual(legacyAddress, address))) {
         return role
       }
     }

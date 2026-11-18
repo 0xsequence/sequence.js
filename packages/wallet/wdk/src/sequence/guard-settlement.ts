@@ -1,3 +1,4 @@
+import { Relayer } from '@0xsequence/relayer'
 import { Envelope, Wallet as CoreWallet } from '@0xsequence/wallet-core'
 import { Constants, Network, Payload } from '@0xsequence/wallet-primitives'
 import { AbiFunction, Address, Hash, Hex, Provider, RpcTransport } from 'ox'
@@ -114,7 +115,8 @@ export class GuardSettlements {
       return undefined
     }
 
-    if ((await this.chainsToSettle(wallet)).length === 0) {
+    const networks = await this.chainsToSettle(wallet)
+    if (networks.length === 0) {
       return undefined
     }
 
@@ -124,6 +126,10 @@ export class GuardSettlements {
     })
     const status = await coreWallet.getStatus()
     const payload = guardSettlementPayload(wallet, status.imageHash)
+
+    if (!(await this.hasSponsorship(coreWallet, networks, payload))) {
+      return undefined
+    }
 
     // Reuse a pending request for the same configuration
     const pending = (await this.shared.modules.signatures.list()).find(
@@ -173,7 +179,10 @@ export class GuardSettlements {
       try {
         const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
         const transaction = await coreWallet.buildTransaction(provider, envelope)
-        results.push({ chainId: network.chainId, opHash: await this.relay(envelope.wallet, network, transaction) })
+        const opHash = await this.relay(envelope.wallet, network, envelope.payload.calls, transaction)
+        if (opHash) {
+          results.push({ chainId: network.chainId, opHash })
+        }
       } catch (error) {
         this.shared.modules.logger.log(`Failed to settle guard on chain ${network.chainId}`, error)
         results.push({ chainId: network.chainId, error: error instanceof Error ? error.message : String(error) })
@@ -184,27 +193,73 @@ export class GuardSettlements {
     return results
   }
 
-  private async relay(
+  private async hasSponsorship(
+    wallet: CoreWallet,
+    networks: Network.Network[],
+    payload: Payload.Calls,
+  ): Promise<boolean> {
+    for (const network of networks) {
+      try {
+        const provider = Provider.from(RpcTransport.fromHttp(network.rpcUrl))
+        const transaction = await wallet.buildFeeOptionsTransaction(provider, payload)
+        for await (const _ of this.sponsoredRelayers(wallet.address, network, payload.calls, transaction)) {
+          return true
+        }
+      } catch (error) {
+        this.shared.modules.logger.log(`Failed to quote guard settlement on chain ${network.chainId}`, error)
+      }
+    }
+    return false
+  }
+
+  private async *sponsoredRelayers(
     wallet: Address.Address,
     network: Network.Network,
+    calls: Payload.Call[],
     transaction: { to: Address.Address; data: Hex.Hex },
-  ): Promise<Hex.Hex> {
-    let lastError: unknown = new Error(`no relayer available for chain ${network.chainId}`)
-
+  ) {
     for (const relayer of this.shared.sequence.relayers) {
       try {
         if (!(await relayer.isAvailable(wallet, network.chainId))) {
           continue
         }
-        // The settlement can't pay a fee (its calls are fixed by the signature), so the relay must be sponsored
-        const { quote } = await relayer.feeOptions(wallet, network.chainId, transaction.to, [], transaction.data)
-        const { opHash } = await relayer.relay(transaction.to, transaction.data, network.chainId, quote)
+        const { quote, sponsored } = await relayer.feeOptions(
+          wallet,
+          network.chainId,
+          transaction.to,
+          calls,
+          transaction.data,
+        )
+        if (sponsored) {
+          yield { relayer, quote }
+        }
+      } catch (error) {
+        this.shared.modules.logger.log(`Failed to quote guard settlement on chain ${network.chainId}`, error)
+      }
+    }
+  }
+
+  private async relay(
+    wallet: Address.Address,
+    network: Network.Network,
+    calls: Payload.Call[],
+    transaction: { to: Address.Address; data: Hex.Hex },
+  ): Promise<Hex.Hex | undefined> {
+    let lastError: unknown
+    for await (const { relayer, quote } of this.sponsoredRelayers(wallet, network, calls, transaction)) {
+      try {
+        const { to, data } = transaction
+        const { opHash } =
+          relayer instanceof Relayer.RpcRelayer
+            ? await relayer.sendMetaTxn(wallet, to, data, network.chainId, quote)
+            : await relayer.relay(to, data, network.chainId, quote)
         return opHash
       } catch (error) {
         lastError = error
       }
     }
-
-    throw lastError
+    if (lastError) {
+      throw lastError
+    }
   }
 }

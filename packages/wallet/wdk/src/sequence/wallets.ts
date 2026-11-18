@@ -1325,7 +1325,8 @@ export class Wallets implements WalletsInterface {
 
     // Every configuration update also moves the wallet off rotated-out guards, except logouts: the device that
     // signs a logout is leaving, the next update by a remaining device moves the wallet
-    const skipGuardMigration = action === Actions.Logout || action === Actions.RemoteLogout
+    const skipGuardMigration =
+      !this.shared.sequence.enableGuardMigration || action === Actions.Logout || action === Actions.RemoteLogout
     const migrated = skipGuardMigration
       ? { modules: changes.modules ?? modules, guardTopology: changes.guardTopology ?? guardTopology }
       : this.migrateGuardParts(changes.modules ?? modules, changes.guardTopology ?? guardTopology)
@@ -1406,7 +1407,7 @@ export class Wallets implements WalletsInterface {
    * @returns The signature request id, or undefined if the wallet does not need to migrate.
    */
   public async migrateGuard(wallet: Address.Address): Promise<string | undefined> {
-    if (!(await this.needsGuardMigration(wallet))) {
+    if (!this.shared.sequence.enableGuardMigration || !(await this.needsGuardMigration(wallet))) {
       return undefined
     }
 
@@ -1414,10 +1415,16 @@ export class Wallets implements WalletsInterface {
   }
 
   public async prepareGuardSettlement(wallet: Address.Address): Promise<string | undefined> {
+    if (!this.shared.sequence.enableGuardMigration) {
+      return undefined
+    }
     return this.shared.modules.guardSettlements.request(wallet, 'wallet-webapp')
   }
 
   public async completeGuardSettlement(requestId: string): Promise<GuardSettlementResult[]> {
+    if (!this.shared.sequence.enableGuardMigration) {
+      return []
+    }
     return this.shared.modules.guardSettlements.complete(requestId)
   }
 
@@ -1438,6 +1445,10 @@ export class Wallets implements WalletsInterface {
 
     await wallet.submitUpdate(request.envelope as Envelope.Signed<Payload.ConfigUpdate>)
     await this.shared.modules.signatures.complete(requestId)
+
+    if (!this.shared.sequence.enableGuardMigration) {
+      return
+    }
 
     // If this update moved the wallet off a rotated-out guard, ask for the settlement of the new configuration
     const previous = fromConfig(request.envelope.configuration)
