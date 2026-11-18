@@ -94,7 +94,7 @@ async function onChainImageHash(manager: Manager, wallet: Address.Address) {
 const guardRequests: Address.Address[] = []
 const realFetch = globalThis.fetch
 const guardFetch = vi.fn(async (url: string, init: { body: string }) => {
-  if (!String(url).startsWith('https://guard.test')) {
+  if (!String(url).startsWith('https://guard.test/')) {
     return realFetch(url, init as any)
   }
   const { signer, request } = JSON.parse(init.body)
