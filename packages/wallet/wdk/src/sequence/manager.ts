@@ -9,6 +9,7 @@ import { resolveWdkEnv, type WdkEnv } from '../env.js'
 import { Cron } from './cron.js'
 import { Devices } from './devices.js'
 import { Guards, GuardRole } from './guards.js'
+import { GuardSettlements } from './guard-settlement.js'
 import { AuthCodeHandler } from './handlers/authcode.js'
 import {
   AuthCodePkceHandler,
@@ -80,6 +81,10 @@ export type ManagerOptions = {
   bundlers?: Bundler.Bundler[]
   guardUrl?: string
   guardAddresses?: Record<GuardRole, Address.Address>
+  // Additional guard addresses recognized for signing on existing wallets.
+  legacyGuardAddresses?: Partial<Record<GuardRole, Address.Address[]>>
+  // Allow existing wallets to move to guardAddresses and settle the new configuration. Defaults to false.
+  enableGuardMigration?: boolean
 
   nonWitnessableSigners?: Address.Address[]
 
@@ -164,6 +169,8 @@ export type ResolvedManagerOptions = {
   bundlers: Bundler.Bundler[]
   guardUrl: string
   guardAddresses: Record<GuardRole, Address.Address>
+  legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
+  enableGuardMigration: boolean
 
   nonWitnessableSigners: Address.Address[]
 
@@ -214,6 +221,8 @@ export const ManagerOptionsDefaults = {
     wallet: '0x26f3D30F41FA897309Ae804A2AFf15CEb1dA5742',
     sessions: '0xF6Bc87F5F2edAdb66737E32D37b46423901dfEF1',
   } as Record<GuardRole, Address.Address>,
+  legacyGuardAddresses: {} as Partial<Record<GuardRole, Address.Address[]>>,
+  enableGuardMigration: false,
 
   defaultGuardTopology: {
     type: 'nested',
@@ -365,6 +374,8 @@ export function applyManagerOptionsDefaults(options?: ManagerOptions): ResolvedM
     bundlers: options?.bundlers ?? ManagerOptionsDefaults.bundlers,
     guardUrl: options?.guardUrl ?? ManagerOptionsDefaults.guardUrl,
     guardAddresses: options?.guardAddresses ?? ManagerOptionsDefaults.guardAddresses,
+    legacyGuardAddresses: options?.legacyGuardAddresses ?? ManagerOptionsDefaults.legacyGuardAddresses,
+    enableGuardMigration: options?.enableGuardMigration ?? ManagerOptionsDefaults.enableGuardMigration,
 
     nonWitnessableSigners: Array.from(nonWitnessable) as Address.Address[],
 
@@ -417,12 +428,15 @@ export type Sequence = {
 
   readonly guardUrl: string
   readonly guardAddresses: Record<GuardRole, Address.Address>
+  readonly legacyGuardAddresses: Partial<Record<GuardRole, Address.Address[]>>
+  readonly enableGuardMigration: boolean
 }
 
 export type Modules = {
   readonly logger: Logger
   readonly devices: Devices
   readonly guards: Guards
+  readonly guardSettlements: GuardSettlements
   readonly wallets: Wallets
   readonly sessions: Sessions
   readonly signers: Signers
@@ -610,6 +624,8 @@ export class Manager {
 
         guardUrl: ops.guardUrl,
         guardAddresses: ops.guardAddresses,
+        legacyGuardAddresses: ops.legacyGuardAddresses,
+        enableGuardMigration: ops.enableGuardMigration,
       },
 
       databases: {
@@ -638,6 +654,7 @@ export class Manager {
       logger: new Logger(shared),
       devices: new Devices(shared),
       guards: new Guards(shared),
+      guardSettlements: new GuardSettlements(shared),
       wallets: new Wallets(shared),
       sessions: new Sessions(shared),
       signers: new Signers(shared),

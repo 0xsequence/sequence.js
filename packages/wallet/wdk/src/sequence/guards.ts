@@ -25,7 +25,54 @@ export class Guards {
         return [role, this.getByRole(role)]
       }
     }
+
+    // Existing wallets can continue to sign with any configured legacy guard.
+    const role = this.legacyRoleOf(address)
+    if (role) {
+      return [role, new Signers.Guard(new Guard.Sequence.Guard(this.shared.sequence.guardUrl, address))]
+    }
+
     return undefined
+  }
+
+  legacyRoleOf(address: Address.Address): GuardRole | undefined {
+    const roles = Object.entries(this.shared.sequence.legacyGuardAddresses) as [
+      GuardRole,
+      Address.Address[] | undefined,
+    ][]
+    for (const [role, legacyAddresses] of roles) {
+      if (legacyAddresses?.some((legacyAddress) => Address.isEqual(legacyAddress, address))) {
+        return role
+      }
+    }
+    return undefined
+  }
+
+  isGuard(address: Address.Address): boolean {
+    return this.getByAddress(address) !== undefined
+  }
+
+  // Replaces every legacy guard address of the given role with the current guard address,
+  // returns undefined if the topology does not reference any legacy guard of that role.
+  migrateTopology(topology: Config.Topology, role: GuardRole): Config.Topology | undefined {
+    const guardAddress = this.shared.sequence.guardAddresses[role]
+    if (!guardAddress) {
+      return undefined
+    }
+
+    let migrated = topology
+    for (const legacyAddress of this.shared.sequence.legacyGuardAddresses[role] ?? []) {
+      if (Address.isEqual(legacyAddress, guardAddress)) {
+        continue
+      }
+      migrated = Config.replaceAddress(migrated, legacyAddress, guardAddress)
+    }
+
+    if (Bytes.isEqual(Config.hashConfiguration(migrated), Config.hashConfiguration(topology))) {
+      return undefined
+    }
+
+    return migrated
   }
 
   topology(role: GuardRole): Config.Topology | undefined {

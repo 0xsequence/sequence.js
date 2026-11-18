@@ -45,11 +45,7 @@ export class Signers {
     if (this.shared.modules.recovery.isRecoveryModule(address)) {
       return Kinds.Recovery
     }
-    if (
-      Array.from(Object.values(this.shared.sequence.guardAddresses)).some((guardAddress) =>
-        Address.isEqual(guardAddress, address),
-      )
-    ) {
+    if (this.shared.modules.guards.isGuard(address)) {
       return Kinds.Guard
     }
 
