@@ -160,7 +160,6 @@ export class MultipleTracker implements migrator.PresignedMigrationTracker, Conf
     wallet: string
     fromImageHash: string
     longestPath?: boolean | undefined
-    chainId?: number
   }): Promise<PresignedConfigLink[]> {
     // We can't race here, because any of the trackers could have a new "link" in the chain
     const results = await allSafe(

@@ -55,7 +55,6 @@ export class DedupedTracker implements migrator.PresignedMigrationTracker, Confi
     wallet: string
     fromImageHash: string
     longestPath?: boolean | undefined
-    chainId?: number
   }): Promise<PresignedConfigLink[]> {
     return this.cache.do('loadPresignedConfiguration', this.window, args => this.tracker.loadPresignedConfiguration(args), args)
   }
