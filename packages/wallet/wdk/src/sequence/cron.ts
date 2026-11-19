@@ -146,6 +146,7 @@ export class Cron {
       }
 
       const lastRun = storage.get(id)?.lastRun ?? job.lastRun
+      job.lastRun = lastRun
       const timeSinceLastRun = now - lastRun
 
       if (timeSinceLastRun >= job.interval) {
