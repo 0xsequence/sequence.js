@@ -12,7 +12,9 @@ function parseSignature(sig: string): { types: string[]; names: (string | undefi
   const inner = m[1]?.trim() ?? ''
   if (inner === '') return { types: [], names: [] }
 
-  const parts = inner.split(',').map((p) => p.trim())
+  const parts = AbiFunction.from(sig).inputs.map((input) =>
+    input.name ? `${input.type} ${input.name}` : input.type,
+  )
   const types = parts.map((p) => {
     const t = p.split(/\s+/)[0]
     if (!t) throw new Error(`Invalid parameter in signature: "${p}"`)
