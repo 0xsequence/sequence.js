@@ -388,9 +388,9 @@ describe('Permission', () => {
         })
       })
 
-      it('should throw for empty permissions', () => {
-        // Create invalid encoded data with 0 permissions
-        const invalidEncoded = Bytes.concat(
+      it('should decode zero permissions', () => {
+        // A permission count of 0 is accepted by the contracts,, so it must decode
+        const encoded = Bytes.concat(
           Bytes.padLeft(Bytes.fromHex(testAddress), 20),
           Bytes.padLeft(Bytes.fromNumber(testChainId), 32),
           Bytes.padLeft(Bytes.fromNumber(testValueLimit), 32),
@@ -398,7 +398,15 @@ describe('Permission', () => {
           Bytes.fromNumber(0, { size: 1 }), // 0 permissions
         )
 
-        expect(() => decodeSessionPermissions(invalidEncoded)).toThrow('No permissions')
+        const decoded = decodeSessionPermissions(encoded)
+        expect(decoded).toEqual({
+          signer: testAddress,
+          chainId: testChainId,
+          valueLimit: testValueLimit,
+          deadline: testDeadline,
+          permissions: [],
+        })
+        expect(Bytes.isEqual(encodeSessionPermissions(decoded), encoded)).toBe(true)
       })
 
       it('should handle various parameter operations correctly', () => {

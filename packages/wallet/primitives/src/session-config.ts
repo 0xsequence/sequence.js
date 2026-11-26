@@ -583,6 +583,11 @@ export function addExplicitSession(
   topology: SessionsTopology,
   sessionPermissions: SessionPermissions,
 ): SessionsTopology {
+  // A session without permissions can make no calls. Refuse to create one here rather than in the encoder,
+  // so wallets that already hold such a leaf can still re-encode their topology.
+  if (!Array.isArray(sessionPermissions.permissions) || sessionPermissions.permissions.length === 0) {
+    throw new Error('Session permissions must be a non-empty array')
+  }
   // Find the session in the topology
   if (getSessionPermissions(topology, sessionPermissions.signer)) {
     throw new Error('Session already exists')

@@ -515,8 +515,11 @@ export class Sessions implements SessionsInterface {
     topology: SessionConfig.SessionsTopology,
     origin: string = 'wallet-webapp',
   ): Promise<string> {
-    // Store the new configuration
     const tree = SessionConfig.sessionsTopologyToConfigurationTree(topology)
+    // Make sure the new tree can be read back before it is stored or signed, so an encoding the SDK
+    // cannot decode never reaches the wallet configuration
+    SessionConfig.configurationTreeToSessionsTopology(tree)
+    // Store the new configuration
     await this.shared.sequence.stateProvider.saveTree(tree)
     const newImageHash = GenericTree.hash(tree)
 

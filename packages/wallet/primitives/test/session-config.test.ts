@@ -1,6 +1,7 @@
 import { Address, Bytes } from 'ox'
 import { describe, expect, it } from 'vitest'
 
+import * as GenericTree from '../src/generic-tree.js'
 import { ChainId } from '../src/network.js'
 import { ParameterOperation, Permission, SessionPermissions } from '../src/permission.js'
 import {
@@ -16,6 +17,7 @@ import {
   SessionPermissionsLeaf,
   SessionsTopology,
   addExplicitSession,
+  addIdentitySigner,
   addToImplicitBlacklist,
   balanceSessionsTopology,
   cleanSessionsTopology,
@@ -1106,5 +1108,101 @@ describe('Session Config', () => {
       const minimized = minimiseSessionsTopology(cleaned!, [], [])
       expect(isSessionsTopology(minimized)).toBe(true)
     })
+  })
+})
+
+// Regression tests for a session leaf with zero permissions.
+// The contracts accept such a leaf (and it can make no calls), so the SDK must be able to decode it,
+// but it must never create one.
+describe('Zero-permission session leaves', () => {
+  const identitySigner: Address.Address = '0x1111111111111111111111111111111111111111'
+  const identitySigner2: Address.Address = '0x2222222222222222222222222222222222222222'
+  const emptySessionSigner: Address.Address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  const validSessionSigner: Address.Address = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+
+  const emptyLeaf: SessionPermissionsLeaf = {
+    type: 'session-permissions',
+    signer: emptySessionSigner,
+    chainId: ChainId.MAINNET,
+    valueLimit: 0n,
+    deadline: 0n,
+    permissions: [],
+  }
+
+  const validSession: SessionPermissions = {
+    signer: validSessionSigner,
+    chainId: ChainId.MAINNET,
+    valueLimit: 0n,
+    deadline: 0n,
+    permissions: [{ target: validSessionSigner, rules: [] }],
+  }
+
+  // A stored topology that already holds an empty leaf, built by hand because addExplicitSession refuses to create one
+  const affectedTopology = (): SessionsTopology =>
+    balanceSessionsTopology(
+      mergeSessionsTopologies(addExplicitSession(emptySessionsTopology(identitySigner), validSession), emptyLeaf),
+    )
+
+  it('round-trips a zero-permission leaf byte for byte', () => {
+    const encoded = encodeLeafToGeneric(emptyLeaf)
+    const decoded = decodeLeafFromBytes(encoded.value)
+    expect(decoded).toEqual(emptyLeaf)
+    expect(Bytes.isEqual(encodeLeafToGeneric(decoded as SessionPermissionsLeaf).value, encoded.value)).toBe(true)
+  })
+
+  it('round-trips a topology holding a zero-permission leaf with the same image hash', () => {
+    const tree = sessionsTopologyToConfigurationTree(affectedTopology())
+    const decoded = configurationTreeToSessionsTopology(tree)
+    const reencoded = sessionsTopologyToConfigurationTree(decoded)
+    expect(GenericTree.hash(reencoded)).toBe(GenericTree.hash(tree))
+    expect(getSessionPermissions(decoded, emptySessionSigner)).toEqual(emptyLeaf)
+  })
+
+  it('round-trips a zero-permission leaf through the contract encoding', () => {
+    const topology = affectedTopology()
+    const decoded = decodeSessionsTopology(encodeSessionsTopology(topology))
+    expect(Bytes.isEqual(encodeSessionsTopology(decoded), encodeSessionsTopology(topology))).toBe(true)
+  })
+
+  it('addExplicitSession rejects empty permissions', () => {
+    expect(() => addExplicitSession(emptySessionsTopology(identitySigner), { ...emptyLeaf, permissions: [] })).toThrow(
+      'Session permissions must be a non-empty array',
+    )
+  })
+
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['an object', {}],
+    ['an array-like object', { length: 0 }],
+    ['a string', 'abc'],
+  ])('addExplicitSession rejects permissions that are %s', (_label, permissions) => {
+    expect(() =>
+      addExplicitSession(emptySessionsTopology(identitySigner), {
+        ...validSession,
+        permissions: permissions as unknown as SessionPermissions['permissions'],
+      }),
+    ).toThrow('Session permissions must be a non-empty array')
+  })
+
+  it('can remove the empty session from a stored topology', () => {
+    const decoded = configurationTreeToSessionsTopology(sessionsTopologyToConfigurationTree(affectedTopology()))
+    const repaired = removeExplicitSession(decoded, emptySessionSigner)
+    expect(repaired).not.toBeNull()
+    const repairedDecoded = configurationTreeToSessionsTopology(sessionsTopologyToConfigurationTree(repaired!))
+    expect(getSessionPermissions(repairedDecoded, emptySessionSigner)).toBeNull()
+    expect(getSessionPermissions(repairedDecoded, validSessionSigner)).toEqual({
+      type: 'session-permissions',
+      ...validSession,
+    })
+    expect(getIdentitySigners(repairedDecoded)).toEqual([identitySigner])
+  })
+
+  it('can add an identity signer to a stored topology holding an empty session', () => {
+    const decoded = configurationTreeToSessionsTopology(sessionsTopologyToConfigurationTree(affectedTopology()))
+    const updated = addIdentitySigner(decoded, identitySigner2)
+    const updatedDecoded = configurationTreeToSessionsTopology(sessionsTopologyToConfigurationTree(updated))
+    expect(getIdentitySigners(updatedDecoded)).toEqual(expect.arrayContaining([identitySigner, identitySigner2]))
+    expect(getSessionPermissions(updatedDecoded, emptySessionSigner)).toEqual(emptyLeaf)
   })
 })
