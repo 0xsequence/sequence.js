@@ -31,11 +31,11 @@
     "@repo/eslint-config": "workspace:^",
     "@repo/typescript-config": "workspace:^",
     "@types/node": "^25.3.0",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.12",
     "dotenv": "^17.3.1",
     "fake-indexeddb": "^6.2.5",
     "typescript": "^6.0.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.12"
   },
   "dependencies": {
     "@0xsequence/guard": "workspace:^",
