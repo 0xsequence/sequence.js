@@ -188,7 +188,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   packages/services/identity-instrument:
     dependencies:
@@ -216,7 +216,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   packages/services/indexer:
     devDependencies:
@@ -292,7 +292,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   packages/services/userdata:
     devDependencies:
@@ -368,7 +368,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   packages/wallet/dapp-client:
     dependencies:
@@ -407,14 +407,14 @@ importers:
         specifier: ^6.2.5
         version: 6.2.5
       happy-dom:
-        specifier: ^20.14.6
-        version: 20.14.6
+        specifier: ^21.0.4
+        version: 21.0.4
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   packages/wallet/primitives:
     dependencies:
@@ -436,7 +436,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   packages/wallet/primitives-cli:
     dependencies:
@@ -527,14 +527,14 @@ importers:
         specifier: ^6.2.5
         version: 6.2.5
       happy-dom:
-        specifier: ^20.14.6
-        version: 20.14.6
+        specifier: ^21.0.4
+        version: 21.0.4
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+        version: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   repo/eslint-config:
     devDependencies:
@@ -2613,8 +2613,8 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  happy-dom@20.14.6:
-    resolution: {integrity: sha512-5DDsf4QmEIlRL6NkCv/fxSjYHHkZceL/IaYQdJc2h3G7DRTEai++VTjbfL0LB9geW2VrA3+vrjF3Efx+OTtX0Q==}
+  happy-dom@21.0.4:
+    resolution: {integrity: sha512-tFm+GaLBgo6o0awHnvHaNoraVo27qJ+2tZEtZ+cIa08hXbeitrxAJajLI05hsUy/2/YTKcUjQYzHe5mCcraLBw==}
     engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
@@ -5225,7 +5225,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0))
+      vitest: 4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0))
 
   '@vitest/expect@4.1.12':
     dependencies:
@@ -6278,7 +6278,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  happy-dom@20.14.6:
+  happy-dom@21.0.4:
     dependencies:
       '@types/node': 25.3.0
       '@types/whatwg-mimetype': 3.0.2
@@ -7791,7 +7791,7 @@ snapshots:
       '@types/node': 25.3.0
       fsevents: 2.3.3
 
-  vitest@4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@20.14.6)(vite@7.3.0(@types/node@25.3.0)):
+  vitest@4.1.12(@types/node@25.3.0)(@vitest/coverage-v8@4.0.18)(happy-dom@21.0.4)(vite@7.3.0(@types/node@25.3.0)):
     dependencies:
       '@vitest/expect': 4.1.12
       '@vitest/mocker': 4.1.12(vite@7.3.0(@types/node@25.3.0))
@@ -7816,7 +7816,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.3.0
       '@vitest/coverage-v8': 4.0.18(vitest@4.1.12)
-      happy-dom: 20.14.6
+      happy-dom: 21.0.4
     transitivePeerDependencies:
       - msw
 
