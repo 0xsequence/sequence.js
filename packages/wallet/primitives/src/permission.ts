@@ -119,9 +119,8 @@ export function decodeSessionPermissions(bytes: Bytes.Bytes): SessionPermissions
     permissions.push(permission)
     pointer += consumed
   }
-  if (permissions.length === 0) {
-    throw new Error('No permissions')
-  }
+  // A count of 0 is valid on chain (the session can make no calls), so it must decode.
+  // Wallets that already hold such a leaf must be able to decode it to remove it.
   return {
     signer,
     chainId,
