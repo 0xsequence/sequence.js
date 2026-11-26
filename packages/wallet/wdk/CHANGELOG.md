@@ -1,5 +1,17 @@
 # @0xsequence/wallet-wdk
 
+## 3.1.5
+
+### Patch Changes
+
+- [#1072](https://github.com/0xsequence/sequence.js/pull/1072) [`1be910a`](https://github.com/0xsequence/sequence.js/commit/1be910a4c48f151813405fecaadb85d39678bf2d) Thanks [@shan8851](https://github.com/shan8851)! - Wallets whose sessions configuration contains an explicit session with no permissions can be read and updated again, and new sessions must now have at least one permission.
+  - `decodeSessionPermissions` accepts a permission count of zero, matching the encoder and the on-chain decoder, so such a session can be listed and removed.
+  - `SessionConfig.addExplicitSession` (and the WDK's `addExplicitSession` / `modifyExplicitSession`) reject `permissions` that is not a non-empty array.
+  - The WDK checks that an updated sessions configuration decodes before saving it or requesting a signature.
+
+- Updated dependencies [[`1be910a`](https://github.com/0xsequence/sequence.js/commit/1be910a4c48f151813405fecaadb85d39678bf2d)]:
+  - @0xsequence/wallet-primitives@3.0.18
+
 ## 3.1.4
 
 ### Patch Changes
