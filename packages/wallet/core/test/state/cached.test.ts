@@ -243,7 +243,7 @@ describe('Cached', () => {
 
       expect(result).toEqual({
         [TEST_ADDRESS]: mockSapientWalletData,
-        [TEST_ADDRESS_2]: mockSapientWalletData,
+        [Address.checksum(TEST_ADDRESS_2)]: mockSapientWalletData,
       })
 
       // Verify bidirectional syncing
@@ -253,17 +253,19 @@ describe('Cached', () => {
 
     it('should handle address normalization in syncing', async () => {
       const sourceData = {
-        [TEST_ADDRESS.toLowerCase()]: mockSapientWalletData,
+        [TEST_ADDRESS_2.toLowerCase()]: mockSapientWalletData,
       }
 
       vi.mocked(mockCache.getWalletsForSapient).mockResolvedValue({})
       vi.mocked(mockSource.getWalletsForSapient).mockResolvedValue(sourceData)
 
-      await cached.getWalletsForSapient(TEST_ADDRESS, TEST_IMAGE_HASH)
+      const result = await cached.getWalletsForSapient(TEST_ADDRESS, TEST_IMAGE_HASH)
+
+      expect(result).toEqual({ [Address.checksum(TEST_ADDRESS_2)]: mockSapientWalletData })
 
       // Should sync to cache with proper address conversion
       expect(mockCache.saveWitnesses).toHaveBeenCalledWith(
-        TEST_ADDRESS,
+        Address.checksum(TEST_ADDRESS_2),
         mockSapientWalletData.chainId,
         mockSapientWalletData.payload,
         {
@@ -272,6 +274,23 @@ describe('Cached', () => {
           signature: mockSapientWalletData.signature,
         },
       )
+      expect(mockCache.saveWitnesses).toHaveBeenCalledTimes(1)
+      expect(mockSource.saveWitnesses).not.toHaveBeenCalled()
+    })
+
+    it.each([
+      [TEST_ADDRESS_2.toLowerCase(), Address.checksum(TEST_ADDRESS_2)],
+      [Address.checksum(TEST_ADDRESS_2), TEST_ADDRESS_2.toLowerCase()],
+    ])('should deduplicate sapient wallets from cache %s and source %s', async (cacheAddress, sourceAddress) => {
+      const sourceData = { ...mockSapientWalletData, chainId: Network.ChainId.POLYGON }
+      vi.mocked(mockCache.getWalletsForSapient).mockResolvedValue({ [cacheAddress]: mockSapientWalletData })
+      vi.mocked(mockSource.getWalletsForSapient).mockResolvedValue({ [sourceAddress]: sourceData })
+
+      const result = await cached.getWalletsForSapient(TEST_ADDRESS, TEST_IMAGE_HASH)
+
+      expect(result).toEqual({ [Address.checksum(TEST_ADDRESS_2)]: sourceData })
+      expect(mockSource.saveWitnesses).not.toHaveBeenCalled()
+      expect(mockCache.saveWitnesses).not.toHaveBeenCalled()
     })
   })
 

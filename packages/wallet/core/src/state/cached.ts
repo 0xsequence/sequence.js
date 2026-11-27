@@ -84,8 +84,8 @@ export class Cached implements Provider {
       signature: Signature.SignatureOfSapientSignerLeaf
     }
   }> {
-    const cached = await this.args.cache.getWalletsForSapient(signer, imageHash)
-    const source = await this.args.source.getWalletsForSapient(signer, imageHash)
+    const cached = normalizeAddressKeys(await this.args.cache.getWalletsForSapient(signer, imageHash))
+    const source = normalizeAddressKeys(await this.args.source.getWalletsForSapient(signer, imageHash))
 
     const deduplicated = { ...cached, ...source }
 
